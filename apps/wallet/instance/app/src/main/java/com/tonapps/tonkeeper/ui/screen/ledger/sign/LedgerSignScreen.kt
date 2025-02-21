@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.ledger.sign
 
 import android.os.Bundle
 import android.view.View
+import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.toByteArray
 import com.tonapps.ledger.ton.Transaction
@@ -37,7 +38,7 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        connectionViewModel.setSignData(args.transaction, args.walletId)
+        connectionViewModel.setSignData(args.transaction, args.walletId, args.transactionIndex, args.transactionCount)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,19 +51,13 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
         view.findViewById<View>(R.id.cancel).setOnClickListener { finish() }
 
         if (savedInstanceState == null) {
-            childFragmentManager.beginTransaction().replace(R.id.steps, ledgerConnectionFragment)
-                .commit()
+            childFragmentManager.commit {
+                replace(R.id.steps, ledgerConnectionFragment)
+            }
         }
 
         collectFlow(connectionViewModel.eventFlow, ::onEvent)
     }
-
-    /*override fun onDestroy() {
-        super.onDestroy()
-        if (!requireActivity().isChangingConfigurations && !isSuccessful) {
-            navigation?.setFragmentResult(args.requestKey, Bundle())
-        }
-    }*/
 
     private fun onEvent(event: LedgerEvent) {
         when (event) {
@@ -101,14 +96,23 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
         isSuccessful = true
     }
 
-
     companion object {
         const val SIGNED_MESSAGE = "signed_message"
 
-        fun newInstance(transaction: Transaction, walletId: String): LedgerSignScreen {
-            return LedgerSignScreen().apply {
-                setArgs(LedgerSignArgs(transaction, walletId))
-            }
+        fun newInstance(
+            transaction: Transaction,
+            walletId: String,
+            transactionIndex: Int,
+            transactionCount: Int
+        ): LedgerSignScreen {
+            val screen = LedgerSignScreen()
+            screen.setArgs(LedgerSignArgs(
+                transaction = transaction,
+                walletId = walletId,
+                transactionIndex = transactionIndex,
+                transactionCount = transactionCount
+            ))
+            return screen
         }
     }
 }

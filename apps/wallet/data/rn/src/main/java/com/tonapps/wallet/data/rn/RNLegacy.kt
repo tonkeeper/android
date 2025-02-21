@@ -131,11 +131,16 @@ class RNLegacy(
     }
 
     suspend fun getVaultState(passcode: String): RNVaultState = withContext(Dispatchers.IO) {
-        try {
+        val vaultState = getVaultStateDefault(passcode) ?: getVaultStateDefault("")
+        vaultState ?: RNVaultState(original = "Failed found", cause = Throwable("No vault state found"))
+    }
+
+    private suspend fun getVaultStateDefault(passcode: String): RNVaultState? {
+        return try {
             seedStorage.get(passcode)
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
-            RNVaultState(original = e.bestMessage, cause = e)
+            null
         }
     }
 

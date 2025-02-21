@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.usecase.emulation
 
+import android.util.Log
 import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf

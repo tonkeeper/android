@@ -118,4 +118,8 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
         listView.layoutManager = layoutManager
     }
 
+    fun scrollToTop() {
+        listView.scrollToPosition(0)
+    }
+
 }

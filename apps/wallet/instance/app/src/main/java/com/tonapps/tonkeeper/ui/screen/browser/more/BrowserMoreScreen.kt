@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.browser.more
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
@@ -38,7 +39,7 @@ class BrowserMoreScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContex
     }
 
     override fun finishInternal() {
-        baseFragment?.removeFragment(this)
+        baseFragment?.removeFragment(this) ?: finish()
     }
 
     companion object {

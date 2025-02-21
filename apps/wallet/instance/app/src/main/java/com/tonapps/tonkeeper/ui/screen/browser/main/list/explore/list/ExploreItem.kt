@@ -18,7 +18,7 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
 
     data class Title(
         val title: String,
-        val id: String
+        val id: String? = null
     ): ExploreItem(TYPE_TITLE)
 
     data class Ads(

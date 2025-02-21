@@ -6,6 +6,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.extensions.deviceCountry
 import com.tonapps.extensions.locale
 import com.tonapps.security.Security
 import com.tonapps.tonkeeper.core.DevSettings
@@ -97,8 +98,9 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             logView.visibility = View.GONE
         }
 
-        view.findViewById<View>(R.id.import_legacy).setOnClickListener {
+        view.findViewById<View>(R.id.import_legacy).setOnLongClickListener {
             valuesFromLegacy()
+            true
         }
 
         view.findViewById<View>(R.id.card).setOnLongClickListener {
@@ -162,6 +164,8 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         list.add("Device rooted: ${booleanToYesOrNo(Security.isDeviceRooted())}")
         list.add("Device strongbox: ${booleanToYesOrNo(Security.isSupportStrongBox(requireContext()))}")
         list.add("ADB enabled: ${booleanToYesOrNo(Security.isAdbEnabled(requireContext()))}")
+        list.add("Package name: ${requireContext().packageName}")
+        list.add("Device country: ${requireContext().deviceCountry}")
         return list
     }
 

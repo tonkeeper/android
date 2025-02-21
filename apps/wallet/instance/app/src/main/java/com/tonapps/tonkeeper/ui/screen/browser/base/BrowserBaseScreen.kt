@@ -10,6 +10,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
@@ -17,6 +18,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
 import uikit.extensions.collectFlow
@@ -71,8 +73,12 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     }
 
     fun openCategory(category: String) {
-        val fragment = BrowserMoreScreen.newInstance(screenContext.wallet, category)
-        addFragment(fragment)
+        lifecycleScope.launch {
+            if (viewModel.hasCategory(category)) {
+                val fragment = BrowserMoreScreen.newInstance(screenContext.wallet, category)
+                addFragment(fragment)
+            }
+        }
     }
 
     override fun onBackPressed(): Boolean {

@@ -42,6 +42,9 @@ fun String.toUserFriendly(
 }
 
 fun String.toRawAddress(): String {
+    if (this.contains(":")) {
+        return this
+    }
     return try {
         AddrStd(this).toString(userFriendly = false).lowercase()
     } catch (e: Exception) {
@@ -56,6 +59,10 @@ fun String.isValidTonAddress(): Boolean {
     } catch (e: Exception) {
         false
     }
+}
+
+fun String.isValidTonDomain(): Boolean {
+    return endsWith(".ton")
 }
 
 fun String.equalsAddress(other: String): Boolean {

@@ -8,20 +8,27 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import androidx.core.widget.NestedScrollView
+import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.imagepipeline.request.ImageRequest
+import com.facebook.imagepipeline.request.ImageRequestBuilder
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.isLightTheme
-import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.toastLoading
+import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeper.ui.component.LottieView
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -46,6 +53,7 @@ import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.inflate
+import uikit.extensions.roundTop
 import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
 import uikit.widget.ColumnLayout
@@ -71,12 +79,17 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private lateinit var headerView: HeaderView
     private lateinit var spamView: View
+    private lateinit var previewView: FrameLayout
+
+    private var lottieView: LottieView? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.title = nftEntity.name
         headerView.doOnCloseClick = { finish() }
+
+        previewView = view.findViewById(R.id.preview)
 
         val contentView = view.findViewById<NestedScrollView>(R.id.content)
         contentView.applyNavBottomPadding()
@@ -88,7 +101,12 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         view.findViewById<Button>(R.id.not_spam).setOnClickListener { reportSpam(false) }
 
         val imageView = view.findViewById<FrescoView>(R.id.image)
-        imageView.setImageURI(nftEntity.bigUri)
+
+        imageView.controller = Fresco.newDraweeControllerBuilder()
+            .setLowResImageRequest(ImageRequest.fromUri(nftEntity.mediumUri))
+            .setImageRequest(ImageRequest.fromUri(nftEntity.bigUri))
+            .setOldController(imageView.controller)
+            .build()
 
         val nameView = view.findViewById<AppCompatTextView>(R.id.name)
         nameView.text = nftEntity.name
@@ -115,7 +133,8 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         transferButton.setOnClickListener {
             navigation?.add(SendScreen.newInstance(
                 wallet = wallet,
-                nftAddress = nftEntity.address
+                nftAddress = nftEntity.address,
+                type = SendScreen.Companion.Type.Nft
             ))
         }
 
@@ -125,6 +144,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         if (nftEntity.isDomain && nftEntity.metadata.buttons.isEmpty()) {
             val url = Uri.parse("https://dns.tonkeeper.com/manage?v=${nftEntity.userFriendlyAddress}")
             val dAppArgs = DAppArgs(
+                title = url.host ?: nftEntity.name,
                 url = url,
                 source = "nft",
                 sendAnalytics = true
@@ -190,6 +210,17 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
             domainRenewButton.visibility = View.GONE
             transferButton.visibility = View.GONE
         }
+
+        if (nftEntity.lottieUri != null) {
+            lottieView = LottieView(requireContext()).apply {
+                roundTop(16.dp)
+                setUri(nftEntity.lottieUri!!)
+            }
+            previewView.addView(lottieView, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ))
+        }
     }
 
     private fun setTrust(trust: Trust) {
@@ -217,7 +248,8 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         navigation?.add(SendScreen.newInstance(
             wallet = wallet,
             targetAddress = viewModel.burnAddress,
-            nftAddress = nftEntity.address
+            nftAddress = nftEntity.address,
+            type = SendScreen.Companion.Type.Nft
         ))
         finish()
     }
@@ -227,9 +259,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
             val uri = url.toUriOrNull() ?: return
             rootViewModel.processDeepLink(uri, false, null, false, null)
         } else {
+            val uri = url.toUriOrNull() ?: return
             navigation?.add(DAppScreen.newInstance(
                 wallet = wallet,
-                url = url.toUri(),
+                title = uri.host ?: nftEntity.name,
+                url = uri,
                 source = "nft"
             ))
         }
@@ -327,11 +361,16 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     }
 
     private fun reportSpam(spam: Boolean) {
+        navigation?.toastLoading(true)
         setTrust(if (spam) Trust.blacklist else Trust.whitelist)
         spamView.visibility = View.GONE
         headerView.setSubtitle(null)
         viewModel.reportSpam(spam) {
-            finish()
+            navigation?.toastLoading(false)
+            if (spam) {
+                navigation?.toast(Localization.nft_marked_as_spam)
+                finish()
+            }
         }
     }
 
@@ -357,7 +396,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     private fun setAddress(view: View, address: String) {
         val explorerView = view.findViewById<AppCompatTextView>(R.id.open_explorer)
         explorerView.setOnClickListener {
-            val nftExplorer = context?.remoteConfig?.nftExplorer ?: return@setOnClickListener
+            val nftExplorer = context?.serverConfig?.nftExplorer ?: return@setOnClickListener
             val explorerUrl = nftExplorer.format(address)
             navigation?.openURL(explorerUrl)
         }
@@ -370,6 +409,12 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
         val addressView = view.findViewById<AppCompatTextView>(R.id.address)
         addressView.text = address.short4
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        lottieView?.destroy()
+        lottieView = null
     }
 
     companion object {

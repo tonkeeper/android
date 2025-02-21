@@ -4,18 +4,23 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
+import com.tonapps.extensions.isPositive
 import com.tonapps.extensions.short4
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.copyToClipboard
@@ -29,6 +34,7 @@ import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
+import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
@@ -49,6 +55,7 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
 import org.ton.cell.Cell
 import uikit.base.BaseFragment
@@ -86,7 +93,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
-        InsufficientFundsDialog(requireContext())
+        InsufficientFundsDialog(this)
     }
 
     private lateinit var slidesView: SlideBetweenView
@@ -116,6 +123,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     private lateinit var commentDecryptView: AppCompatTextView
     private lateinit var commentRequiredView: AppCompatTextView
     private lateinit var commentErrorView: AppCompatTextView
+    private lateinit var reviewHeaderView: HeaderView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,7 +144,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         createHeaderView.doOnActionClick = { finish() }
         createHeaderView.doOnCloseClick = { openCamera() }
 
-        val reviewHeaderView = view.findViewById<HeaderView>(R.id.review_header)
+        reviewHeaderView = view.findViewById(R.id.review_header)
         reviewHeaderView.doOnCloseClick = { showCreate() }
 
         addressInput = view.findViewById(R.id.address)
@@ -272,9 +280,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             }
         }
 
-        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress, args.bin)
-
-        addressInput.focus()
+        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress, args.bin, args.type)
     }
 
     private fun confirmSendAll() {
@@ -307,19 +313,36 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     fun initializeArgs(
         targetAddress: String?,
-        amountNano: Long,
+        amountNano: Long?,
         text: String?,
-        tokenAddress: String,
-        bin: Cell?
+        tokenAddress: String?,
+        bin: Cell? = null,
+        type: Type
     ) {
         viewModel.initializeTokenAndAmount(
             tokenAddress = tokenAddress,
             amountNano = amountNano,
+            type = type
         )
 
         text?.let { commentInput.text = it }
         targetAddress?.let { addressInput.text = it }
         bin?.let { viewModel.userInputBin(it) }
+
+        if (type == Type.Direct && amountNano.isPositive()) {
+            reviewHeaderView.setIcon(0)
+            reviewHeaderView.setAction(UIKitIcon.ic_close_16)
+            reviewHeaderView.doOnActionClick = { finish() }
+            next()
+            slidesView.next(false)
+            addressInput.hideKeyboard()
+        } else {
+            reviewHeaderView.setAction(0)
+            reviewHeaderView.setIcon(UIKitIcon.ic_chevron_left_16)
+            reviewHeaderView.doOnCloseClick = { showCreate() }
+            showCreate()
+            addressInput.focus()
+        }
     }
 
     private fun applyCommentEncryptState(enabled: Boolean) {
@@ -380,17 +403,18 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     private fun onEvent(event: SendEvent) {
         when (event) {
+            is SendEvent.Canceled -> setDefault()
             is SendEvent.Failed -> setFailed(event.throwable)
             is SendEvent.Success -> setSuccess()
             is SendEvent.Loading -> setLoading()
             is SendEvent.Fee -> setFee(event)
             is SendEvent.InsufficientBalance -> {
-                insufficientFundsDialog.show(
-                    wallet = wallet,
+                showInsufficientFundsDialog(
                     balance = event.balance,
                     required = event.required,
                     withRechargeBattery = event.withRechargeBattery,
-                    singleWallet = event.singleWallet
+                    singleWallet = event.singleWallet,
+                    type = event.type
                 )
             }
             is SendEvent.Confirm -> slidesView.next()
@@ -455,7 +479,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransactionAmount(amount: SendTransaction.Amount) {
-        if (!amount.value.isPositive) {
+        if (amount.value.isNegative) {
             reviewRecipientAmountView.visibility = View.GONE
             return
         }
@@ -466,8 +490,6 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransactionAccount(destination: SendDestination.Account) {
-
-
         if (destination.displayName == null) {
             reviewRecipientView.value = destination.displayAddress.short4
             reviewRecipientView.setOnClickListener {
@@ -489,7 +511,25 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 )
             }
         }
+    }
 
+    private fun showInsufficientFundsDialog(
+        balance: Amount,
+        required: Amount,
+        withRechargeBattery: Boolean,
+        singleWallet: Boolean? = null,
+        type: InsufficientBalanceType
+    ) {
+        if (!insufficientFundsDialog.isShowing) {
+            insufficientFundsDialog.show(
+                wallet = wallet,
+                balance = balance,
+                required = required,
+                withRechargeBattery = withRechargeBattery,
+                singleWallet = singleWallet ?: false,
+                type = type
+            )
+        }
     }
 
     private fun setFee(event: SendEvent.Fee?) {
@@ -500,9 +540,16 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             button.isEnabled = false
             button.isLoading = true
         } else {
-            reviewRecipientFeeView.value = "≈ ${event.format}".withCustomSymbol(requireContext())
-            reviewRecipientFeeView.description =
-                "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
+            reviewRecipientFeeView.title = if (event.fee.isRefund) getString(Localization.refund) else getString(Localization.fee)
+            if (event.fee.value.isZero) {
+                reviewRecipientFeeView.value = getString(Localization.unknown)
+                reviewRecipientFeeView.description = ""
+            } else {
+                reviewRecipientFeeView.value = "≈ ${event.format}".withCustomSymbol(requireContext())
+                reviewRecipientFeeView.description =
+                    "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
+            }
+
             reviewRecipientFeeView.subtitle = if (event.isBattery) {
                 getString(Localization.will_be_paid_with_battery)
             } else if (event.showGaslessToggle) {
@@ -525,7 +572,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             }
             reviewRecipientFeeView.subtitleView.isEnabled = true
             reviewRecipientFeeView.setDefault()
-            confirmButton.isEnabled = true
+            confirmButton.isEnabled = !event.insufficientFunds
             button.isEnabled = true
             button.isLoading = false
         }
@@ -570,22 +617,71 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     companion object {
 
+        class Builder(val wallet: WalletEntity) {
+            private var targetAddress: String? = null
+            private var tokenAddress: String? = null
+            private var amountNano: Long? = null
+            private var text: String? = null
+            private var nftAddress: String? = null
+            private var type: Type = Type.Default
+            private var bin: Cell? = null
+
+            fun setTargetAddress(targetAddress: String) = apply {
+                this.targetAddress = targetAddress
+            }
+
+            fun setTokenAddress(tokenAddress: String?) = apply {
+                this.tokenAddress = tokenAddress
+            }
+
+            fun setAmountNano(amountNano: Long?) = apply {
+                this.amountNano = amountNano
+            }
+
+            fun setText(text: String?) = apply {
+                this.text = text
+            }
+
+            fun setNftAddress(nftAddress: String) = apply {
+                this.nftAddress = nftAddress
+            }
+
+            fun setType(type: Type) = apply {
+                this.type = type
+            }
+
+            fun setBin(bin: Cell?) = apply {
+                this.bin = bin
+            }
+
+            fun build() = newInstance(wallet, targetAddress, tokenAddress, amountNano, text, nftAddress, type, bin)
+        }
+
+        enum class Type {
+            Default, Direct, Nft
+        }
+
         fun newInstance(
             wallet: WalletEntity,
             targetAddress: String? = null,
-            tokenAddress: String = TokenEntity.TON.address,
-            amountNano: Long = 0,
+            tokenAddress: String? = null,
+            amountNano: Long? = null,
             text: String? = null,
             nftAddress: String? = null,
+            type: Type,
             bin: Cell? = null
         ): SendScreen {
-            val screen = SendScreen(wallet)
-            screen.setArgs(
-                SendArgs(
-                    targetAddress, tokenAddress, amountNano, text, nftAddress ?: "", bin
-                )
+            val args = SendArgs(
+                targetAddress = targetAddress,
+                tokenAddress = tokenAddress,
+                amountNano = amountNano,
+                text = text, nftAddress = nftAddress ?: "",
+                type = type,
+                bin = bin
             )
-            return screen
+            return SendScreen(wallet).apply {
+                setArgs(args)
+            }
         }
     }
 }

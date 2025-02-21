@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import androidx.core.database.getStringOrNull
 import com.tonapps.blockchain.ton.contract.walletVersion
+import com.tonapps.extensions.closeSafe
 import com.tonapps.extensions.isNullOrEmpty
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
@@ -151,6 +152,7 @@ internal class DatabaseSource(
         val query = "SELECT $walletFields FROM $WALLET_TABLE_NAME LIMIT 1000;"
         val cursor = readableDatabase.rawQuery(query, null)
         if (cursor.isNullOrEmpty()) {
+            cursor.closeSafe()
             emptyList()
         } else {
             readAccounts(cursor)
@@ -180,7 +182,7 @@ internal class DatabaseSource(
         } else {
             null
         }
-        cursor.close()
+        cursor.closeSafe()
         id
     }
 
@@ -197,37 +199,33 @@ internal class DatabaseSource(
         val initializedIndex = cursor.getColumnIndex(WALLET_TABLE_INITIALIZED_COLUMN)
         val accounts = mutableListOf<WalletEntity>()
         while (cursor.moveToNext()) {
-            val wallet = WalletEntity(
+            val label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>() ?: continue
+
+            var wallet = WalletEntity(
                 id = cursor.getString(idIndex),
                 publicKey = PublicKeyEd25519(cursor.getBlob(publicKeyIndex)),
                 type = Wallet.typeOf(cursor.getInt(typeIndex)),
                 version = walletVersion(cursor.getInt(versionIndex)),
-                label = cursor.getBlob(labelIndex).toParcel<Wallet.Label>()!!,
+                label = label,
                 initialized = cursor.getInt(initializedIndex) == 1
             )
             if (wallet.type == Wallet.Type.Ledger) {
-                accounts.add(
-                    wallet.copy(
-                        ledger = WalletEntity.Ledger(
-                            deviceId = cursor.getString(ledgerDeviceIdIndex),
-                            accountIndex = cursor.getInt(ledgerAccountIndexIndex)
-                        )
-                    )
+                val ledger = WalletEntity.Ledger(
+                    deviceId = cursor.getString(ledgerDeviceIdIndex),
+                    accountIndex = cursor.getInt(ledgerAccountIndexIndex)
                 )
+                wallet = wallet.copy(ledger = ledger)
             } else if (wallet.type == Wallet.Type.Keystone) {
-                accounts.add(
-                    wallet.copy(
-                        keystone = WalletEntity.Keystone(
-                            xfp = cursor.getStringOrNull(keystoneXfpIndex) ?: "",
-                            path = cursor.getStringOrNull(keystonePathIndex) ?: ""
-                        )
-                    )
+                val keystone = WalletEntity.Keystone(
+                    xfp = cursor.getStringOrNull(keystoneXfpIndex) ?: "",
+                    path = cursor.getStringOrNull(keystonePathIndex) ?: ""
                 )
-            } else {
-                accounts.add(wallet)
+                wallet = wallet.copy(keystone = keystone)
             }
+
+            accounts.add(wallet)
         }
-        cursor.close()
+        cursor.closeSafe()
         return accounts
     }
 }

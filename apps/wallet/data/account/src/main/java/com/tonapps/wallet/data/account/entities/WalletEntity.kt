@@ -76,7 +76,7 @@ data class WalletEntity(
     }
 
     val maxMessages: Int
-        get() = if (isLedger) 1 else contract.maxMessages
+        get() = contract.maxMessages
 
     val testnet: Boolean
         get() = type == Wallet.Type.Testnet

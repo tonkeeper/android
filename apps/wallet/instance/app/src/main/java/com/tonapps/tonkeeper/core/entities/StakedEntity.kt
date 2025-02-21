@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.core.entities
 
+import android.util.Log
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins

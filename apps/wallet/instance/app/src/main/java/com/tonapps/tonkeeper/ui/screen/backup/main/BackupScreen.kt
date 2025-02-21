@@ -2,12 +2,15 @@ package com.tonapps.tonkeeper.ui.screen.backup.main
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.extensions.bestMessage
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
@@ -50,8 +53,12 @@ class BackupScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wal
     }
 
     private fun openRecoveryPhrase(backup: Boolean = false, backupId: Long = 0) {
-        viewModel.getRecoveryPhrase(requireContext()) { words ->
-            navigation?.add(PhraseScreen.newInstance(screenContext.wallet, words, backup, backupId))
+        viewModel.getRecoveryPhrase(requireContext()) { words, error ->
+            if (error != null) {
+                navigation?.toast(error.bestMessage)
+            } else {
+                navigation?.add(PhraseScreen.newInstance(screenContext.wallet, words, backup, backupId))
+            }
         }
     }
 

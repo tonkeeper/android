@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.collectibles.manage
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -15,6 +16,8 @@ import uikit.extensions.collectFlow
 class CollectiblesManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
     override val fragmentName: String = "CollectiblesManageScreen"
+
+    private var spamArg: Boolean = false
 
     private val spamDialog: CollectionSpamDialog by lazy { CollectionSpamDialog(requireContext()) }
 
@@ -31,21 +34,52 @@ class CollectiblesManageScreen(wallet: WalletEntity): BaseListWalletScreen<Scree
         showAllClick = { viewModel.showAll() }
     )
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        spamArg = arguments?.getBoolean(ARG_SPAM) ?: false
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setTitle(getString(Localization.collectibles))
         setAdapter(adapter)
-        collectFlow(viewModel.uiItemsFlow, adapter::submitList)
+        collectFlow(viewModel.uiItemsFlow, ::setUiItems)
+    }
+
+    private fun setUiItems(uiItems: List<Item>) {
+        adapter.submitList(uiItems) {
+            if (spamArg) {
+                scrollToSpam()
+                spamArg = false
+            }
+        }
+    }
+
+    private fun scrollToSpam() {
+        val index = adapter.currentList.indexOf(viewModel.spamItem)
+        if (index != -1) {
+            listView.scrollToPosition(index)
+        }
     }
 
     private fun showSpamDialog(item: Item.Collection) {
         spamDialog.show(item) {
             viewModel.notSpam(item)
+            navigation?.toast(Localization.tx_marked_as_not_spam)
         }
     }
 
     companion object {
 
-        fun newInstance(wallet: WalletEntity) = CollectiblesManageScreen(wallet)
+        private const val ARG_SPAM = "spam"
+
+        fun newInstance(
+            wallet: WalletEntity,
+            spam: Boolean = false
+        ): CollectiblesManageScreen {
+            val screen = CollectiblesManageScreen(wallet)
+            screen.putBooleanArg(ARG_SPAM, spam)
+            return screen
+        }
     }
 }

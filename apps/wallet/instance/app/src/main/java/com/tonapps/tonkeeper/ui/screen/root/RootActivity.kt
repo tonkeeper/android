@@ -1,12 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.net.Uri
-import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
@@ -15,17 +12,22 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.getStringValue
+import com.tonapps.extensions.isPositive
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
+import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.helper.ReferrerClientHelper
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
@@ -40,7 +42,6 @@ import com.tonapps.tonkeeper.ui.screen.start.StartScreen
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
-import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
@@ -51,6 +52,8 @@ import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.ton.cell.Cell
@@ -71,10 +74,7 @@ class RootActivity: BaseWalletActivity() {
     private val legacyRN: RNLegacy by inject()
     private val settingsRepository by inject<SettingsRepository>()
     private val passcodeManager by inject<PasscodeManager>()
-
-    private val nfcAdapter: NfcAdapter? by lazy {
-        NfcAdapter.getDefaultAdapter(this)
-    }
+    private val referrerClientHelper by inject<ReferrerClientHelper>()
 
     private lateinit var uiHandler: Handler
 
@@ -125,21 +125,21 @@ class RootActivity: BaseWalletActivity() {
 
         App.applyConfiguration(resources.configuration)
 
-        if (0L >= DevSettings.firstLaunchDate) {
-            AnalyticsHelper.firstLaunch(settingsRepository.installId)
+        sendFirstLaunchEvent()
+        remoteConfig?.fetchAndActivate()
+    }
+
+    private fun sendFirstLaunchEvent() {
+        if (DevSettings.firstLaunchDate > 0) {
+            return
+        }
+        lifecycleScope.launch {
+            delay(240)
+            val referrer = referrerClientHelper.getInstallReferrer()
+            val deeplink = DevSettings.firstLaunchDeeplink.ifBlank { null }
+            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer, deeplink)
             DevSettings.firstLaunchDate = currentTimeSeconds()
         }
-    }
-
-    private fun enableNfcForegroundDispatch() {
-        val intent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
-        val filters = arrayOf(IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED))
-        nfcAdapter?.enableForegroundDispatch(this, pendingIntent, filters, null)
-    }
-
-    private fun disableNfcForegroundDispatch() {
-        nfcAdapter?.disableForegroundDispatch(this)
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -163,13 +163,11 @@ class RootActivity: BaseWalletActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.connectTonConnectBridge()
-        enableNfcForegroundDispatch()
     }
 
     override fun onPause() {
         super.onPause()
         viewModel.disconnectTonConnectBridge()
-        disableNfcForegroundDispatch()
     }
 
     private suspend fun pinState(state: LockScreen.State) {
@@ -260,8 +258,8 @@ class RootActivity: BaseWalletActivity() {
             is RootEvent.Ledger -> add(InitScreen.newInstance(type = InitArgs.Type.Ledger, ledgerConnectData = event.connectData, accounts = event.accounts))
             is RootEvent.Transfer -> openSend(
                 targetAddress = event.address,
-                tokenAddress = event.jettonAddress ?: TokenEntity.TON.address,
-                amountNano = event.amount ?: 0L,
+                tokenAddress = event.jettonAddress,
+                amountNano = event.amount,
                 text = event.text,
                 wallet = event.wallet,
                 bin = event.bin,
@@ -277,6 +275,7 @@ class RootActivity: BaseWalletActivity() {
         removeByClass({
             add(DAppScreen.newInstance(
                 wallet = wallet,
+                title = uri.host ?: "unknown",
                 url = uri,
                 source = "shortcut",
             ))
@@ -292,9 +291,9 @@ class RootActivity: BaseWalletActivity() {
         targetAddress: String,
         amountNano: Long,
         bin: Cell?,
-        initStateBase64: String?
+        initStateBase64: String?,
+        comment: String? = null
     ) {
-
         val request = SignRequestEntity.Builder()
             .setFrom(wallet.contract.address)
             .setValidUntil(currentTimeSeconds())
@@ -302,7 +301,9 @@ class RootActivity: BaseWalletActivity() {
                 addressValue = targetAddress,
                 amount = amountNano,
                 stateInitValue = initStateBase64,
-                payloadValue = bin?.base64()
+                payloadValue = bin?.base64() ?: comment?.let {
+                    TransferEntity.comment(it)
+                }?.base64()
             ))
             .setTestnet(wallet.testnet)
             .build(Uri.parse("tonkeeper://signRaw/"))
@@ -311,34 +312,48 @@ class RootActivity: BaseWalletActivity() {
         add(screen)
     }
 
+    private fun openDirectSend(builder: SendScreen.Companion.Builder) {
+        removeByClass({
+            add(builder.build())
+        }, SendScreen::class.java)
+    }
+
     private fun openSend(
         wallet: WalletEntity,
         targetAddress: String? = null,
-        tokenAddress: String = TokenEntity.TON.address,
-        amountNano: Long = 0,
+        tokenAddress: String?,
+        amountNano: Long?,
         text: String? = null,
         nftAddress: String? = null,
         bin: Cell? = null,
         initStateBase64: String? = null
     ) {
-        if ((bin != null || initStateBase64 != null) && 0 >= amountNano) {
+        if ((bin != null || initStateBase64 != null) && amountNano.isPositive()) {
             toast(Localization.invalid_link)
             return
         }
 
-        if (targetAddress != null && amountNano > 0 && (bin != null || initStateBase64 != null)) {
-            openSign(
-                wallet = wallet,
-                targetAddress = targetAddress,
-                amountNano = amountNano,
-                bin = bin,
-                initStateBase64 = initStateBase64
-            )
-            return
-        }
-
         val fragment = supportFragmentManager.findFragment<SendScreen>()
-        if (fragment == null) {
+
+        if (targetAddress != null && amountNano.isPositive() && nftAddress.isNullOrBlank()) {
+            if (bin != null || initStateBase64 != null) {
+                openSign(
+                    wallet = wallet,
+                    targetAddress = targetAddress,
+                    amountNano = amountNano!!,
+                    bin = bin,
+                    initStateBase64 = initStateBase64,
+                    comment = text,
+                )
+            } else {
+                openDirectSend(SendScreen.Companion.Builder(wallet)
+                    .setTargetAddress(targetAddress)
+                    .setTokenAddress(tokenAddress)
+                    .setAmountNano(amountNano)
+                    .setText(text)
+                    .setType(SendScreen.Companion.Type.Direct))
+            }
+        } else if (fragment == null) {
             add(
                 SendScreen.newInstance(
                     wallet = wallet,
@@ -347,7 +362,8 @@ class RootActivity: BaseWalletActivity() {
                     amountNano = amountNano,
                     text = text,
                     nftAddress = nftAddress,
-                    bin = bin
+                    bin = bin,
+                    type = SendScreen.Companion.Type.Default
                 )
             )
         } else {
@@ -357,7 +373,8 @@ class RootActivity: BaseWalletActivity() {
                     tokenAddress = tokenAddress,
                     amountNano = amountNano,
                     text = text,
-                    bin = bin
+                    bin = bin,
+                    type = SendScreen.Companion.Type.Default
                 )
             }
         }
@@ -401,16 +418,17 @@ class RootActivity: BaseWalletActivity() {
 
     private fun handleIntent(intent: Intent) {
         val uri = intent.data ?: intent.getStringExtra("link")?.toUriOrNull()
+        if (0 >= DevSettings.firstLaunchDate) {
+            DevSettings.firstLaunchDeeplink = uri?.toString() ?: ""
+        }
         val extras = intent.extras
         val dappDeepLink = extras?.getStringValue("dapp_deeplink")?.toUriOrNull()
         if (dappDeepLink != null) {
             viewModel.openDApp(dappDeepLink)
-            return;
-        }
-        if (extras != null && !extras.isEmpty && viewModel.processIntentExtras(extras)) {
-            return;
-        }
-        if (uri != null) {
+            return
+        } else if (extras != null && !extras.isEmpty && viewModel.processIntentExtras(extras)) {
+            return
+        } else if (uri != null) {
             processDeepLink(DeepLink.fixBadUri(uri), false, intent.getStringExtra(Browser.EXTRA_APPLICATION_ID))
         }
     }

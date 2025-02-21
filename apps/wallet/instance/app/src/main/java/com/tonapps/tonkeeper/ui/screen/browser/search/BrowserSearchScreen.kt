@@ -19,6 +19,7 @@ import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
+import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -122,19 +123,26 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
     private fun inputDone() {
         val query = searchInput.text.toString()
         val url = BrowserSearchViewModel.parseIfUrl(query)
-        if (url != null) {
+        if (url != null && !viewModel.isScamUri(url)) {
             navigation?.add(DAppScreen.newInstance(
                 wallet = wallet,
+                title = url.host ?: "unknown",
                 url = url,
                 source = "browser_search_direct"
             ))
         } else {
-            navigation?.add(DAppScreen.newInstance(
+            context?.let {
+                TonConnectSafeModeDialog(it).show(wallet)
+            }
+            /*navigation?.add(DAppScreen.newInstance(
                 wallet = wallet,
+                title = url?.host ?: "unknown",
                 url = viewModel.createSearchUrl(query),
-                source = "browser_search_direct"
-            ))
+                source = "browser_search_direct",
+                sendAnalytics = false
+            ))*/
         }
+
         searchInput.hideKeyboard()
     }
 

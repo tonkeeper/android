@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.collectibles.main
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
@@ -42,13 +43,20 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.title = getString(Localization.collectibles)
+        headerView.setTitleGravity(Gravity.START)
+        headerView.hideCloseIcon()
         if (requireContext().isLightTheme) {
             headerView.setColor(requireContext().backgroundPageColor)
         } else {
             headerView.setColor(requireContext().backgroundTransparentColor)
         }
         headerView.setAction(UIKitIcon.ic_sliders_16)
-        headerView.doOnActionClick = { navigation?.add(CollectiblesManageScreen.newInstance(wallet)) }
+        headerView.doOnActionClick = {
+            navigation?.add(CollectiblesManageScreen.newInstance(wallet))
+        }
+        headerView.setRightButton(Localization.spam) {
+            navigation?.add(CollectiblesManageScreen.newInstance(wallet, true))
+        }
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.setOnRefreshListener { viewModel.refresh() }

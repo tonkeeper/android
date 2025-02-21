@@ -223,24 +223,23 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
             return
         }
 
-        val fragments = supportFragmentManager.fragments.filter { it.javaClass in clazz }
-        if (fragments.isEmpty()) {
+        val invalidate = Runnable {
             hostFragmentView.scale = 1f
             hostFragmentView.alpha = 1f
             runnable.run()
-            return
         }
-        supportFragmentManager.commitNow {
-            for (fragment in fragments) {
-                remove(fragment)
-            }
-            runOnCommit {
-                hostFragmentView.scale = 1f
-                hostFragmentView.alpha = 1f
-                runnable.run()
+
+        val fragments = supportFragmentManager.fragments.filter { it.javaClass in clazz }
+        if (fragments.isEmpty()) {
+            invalidate.run()
+        } else {
+            supportFragmentManager.commitNow {
+                fragments.forEach(::remove)
+                runOnCommit(invalidate)
             }
         }
     }
+
 
     private fun isStateSaved(): Boolean {
         return supportFragmentManager.isStateSaved || isFinishing || isDestroyed

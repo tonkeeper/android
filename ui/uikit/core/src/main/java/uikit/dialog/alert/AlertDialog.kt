@@ -9,6 +9,7 @@ import android.view.animation.OvershootInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import com.tonapps.uikit.color.textPrimaryColor
 import uikit.R
 import uikit.base.BaseDialog
 import uikit.extensions.dp
@@ -82,6 +83,8 @@ class AlertDialog private constructor(
         }
         if (button.color != Color.TRANSPARENT) {
             view.setTextColor(button.color)
+        } else {
+            view.setTextColor(context.textPrimaryColor)
         }
         view.visibility = View.VISIBLE
         view.text = button.title

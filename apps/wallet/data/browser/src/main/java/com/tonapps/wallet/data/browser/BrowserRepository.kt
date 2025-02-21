@@ -22,7 +22,7 @@ class BrowserRepository(context: Context, api: API) {
     suspend fun search(
         country: String,
         query: String,
-        testnet: Boolean,
+        testnet: Boolean = false,
         locale: Locale
     ): List<BrowserAppEntity> {
         val data = load(country, testnet, locale) ?: return emptyList()
@@ -49,6 +49,14 @@ class BrowserRepository(context: Context, api: API) {
 
     suspend fun load(country: String, testnet: Boolean, locale: Locale): BrowserDataEntity? = withContext(Dispatchers.IO) {
         loadLocal(country, locale) ?: loadRemote(country, testnet, locale)
+    }
+
+    suspend fun loadCategories(
+        country: String,
+        testnet: Boolean,
+        locale: Locale
+    ): List<String> {
+        return load(country, testnet, locale)?.categories?.map { it.id } ?: emptyList()
     }
 
     private fun loadLocal(country: String, locale: Locale): BrowserDataEntity? {

@@ -172,8 +172,7 @@ sealed class State {
             return Item.Actions(
                 wallet = wallet,
                 token = TokenEntity.TON,
-                swapUri = config.swapUri,
-                disableSwap = config.flags.disableSwap
+                swapUri = config.swapUri
             )
         }
 

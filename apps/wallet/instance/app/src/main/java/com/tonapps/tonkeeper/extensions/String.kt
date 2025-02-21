@@ -76,3 +76,10 @@ fun String.withVerificationIcon(context: Context): CharSequence {
 fun String.isPrintableAscii(): Boolean {
     return this.all { it.code in 32..126 }
 }
+
+fun String.fixW5Title(): String {
+    return replace("v5R1", "w5", true)
+        .replace("v5", "w5", true)
+        .replace("v5beta", "w5 beta", true)
+        .replace("w5beta", "w5 beta", true)
+}

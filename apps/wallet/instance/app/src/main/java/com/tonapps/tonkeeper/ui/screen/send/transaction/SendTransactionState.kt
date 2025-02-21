@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.send.transaction
 
 import com.tonapps.icu.Coins
+import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.wallet.data.account.entities.WalletEntity
 
 sealed class SendTransactionState {
@@ -12,10 +14,11 @@ sealed class SendTransactionState {
 
     data class InsufficientBalance(
         val wallet: WalletEntity,
-        val balance: Coins,
-        val required: Coins,
+        val balance: Amount,
+        val required: Amount,
         val withRechargeBattery: Boolean,
-        val singleWallet: Boolean
+        val singleWallet: Boolean,
+        val type: InsufficientBalanceType
     ): SendTransactionState()
 
     data class Details(

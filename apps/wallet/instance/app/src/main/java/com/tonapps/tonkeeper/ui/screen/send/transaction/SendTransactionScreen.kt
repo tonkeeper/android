@@ -21,6 +21,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
@@ -54,7 +55,7 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
     private val args: SendTransactionArgs by lazy { SendTransactionArgs(requireArguments()) }
 
     private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
-        InsufficientFundsDialog(requireContext())
+        InsufficientFundsDialog(this)
     }
 
     override val viewModel: SendTransactionViewModel by walletViewModel {
@@ -126,8 +127,10 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
             } else {
                 setErrorTask(BridgeException(cause = it))
             }
-        }.onEach { boc ->
-            setSuccessTask(boc)
+        }.onEach { bocList ->
+            if (bocList.isNotEmpty()) {
+                setSuccessTask(bocList.first())
+            }
         }.launchIn(lifecycleScope)
     }
 
@@ -182,7 +185,7 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
             is SendTransactionState.Failed -> setErrorTask(BridgeException(message = "Failed to send transaction in client"))
             is SendTransactionState.FailedEmulation -> setErrorTask(BridgeException(message = "Transaction emulation failed. Verify 'payload' and 'stateInit' field validity. Invalid message assembly detected or base64 decoding error."))
             is SendTransactionState.InsufficientBalance -> {
-                insufficientFundsDialog.show(state.wallet, state.balance, state.required, state.withRechargeBattery, state.singleWallet)
+                insufficientFundsDialog.show(state.wallet, state.balance, state.required, state.withRechargeBattery, state.singleWallet, state.type)
                 finish()
             }
             else -> { }

@@ -1,6 +1,8 @@
 package com.tonapps.wallet.data.passcode.dialog
 
 import android.content.Context
+import android.os.Bundle
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.wallet.data.passcode.PasscodeHelper
 import com.tonapps.wallet.data.passcode.R
@@ -37,6 +39,11 @@ class PasscodeDialog(
         }
     }
 
+    private val windowInsetsController: WindowInsetsControllerCompat? by lazy {
+        val window = window ?: return@lazy null
+        WindowInsetsControllerCompat(window, window.decorView)
+    }
+
     private var resultAlreadySent = false
     private val helper: PasscodeHelper by inject()
     private val headerView: HeaderView
@@ -54,7 +61,14 @@ class PasscodeDialog(
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setSecure(true)
+        setAppearanceLight(helper.isLightTheme)
+    }
+
     override fun dismiss() {
+        setSecure(false)
         setResult(null)
         super.dismissAndDestroy()
     }
@@ -84,6 +98,13 @@ class PasscodeDialog(
         }
         resultAlreadySent = true
         callback.invoke(code)
+    }
+
+    private fun setAppearanceLight(light: Boolean) {
+        windowInsetsController?.apply {
+            isAppearanceLightStatusBars = light
+            isAppearanceLightNavigationBars = light
+        }
     }
 
 }

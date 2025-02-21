@@ -191,7 +191,7 @@ data class TransferEntity(
         }
         val builder = TransactionBuilder()
         if (isNft) {
-            builder.setCoins(coins)
+            builder.setCoins(jettonTransferAmount.toGrams())
             builder.setDestination(AddrStd.parse(nftAddress!!))
             builder.setPayload(
                 TonPayloadFormat.NftTransfer(
@@ -406,6 +406,16 @@ data class TransferEntity(
                 FirebaseCrashlytics.getInstance().recordException(e)
                 BigInteger.ZERO
             }
+        }
+
+        fun comment(text: String?): Cell? {
+            if (text.isNullOrBlank()) {
+                return null
+            }
+            return beginCell()
+                .storeUInt(0, 32)
+                .storeStringTail(text)
+                .endCell()
         }
     }
 }

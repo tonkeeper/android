@@ -7,9 +7,10 @@ val String.countryEmoji: String
         if (this == "NOKYC") {
             return "\uD83C\uDFF4\u200D☠\uFE0F"
         }
+        val countryCode = if (this == "UK") "GB" else this
         return try {
-            val firstLetter = Character.codePointAt(this, 0) - 0x41 + 0x1F1E6
-            val secondLetter = Character.codePointAt(this, 1) - 0x41 + 0x1F1E6
+            val firstLetter = Character.codePointAt(countryCode, 0) - 0x41 + 0x1F1E6
+            val secondLetter = Character.codePointAt(countryCode, 1) - 0x41 + 0x1F1E6
             String(Character.toChars(firstLetter)) + String(Character.toChars(secondLetter))
         } catch (e: Exception) {
             this

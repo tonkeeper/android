@@ -17,4 +17,5 @@ dependencies {
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.icu))
     implementation(project(Dependence.Lib.security))
+    implementation(project(Dependence.Lib.sqlite))
 }

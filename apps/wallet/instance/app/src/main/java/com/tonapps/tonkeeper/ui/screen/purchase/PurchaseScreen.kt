@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
@@ -59,10 +60,14 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val isCountryPickerDisable = requireContext().remoteConfig?.isCountryPickerDisable == true
+
         countryView = view.findViewById(R.id.country)
         countryView.setOnClickListener {
             navigation?.add(CountryPickerScreen.newInstance(COUNTRY_REQUEST_KEY))
         }
+        countryView.isEnabled = !isCountryPickerDisable
 
         tabBuyView = view.findViewById(R.id.tab_buy)
         tabBuyView.setOnClickListener { viewModel.setTab(PurchaseViewModel.Tab.BUY) }

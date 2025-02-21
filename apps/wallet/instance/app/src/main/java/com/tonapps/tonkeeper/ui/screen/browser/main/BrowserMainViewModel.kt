@@ -1,16 +1,21 @@
 package com.tonapps.tonkeeper.ui.screen.browser.main
 
 import android.app.Application
+import android.graphics.Color
+import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.mapList
 import com.tonapps.tonkeeper.extensions.getFixedCountryCode
 import com.tonapps.tonkeeper.extensions.getLocaleCountryFlow
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.connected.ConnectedItem
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreItem
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
@@ -48,17 +53,35 @@ class BrowserMainViewModel(
     val uiExploreItemsFlow = _uiExploreItemsFlow.asStateFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            val code = settingsRepository.getFixedCountryCode(api)
-            val locale = settingsRepository.getLocale()
-            _uiExploreItemsFlow.value = emptyList()
-            browserRepository.load(code, wallet.testnet, locale)?.let { setData(it) }
-            browserRepository.loadRemote(code, wallet.testnet, locale)?.let { setData(it) }
+        val isDappsDisable = context.remoteConfig?.isDappsDisable == true
+
+        if (!isDappsDisable) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val code = settingsRepository.getFixedCountryCode(api)
+                val locale = settingsRepository.getLocale()
+                _uiExploreItemsFlow.value = emptyList()
+                browserRepository.load(code, wallet.testnet, locale)?.let { setData(it) }
+                browserRepository.loadRemote(code, wallet.testnet, locale)?.let { setData(it) }
+            }
         }
     }
 
     fun deleteConnect(app: AppEntity) {
         tonConnectManager.disconnect(wallet, app.url)
+    }
+
+    private fun getDebugApps(): List<BrowserAppEntity> {
+        val apps = mutableListOf<BrowserAppEntity>()
+        apps.add(BrowserAppEntity(
+            name = "Mariabit",
+            description = "fdsfsd",
+            icon = Uri.EMPTY,
+            poster = null,
+            url = "https://mariabit.github.io/".toUri(),
+            textColor = Color.WHITE,
+        ))
+
+        return apps.toList()
     }
 
     private fun setData(data: BrowserDataEntity) {
@@ -102,6 +125,19 @@ class BrowserMainViewModel(
 
         adsItem?.let {
             items.add(1, it)
+        }
+
+        if (BuildConfig.DEBUG) {
+            val debugItems = mutableListOf<ExploreItem>()
+            debugItems.add(ExploreItem.Title("Testing"))
+            for (app in getDebugApps()) {
+                debugItems.add(ExploreItem.App(
+                    app = app,
+                    wallet = wallet,
+                    singleLine = false
+                ))
+            }
+            items.addAll(5, debugItems)
         }
 
         _uiExploreItemsFlow.value = items.toList()

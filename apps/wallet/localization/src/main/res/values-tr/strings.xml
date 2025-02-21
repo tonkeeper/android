@@ -39,6 +39,7 @@
     <string name="signer_step_1">Signer ile QR kodunu tarayın</string>
     <string name="signer_step_2">İşleminizi Signer\'da onaylayın</string>
     <string name="signer_step_3">İmzalayan\'dan imzalı işlem QR kodunu tarayın</string>
+    <string name="spam_folder_empty">Spam klasörü boş</string>
     <string name="insufficient_balance_title">Yetersiz bakiye</string>
     <string name="insufficient_balance_description">Daha az bir tutar girin veya maksimum bakiyenizi seçin.</string>
     <string name="w5_story_title_1">Gazsız USDT Transferleri</string>
@@ -112,7 +113,7 @@
     <string name="delete_account_alert">Hesabı silmek istiyor musunuz?</string>
     <string name="delete">Sil</string>
     <string name="delete_watch_account">Saat hesabını sil</string>
-    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\\nTüm Cüzdanlardan Çıkış Yap?</string>
+    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nTüm Cüzdanlardan Çıkış Yap?</string>
     <string name="sign_out_all_description">Bu, tüm cüzdanların anahtarlarını silecek. Kurtarma ifadelerinizi yedeklediğinizden emin olun.</string>
     <string name="sign_out_title">🚧 🚨 Çıkış Yapılsın mı? 🚨 🚧</string>
     <string name="sign_out_description">Bu, cüzdanınıza ait anahtarı silecektir. Kurtarma ifadenizi yedeklediğinizden emin olun.</string>
@@ -158,7 +159,7 @@
     <string name="name_your_wallet_subtitle">Cüzdanınızı adlandırarak Tonkeeper kullanırken kolayca tanıyın. Bu isimler yerel olarak saklanır ve yalnızca sizin tarafınızdan görülebilir.</string>
     <string name="open_anyway">Yine de aç</string>
     <string name="nft_warning_buttton_title">Dış bağlantı açmak istediğinizden emin misiniz?</string>
-    <string name="nft_warning_buttton_subtitle">Yalnızca koleksiyonun yazarına güveniyorsanız bu harici bağlantıyı ziyaret edin.\\n\\n%1$s</string>
+    <string name="nft_warning_buttton_subtitle">Yalnızca koleksiyonun yazarına güveniyorsanız bu harici bağlantıyı ziyaret edin.\n\n%1$s</string>
     <string name="tokens">Jetonlar</string>
     <string name="today">Bugün</string>
     <string name="address">Adres</string>
@@ -360,6 +361,8 @@
     <string name="hide_collection">Koleksiyonu gizle</string>
     <string name="hide_and_report_collection">Gizle ve bildir</string>
     <string name="open_tonviewer">Tonviewer\'da aç</string>
+    <string name="tx_marked_as_not_spam">Spam değil olarak işaretlendi</string>
+    <string name="nft_marked_as_spam">NFT Spam olarak işaretlendi</string>
     <string name="safe_mode_disabled">Güvenli mod 24 saat boyunca kapalıdır. Otomatik olarak açılacaktır. <annotation colorAttr="textAccentColor">Kalıcı olarak kapat</annotation></string>
     <string name="customize">Özelleştir</string>
     <string name="customize_wallet_title">Cüzdanınızı Özelleştirin</string>
@@ -376,6 +379,7 @@
     <string name="ledger_open_ton_app">Kilidini aç ve TON Uygulamasını aç</string>
     <string name="ledger_install_ton_app">TON Uygulamasını Yükle</string>
     <string name="ledger_confirm_tx">İşleminizi Ledger\'da onaylayın</string>
+    <string name="ledger_confirm_tx_step">Ledger\'da #%1$d işlemini onaylayın</string>
     <string name="ledger_confirm_proof">Ledger\'da alan adını doğrula</string>
     <string name="ledger_operation_not_supported">Bu işlem Ledger cüzdanları için mevcut değil. Başka bir cüzdan seçin ve tekrar deneyin.</string>
     <string name="ledger_update_title">Ledger\'daki TON uygulamasını %1$s sürümüne güncelleyin</string>
@@ -458,8 +462,8 @@
     <string name="payment_method_not_found">Ödeme yöntemi mevcut değil</string>
     <string name="app_not_found">Uygulama bulunamadı</string>
     <string name="insufficient_balance_in_wallet">Cüzdanda yetersiz bakiye</string>
-    <string name="insufficient_balance_fees">Blockchain ücretleri için gerekli: %1$s.\\nBakiyeniz: %2$s.</string>
-    <string name="insufficient_balance_default">Ödenecek tutar: %1$s.\\nBakiyeniz: %2$s.</string>
+    <string name="insufficient_balance_fees">Blockchain ücretleri için gerekli: %1$s.\nBakiyeniz: %2$s.</string>
+    <string name="insufficient_balance_default">Ödenecek tutar: %1$s.\nBakiyeniz: %2$s.</string>
     <string name="buy_ton">TON satın al</string>
     <string name="recharge_battery">Aküyü şarj edin</string>
     <string name="name">İsim</string>

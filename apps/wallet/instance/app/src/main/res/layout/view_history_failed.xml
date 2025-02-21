@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/barHeight">
+
+    <uikit.widget.RowLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:tint="?attr/textTertiaryColor"
+            android:src="@drawable/ic_exclamationmark_circle_32"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_gravity="center"
+            android:text="@string/unknown_error"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:textColor="?attr/textTertiaryColor"/>
+
+    </uikit.widget.RowLayout>
+
+</FrameLayout>

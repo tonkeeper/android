@@ -8,6 +8,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.list.BaseListHolder
@@ -44,9 +45,11 @@ class Holder(
     }
 
     private fun setDetails(walletVersion: WalletVersion, balance: CharSequence, tokens: Boolean, collectibles: Boolean, isLedger: Boolean, ledgerAdded: Boolean) {
+        val walletTitle = walletVersion.title.fixW5Title()
+
         val builder = SpannableStringBuilder()
         if (!isLedger) {
-            builder.append(walletVersion.title)
+            builder.append(walletTitle)
             builder.append(DOT)
         }
         builder.append(balance.withCustomSymbol(context))
@@ -65,7 +68,7 @@ class Holder(
 
         if (!isLedger) {
             val spannableString = SpannableString(builder)
-            spannableString.setColor(context.textTertiaryColor, walletVersion.title.length, walletVersion.title.length + DOT.length)
+            spannableString.setColor(context.textTertiaryColor, walletTitle.length, walletTitle.length + DOT.length)
             detailsView.text = spannableString
         } else {
             detailsView.text = builder.toString()

@@ -2,18 +2,17 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.content.Context
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
-import com.tonapps.extensions.getParcelableCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.koin.remoteConfig
+import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.wallet.api.entity.ConfigEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation
-import kotlin.reflect.KClass
 
 abstract class BaseWalletScreen<C: ScreenContext>(
     @LayoutRes layoutId: Int,
@@ -24,13 +23,28 @@ abstract class BaseWalletScreen<C: ScreenContext>(
         private const val ARG_SCREEN_CONTEXT = "_screen_context"
     }
 
-    val remoteConfig: ConfigEntity?
+    val serverConfig: ConfigEntity?
+        get() = context?.serverConfig
+
+    val remoteConfig: RemoteConfig?
         get() = context?.remoteConfig
 
     override val uiContext: Context
         get() = requireContext()
 
     abstract val viewModel: BaseWalletVM
+
+    private val isBottomSheet: Boolean
+        get() = this is BottomSheet
+
+    val windowInsetsController: WindowInsetsControllerCompat? by lazy {
+        val window = window ?: return@lazy null
+        WindowInsetsControllerCompat(window, window.decorView)
+    }
+
+    private val isAppearanceLightStatusBars: Boolean by lazy {
+        windowInsetsController?.isAppearanceLightStatusBars ?: false
+    }
 
     val navigation: Navigation?
         get() = context?.let { Navigation.from(it) }
@@ -50,12 +64,25 @@ abstract class BaseWalletScreen<C: ScreenContext>(
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        if (isBottomSheet && isAppearanceLightStatusBars) {
+            setAppearanceLight(false)
+        }
         viewModel.attachHolder(this)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        if (isBottomSheet && isAppearanceLightStatusBars) {
+            setAppearanceLight(true)
+        }
         viewModel.detachHolder()
+    }
+
+    fun setAppearanceLight(light: Boolean) {
+        windowInsetsController?.apply {
+            isAppearanceLightStatusBars = light
+            isAppearanceLightNavigationBars = light
+        }
     }
 }

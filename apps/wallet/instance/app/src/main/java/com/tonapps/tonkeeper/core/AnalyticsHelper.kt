@@ -10,6 +10,10 @@ import com.tonapps.wallet.api.entity.StoryEntity
 
 object AnalyticsHelper {
 
+    private val regexPrivateData: Regex by lazy {
+        Regex("[a-f0-9]{64}|0:[a-f0-9]{64}")
+    }
+
     fun setConfig(context: Context, config: ConfigEntity) {
         initAptabase(
             context = context,
@@ -18,11 +22,22 @@ object AnalyticsHelper {
         )
     }
 
+    private fun removePrivateDataFromUrl(url: String): String {
+        return url.replace(regexPrivateData, "X")
+    }
+
     @UiThread
-    fun firstLaunch(installId: String) {
-        Aptabase.instance.trackEvent("first_launch", hashMapOf(
+    fun firstLaunch(installId: String, referrer: String?, deeplink: String?) {
+        val props = hashMapOf(
             "firebase_user_id" to installId
-        ))
+        )
+        referrer?.let {
+            props["referrer"] = it
+        }
+        deeplink?.let {
+            props["deeplink"] = it
+        }
+        Aptabase.instance.trackEvent("first_launch", props)
     }
 
     @UiThread
@@ -50,7 +65,7 @@ object AnalyticsHelper {
         Aptabase.instance.trackEvent("push_click", hashMapOf(
             "firebase_user_id" to installId,
             "push_id" to pushId,
-            "payload" to payload
+            "payload" to removePrivateDataFromUrl(payload)
         ))
     }
 

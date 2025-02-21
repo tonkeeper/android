@@ -11,6 +11,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.billing.priceFormatted
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
@@ -122,7 +123,7 @@ class BatteryRefillViewModel(
 
         val rechargeMethodsItems = uiItemsRechargeMethods(wallet)
 
-        if (!api.config.disableBatteryCryptoRecharge && rechargeMethodsItems.isNotEmpty()) {
+        if (context.remoteConfig?.isBatteryCryptoRechargeDisable == false && rechargeMethodsItems.isNotEmpty()) {
             uiItems.addAll(uiItemsRechargeMethods(wallet))
             uiItems.add(Item.Space)
         }

@@ -57,12 +57,6 @@ import uikit.extensions.context
 import java.math.BigDecimal
 import java.math.BigInteger
 
-data class ProofData(
-    val domain: String,
-    val timestamp: BigInteger,
-    val payload: String,
-)
-
 class LedgerConnectionViewModel(
     app: Application,
     private val accountRepository: AccountRepository,
@@ -80,6 +74,8 @@ class LedgerConnectionViewModel(
     private var _proofData: ProofData? = null
     private var _connectedDevice: ConnectedDevice? = null
     private var _tonTransport: TonTransport? = null
+    private var _transactionIndex: Int = 0
+    private var _transactionCount: Int = 0
 
     private val _connectionState = MutableEffectFlow<ConnectionState>()
 
@@ -88,12 +84,12 @@ class LedgerConnectionViewModel(
 
     val currentStepFlow = _connectionState.map { state ->
         when (state) {
-            ConnectionState.Idle -> LedgerStep.CONNECT
-            ConnectionState.Scanning -> LedgerStep.CONNECT
-            is ConnectionState.Connected -> LedgerStep.OPEN_TON_APP
-            is ConnectionState.TonAppOpened -> if (_walletId != null) LedgerStep.CONFIRM_TX else LedgerStep.DONE
-            is ConnectionState.Disconnected -> LedgerStep.CONNECT
-            ConnectionState.Signed -> LedgerStep.DONE
+            ConnectionState.Idle -> LedgerStep.Connect
+            ConnectionState.Scanning -> LedgerStep.Connect
+            is ConnectionState.Connected -> LedgerStep.OpenTonApp
+            is ConnectionState.TonAppOpened -> if (_walletId != null) LedgerStep.ConfirmTx else LedgerStep.Done
+            is ConnectionState.Disconnected -> LedgerStep.Connect
+            ConnectionState.Signed -> LedgerStep.Done
         }
     }
 
@@ -103,7 +99,7 @@ class LedgerConnectionViewModel(
 
     val displayTextFlow = currentStepFlow.map { state ->
         when {
-            _walletId != null && (state == LedgerStep.CONFIRM_TX || state == LedgerStep.DONE) -> "Review"
+            _walletId != null && (state == LedgerStep.ConfirmTx || state == LedgerStep.Done) -> "Review"
             else -> "TON ready"
         }
     }
@@ -140,9 +136,16 @@ class LedgerConnectionViewModel(
         context.unregisterReceiver(bluetoothReceiver)
     }
 
-    fun setSignData(transaction: Transaction, walletId: String) {
+    fun setSignData(
+        transaction: Transaction,
+        walletId: String,
+        transactionIndex: Int,
+        transactionCount: Int
+    ) {
         _transaction = transaction
         _walletId = walletId
+        _transactionIndex = transactionIndex
+        _transactionCount = transactionCount
     }
 
     fun setProofData(domain: String, timestamp: BigInteger, payload: String, walletId: String) {
@@ -460,28 +463,42 @@ class LedgerConnectionViewModel(
         uiItems.add(
             Item.Step(
                 context.getString(Localization.ledger_connect),
-                currentStep !== LedgerStep.CONNECT,
-                currentStep == LedgerStep.CONNECT
+                currentStep !== LedgerStep.Connect,
+                currentStep == LedgerStep.Connect
             )
         )
 
         uiItems.add(
             Item.Step(
                 context.getString(Localization.ledger_open_ton_app),
-                currentStep == LedgerStep.DONE || currentStep == LedgerStep.CONFIRM_TX,
-                currentStep == LedgerStep.OPEN_TON_APP,
+                currentStep == LedgerStep.Done || currentStep == LedgerStep.ConfirmTx,
+                currentStep == LedgerStep.OpenTonApp,
                 _walletId == null
             )
         )
 
-        if (_walletId != null) {
+        if (_walletId == null) {
+            return uiItems
+        }
+
+        if (_transactionCount > 1) {
+            for (i in 0 until _transactionCount) {
+                uiItems.add(
+                    Item.Step(
+                        context.getString(Localization.ledger_confirm_tx_step, i + 1),
+                        _transactionIndex > i,
+                        currentStep == LedgerStep.ConfirmTx && _transactionIndex == i
+                    )
+                )
+            }
+        } else {
             uiItems.add(
                 Item.Step(
                     if (_proofData !== null) context.getString(Localization.ledger_confirm_proof) else context.getString(
                         Localization.ledger_confirm_tx
                     ),
-                    currentStep == LedgerStep.DONE,
-                    currentStep == LedgerStep.CONFIRM_TX
+                    currentStep == LedgerStep.Done,
+                    currentStep == LedgerStep.ConfirmTx
                 )
             )
         }

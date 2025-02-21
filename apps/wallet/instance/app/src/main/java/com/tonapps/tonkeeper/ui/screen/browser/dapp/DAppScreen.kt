@@ -25,11 +25,14 @@ import androidx.webkit.WebViewFeature
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.loadSquare
 import com.tonapps.tonkeeper.extensions.setWallet
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.withUtmSource
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
@@ -77,8 +80,6 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
     private val currentUrl: Uri
         get() = webView.url?.toUri() ?: args.url
 
-    private var openNewTabRunnable: Runnable? = null
-
     private val webViewCallback = object : WebViewFixed.Callback() {
         override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
             return overrideUrlLoading(request)
@@ -109,11 +110,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
 
         override fun onNewTab(url: String) {
             super.onNewTab(url)
-            openNewTabRunnable?.let { removeCallbacks(it) }
-            openNewTabRunnable = Runnable {
-                openNewTab(url)
-            }
-            openNewTabRunnable?.let { postDelayed(100, it) }
+            openNewTab(DeepLink.fixBadUrl(url))
         }
     }
 
@@ -122,7 +119,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         if (args.sendAnalytics) {
             AnalyticsHelper.trackEventClickDApp(
                 url = args.url.toString(),
-                name = args.title ?: "unknown",
+                name = args.title,
                 installId = installId,
                 source = args.source
             )
@@ -136,12 +133,20 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
     }
 
     private fun openNewTab(url: String) {
-        val uri = url.toUriOrNull() ?: return
-        navigation?.add(newInstance(
-            wallet = wallet,
-            url = uri,
-            source = args.source
-        ))
+        val now = System.currentTimeMillis()
+        if ((now - lastDeepLinkTime) > 1000) {
+            lastDeepLinkTime = now
+            if (DeepLinkRoute.isAppLink(url)) {
+                val deeplink = DeepLink(url.toUri(), false, null)
+                when (deeplink.route) {
+                    is DeepLinkRoute.DApp -> webView.loadUrl(url)
+                    is DeepLinkRoute.Unknown -> BrowserHelper.open(requireActivity(), url)
+                    else -> processDeeplink(deeplink, url)
+                }
+            } else {
+                BrowserHelper.open(requireActivity(), url)
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -155,11 +160,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         backView.setOnClickListener { back() }
 
         titleView = view.findViewById(R.id.title)
-        if (args.title.isNullOrBlank()) {
-            titleView.text = getString(Localization.loading)
-        } else {
-            titleView.text = args.title
-        }
+        titleView.text = args.title
 
         hostView = view.findViewById(R.id.host)
         hostView.text = args.url.host
@@ -323,7 +324,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
 
         fun newInstance(
             wallet: WalletEntity,
-            title: String? = null,
+            title: String,
             url: Uri,
             source: String,
             sendAnalytics: Boolean = true,

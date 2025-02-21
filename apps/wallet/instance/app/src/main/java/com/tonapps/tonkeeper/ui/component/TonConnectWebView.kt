@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.component
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import uikit.widget.webview.bridge.BridgeWebView
 
 class TonConnectWebView @JvmOverloads constructor(
@@ -12,5 +13,6 @@ class TonConnectWebView @JvmOverloads constructor(
 
     init {
         isVerticalScrollBarEnabled = false
+        settings.setSupportZoom(false)
     }
 }

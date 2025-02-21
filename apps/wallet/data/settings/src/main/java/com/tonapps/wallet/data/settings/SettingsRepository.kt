@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
+import android.content.res.Configuration
 import android.icu.util.Currency
 import android.util.Log
 import androidx.core.content.edit
@@ -243,6 +244,17 @@ class SettingsRepository(
 
     val addressCopyCount: Int
         get() = prefs.getInt(ADDRESS_COPY_COUNT_KEY, 0)
+
+    val isLightTheme: Boolean
+        get() {
+            if (theme.isSystem) {
+                val uiMode = context.resources.configuration.uiMode
+                val isDarkMode = uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                return !isDarkMode
+            } else {
+                return theme.light
+            }
+        }
 
     fun getSafeModeState(): SafeModeState {
         val disabledUnix = prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, -5)

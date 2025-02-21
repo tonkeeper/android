@@ -1,7 +1,9 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
+import android.net.Uri
 import android.util.ArrayMap
+import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -13,9 +15,11 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
+import com.tonapps.network.execute
 import com.tonapps.network.get
 import com.tonapps.network.post
 import com.tonapps.network.postJSON
+import com.tonapps.network.requestBuilder
 import com.tonapps.network.sse
 import com.tonapps.wallet.api.core.SourceAPI
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
@@ -116,6 +120,7 @@ class API(
                 builder.addHeader(key, value)
             }
         }
+        builder.addHeader("Authorization", "Bearer ${config.tonApiV2Key}")
 
         if (methodOptions.equals("POST", ignoreCase = true)) {
             builder.post(bodyOptions.toRequestBody(contentTypeOptions.toMediaType()))
@@ -756,20 +761,16 @@ class API(
         firebaseToken: String,
     ): Boolean {
         return try {
-            val url = "${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect"
+            val uriBuilder = Uri.parse("${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect").buildUpon()
+            uriBuilder.appendQueryParameter("firebase_token", firebaseToken)
+            uriBuilder.appendQueryParameter("app_url", appUrl)
+            uriBuilder.appendQueryParameter("account", accountId)
 
-            val json = JSONObject()
-            json.put("app_url", appUrl)
-            json.put("account", accountId)
-            json.put("firebase_token", firebaseToken)
-            json.put("commercial", false)
-            json.put("silent", true)
-            val data = json.toString().replace("\\/", "/")
-
-            tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
-                set("X-TonConnect-Auth", token)
-                set("Connection", "close")
-            }).isSuccessful
+            val builder = requestBuilder(uriBuilder.build().toString())
+            builder.delete()
+            builder.addHeader("X-TonConnect-Auth", token)
+            builder.addHeader("Connection", "close")
+            tonAPIHttpClient.execute(builder.build()).isSuccessful
         } catch (e: Throwable) {
             false
         }

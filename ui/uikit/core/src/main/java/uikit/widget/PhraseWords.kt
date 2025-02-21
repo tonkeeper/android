@@ -1,13 +1,16 @@
 package uikit.widget
 
 import android.content.Context
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.extensions.dp
 import uikit.extensions.scale
+import uikit.extensions.setPaddingVertical
 
 class PhraseWords @JvmOverloads constructor(
     context: Context,
@@ -15,21 +18,35 @@ class PhraseWords @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : LinearLayoutCompat(context, attrs, defStyle) {
 
+    private val isSmallScreen: Boolean by lazy {
+        1320 >= context.resources.displayMetrics.heightPixels
+    }
+
+    private val isVerySmallScreen: Boolean by lazy {
+        720 >= context.resources.displayMetrics.heightPixels
+    }
+
     init {
         orientation = HORIZONTAL
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val isSmall = 1320 >= context.resources.displayMetrics.heightPixels
-        scale = if (isSmall) {
-            .7f
-        } else {
-            1f
-        }
-
         pivotY = 0f
-        translationX = measuredWidth * (1 - scale) / 2
+        val screenHeight = context.resources.displayMetrics.heightPixels
+
+        val isSmall = 1320 >= context.resources.displayMetrics.heightPixels
+        val isVerySmall = 720 >= context.resources.displayMetrics.heightPixels
+        if (isVerySmall) {
+            // scale = .4f
+            // translationX = (measuredWidth * (1 - scale) / 2)
+        } else if (isSmall) {
+            // scale = .7f
+            // translationX = (measuredWidth * (1 - scale) / 2)
+        } else {
+            // scale = 1f
+            // translationX = 0f
+        }
     }
 
     fun setWords(words: Array<String>) {
@@ -39,11 +56,7 @@ class PhraseWords @JvmOverloads constructor(
     fun setWords(words: List<String>) {
         removeAllViews()
 
-        val layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1f
-        )
+        val phraseLayoutParams = LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
 
         var row = insertWordRow()
 
@@ -55,7 +68,12 @@ class PhraseWords @JvmOverloads constructor(
             }
             val wordView = PhraseWord(context)
             wordView.setData(index + 1, word)
-            row.addView(wordView, layoutParams)
+            if (isSmallScreen) {
+                wordView.setPaddingVertical(2.dp)
+            } else if (!isVerySmallScreen) {
+                wordView.setPaddingVertical(4.dp)
+            }
+            row.addView(wordView, phraseLayoutParams)
         }
     }
 

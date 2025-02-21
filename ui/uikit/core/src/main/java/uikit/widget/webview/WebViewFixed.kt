@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
@@ -21,13 +22,16 @@ import android.webkit.PermissionRequest
 import android.webkit.ServiceWorkerController
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.webkit.Profile
+import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -70,6 +74,7 @@ open class WebViewFixed @JvmOverloads constructor(
     }
 
     private val callbacks = mutableListOf<Callback>()
+    private var onNewTabRunnable: Runnable? = null
 
     private val jsExecuteQueue = LinkedList<String>()
 
@@ -91,6 +96,13 @@ open class WebViewFixed @JvmOverloads constructor(
         settings.textSize = WebSettings.TextSize.NORMAL
         settings.setGeolocationEnabled(false)
 
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+            WebSettingsCompat.setAlgorithmicDarkeningAllowed(settings, false)
+        }
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.MUTE_AUDIO)) {
+            WebViewCompat.setAudioMuted(this@WebViewFixed, true)
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
         }
@@ -106,13 +118,12 @@ open class WebViewFixed @JvmOverloads constructor(
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                var isTrue: Boolean? = null
                 for (callback in callbacks) {
                     if (callback.shouldOverrideUrlLoading(request)) {
-                        isTrue = true
+                        return true
                     }
                 }
-                return isTrue ?: super.shouldOverrideUrlLoading(view, request)
+                return false
             }
 
             override fun onPageFinished(view: WebView?, url: String) {
@@ -149,7 +160,7 @@ open class WebViewFixed @JvmOverloads constructor(
             }
 
             override fun onCreateWindow(
-                view: WebView?,
+                view: WebView,
                 isDialog: Boolean,
                 isUserGesture: Boolean,
                 resultMsg: Message?
@@ -157,8 +168,9 @@ open class WebViewFixed @JvmOverloads constructor(
                 if (isDialog) {
                     return resultMsg?.let { openNewWindow(it) } ?: false
                 }
-                val newUrl = view?.hitTestResult?.extra ?: return false
-                callbacks.forEach { it.onNewTab(newUrl) }
+                getTargetUrl(view, resultMsg) { newUrl ->
+                    onNewTab(newUrl)
+                }
                 return true
             }
 
@@ -171,6 +183,62 @@ open class WebViewFixed @JvmOverloads constructor(
         applyAndroidWebViewBridge()
     }
 
+    private fun onNewTab(url: String) {
+        onNewTabRunnable?.let { removeCallbacks(it) }
+        onNewTabRunnable = Runnable {
+            callbacks.forEach { it.onNewTab(url) }
+        }
+        onNewTabRunnable?.let { postDelayed(it, 220) }
+    }
+
+    private fun getTargetUrl(
+        view: WebView,
+        resultMsg: Message?,
+        callback: (url: String) -> Unit
+    ) {
+        val extra = view.hitTestResult.extra
+        if (extra != null) {
+            callback(extra)
+        } else {
+            getTargetUrlHack(view, resultMsg, callback)
+        }
+    }
+
+    private fun getTargetUrlHack(
+        view: WebView,
+        resultMsg: Message?,
+        callback: (url: String) -> Unit
+    ) {
+        val newWebView = WebView(view.context).apply {
+            settings.apply {
+                javaScriptEnabled = true
+                displayZoomControls = false
+                loadWithOverviewMode = true
+                setSupportMultipleWindows(true)
+            }
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    request?.url?.let {
+                        callback(it.toString())
+                        post {
+                            destroy()
+                        }
+                    }
+                    return true
+                }
+            }
+        }
+        try {
+            val transport = resultMsg?.obj as WebView.WebViewTransport
+            transport.webView = newWebView
+            resultMsg.sendToTarget()
+        } catch (e: Throwable) {
+            newWebView.destroy()
+        }
+    }
 
     private fun openNewWindow(resultMsg: Message): Boolean {
         val dialog = NewWindowDialog(context, getProfile().name)
@@ -204,7 +272,9 @@ open class WebViewFixed @JvmOverloads constructor(
     }
 
     fun addCallback(callback: Callback) {
-        callbacks.add(callback)
+        if (!callbacks.contains(callback)) {
+            callbacks.add(callback)
+        }
     }
 
     fun removeCallback(callback: Callback) {

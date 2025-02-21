@@ -38,6 +38,8 @@ class CollectiblesManageViewModel(
     private val api: API,
 ): BaseWalletVM(app) {
 
+    val spamItem = Item.Title(getString(Localization.spam))
+
     private val safeMode: Boolean
         get() = settingsRepository.isSafeModeEnabled(api)
 
@@ -124,7 +126,7 @@ class CollectiblesManageViewModel(
         }
 
         if (spamCollection.isNotEmpty()) {
-            uiItems.add(Item.Title(getString(Localization.spam)))
+            uiItems.add(spamItem)
             uiItems.add(Item.Space)
             for ((index, item) in spamCollection.withIndex()) {
                 uiItems.add(item.copy(

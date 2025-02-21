@@ -93,6 +93,7 @@ dependencies {
 
     implementation(platform(Dependence.Firebase.bom))
     implementation(Dependence.Firebase.analytics)
+    implementation(Dependence.Firebase.config)
     implementation(Dependence.Firebase.crashlytics)
     implementation(Dependence.Firebase.messaging)
     implementation(Dependence.Firebase.performance)
@@ -119,6 +120,7 @@ dependencies {
     implementation(Dependence.GooglePlay.review)
     implementation(Dependence.GooglePlay.billing)
     implementation(Dependence.GooglePlay.update)
+    implementation(Dependence.GooglePlay.installreferrer)
 
     implementation(Dependence.Squareup.okhttp)
     implementation(Dependence.Squareup.sse)

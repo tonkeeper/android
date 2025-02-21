@@ -1,11 +1,14 @@
 package com.tonapps.tonkeeper.ui.base
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.webkit.WebResourceRequest
 import androidx.annotation.LayoutRes
+import androidx.camera.core.imagecapture.BundlingNode
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
@@ -14,6 +17,7 @@ import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
@@ -32,6 +36,7 @@ import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
@@ -61,6 +66,8 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     val installId: String
         get() = rootViewModel.installId
 
+    var lastDeepLinkTime: Long = 0
+
     fun back() {
         if (webView.canGoBack()) {
             webView.goBack()
@@ -76,22 +83,32 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
 
     fun overrideUrlLoading(request: WebResourceRequest): Boolean {
         val refererUri = request.requestHeaders?.get("Referer")?.toUri()
-        val url = request.url.normalizeTONSites()
+        val url = DeepLink.fixBadUri(request.url).normalizeTONSites()
         val scheme = url.scheme ?: ""
         if (scheme == "https" && url.host != "app.tonkeeper.com") {
             return false
         }
         val deeplink = DeepLink(url, false, refererUri)
-        return when (deeplink.route) {
-            is DeepLinkRoute.TonConnect -> {
-                rootViewModel.processTonConnectDeepLink(deeplink, null)
-                true
-            }
-            is DeepLinkRoute.Unknown -> {
-                navigation?.openURL(url.toString())
-                true
-            }
-            else -> rootViewModel.processDeepLink(uri = url, fromQR = false, refSource = refererUri, internal = false, fromPackageName = null)
+        if (deeplink.route is DeepLinkRoute.Unknown) {
+            BrowserHelper.open(requireActivity(), url)
+            return true
+        }
+        if (deeplink.route is DeepLinkRoute.Internal) {
+            return true
+        }
+        val now = System.currentTimeMillis()
+        if ((now - lastDeepLinkTime) > 1000) {
+            lastDeepLinkTime = now
+            processDeeplink(deeplink, url.toString())
+        }
+        return true
+    }
+
+    fun processDeeplink(deeplink: DeepLink, url: String) {
+        when (deeplink.route) {
+            is DeepLinkRoute.TonConnect -> rootViewModel.processTonConnectDeepLink(deeplink, null)
+            is DeepLinkRoute.Unknown -> navigation?.openURL(url)
+            else -> rootViewModel.processDeepLink(uri = url.toUri(), fromQR = false, refSource = deeplink.referrer, internal = false, fromPackageName = null)
         }
     }
 

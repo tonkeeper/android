@@ -27,19 +27,15 @@ class NftViewModel(
 
     fun reportSpam(spam: Boolean, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            loading(true)
             val state = if (spam) TokenPrefsEntity.State.SPAM else TokenPrefsEntity.State.TRUST
             val address = nft.collectionAddressOrNFTAddress
             settingsRepository.setTokenState(wallet.id, address, state)
             try {
                 api.reportNtfSpam(nft.address, spam)
-                withContext(Dispatchers.Main) {
-                    callback()
-                }
-            } catch (e: Throwable) {
-                toast(Localization.unknown_error)
+            } catch (ignored: Throwable) {}
+            withContext(Dispatchers.Main) {
+                callback()
             }
-            loading(false)
         }
     }
 

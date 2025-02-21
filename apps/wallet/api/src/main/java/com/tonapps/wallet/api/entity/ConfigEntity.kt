@@ -40,7 +40,6 @@ data class ConfigEntity(
     val batteryMeanPriceNft: String,
     val batteryMeanPriceSwap: String,
     val batteryMeanPriceJetton: String,
-    val disableBatteryCryptoRecharge: Boolean,
     val disableBatteryIapModule: Boolean,
     val batteryReservedAmount: String,
     val batteryMaxInputAmount: String,
@@ -68,7 +67,7 @@ data class ConfigEntity(
 
     @IgnoredOnParcel
     val domains: List<String> by lazy {
-        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/")
+        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/", "https://tonapi.io/")
     }
 
     @IgnoredOnParcel
@@ -109,7 +108,6 @@ data class ConfigEntity(
         batteryDisabled = json.optBoolean("disable_battery", false),
         batterySendDisabled = json.optBoolean("disable_battery_send", false),
         batteryMeanFees = json.optString("batteryMeanFees", "0.0055"),
-        disableBatteryCryptoRecharge = json.optBoolean("disable_battery_crypto_recharge_module", false),
         disableBatteryIapModule = json.optBoolean("disable_battery_iap_module", false),
         batteryMeanPriceNft = json.optString("batteryMeanPrice_nft", "0.03"),
         batteryMeanPriceSwap = json.optString("batteryMeanPrice_swap", "0.22"),
@@ -140,7 +138,7 @@ data class ConfigEntity(
         mercuryoSecret = "",
         tonapiMainnetHost = "https://keeper.tonapi.io",
         tonapiTestnetHost = "https://testnet.tonapi.io",
-        stonfiUrl = "https://tonkeeper.ston.fi/swap",
+        stonfiUrl = "https://swap-widget.tonkeeper.com",
         tonNFTsMarketplaceEndpoint = "https://ton.diamonds",
         directSupportUrl = "https://t.me/tonkeeper_supportbot",
         tonkeeperNewsUrl = "https://t.me/tonkeeper_new",
@@ -159,7 +157,6 @@ data class ConfigEntity(
         batteryDisabled = false,
         batterySendDisabled = false,
         batteryMeanFees = "0.0055",
-        disableBatteryCryptoRecharge = false,
         disableBatteryIapModule = false,
         batteryMeanPriceNft = "0.03",
         batteryMeanPriceSwap = "0.22",

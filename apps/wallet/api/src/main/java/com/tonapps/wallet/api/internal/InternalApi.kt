@@ -3,9 +3,9 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
-import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.extensions.appVersionName
+import com.tonapps.extensions.deviceCountry
+import com.tonapps.extensions.getStoreCountry
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.network.get
@@ -14,6 +14,7 @@ import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.api.withRetry
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.json.JSONObject
@@ -30,8 +31,8 @@ internal class InternalApi(
         testnet: Boolean,
         platform: String,
         build: String,
-        boot: Boolean = false
-    ): String {
+        boot: Boolean = false,
+    ): String = runBlocking {
         val builder = Uri.Builder()
         builder.scheme("https")
             .authority(if (boot) "boot.tonkeeper.com" else "api.tonkeeper.com")
@@ -40,8 +41,15 @@ internal class InternalApi(
             .appendQueryParameter("build", build)
             .appendQueryParameter("platform", platform)
             .appendQueryParameter("chainName", if (testnet) "testnet" else "mainnet")
+            .appendQueryParameter("bundle_id", context.packageName)
 
-        return builder.build().toString()
+        val storeCountry = context.getStoreCountry()
+        storeCountry?.let {
+            builder.appendQueryParameter("store_country_code", storeCountry)
+        }
+        builder.appendQueryParameter("device_country_code", context.deviceCountry)
+
+        builder.build().toString()
     }
 
     private fun request(
@@ -50,7 +58,7 @@ internal class InternalApi(
         platform: String = "android",
         build: String = appVersionName,
         locale: Locale,
-        boot: Boolean = false
+        boot: Boolean = false,
     ): JSONObject {
         val url = endpoint(path, testnet, platform, build, boot)
         val headers = ArrayMap<String, String>()

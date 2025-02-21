@@ -35,11 +35,15 @@ class SignTransaction(
     suspend fun ledger(
         activity: NavigationActivity,
         wallet: WalletEntity,
-        ledgerTransaction: Transaction
+        ledgerTransaction: Transaction,
+        transactionIndex: Int,
+        transactionCount: Int
     ): Cell {
         val fragment = LedgerSignScreen.newInstance(
             transaction = ledgerTransaction,
-            walletId = wallet.id
+            walletId = wallet.id,
+            transactionIndex = transactionIndex,
+            transactionCount = transactionCount
         )
         val result = activity.addForResult(fragment)
         val signerMessage = result.getByteArray(LedgerSignScreen.SIGNED_MESSAGE)

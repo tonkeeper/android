@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
@@ -37,17 +39,27 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(PurchaseScreen.newInstance(item.wallet, "wallet"))
         }
         sendView.setOnClickListener {
-            navigation?.add(SendScreen.newInstance(item.wallet))
+            navigation?.add(SendScreen.newInstance(item.wallet, type = SendScreen.Companion.Type.Default))
         }
         stakeView.setOnClickListener {
             navigation?.add(StakingScreen.newInstance(item.wallet))
         }
 
-        swapView.isEnabled = item.walletType != Wallet.Type.Watch && !item.disableSwap
+        val isSwapDisable = context.remoteConfig?.isSwapDisable == true
+        val isStakingDisable = context.remoteConfig?.isStakingDisable == true
+
+        swapView.isEnabled = item.walletType != Wallet.Type.Watch && !isSwapDisable
         sendView.isEnabled = item.walletType != Wallet.Type.Watch
         scanView.isEnabled = item.walletType != Wallet.Type.Watch
-        stakeView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet
-        buyOrSellView.isEnabled = item.walletType != Wallet.Type.Testnet && !item.disableSwap
+        stakeView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !isStakingDisable
+        buyOrSellView.isEnabled = item.walletType != Wallet.Type.Testnet
+
+        if (isSwapDisable) {
+            swapView.alpha = 0f
+        }
+        if (isStakingDisable) {
+            stakeView.alpha = 0f
+        }
     }
 
 }

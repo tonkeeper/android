@@ -145,7 +145,8 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
             wallet = screenContext.wallet,
             targetAddress = viewModel.burnAddress,
             tokenAddress = token.address,
-            amountNano = token.balance.value.toLong()
+            amountNano = token.balance.value.toLong(),
+            type = SendScreen.Companion.Type.Default
         ))
         finish()
     }

@@ -10,6 +10,7 @@ import com.tonapps.security.Security
 import com.tonapps.security.clear
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.mnemonic.Mnemonic
@@ -24,6 +25,14 @@ internal class VaultSource(context: Context) {
     }
 
     private val prefs = Security.pref(context, KEY_ALIAS, NAME)
+
+    fun getVaultKeys(): String {
+        val result = JSONObject()
+        for ((key, value) in prefs.all) {
+            result.put(key, value.toString())
+        }
+        return result.toString()
+    }
 
     fun getMnemonic(publicKey: PublicKeyEd25519): Array<String>? {
         val value = prefs.getString(mnemonicKey(publicKey), null) ?: return null

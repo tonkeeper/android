@@ -25,6 +25,7 @@ import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.recipient
 import com.tonapps.wallet.data.events.sender
 import com.tonapps.wallet.data.settings.SpamTransactionState
+import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.EncryptedComment
 import kotlinx.parcelize.IgnoredOnParcel
@@ -39,6 +40,8 @@ sealed class HistoryItem(
         const val TYPE_HEADER = 2
         const val TYPE_LOADER = 3
         const val TYPE_APP = 4
+        const val TYPE_EMPTY = 5
+        const val TYPE_FAILED = 6
 
         fun createFromParcel(parcel: Parcel): HistoryItem {
             return when (parcel.readInt()) {
@@ -46,6 +49,8 @@ sealed class HistoryItem(
                 TYPE_HEADER -> Header(parcel)
                 TYPE_LOADER -> Loader(parcel)
                 TYPE_APP -> App(parcel)
+                TYPE_EMPTY -> Empty(parcel)
+                TYPE_FAILED -> Failed(parcel)
                 else -> throw IllegalArgumentException("Unknown type")
             }
         }
@@ -57,6 +62,8 @@ sealed class HistoryItem(
             is Loader -> this.date
             is App -> this.timestamp
             is Header -> this.date
+            is Failed -> this.date
+            else -> 0L
         }
     }
 
@@ -66,6 +73,9 @@ sealed class HistoryItem(
             is Loader -> "loader_${this.index}"
             is App -> "app_${this.timestamp}"
             is Header -> "header_${this.title}"
+            is Failed -> "failed_${this.date}"
+            is Empty -> "empty_${this.title}"
+            else -> "unknown"
         }
     }
 
@@ -80,10 +90,12 @@ sealed class HistoryItem(
         return 0
     }
 
+    abstract class Service(type: Int): HistoryItem(type)
+
     data class Loader(
         val index: Int,
         val date: Long
-    ): HistoryItem(TYPE_LOADER) {
+    ): Service(TYPE_LOADER) {
 
         constructor(parcel: Parcel) : this(
             index = parcel.readInt(),
@@ -126,6 +138,56 @@ sealed class HistoryItem(
                 return arrayOfNulls(size)
             }
         }
+    }
+
+    data class Failed(
+        val text: String = "",
+        val date: Long = System.currentTimeMillis()
+    ): Service(TYPE_FAILED) {
+
+        constructor(context: Context, resId: Int = Localization.unknown_error) : this(context.getString(resId))
+
+        constructor(parcel: Parcel) : this(
+            parcel.readString()!!,
+            parcel.readLong()
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeString(text)
+            dest.writeLong(date)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Failed> {
+            override fun createFromParcel(parcel: Parcel) = Failed(parcel)
+
+            override fun newArray(size: Int): Array<Failed?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
+    data class Empty(
+        val title: String
+    ): Service(TYPE_EMPTY) {
+
+        constructor(context: Context, resId: Int) : this(context.getString(resId))
+
+        constructor(parcel: Parcel) : this(
+            parcel.readString()!!
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeString(title)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Empty> {
+            override fun createFromParcel(parcel: Parcel) = Empty(parcel)
+
+            override fun newArray(size: Int): Array<Empty?> {
+                return arrayOfNulls(size)
+            }
+        }
+
     }
 
     data class App(

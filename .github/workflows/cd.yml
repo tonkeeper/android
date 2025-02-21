@@ -3,7 +3,8 @@ name: Android APK build CD
 on:
   push:
     branches:
-      - dev
+      - 'dev'
+  workflow_dispatch:
 
 jobs:
   android-build:
@@ -44,13 +45,13 @@ jobs:
       - name: Upload android aab to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Tonkeeper X aab ${{ env.VERSION_CODE }}
+          name: Tonkeeper aab ${{ env.VERSION_CODE }}
           path: |
             ${{ env.AAB_OUTPUT_PATH }}
 
       - name: Upload android apk to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Tonkeeper X apk ${{ env.VERSION_CODE }}
+          name: Tonkeeper apk ${{ env.VERSION_CODE }}
           path: |
             ${{ env.APK_OUTPUT_PATH }}

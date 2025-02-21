@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.webkit.WebView
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -36,6 +37,7 @@ import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
+import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.deeplink.DeepLink
@@ -154,20 +156,26 @@ class RootViewModel(
         }
     }
 
-    init {
-        pushManager.clearNotifications()
+    override fun attachHolder(holder: Holder) {
+        super.attachHolder(holder)
 
         tonConnectManager.transactionRequestFlow.map { (connection, message) ->
             val tx = RootSignTransaction(connection, message, savedState.returnUri)
             savedState.returnUri = null
             tx
-        }.filter { !ignoreTonConnectTransaction.contains(it.hash) }.collectFlow {
+        }.filter {
+            !ignoreTonConnectTransaction.contains(it.hash)
+        }.collectFlow {
             _eventFlow.tryEmit(RootEvent.CloseCurrentTonConnect)
             viewModelScope.launch {
                 ignoreTonConnectTransaction.add(it.hash)
                 signTransaction(it)
             }
         }
+    }
+
+    init {
+        pushManager.clearNotifications()
 
         settingsRepository.languageFlow.collectFlow {
             context.setLocales(settingsRepository.localeList)
@@ -429,8 +437,10 @@ class RootViewModel(
         if (openUrl != null) {
             openScreen(DAppScreen.newInstance(
                 wallet = wallet,
+                title = openUrl.host ?: "unknown",
                 url = openUrl,
-                source = "push"
+                source = "push",
+                sendAnalytics = true,
             ))
         }
     }
@@ -478,6 +488,7 @@ class RootViewModel(
 
     fun processTonConnectDeepLink(deeplink: DeepLink, fromPackageName: String?) {
         val route = deeplink.route as DeepLinkRoute.TonConnect
+
         savedState.returnUri = tonConnectManager.processDeeplink(
             context = context,
             uri = route.uri,
@@ -500,7 +511,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Tabs) {
             _eventFlow.tryEmit(RootEvent.OpenTab(route.tabUri.toUri(), wallet, route.from))
         } else if (route is DeepLinkRoute.Send && !wallet.isWatchOnly) {
-            openScreen(SendScreen.newInstance(wallet))
+            openScreen(SendScreen.newInstance(wallet, type = SendScreen.Companion.Type.Default))
         } else if (route is DeepLinkRoute.Staking && !wallet.isWatchOnly) {
             openScreen(StakingScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.StakingPool) {
@@ -554,13 +565,15 @@ class RootViewModel(
                 testnet = wallet.testnet,
                 locale = context.locale
             ).find { it.url.host == dAppUri.host }
+
             if (dApp == null) {
                 toast(Localization.app_not_found)
             } else {
                 openScreen(DAppScreen.newInstance(
                     wallet = wallet,
+                    title = dApp.name,
                     url = dAppUri,
-                    source = "deep-link"
+                    source = "deep-link",
                 ))
             }
         } else if (route is DeepLinkRoute.SettingsSecurity) {
@@ -653,7 +666,9 @@ class RootViewModel(
         val tx = historyHelper.getEvent(
             wallet = wallet,
             eventId = hash,
-            safeMode = settingsRepository.isSafeModeEnabled(api),
+            options = ActionOptions(
+                safeMode = settingsRepository.isSafeModeEnabled(api),
+            )
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }
@@ -664,7 +679,9 @@ class RootViewModel(
         val tx = historyHelper.mapping(
             wallet = wallet,
             event = event,
-            safeMode = settingsRepository.isSafeModeEnabled(api),
+            options = ActionOptions(
+                safeMode = settingsRepository.isSafeModeEnabled(api),
+            )
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
     }

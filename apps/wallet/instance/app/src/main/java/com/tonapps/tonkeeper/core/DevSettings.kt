@@ -35,6 +35,14 @@ object DevSettings {
             }
         }
 
+    var firstLaunchDeeplink: String = prefs.getString("first_launch_deeplink", "") ?: ""
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.edit().putString("first_launch_deeplink", value).apply()
+            }
+        }
+
     var tonConnectLogs: Boolean = prefs.getBoolean("ton_connect_logs", false)
         set(value) {
             if (field != value) {

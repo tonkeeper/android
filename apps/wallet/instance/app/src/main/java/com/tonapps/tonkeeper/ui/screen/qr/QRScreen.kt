@@ -75,18 +75,13 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
         context?.copyToClipboard(viewModel.address)
     }
 
-    @Composable
-    override fun ScreenContent() {
-        val isTronDisabled = remoteConfig?.isTronDisabled ?: false
-        val tabsVisible = !hasToken && wallet.hasPrivateKey && !wallet.testnet && !isTronDisabled
-        val qrContent by remember {
-            derivedStateOf {
-                if (viewModel.address.isNotEmpty()) {
-                    getQrContent(viewModel.address, viewModel.token)
-                } else {
-                    null
-                }
-            }
+    private fun getDeepLink(): String {
+        var deepLink = "ton://transfer/${wallet.address}"
+        if (!token.isTon) {
+            deepLink += "?jetton=${token.address.toUserFriendly(
+                wallet = false,
+                testnet = wallet.type == Wallet.Type.Testnet
+            )}"
         }
         QrComposable(
             wallet = wallet,

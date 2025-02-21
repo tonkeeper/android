@@ -58,6 +58,7 @@ import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -144,8 +145,10 @@ class RootActivity : BaseWalletActivity() {
             return
         }
         lifecycleScope.launch {
+            delay(240)
             val referrer = referrerClientHelper.getInstallReferrer()
-            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer)
+            val deeplink = DevSettings.firstLaunchDeeplink.ifBlank { null }
+            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer, deeplink)
             DevSettings.firstLaunchDate = currentTimeSeconds()
         }
     }
@@ -470,8 +473,6 @@ class RootActivity : BaseWalletActivity() {
         val uri = intent.data ?: intent.getStringExtra("link")?.toUriOrNull()
         if (0 >= DevSettings.firstLaunchDate) {
             DevSettings.firstLaunchDeeplink = uri?.toString() ?: ""
-        } else if (uri?.hasRefer() == true || uri?.hasUtmSource() == true) {
-            AnalyticsHelper.openRefDeeplink(settingsRepository.installId, uri.toString())
         }
         val extras = intent.extras
         val dappDeepLink = extras?.getStringValue("dapp_deeplink")?.toUriOrNull()

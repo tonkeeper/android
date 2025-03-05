@@ -70,6 +70,19 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
         collectFlow(connectionViewModel.connectionType, ::onConnectionType)
     }
 
+    private fun onConnectionType(type: LedgerConnectionType) {
+        when (type) {
+            LedgerConnectionType.USB -> {
+                tabUsbView.setBackgroundResource(uikit.R.drawable.bg_button_tertiary)
+                tabBluetoothView.background = null
+            }
+            LedgerConnectionType.BLUETOOTH -> {
+                tabUsbView.background = null
+                tabBluetoothView.setBackgroundResource(uikit.R.drawable.bg_button_tertiary)
+            }
+        }
+    }
+
     private fun onEvent(event: LedgerEvent) {
         when (event) {
             is LedgerEvent.Ready -> {

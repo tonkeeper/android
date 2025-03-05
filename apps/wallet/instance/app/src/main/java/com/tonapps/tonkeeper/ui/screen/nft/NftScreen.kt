@@ -420,12 +420,6 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         addressView.text = address.short4
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        lottieView?.destroy()
-        lottieView = null
-    }
-
     companion object {
 
         private const val HIDE_NFT_ID = 1L

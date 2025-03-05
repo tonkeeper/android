@@ -97,6 +97,8 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
         spamView = view.findViewById(R.id.spam)
 
+        previewView = view.findViewById(R.id.preview)
+
         view.findViewById<Button>(R.id.report_spam).setOnClickListener { reportSpam(true) }
         view.findViewById<Button>(R.id.not_spam).setOnClickListener { reportSpam(false) }
 
@@ -354,6 +356,12 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        lottieView?.destroy()
+        lottieView = null
+    }
+
     private fun showTrustState() {
         spamView.visibility = View.GONE
         headerView.setSubtitle(null)
@@ -409,12 +417,6 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
         val addressView = view.findViewById<AppCompatTextView>(R.id.address)
         addressView.text = address.short4
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        lottieView?.destroy()
-        lottieView = null
     }
 
     companion object {

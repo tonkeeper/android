@@ -97,4 +97,12 @@ object Devices {
 
         return device ?: devices[DeviceModelId.NANO_X]!!
     }
+
+    fun fromUSBProductId(usbProductId: Int): DeviceModel {
+        val legacy = devices.values.find { it.legacyUsbProductId == usbProductId }
+        if (legacy != null) return legacy
+
+        val mm = usbProductId shr 8
+        return devices.values.find { it.productIdMM == mm } ?: devices[DeviceModelId.NANO_S]!!
+    }
 }

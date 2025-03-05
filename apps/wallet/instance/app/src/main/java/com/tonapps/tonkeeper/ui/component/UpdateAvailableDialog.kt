@@ -15,8 +15,8 @@ class UpdateAvailableDialog(
 ): ModalDialog(context, R.layout.dialog_update_available) {
 
     init {
-        findViewById<View>(R.id.later)!!.setOnClickListener { closeAndClick() }
-        findViewById<HeaderView>(R.id.header)!!.doOnActionClick = { closeAndClick() }
+        findViewById<View>(R.id.later)!!.setOnClickListener { dismiss() }
+        findViewById<HeaderView>(R.id.header)!!.doOnActionClick = { dismiss() }
     }
 
     fun show(callback: () -> Unit) {
@@ -25,10 +25,5 @@ class UpdateAvailableDialog(
             callback()
             dismiss()
         }
-    }
-
-    private fun closeAndClick() {
-        apkManager.closeReminder()
-        dismiss()
     }
 }

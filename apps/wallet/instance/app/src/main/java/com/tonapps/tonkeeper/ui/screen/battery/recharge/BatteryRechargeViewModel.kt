@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.TonTransferHelper
@@ -15,6 +16,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.toGrams
+import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackEntity
@@ -50,6 +52,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn

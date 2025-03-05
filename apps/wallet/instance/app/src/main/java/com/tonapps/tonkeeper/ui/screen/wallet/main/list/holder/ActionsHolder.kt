@@ -54,7 +54,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         val isSwapDisable = context.remoteConfig?.isSwapDisable == true
         val isStakingDisable = context.remoteConfig?.isStakingDisable == true
 
-        swapView.isEnabled = item.walletType != Wallet.Type.Watch && !isSwapDisable
+        swapView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !isSwapDisable
         sendView.isEnabled = item.walletType != Wallet.Type.Watch
         scanView.isEnabled = item.walletType != Wallet.Type.Watch
         stakeView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !isStakingDisable

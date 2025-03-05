@@ -49,13 +49,24 @@ object AnalyticsHelper {
         "token_open",
     )*/
 
-    private data class QueuedEvent(
-        val eventName: String,
-        val props: Map<String, Any>
-    )
+    @UiThread
+    fun simpleTrackEvent(eventName: String, installId: String, props: MutableMap<String, Any> = hashMapOf()) {
+        props["firebase_user_id"] = installId
+        trackEvent(eventName, props)
+    }
 
-    private val isInitialized = AtomicBoolean(false)
-    private val eventQueue = ConcurrentLinkedQueue<QueuedEvent>()
+    fun trackEvent(eventName: String, props: Map<String, Any> = hashMapOf()) {
+        Aptabase.instance.trackEvent(eventName, props)
+        Log.d("AnalyticsSendLog", "Track event: $eventName, props: $props")
+    }
+
+    @UiThread
+    fun simpleTrackScreenEvent(eventName: String, installId: String, from: String) {
+        simpleTrackEvent(eventName, installId, hashMapOf(
+            "from" to from
+        ))
+    }
+
     private val regexPrivateData: Regex by lazy {
         Regex("[a-f0-9]{64}|0:[a-f0-9]{64}")
     }
@@ -116,16 +127,7 @@ object AnalyticsHelper {
         deeplink?.let {
             props["deeplink"] = it
         }
-        Aptabase.instance.trackEvent("first_launch", props)
-    }
-
-    @UiThread
-    fun openRefDeeplink(installId: String, deeplink: String) {
-        val props = hashMapOf(
-            "firebase_user_id" to installId,
-            "deeplink" to deeplink
-        )
-        trackEvent("ads_deeplink", props)
+        trackEvent("first_launch", props)
     }
 
     @UiThread

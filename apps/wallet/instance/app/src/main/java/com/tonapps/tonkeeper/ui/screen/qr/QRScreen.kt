@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.qr.ui.QRView
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
@@ -33,9 +34,34 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
     private val hasToken: Boolean
         get() = arguments?.getBoolean(ARG_HAS_TOKEN) ?: false
 
-    private val enableTronDialog: EnableTronDialog by lazy {
-        EnableTronDialog(this, wallet, onDone = viewModel::setTron)
+    private lateinit var headerView: HeaderView
+    private lateinit var infoView: TextHeaderView
+    private lateinit var qrView: QRView
+    private lateinit var iconView: FrescoView
+    private lateinit var addressView: AppCompatTextView
+    private lateinit var walletTypeView: AppCompatTextView
+    private lateinit var copyView: View
+    private lateinit var shareView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("receive_open", viewModel.installId)
     }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        headerView = view.findViewById(R.id.header)
+        headerView.doOnCloseClick = { finish() }
+
+        infoView = view.findViewById(R.id.info)
+        infoView.title = getString(Localization.receive_coin, token.name)
+        infoView.desciption = getString(Localization.receive_coin_description, token.name)
+
+        qrView = view.findViewById(R.id.qr)
+        qrView.setContent(getDeepLink())
+
+        iconView = view.findViewById(R.id.icon)
+        iconView.setImageURI(token.imageUri)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

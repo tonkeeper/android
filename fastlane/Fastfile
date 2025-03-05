@@ -77,7 +77,7 @@ platform :android do
 
     desc "Build the android apk"
     lane :assemble_release do |options|
-        flavor = options[:flavor] || "default"
+        flavor = options[:flavor] || "site"
         gradle(
             task: "assemble",
             build_type: "release",
@@ -119,7 +119,7 @@ platform :android do
         build_release(flavor: "default")
         upload_release(app_identifier: "com.ton_keeper")
 
-        assemble_release(flavor: "default")
+        assemble_release(flavor: "site")
     end
     
     desc "Build and upload to GooglePlay (UK)"

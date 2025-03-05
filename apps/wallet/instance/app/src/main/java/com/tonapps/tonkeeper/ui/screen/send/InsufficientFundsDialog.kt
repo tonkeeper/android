@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.send
 import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.Button
-import androidx.appcompat.widget.AppCompatImageView
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.Amount
@@ -13,7 +12,6 @@ import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization

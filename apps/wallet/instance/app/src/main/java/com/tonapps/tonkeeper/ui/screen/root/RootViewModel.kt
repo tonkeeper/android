@@ -239,7 +239,6 @@ class RootViewModel(
 
         api.configFlow.filter { !it.empty }.take(1).collectFlow { config ->
             AnalyticsHelper.setConfig(context, config)
-            sendFirstLaunchEvent()
         }
 
         combine(

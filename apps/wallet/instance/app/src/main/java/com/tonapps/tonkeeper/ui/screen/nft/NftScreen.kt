@@ -84,6 +84,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private var lottieView: LottieView? = null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("collectibles_select", rootViewModel.installId)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)

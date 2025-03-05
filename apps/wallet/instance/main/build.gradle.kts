@@ -25,7 +25,7 @@ android {
         targetSdk = 35
         versionCode = 600
 
-        versionName = "5.0.21" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
+        versionName = "5.0.23" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,15 +35,6 @@ android {
     productFlavors {
         create("default") { }
         create("site") { }
-        create("uk") {
-            applicationIdSuffix = ".uk"
-        }
-    }
-
-    flavorDimensions += "version"
-
-    productFlavors {
-        create("default") {}
         create("uk") {
             applicationIdSuffix = ".uk"
         }

@@ -42,15 +42,9 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
 
     }
 
-    data class TronToggle(
-        val enabled: Boolean,
-    ): Item(TYPE_TRON, "tron")
-
     data object Space: Item(TYPE_SPACE, "")
 
-    data class Logo(
-        val installerSource: AppInstall.Source
-    ): Item(TYPE_LOGO, "version")
+    data object Logo: Item(TYPE_LOGO, "version")
 
     sealed class Text(
         val titleRes: Int,

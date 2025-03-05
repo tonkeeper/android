@@ -66,12 +66,6 @@ class TokenViewModel(
     val installId: String
         get() = settingsRepository.installId
 
-    val tronUsdtEnabled: Boolean
-        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
-
-    var tronAddress: String? = null
-        private set
-
     private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
     val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 

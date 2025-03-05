@@ -65,7 +65,7 @@ object Devices {
         ),
         DeviceModelId.EUROPA to DeviceModel(
             id = DeviceModelId.EUROPA,
-            productName = "Ledger Europa",
+            productName = "Ledger Flex",
             productIdMM = 0x70,
             legacyUsbProductId = 0x0007,
             usbOnly = false,

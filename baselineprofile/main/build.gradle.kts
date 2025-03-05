@@ -25,6 +25,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    productFlavors {
+        create("default") {}
+        create("uk") {
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
@@ -45,6 +51,7 @@ android {
     }
 
     targetProjectPath = ":apps:wallet:instance:main"
+    flavorDimensions += listOf("service")
 
     experimentalProperties["android.experimental.self-instrumenting"] = true
     experimentalProperties["android.experimental.testOptions.managedDevices.setupTimeoutMinutes"] = 20

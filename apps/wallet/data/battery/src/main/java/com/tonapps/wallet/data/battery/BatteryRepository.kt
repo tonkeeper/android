@@ -2,11 +2,13 @@ package com.tonapps.wallet.data.battery
 
 import android.content.Context
 import androidx.collection.ArrayMap
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
+import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
 import com.tonapps.wallet.data.battery.source.LocalDataSource
 import com.tonapps.wallet.data.battery.source.RemoteDataSource
 import io.tonapi.models.MessageConsequences
@@ -43,6 +45,22 @@ class BatteryRepository(
         _balanceUpdatedFlow.tryEmit(Unit)
         scope.launch(Dispatchers.IO) {
             getConfig(false, ignoreCache = true)
+        }
+    }
+
+    suspend fun getRechargeMethodByJetton(
+        testnet: Boolean,
+        jetton: String
+    ): RechargeMethodEntity? {
+        val rechargeMethods = getConfig(testnet).rechargeMethods.filter { it.supportRecharge }
+        if (rechargeMethods.isEmpty()) {
+            return null
+        }
+        return rechargeMethods.firstOrNull {
+            it.symbol.equals(
+                jetton,
+                ignoreCase = true
+            ) || it.jettonMaster?.equalsAddress(jetton) == true
         }
     }
 

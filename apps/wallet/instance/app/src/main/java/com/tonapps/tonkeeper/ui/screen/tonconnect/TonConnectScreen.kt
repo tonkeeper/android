@@ -295,7 +295,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     }
 
     private fun openWalletPicker(wallet: WalletEntity) {
-        val fragment = PickerScreen.newInstance(PickerMode.TonConnect(wallet.id))
+        val fragment = PickerScreen.newInstance(PickerMode.TonConnect(wallet.id), from = "tonconnect")
         navigation?.addForResult(fragment) { bundle ->
             fragment.contract.parseResult(bundle)?.let {
                 viewModel.setWallet(it)

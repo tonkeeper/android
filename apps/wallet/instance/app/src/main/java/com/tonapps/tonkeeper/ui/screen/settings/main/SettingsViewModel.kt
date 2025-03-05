@@ -61,6 +61,9 @@ class SettingsViewModel(
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }
 
+    val installId: String
+        get() = settingsRepository.installId
+
     init {
         combine(
             settingsRepository.currencyFlow,
@@ -79,7 +82,7 @@ class SettingsViewModel(
     }
 
     fun signOut(callback: () -> Unit) {
-        AnalyticsHelper.trackEvent("delete_wallet", settingsRepository.installId)
+        AnalyticsHelper.simpleTrackEvent("delete_wallet", settingsRepository.installId)
         viewModelScope.launch(Dispatchers.IO) {
             tonConnectManager.clear(wallet)
             PushToggleWorker.run(context, wallet, PushManager.State.Delete)

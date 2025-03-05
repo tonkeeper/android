@@ -31,7 +31,7 @@ platform :android do
         )
 
         max = internal_version_codes[0] > production_version_codes[0] ? internal_version_codes[0] : production_version_codes[0]
-        updated_version_code = max + 2
+        updated_version_code = max + 1
 
         increment_version_code(
             gradle_file_path: "./apps/wallet/instance/main/build.gradle.kts",
@@ -62,6 +62,7 @@ platform :android do
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
                 "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+                "isApk" => "false"
             }
         )
 
@@ -76,7 +77,7 @@ platform :android do
 
     desc "Build the android apk"
     lane :assemble_release do |options|
-        flavor = options[:flavor] || "default"
+        flavor = options[:flavor] || "site"
         gradle(
             task: "assemble",
             build_type: "release",
@@ -86,7 +87,7 @@ platform :android do
                 "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
                 "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
                 "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
-                "android.injected.feature.in-app-update.apk" => "true",
+                "isApk" => "true"
             }
         )
 
@@ -118,7 +119,7 @@ platform :android do
         build_release(flavor: "default")
         upload_release(app_identifier: "com.ton_keeper")
 
-        assemble_release(flavor: "default")
+        assemble_release(flavor: "site")
     end
     
     desc "Build and upload to GooglePlay (UK)"

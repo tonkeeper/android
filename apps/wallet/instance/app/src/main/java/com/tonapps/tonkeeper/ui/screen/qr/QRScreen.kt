@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.qr.ui.QRView
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
@@ -42,6 +43,11 @@ class QRScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_qr, 
     private lateinit var walletTypeView: AppCompatTextView
     private lateinit var copyView: View
     private lateinit var shareView: View
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("receive_open", viewModel.installId)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -127,7 +127,7 @@ data class ConfigEntity(
         reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
         stories = json.getJSONArray("stories").toStringList(),
         apkDownloadUrl = json.optString("apk_download_url"),
-        apkName = json.optString("apk_name")?.let { AppVersion(it) }
+        apkName = json.optString("apk_name")?.let { AppVersion(it.removePrefix("v")) }
     )
 
     constructor() : this(

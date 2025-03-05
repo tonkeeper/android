@@ -12,6 +12,7 @@ android {
 
     defaultConfig {
         minSdk = Build.minSdkVersion
+
         ndk {
             abiFilters.add("armeabi-v7a")
             abiFilters.add("arm64-v8a")

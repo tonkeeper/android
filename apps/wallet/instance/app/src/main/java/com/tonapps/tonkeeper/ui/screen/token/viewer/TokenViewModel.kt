@@ -55,6 +55,9 @@ class TokenViewModel(
         api.getBurnAddress()
     }
 
+    val installId: String
+        get() = settingsRepository.installId
+
     private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
     val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 

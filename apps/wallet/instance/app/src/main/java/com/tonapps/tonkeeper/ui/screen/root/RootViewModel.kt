@@ -209,7 +209,6 @@ class RootViewModel(
 
         api.configFlow.filter { !it.empty }.take(1).collectFlow { config ->
             AnalyticsHelper.setConfig(context, config)
-            AnalyticsHelper.trackEvent("launch_app", settingsRepository.installId)
         }
 
         combine(
@@ -237,6 +236,7 @@ class RootViewModel(
         apkManager.statusFlow.filter {
             it is APKManager.Status.UpdateAvailable
         }.collectFlow {
+            delay(1000)
             showUpdateAvailable(it as APKManager.Status.UpdateAvailable)
         }
     }
@@ -277,7 +277,7 @@ class RootViewModel(
         appUpdateManager.startUpdateFlowForResult(
             appUpdateInfo,
             activity,
-            AppUpdateOptions.defaultOptions(AppUpdateType.IMMEDIATE),
+            AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
             0
         )
     }
@@ -364,7 +364,9 @@ class RootViewModel(
             list.add(ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "tonkeeper://send"))
         }
         list.addAll(walletShortcutsFromWallet(currentWallet, wallets))
-        ShortcutManagerCompat.setDynamicShortcuts(context, list.take(3))
+        if (ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
+            ShortcutManagerCompat.setDynamicShortcuts(context, list.take(3))
+        }
     }
 
     private suspend fun walletShortcutsFromWallet(
@@ -557,7 +559,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Backups && wallet.hasPrivateKey) {
             openScreen(BackupScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.Settings) {
-            openScreen(SettingsScreen.newInstance(wallet))
+            openScreen(SettingsScreen.newInstance(wallet, from = "deeplink"))
         } else if (route is DeepLinkRoute.DApp && !wallet.isWatchOnly) {
             val dAppUri = route.url.toUri()
             val dApp = browserRepository.getApps(
@@ -583,7 +585,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.SettingsLanguage) {
             openScreen(LanguageScreen.newInstance())
         } else if (route is DeepLinkRoute.SettingsNotifications) {
-            openScreen(SettingsScreen.newInstance(wallet))
+            openScreen(SettingsScreen.newInstance(wallet, "deeplink"))
         } else if (route is DeepLinkRoute.EditWalletLabel) {
             openScreen(EditNameScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.Camera && !wallet.isWatchOnly) {
@@ -593,7 +595,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.ManageAssets) {
             openScreen(TokensManageScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.WalletPicker) {
-            openScreen(PickerScreen.newInstance())
+            openScreen(PickerScreen.newInstance(from = "deeplink"))
         } else if (route is DeepLinkRoute.Jetton) {
             openTokenViewer(wallet, route)
         } else if (route is DeepLinkRoute.Install) {
@@ -612,13 +614,13 @@ class RootViewModel(
     private suspend fun openBattery(wallet: WalletEntity, route: DeepLinkRoute.Battery) {
         val promoCode = route.promocode
         if (promoCode.isNullOrEmpty()) {
-            openScreen(BatteryScreen.newInstance(wallet))
+            openScreen(BatteryScreen.newInstance(wallet, from = "deeplink", jetton = route.jetton))
         } else {
             loading(true)
             val validCode = api.batteryVerifyPurchasePromo(wallet.testnet, promoCode)
             loading(false)
             if (validCode) {
-                openScreen(BatteryScreen.newInstance(wallet, promoCode))
+                openScreen(BatteryScreen.newInstance(wallet, promoCode, "deeplink", jetton = route.jetton))
             } else {
                 toast(Localization.wrong_promocode)
             }

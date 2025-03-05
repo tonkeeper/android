@@ -89,6 +89,9 @@ class InitViewModel(
         EntropyHelper(context)
     }
 
+    val installId: String
+        get() = settingsRepository.installId
+
     private val savedState = InitModelState(savedStateHandle)
     private val type = args.type
     private val testnet: Boolean = type == InitArgs.Type.Testnet
@@ -555,8 +558,7 @@ class InitViewModel(
 
         val wallet = accountRepository.addNewWallet(walletId, label, mnemonic)
 
-        AnalyticsHelper.trackEvent("generate_wallet", settingsRepository.installId)
-        AnalyticsHelper.trackEvent("create_wallet", settingsRepository.installId)
+        AnalyticsHelper.simpleTrackEvent("wallet_generate", installId, hashMapOf("wallet_type" to wallet.version.title))
         return wallet
     }
 
@@ -581,8 +583,11 @@ class InitViewModel(
             )
         })
 
+        accounts.map {
+            AnalyticsHelper.simpleTrackEvent("wallet_import", installId, hashMapOf("wallet_type" to it.walletVersion.title))
+        }
+
         val wallets = accountRepository.importWallet(ids, label, mnemonic, accounts.map { it.walletVersion }, testnet, accounts.map { it.initialized })
-        AnalyticsHelper.trackEvent("import_wallet", settingsRepository.installId)
         wallets
     }
 

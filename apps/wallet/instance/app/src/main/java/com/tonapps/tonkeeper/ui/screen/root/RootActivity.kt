@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
+import android.util.Log
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
@@ -328,7 +329,7 @@ class RootActivity: BaseWalletActivity() {
         bin: Cell? = null,
         initStateBase64: String? = null
     ) {
-        if ((bin != null || initStateBase64 != null) && amountNano.isPositive()) {
+        if ((bin != null || initStateBase64 != null) && !amountNano.isPositive()) {
             toast(Localization.invalid_link)
             return
         }

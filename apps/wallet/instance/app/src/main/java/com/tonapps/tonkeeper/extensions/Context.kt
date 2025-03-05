@@ -59,6 +59,18 @@ fun Context.safeExternalOpenUri(uri: Uri) {
     }
 }
 
+fun Context.safeCanRequestPackageInstalls(): Boolean {
+    return try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            packageManager.canRequestPackageInstalls()
+        } else {
+            true
+        }
+    } catch (e: Throwable) {
+        false
+    }
+}
+
 fun Context.showToast(@StringRes resId: Int) {
     navigation?.toast(resId)
 }

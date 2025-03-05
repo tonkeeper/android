@@ -52,7 +52,7 @@ class W5StoriesScreen: BaseStoriesScreen() {
         viewModel.addWallet(requireContext()).catch {
             FirebaseCrashlytics.getInstance().recordException(it)
         }.onEach { walletId ->
-            navigation?.add(PickerScreen.newInstance(PickerMode.Focus(walletId)))
+            navigation?.add(PickerScreen.newInstance(PickerMode.Focus(walletId), from = "stories"))
             navigation?.removeByClass({
                 finish()
             }, SettingsScreen::class.java)

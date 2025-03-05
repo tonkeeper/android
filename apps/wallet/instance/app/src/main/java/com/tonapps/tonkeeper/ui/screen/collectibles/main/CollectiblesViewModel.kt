@@ -40,6 +40,9 @@ class CollectiblesViewModel(
     private val _ltFlow = MutableStateFlow(0L)
     private val ltFlow = _ltFlow.asStateFlow()
 
+    val installId: String
+        get() = settingsRepository.installId
+
     val uiListStateFlow = combine(
         networkMonitor.isOnlineFlow,
         settingsRepository.hiddenBalancesFlow,

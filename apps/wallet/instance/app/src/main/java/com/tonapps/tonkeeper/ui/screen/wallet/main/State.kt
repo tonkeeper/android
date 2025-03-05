@@ -272,7 +272,7 @@ sealed class State {
             prefixYourAddress: Boolean,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
-            if (apkStatus != APKManager.Status.Default) {
+            if (apkStatus != APKManager.Status.Default && apkStatus !is APKManager.Status.UpdateAvailable) {
                 uiItems.add(Item.ApkStatus(apkStatus))
             }
             if (alerts.isNotEmpty()) {

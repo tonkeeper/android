@@ -1118,7 +1118,7 @@ class SendViewModel(
     private fun Flow<Triple<Cell, WalletEntity, Boolean>>.sendTransfer() {
         this.map { (boc, wallet, withBattery) ->
             send(boc, wallet, withBattery)
-            AnalyticsHelper.trackEvent("send_success", settingsRepository.installId)
+            AnalyticsHelper.simpleTrackEvent("send_success", settingsRepository.installId)
         }.catch {
             FirebaseCrashlytics.getInstance().recordException(it)
             _uiEventFlow.tryEmit(SendEvent.Failed(it))

@@ -20,6 +20,7 @@ import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.toast
@@ -82,6 +83,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     private lateinit var previewView: FrameLayout
 
     private var lottieView: LottieView? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("collectibles_select", rootViewModel.installId)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

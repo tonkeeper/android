@@ -15,6 +15,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.toast
@@ -53,6 +54,11 @@ class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.Botto
 
     override lateinit var cameraView: PreviewView
     private lateinit var galleryButton: Button
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("scan_open", rootViewModel.installId)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

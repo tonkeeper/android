@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.TonTransferHelper
@@ -13,8 +14,10 @@ import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.toGrams
+import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackEntity
@@ -50,6 +53,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -265,6 +269,23 @@ class BatteryRechargeViewModel(
                 _tokenFlow.tryEmit(supportedTokens.first())
             }
         }
+
+        combine(
+            promoStateFlow,
+            tokenFlow.map { it.token.symbol },
+            _customAmountFlow,
+            _selectedPackTypeFlow
+        ) { promoState, tokenSymbol, amount, rechargePackType ->
+            val promoCode = (promoState as? PromoState.Applied)?.appliedPromo ?: "null"
+            val size = if (amount) "custom" else rechargePackType?.name?.lowercase() ?: "null"
+
+            AnalyticsHelper.simpleTrackEvent("battery_select", settingsRepository.installId, hashMapOf(
+                "size" to size,
+                "promo" to promoCode,
+                "jetton" to tokenSymbol,
+                "type" to "crypto"
+            ))
+        }.launch()
     }
 
     fun setToken(token: TokenEntity) {
@@ -536,6 +557,9 @@ class BatteryRechargeViewModel(
     }
 
     fun sign(request: SignRequestEntity, forceRelayer: Boolean) = flow {
+        val promoCode = (promoStateFlow.value as? PromoState.Applied)?.appliedPromo ?: "null"
+        val tokenSymbol = _tokenFlow.value?.token?.symbol ?: "null"
+        AnalyticsHelper.batterySuccess(settingsRepository.installId, "crypto", promoCode, tokenSymbol)
         val boc = SendTransactionScreen.run(context, wallet, request, forceRelayer = forceRelayer)
         emit(boc)
     }.flowOn(Dispatchers.IO)

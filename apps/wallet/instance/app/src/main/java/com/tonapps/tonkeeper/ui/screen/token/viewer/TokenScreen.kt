@@ -7,6 +7,7 @@ import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -51,6 +52,11 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
         override fun onLoadMore() {
             viewModel.loadMore()
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("token_open", viewModel.installId)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

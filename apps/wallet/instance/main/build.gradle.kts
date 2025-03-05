@@ -13,6 +13,7 @@ plugins {
 }
 
 val isCI = project.hasProperty("android.injected.signing.store.file")
+var isAPK = gradle.startParameter.projectProperties["isApk"]?.toBoolean() ?: false
 
 android {
     namespace = Build.namespacePrefix("TonKeeper")
@@ -24,20 +25,16 @@ android {
         targetSdk = 35
         versionCode = 600
 
-        versionName = "5.0.21" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
+        versionName = "5.0.23" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        if (project.hasProperty("android.injected.feature.in-app-update.apk")) {
-            manifestPlaceholders["requestInstallPackagesPermission"] = "<uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\"/><uses-permission android:name=\"android.permission.FOREGROUND_SERVICE_DATA_SYNC\" />"
-        } else {
-            manifestPlaceholders["requestInstallPackagesPermission"] = ""
-        }
     }
 
     flavorDimensions += "version"
 
     productFlavors {
-        create("default") {}
+        create("default") { }
+        create("site") { }
         create("uk") {
             applicationIdSuffix = ".uk"
         }
@@ -57,12 +54,20 @@ android {
             )
             if (isCI) {
                 signingConfig = signingConfigs.getByName("release")
+                manifestPlaceholders += if (isAPK) {
+                    mapOf("build_type" to "site")
+                } else {
+                    mapOf("build_type" to "google_play")
+                }
+            } else {
+                manifestPlaceholders += mapOf("build_type" to "manual")
             }
         }
 
         debug {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
+            manifestPlaceholders += mapOf("build_type" to "internal_debug")
         }
     }
 

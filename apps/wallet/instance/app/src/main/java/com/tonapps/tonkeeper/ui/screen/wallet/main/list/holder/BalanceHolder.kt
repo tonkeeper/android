@@ -80,7 +80,7 @@ class BalanceHolder(
 
     override fun onBind(item: Item.Balance) {
         batteryView.setOnClickListener {
-            Navigation.from(context)?.add(BatteryScreen.newInstance(item.wallet))
+            Navigation.from(context)?.add(BatteryScreen.newInstance(item.wallet, from = "wallet"))
         }
         backupIconContainerView.setOnClickListener {
             Navigation.from(context)?.add(BackupScreen.newInstance(item.wallet))

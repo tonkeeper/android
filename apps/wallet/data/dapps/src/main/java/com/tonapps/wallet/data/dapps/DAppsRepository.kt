@@ -101,9 +101,6 @@ class DAppsRepository(
     }
 
     private suspend fun refreshLocalPushes(accountId: String) {
-        if (true) {
-            return
-        }
         val local = getPushes(accountId)
         if (!local.isEmpty) {
             setAppNotifications(local)
@@ -137,9 +134,6 @@ class DAppsRepository(
     }
 
     private suspend fun loadPushes(accountId: String, tonProof: String): AppNotificationsEntity {
-        if (true) {
-            return AppNotificationsEntity(accountId)
-        }
         val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
         database.insertNotifications(accountId, pushes)
         if (pushes.isEmpty()) {

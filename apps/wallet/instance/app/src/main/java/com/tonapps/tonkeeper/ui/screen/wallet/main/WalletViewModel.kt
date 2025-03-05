@@ -60,6 +60,9 @@ class WalletViewModel(
     private val apkManager: APKManager,
 ): BaseWalletVM(app) {
 
+    val installId: String
+        get() = settingsRepository.installId
+
     private var autoRefreshJob: Job? = null
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
 

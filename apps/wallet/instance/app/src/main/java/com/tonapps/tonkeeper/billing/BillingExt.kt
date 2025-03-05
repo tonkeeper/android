@@ -35,7 +35,7 @@ private suspend fun BillingClient.getReady(): BillingClient = suspendCancellable
             } else if (result.isSuccess) {
                 continuation.resume(this@getReady)
             } else {
-                val message = result?.debugMessage ?: "unknown error"
+                val message = result.debugMessage ?: "unknown error"
                 continuation.resumeWithException(ErrorForUserException.of(message))
             }
         }

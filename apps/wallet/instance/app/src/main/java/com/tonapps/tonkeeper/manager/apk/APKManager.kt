@@ -13,6 +13,9 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.file
+import com.tonapps.extensions.getParcelable
+import com.tonapps.extensions.putParcelable
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.extensions.safeCanRequestPackageInstalls
 import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.wallet.api.API
@@ -72,6 +75,43 @@ class APKManager(
             .onEach(::checkUpdates)
             .flowOn(Dispatchers.IO)
             .launchIn(scope)
+    }
+
+    private fun getHideReminder(): HideReminder {
+        val timestamp = settingsRepository.prefs.getLong(UPDATE_REMINDER_TIMESTAMP_KEY, 0)
+        val count = settingsRepository.prefs.getInt(UPDATE_REMINDER_COUNT_KEY, 0)
+        return HideReminder(
+            timestamp = timestamp,
+            count = count
+        )
+    }
+
+    fun closeReminder() {
+        val oldState = getHideReminder()
+        val newState = oldState.copy(
+            timestamp = System.currentTimeMillis(),
+            count = oldState.count + 1
+        )
+
+        settingsRepository.prefs.edit {
+            putLong(UPDATE_REMINDER_TIMESTAMP_KEY, newState.timestamp)
+            putInt(UPDATE_REMINDER_COUNT_KEY, newState.count)
+        }
+    }
+
+    private fun isShowReminder(): Boolean {
+        val state = getHideReminder()
+        if (0 >= state.count) {
+            return true
+        }
+        val days = if (state.count > 2) 7 else 1
+
+        val currentTime = System.currentTimeMillis()
+        val lastTime = state.timestamp
+
+        val diff = currentTime - lastTime
+        val daysDiff = diff / (1000 * 60 * 60 * 24)
+        return daysDiff >= days
     }
 
     private fun getFile(apk: ApkEntity): File {

@@ -14,6 +14,7 @@ class RemoteConfig(context: Context) {
         IS_DAPPS_DISABLE("isDappsDisable"),
         DISABLE_BATTERY_CRYPTO_RECHARGE_MODULE("disableBatteryCryptoRechargeModule"),
         HARDCODED_COUNTRY_CODE("hardcodedCountryCode"),
+        IN_APP_UPDATE_AVAILABLE("inAppUpdateAvailable"),
         IS_COUNTRY_PICKER_DISABLE("isCountryPickerDisable");
     }
 
@@ -42,6 +43,9 @@ class RemoteConfig(context: Context) {
             }
         }
     }
+
+    val inAppUpdateAvailable: Boolean
+        get() = remoteConfig.getBoolean(FeatureFlag.IN_APP_UPDATE_AVAILABLE.key)
 
     val isSwapDisable: Boolean
         get() = remoteConfig.getBoolean(FeatureFlag.IS_SWAP_DISABLE.key)

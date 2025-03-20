@@ -376,6 +376,7 @@
     <string name="ledger_confirm_title">Konfirmasi Tindakan</string>
     <string name="ledger_connect_title">Hubungkan Ledger</string>
     <string name="ledger_connect">Hubungkan Ledger ke perangkat Anda melalui Bluetooth</string>
+    <string name="ledger_usb_connect">Hubungkan Ledger ke perangkat Anda melalui USB</string>
     <string name="ledger_open_ton_app">Buka kunci dan buka Aplikasi TON</string>
     <string name="ledger_install_ton_app">Pasang Aplikasi TON</string>
     <string name="ledger_confirm_tx">Konfirmasi transaksi Anda di Ledger</string>
@@ -386,6 +387,7 @@
     <string name="ledger_update_text">Jenis transaksi ini tidak didukung di versi aplikasi Anda saat ini.</string>
     <string name="ledger_update_button">OKE</string>
     <string name="ledger_comment_error">Gunakan hanya karakter ASCII: angka, huruf alfabet latin, dan tanda baca.</string>
+    <string name="ledger_usb_permission_error">Izin perangkat ditolak. Harap sambungkan kembali perangkat USB.</string>
     <string name="bluetooth_permissions_alert_title">Izin Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Silakan aktifkan izin Bluetooth di pengaturan Anda untuk menggunakan fitur ini</string>
     <string name="bluetooth_permissions_alert_open_settings">Buka Pengaturan</string>

@@ -376,6 +376,7 @@
     <string name="ledger_confirm_title">Підтвердити дію</string>
     <string name="ledger_connect_title">Підключити Ledger</string>
     <string name="ledger_connect">Підключіть Ledger до вашого пристрою через Bluetooth</string>
+    <string name="ledger_usb_connect">Підключіть Ledger до свого пристрою через USB</string>
     <string name="ledger_open_ton_app">Розблокуйте його та відкрийте додаток TON</string>
     <string name="ledger_install_ton_app">Встановіть додаток TON</string>
     <string name="ledger_confirm_tx">Підтвердіть вашу транзакцію на Ledger</string>
@@ -386,6 +387,7 @@
     <string name="ledger_update_text">Цей тип транзакцій не підтримується поточною версією програми.</string>
     <string name="ledger_update_button">OK</string>
     <string name="ledger_comment_error">Використовуйте лише символи ASCII: цифри, літери латинського алфавіту та знаки пунктуації.</string>
+    <string name="ledger_usb_permission_error">У дозволі пристрою відмовлено. Повторно підключіть USB-пристрій.</string>
     <string name="bluetooth_permissions_alert_title">Дозволи Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Будь ласка, увімкніть дозволи на використання Bluetooth у налаштуваннях, щоб скористатися цією функцією</string>
     <string name="bluetooth_permissions_alert_open_settings">Відкрити Налаштування</string>

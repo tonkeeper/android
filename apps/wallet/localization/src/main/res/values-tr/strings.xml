@@ -376,6 +376,7 @@
     <string name="ledger_confirm_title">Eylemi Onayla</string>
     <string name="ledger_connect_title">Ledger\'ı Bağla</string>
     <string name="ledger_connect">Bluetooth ile cihazınıza Ledger bağlayın</string>
+    <string name="ledger_usb_connect">Ledger\'ı USB aracılığıyla cihazınıza bağlayın</string>
     <string name="ledger_open_ton_app">Kilidini aç ve TON Uygulamasını aç</string>
     <string name="ledger_install_ton_app">TON Uygulamasını Yükle</string>
     <string name="ledger_confirm_tx">İşleminizi Ledger\'da onaylayın</string>
@@ -386,6 +387,7 @@
     <string name="ledger_update_text">Bu tür işlem mevcut uygulama sürümünüzde desteklenmiyor.</string>
     <string name="ledger_update_button">Tamam</string>
     <string name="ledger_comment_error">Yalnızca ASCII karakterleri kullanın: rakamlar, Latin alfabesi harfleri ve noktalama işaretleri.</string>
+    <string name="ledger_usb_permission_error">Aygıt izni reddedildi. Lütfen USB aygıtını yeniden bağlayın.</string>
     <string name="bluetooth_permissions_alert_title">Bluetooth İzinleri</string>
     <string name="bluetooth_permissions_alert_message">Lütfen bu özelliği kullanmak için ayarlardan Bluetooth izinlerini etkinleştirin</string>
     <string name="bluetooth_permissions_alert_open_settings">Ayarları Aç</string>

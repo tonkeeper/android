@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.core.history.list.holder
 
+import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
@@ -18,21 +19,29 @@ class HistoryAppHolder(
     private val imageView = itemView.findViewById<FrescoView>(R.id.image)
     private val messageView = itemView.findViewById<AppCompatTextView>(R.id.message)
     private val dataView = itemView.findViewById<AppCompatTextView>(R.id.data)
+    private val navigation: Navigation?
+        get() = Navigation.from(context)
 
     init {
         itemView.background = ListCell.Position.SINGLE.drawable(context)
     }
 
     override fun onBind(item: HistoryItem.App) {
-        itemView.setOnClickListener {
-            Navigation.from(context)?.add(
+        itemView.isClickable = item.isClickable
+        if (item.isClickable) {
+            itemView.setOnClickListener {
+                navigation?.add(
                 DAppScreen.newInstance(
                     wallet = item.wallet,
                     title = item.title,
                     url = item.deepLink.toUri(),
                     source = "activity"
-            ))
+                ))
+            }
+        } else {
+            itemView.setOnClickListener(null)
         }
+
         imageView.setImageURI(item.iconUri, this)
         messageView.text = item.body
         dataView.text = createData(item.title, item.date)

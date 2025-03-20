@@ -243,7 +243,7 @@ class RootViewModel(
 
     private fun showUpdateAvailable(status: APKManager.Status.UpdateAvailable) {
         try {
-            UpdateAvailableDialog(context).show {
+            UpdateAvailableDialog(context, apkManager).show {
                 apkManager.download(status.apk)
             }
         } catch (e: Throwable) {

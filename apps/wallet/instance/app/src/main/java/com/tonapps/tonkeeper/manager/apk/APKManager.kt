@@ -9,14 +9,19 @@ import android.os.Parcelable
 import android.provider.Settings
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.file
+import com.tonapps.extensions.getParcelable
+import com.tonapps.extensions.putParcelable
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.extensions.safeCanRequestPackageInstalls
 import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ApkEntity
 import com.tonapps.wallet.api.entity.AppVersion
+import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +39,20 @@ class APKManager(
     private val scope: CoroutineScope,
     private val environment: com.tonapps.tonkeeper.Environment,
     private val api: API,
+    private val remoteConfig: RemoteConfig,
+    private val settingsRepository: SettingsRepository,
 ) {
+
+    companion object {
+        private const val UPDATE_REMINDER_TIMESTAMP_KEY = "apk_update_reminder_timestamp"
+        private const val UPDATE_REMINDER_COUNT_KEY = "apk_update_reminder_count"
+    }
+
+    @Parcelize
+    data class HideReminder(
+        val timestamp: Long = 0,
+        val count: Int = 0,
+    ): Parcelable
 
     sealed class Status {
         data object Default : Status()
@@ -59,14 +77,52 @@ class APKManager(
             .launchIn(scope)
     }
 
+    private fun getHideReminder(): HideReminder {
+        val timestamp = settingsRepository.prefs.getLong(UPDATE_REMINDER_TIMESTAMP_KEY, 0)
+        val count = settingsRepository.prefs.getInt(UPDATE_REMINDER_COUNT_KEY, 0)
+        return HideReminder(
+            timestamp = timestamp,
+            count = count
+        )
+    }
+
+    fun closeReminder() {
+        val oldState = getHideReminder()
+        val newState = oldState.copy(
+            timestamp = System.currentTimeMillis(),
+            count = oldState.count + 1
+        )
+
+        settingsRepository.prefs.edit {
+            putLong(UPDATE_REMINDER_TIMESTAMP_KEY, newState.timestamp)
+            putInt(UPDATE_REMINDER_COUNT_KEY, newState.count)
+        }
+    }
+
+    private fun isShowReminder(): Boolean {
+        val state = getHideReminder()
+        if (0 >= state.count) {
+            return true
+        }
+        val days = if (state.count > 2) 7 else 1
+
+        val currentTime = System.currentTimeMillis()
+        val lastTime = state.timestamp
+
+        val diff = currentTime - lastTime
+        val daysDiff = diff / (1000 * 60 * 60 * 24)
+        return daysDiff >= days
+    }
+
     private fun getFile(apk: ApkEntity): File {
         return folder.file("Tonkeeper_${apk.apkName}.apk")
     }
 
     private fun checkUpdates(apk: ApkEntity) {
-        if (environment.isFromGooglePlay) {
+        if (environment.isFromGooglePlay || !remoteConfig.inAppUpdateAvailable || !isShowReminder()) {
             return
         }
+
         val currentVersion = AppVersion(context.appVersionName)
         if (currentVersion.integer >= apk.apkName.integer) {
             return

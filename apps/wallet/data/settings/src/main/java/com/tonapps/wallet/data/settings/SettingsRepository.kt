@@ -96,7 +96,7 @@ class SettingsRepository(
         _walletPush.tryEmit(Unit)
     }
 
-    private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+    val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context, scope)
     private val walletPrefsFolder = WalletPrefsFolder(context, scope)
     private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)

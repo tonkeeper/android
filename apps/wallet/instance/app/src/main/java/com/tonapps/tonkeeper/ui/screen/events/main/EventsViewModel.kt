@@ -68,11 +68,17 @@ class EventsViewModel(
     private val _selectedFilter = MutableStateFlow<FilterItem?>(null)
     private val selectedFilter = _selectedFilter.asStateFlow()
 
-    val uiFilterItemsFlow: Flow<List<FilterItem>> = selectedFilter.map { selected ->
+    private val dAppsNotificationsFlow = dAppsRepository.notificationsFlow(wallet, viewModelScope).map {
+        it.notifications
+    }
+
+    val uiFilterItemsFlow: Flow<List<FilterItem>> = combine(selectedFilter, dAppsNotificationsFlow) { selected, notifications ->
         val uiFilterItems = mutableListOf<FilterItem>()
         uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
         uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
-        uiFilterItems.add(FilterItem.Dapps(selected?.type == FilterItem.TYPE_DAPPS))
+        if (notifications.isNotEmpty()) {
+            uiFilterItems.add(FilterItem.Dapps(selected?.type == FilterItem.TYPE_DAPPS))
+        }
         uiFilterItems.add(FilterItem.Spam())
         uiFilterItems.toList()
     }
@@ -84,9 +90,7 @@ class EventsViewModel(
 
     private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull()
 
-    private val dAppsNotificationsFlow = dAppsRepository.notificationsFlow(wallet, viewModelScope).map {
-        it.notifications
-    }
+
 
     private val historyItemsFlow = combine(
         eventsFlow.map { list -> list.map { it.event } },

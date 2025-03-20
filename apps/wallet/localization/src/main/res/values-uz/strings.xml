@@ -376,6 +376,7 @@
     <string name="ledger_confirm_title">Harakatni Tasdiqlang</string>
     <string name="ledger_connect_title">Ledgerni ulash</string>
     <string name="ledger_connect">Ledger qurilmasini Bluetooth orqali qurilmangizga ulang</string>
+    <string name="ledger_usb_connect">Ledger’ni qurilmangizga USB orqali ulang</string>
     <string name="ledger_open_ton_app">Qulflang va TON ilovasini oching</string>
     <string name="ledger_install_ton_app">TON ilovasini o\'rnating</string>
     <string name="ledger_confirm_tx">Ledger\'da tranzaksiyangizni tasdiqlang</string>
@@ -386,6 +387,7 @@
     <string name="ledger_update_text">Ilovangizning joriy versiyasida bu turdagi tranzaksiya qo‘llab-quvvatlanmaydi.</string>
     <string name="ledger_update_button">OK</string>
     <string name="ledger_comment_error">Faqat ASCII belgilaridan foydalaning: raqamlar, lotin alifbosi harflari va tinish belgilari.</string>
+    <string name="ledger_usb_permission_error">Qurilmaga ruxsat berilmadi. Iltimos, USB qurilmasini qayta ulang.</string>
     <string name="bluetooth_permissions_alert_title">Bluetooth ruxsatnomalari</string>
     <string name="bluetooth_permissions_alert_message">Iltimos, ushbu funksiyani ishlatish uchun sozlamalaringizda Bluetooth ruxsatlarini yoqing</string>
     <string name="bluetooth_permissions_alert_open_settings">Sozlamalarni oching</string>

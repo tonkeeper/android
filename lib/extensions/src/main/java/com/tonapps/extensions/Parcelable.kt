@@ -39,7 +39,6 @@ inline fun <reified T: Parcelable> ByteArray.toParcel(): T? {
         parcel.recycle()
         value
     } catch (e: Throwable) {
-        Log.e("DAppsRepositoryLog", "toParcel: ", e)
         null
     }
 }

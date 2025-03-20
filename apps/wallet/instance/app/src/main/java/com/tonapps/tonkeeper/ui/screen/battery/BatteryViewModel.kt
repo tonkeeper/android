@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 class BatteryViewModel(
     app: Application,
     private val wallet: WalletEntity,
-    jetton: String?,
+    jetton: String,
     private val settingsRepository: SettingsRepository,
     private val batteryRepository: BatteryRepository,
     private val tokenRepository: TokenRepository,
@@ -41,7 +41,9 @@ class BatteryViewModel(
 
     init {
         routeToRefill()
-        jetton?.let { openRecharge(it) }
+        if (jetton.isNotEmpty()) {
+            openRecharge(jetton)
+        }
     }
 
     private fun openRecharge(jetton: String) {

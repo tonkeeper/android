@@ -376,6 +376,7 @@
     <string name="ledger_confirm_title">Confirmar acción</string>
     <string name="ledger_connect_title">Conectar Ledger</string>
     <string name="ledger_connect">Conectar Ledger a tu dispositivo vía Bluetooth</string>
+    <string name="ledger_usb_connect">Conecte Ledger a su dispositivo a través de USB</string>
     <string name="ledger_open_ton_app">Desbloquéalo y abre la aplicación TON</string>
     <string name="ledger_install_ton_app">Instalar la aplicación TON</string>
     <string name="ledger_confirm_tx">Confirma tu transacción en Ledger</string>
@@ -386,6 +387,7 @@
     <string name="ledger_update_text">Este tipo de transacción no es compatible con la versión actual de su aplicación.</string>
     <string name="ledger_update_button">OK</string>
     <string name="ledger_comment_error">Utilice únicamente caracteres ASCII: dígitos, letras del alfabeto latino y signos de puntuación.</string>
+    <string name="ledger_usb_permission_error">Permiso de dispositivo denegado. Vuelva a conectar el dispositivo USB.</string>
     <string name="bluetooth_permissions_alert_title">Permisos de Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Por favor, habilite los permisos de Bluetooth en su configuración para usar esta función</string>
     <string name="bluetooth_permissions_alert_open_settings">Abrir Configuración</string>

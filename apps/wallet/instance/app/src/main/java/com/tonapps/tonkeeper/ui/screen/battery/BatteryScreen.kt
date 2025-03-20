@@ -24,7 +24,7 @@ class BatteryScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
     private val initialPromo: String? by lazy { requireArguments().getString(ARG_PROMO) }
 
     override val viewModel: BatteryViewModel by walletViewModel {
-        parametersOf(arguments?.getString(ARG_JETTON))
+        parametersOf(arguments?.getString(ARG_JETTON) ?: "")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

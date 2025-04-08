@@ -91,7 +91,9 @@
     <string name="manual_backup_check">Перевірити резервну копію</string>
     <string name="backup_check">Перевірка резервної копії</string>
     <string name="backup_check_subtitle">Перевіримо, чи все у вас правильно. Введіть слова %1$d, %2$d та %3$d.</string>
+    <string name="sign_data_binary_title">Зашифрований вміст</string>
     <string name="slide_to_confirm">Підтвердити</string>
+    <string name="sign_text_subtitle">Уважно перегляньте повідомлення і, якщо ви згодні, підпишіть транзакцію.</string>
     <string name="refresh">Оновити</string>
     <string name="mute">Вимкнути звук</string>
     <string name="disconnect">Відключити</string>
@@ -539,4 +541,6 @@
     <string name="words24">24 слова</string>
     <string name="theme_deep_blue">Темно-синя</string>
     <string name="theme_dark">Темна</string>
+    <string name="sign_data_binary_message">Ви підписуєтеся наосліп. Підписуйте лише з надійних джерел.</string>
+    <string name="slide_to_sign">Свайп щоб підписати</string>
 </resources>

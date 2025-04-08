@@ -43,7 +43,7 @@ sealed class DeepLinkRoute {
             private companion object {
 
                 private fun buildBrowserUri(category: String?): String {
-                    val builder = Uri.parse("tonkeeper://browser").buildUpon()
+                    val builder = "tonkeeper://browser".toUri().buildUpon()
                     if (!category.isNullOrBlank()) {
                         builder.appendQueryParameter("category", category)
                     }

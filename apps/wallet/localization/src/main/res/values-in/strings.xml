@@ -91,7 +91,9 @@
     <string name="manual_backup_check">Periksa Cadangan</string>
     <string name="backup_check">Pemeriksaan Cadangan</string>
     <string name="backup_check_subtitle">Mari kita lihat apakah Anda sudah benar. Masukkan kata %1$d, %2$d, dan %3$d.</string>
+    <string name="sign_data_binary_title">Konten terenkripsi</string>
     <string name="slide_to_confirm">Geser untuk Konfirmasi</string>
+    <string name="sign_text_subtitle">Tinjau pesan tersebut dengan saksama, dan jika Anda setuju, tandatangani transaksinya.</string>
     <string name="refresh">Segarkan</string>
     <string name="mute">Bisukan</string>
     <string name="disconnect">Putuskan Koneksi</string>
@@ -524,5 +526,7 @@
     <string name="words24">24 kata</string>
     <string name="theme_deep_blue">Biru Tua</string>
     <string name="theme_dark">Gelap</string>
+    <string name="sign_data_binary_message">Anda menandatangani secara membabi buta. Tanda tangani hanya dari sumber yang tepercaya.</string>
+    <string name="slide_to_sign">Geser untuk Menandatangani</string>
 
 </resources>

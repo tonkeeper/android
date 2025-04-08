@@ -61,6 +61,7 @@
     <string name="setup_finish_telegram">Присоединяйтесь к каналу Tonkeeper</string>
     <string name="staked">Стейкинг</string>
     <string name="sending_error">Ошибка отправки. Попробуйте позже</string>
+    <string name="sign_data_binary_title">Зашифрованный контент</string>
     <string name="slide_to_confirm">Подтвердить</string>
     <string name="unverified_token_description">Токен выглядит подозрительно по одной или нескольким причинам.</string>
     <string name="unverified_token_reason_1">Низкая ликвидность. У токена может быть какая-то стоимость, но она крайне мала.</string>
@@ -85,6 +86,7 @@
     <string name="domain_link_button">Привязать домен</string>
     <string name="manual_start_button">Сделать копию вручную</string>
     <string name="manual">Вручную</string>
+    <string name="emulation_failed_warning">После подтверждения может произойти что угодно, включая потерю всех ваших средств. Все транзакции необратимы. Мы не смогли проэмулировать транзакцию и не знаем, что произойдёт дальше.</string>
     <string name="manual_description">Создайте резервную копию своего кошелька вручную, записав секретный ключ.</string>
     <string name="manual_backup_done">Резервная копия сделана</string>
     <string name="manual_backup_date">Последняя %1$s</string>
@@ -122,6 +124,7 @@
     <string name="rate_tonkeeper">Оценить Tonkeeper</string>
     <string name="domain_renew_button">Продлить домен</string>
     <string name="backup">Резервная копия</string>
+    <string name="sign_text_subtitle">Внимательно прочитайте сообщение и, если вы согласны, подпишите транзакцию.</string>
     <string name="refresh">Обновить</string>
     <string name="mute">Заглушить</string>
     <string name="disconnect">Отключить</string>
@@ -598,6 +601,8 @@
     <string name="theme_deep_blue">Тёмно-синяя</string>
     <string name="theme_dark">Тёмная</string>
     <string name="words12">12 слов</string>
+    <string name="sign_data_binary_message">Вы подписываетесь вслепую. Подписывайте только из проверенных источников.</string>
+    <string name="slide_to_sign">Свайп чтобы подписать</string>
 
 
 </resources>

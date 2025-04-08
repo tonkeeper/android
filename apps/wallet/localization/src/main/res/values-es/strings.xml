@@ -91,7 +91,9 @@
     <string name="manual_backup_check">Verificar Respaldo</string>
     <string name="backup_check">Verificación de respaldo</string>
     <string name="backup_check_subtitle">Vamos a ver si tienes todo correcto. Ingresa las palabras %1$d, %2$d y %3$d.</string>
+    <string name="sign_data_binary_title">Contenido cifrado</string>
     <string name="slide_to_confirm">Deslice para confirmar</string>
+    <string name="sign_text_subtitle">Revise cuidadosamente el mensaje y si está de acuerdo, firme la transacción.</string>
     <string name="refresh">Actualizar</string>
     <string name="mute">Silenciar</string>
     <string name="disconnect">Desconectar</string>
@@ -529,5 +531,7 @@
     <string name="words24">24 palabras</string>
     <string name="theme_deep_blue">Azul profundo</string>
     <string name="theme_dark">Oscuro</string>
+    <string name="sign_data_binary_message">Estás firmando a ciegas. Firma solo con fuentes confiables.</string>
+    <string name="slide_to_sign">Deslizar para firmar</string>
 
 </resources>

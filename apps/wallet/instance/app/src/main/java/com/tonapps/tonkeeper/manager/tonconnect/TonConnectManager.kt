@@ -7,16 +7,14 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.proof.TONProof
+import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.filterList
-import com.tonapps.extensions.flat
 import com.tonapps.extensions.flatter
 import com.tonapps.extensions.hasQuery
 import com.tonapps.extensions.isEmptyQuery
 import com.tonapps.extensions.mapList
-import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.simple
 import com.tonapps.security.CryptoBox
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
@@ -29,7 +27,9 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.manager.tonconnect.exceptions.ManifestException
+import com.tonapps.tonkeeper.ui.component.SnackBarView
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
@@ -44,16 +44,17 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -62,6 +63,8 @@ import uikit.extensions.activity
 import uikit.extensions.addForResult
 import uikit.navigation.NavigationActivity
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TonConnectManager(
@@ -77,6 +80,7 @@ class TonConnectManager(
     private val bridge: Bridge = Bridge(api)
     private val bridgeConnected = AtomicBoolean(false)
     private var bridgeJob: Job? = null
+    private val recentlyConnectedClients = ConcurrentHashMap<String, Long>()
 
     private val _eventsFlow = MutableSharedFlow<BridgeEvent>(replay = 1)
     private val eventsFlow = _eventsFlow.asSharedFlow().mapNotNull { event ->
@@ -90,16 +94,26 @@ class TonConnectManager(
 
     val transactionRequestFlow = eventsFlow.mapNotNull { event ->
         if (event.method == BridgeMethod.SEND_TRANSACTION) {
+            val connectTime = recentlyConnectedClients[event.connection.clientId] ?: 0L
+            val timeSinceConnect = System.currentTimeMillis() - connectTime
+            if (timeSinceConnect < THROTTLE_DELAY_MS) {
+                delay(THROTTLE_DELAY_MS)
+            }
             Pair(event.connection, event.message)
         } else {
             if (event.method == BridgeMethod.DISCONNECT) {
                 deleteConnection(event.connection, event.message.id)
-            } else {
+            } else if (event.method != BridgeMethod.SIGN_DATA) {
                 sendBridgeError(event.connection, BridgeError.methodNotSupported("Method \"${event.method}\" not supported"), event.message.id)
             }
             null
         }
     }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 0)
+
+    val signDataRequestFlow = eventsFlow
+        .filter { it.method == BridgeMethod.SIGN_DATA }
+        .map { it }
+        .shareIn(scope, SharingStarted.Eagerly, 0)
 
     fun connectBridge() {
         if (bridgeConnected.get()) {
@@ -190,10 +204,15 @@ class TonConnectManager(
     fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type? = null) {
         scope.launch(Dispatchers.IO) {
             val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.testnet, appUrl, type)
-            for (connection in connections) {
-                bridge.sendDisconnect(connection)
+            if (connections.isNotEmpty()) {
+                for (connection in connections) {
+                    bridge.sendDisconnect(connection)
+                }
+                pushManager.dAppUnsubscribe(wallet, connections)
             }
-            pushManager.dAppUnsubscribe(wallet, connections)
+            withContext(Dispatchers.Main.immediate) {
+                reconnectBridge()
+            }
         }
     }
 
@@ -212,6 +231,11 @@ class TonConnectManager(
 
     suspend fun sendTransactionResponseSuccess(connection: AppConnectEntity, boc: String, id: Long) {
         bridge.sendTransactionResponseSuccess(connection, boc, id)
+        setLastAppRequestId(connection.clientId, id)
+    }
+
+    suspend fun sendSignDataResponseSuccess(connection: AppConnectEntity, proof: TONProof.Result, address: String, payload: SignDataRequestPayload, id: Long) {
+        bridge.sendSignDataResponseSuccess(connection, proof, address, payload, id)
         setLastAppRequestId(connection.clientId, id)
     }
 
@@ -300,7 +324,6 @@ class TonConnectManager(
 
         val clientId = tonConnect.clientId
         try {
-
             val app = readManifest(tonConnect.manifestUrl)
             if (isScam(activity, wallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
                 return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
@@ -330,7 +353,9 @@ class TonConnectManager(
                 type = if (tonConnect.jsInject) AppConnectEntity.Type.Internal else AppConnectEntity.Type.External
             )
 
-            activity.runOnUiThread {
+            recentlyConnectedClients[clientId] = System.currentTimeMillis()
+
+            withContext(Dispatchers.Main.immediate) {
                 reconnectBridge()
 
                 DAppPushToggleWorker.run(
@@ -358,6 +383,17 @@ class TonConnectManager(
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             JsonBuilder.connectEventError(BridgeError.unknown(e.bestMessage))
+        }
+    }
+
+    suspend fun showLogoutAppBar(wallet: WalletEntity, context: Context, url: Uri) = withContext(Dispatchers.Main.immediate) {
+        val connections = dAppsRepository.getConnections(wallet.accountId, wallet.testnet).flatMap {
+            it.value
+        }.filter { it.accountId.equalsAddress(wallet.accountId) && it.testnet == wallet.testnet }
+
+        if (connections.isNotEmpty()) {
+            val text = context.getString(Localization.disconnect_dapp_confirm, url.host)
+            SnackBarView.show(context, text) { disconnect(wallet, url, null) }
         }
     }
 
@@ -394,6 +430,8 @@ class TonConnectManager(
     }
 
     companion object {
+        private const val THROTTLE_DELAY_MS = 5000L
+
         private const val TONCONNECT_PREFIX = "tonkeeper://ton-connect"
 
         private val othersPrefix = listOf("tc://", "https://app.tonkeeper.com/ton-connect")

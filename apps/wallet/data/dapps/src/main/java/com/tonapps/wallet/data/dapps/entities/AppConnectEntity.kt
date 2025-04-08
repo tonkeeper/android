@@ -25,7 +25,7 @@ data class AppConnectEntity(
 ): Parcelable {
 
     enum class Type(val value: Int) {
-        Internal(1), External(2)
+        Internal(1), External(2);
     }
 
     companion object {

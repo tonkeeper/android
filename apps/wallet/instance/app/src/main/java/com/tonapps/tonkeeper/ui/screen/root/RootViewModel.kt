@@ -51,6 +51,7 @@ import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.component.UpdateAvailableDialog
 import com.tonapps.tonkeeper.ui.screen.add.AddWalletScreen
@@ -68,6 +69,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
+import com.tonapps.tonkeeper.ui.screen.sign.SignDataScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.stories.remote.RemoteStoriesScreen
@@ -105,6 +107,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import uikit.extensions.activity
 import java.util.concurrent.CancellationException
 
@@ -158,7 +161,11 @@ class RootViewModel(
 
     override fun attachHolder(holder: Holder) {
         super.attachHolder(holder)
+        observeTonConnectTransaction()
+        observeTonConnectSignData()
+    }
 
+    private fun observeTonConnectTransaction() {
         tonConnectManager.transactionRequestFlow.map { (connection, message) ->
             val tx = RootSignTransaction(connection, message, savedState.returnUri)
             savedState.returnUri = null
@@ -171,6 +178,15 @@ class RootViewModel(
                 ignoreTonConnectTransaction.add(it.hash)
                 signTransaction(it)
             }
+        }
+    }
+
+    private fun observeTonConnectSignData() {
+        tonConnectManager.signDataRequestFlow.collectFlow { event ->
+            val wallet = accountRepository.getWalletByAccountId(event.connection.accountId) ?: return@collectFlow
+            val params = event.message.params.firstOrNull() ?: return@collectFlow
+            val payload = SignDataRequestPayload.parse(params) ?: return@collectFlow
+            signData(wallet, event.connection, payload, event.message.id)
         }
     }
 
@@ -348,6 +364,7 @@ class RootViewModel(
         } catch (e: Throwable) {
             DevSettings.tonConnectLog("Error while signing transaction: ${e.bestMessage}", error = true)
             if (e is CancellationException) {
+                tonConnectManager.showLogoutAppBar(wallet, context, connection.appUrl)
                 tonConnectManager.sendBridgeError(connection, BridgeError.userDeclinedTransaction(), eventId)
             } else {
                 tonConnectManager.sendBridgeError(connection, BridgeError.unknown(e.bestMessage), eventId)
@@ -361,7 +378,9 @@ class RootViewModel(
         val wallets = accountRepository.getWallets()
         val list = mutableListOf<ShortcutInfoCompat>()
         if (!currentWallet.testnet) {
-            list.add(ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "tonkeeper://send"))
+            ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "tonkeeper://send")?.let {
+                list.add(it)
+            }
         }
         list.addAll(walletShortcutsFromWallet(currentWallet, wallets))
         if (ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
@@ -381,7 +400,9 @@ class RootViewModel(
             if (wallet == currentWallet || wallet.label.name.isBlank()) {
                 continue
             }
-            list.add(ShortcutHelper.shortcutWallet(context, wallet))
+            ShortcutHelper.shortcutWallet(context, wallet)?.let {
+                list.add(it)
+            }
         }
         return list
     }
@@ -428,7 +449,6 @@ class RootViewModel(
                 processDeepLinkPush(deeplink, bundle)
             }
         }
-
         return true
     }
 
@@ -686,5 +706,20 @@ class RootViewModel(
             )
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
+    }
+
+    private suspend fun signData(wallet: WalletEntity, connection: AppConnectEntity, payload: SignDataRequestPayload, eventId: Long) {
+        try {
+            val proof = SignDataScreen.run(context, wallet, connection.appUrl, payload)
+            tonConnectManager.sendSignDataResponseSuccess(connection, proof, wallet.address, payload, eventId)
+        } catch (e: Throwable) {
+            DevSettings.tonConnectLog("Error while signing data: ${e.bestMessage}", error = true)
+            if (e is CancellationException) {
+                tonConnectManager.showLogoutAppBar(wallet, context, connection.appUrl)
+                tonConnectManager.sendBridgeError(connection, BridgeError.userDeclinedTransaction(), eventId)
+            } else {
+                tonConnectManager.sendBridgeError(connection, BridgeError.unknown(e.bestMessage), eventId)
+            }
+        }
     }
 }

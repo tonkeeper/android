@@ -91,7 +91,9 @@
     <string name="manual_backup_check">Yedeklemeyi Kontrol Et</string>
     <string name="backup_check">Yedek Kontrolü</string>
     <string name="backup_check_subtitle">Bakalım her şeyi doğru yapmış mısın. %1$d, %2$d ve %3$d kelimelerini gir.</string>
+    <string name="sign_data_binary_title">Şifrelenmiş içerik</string>
     <string name="slide_to_confirm">Onaylamak için Kaydırın</string>
+    <string name="sign_text_subtitle">Mesajı dikkatlice inceleyin ve kabul ediyorsanız işlemi imzalayın.</string>
     <string name="refresh">Yenile</string>
     <string name="mute">Sessiz</string>
     <string name="disconnect">Bağlantıyı Kes</string>
@@ -529,4 +531,6 @@
     <string name="words24">24 kelime</string>
     <string name="theme_deep_blue">Derin Mavi</string>
     <string name="theme_dark">Karanlık</string>
+    <string name="sign_data_binary_message">Körü körüne imza atıyorsunuz. Sadece güvenilir kaynaklardan imza atın.</string>
+    <string name="slide_to_sign">İmzalamak için Kaydırın</string>
 </resources>

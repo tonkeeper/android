@@ -50,7 +50,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     override val viewModel: BrowserMainViewModel by walletViewModel()
 
     private val connectedAdapter = ConnectedAdapter { app ->
-        deleteAppConfirm(app)
+        viewModel.showDisconnect(app)
     }
 
     private val exploreAdapter = ExploreAdapter { id ->
@@ -240,16 +240,6 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         }
 
         updateScrollHandler()
-    }
-
-    private fun deleteAppConfirm(app: AppEntity) {
-        val message = getString(Localization.remove_dapp_confirm, app.name)
-        AlertDialog.Builder(requireContext())
-            .setMessage(message)
-            .setNegativeButton(Localization.confirm) {
-                viewModel.deleteConnect(app)
-            }
-            .setPositiveButton(Localization.cancel).show()
     }
 
     companion object {

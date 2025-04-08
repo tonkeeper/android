@@ -288,6 +288,8 @@ class DAppsRepository(
         }
     }
 
+    suspend fun getApps(url: Uri) = getApps(listOf(url))
+
     suspend fun getApps(urls: List<Uri>): List<AppEntity> {
         val apps = database.getApps(urls).toMutableList()
         val notFoundApps = urls.filter { url -> apps.none { it.url == url } }

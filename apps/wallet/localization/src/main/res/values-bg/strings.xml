@@ -119,7 +119,9 @@
     <string name="backup_check">Проверка на резервното копие</string>
     <string name="backup_check_subtitle">Нека видим дали сте запомнили всичко. Въведете думи %1$d, %2$d и %3$d.</string>
 
+    <string name="sign_data_binary_title">Криптирано съдържание</string>
     <string name="slide_to_confirm">Потвърждение</string>
+    <string name="sign_text_subtitle">Внимателно прегледайте съобщението и ако сте съгласни, подпишете транзакцията.</string>
     <string name="refresh">Обновяване</string>
     <string name="mute">Заглушаване</string>
     <string name="disconnect">Прекъсване</string>
@@ -575,4 +577,6 @@
     <string name="words24">24 думи</string>
     <string name="theme_deep_blue">Deep Blue</string>
     <string name="theme_dark">Тъмно</string>
+    <string name="sign_data_binary_message">Подписваш се на сляпо. Подписвайте само от доверени източници.</string>
+    <string name="slide_to_sign">Плъзнете, за да подпишете</string>
 </resources>

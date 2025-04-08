@@ -26,9 +26,11 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
+import com.tonapps.tonkeeper.ui.screen.sign.SignDataScreen
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
@@ -136,6 +138,20 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         )
     }
 
+    private suspend fun tonconnectSignData(message: BridgeEvent.Message): JSONObject {
+        try {
+            val params = message.params.firstOrNull() ?: return JsonBuilder.responseError(message.id, BridgeError.methodNotSupported("Unknown params"))
+            val payload = SignDataRequestPayload.parse(params) ?: return JsonBuilder.responseError(message.id, BridgeError.methodNotSupported("Unknown payload"))
+            val proof = SignDataScreen.run(requireContext(), wallet, uri, payload)
+            return JsonBuilder.responseSignData(message.id, proof, wallet.address, payload)
+        } catch (e: CancellationException) {
+            context?.let { tonConnectManager.showLogoutAppBar(wallet, it, uri) }
+            return JsonBuilder.responseError(message.id, BridgeError.userDeclinedTransaction())
+        } catch (e: Throwable) {
+            return JsonBuilder.responseError(message.id, BridgeError.unknown(e.bestMessage))
+        }
+    }
+
     suspend fun tonconnectSend(array: JSONArray): JSONObject {
         var id = 0L
         try {
@@ -143,7 +159,9 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             if (messages.size == 1) {
                 val message = messages.first()
                 id = message.id
-                if (message.method != BridgeMethod.SEND_TRANSACTION) {
+                if (message.method == BridgeMethod.SIGN_DATA) {
+                    return tonconnectSignData(message)
+                } else if (message.method != BridgeMethod.SEND_TRANSACTION) {
                     return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
                 }
                 val signRequests = message.params.map { SignRequestEntity(it, uri) }
@@ -155,6 +173,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
                     JsonBuilder.responseSendTransaction(id, boc)
                 } catch (e: CancellationException) {
+                    context?.let { tonConnectManager.showLogoutAppBar(wallet, it, uri) }
                     JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
                 } catch (e: BridgeException) {
                     JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))

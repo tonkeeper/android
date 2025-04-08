@@ -1,6 +1,5 @@
 package com.tonapps.extensions
 
-import android.os.Parcelable
 import org.json.JSONArray
 import org.json.JSONObject
 

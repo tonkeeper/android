@@ -4,8 +4,10 @@ import android.util.Log
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.ledger.ton.Transaction
+import com.tonapps.security.tryCallGC
 import com.tonapps.tonkeeper.core.signer.SignerHelper
 import com.tonapps.tonkeeper.extensions.requestPrivateKey
+import com.tonapps.tonkeeper.extensions.sign
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
 import com.tonapps.tonkeeper.ui.screen.external.qr.signer.sign.SignerSignScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
@@ -53,12 +55,12 @@ class SignTransaction(
         return BagOfCells(signerMessage).first()
     }
 
-    suspend fun requestSignedMessage(
+    suspend fun requestSignature(
         activity: NavigationActivity,
         wallet: WalletEntity,
         unsignedBody: Cell
-    ): Cell {
-        val signature = when (wallet.type) {
+    ): BitString {
+        return when (wallet.type) {
             Wallet.Type.SignerQR -> signerQR(activity, wallet, unsignedBody)
             Wallet.Type.Signer -> signerApp(activity, wallet, unsignedBody)
             Wallet.Type.Default, Wallet.Type.Testnet, Wallet.Type.Lockup -> default(activity, wallet, unsignedBody)
@@ -67,6 +69,14 @@ class SignTransaction(
                 throw IllegalArgumentException("Unsupported wallet type: ${wallet.type}")
             }
         }
+    }
+
+    suspend fun requestSignedMessage(
+        activity: NavigationActivity,
+        wallet: WalletEntity,
+        unsignedBody: Cell
+    ): Cell {
+        val signature = requestSignature(activity, wallet, unsignedBody)
         return wallet.contract.signedBody(signature, unsignedBody)
     }
 
@@ -107,7 +117,7 @@ class SignTransaction(
         return hash ?: throw CancellationException("Signer cancelled")
     }
 
-    private suspend fun default(
+    suspend fun default(
         activity: NavigationActivity,
         wallet: WalletEntity,
         unsignedBody: Cell
@@ -122,5 +132,20 @@ class SignTransaction(
         val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id) ?: throw SendException.UnableSendTransaction()
         val hash = privateKey.sign(unsignedBody.hash())
         BitString(hash)
+    }
+
+    suspend fun default(
+        activity: NavigationActivity,
+        wallet: WalletEntity,
+        bytes: ByteArray
+    ): ByteArray = withContext(Dispatchers.IO) {
+        if (!wallet.hasPrivateKey) {
+            throw SendException.UnableSendTransaction()
+        }
+        val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        if (!isValidPasscode) {
+            throw SendException.WrongPasscode()
+        }
+        accountRepository.sign(activity, rnLegacy, wallet.id, bytes)
     }
 }

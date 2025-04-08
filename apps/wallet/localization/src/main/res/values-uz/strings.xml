@@ -91,7 +91,9 @@
     <string name="manual_backup_check">Zaxiralarni tekshirish</string>
     <string name="backup_check">Zaxira tekshiruvi</string>
     <string name="backup_check_subtitle">Keling, hammasi to\'g\'ri ekanligini ko\'rib chiqamiz. %1$d, %2$d va %3$d so\'zlarni kiriting.</string>
+    <string name="sign_data_binary_title">Shifrlangan kontent</string>
     <string name="slide_to_confirm">Tasdiqlash uchun suring</string>
+    <string name="sign_text_subtitle">Xabarni diqqat bilan ko\'rib chiqing va agar rozi bo\'lsangiz, bitimga imzo cheking.</string>
     <string name="refresh">Yangilash</string>
     <string name="mute">Ovozini o\'chirish</string>
     <string name="disconnect">Aloqani uzish</string>
@@ -529,4 +531,6 @@
     <string name="words24">24 so\'z</string>
     <string name="theme_deep_blue">Chuqur moviy</string>
     <string name="theme_dark">Qorong\'i</string>
+    <string name="sign_data_binary_message">Siz ko\'r-ko\'rona imzo chekyapsiz. Faqat ishonchli manbalardan kiring.</string>
+    <string name="slide_to_sign">Imzolash uchun suring</string>
 </resources>

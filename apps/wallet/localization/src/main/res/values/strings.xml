@@ -8,6 +8,7 @@
     <string name="beta" translatable="false">Beta</string>
     <string name="ok" translatable="false">OK</string>
     <string name="usb" translatable="false">USB</string>
+    <string name="sign_data" translatable="false">Sign data</string>
     <string name="bluetooth" translatable="false">Bluetooth</string>
     <string name="dApps" translatable="false">dApps</string>
     <string name="keystone" translatable="false">Keystone</string>
@@ -22,6 +23,8 @@
     <string name="app_icon">App Icon</string>
     <string name="app_icon_changed">App icon changed</string>
     <string name="default_font_size">Default Font Size</string>
+    <string name="sign">Sign</string>
+    <string name="swipe_right">Swipe right</string>
     <string name="open">Open</string>
     <string name="words12">12 words</string>
     <string name="words24">24 words</string>
@@ -29,6 +32,7 @@
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>
     <string name="downloading">Downloading…</string>
+    <string name="emulation_failed_warning">After confirmation, anything can happen, including losing all your funds. All transactions are irreversible. We couldn’t emulate the transaction and don’t know what will happen next.</string>
     <string name="update_tonkeeper">Update Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">A new version of Tonkeeper is available. You can download it now.</string>
     <string name="download_error">Download error. Tap to retry.</string>
@@ -183,7 +187,12 @@
     <string name="backup_check">Backup Check</string>
     <string name="backup_check_subtitle">Let\'s see if you\'ve got everything right. Enter words %1$d, %2$d, and %3$d.</string>
 
+
+    <string name="sign_data_binary_message">You are signing blindly. Sign only from trusted sources.</string>
+    <string name="sign_data_binary_title">Encrypted content</string>
     <string name="slide_to_confirm">Slide to Confirm</string>
+    <string name="slide_to_sign">Slide to Sign</string>
+    <string name="sign_text_subtitle">Carefully review the message, and if you agree, sign the transaction.</string>
     <string name="refresh">Refresh</string>
     <string name="mute">Mute</string>
     <string name="disconnect">Disconnect</string>

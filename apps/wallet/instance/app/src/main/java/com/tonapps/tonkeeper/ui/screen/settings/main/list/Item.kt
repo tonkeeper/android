@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list
 
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.tonkeeper.os.AppInstall
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
@@ -42,7 +43,9 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
 
     data object Space: Item(TYPE_SPACE, "")
 
-    data object Logo: Item(TYPE_LOGO, "version")
+    data class Logo(
+        val installerSource: AppInstall.Source
+    ): Item(TYPE_LOGO, "version")
 
     sealed class Text(
         val titleRes: Int,

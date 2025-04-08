@@ -13,6 +13,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.tonapps.emoji.Emoji
+import com.tonapps.extensions.isValid
 import com.tonapps.extensions.max18
 import com.tonapps.tonkeeper.App
 import com.tonapps.uikit.color.accentBlueColor
@@ -21,6 +22,8 @@ import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.extensions.dp
 import uikit.extensions.drawable
+import androidx.core.net.toUri
+import androidx.core.graphics.createBitmap
 
 object ShortcutHelper {
 
@@ -31,7 +34,7 @@ object ShortcutHelper {
         val iconDrawable = context.drawable(resId)
 
         val size = 64.dp
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(size, size)
         val canvas = Canvas(bitmap)
 
         val iconSize = 24.dp
@@ -49,18 +52,25 @@ object ShortcutHelper {
         titleRes: Int,
         iconRes: Int,
         url: String
-    ): ShortcutInfoCompat {
-        val icon = IconCompat.createWithBitmap(createIcon(context, iconRes))
+    ): ShortcutInfoCompat? {
+        try {
+            val icon = IconCompat.createWithBitmap(createIcon(context, iconRes))
 
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        intent.setPackage(context.packageName)
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            intent.setPackage(context.packageName)
+            if (!intent.isValid(context)) {
+                return null
+            }
 
-        val builder = ShortcutInfoCompat.Builder(context, url)
-            .setShortLabel(context.getString(titleRes))
-            .setIcon(icon)
-            .setIntent(intent)
+            val builder = ShortcutInfoCompat.Builder(context, url)
+                .setShortLabel(context.getString(titleRes))
+                .setIcon(icon)
+                .setIntent(intent)
 
-        return builder.build()
+            return builder.build()
+        } catch (e: Throwable) {
+            return null
+        }
     }
 
     private suspend fun createWalletIcon(
@@ -70,7 +80,7 @@ object ShortcutHelper {
         val iconBitmap = Emoji.getBitmap(context, wallet.label.emoji, Color.TRANSPARENT)
 
         val size = 64.dp
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(size, size)
         val canvas = Canvas(bitmap)
         canvas.drawColor(wallet.label.color)
 
@@ -84,28 +94,36 @@ object ShortcutHelper {
     suspend fun shortcutWallet(
         context: Context,
         wallet: WalletEntity
-    ): ShortcutInfoCompat {
-        val url = "tonkeeper://pick/${wallet.id}"
-        val icon = IconCompat.createWithBitmap(createWalletIcon(context, wallet))
+    ): ShortcutInfoCompat? {
+        try {
+            val url = "tonkeeper://pick/${wallet.id}"
+            val icon = IconCompat.createWithBitmap(createWalletIcon(context, wallet))
 
-        val person = Person.Builder()
-            .setName(wallet.label.name.max18)
-            .setIcon(icon)
-            .setUri(url)
-            .setKey(wallet.id)
-            .build()
+            val person = Person.Builder()
+                .setName(wallet.label.name.max18)
+                .setIcon(icon)
+                .setUri(url)
+                .setKey(wallet.id)
+                .build()
 
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        intent.setPackage(context.packageName)
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            intent.setPackage(context.packageName)
 
-        val builder = ShortcutInfoCompat.Builder(context, "wallet_${wallet.id}")
-            .setShortLabel(wallet.label.name)
-            .setIcon(person.icon)
-            .setPerson(person)
-            .setLongLived(true)
-            .setLocusId(LocusIdCompat(wallet.id))
-            .setIntent(intent)
+            if (!intent.isValid(context)) {
+                return null
+            }
 
-        return builder.build()
+            val builder = ShortcutInfoCompat.Builder(context, "wallet_${wallet.id}")
+                .setShortLabel(wallet.label.name)
+                .setIcon(person.icon)
+                .setPerson(person)
+                .setLongLived(true)
+                .setLocusId(LocusIdCompat(wallet.id))
+                .setIntent(intent)
+
+            return builder.build()
+        } catch (e: Throwable) {
+            return null
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.tonapps.wallet.api.internal
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
+import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.deviceCountry
 import com.tonapps.extensions.getStoreCountry

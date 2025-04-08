@@ -9,7 +9,7 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.proof.TONProof
+import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4

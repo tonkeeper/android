@@ -215,7 +215,7 @@ class SettingsViewModel(
             uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label, !wallet.hasPrivateKey))
         }
         uiItems.add(Item.Space)
-        uiItems.add(Item.Logo)
+        uiItems.add(Item.Logo(environment.installerSource))
 
         _uiItemsFlow.value = uiItems
     }

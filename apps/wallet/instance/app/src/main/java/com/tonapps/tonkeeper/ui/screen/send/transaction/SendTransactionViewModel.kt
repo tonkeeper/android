@@ -131,7 +131,8 @@ class SendTransactionViewModel(
                         emulated = details,
                         totalFormat = if (emulated.failed) getString(Localization.unknown) else totalFormatBuilder.toString(),
                         isDangerous = emulated.total.isDangerous,
-                        nftCount = emulated.nftCount
+                        nftCount = emulated.nftCount,
+                        failed = emulated.failed
                     )
                 }
             } catch (e: Throwable) {

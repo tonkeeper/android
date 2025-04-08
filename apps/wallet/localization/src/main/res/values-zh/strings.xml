@@ -529,23 +529,4 @@
     <string name="theme_dark">黑暗的</string>
     <string name="sign_data_binary_message">您正在盲目签名。请仅从可信赖的来源签名。</string>
     <string name="slide_to_sign">滑动签名</string>
-    <string name="insufficient_battery_charges">电池电量不足</string>
-    <string name="insufficient_balance_charges">手续费所需：%1$s。\n可用余额：%2$s。</string>
-    <string name="receive_tron_description">请仅向此地址发送 %1$s，否则您可能会丢失资金。</string>
-    <string name="open_explorer">在浏览器中打开</string>
-    <string name="out_of_available_charges">已用完 %1$s 可用额度</string>
-    <string name="tron_toggle_text">使用 USD₮ TRC20，无需 TRX。手续费由 Tonkeeper Battery 支付。</string>
-    <string name="trc20">TRC20</string>
-    <string name="copy_phrase">复制助记词</string>
-    <string name="export_tron">导出 TRC20 钱包</string>
-    <string name="phrase_title_tron">TRC20 钱包</string>
-    <string name="phrase_description_tron">请记下这些助记词和对应编号，并妥善保管。</string>
-    <string name="prhase_tron_warning">此助记词仅适用于 TRC20，无法恢复您的 TON 钱包。请使用您的 TON 恢复助记词进行恢复。</string>
-    <string name="battery_required_title">%1$s 需要 Tonkeeper Battery</string>
-    <string name="battery_required_text">电池电量用于支付交易手续费，使转账更简单且更具性价比。</string>
-    <string name="charge_battery">为电池充电</string>
-    <string name="send_wrong_blockchain">该地址属于 %1$s 网络。</string>
-    <string name="send_wrong_blockchain_swap">通过 %3$s 将 USD₮ %1$s 兑换为 USD₮ %2$s 以继续转账。</string>
-    <string name="enable_usdt_tron">启用 USD₮ TRC20</string>
-
 </resources>

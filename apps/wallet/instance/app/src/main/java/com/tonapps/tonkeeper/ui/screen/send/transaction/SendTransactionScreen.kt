@@ -7,7 +7,6 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnNextLayout
@@ -55,7 +54,6 @@ import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 import java.util.concurrent.CancellationException
 import androidx.core.view.isVisible
-import uikit.extensions.getDimensionPixelSize
 
 class SendTransactionScreen(wallet: WalletEntity) :
     WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal,
@@ -163,18 +161,8 @@ class SendTransactionScreen(wallet: WalletEntity) :
         slideTextBuilder.append(getString(Localization.confirm))
         slideTextBuilder.append("\n")
         slideTextBuilder.append(SpannableString(secondLineText).apply {
-            setSpan(
-                RelativeSizeSpan(0.8f),
-                0,
-                secondLineText.length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-            setSpan(
-                ForegroundColorSpan(
-                    requireContext().resolveColor(com.tonapps.uikit.color.R.attr.textTertiaryColor)
-                        .withAlpha(0.7f)
-                ), 0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
+            setSpan(RelativeSizeSpan(0.8f),0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(ForegroundColorSpan(requireContext().resolveColor(com.tonapps.uikit.color.R.attr.textTertiaryColor).withAlpha(0.7f)),0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         })
         return slideTextBuilder
     }
@@ -251,8 +239,6 @@ class SendTransactionScreen(wallet: WalletEntity) :
         }
         if (state.failed) {
             showFailedEmulate()
-        } else {
-            applyTotal(state)
         }
     }
 

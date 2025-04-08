@@ -170,15 +170,6 @@ class RootViewModel(
         observeTonConnectSignData()
     }
 
-    private suspend fun sendFirstLaunchEvent() = withContext(Dispatchers.IO) {
-        if (0 >= DevSettings.firstLaunchDate) {
-            val referrer = referrerClientHelper.getInstallReferrer()
-            val deeplink = DevSettings.firstLaunchDeeplink.ifBlank { null }
-            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer, deeplink)
-            DevSettings.firstLaunchDate = currentTimeSeconds()
-        }
-    }
-
     private fun observeTonConnectTransaction() {
         tonConnectManager.transactionRequestFlow.map { (connection, message) ->
             val tx = RootSignTransaction(connection, message, savedState.returnUri)

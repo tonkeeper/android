@@ -544,23 +544,4 @@
     <string name="theme_dark">Темна</string>
     <string name="sign_data_binary_message">Ви підписуєтеся наосліп. Підписуйте лише з надійних джерел.</string>
     <string name="slide_to_sign">Свайп щоб підписати</string>
-    <string name="insufficient_battery_charges">Недостатньо зарядів батареї</string>
-    <string name="insufficient_balance_charges">Потрібно для комісії: %1$s.\nДоступно: %2$s.</string>
-    <string name="receive_tron_description">Надсилайте лише %1$s на цю адресу, інакше можете втратити кошти.</string>
-    <string name="open_explorer">Відкрити в оглядачі</string>
-    <string name="out_of_available_charges">з %1$s доступних</string>
-    <string name="tron_toggle_text">Використовуйте USD₮ TRC20 без TRX. Комісії покриваються Tonkeeper Battery.</string>
-    <string name="trc20">TRC20</string>
-    <string name="copy_phrase">Скопіювати фразу</string>
-    <string name="export_tron">Експортувати TRC20-гаманець</string>
-    <string name="phrase_title_tron">TRC20-гаманець</string>
-    <string name="phrase_description_tron">Запишіть ці слова з їхніми номерами та збережіть у безпечному місці.</string>
-    <string name="prhase_tron_warning">Ця фраза тільки для TRC20. Вона не відновить ваш TON-гаманець. Використовуйте фразу відновлення TON для відновлення TON-гаманця.</string>
-    <string name="battery_required_title">Потрібна Tonkeeper Battery для %1$s</string>
-    <string name="battery_required_text">Заряди батареї використовуються для покриття комісій, що робить перекази простішими та вигіднішими.</string>
-    <string name="charge_battery">Зарядити батарею</string>
-    <string name="send_wrong_blockchain">Адреса належить мережі %1$s.</string>
-    <string name="send_wrong_blockchain_swap">Обміняйте USD₮ %1$s на USD₮ %2$s через %3$s, щоб продовжити переказ.</string>
-    <string name="enable_usdt_tron">Увімкніть USD₮ TRC20</string>
-
 </resources>

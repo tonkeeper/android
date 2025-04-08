@@ -8,6 +8,7 @@
     <string name="beta" translatable="false">Beta</string>
     <string name="ok" translatable="false">OK</string>
     <string name="usb" translatable="false">USB</string>
+    <string name="sign_data" translatable="false">Sign data</string>
     <string name="bluetooth" translatable="false">Bluetooth</string>
     <string name="dApps" translatable="false">dApps</string>
     <string name="keystone" translatable="false">Keystone</string>

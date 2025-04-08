@@ -25,7 +25,7 @@ android {
         targetSdk = 35
         versionCode = 600
 
-        versionName = "5.0.20" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
+        versionName = "5.1.2" // Format is "major.minor.patch" (e.g. "1.0.0") and only numbers are allowed
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -101,7 +101,7 @@ baselineProfile {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation(project(Dependence.Wallet.app))
 
     testImplementation("junit:junit:4.13.2")
@@ -111,7 +111,7 @@ dependencies {
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
 
     // implementation(Dependence.AndroidX.profileinstaller)
-    // baselineProfile(project(":baselineprofile:main"))
+    baselineProfile(project(":baselineprofile:main"))
 
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 }

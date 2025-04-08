@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
+import android.view.View
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
@@ -67,18 +68,10 @@ class BrowserMainViewModel(
         }
     }
 
-    private fun getDebugApps(): List<BrowserAppEntity> {
-        val apps = mutableListOf<BrowserAppEntity>()
-        apps.add(BrowserAppEntity(
-            name = "Mariabit",
-            description = "fdsfsd",
-            icon = Uri.EMPTY,
-            poster = null,
-            url = "https://mariabit.github.io/".toUri(),
-            textColor = Color.WHITE,
-        ))
-
-        return apps.toList()
+    fun showDisconnect(app: AppEntity) {
+        viewModelScope.launch {
+            tonConnectManager.showLogoutAppBar(wallet, context, app.url)
+        }
     }
 
     private fun getDebugApps(): List<BrowserAppEntity> {

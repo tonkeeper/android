@@ -535,17 +535,4 @@
     <string name="theme_dark">Qorong\'i</string>
     <string name="sign_data_binary_message">Siz ko\'r-ko\'rona imzo chekyapsiz. Faqat ishonchli manbalardan kiring.</string>
     <string name="slide_to_sign">Imzolash uchun suring</string>
-    <string name="tron_toggle_text">USD₮ TRC20 ni TRX holda ishlating. Komissiyalar Tonkeeper Battery tomonidan qoplanadi.</string>
-    <string name="trc20">TRC20</string>
-    <string name="copy_phrase">Iborani nusxalash</string>
-    <string name="export_tron">TRC20 hamyonni eksport qilish</string>
-    <string name="phrase_title_tron">TRC20 hamyon</string>
-    <string name="phrase_description_tron">Ushbu so‘zlarni raqamlari bilan yozib oling va xavfsiz joyda saqlang.</string>
-    <string name="prhase_tron_warning">Ushbu ibora faqat TRC20 uchun. Bu sizning TON hamyoningizni tiklay olmaydi. TON hamyonini tiklash uchun TON tiklash iborasidan foydalaning.</string>
-    <string name="battery_required_title">%1$s uchun Tonkeeper Battery talab qilinadi</string>
-    <string name="battery_required_text">Tranzaksiya to‘lovlarini qoplash uchun zaryadlar ishlatiladi, bu esa pul o‘tkazmalarini oson va arzon qiladi.</string>
-    <string name="charge_battery">Batareyani zaryadlash</string>
-    <string name="send_wrong_blockchain">Manzil %1$s tarmog‘iga tegishli.</string>
-    <string name="send_wrong_blockchain_swap">USD₮ %1$s ni USD₮ %2$s ga %3$s orqali almashtirib, pul o‘tkazmasini davom eting.</string>
-    <string name="enable_usdt_tron">USD₮ TRC20 ni yoqish</string>
 </resources>

@@ -13,16 +13,6 @@ class Environment(
     private val settingsRepository: SettingsRepository,
 ) {
 
-    val theme: AppTheme
-        get() {
-            return when(settingsRepository.theme.key) {
-                "blue" -> AppTheme.BLUE
-                "dark" -> AppTheme.DARK
-                "light" -> AppTheme.LIGHT
-                else -> if (context.isDarkMode) AppTheme.DARK else AppTheme.LIGHT
-            }
-        }
-
     val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
 
     val isFromGooglePlay: Boolean by lazy {

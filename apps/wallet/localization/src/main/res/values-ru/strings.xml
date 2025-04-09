@@ -94,7 +94,7 @@
     <string name="backup_attention_description">Пожалуйста, внимательно прочитайте перед просмотром секретного ключа.</string>
     <string name="backup_attention_line_1">Никогда и нигде не вводите свой секретный ключ для доступа к кошельку, кроме Tonkeeper.</string>
     <string name="backup_attention_line_2">Поддержка Tonkeeper никогда не запрашивает секретный ключ.</string>
-    <string name="backup_attention_line_3">Любой, кто знает ваш секретный ключ, сможет получить доступ к вашему кошельку.</string>
+    <string name="backup_attention_line_3">Любой, кто знает ваш секретный ключ, сможет использовать ваш кошелёк.</string>
     <string name="backup_check">Проверка резервной копии</string>
     <string name="backup_check_subtitle">Давайте проверим, все ли вы записали правильно. Введите слова %1$d, %2$d, и %3$d.</string>
     <string name="manual_backup_check">Проверить резервную копию</string>

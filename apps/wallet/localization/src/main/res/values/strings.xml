@@ -182,7 +182,7 @@
     <string name="backup_attention_description">Please read the following carefully before viewing your recovery phrase.</string>
     <string name="backup_attention_line_1">Never enter your recovery phrase any other place than Tonkeeper to access your wallet.</string>
     <string name="backup_attention_line_2">Tonkeeper Support never asks for a recovery phrase.</string>
-    <string name="backup_attention_line_3">Everybody with your recovery phrase can access your wallet.</string>
+    <string name="backup_attention_line_3">Anyone with your recovery phrase can use your wallet.</string>
     <string name="manual_backup_check">Check Backup</string>
     <string name="backup_check">Backup Check</string>
     <string name="backup_check_subtitle">Let\'s see if you\'ve got everything right. Enter words %1$d, %2$d, and %3$d.</string>

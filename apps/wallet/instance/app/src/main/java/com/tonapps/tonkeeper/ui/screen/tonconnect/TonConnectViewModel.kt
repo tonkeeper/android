@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,11 +19,15 @@ import kotlinx.coroutines.launch
 class TonConnectViewModel(
     app: Application,
     private val accountRepository: AccountRepository,
-    private val signUseCase: SignUseCase
+    private val signUseCase: SignUseCase,
+    private val settingsRepository: SettingsRepository
 ): BaseWalletVM(app) {
 
     private val _stateFlow = MutableStateFlow<TonConnectScreenState?>(null)
     val stateFlow = _stateFlow.asStateFlow().filterNotNull()
+
+    val installId: String
+        get() = settingsRepository.installId
 
     init {
         viewModelScope.launch(Dispatchers.IO) {

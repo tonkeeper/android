@@ -9,6 +9,7 @@ import com.tonapps.wallet.api.entity.AccountEventEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.battery.BatteryRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,7 +33,8 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalCoroutinesApi::class)
 class TransactionManager(
     private val accountRepository: AccountRepository,
-    private val api: API
+    private val api: API,
+    private val batteryRepository: BatteryRepository,
 ) {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -88,7 +90,15 @@ class TransactionManager(
         confirmationTime: Double,
     ): SendBlockchainState {
         val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return SendBlockchainState.UNKNOWN_ERROR
-        return api.sendToBlockchainWithBattery(boc, tonProofToken, wallet.testnet, source, confirmationTime)
+        val state = api.sendToBlockchainWithBattery(boc, tonProofToken, wallet.testnet, source, confirmationTime)
+        if (state == SendBlockchainState.SUCCESS) {
+            batteryRepository.refreshBalanceDelay(
+                publicKey = wallet.publicKey,
+                tonProofToken = tonProofToken,
+                testnet = wallet.testnet,
+            )
+        }
+        return state
     }
 
     suspend fun send(

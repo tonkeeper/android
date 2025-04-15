@@ -11,6 +11,7 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.Amount
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
@@ -74,6 +75,7 @@ class SendTransactionViewModel(
     var message: MessageBodyEntity? = null
 
     init {
+        AnalyticsHelper.tcViewConfirm(settingsRepository.installId, request.appUri.toString(), request.targetAddressValue)
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = getTokens()
             val useBattery = isBatteryIsEnabledTx()
@@ -266,7 +268,18 @@ class SendTransactionViewModel(
         }
 
         val isSuccessful = states.all { it == SendBlockchainState.SUCCESS }
+
         if (isSuccessful) {
+            val feePaid = when {
+                isBattery -> "battery"
+                else -> "ton"
+            }
+            AnalyticsHelper.tcSendSuccess(
+                installId = settingsRepository.installId,
+                url = request.appUri.toString(),
+                address = request.targetAddressValue,
+                feePaid = feePaid
+            )
             emit(cells.map { it.base64() }.toTypedArray())
         } else {
             throw IllegalStateException("Failed to send transaction to blockchain: $states")

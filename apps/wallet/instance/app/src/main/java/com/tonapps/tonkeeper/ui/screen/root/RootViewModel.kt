@@ -10,6 +10,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManager
@@ -42,9 +43,12 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
+import com.tonapps.tonkeeper.extensions.hasRefer
+import com.tonapps.tonkeeper.extensions.hasUtmSource
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.safeExternalOpenUri
 import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.helper.ReferrerClientHelper
 import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.FirebasePush
@@ -125,6 +129,7 @@ class RootViewModel(
     private val environment: Environment,
     private val passcodeManager: PasscodeManager,
     private val apkManager: APKManager,
+    private val referrerClientHelper: ReferrerClientHelper,
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
@@ -163,6 +168,15 @@ class RootViewModel(
         super.attachHolder(holder)
         observeTonConnectTransaction()
         observeTonConnectSignData()
+    }
+
+    private suspend fun sendFirstLaunchEvent() = withContext(Dispatchers.IO) {
+        if (0 >= DevSettings.firstLaunchDate) {
+            val referrer = referrerClientHelper.getInstallReferrer()
+            val deeplink = DevSettings.firstLaunchDeeplink.ifBlank { null }
+            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer, deeplink)
+            DevSettings.firstLaunchDate = currentTimeSeconds()
+        }
     }
 
     private fun observeTonConnectTransaction() {
@@ -225,6 +239,7 @@ class RootViewModel(
 
         api.configFlow.filter { !it.empty }.take(1).collectFlow { config ->
             AnalyticsHelper.setConfig(context, config)
+            sendFirstLaunchEvent()
         }
 
         combine(
@@ -492,7 +507,7 @@ class RootViewModel(
         savedState.returnUri = null
         val deeplink = DeepLink(uri, fromQR, refSource)
         if (deeplink.route is DeepLinkRoute.Unknown) {
-            viewModelScope.launch { toast(Localization.invalid_link) }
+            viewModelScope.launch { showInvalidLinkToast(deeplink.route) }
             return false
         }
         if (deeplink.route is DeepLinkRoute.Internal && !internal) {
@@ -621,6 +636,12 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Install) {
             installAPK(route)
         } else {
+            showInvalidLinkToast(deeplink.route)
+        }
+    }
+
+    private suspend fun showInvalidLinkToast(route: DeepLinkRoute) {
+        if (!(route is DeepLinkRoute.Unknown && (route.uri.hasRefer() || route.uri.hasUtmSource()))) {
             toast(Localization.invalid_link)
         }
     }

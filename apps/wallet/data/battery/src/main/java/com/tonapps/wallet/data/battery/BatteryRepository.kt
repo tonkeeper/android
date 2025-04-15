@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.battery
 
 import android.content.Context
+import android.util.Log
 import androidx.collection.ArrayMap
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
@@ -14,6 +15,7 @@ import com.tonapps.wallet.data.battery.source.RemoteDataSource
 import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,7 +35,7 @@ import org.ton.cell.Cell
 class BatteryRepository(
     context: Context,
     private val api: API,
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
 ) {
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
@@ -104,6 +106,17 @@ class BatteryRepository(
         localDataSource.setBalance(publicKey, testnet, balance)
         _balanceUpdatedFlow.emit(Unit)
         return balance
+    }
+
+    fun refreshBalanceDelay(
+        publicKey: PublicKeyEd25519,
+        tonProofToken: String,
+        testnet: Boolean
+    ) {
+        scope.launch(Dispatchers.IO) {
+            delay(10000)
+            fetchBalance(publicKey, tonProofToken, testnet)
+        }
     }
 
     suspend fun emulate(

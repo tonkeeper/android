@@ -8,6 +8,8 @@ import com.aptabase.InitOptions
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.StoryEntity
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
 object AnalyticsHelper {
 
@@ -47,15 +49,41 @@ object AnalyticsHelper {
         "token_open",
     )*/
 
+    private data class QueuedEvent(
+        val eventName: String,
+        val props: Map<String, Any>
+    )
+
+    private val isInitialized = AtomicBoolean(false)
+    private val eventQueue = ConcurrentLinkedQueue<QueuedEvent>()
+    private val regexPrivateData: Regex by lazy {
+        Regex("[a-f0-9]{64}|0:[a-f0-9]{64}")
+    }
+
+    private fun getAddressType(address: String): String {
+        return when {
+            address.startsWith("0:") -> "raw"
+            address.startsWith("E") -> "bounce"
+            else -> "non-bounce"
+        }
+    }
+
     @UiThread
     fun simpleTrackEvent(eventName: String, installId: String, props: MutableMap<String, Any> = hashMapOf()) {
         props["firebase_user_id"] = installId
         trackEvent(eventName, props)
     }
 
-    fun trackEvent(eventName: String, props: Map<String, Any> = hashMapOf()) {
+    private fun trackEvent(eventName: String, props: Map<String, Any> = hashMapOf()) {
+        if (isInitialized.get()) {
+            send(eventName, props)
+        } else {
+            eventQueue.offer(QueuedEvent(eventName, props))
+        }
+    }
+
+    private fun send(eventName: String, props: Map<String, Any> = hashMapOf()) {
         Aptabase.instance.trackEvent(eventName, props)
-        Log.d("AnalyticsSendLog", "Track event: $eventName, props: $props")
     }
 
     @UiThread
@@ -63,10 +91,6 @@ object AnalyticsHelper {
         simpleTrackEvent(eventName, installId, hashMapOf(
             "from" to from
         ))
-    }
-
-    private val regexPrivateData: Regex by lazy {
-        Regex("[a-f0-9]{64}|0:[a-f0-9]{64}")
     }
 
     fun setConfig(context: Context, config: ConfigEntity) {
@@ -82,6 +106,46 @@ object AnalyticsHelper {
     }
 
     @UiThread
+    fun tcRequest(installId: String, url: String) {
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "dapp_url" to url
+        )
+        trackEvent("tc_request", props)
+    }
+
+    @UiThread
+    fun tcConnect(installId: String, url: String, pushEnabled: Boolean) {
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "dapp_url" to url,
+            "allow_notifications" to pushEnabled
+        )
+        trackEvent("tc_connect", props)
+    }
+
+    @UiThread
+    fun tcViewConfirm(installId: String, url: String, address: String) {
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "dapp_url" to url,
+            "address_type" to getAddressType(address)
+        )
+        trackEvent("tc_view_confirm", props)
+    }
+
+    @UiThread
+    fun tcSendSuccess(installId: String, url: String, address: String, feePaid: String) {
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "dapp_url" to url,
+            "address_type" to getAddressType(address),
+            "network_fee_paid" to feePaid
+        )
+        trackEvent("tc_send_success", props)
+    }
+
+    @UiThread
     fun firstLaunch(installId: String, referrer: String?, deeplink: String?) {
         val props = hashMapOf(
             "firebase_user_id" to installId
@@ -93,6 +157,15 @@ object AnalyticsHelper {
             props["deeplink"] = it
         }
         trackEvent("first_launch", props)
+    }
+
+    @UiThread
+    fun openRefDeeplink(installId: String, deeplink: String) {
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "deeplink" to deeplink
+        )
+        trackEvent("ads_deeplink", props)
     }
 
     @UiThread
@@ -169,16 +242,32 @@ object AnalyticsHelper {
         ))
     }
 
+    private fun processEventQueue() {
+        if (!isInitialized.get()) {
+            return
+        }
+        while (eventQueue.isNotEmpty()) {
+            val queuedEvent = eventQueue.poll()
+            if (queuedEvent != null) {
+                send(queuedEvent.eventName, queuedEvent.props)
+            }
+        }
+    }
+
     private fun initAptabase(
         context: Context,
         appKey: String,
         host: String
     ) {
+        Log.d("AnalyticsHelper", "initAptabase: appKey=$appKey, host=$host")
         try {
             val options = InitOptions(
                 host = host
             )
             Aptabase.instance.initialize(context, appKey, options)
+            if (isInitialized.compareAndSet(false, true)) {
+                processEventQueue()
+            }
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
         }

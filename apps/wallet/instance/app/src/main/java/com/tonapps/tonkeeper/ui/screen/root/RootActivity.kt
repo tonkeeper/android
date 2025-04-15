@@ -25,7 +25,6 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.extensions.getDefaultWalletTransfer
 import com.tonapps.tonkeeper.extensions.hasRefer
 import com.tonapps.tonkeeper.extensions.hasUtmSource
 import com.tonapps.tonkeeper.extensions.isDarkMode
@@ -86,7 +85,6 @@ class RootActivity : BaseWalletActivity() {
     private val accountRepository by inject<AccountRepository>()
     private val emulationUseCase by inject<EmulationUseCase>()
     private val passcodeManager by inject<PasscodeManager>()
-    private val referrerClientHelper by inject<ReferrerClientHelper>()
 
     private lateinit var uiHandler: Handler
 
@@ -136,22 +134,7 @@ class RootActivity : BaseWalletActivity() {
         collectFlow(viewModel.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
-
-        sendFirstLaunchEvent()
         remoteConfig?.fetchAndActivate()
-    }
-
-    private fun sendFirstLaunchEvent() {
-        if (DevSettings.firstLaunchDate > 0) {
-            return
-        }
-        lifecycleScope.launch {
-            delay(240)
-            val referrer = referrerClientHelper.getInstallReferrer()
-            val deeplink = DevSettings.firstLaunchDeeplink.ifBlank { null }
-            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer, deeplink)
-            DevSettings.firstLaunchDate = currentTimeSeconds()
-        }
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -474,6 +457,8 @@ class RootActivity : BaseWalletActivity() {
         val uri = intent.data ?: intent.getStringExtra("link")?.toUriOrNull()
         if (0 >= DevSettings.firstLaunchDate) {
             DevSettings.firstLaunchDeeplink = uri?.toString() ?: ""
+        } else if (uri?.hasRefer() == true || uri?.hasUtmSource() == true) {
+            AnalyticsHelper.openRefDeeplink(settingsRepository.installId, uri.toString())
         }
         val extras = intent.extras
         val dappDeepLink = extras?.getStringValue("dapp_deeplink")?.toUriOrNull()

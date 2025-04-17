@@ -172,7 +172,7 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
         displayFadeAnim?.cancel()
         translationX?.cancel()
 
-        if (currentStep == LedgerStep.Connect) {
+        if (currentStep == LedgerStep.CONNECT) {
             blFadeAnim =
                 ObjectAnimator.ofFloat(bluetoothIconView, "alpha", bluetoothIconView.alpha, 1f)
                     .apply {

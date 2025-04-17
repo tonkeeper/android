@@ -13,7 +13,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -68,7 +67,6 @@ fun Header(
     backgroundColor: Color = UIKit.colors.backgroundContent,
     iconTintColor: Color = UIKit.colors.buttonSecondaryForeground,
     iconBackgroundColor: Color = UIKit.colors.buttonSecondaryBackground,
-    content: @Composable (ColumnScope.() -> Unit)? = null
 ) {
     val headerHeight = Dimens.barHeight
     val density = LocalDensity.current
@@ -120,67 +118,55 @@ fun Header(
                 }
             }
 
-            if (content != null) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = Dimens.offsetMedium),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .alpha(textAlpha)
+                    .padding(horizontal = Dimens.offsetMedium),
+                horizontalAlignment = titleAlignment,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = title,
+                    color = UIKit.colors.textPrimary,
+                    style = UIKit.typography.h3,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = when (titleAlignment) {
+                        Alignment.CenterHorizontally -> TextAlign.Center
+                        Alignment.End -> TextAlign.End
+                        else -> TextAlign.Start
+                    }
+                )
+                AnimatedVisibility(
+                    visible = subtitleContainerTargetVisible,
+                    enter = fadeIn(animationSpec = tween(HEADER_ANIMATION_DURATION_MS)) + expandVertically(animationSpec = tween(
+                        HEADER_ANIMATION_DURATION_MS
+                    )),
+                    exit = fadeOut(animationSpec = tween(HEADER_ANIMATION_DURATION_MS)) + shrinkVertically(animationSpec = tween(
+                        HEADER_ANIMATION_DURATION_MS
+                    ))
                 ) {
-                    content()
-                }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .alpha(textAlpha)
-                        .padding(horizontal = Dimens.offsetMedium),
-                    horizontalAlignment = titleAlignment,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = title,
-                        color = UIKit.colors.textPrimary,
-                        style = UIKit.typography.h3,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = when (titleAlignment) {
-                            Alignment.CenterHorizontally -> TextAlign.Center
-                            Alignment.End -> TextAlign.End
-                            else -> TextAlign.Start
-                        }
-                    )
-                    AnimatedVisibility(
-                        visible = subtitleContainerTargetVisible,
-                        enter = fadeIn(animationSpec = tween(HEADER_ANIMATION_DURATION_MS)) + expandVertically(animationSpec = tween(
-                            HEADER_ANIMATION_DURATION_MS
-                        )),
-                        exit = fadeOut(animationSpec = tween(HEADER_ANIMATION_DURATION_MS)) + shrinkVertically(animationSpec = tween(
-                            HEADER_ANIMATION_DURATION_MS
-                        ))
+                    Row(
+                        modifier = Modifier.height(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.height(20.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (!subtitle.isNullOrBlank() && !isUpdating) {
-                                Text(
-                                    text = subtitle,
-                                    color = UIKit.colors.textSecondary,
-                                    style = UIKit.typography.body2.copy(fontWeight = FontWeight.Medium),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            if (isUpdating) {
-                                Spacer(modifier = Modifier.width(Dimens.offsetExtraSmall))
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(12.dp),
-                                    color = UIKit.colors.textSecondary,
-                                    strokeWidth = 1.5.dp
-                                )
-                            }
+                        if (!subtitle.isNullOrBlank() && !isUpdating) {
+                            Text(
+                                text = subtitle,
+                                color = UIKit.colors.textSecondary,
+                                style = UIKit.typography.body2.copy(fontWeight = FontWeight.Medium),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        if (isUpdating) {
+                            Spacer(modifier = Modifier.width(Dimens.offsetExtraSmall))
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(12.dp),
+                                color = UIKit.colors.textSecondary,
+                                strokeWidth = 1.5.dp
+                            )
                         }
                     }
                 }

@@ -8,6 +8,7 @@ import com.tonapps.blockchain.ton.extensions.toByteArray
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
+import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionType
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerEvent
 import com.tonapps.tonkeeper.ui.screen.ledger.update.LedgerUpdateScreen
@@ -33,6 +34,9 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
         LedgerConnectionFragment.newInstance()
     }
 
+    private lateinit var tabUsbView: View
+    private lateinit var tabBluetoothView: View
+
     private var isSuccessful: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +47,12 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        tabUsbView = view.findViewById(R.id.tab_usb)
+        tabUsbView.setOnClickListener { connectionViewModel.setConnectionType(LedgerConnectionType.USB) }
+
+        tabBluetoothView = view.findViewById(R.id.tab_bluetooth)
+        tabBluetoothView.setOnClickListener { connectionViewModel.setConnectionType(LedgerConnectionType.BLUETOOTH) }
 
         view.findViewById<View>(R.id.container)
             .applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
@@ -57,6 +67,20 @@ class LedgerSignScreen: BaseFragment(R.layout.fragment_ledger_sign), BaseFragmen
         }
 
         collectFlow(connectionViewModel.eventFlow, ::onEvent)
+        collectFlow(connectionViewModel.connectionType, ::onConnectionType)
+    }
+
+    private fun onConnectionType(type: LedgerConnectionType) {
+        when (type) {
+            LedgerConnectionType.USB -> {
+                tabUsbView.setBackgroundResource(uikit.R.drawable.bg_button_tertiary)
+                tabBluetoothView.background = null
+            }
+            LedgerConnectionType.BLUETOOTH -> {
+                tabUsbView.background = null
+                tabBluetoothView.setBackgroundResource(uikit.R.drawable.bg_button_tertiary)
+            }
+        }
     }
 
     private fun onEvent(event: LedgerEvent) {

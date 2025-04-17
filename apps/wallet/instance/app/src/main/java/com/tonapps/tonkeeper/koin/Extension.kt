@@ -80,3 +80,6 @@ val Context.pushManager: PushManager?
 
 val Context.apkManager: APKManager?
     get() = koin?.get<APKManager>()
+
+val Context.installId: String
+    get() = settingsRepository?.installId ?: ""

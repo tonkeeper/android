@@ -5,9 +5,9 @@ import android.os.Build
 
 object AppInstall {
 
-    enum class Source(val packageName: String) {
-        GOOGLE_PLAY("com.android.vending"),
-        UNKNOWN("unknown")
+    enum class Source(val packageName: String, val title: String) {
+        GOOGLE_PLAY("com.android.vending", "GooglePlay"),
+        UNKNOWN("unknown", "APK")
     }
 
     fun request(context: Context): Source {

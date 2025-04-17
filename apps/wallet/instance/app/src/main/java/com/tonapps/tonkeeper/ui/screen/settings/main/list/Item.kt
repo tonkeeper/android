@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list
 
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.tonkeeper.os.AppInstall
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
@@ -9,7 +10,7 @@ import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 
-sealed class Item(type: Int): BaseListItem(type) {
+sealed class Item(type: Int, val name: String): BaseListItem(type) {
 
     companion object {
         const val TYPE_ACCOUNT = 0
@@ -21,7 +22,7 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data class Account(
         val wallet: WalletEntity
-    ): Item(TYPE_ACCOUNT) {
+    ): Item(TYPE_ACCOUNT, "edit") {
 
         val title: String
             get() = wallet.label.name
@@ -40,15 +41,18 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     }
 
-    data object Space: Item(TYPE_SPACE)
+    data object Space: Item(TYPE_SPACE, "")
 
-    data object Logo: Item(TYPE_LOGO)
+    data class Logo(
+        val installerSource: AppInstall.Source
+    ): Item(TYPE_LOGO, "version")
 
     sealed class Text(
         val titleRes: Int,
         val value: String,
-        open val position: ListCell.Position
-    ): Item(TYPE_TEXT)
+        open val position: ListCell.Position,
+        name: String
+    ): Item(TYPE_TEXT, name)
 
     class Currency(
         code: String,
@@ -56,7 +60,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Text(
         titleRes = Localization.currency,
         value = code,
-        position = position
+        position = position,
+        name = "currency"
     )
 
     data class ConnectedApps(
@@ -65,7 +70,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.connected_apps,
         iconRes = UIKitIcon.ic_apps_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "connected_apps"
     )
 
     sealed class Icon(
@@ -74,7 +80,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         open val position: ListCell.Position,
         val secondaryIcon: Boolean,
         val dot: Boolean = false,
-    ): Item(TYPE_ICON)
+        name: String
+    ): Item(TYPE_ICON, name)
 
     data class Theme(
         override val position: ListCell.Position
@@ -82,7 +89,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.appearance,
         iconRes = UIKitIcon.ic_appearance_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "theme"
     )
 
     data class Widget(
@@ -91,7 +99,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.widget,
         iconRes = com.tonapps.uikit.icon.R.drawable.ic_link_square_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "widget"
     )
 
     data class Backup(
@@ -102,7 +111,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         iconRes = UIKitIcon.ic_key_28,
         position = position,
         secondaryIcon = false,
-        dot = !hasBackup
+        dot = !hasBackup,
+        name = "backup"
     )
 
     data class Support(
@@ -112,7 +122,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.support,
         iconRes = UIKitIcon.ic_message_bubble_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "support"
     )
 
     data class FAQ(
@@ -122,7 +133,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.faq,
         iconRes = UIKitIcon.ic_question_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "faq"
     )
 
     data class Tester(
@@ -133,7 +145,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         iconRes = R.drawable.ic_telegram_28,
         position = position,
         secondaryIcon = false,
-        dot = true
+        dot = true,
+        name = "tester"
     )
 
     data class News(
@@ -143,7 +156,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.tonkeeper_news,
         iconRes = R.drawable.ic_telegram_28,
         position = position,
-        secondaryIcon = true
+        secondaryIcon = true,
+        name = "news"
     )
 
     data class Contact(
@@ -153,7 +167,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.contact_us,
         iconRes = R.drawable.ic_envelope_28,
         position = position,
-        secondaryIcon = true
+        secondaryIcon = true,
+        name = "contact"
     )
 
     data class Legal(
@@ -162,7 +177,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.legal,
         iconRes = UIKitIcon.ic_doc_28,
         position = position,
-        secondaryIcon = true
+        secondaryIcon = true,
+        name = "legal"
     )
 
     data class Notifications(
@@ -171,7 +187,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.notifications,
         iconRes = UIKitIcon.ic_notifications_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "notifications"
     )
 
     data class Logout(
@@ -182,7 +199,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.log_out,
         iconRes = R.drawable.ic_door_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "logout"
     )
 
     data class Security(
@@ -191,7 +209,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.security,
         iconRes = UIKitIcon.ic_lock_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "security"
     )
 
     data class DeleteWatchAccount(
@@ -200,7 +219,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.delete_watch_account,
         iconRes = UIKitIcon.ic_trash_bin_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "delete_watch_account"
     )
 
     data class SearchEngine(
@@ -209,7 +229,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Text(
         titleRes = Localization.search,
         value = engine.title,
-        position = position
+        position = position,
+        name = "search_engine"
     )
 
     data class Language(
@@ -218,7 +239,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     ): Text(
         titleRes = Localization.language,
         value = data,
-        position = position
+        position = position,
+        name = "language"
     )
 
     data class Rate(
@@ -227,7 +249,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.rate_tonkeeper,
         iconRes = UIKitIcon.ic_star_28,
         position = position,
-        secondaryIcon = true
+        secondaryIcon = true,
+        name = "rate"
     )
 
     data class W5(
@@ -236,7 +259,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.w5_wallet,
         iconRes = UIKitIcon.ic_wallet_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "w5"
     )
 
     data class V4R2(
@@ -245,7 +269,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.v4r2_wallet,
         iconRes = UIKitIcon.ic_wallet_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "v4r2"
     )
 
     data class Battery(
@@ -254,6 +279,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         titleRes = Localization.battery,
         iconRes = UIKitIcon.ic_battery_28,
         position = position,
-        secondaryIcon = false
+        secondaryIcon = false,
+        name = "battery"
     )
 }

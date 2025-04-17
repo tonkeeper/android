@@ -2,6 +2,10 @@ package com.tonapps.tonkeeper.core
 
 import android.util.Log
 import com.tonapps.tonkeeper.App
+import androidx.core.content.edit
+import com.tonapps.extensions.putBoolean
+import com.tonapps.extensions.putLong
+import com.tonapps.extensions.putString
 
 object DevSettings {
 
@@ -11,7 +15,7 @@ object DevSettings {
         set(value) {
             if (field != value) {
                 field = value
-                prefs.edit().putBoolean("blur_enabled", value).apply()
+                prefs.putBoolean("blur_enabled", value)
             }
         }
 
@@ -19,7 +23,15 @@ object DevSettings {
         set(value) {
             if (field != value) {
                 field = value
-                prefs.edit().putLong("first_launch_date", value).apply()
+                prefs.putLong("first_launch_date", value)
+            }
+        }
+
+    var firstLaunchDeeplink: String = prefs.getString("first_launch_deeplink", "") ?: ""
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.putString("first_launch_deeplink", value)
             }
         }
 
@@ -35,7 +47,7 @@ object DevSettings {
         set(value) {
             if (field != value) {
                 field = value
-                prefs.edit().putBoolean("ton_connect_logs", value).apply()
+                prefs.putBoolean("ton_connect_logs", value)
             }
         }
 
@@ -43,7 +55,7 @@ object DevSettings {
         set(value) {
             if (field != value) {
                 field = value
-                prefs.edit().putBoolean("ignore_system_font_size", value).apply()
+                prefs.putBoolean("ignore_system_font_size", value)
             }
         }
 

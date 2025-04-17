@@ -91,7 +91,7 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)
-            navigation?.openURL("tonkeeper://activity")
+            navigation?.openURL("tonkeeper://activity?from=stake")
             close()
         }.launchIn(lifecycleScope)
     }

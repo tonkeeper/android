@@ -3,19 +3,26 @@ package com.tonapps.tonkeeper.ui.screen.events.main
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.extensions.filterList
+import com.tonapps.extensions.mapList
 import com.tonapps.tonkeeper.api.AccountEventWrap
 import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
+import com.tonapps.tonkeeper.extensions.notificationsFlow
+import com.tonapps.tonkeeper.extensions.refreshNotifications
 import com.tonapps.tonkeeper.helper.CacheHelper
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.main.filters.FilterItem
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountEvent
@@ -28,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -46,6 +54,8 @@ class EventsViewModel(
     private val historyHelper: HistoryHelper,
     private val settingsRepository: SettingsRepository,
     private val transactionManager: TransactionManager,
+    private val dAppsRepository: DAppsRepository,
+    private val accountRepository: AccountRepository,
     private val api: API,
     private val cacheHelper: CacheHelper,
 ): BaseWalletVM(app) {
@@ -58,10 +68,17 @@ class EventsViewModel(
     private val _selectedFilter = MutableStateFlow<FilterItem?>(null)
     private val selectedFilter = _selectedFilter.asStateFlow()
 
-    val uiFilterItemsFlow: Flow<List<FilterItem>> = selectedFilter.map { selected ->
+    private val dAppsNotificationsFlow = dAppsRepository.notificationsFlow(wallet, viewModelScope).map {
+        it.notifications
+    }
+
+    val uiFilterItemsFlow: Flow<List<FilterItem>> = combine(selectedFilter, dAppsNotificationsFlow) { selected, notifications ->
         val uiFilterItems = mutableListOf<FilterItem>()
         uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
         uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
+        if (notifications.isNotEmpty()) {
+            uiFilterItems.add(FilterItem.Dapps(selected?.type == FilterItem.TYPE_DAPPS))
+        }
         uiFilterItems.add(FilterItem.Spam())
         uiFilterItems.toList()
     }
@@ -73,11 +90,14 @@ class EventsViewModel(
 
     private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull()
 
+
+
     private val historyItemsFlow = combine(
         eventsFlow.map { list -> list.map { it.event } },
         _triggerFlow,
-    ) { events, _ ->
-        mapping(events)
+        dAppsNotificationsFlow.mapList { HistoryItem.App(context, wallet, it) }
+    ) { events, _, dAppNotifications ->
+        mapping(events) + dAppNotifications
     }
 
     private val uiItemsFlow = combine(
@@ -88,6 +108,7 @@ class EventsViewModel(
         val actionOutStatus = resolveActionOutStatus(resolveFilter(filter))
         val uiItems = historyHelper.groupByDate(historyItems.filter {
             when (actionOutStatus) {
+                ActionOutStatus.dApps -> it is HistoryItem.App
                 ActionOutStatus.App -> it is HistoryItem.App && it.url == (filter as? FilterItem.App)?.url
                 ActionOutStatus.Send -> it is HistoryItem.Event && (it.actionOutStatus == ActionOutStatus.Send || it.actionOutStatus == ActionOutStatus.Any)
                 ActionOutStatus.Received -> it is HistoryItem.Event && (it.actionOutStatus == ActionOutStatus.Received || it.actionOutStatus == ActionOutStatus.Any)
@@ -106,6 +127,9 @@ class EventsViewModel(
         }
         list
     }.flowOn(Dispatchers.IO)
+
+    val installId: String
+        get() = settingsRepository.installId
 
     val uiStateFlow: Flow<EventsUiState> = flow {
         val cached = cacheHelper.getEventsCached(wallet)
@@ -140,7 +164,10 @@ class EventsViewModel(
             }
         }
 
-        viewModelScope.launch { initialLoad(true) }
+        viewModelScope.launch {
+            dAppsRepository.refreshNotifications(wallet, accountRepository)
+            initialLoad(true)
+        }
         _triggerFlow.tryEmit(Unit)
     }
 
@@ -168,6 +195,7 @@ class EventsViewModel(
             when (item.id) {
                 FilterItem.SEND_ID -> TX_FILTER_SENT
                 FilterItem.RECEIVE_ID -> TX_FILTER_RECEIVED
+                FilterItem.DAPPS_ID -> TX_FILTER_DAPPS
                 else -> TX_FILTER_APP
             }
         }
@@ -178,6 +206,7 @@ class EventsViewModel(
             // TX_FILTER_APP -> ActionOutStatus.App
             TX_FILTER_SENT -> ActionOutStatus.Send
             TX_FILTER_RECEIVED -> ActionOutStatus.Received
+            TX_FILTER_DAPPS -> ActionOutStatus.dApps
             else -> return null
         }
     }
@@ -229,7 +258,7 @@ class EventsViewModel(
     }
 
     fun loadMore() {
-        if (isLoading.get() || _selectedFilter.value is FilterItem.App) {
+        if (isLoading.get() || _selectedFilter.value is FilterItem.App || _selectedFilter.value is FilterItem.Dapps) {
             return
         }
 
@@ -312,5 +341,6 @@ class EventsViewModel(
         private const val TX_FILTER_SENT = 1
         private const val TX_FILTER_RECEIVED = 2
         private const val TX_FILTER_APP = 3
+        private const val TX_FILTER_DAPPS = 4
     }
 }

@@ -5,6 +5,7 @@ import android.app.Notification
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.net.Uri
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
@@ -19,18 +20,29 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.file
+import com.tonapps.extensions.filterList
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.helper.NotificationsHelper
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.FileDownloader
 import com.tonapps.wallet.api.FileDownloader.DownloadStatus
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import java.util.UUID
 import kotlin.coroutines.resume
+import kotlin.uuid.Uuid
 
 class ApkDownloadWorker(
     private val context: Context,
@@ -45,51 +57,40 @@ class ApkDownloadWorker(
     }
 
     override suspend fun doWork(): Result {
+        if (isStopped) {
+            return Result.success()
+        }
+
         val downloadUrl = inputData.getString(ARG_URL) ?: return Result.failure()
         val targetFile = inputData.getString(ARG_FILE)?.let {
             File(it)
         } ?: return Result.failure()
         setForeground(getForegroundInfo())
-        return if (downloadSync(downloadUrl, targetFile) is DownloadStatus.Success) {
-            showInstallNotification(targetFile)
-            Result.success()
-        } else {
-            Result.failure()
-        }
-    }
+        setProgressAsync(workDataOf(ARG_PROGRESS to 0))
 
-    private suspend fun downloadSync(
-        url: String,
-        file: File,
-    ) = suspendCancellableCoroutine { continuation ->
-        download(url, file) { status ->
-            if (!continuation.isCompleted) {
-                continuation.resume(status)
-            }
-        }
-    }
-
-    private fun download(
-        url: String,
-        file: File,
-        result: (DownloadStatus) -> Unit
-    ) {
         var lastUpdateTime = 0L
-        fileDownloader.download(
-            url = url,
-            outputFile = file,
-            callback = { status ->
-                if (status is DownloadStatus.Progress) {
-                    val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastUpdateTime >= 320) {
-                        updateNotification(status)
-                        lastUpdateTime = currentTime
-                    }
-                } else {
-                    result(status)
+        fileDownloader.download(downloadUrl, targetFile).onEach { status ->
+            if (status is DownloadStatus.Progress) {
+                setProgress(status.percent)
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastUpdateTime >= 320) {
+                    updateNotification(status)
+                    lastUpdateTime = currentTime
                 }
+            } else if (status is DownloadStatus.Success) {
+                notificationManager.cancel(NOTIFICATION_ID)
+                setProgress(100)
+                showInstallNotification(targetFile)
+            } else if (status is DownloadStatus.Error) {
+                notificationManager.cancel(NOTIFICATION_ID)
+                setProgress(0)
             }
-        )
+        }.collect()
+        return Result.success()
+    }
+
+    private suspend fun setProgress(value: Int) {
+        setProgress(workDataOf(ARG_PROGRESS to value))
     }
 
     @SuppressLint("MissingPermission")
@@ -114,7 +115,6 @@ class ApkDownloadWorker(
     @SuppressLint("MissingPermission")
     private fun updateNotification(status: DownloadStatus.Progress) {
         try {
-            setProgressAsync(workDataOf(ARG_PROGRESS to status.percent))
             val builder = notificationBuilder()
                 .setProgress(100, status.percent, false)
                 .setContentText(status.downloadSpeed)
@@ -172,7 +172,9 @@ class ApkDownloadWorker(
             context: Context,
             downloadUrl: String,
             targetFile: String
-        ): Operation {
+        ): UUID {
+            val id = UUID.randomUUID()
+            context.workManager.cancelAllWorkByTag(NAME)
             val inputData = Data.Builder()
                 .putString(ARG_URL, downloadUrl)
                 .putString(ARG_FILE, targetFile)
@@ -181,14 +183,18 @@ class ApkDownloadWorker(
             builder.requiredNetwork()
             builder.setInputData(inputData)
             builder.addTag(NAME)
+            builder.setId(id)
             builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            return context.workManager.enqueue(builder.build())
+            return builder.build().let {
+                context.workManager.enqueue(it)
+                id
+            }
         }
 
-        fun flowProgress(context: Context): Flow<Int> {
-            return context.workManager.getWorkInfosByTagFlow(NAME).mapNotNull {
-                it.firstOrNull()
-            }.map { it.progress.getInt(ARG_PROGRESS, 0) }
+        fun flowProgress(context: Context, id: UUID): Flow<Int> {
+            return context.workManager.getWorkInfoByIdFlow(id).filterNotNull().map {
+                it.progress.getInt(ARG_PROGRESS, 0)
+            }
         }
 
     }

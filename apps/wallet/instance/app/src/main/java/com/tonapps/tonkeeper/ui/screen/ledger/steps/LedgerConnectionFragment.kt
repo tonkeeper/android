@@ -36,7 +36,7 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
             it.value
         }
         if (allGranted) {
-            connectionViewModel.scanOrConnect()
+            connectionViewModel.onBleReady()
         } else {
             showBluetoothPermissionsAlert()
         }
@@ -89,12 +89,12 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
         collectFlow(connectionViewModel.bluetoothState) { state ->
             when (state) {
                 BluetoothAdapter.STATE_OFF -> {
-                    connectionViewModel.disconnect()
+                    connectionViewModel.disconnectBle()
                     promptEnableBluetooth()
                 }
 
                 BluetoothAdapter.STATE_ON -> {
-                    checkPermissionsAndScan();
+                    checkPermissionsAndScan()
                 }
             }
         }
@@ -149,7 +149,7 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
 
     private fun checkPermissionsAndScan() {
         if (isPermissionGranted()) {
-            connectionViewModel.scanOrConnect()
+            connectionViewModel.onBleReady()
         } else {
             requestPermissionLauncher.launch(blePermissions)
         }

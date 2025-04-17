@@ -26,6 +26,9 @@ data class BrowserAppEntity(
     val useCustomTabs: Boolean
         get() = url.host?.endsWith("mercuryo.io") == true
 
+    val useTG: Boolean
+        get() = url.host == "t.me"
+
     @Parcelize
     data class Button(
         val type: String,

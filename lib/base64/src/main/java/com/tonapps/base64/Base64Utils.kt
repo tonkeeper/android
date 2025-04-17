@@ -11,8 +11,8 @@ fun String.fixBase64(): String {
 fun String.decodeBase64(): ByteArray {
     // force non-url safe base64
     val replaced = replace('-', '+').replace('_', '/')
-    /*
-    val replaced = trim()
+
+    /*val replaced = trim()
         .replace('-', '+')
         .replace('_', '/')
     val paddedLength = (4 - replaced.length % 4) % 4

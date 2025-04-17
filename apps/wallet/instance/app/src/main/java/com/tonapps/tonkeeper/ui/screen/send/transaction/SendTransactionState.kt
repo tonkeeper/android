@@ -25,7 +25,8 @@ sealed class SendTransactionState {
         val emulated: HistoryHelper.Details,
         val totalFormat: CharSequence,
         val isDangerous: Boolean,
-        val nftCount: Int
+        val nftCount: Int,
+        val failed: Boolean
     ): SendTransactionState() {
 
         val uiItems: List<HistoryItem>

@@ -43,7 +43,7 @@ sealed class DeepLinkRoute {
             private companion object {
 
                 private fun buildBrowserUri(category: String?): String {
-                    val builder = Uri.parse("tonkeeper://browser").buildUpon()
+                    val builder = "tonkeeper://browser".toUri().buildUpon()
                     if (!category.isNullOrBlank()) {
                         builder.appendQueryParameter("category", category)
                     }
@@ -165,10 +165,14 @@ sealed class DeepLinkRoute {
         )
     }
 
-    data class Battery(val promocode: String?): DeepLinkRoute() {
+    data class Battery(
+        val jetton: String?,
+        val promocode: String?
+    ): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
-            promocode = uri.query("promocode")
+            jetton = uri.query("jetton"),
+            promocode = uri.query("promocode"),
         )
     }
 
@@ -277,7 +281,6 @@ sealed class DeepLinkRoute {
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {
-                Log.e("ApkDownloadWorker", "Failed to resolve deep link: $uri", e)
                 return Unknown(uri)
             }
         }

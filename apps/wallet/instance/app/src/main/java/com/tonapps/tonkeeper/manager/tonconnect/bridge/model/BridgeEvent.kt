@@ -1,9 +1,7 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge.model
 
-import android.util.Log
 import com.tonapps.extensions.getLongCompat
 import com.tonapps.extensions.toStringList
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -25,11 +23,19 @@ data class BridgeEvent(
 
         constructor(json: JSONObject) : this(
             BridgeMethod.of(json.getString("method")),
-            json.getJSONArray("params").toStringList(),
+            smartParseParams(json),
             json.getLongCompat("id"),
         )
 
         companion object {
+
+            fun smartParseParams(json: JSONObject): List<String> {
+                return when (val params = json.get("params")) {
+                    is JSONArray -> params.toStringList()
+                    is String -> listOf(params)
+                    else -> listOf(params.toString())
+                }
+            }
 
             fun parse(array: JSONArray): List<Message> {
                 val messages = mutableListOf<Message>()

@@ -201,6 +201,8 @@ sealed class HistoryItem(
         val wallet: WalletEntity,
     ): HistoryItem(TYPE_APP) {
 
+        val isClickable: Boolean
+            get() = deepLink.isNotBlank()
 
         constructor(context: Context, wallet: WalletEntity, push: AppPushEntity) : this(
             iconUri = push.iconUrl.toUri(),
@@ -209,7 +211,7 @@ sealed class HistoryItem(
             date = DateHelper.formattedDate(push.timestamp, context.locale),
             url = push.url,
             timestamp = push.timestamp,
-            deepLink = push.deeplink,
+            deepLink = push.deeplink ?: push.url.toString(),
             wallet = wallet
         )
 

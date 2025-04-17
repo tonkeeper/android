@@ -61,6 +61,7 @@
     <string name="setup_finish_telegram">Присоединяйтесь к каналу Tonkeeper</string>
     <string name="staked">Стейкинг</string>
     <string name="sending_error">Ошибка отправки. Попробуйте позже</string>
+    <string name="sign_data_binary_title">Зашифрованный контент</string>
     <string name="slide_to_confirm">Подтвердить</string>
     <string name="unverified_token_description">Токен выглядит подозрительно по одной или нескольким причинам.</string>
     <string name="unverified_token_reason_1">Низкая ликвидность. У токена может быть какая-то стоимость, но она крайне мала.</string>
@@ -85,6 +86,7 @@
     <string name="domain_link_button">Привязать домен</string>
     <string name="manual_start_button">Сделать копию вручную</string>
     <string name="manual">Вручную</string>
+    <string name="emulation_failed_warning">После подтверждения может произойти что угодно, включая потерю всех ваших средств. Все транзакции необратимы. Мы не смогли проэмулировать транзакцию и не знаем, что произойдёт дальше.</string>
     <string name="manual_description">Создайте резервную копию своего кошелька вручную, записав секретный ключ.</string>
     <string name="manual_backup_done">Резервная копия сделана</string>
     <string name="manual_backup_date">Последняя %1$s</string>
@@ -92,7 +94,7 @@
     <string name="backup_attention_description">Пожалуйста, внимательно прочитайте перед просмотром секретного ключа.</string>
     <string name="backup_attention_line_1">Никогда и нигде не вводите свой секретный ключ для доступа к кошельку, кроме Tonkeeper.</string>
     <string name="backup_attention_line_2">Поддержка Tonkeeper никогда не запрашивает секретный ключ.</string>
-    <string name="backup_attention_line_3">Любой, кто знает ваш секретный ключ, сможет получить доступ к вашему кошельку.</string>
+    <string name="backup_attention_line_3">Любой, кто знает ваш секретный ключ, сможет использовать ваш кошелёк.</string>
     <string name="backup_check">Проверка резервной копии</string>
     <string name="backup_check_subtitle">Давайте проверим, все ли вы записали правильно. Введите слова %1$d, %2$d, и %3$d.</string>
     <string name="manual_backup_check">Проверить резервную копию</string>
@@ -122,6 +124,7 @@
     <string name="rate_tonkeeper">Оценить Tonkeeper</string>
     <string name="domain_renew_button">Продлить домен</string>
     <string name="backup">Резервная копия</string>
+    <string name="sign_text_subtitle">Внимательно прочитайте сообщение и, если вы согласны, подпишите транзакцию.</string>
     <string name="refresh">Обновить</string>
     <string name="mute">Заглушить</string>
     <string name="disconnect">Отключить</string>
@@ -462,6 +465,7 @@
     <string name="ledger_confirm_title">Подтвердить действие</string>
     <string name="ledger_connect_title">Подключить Ledger</string>
     <string name="ledger_connect">Подключите Ledger к своему устройству с помощью Bluetooth</string>
+    <string name="ledger_usb_connect">Подключите Ledger к своему устройству с помощью USB</string>
     <string name="ledger_open_ton_app">Разблокируйте его и откройте приложение TON</string>
     <string name="ledger_install_ton_app">Установить приложение</string>
     <string name="ledger_confirm_tx">Подтвердите транзакцию в Ledger</string>
@@ -473,6 +477,7 @@
     <string name="ledger_update_button">Хорошо</string>
     <string name="ledger_blind_signing_error">Необходимо включить слепую подпись в настройках Ledger</string>
     <string name="ledger_comment_error">Используйте только ASCII символы: цифры, буквы латинского алфавита и знаки пунктуации.</string>
+    <string name="ledger_usb_permission_error">Доступ к устройству запрещен. Пожалуйста, переподключите USB-устройство.</string>
 
     <string name="bluetooth_permissions_alert_title">Разрешения Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Пожалуйста, включите разрешения Bluetooth в настройках, чтобы использовать эту функцию</string>
@@ -596,6 +601,8 @@
     <string name="theme_deep_blue">Тёмно-синяя</string>
     <string name="theme_dark">Тёмная</string>
     <string name="words12">12 слов</string>
+    <string name="sign_data_binary_message">Вы подписываетесь вслепую. Подписывайте только из проверенных источников.</string>
+    <string name="slide_to_sign">Свайп чтобы подписать</string>
 
 
 </resources>

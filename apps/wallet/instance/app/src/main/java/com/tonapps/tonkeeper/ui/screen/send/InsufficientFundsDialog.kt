@@ -1,10 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.send
 
-import android.content.Context
 import android.text.SpannableStringBuilder
 import android.view.View
 import android.widget.Button
-import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.Amount
@@ -61,7 +59,7 @@ class InsufficientFundsDialog(private val fragment: BaseFragment): ModalDialog(f
         }
 
         batteryButton.setOnClickListener {
-            navigation?.add(BatteryScreen.newInstance(wallet))
+            navigation?.add(BatteryScreen.newInstance(wallet, from = "insufficient_funds"))
             dismiss()
         }
     }

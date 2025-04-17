@@ -11,17 +11,36 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.AppCompatTextView
+        <uikit.widget.RowLayout
             android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:text="@string/ledger_confirm_title"
-            android:textAppearance="@style/TextAppearance.H3"
-            android:textColor="?attr/textPrimaryColor"
-            app:layout_constraintEnd_toStartOf="@+id/close"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_content_20"
+            android:padding="4dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tab_usb"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:text="@string/usb"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:textColor="?attr/textPrimaryColor" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tab_bluetooth"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:text="@string/bluetooth"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:textColor="?attr/textPrimaryColor" />
+        </uikit.widget.RowLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/subtitle"

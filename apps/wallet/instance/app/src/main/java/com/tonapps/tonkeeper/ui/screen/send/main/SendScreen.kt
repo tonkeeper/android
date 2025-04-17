@@ -127,7 +127,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEvent("send_open", viewModel.installId)
+        AnalyticsHelper.simpleTrackEvent("send_open", viewModel.installId)
 
         navigation?.setFragmentResultListener(contractsRequestKey) { bundle ->
             val contact = bundle.getParcelableCompat<SendContact>("contact")
@@ -210,7 +210,10 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         }
 
         button = view.findViewById(R.id.button)
-        button.setOnClickListener { next() }
+        button.setOnClickListener {
+            AnalyticsHelper.simpleTrackEvent("send_click", viewModel.installId)
+            next()
+        }
 
         reviewIconView = view.findViewById(R.id.review_icon)
         reviewTitleView = view.findViewById(R.id.review_title)
@@ -243,7 +246,10 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             taskContainerView.translationY = -offset.toFloat()
         }
 
-        confirmButton.setOnClickListener { signAndSend() }
+        confirmButton.setOnClickListener {
+            AnalyticsHelper.simpleTrackEvent("send_confirm", viewModel.installId)
+            signAndSend()
+        }
         confirmButton.setText(if (wallet.hasPrivateKey) Localization.confirm else Localization.continue_action)
 
         collectFlow(viewModel.uiInputAddressErrorFlow) {
@@ -441,7 +447,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     private fun setSuccess() {
         processTaskView.state = ProcessTaskView.State.SUCCESS
-        navigation?.openURL("tonkeeper://activity")
+        navigation?.openURL("tonkeeper://activity?from=send")
         navigation?.removeByClass({
             postDelayed(2000, ::finish)
         }, NftScreen::class.java, TokenScreen::class.java)

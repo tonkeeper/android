@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
+import android.util.Log
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
@@ -23,6 +24,8 @@ import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.extensions.hasRefer
+import com.tonapps.tonkeeper.extensions.hasUtmSource
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -74,7 +77,6 @@ class RootActivity: BaseWalletActivity() {
     private val legacyRN: RNLegacy by inject()
     private val settingsRepository by inject<SettingsRepository>()
     private val passcodeManager by inject<PasscodeManager>()
-    private val referrerClientHelper by inject<ReferrerClientHelper>()
 
     private lateinit var uiHandler: Handler
 
@@ -124,22 +126,7 @@ class RootActivity: BaseWalletActivity() {
         collectFlow(viewModel.lockscreenFlow, ::pinState)
 
         App.applyConfiguration(resources.configuration)
-
-        sendFirstLaunchEvent()
         remoteConfig?.fetchAndActivate()
-    }
-
-    private fun sendFirstLaunchEvent() {
-        if (DevSettings.firstLaunchDate > 0) {
-            return
-        }
-        lifecycleScope.launch {
-            delay(240)
-            val referrer = referrerClientHelper.getInstallReferrer()
-            val deeplink = DevSettings.firstLaunchDeeplink.ifBlank { null }
-            AnalyticsHelper.firstLaunch(settingsRepository.installId, referrer, deeplink)
-            DevSettings.firstLaunchDate = currentTimeSeconds()
-        }
     }
 
     override fun attachBaseContext(newBase: Context) {
@@ -328,7 +315,7 @@ class RootActivity: BaseWalletActivity() {
         bin: Cell? = null,
         initStateBase64: String? = null
     ) {
-        if ((bin != null || initStateBase64 != null) && amountNano.isPositive()) {
+        if ((bin != null || initStateBase64 != null) && !amountNano.isPositive()) {
             toast(Localization.invalid_link)
             return
         }
@@ -420,6 +407,8 @@ class RootActivity: BaseWalletActivity() {
         val uri = intent.data ?: intent.getStringExtra("link")?.toUriOrNull()
         if (0 >= DevSettings.firstLaunchDate) {
             DevSettings.firstLaunchDeeplink = uri?.toString() ?: ""
+        } else if (uri?.hasRefer() == true || uri?.hasUtmSource() == true) {
+            AnalyticsHelper.openRefDeeplink(settingsRepository.installId, uri.toString())
         }
         val extras = intent.extras
         val dappDeepLink = extras?.getStringValue("dapp_deeplink")?.toUriOrNull()

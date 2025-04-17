@@ -1,10 +1,8 @@
 package com.tonapps.tonkeeper.usecase.sign
 
 import com.tonapps.base64.encodeBase64
-import com.tonapps.blockchain.ton.proof.TONProof
-import com.tonapps.blockchain.ton.proof.TONProof.Address
-import com.tonapps.blockchain.ton.proof.TONProof.Domain
-import com.tonapps.blockchain.ton.proof.TONProof.Request
+import com.tonapps.blockchain.ton.connect.TONProof
+import com.tonapps.blockchain.ton.connect.TONProof.Request
 import com.tonapps.tonkeeper.extensions.requestPrivateKey
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.proof.LedgerProofScreen
@@ -18,6 +16,8 @@ import org.ton.crypto.hex
 import uikit.extensions.addForResult
 import uikit.navigation.NavigationActivity
 import java.util.concurrent.CancellationException
+import com.tonapps.blockchain.ton.connect.TCDomain
+import com.tonapps.blockchain.ton.connect.TCAddress
 
 class SignProof(
     private val accountRepository: AccountRepository,
@@ -46,7 +46,7 @@ class SignProof(
 
         return TONProof.Result(
             timestamp = timestamp,
-            domain = Domain(domain),
+            domain = TCDomain(domain),
             payload = payload,
             signature = signature.encodeBase64()
         )
@@ -56,12 +56,12 @@ class SignProof(
         activity: NavigationActivity,
         wallet: WalletEntity,
         payload: String,
-        domain: String,
+        domain: String
     ): TONProof.Result {
         val request = Request(
             payload = payload,
-            domain = Domain(domain),
-            address = Address(wallet.contract.address)
+            domain = TCDomain(domain),
+            address = TCAddress(wallet.contract.address)
         )
 
         val fragment = KeystoneSignScreen.newInstance(
@@ -85,8 +85,12 @@ class SignProof(
         activity: NavigationActivity,
         wallet: WalletEntity,
         payload: String,
-        domain: String,
+        domain: String
     ): TONProof.Result {
+        if (!domain.contains(".")) {
+            throw IllegalArgumentException("Invalid domain")
+        }
+
         if (!wallet.hasPrivateKey) {
             throw SignException.UnsupportedWalletType(wallet.type)
         }

@@ -1,20 +1,21 @@
-package com.tonapps.blockchain.ton.proof
+package com.tonapps.blockchain.ton.connect
 
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonapps.base64.encodeBase64
+import com.tonapps.extensions.readParcelableCompat
 import com.tonapps.extensions.toByteArray
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.crypto.digest.sha256
 import org.ton.crypto.hex
+import java.nio.ByteOrder
 
 object TONProof {
 
-    private const val tonProofPrefix = "ton-proof-item-v2/"
+    private val prefix = "ton-proof-item-v2/".toByteArray()
     private const val tonConnectPrefix = "ton-connect"
-    private val prefixMessage = hex("ffff") + tonConnectPrefix.toByteArray()
-    private val prefixItem = tonProofPrefix.toByteArray()
+    val prefixMessage = hex("ffff") + tonConnectPrefix.toByteArray()
 
     fun sign(
         address: AddrStd,
@@ -24,8 +25,8 @@ object TONProof {
     ): Result {
         val request = Request(
             payload = payload,
-            domain = Domain(domain),
-            address = Address(address)
+            domain = TCDomain(domain),
+            address = TCAddress(address)
         )
 
         val body = sha256(prefixMessage + request.signatureMessage)
@@ -39,60 +40,37 @@ object TONProof {
         )
     }
 
-    private interface Serializable {
-        fun toByteArray(): ByteArray
-    }
-
     data class Request(
         val timestamp: Long = System.currentTimeMillis() / 1000L,
         val payload: String,
-        val domain: Domain,
-        val address: Address
+        val domain: TCDomain,
+        val address: TCAddress
     ) {
+        val message = prefix + address.toByteArray(ByteOrder.LITTLE_ENDIAN) + domain.toByteArray(ByteOrder.LITTLE_ENDIAN) + timestamp.toByteArray(ByteOrder.LITTLE_ENDIAN) + payload.toByteArray()
 
-        val message by lazy {
-            prefixItem + address.toByteArray() + domain.toByteArray() + timestamp.toByteArray() + payload.toByteArray()
-        }
 
         val signatureMessage by lazy {
             sha256(message)
         }
     }
 
-    data class Address(val value: AddrStd): Serializable {
-
-        override fun toByteArray(): ByteArray {
-            val addressWorkchainBuffer = value.workchainId.toByteArray()
-            val addressHashBuffer = value.address.toByteArray()
-            return addressWorkchainBuffer + addressHashBuffer
-        }
-    }
-
-    data class Domain(val value: String): Serializable {
-
-        private val lengthBytes: Int = value.toByteArray().size
-
-        override fun toByteArray(): ByteArray {
-            return lengthBytes.toByteArray() + value.toByteArray()
-        }
-    }
-
     data class Result(
         val timestamp: Long,
-        val domain: Domain,
+        val domain: TCDomain,
         val payload: String?,
         val signature: String
     ): Parcelable {
+
         constructor(parcel: Parcel) : this(
             parcel.readLong(),
-            Domain(parcel.readString()!!),
+            parcel.readParcelableCompat()!!,
             parcel.readString(),
             parcel.readString()!!
         )
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
             parcel.writeLong(timestamp)
-            parcel.writeString(domain.value)
+            parcel.writeParcelable(domain, flags)
             parcel.writeString(payload)
             parcel.writeString(signature)
         }

@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.os.AppInstall
 
 class Environment(context: Context) {
 
-    private val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
+    val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
 
     val isFromGooglePlay: Boolean by lazy {
         installerSource == AppInstall.Source.GOOGLE_PLAY

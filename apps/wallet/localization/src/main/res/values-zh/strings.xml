@@ -91,7 +91,9 @@
     <string name="manual_backup_check">检查备份</string>
     <string name="backup_check">备份检查</string>
     <string name="backup_check_subtitle">让我们看看你是否一切正确。请输入单词 %1$d、%2$d 和 %3$d。</string>
+    <string name="sign_data_binary_title">加密内容</string>
     <string name="slide_to_confirm">滑动确认</string>
+    <string name="sign_text_subtitle">仔细检查消息，如果同意，请签署交易。</string>
     <string name="refresh">刷新</string>
     <string name="mute">静音</string>
     <string name="disconnect">断开连接</string>
@@ -376,6 +378,7 @@
     <string name="ledger_confirm_title">确认操作</string>
     <string name="ledger_connect_title">连接 Ledger</string>
     <string name="ledger_connect">通过蓝牙将 Ledger 连接到您的设备</string>
+    <string name="ledger_usb_connect">通过 USB 将 Ledger 连接到您的设备</string>
     <string name="ledger_open_ton_app">解锁并打开TON应用程序</string>
     <string name="ledger_install_ton_app">安装TON应用</string>
     <string name="ledger_confirm_tx">在 Ledger 上确认您的交易</string>
@@ -386,6 +389,7 @@
     <string name="ledger_update_text">此类型交易在您当前的应用程序版本中不受支持。</string>
     <string name="ledger_update_button">确定</string>
     <string name="ledger_comment_error">仅使用 ASCII 字符：数字、拉丁字母和标点符号。</string>
+    <string name="ledger_usb_permission_error">设备权限被拒绝。请重新连接 USB 设备。</string>
     <string name="bluetooth_permissions_alert_title">蓝牙权限</string>
     <string name="bluetooth_permissions_alert_message">请在设置中启用蓝牙权限以使用此功能</string>
     <string name="bluetooth_permissions_alert_open_settings">打开设置</string>
@@ -522,4 +526,6 @@
     <string name="words24">24 个字</string>
     <string name="theme_deep_blue">深蓝</string>
     <string name="theme_dark">黑暗的</string>
+    <string name="sign_data_binary_message">您正在盲目签名。请仅从可信赖的来源签名。</string>
+    <string name="slide_to_sign">滑动签名</string>
 </resources>

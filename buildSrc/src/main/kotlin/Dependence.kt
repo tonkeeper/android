@@ -87,6 +87,17 @@ object Dependence {
         object Emoji {
             const val core = "androidx.emoji2:emoji2:1.5.0"
         }
+
+        object Compose {
+            const val bom = "androidx.compose:compose-bom:2025.04.00"
+            const val foundation = "androidx.compose.foundation:foundation"
+            const val foundationLayout = "androidx.compose.foundation:foundation-layout"
+            const val ui = "androidx.compose.ui:ui"
+            const val material3 = "androidx.compose.material3:material3"
+            const val preview = "androidx.compose.ui:ui-tooling-preview"
+            const val debugTooling = "androidx.compose.ui:ui-tooling"
+            const val viewModel = "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7"
+        }
     }
 
     object Squareup {

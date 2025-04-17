@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -42,6 +43,25 @@ inline fun <reified T : ViewModel> BaseWalletScreen<ScreenContext.Wallet>.wallet
             extrasProducer = extrasProducer,
             parameters = {
                 parameters.invoke().insert(0, screenContext.wallet)
+            }
+        )
+    }
+}
+
+@MainThread
+inline fun <reified T : ViewModel> ComposeWalletScreen.walletViewModel(
+    qualifier: Qualifier? = null,
+    noinline ownerProducer: () -> ViewModelStoreOwner = { this },
+    noinline extrasProducer: (() -> CreationExtras)? = null,
+    noinline parameters: ParametersDefinition = { parametersOf() },
+): Lazy<T> {
+    return lazy(LazyThreadSafetyMode.NONE) {
+        getViewModel(
+            qualifier = qualifier,
+            ownerProducer = ownerProducer,
+            extrasProducer = extrasProducer,
+            parameters = {
+                parameters.invoke().insert(0, wallet)
             }
         )
     }

@@ -493,7 +493,7 @@
     <string name="system">System</string>
     <string name="network_fee">Network fee</string>
     <string name="confirm">Confirm</string>
-    <string name="send_request_comment">You must include the note from the exchange for transfer. Without it your funds will be lost.</string>
+    <string name="send_request_comment">When sending, make sure to include the memo or tag from the exchange. Without it, the funds won’t be deposited and may be lost.</string>
     <string name="banner_top">You currently using an experimental version of Tonkeeper.</string>
     <string name="banner_top_button">Install stable version</string>
     <string name="signer_description">Open Signer » Select the required key » Scan QR code</string>

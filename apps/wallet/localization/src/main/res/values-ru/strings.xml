@@ -161,7 +161,7 @@
     <string name="tonkeeper_news">Новости Tonkeeper</string>
     <string name="contact_us">Написать команде</string>
     <string name="confirm_and_send">Подтвердить и отправить</string>
-    <string name="send_request_comment">Обязательно укажите memo или тег при отправке на биржу.</string>
+    <string name="send_request_comment">При отправке обязательно укажите memo или тег от биржи. Без него средства не поступят и могут быть утеряны.</string>
     <string name="import_wallet">Существующий кошелёк</string>
     <string name="import_wallet_words">Добавить кошелёк с помощью секретного ключа из 24 или 12 слов</string>
     <string name="watch_wallet">Аккаунт для просмотра</string>

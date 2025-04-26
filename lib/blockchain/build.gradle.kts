@@ -21,6 +21,8 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    sourceSets
 }
 
 dependencies {
@@ -36,4 +38,14 @@ dependencies {
     api(Dependence.KotlinX.io)
     implementation(project(Dependence.Lib.extensions))
     implementation(project(Dependence.Lib.base64))
+    implementation(Dependence.bcprovjdk)
+    implementation(Dependence.web3j) {
+        exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
+    }
+    implementation("org.bitcoinj:bitcoinj-core:0.15.10") {
+        exclude(group = "com.google.protobuf", module = "protobuf-java")
+    }
+    implementation("com.google.protobuf:protobuf-javalite:3.25.5")
 }
+
+

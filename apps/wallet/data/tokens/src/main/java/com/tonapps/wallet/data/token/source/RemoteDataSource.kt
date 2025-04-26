@@ -43,4 +43,10 @@ internal class RemoteDataSource(
         }
     }
 
+    suspend fun loadTronUsdt(
+        tronAddress: String,
+    ): BalanceEntity = withContext(Dispatchers.IO) {
+        api.tron.getTronUsdtBalance(tronAddress)
+    }
+
 }

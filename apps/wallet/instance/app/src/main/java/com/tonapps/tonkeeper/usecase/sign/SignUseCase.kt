@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.usecase.sign
 
 import android.content.Context
 import com.tonapps.blockchain.ton.connect.TONProof
+import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
@@ -114,6 +115,17 @@ class SignUseCase(
             seqno = seqNo,
             transferBody = signedBody
         )
+    }
+
+    suspend operator fun invoke(
+        context: Context,
+        wallet: WalletEntity,
+        transaction: TronTransaction,
+    ): TronTransaction = withContext(Dispatchers.Main) {
+        val activity =
+            context.activity ?: throw IllegalArgumentException("Context must be an Activity")
+
+        signTransaction.tron(activity, wallet, transaction)
     }
 
 }

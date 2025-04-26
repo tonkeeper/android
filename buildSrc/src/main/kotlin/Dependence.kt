@@ -1,11 +1,12 @@
 object Dependence {
 
     const val fresco = "com.facebook.fresco:fresco:3.6.0"
-    const val guava = "com.google.guava:guava:33.4.0-android"
     const val zxing = "com.google.zxing:core:3.5.3"
     const val j2objc = "com.google.j2objc:j2objc-annotations:3.0.0"
     const val cbor = "co.nstant.in:cbor:0.9"
     const val ble = "no.nordicsemi.android:ble-ktx:2.9.0"
+    const val bcprovjdk = "org.bouncycastle:bcprov-jdk15to18:1.68"
+    const val web3j = "org.web3j:core:5.0.0"
 
     object Analytics {
         const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"
@@ -28,6 +29,7 @@ object Dependence {
         const val serializationCBOR = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.0"
         const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
         const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.6.0"
+        const val guava = "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.10.2"
     }
 
     object GooglePlay {
@@ -72,11 +74,13 @@ object Dependence {
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.4.1"
         const val webkit = "androidx.webkit:webkit:1.12.1"
 
+        const val concurrent = "androidx.concurrent:concurrent-futures:1.2.0"
+
         const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
         const val lifecycleSavedState = "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.7"
 
         object Camera {
-            private const val version = "1.4.0-alpha04"
+            private const val version = "1.4.2"
 
             const val base = "androidx.camera:camera-camera2:$version"
             const val core = "androidx.camera:camera-core:$version"

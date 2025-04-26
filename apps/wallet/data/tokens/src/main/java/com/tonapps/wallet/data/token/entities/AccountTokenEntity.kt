@@ -66,6 +66,9 @@ data class AccountTokenEntity(
     val isUsdt: Boolean
         get() = address == TokenEntity.USDT.address
 
+    val isTrc20: Boolean
+        get() = address == TokenEntity.TRON_USDT.address
+
     val fiat: Coins
         get() = fiatRate?.fiat ?: Coins.ZERO
 

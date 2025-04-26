@@ -87,6 +87,7 @@ sealed class State {
         val lt: Long?,
         val isOnline: Boolean,
         val apkStatus: APKManager.Status,
+        val tronUsdtEnabled: Boolean,
     ): State() {
 
         val totalBalanceFiat: Coins
@@ -136,6 +137,7 @@ sealed class State {
                         testnet = wallet.testnet,
                         currencyCode = currencyCode,
                         wallet = wallet,
+                        showNetwork = tronUsdtEnabled && (asset.token.isUsdt || asset.token.isTrc20),
                     )
                     uiItems.add(item)
                 }
@@ -167,12 +169,13 @@ sealed class State {
         }
 
         private fun uiItemActions(
-            config: ConfigEntity
+            config: ConfigEntity,
         ): Item.Actions {
             return Item.Actions(
                 wallet = wallet,
                 token = TokenEntity.TON,
-                swapUri = config.swapUri
+                swapUri = config.swapUri,
+                tronEnabled = tronUsdtEnabled
             )
         }
 

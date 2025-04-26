@@ -431,6 +431,10 @@ class SettingsRepository(
         walletPrefsFolder.setLastUpdated(walletId)
     }
 
+    fun getTronUsdtEnabled(walletId: String): Boolean {
+        return !tokenPrefsFolder.getHidden(walletId, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+    }
+
     suspend fun getTokenPrefs(
         walletId: String,
         tokenAddress: String,

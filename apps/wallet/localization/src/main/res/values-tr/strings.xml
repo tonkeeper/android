@@ -403,7 +403,7 @@
     <string name="battery">Batarya</string>
     <string name="battery_refill_title">Tonkeeper Batarya</string>
     <string name="battery_refill_subtitle">Tonkeeper ile takas yapın, token ve NFT gönderin.</string>
-    <plurals name="battery_current_charges">
+    <plurals name="battery_charges">
         <item quantity="one">%1$s şarj</item>
         <item quantity="other">%1$s şarj</item>
     </plurals>
@@ -417,6 +417,7 @@
     <string name="battery_nft">NFT transferleri</string>
     <string name="battery_swap">Tonkeeper ile takas</string>
     <string name="battery_jetton">token transferleri</string>
+    <string name="battery_trc20">USD₮ TRC20 transferleri</string>
     <string name="battery_swap_single">takas</string>
     <string name="battery_transfer_single">transfer</string>
     <plurals name="battery_charges_per_action">
@@ -533,4 +534,23 @@
     <string name="theme_dark">Karanlık</string>
     <string name="sign_data_binary_message">Körü körüne imza atıyorsunuz. Sadece güvenilir kaynaklardan imza atın.</string>
     <string name="slide_to_sign">İmzalamak için Kaydırın</string>
+    <string name="insufficient_battery_charges">Yetersiz Batarya Yükü</string>
+    <string name="insufficient_balance_charges">Ücret için gerekli: %1$s.\nMevcut: %2$s.</string>
+    <string name="receive_tron_description">Yalnızca %1$s bu adrese gönderin, aksi takdirde varlıklarınızı kaybedebilirsiniz.</string>
+    <string name="open_explorer">Gezginde aç</string>
+    <string name="out_of_available_charges">%1$s mevcut hak tükendi</string>
+    <string name="tron_toggle_text">TRX olmadan USD₮ TRC20 kullanın. Ücretler Tonkeeper Battery tarafından karşılanır.</string>
+    <string name="trc20">TRC20</string>
+    <string name="copy_phrase">İfadeyi Kopyala</string>
+    <string name="export_tron">TRC20 Cüzdanını Dışa Aktar</string>
+    <string name="phrase_title_tron">TRC20 Cüzdanı</string>
+    <string name="phrase_description_tron">Bu kelimeleri numaralarıyla birlikte not alın ve güvenli bir yerde saklayın.</string>
+    <string name="prhase_tron_warning">Bu ifade yalnızca TRC20 içindir. TON cüzdanınızı geri yükleyemez. TON cüzdanınızı kurtarmak için TON kurtarma ifadenizi kullanın.</string>
+    <string name="battery_required_title">%1$s için Tonkeeper Battery gerekli</string>
+    <string name="battery_required_text">İşlem ücretlerini karşılamak için batarya yükleri kullanılır, bu da transferleri daha kolay ve uygun maliyetli hale getirir.</string>
+    <string name="charge_battery">Bataryayı Yükle</string>
+    <string name="send_wrong_blockchain">Adres %1$s ağına aittir.</string>
+    <string name="send_wrong_blockchain_swap">%3$s üzerinden USD₮ %1$s\'yi USD₮ %2$s ile takas ederek transferi gerçekleştirin.</string>
+    <string name="enable_usdt_tron">USD₮ TRC20\'yi Etkinleştir</string>
+
 </resources>

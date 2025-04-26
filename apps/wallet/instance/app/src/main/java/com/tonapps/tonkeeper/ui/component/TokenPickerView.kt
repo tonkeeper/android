@@ -2,6 +2,9 @@ package com.tonapps.tonkeeper.ui.component
 
 import android.content.Context
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.util.Log
 import android.widget.EditText
@@ -10,11 +13,15 @@ import androidx.core.view.setPadding
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.localization.Localization
+import uikit.extensions.badgeDefault
 import uikit.extensions.dp
 import uikit.extensions.getCurrentFocus
 import uikit.extensions.hideKeyboard
+import uikit.extensions.withDefaultBadge
 import uikit.navigation.Navigation
 import uikit.widget.FrescoView
 import uikit.widget.RowLayout
@@ -67,7 +74,22 @@ class TokenPickerView @JvmOverloads constructor(
 
     private fun applyToken(value: TokenEntity) {
         iconView.setImageURI(value.imageUri, null)
-        titleView.text = value.symbol
+        titleView.text = if (value.isTrc20) {
+            val builder = SpannableStringBuilder(value.symbol)
+            builder.append(" ")
+            val start = builder.length
+            builder.append(context.getString(Localization.trc20))
+
+            builder.setSpan(
+                ForegroundColorSpan(context.textSecondaryColor),
+                start,
+                builder.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            builder
+        } else {
+            value.symbol
+        }
         doOnTokenChanged?.invoke(value)
     }
 

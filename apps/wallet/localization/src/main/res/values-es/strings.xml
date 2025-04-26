@@ -403,7 +403,7 @@
     <string name="battery">Batería</string>
     <string name="battery_refill_title">Batería de Tonkeeper</string>
     <string name="battery_refill_subtitle">Intercambia a través de Tonkeeper, envía tokens y NFTs.</string>
-    <plurals name="battery_current_charges">
+    <plurals name="battery_charges">
         <item quantity="one">%1$s carga</item>
         <item quantity="other">%1$s cargas</item>
     </plurals>
@@ -417,6 +417,7 @@
     <string name="battery_nft">Transferencias de NFT</string>
     <string name="battery_swap">intercambios a través de Tonkeeper</string>
     <string name="battery_jetton">transferencias de tokens</string>
+    <string name="battery_trc20">Transferencias de USD₮ TRC20</string>
     <string name="battery_swap_single">intercambio</string>
     <string name="battery_transfer_single">transferencia</string>
     <plurals name="battery_charges_per_action">
@@ -533,5 +534,23 @@
     <string name="theme_dark">Oscuro</string>
     <string name="sign_data_binary_message">Estás firmando a ciegas. Firma solo con fuentes confiables.</string>
     <string name="slide_to_sign">Deslizar para firmar</string>
+    <string name="insufficient_battery_charges">Cargas de batería insuficientes</string>
+    <string name="insufficient_balance_charges">Requerido para la tarifa: %1$s.\nDisponible: %2$s.</string>
+    <string name="receive_tron_description">Envía solo %1$s a esta dirección, o podrías perder tus fondos.</string>
+    <string name="open_explorer">Abrir en el explorador</string>
+    <string name="out_of_available_charges">agotado %1$s disponible</string>
+    <string name="tron_toggle_text">Usa USD₮ TRC20 sin TRX. Las tarifas son cubiertas por Tonkeeper Battery.</string>
+    <string name="trc20">TRC20</string>
+    <string name="copy_phrase">Copiar frase</string>
+    <string name="export_tron">Exportar billetera TRC20</string>
+    <string name="phrase_title_tron">Billetera TRC20</string>
+    <string name="phrase_description_tron">Anota estas palabras con sus números y guárdalas en un lugar seguro.</string>
+    <string name="prhase_tron_warning">Esta frase es solo para TRC20. No puede restaurar tu billetera TON. Usa tu frase de recuperación de TON para restaurar la billetera TON.</string>
+    <string name="battery_required_title">Se requiere Tonkeeper Battery para %1$s</string>
+    <string name="battery_required_text">Las cargas de batería se utilizan para cubrir las tarifas de transacción, haciendo las transferencias más simples y rentables.</string>
+    <string name="charge_battery">Cargar batería</string>
+    <string name="send_wrong_blockchain">La dirección pertenece a la red %1$s.</string>
+    <string name="send_wrong_blockchain_swap">Intercambia USD₮ %1$s por USD₮ %2$s a través de %3$s para continuar con la transferencia.</string>
+    <string name="enable_usdt_tron">Habilitar USD₮ TRC20</string>
 
 </resources>

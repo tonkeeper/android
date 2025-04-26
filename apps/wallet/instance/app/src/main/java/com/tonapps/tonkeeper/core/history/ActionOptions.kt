@@ -6,6 +6,7 @@ data class ActionOptions(
     val hiddenBalances: Boolean = false,
     val removeDate: Boolean = false,
     val positionExtra: Int = 0,
+    val tronEnabled: Boolean = false,
 ) {
 
     enum class SpamFilter {

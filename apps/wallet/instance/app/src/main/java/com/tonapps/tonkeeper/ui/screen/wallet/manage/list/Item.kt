@@ -7,6 +7,8 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.entity.Blockchain
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -35,7 +37,13 @@ sealed class Item(type: Int): BaseListItem(type) {
         val hiddenBalance: Boolean,
         val verified: Boolean,
         val blacklist: Boolean,
+        val blockchain: Blockchain,
     ): Item(TYPE_TOKEN) {
+
+        val isUSDT: Boolean
+            get() = address == TokenEntity.USDT.address
+        val isTRC20: Boolean
+            get() = address == TokenEntity.TRON_USDT.address
 
         constructor(
             position: ListCell.Position,
@@ -53,6 +61,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             hiddenBalance = hiddenBalance,
             verified = token.verified,
             blacklist = token.blacklist,
+            blockchain = token.balance.token.blockchain,
         )
     }
 

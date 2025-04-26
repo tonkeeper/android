@@ -124,8 +124,10 @@
     <string name="insufficient_balance_description">Enter an amount less or choose your maximum balance.</string>
 
     <string name="insufficient_balance_in_wallet">Insufficient funds in wallet</string>
-    <string name="insufficient_balance_fees">Required for blockchain fees: %1$s.\nYour balance: %2$s.</string>
-    <string name="insufficient_balance_default">To be paid: %1$s.\nYour balance: %2$s.</string>
+    <string name="insufficient_battery_charges">Insufficient\nBattery Charges</string>
+    <string name="insufficient_balance_charges">Required for fee: %1$s\nAvailable: %2$s</string>
+    <string name="insufficient_balance_fees">Required for blockchain fees: %1$s\nYour balance: %2$s</string>
+    <string name="insufficient_balance_default">To be paid: %1$s\nYour balance: %2$s</string>
 
 
     <string name="w5_story_title_1">Gasless USDT Transfers</string>
@@ -263,7 +265,7 @@
     <string name="scan_qr_code">Scan QR code</string>
     <string name="loading">Loading…</string>
     <string name="transfer">Transfer</string>
-    <string name="jetton_transfer">%1$s transfer</string>
+    <string name="jetton_transfer">Transfer %1$s</string>
     <string name="name_your_wallet">Name your wallet</string>
     <string name="name_your_wallet_subtitle">Name your wallet to easily identify it while using the Tonkeeper. These names are stored locally, and can only be seen by you.</string>
     <string name="open_anyway">Open anyway</string>
@@ -448,7 +450,8 @@
     <string name="view_details">View details</string>
 
     <string name="receive_coin">Receive %1$s</string>
-    <string name="receive_coin_description">Send only %1$s and tokens in TON network to this address, or you might lose your funds.</string>
+    <string name="receive_coin_description">Send only %1$s and tokens in TON network to this address, or you might lose your funds.</string>
+    <string name="receive_tron_description">Send only %1$s to this address, or you might lose your funds.</string>
     <string name="copy">Copy</string>
     <string name="legal">Legal</string>
     <string name="terms">Terms of use</string>
@@ -470,7 +473,7 @@
     <string name="back_up_now">Back up</string>
     <string name="max">Max</string>
     <string name="confirm_and_send">Confirm and send</string>
-    <string name="confirm_action">Confirm action</string>
+    <string name="confirm_action">Confirm Action</string>
     <string name="ton_connect_title">Connect to %1$s</string>
     <string name="not_supported">Not supported</string>
     <string name="ton_connect_description">%1$s is requesting access to your wallet address %2$s</string>
@@ -510,6 +513,7 @@
     <string name="hide_collection">Hide NFT</string>
     <string name="hide_and_report_collection">Hide and report</string>
     <string name="open_tonviewer">Open in Tonviewer</string>
+    <string name="open_explorer">Open in explorer</string>
     <string name="tx_marked_as_spam">Transaction marked as Spam</string>
     <string name="tx_marked_as_not_spam">Marked as not spam</string>
     <string name="nft_marked_as_spam">NFT marked as Spam</string>
@@ -551,12 +555,13 @@
     <string name="battery">Battery</string>
     <string name="battery_refill_title">Tonkeeper Battery</string>
     <string name="battery_refill_subtitle">Swap via Tonkeeper, send tokens and NFTs.</string>
-    <plurals name="battery_current_charges">
+    <plurals name="battery_charges">
         <item quantity="one">%1$s charge</item>
         <item quantity="few">%1$s charges</item>
         <item quantity="many">%1$s charges</item>
         <item quantity="other">%1$s charges</item>
     </plurals>
+    <string name="out_of_available_charges">out of %1$s available</string>
     <string name="battery_refill_crypto">Recharge with %1$s</string>
     <string name="battery_refill_gift">Battery Gift</string>
     <string name="battery_refill_gift_subtitle">Share with friends</string>
@@ -567,6 +572,7 @@
     <string name="battery_nft">NFT transfers</string>
     <string name="battery_swap">swaps via Tonkeeper</string>
     <string name="battery_jetton">token transfers</string>
+    <string name="battery_trc20">USD₮ TRC20 transfers</string>
     <string name="battery_swap_single">swap</string>
     <string name="battery_transfer_single">transfer</string>
     <plurals name="battery_charges_per_action">
@@ -623,4 +629,18 @@
     <string name="connected_apps_empty">No connected apps</string>
     <string name="send_all_balance">Are you sure you want to send all your balance?</string>
     <string name="wrong_promocode">The entered code is not valid</string>
+    <string name="tron_toggle_text">Use USD₮ TRC20 without TRX. Fees are covered by Tonkeeper Battery.</string>
+    <string name="trc20">TRC20</string>
+    <string name="copy_phrase">Copy Phrase</string>
+    <string name="export_tron">Export TRC20 Wallet</string>
+    <string name="phrase_title_tron">TRC20 Wallet</string>
+    <string name="phrase_description_tron">Write down these words with their numbers and store them in a safe place.</string>
+    <string name="prhase_tron_warning">This phrase is for TRC20 only. It cannot restore your TON wallet. Use your TON recovery phrase for TON wallet recovery.</string>
+    <string name="battery_required_title">Tonkeeper Battery required for %1$s</string>
+    <string name="battery_required_text">Battery charges are used to cover transaction fees, making transfers simpler and more cost-effective.</string>
+    <string name="charge_battery">Charge Battery</string>
+    <string name="send_wrong_blockchain">The address belongs to the %1$s network.</string>
+    <string name="send_wrong_blockchain_swap">Swap USD₮ %1$s to USD₮ %2$s via %3$s to proceed with the transfer.</string>
+    <string name="enable_usdt_tron">Enable USD₮ TRC20</string>
+    <string name="tron">TRON</string>
 </resources>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:action="@drawable/ic_close_16"
+        app:ignoreSystemOffset="true" />
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/offsetLarge"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <FrameLayout
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center">
+
+            <uikit.widget.FrescoView
+                android:id="@+id/icon"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                app:roundAsCircle="true" />
+
+            <uikit.widget.FrescoView
+                android:id="@+id/network_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="end|bottom"
+                android:translationX="8dp"
+                android:translationY="8dp"
+                app:roundAsCircle="true"
+                app:roundingBorderColor="?attr/backgroundPageColor"
+                app:roundingBorderPadding="1dp"
+                app:roundingBorderWidth="4dp" />
+        </FrameLayout>
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:description="@string/tron_toggle_text"
+            android:title="USD₮ TRC20" />
+
+        <Button
+            android:id="@+id/button"
+            style="@style/Widget.App.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:text="@string/enable_usdt_tron"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+        <Button
+            android:id="@+id/later"
+            style="@style/Widget.App.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:text="@string/later"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+    </uikit.widget.ColumnLayout>
+
+</uikit.widget.ColumnLayout>

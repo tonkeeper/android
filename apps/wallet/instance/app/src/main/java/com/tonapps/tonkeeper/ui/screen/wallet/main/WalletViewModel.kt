@@ -58,7 +58,7 @@ class WalletViewModel(
     private val transactionManager: TransactionManager,
     private val assetsManager: AssetsManager,
     private val apkManager: APKManager,
-): BaseWalletVM(app) {
+) : BaseWalletVM(app) {
 
     val installId: String
         get() = settingsRepository.installId
@@ -100,7 +100,12 @@ class WalletViewModel(
         }
     }.map { !it }
 
-    private val _streamFlow = combine(updateWalletSettings, batteryRepository.balanceUpdatedFlow, _lastLtFlow) { _, _, lastLt -> lastLt }
+    private val _streamFlow = combine(
+        updateWalletSettings,
+        batteryRepository.balanceUpdatedFlow,
+        transactionManager.tronUpdatedFlow,
+        _lastLtFlow
+    ) { _, _, _, lastLt -> lastLt }
 
     init {
         viewModelScope.launch {
@@ -137,7 +142,8 @@ class WalletViewModel(
             val lastLt = _stateMainFlow.value?.lt ?: 0
             val lastIsOnline = _stateMainFlow.value?.isOnline
 
-            val isRequestUpdate = _stateMainFlow.value == null || lastLt != currentLt || lastIsOnline != currentIsOnline
+            val isRequestUpdate =
+                _stateMainFlow.value == null || lastLt != currentLt || lastIsOnline != currentIsOnline
 
             if (isRequestUpdate) {
                 setStatus(Status.Updating)
@@ -169,8 +175,14 @@ class WalletViewModel(
                     lt = currentLt,
                     isOnline = currentIsOnline,
                     apkStatus = apkStatus,
+                    tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(wallet.id)
                 )
-                assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
+                assetsManager.setCachedTotalBalance(
+                    wallet,
+                    walletCurrency,
+                    true,
+                    state.totalBalanceFiat
+                )
                 _stateMainFlow.value = state
             }
 
@@ -191,9 +203,15 @@ class WalletViewModel(
                         lt = currentLt,
                         isOnline = currentIsOnline,
                         apkStatus = apkStatus,
+                        tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(wallet.id)
                     )
                     _stateMainFlow.value = state
-                    assetsManager.setCachedTotalBalance(wallet, walletCurrency, true, state.totalBalanceFiat)
+                    assetsManager.setCachedTotalBalance(
+                        wallet,
+                        walletCurrency,
+                        true,
+                        state.totalBalanceFiat
+                    )
                     settingsRepository.setWalletLastUpdated(wallet.id)
                     setStatus(Status.Default)
                 }
@@ -237,7 +255,10 @@ class WalletViewModel(
                 alerts = alerts,
                 dAppNotifications = State.DAppNotifications(emptyList()),
                 setup = uiSetup,
-                lastUpdatedFormat = DateHelper.formattedDate(lastUpdated, settingsRepository.getLocale()),
+                lastUpdatedFormat = DateHelper.formattedDate(
+                    lastUpdated,
+                    settingsRepository.getLocale()
+                ),
                 prefixYourAddress = 3 > settingsRepository.addressCopyCount
             )
             if (uiItems.isNotEmpty()) {
@@ -306,7 +327,8 @@ class WalletViewModel(
         ignoreCache: Boolean = false
     ): Coins = withContext(Dispatchers.IO) {
         if (wallet.hasPrivateKey) {
-            val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return@withContext Coins.ZERO
+            val tonProofToken =
+                accountRepository.requestTonProofToken(wallet) ?: return@withContext Coins.ZERO
             val battery = batteryRepository.getBalance(
                 tonProofToken = tonProofToken,
                 publicKey = wallet.publicKey,

@@ -85,6 +85,8 @@ class TokenPickerViewModel(
             )
         }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator)
 
+        val tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(wallet.id)
+
         sortedTokens.mapIndexed { index, tokenExtendedEntity ->
             val token = (tokenExtendedEntity.raw as AssetsEntity.Token).token
             Item.Token(
@@ -92,7 +94,8 @@ class TokenPickerViewModel(
                 raw = token,
                 selected = token.address == selectedToken.address,
                 balance = CurrencyFormatter.format(token.symbol, token.balance.value),
-                hiddenBalance = settingsRepository.hiddenBalances
+                hiddenBalance = settingsRepository.hiddenBalances,
+                showNetwork = tronUsdtEnabled && (token.isUsdt || token.isTrc20)
             )
         }
     }.flowOn(Dispatchers.IO)

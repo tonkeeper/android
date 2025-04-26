@@ -23,6 +23,7 @@ import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.logError
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.extensions.toast
@@ -34,6 +35,7 @@ import com.tonapps.tonkeeper.worker.TotalBalancesWorker
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.WalletColor
@@ -82,6 +84,7 @@ class InitViewModel(
     private val backupRepository: BackupRepository,
     private val rnLegacy: RNLegacy,
     private val settingsRepository: SettingsRepository,
+    private val remoteConfig: RemoteConfig,
     savedStateHandle: SavedStateHandle
 ): BaseWalletVM(app) {
 
@@ -588,7 +591,26 @@ class InitViewModel(
         }
 
         val wallets = accountRepository.importWallet(ids, label, mnemonic, accounts.map { it.walletVersion }, testnet, accounts.map { it.initialized })
+
+        if (!testnet && !remoteConfig.isTronDisabled) {
+            checkTronBalance(wallets)
+        }
+
         wallets
+    }
+
+    private suspend fun checkTronBalance(wallets: List<WalletEntity>) {
+        val wallet = wallets.first()
+        val tronAddress = accountRepository.getTronAddress(wallet.id) ?: return
+        val balance = api.tron.getTronUsdtBalance(tronAddress)
+
+        if (balance.value.isPositive) {
+            wallets.forEach {
+                settingsRepository.setTokenHidden(it.id, TokenEntity.TRON_USDT.address, false)
+                settingsRepository.setTokenPinned(it.id, TokenEntity.TRON_USDT.address, true)
+                settingsRepository.setTokensSort(wallet.id, listOf(TokenEntity.USDT.address, TokenEntity.TRON_USDT.address))
+            }
+        }
     }
 
     private suspend fun ledgerWallets(): List<WalletEntity> {

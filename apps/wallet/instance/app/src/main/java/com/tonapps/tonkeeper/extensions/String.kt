@@ -62,8 +62,8 @@ fun String.isVersionLowerThan(other: String): Boolean {
     return false // Versions are equal
 }
 
-fun String.withVerificationIcon(context: Context): CharSequence {
-    val drawable = context.drawable(UIKitIcon.ic_verification_16)
+fun String.withIcon(context: Context, resId: Int): CharSequence {
+    val drawable = context.drawable(resId)
     drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
 
     val builder = SpannableStringBuilder()
@@ -72,6 +72,8 @@ fun String.withVerificationIcon(context: Context): CharSequence {
     builder.setSpan(ImageSpanCompat(drawable), builder.length - 1, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
     return builder
 }
+
+fun String.withVerificationIcon(context: Context) = withIcon(context, UIKitIcon.ic_verification_16)
 
 fun String.isPrintableAscii(): Boolean {
     return this.all { it.code in 32..126 }

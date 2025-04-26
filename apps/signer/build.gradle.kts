@@ -78,6 +78,7 @@ dependencies {
     implementation(project(Dependence.Lib.blockchain))
     implementation(project(Dependence.Lib.extensions))
 
+    implementation(Dependence.KotlinX.guava)
 
     implementation(project(Dependence.UIKit.core)) {
         exclude("com.airbnb.android", "lottie")

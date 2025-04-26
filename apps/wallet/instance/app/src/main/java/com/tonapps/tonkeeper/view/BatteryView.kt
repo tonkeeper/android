@@ -194,6 +194,6 @@ class BatteryView @JvmOverloads constructor(
     }
 
     companion object {
-        private const val MIN_LEVEL = 0.14f
+        const val MIN_LEVEL = 0.14f
     }
 }

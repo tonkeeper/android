@@ -86,7 +86,6 @@ dependencies {
     implementation(Dependence.AndroidX.webkit)
     implementation(Dependence.AndroidX.browser)
 
-    implementation(Dependence.guava)
 
     implementation(Dependence.UI.material)
     implementation(Dependence.UI.flexbox)

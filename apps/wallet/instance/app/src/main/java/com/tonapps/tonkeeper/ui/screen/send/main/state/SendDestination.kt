@@ -1,13 +1,22 @@
 package com.tonapps.tonkeeper.ui.screen.send.main.state
 
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.wallet.api.entity.Blockchain
+import com.tonapps.wallet.api.entity.TokenEntity
 import io.tonapi.models.AccountStatus
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
 
 sealed class SendDestination {
 
-    data class Account(
+    data class TronAccount(val address: String) : SendDestination()
+
+    data class TokenError(
+        val addressBlockchain: Blockchain,
+        val selectedToken: TokenEntity,
+    ) : SendDestination()
+
+    data class TonAccount(
         val query: String,
         val publicKey: PublicKeyEd25519,
         val address: AddrStd,

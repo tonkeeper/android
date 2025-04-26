@@ -7,6 +7,8 @@ import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonDomain
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
+import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.extensions.hasUnsupportedQuery
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
@@ -126,7 +128,7 @@ sealed class DeepLinkRoute {
             address = uri.pathOrNull ?: throw IllegalArgumentException("Address is required"),
             amount = uri.queryLong("amount"),
             text = uri.query("text"),
-            jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
+            jettonAddress = (uri.query("jettonAddress") ?: uri.query("jetton"))?.toRawAddress(),
             bin = uri.query("bin")?.cellFromBase64(),
             initStateBase64 = uri.query("init")
         ) {
@@ -134,7 +136,7 @@ sealed class DeepLinkRoute {
                 throw IllegalArgumentException("Unsupported query parameters")
             }
 
-            if (address.isNotBlank() && (!address.isValidTonAddress() && !address.isValidTonDomain())) {
+            if (address.isNotBlank() && (!address.isValidTonAddress() && !address.isValidTronAddress() && !address.isValidTonDomain())) {
                 throw IllegalArgumentException("Invalid address")
             }
 

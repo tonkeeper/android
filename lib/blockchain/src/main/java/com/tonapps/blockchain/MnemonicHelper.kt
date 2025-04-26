@@ -15,7 +15,7 @@ object MnemonicHelper {
     private const val ED25519_CURVE = "ed25519 seed"
     private const val HARDENED_OFFSET = 0x80000000
 
-    private fun isValidStandardTonMnemonic(mnemonic: List<String>): Boolean {
+    fun isValidStandardTonMnemonic(mnemonic: List<String>): Boolean {
         if (mnemonic.isEmpty()) {
             return false
         }

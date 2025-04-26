@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.extensions.max24
 import com.tonapps.extensions.short4
+import com.tonapps.extensions.shortTron
 import com.tonapps.extensions.withMinus
 import com.tonapps.extensions.withPlus
 import com.tonapps.icu.CurrencyFormatter
@@ -31,13 +32,14 @@ import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
 import com.tonapps.tonkeeper.usecase.emulation.Emulated
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.api.tron.entity.TronEventEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.WalletCurrency
-import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.events.CommentEncryption
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -45,6 +47,7 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
+import com.tonapps.wallet.localization.Plurals
 import io.tonapi.models.JettonVerificationType
 import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.flow.Flow
@@ -86,7 +89,8 @@ class HistoryHelper(
                 calendar.timeInMillis = timestamp * 1000
                 val now = Calendar.getInstance()
                 val yearDiff = now.get(Calendar.YEAR) - calendar.get(Calendar.YEAR)
-                val monthDiff = yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
+                val monthDiff =
+                    yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
 
                 return if (monthDiff < 1) {
                     dayMonthFormatter.format(calendar.time)
@@ -176,7 +180,8 @@ class HistoryHelper(
         }
         it
     }.map { wallet ->
-        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw Exception("Private key not found")
+        val privateKey =
+            accountRepository.getPrivateKey(wallet.id) ?: throw Exception("Private key not found")
         val decrypted = CommentEncryption.decryptComment(
             wallet.publicKey,
             privateKey,
@@ -295,7 +300,8 @@ class HistoryHelper(
         }
 
         val feeFormat = "≈ " + CurrencyFormatter.format("TON", emulated.extra.value)
-        val feeFiatFormat = CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
+        val feeFiatFormat =
+            CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
 
         items.add(
             HistoryItem.Event(
@@ -379,7 +385,8 @@ class HistoryHelper(
         options: ActionOptions,
     ): List<HistoryItem> {
         if (event == null) {
-            val position = if (options.positionExtra == 0) ListCell.Position.SINGLE else ListCell.Position.FIRST
+            val position =
+                if (options.positionExtra == 0) ListCell.Position.SINGLE else ListCell.Position.FIRST
             return listOf(createFakeUnknown(position))
         }
         return mapping(wallet, listOf(event), options)
@@ -396,6 +403,97 @@ class HistoryHelper(
             events = events,
             options = options
         )
+    }
+
+    suspend fun tronMapping(
+        wallet: WalletEntity,
+        tronAddress: String,
+        events: List<TronEventEntity>,
+        options: ActionOptions,
+    ): List<HistoryItem> = withContext(Dispatchers.IO) {
+        val items = mutableListOf<HistoryItem>()
+
+        val token = TokenEntity.TRON_USDT
+
+        for (event in events) {
+            val isScam = event.from != tronAddress && event.amount < Coins.of(0.1, token.decimals)
+            if (options.spamFilter == ActionOptions.SpamFilter.SPAM && !isScam) {
+                continue
+            } else if (options.spamFilter == ActionOptions.SpamFilter.NOT_SPAM && isScam) {
+                continue
+            }
+
+            val action = if (event.from == tronAddress) {
+                ActionType.Send
+            } else {
+                ActionType.Received
+            }
+            val subtitle = if (event.from == tronAddress) {
+                event.to
+            } else {
+                event.from
+            }
+            val amount = CurrencyFormatter.format(token.symbol, event.amount, 2)
+            val value = if (event.from == tronAddress) {
+                amount.withMinus
+            } else {
+                amount.withPlus
+            }
+
+            items.add(
+                HistoryItem.Event(
+                    blockchain = Blockchain.TRON,
+                    index = 0,
+                    txId = event.transactionHash,
+                    action = action,
+                    title = "",
+                    subtitle = subtitle.shortTron,
+                    value = value,
+                    tokenAddress = token.address,
+                    tokenCode = token.symbol,
+                    coinIconUrl = token.imageUri.toString(),
+                    lt = event.timestamp,
+                    timestamp = event.timestamp,
+                    date = DateHelper.formatTransactionTime(
+                        event.timestamp,
+                        settingsRepository.getLocale()
+                    ),
+                    dateDetails = DateHelper.formatTransactionDetailsTime(
+                        event.timestamp,
+                        settingsRepository.getLocale()
+                    ),
+                    isOut = event.from == tronAddress,
+                    sender = HistoryItem.Account(
+                        address = event.from,
+                        name = null,
+                        isWallet = false,
+                        icon = null,
+                        isScam = false
+                    ),
+                    recipient = HistoryItem.Account(
+                        address = event.to,
+                        name = null,
+                        isWallet = false,
+                        icon = null,
+                        isScam = false
+                    ),
+                    pending = event.inProgress,
+                    failed = event.isFailed,
+                    hiddenBalance = options.hiddenBalances,
+                    isScam = isScam,
+                    wallet = wallet,
+                    fee = event.batteryCharges?.let {
+                        context.resources.getQuantityString(
+                            Plurals.battery_charges, it, it
+                        )
+                    },
+                    actionOutStatus = if (event.from == tronAddress) ActionOutStatus.Send else ActionOutStatus.Received,
+                    showNetwork = true,
+                ),
+            )
+        }
+
+        return@withContext items
     }
 
     suspend fun mapping(
@@ -423,7 +521,8 @@ class HistoryHelper(
             var actionOutStatusAny = 0
 
             for ((actionIndex, action) in actions.withIndex()) {
-                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
+                val isScam =
+                    event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
 
                 if (options.spamFilter == ActionOptions.SpamFilter.SPAM && !isScam) {
                     continue
@@ -447,13 +546,16 @@ class HistoryHelper(
                     ActionOutStatus.Any -> actionOutStatusAny++
                     ActionOutStatus.Received -> actionOutStatusReceived++
                     ActionOutStatus.Send -> actionOutStatusSend++
-                    ActionOutStatus.App, ActionOutStatus.dApps -> { }
+                    ActionOutStatus.App, ActionOutStatus.dApps -> {}
                 }
 
                 chunkItems.add(
                     item.copy(
                         pending = pending,
-                        position = ListCell.getPosition(actions.size + options.positionExtra, actionIndex),
+                        position = ListCell.getPosition(
+                            actions.size + options.positionExtra,
+                            actionIndex
+                        ),
                         fee = if (fee.isPositive) CurrencyFormatter.format(
                             TokenEntity.TON.symbol,
                             fee,
@@ -470,7 +572,8 @@ class HistoryHelper(
                             refundInCurrency
                         ),
                         lt = event.lt,
-                        hiddenBalance = options.hiddenBalances
+                        hiddenBalance = options.hiddenBalances,
+                        showNetwork = item.tokenAddress == TokenEntity.USDT.address && options.tronEnabled,
                     )
                 )
             }
@@ -516,7 +619,8 @@ class HistoryHelper(
     ): HistoryItem.Event? {
         val simplePreview = action.simplePreview
         val date = DateHelper.formatTransactionTime(timestamp, settingsRepository.getLocale())
-        val dateDetails = DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
+        val dateDetails =
+            DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
 
         // actionArgs.isTon && !actionArgs.isOut && !actionArgs.isScam && actionArgs.comment != null
         if (action.jettonSwap != null) {
@@ -619,6 +723,7 @@ class HistoryHelper(
                 },
                 comment = comment,
                 value = value,
+                tokenAddress = token,
                 tokenCode = "",
                 coinIconUrl = jettonTransfer.jetton.image,
                 timestamp = timestamp,
@@ -1127,26 +1232,27 @@ class HistoryHelper(
     }
 
 
-    private fun createFakeUnknown(position: ListCell.Position = ListCell.Position.SINGLE) = HistoryItem.Event(
-        index = 0,
-        txId = "",
-        action = ActionType.Unknown,
-        title = context.getString(Localization.unknown),
-        subtitle = context.getString(Localization.unknown_error),
-        position = position,
-        value = MINUS_SYMBOL,
-        tokenCode = "TON",
-        timestamp = 0,
-        date = "",
-        dateDetails = "",
-        isOut = false,
-        sender = null,
-        recipient = null,
-        failed = false,
-        isScam = false,
-        wallet = WalletEntity.EMPTY,
-        actionOutStatus = ActionOutStatus.Any
-    )
+    private fun createFakeUnknown(position: ListCell.Position = ListCell.Position.SINGLE) =
+        HistoryItem.Event(
+            index = 0,
+            txId = "",
+            action = ActionType.Unknown,
+            title = context.getString(Localization.unknown),
+            subtitle = context.getString(Localization.unknown_error),
+            position = position,
+            value = MINUS_SYMBOL,
+            tokenCode = "TON",
+            timestamp = 0,
+            date = "",
+            dateDetails = "",
+            isOut = false,
+            sender = null,
+            recipient = null,
+            failed = false,
+            isScam = false,
+            wallet = WalletEntity.EMPTY,
+            actionOutStatus = ActionOutStatus.Any
+        )
 
     private fun createUnknown(
         index: Int,

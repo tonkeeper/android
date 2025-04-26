@@ -44,7 +44,7 @@ class BatteryHolder(
         }
 
         if (item.balance > 0) {
-            subtitleView.text = context.resources.getQuantityString(Plurals.battery_current_charges, item.changes, item.formattedChanges)
+            subtitleView.text = context.resources.getQuantityString(Plurals.battery_charges, item.changes, item.formattedChanges)
         } else {
             val subtitleText = context.getString(Localization.battery_refill_subtitle)
             val clickText = context.getString(Localization.battery_supported_transaction)

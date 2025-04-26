@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="@dimen/offsetMedium"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:paddingHorizontal="28dp"
+    android:paddingBottom="4dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
@@ -29,13 +32,32 @@
 
     </uikit.widget.ColumnLayout>
 
-    <uikit.widget.FrescoView
-        android:id="@+id/icon"
+
+    <FrameLayout
         android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:background="@drawable/bg_oval"
-        android:backgroundTint="?attr/backgroundContentColor"
-        app:roundAsCircle="true" />
+        android:layout_height="64dp">
+
+        <uikit.widget.FrescoView
+            android:id="@+id/icon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/bg_oval"
+            android:backgroundTint="?attr/backgroundContentColor"
+            app:roundAsCircle="true" />
+
+        <uikit.widget.FrescoView
+            android:id="@+id/network_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="end|bottom"
+            android:translationX="7dp"
+            android:translationY="7dp"
+            android:visibility="gone"
+            app:roundAsCircle="true"
+            app:roundingBorderColor="?attr/backgroundPageColor"
+            app:roundingBorderPadding="1dp"
+            app:roundingBorderWidth="3dp" />
+    </FrameLayout>
 
 
 </uikit.widget.RowLayout>

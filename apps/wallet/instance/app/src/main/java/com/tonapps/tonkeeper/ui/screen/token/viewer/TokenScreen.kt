@@ -24,9 +24,11 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListPaginationListener
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.flow.take
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
@@ -34,8 +36,11 @@ import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setRightDrawable
+import androidx.core.net.toUri
 
-class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
+class TokenScreen(wallet: WalletEntity) :
+    BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)),
+    BaseFragment.SwipeBack {
 
     override val fragmentName: String = "TokenScreen"
 
@@ -64,6 +69,9 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
         val padding = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
         setListPadding(0, padding, 0, padding)
         setTitle(args.symbol)
+        if (args.address == TokenEntity.TRON_USDT.address) {
+            headerView.setSubtitle(Localization.trc20)
+        }
         setAdapter(ConcatAdapter(tokenAdapter, historyAdapter))
         addItemDecoration(HistoryItemDecoration())
         addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -119,9 +127,11 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
 
     private fun actionMenu(view: View, token: AccountTokenEntity) {
         val detailsUrl = if (token.isTon) {
-            Uri.parse("https://tonviewer.com/${screenContext.wallet.address}")
+            "https://tonviewer.com/${screenContext.wallet.address}".toUri()
+        } else if (token.isTrc20) {
+            "https://tronscan.org/#/address/${viewModel.tronAddress}".toUri()
         } else {
-            Uri.parse("https://tonviewer.com/${screenContext.wallet.address}/jetton/${token.address}")
+            "https://tonviewer.com/${screenContext.wallet.address}/jetton/${token.address}".toUri()
         }
 
         val actionSheet = ActionSheet(view.context)
@@ -147,13 +157,15 @@ class TokenScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wall
     }
 
     private fun burn(token: AccountTokenEntity) {
-        navigation?.add(SendScreen.newInstance(
-            wallet = screenContext.wallet,
-            targetAddress = viewModel.burnAddress,
-            tokenAddress = token.address,
-            amountNano = token.balance.value.toLong(),
-            type = SendScreen.Companion.Type.Default
-        ))
+        navigation?.add(
+            SendScreen.newInstance(
+                wallet = screenContext.wallet,
+                targetAddress = viewModel.burnAddress,
+                tokenAddress = token.address,
+                amountNano = token.balance.value.toLong(),
+                type = SendScreen.Companion.Type.Default
+            )
+        )
         finish()
     }
 

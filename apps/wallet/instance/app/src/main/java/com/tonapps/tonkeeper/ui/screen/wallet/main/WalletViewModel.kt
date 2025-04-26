@@ -63,9 +63,6 @@ class WalletViewModel(
     val installId: String
         get() = settingsRepository.installId
 
-    val installId: String
-        get() = settingsRepository.installId
-
     private var autoRefreshJob: Job? = null
     private val alertNotificationsFlow = MutableStateFlow<List<NotificationEntity>>(emptyList())
 

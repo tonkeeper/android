@@ -136,7 +136,7 @@ sealed class DeepLinkRoute {
                 throw IllegalArgumentException("Unsupported query parameters")
             }
 
-            if (address.isNotBlank() && (!address.isValidTonAddress() && !address.isValidTonDomain())) {
+            if (address.isNotBlank() && (!address.isValidTonAddress() && !address.isValidTronAddress() && !address.isValidTonDomain())) {
                 throw IllegalArgumentException("Invalid address")
             }
 

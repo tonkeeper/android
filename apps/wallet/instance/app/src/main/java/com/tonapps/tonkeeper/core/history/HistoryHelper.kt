@@ -40,7 +40,6 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.WalletCurrency
-import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.events.CommentEncryption
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -550,7 +549,7 @@ class HistoryHelper(
                     ActionOutStatus.Any -> actionOutStatusAny++
                     ActionOutStatus.Received -> actionOutStatusReceived++
                     ActionOutStatus.Send -> actionOutStatusSend++
-                    ActionOutStatus.App, ActionOutStatus.dApps -> { }
+                    ActionOutStatus.App, ActionOutStatus.dApps -> {}
                 }
 
                 chunkItems.add(

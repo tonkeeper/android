@@ -40,6 +40,8 @@ data class ConfigEntity(
     val batteryMeanPriceNft: String,
     val batteryMeanPriceSwap: String,
     val batteryMeanPriceJetton: String,
+    val batteryMeanPriceTrcMin: String,
+    val batteryMeanPriceTrcMax: String,
     val disableBatteryIapModule: Boolean,
     val batteryReservedAmount: String,
     val batteryMaxInputAmount: String,
@@ -130,7 +132,8 @@ data class ConfigEntity(
         reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
         stories = json.getJSONArray("stories").toStringList(),
         apkDownloadUrl = json.optString("apk_download_url"),
-        apkName = json.optString("apk_name")?.let { AppVersion(it.removePrefix("v")) }
+        apkName = json.optString("apk_name")?.let { AppVersion(it.removePrefix("v")) },
+        tronApiUrl = json.optString("tron_api_url", "https://api.trongrid.io"),
     )
 
     constructor() : this(

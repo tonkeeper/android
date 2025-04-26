@@ -1,12 +1,10 @@
 package com.tonapps.tonkeeper.ui.base
 
 import android.app.Application
-import android.content.Context
 import android.net.Uri
 import android.webkit.WebResourceRequest
 import androidx.annotation.LayoutRes
 import androidx.core.net.toUri
-import androidx.lifecycle.lifecycleScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
@@ -36,8 +34,6 @@ import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import org.koin.android.ext.android.inject

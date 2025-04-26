@@ -5,6 +5,8 @@ object Dependence {
     const val j2objc = "com.google.j2objc:j2objc-annotations:3.0.0"
     const val cbor = "co.nstant.in:cbor:0.9"
     const val ble = "no.nordicsemi.android:ble-ktx:2.9.0"
+    const val bcprovjdk = "org.bouncycastle:bcprov-jdk15to18:1.68"
+    const val web3j = "org.web3j:core:5.0.0"
 
     object Analytics {
         const val aptabase = "com.github.aptabase:aptabase-kotlin:0.0.8"

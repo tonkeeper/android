@@ -1,12 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.events.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.filterList
 import com.tonapps.extensions.mapList
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.api.AccountEventWrap
 import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.ActionOutStatus
@@ -20,6 +18,7 @@ import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.main.filters.FilterItem
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.tron.entity.TronEventEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -71,20 +69,22 @@ class EventsViewModel(
     private val _selectedFilter = MutableStateFlow<FilterItem?>(null)
     private val selectedFilter = _selectedFilter.asStateFlow()
 
-    private val dAppsNotificationsFlow = dAppsRepository.notificationsFlow(wallet, viewModelScope).map {
-        it.notifications
-    }
-
-    val uiFilterItemsFlow: Flow<List<FilterItem>> = combine(selectedFilter, dAppsNotificationsFlow) { selected, notifications ->
-        val uiFilterItems = mutableListOf<FilterItem>()
-        uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
-        uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
-        if (notifications.isNotEmpty()) {
-            uiFilterItems.add(FilterItem.Dapps(selected?.type == FilterItem.TYPE_DAPPS))
+    private val dAppsNotificationsFlow =
+        dAppsRepository.notificationsFlow(wallet, viewModelScope).map {
+            it.notifications
         }
-        uiFilterItems.add(FilterItem.Spam())
-        uiFilterItems.toList()
-    }
+
+    val uiFilterItemsFlow: Flow<List<FilterItem>> =
+        combine(selectedFilter, dAppsNotificationsFlow) { selected, notifications ->
+            val uiFilterItems = mutableListOf<FilterItem>()
+            uiFilterItems.add(FilterItem.Send(selected?.type == FilterItem.TYPE_SEND))
+            uiFilterItems.add(FilterItem.Receive(selected?.type == FilterItem.TYPE_RECEIVE))
+            if (notifications.isNotEmpty()) {
+                uiFilterItems.add(FilterItem.Dapps(selected?.type == FilterItem.TYPE_DAPPS))
+            }
+            uiFilterItems.add(FilterItem.Spam())
+            uiFilterItems.toList()
+        }
 
     private val isLoading: AtomicBoolean = AtomicBoolean(false)
     private val isError: AtomicBoolean = AtomicBoolean(false)
@@ -97,15 +97,34 @@ class EventsViewModel(
 
     private val eventsFlow = _eventsFlow.asStateFlow().filterNotNull()
 
+    private val _tronEventsFlow = MutableStateFlow<List<TronEventEntity>>(emptyList())
 
+    private val tronEventsFlow = _tronEventsFlow.asStateFlow().filterNotNull()
 
     private val historyItemsFlow = combine(
         eventsFlow.map { list -> list.map { it.event } },
         tronEventsFlow,
         _triggerFlow,
-        dAppsNotificationsFlow.mapList { HistoryItem.App(context, wallet, it) }
-    ) { events, _, dAppNotifications ->
-        mapping(events) + dAppNotifications
+        dAppsNotificationsFlow.mapList { HistoryItem.App(context, wallet, it) },
+    ) { events, tronEvents, _, dAppNotifications ->
+        val historyEvents = mapping(events)
+        val lastEventsTimestamp = historyEvents.lastOrNull()?.timestampForSort ?: 0L
+        val tronHistoryEvents = if (nextFrom != null) {
+            tronMapping(tronEvents).filter { it.timestampForSort > lastEventsTimestamp }
+        } else {
+            tronMapping(tronEvents)
+        }
+
+        val hasFilter = _selectedFilter.value != null
+
+
+        if (hasFilter) {
+            (historyEvents + tronHistoryEvents + dAppNotifications).sortedBy { it.timestampForSort }
+        } else {
+            val lastTronTimestamp = tronHistoryEvents.lastOrNull()?.timestampForSort ?: 0L
+            val lastTimestamp = min(lastEventsTimestamp, lastTronTimestamp)
+            (historyEvents + tronHistoryEvents + dAppNotifications.filter { it.timestamp > lastTimestamp }).sortedBy { it.timestampForSort }
+        }
     }
 
     private val uiItemsFlow = combine(
@@ -140,10 +159,11 @@ class EventsViewModel(
     val uiStateFlow: Flow<EventsUiState> = flow {
         val cached = cacheHelper.getEventsCached(wallet)
         if (cached.isNotEmpty()) {
-            emit(EventsUiState(
-                uiItems = cached,
-                loading = true
-            ))
+            emit(
+                EventsUiState(
+                    uiItems = cached, loading = true
+                )
+            )
         }
 
         emitAll(uiItemsFlow.map {
@@ -173,7 +193,6 @@ class EventsViewModel(
 
         viewModelScope.launch {
             dAppsRepository.refreshNotifications(wallet, accountRepository)
-            initialLoad(true)
         }
         _triggerFlow.tryEmit(Unit)
     }
@@ -263,10 +282,37 @@ class EventsViewModel(
                 return@withContext
             }
 
-            _eventsFlow.value = events
-        } catch (e: Throwable) {
-            setError()
+            setLoading(loading = true, trigger = true)
 
+            val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && !remoteConfig.isTronDisabled) {
+                accountRepository.getTronAddress(wallet.id)
+            } else null
+            val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
+
+            if (isFirstLoad.get()) {
+                val cached = cache().toTypedArray()
+                _tronEventsFlow.value =
+                    tronAddress?.let { eventsRepository.getTronLocal(tronAddress) } ?: emptyList()
+                if (cached.isNotEmpty()) {
+                    _eventsFlow.value = cached
+                }
+
+                isFirstLoad.set(false)
+            }
+
+            try {
+                val events = loadDefault(beforeLt = null, limit = 30).toTypedArray()
+                val tronEvents =
+                    tronAddress?.let { eventsRepository.loadTronEvents(tronAddress, tonProofToken) }
+                        ?: emptyList()
+                isError.set(false)
+                setLoading(loading = false, trigger = false)
+
+                _eventsFlow.value = events
+                _tronEventsFlow.value = tronEvents
+            } catch (e: Throwable) {
+                setError()
+            }
         }
 
     fun loadMore() {
@@ -296,6 +342,32 @@ class EventsViewModel(
                 setLoading(loading = false, trigger = false)
             } catch (e: Throwable) {
                 setError()
+            }
+        } catch (_: Throwable) {
+        }
+    }
+
+    private suspend fun loadMoreTron() {
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && !remoteConfig.isTronDisabled) {
+            accountRepository.getTronAddress(wallet.id)
+        } else null
+
+        if (tronAddress.isNullOrEmpty()) {
+            return
+        }
+
+        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
+        try {
+            val tronLastLt = getTronLastLt()
+            if (tronLastLt != null) {
+                val tronEvents = eventsRepository.loadTronEvents(
+                    tronAddress, tonProofToken, beforeLt = tronLastLt
+                ) ?: throw IllegalStateException("Failed to load tron events")
+
+                _tronEventsFlow.update { currentEvents ->
+                    (currentEvents + tronEvents).distinctBy { it.transactionHash }
+                        .sortedBy { it.timestamp }.reversed()
+                }
             }
         } catch (_: Throwable) {
         }

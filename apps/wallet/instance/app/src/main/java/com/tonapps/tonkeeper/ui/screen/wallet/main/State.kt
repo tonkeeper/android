@@ -174,7 +174,8 @@ sealed class State {
             return Item.Actions(
                 wallet = wallet,
                 token = TokenEntity.TON,
-                swapUri = config.swapUri
+                swapUri = config.swapUri,
+                tronEnabled = tronUsdtEnabled
             )
         }
 

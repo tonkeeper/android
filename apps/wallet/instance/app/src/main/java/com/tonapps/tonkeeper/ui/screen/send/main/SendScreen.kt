@@ -4,21 +4,19 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.updateLayoutParams
-import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.isPositive
 import com.tonapps.extensions.short4
-import com.tonapps.icu.Coins
+import com.tonapps.extensions.shortTron
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
-import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
@@ -58,7 +56,6 @@ import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.Plurals
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
 import org.ton.cell.Cell
 import uikit.base.BaseFragment
@@ -315,7 +312,66 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             }
         }
 
-        initializeArgs(args.targetAddress, args.amountNano, args.text, args.tokenAddress, args.bin, args.type)
+        initializeArgs(
+            args.targetAddress,
+            args.amountNano,
+            args.text,
+            args.tokenAddress,
+            args.bin,
+            args.type
+        )
+    }
+
+    private fun applyTokenError(
+        error: SendDestination.TokenError,
+        swapMethod: WalletPurchaseMethodEntity?
+    ) {
+        val addressBlockchainRes = if (error.addressBlockchain == Blockchain.TON) {
+            Localization.ton
+        } else {
+            Localization.tron
+        }
+        val selectedBlockchainRes = if (error.selectedToken.blockchain == Blockchain.TON) {
+            Localization.ton
+        } else {
+            Localization.tron
+        }
+
+        val errorText = getString(
+            Localization.send_wrong_blockchain,
+            getString(addressBlockchainRes),
+        )
+        val swapTitle = swapMethod?.method?.title ?: ""
+        val swapText = getString(
+            Localization.send_wrong_blockchain_swap,
+            getString(selectedBlockchainRes),
+            getString(addressBlockchainRes),
+            swapTitle,
+        )
+
+        val isUsdt = error.selectedToken.isTrc20 || error.selectedToken.isUsdt
+
+        if (swapMethod != null && isUsdt) {
+            val spannableString = SpannableString("$errorText $swapText")
+            val start = spannableString.indexOf(swapTitle)
+            spannableString.setSpan(
+                ForegroundColorSpan(requireContext().accentBlueColor),
+                spannableString.indexOf(swapTitle),
+                start + swapTitle.length,
+                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            addressErrorView.setTextColor(requireContext().textSecondaryColor)
+            addressErrorView.text = spannableString
+            addressErrorView.setOnClickListener {
+                BrowserHelper.openPurchase(requireContext(), swapMethod)
+            }
+        } else {
+            addressErrorView.setTextColor(requireContext().accentRedColor)
+            addressErrorView.text = errorText
+            addressErrorView.setOnClickListener(null)
+        }
+
+        addressErrorView.visibility = View.VISIBLE
     }
 
     private fun confirmSendAll() {
@@ -540,11 +596,28 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             amount.convertedFormat.withCustomSymbol(requireContext())
     }
 
-    private fun applyTransactionAccount(destination: SendDestination.Account) {
-        if (destination.displayName == null) {
-            reviewRecipientView.value = destination.displayAddress.short4
-            reviewRecipientView.setOnClickListener {
-                requireContext().copyToClipboard(destination.displayAddress)
+    private fun applyTransactionAccount(destination: SendDestination) {
+        if (destination is SendDestination.TonAccount) {
+            if (destination.displayName == null) {
+                reviewRecipientView.value = destination.displayAddress.short4
+                reviewRecipientView.setOnClickListener {
+                    requireContext().copyToClipboard(destination.displayAddress)
+                }
+
+                reviewRecipientAddressView.visibility = View.GONE
+            } else {
+                reviewRecipientView.value = destination.displayName
+                reviewRecipientView.setOnClickListener {
+                    requireContext().copyToClipboard(destination.displayName!!)
+                }
+
+                reviewRecipientAddressView.visibility = View.VISIBLE
+                reviewRecipientAddressView.value = destination.displayAddress.short4
+                reviewRecipientAddressView.setOnClickListener {
+                    requireContext().copyToClipboard(
+                        destination.displayAddress
+                    )
+                }
             }
         } else if (destination is SendDestination.TronAccount) {
             reviewRecipientView.value = destination.address.shortTron
@@ -586,12 +659,24 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             button.isLoading = false
             button.isEnabled = true
         } else {
-            reviewRecipientFeeView.title = if (event.fee.isRefund) getString(Localization.refund) else getString(Localization.fee)
-            if (event.fee.value.isZero) {
+            reviewRecipientFeeView.title =
+                if (event.fee.isRefund) getString(Localization.refund) else getString(Localization.fee)
+            if (event.charges != null) {
+                reviewRecipientFeeView.value = "≈ " + requireContext().resources.getQuantityString(
+                    Plurals.battery_charges, event.charges, event.chargesFormat
+                )
+                reviewRecipientFeeView.description = if (event.chargesBalance != null) {
+                    requireContext().getString(
+                        Localization.out_of_available_charges,
+                        event.chargesBalanceFormat
+                    )
+                } else ""
+            } else if (event.fee.value.isZero) {
                 reviewRecipientFeeView.value = getString(Localization.unknown)
                 reviewRecipientFeeView.description = ""
             } else {
-                reviewRecipientFeeView.value = "≈ ${event.format}".withCustomSymbol(requireContext())
+                reviewRecipientFeeView.value =
+                    "≈ ${event.format}".withCustomSymbol(requireContext())
                 reviewRecipientFeeView.description =
                     "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
             }
@@ -723,7 +808,16 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 this.bin = bin
             }
 
-            fun build() = newInstance(wallet, targetAddress, tokenAddress, amountNano, text, nftAddress, type, bin)
+            fun build() = newInstance(
+                wallet,
+                targetAddress,
+                tokenAddress,
+                amountNano,
+                text,
+                nftAddress,
+                type,
+                bin
+            )
         }
 
         enum class Type {
@@ -740,6 +834,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             type: Type,
             bin: Cell? = null
         ): SendScreen {
+            Log.d("SendScreen", "newInstance: $targetAddress, $tokenAddress, $amountNano, $text")
             val args = SendArgs(
                 targetAddress = targetAddress,
                 tokenAddress = tokenAddress,

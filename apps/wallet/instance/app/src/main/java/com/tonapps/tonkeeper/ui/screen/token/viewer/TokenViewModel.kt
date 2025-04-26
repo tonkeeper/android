@@ -66,6 +66,12 @@ class TokenViewModel(
     val installId: String
         get() = settingsRepository.installId
 
+    val tronUsdtEnabled: Boolean
+        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
+
+    var tronAddress: String? = null
+        private set
+
     private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
     val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 
@@ -208,7 +214,7 @@ class TokenViewModel(
             }
         }
 
-        if (token.hasRate && !token.isUsdt) {
+        if (token.hasRate && !token.isUsdt && !token.isTrc20) {
             val period = settingsRepository.chartPeriod
             val fiatPrice: CharSequence
             val rateDiff24h: String

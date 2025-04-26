@@ -609,6 +609,19 @@
     <string name="words12">12 слов</string>
     <string name="sign_data_binary_message">Вы подписываетесь вслепую. Подписывайте только из проверенных источников.</string>
     <string name="slide_to_sign">Свайп чтобы подписать</string>
-
+    <string name="tron_toggle_text">Используйте USD₮ TRC20 без TRX. Комиссии оплачиваются с помощью батарейки Tonkeeper.</string>
+    <string name="trc20">TRC20</string>
+    <string name="copy_phrase">Скопировать ключ</string>
+    <string name="export_tron">Экспорт TRC20 кошелька</string>
+    <string name="phrase_title_tron">TRC20 кошелёк</string>
+    <string name="phrase_description_tron">Запишите эти слова с их номерами и сохраните их в надежном месте.</string>
+    <string name="prhase_tron_warning">Этот ключ предназначен только для TRC20. Он не может восстановить ваш TON кошелёк. Для восстановления TON кошелька используйте ключ восстановления TON.</string>
+    <string name="battery_required_title">Для %1$s требуется батарейка Tonkeeper</string>
+    <string name="battery_required_text">Заряд батарейки покрывает комиссии за транзакции, упрощая и удешевляя переводы.</string>
+    <string name="charge_battery">Зарядить батарейку</string>
+    <string name="send_wrong_blockchain">Указан адрес сети %1$s.</string>
+    <string name="send_wrong_blockchain_swap">Обменяйте USD₮ %1$s на USD₮ %2$s через %3$s, чтобы продолжить отправку.</string>
+    <string name="enable_usdt_tron">Включить USD₮ TRC20</string>
+    <string name="tron">TRON</string>
 
 </resources>

@@ -591,6 +591,11 @@ class InitViewModel(
         }
 
         val wallets = accountRepository.importWallet(ids, label, mnemonic, accounts.map { it.walletVersion }, testnet, accounts.map { it.initialized })
+
+        if (!testnet && !remoteConfig.isTronDisabled) {
+            checkTronBalance(wallets)
+        }
+
         wallets
     }
 

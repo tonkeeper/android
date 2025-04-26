@@ -7,6 +7,7 @@ enum class InsufficientBalanceType {
     InsufficientJettonBalance,
     InsufficientGaslessBalance,
     InsufficientBalanceWithFee,
+    InsufficientBatteryChargesForFee,
     InsufficientBalanceForFee
 }
 

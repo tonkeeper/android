@@ -580,4 +580,22 @@
     <string name="theme_dark">Тъмно</string>
     <string name="sign_data_binary_message">Подписваш се на сляпо. Подписвайте само от доверени източници.</string>
     <string name="slide_to_sign">Плъзнете, за да подпишете</string>
+    <string name="insufficient_battery_charges">Недостатъчен\nзаряд на батерията</string>
+    <string name="insufficient_balance_charges">Необходимо за такса: %1$s\nНалично: %2$s</string>
+    <string name="receive_tron_description">Изпращайте само %1$s на този адрес, в противен случай може да загубите средствата си.</string>
+    <string name="open_explorer">Отвори в изследователя</string>
+    <string name="out_of_available_charges">изчерпани %1$s налични</string>
+    <string name="tron_toggle_text">Използвайте USD₮ TRC20 без TRX. Таксите се покриват от Tonkeeper Battery.</string>
+    <string name="trc20">TRC20</string>
+    <string name="copy_phrase">Копирай фразата</string>
+    <string name="export_tron">Експортирай TRC20 портфейл</string>
+    <string name="phrase_title_tron">TRC20 портфейл</string>
+    <string name="phrase_description_tron">Запишете тези думи с техните номера и ги съхранявайте на сигурно място.</string>
+    <string name="prhase_tron_warning">Тази фраза е само за TRC20. Тя не може да възстанови вашия TON портфейл. Използвайте вашата възстановителна фраза за TON за възстановяване на TON портфейла.</string>
+    <string name="battery_required_title">Необходим е Tonkeeper Battery за %1$s</string>
+    <string name="battery_required_text">Зарядите на батерията се използват за покриване на таксите за транзакции, правейки трансферите по-прости и икономични.</string>
+    <string name="charge_battery">Зареди батерията</string>
+    <string name="send_wrong_blockchain">Адресът принадлежи на мрежата %1$s.</string>
+    <string name="send_wrong_blockchain_swap">Разменете USD₮ %1$s за USD₮ %2$s чрез %3$s, за да продължите с трансфера.</string>
+    <string name="enable_usdt_tron">Активирайте USD₮ TRC20</string>
 </resources>

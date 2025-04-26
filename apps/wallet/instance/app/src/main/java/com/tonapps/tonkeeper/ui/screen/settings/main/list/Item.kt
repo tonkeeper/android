@@ -42,6 +42,10 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
 
     }
 
+    data class TronToggle(
+        val enabled: Boolean,
+    ): Item(TYPE_TRON, "tron")
+
     data object Space: Item(TYPE_SPACE, "")
 
     data class Logo(

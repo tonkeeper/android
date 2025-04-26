@@ -67,6 +67,14 @@ class SettingsViewModel(
     val installId: String
         get() = settingsRepository.installId
 
+    private val walletInfoFlow = combine(
+        backupRepository.stream,
+        accountRepository.selectedWalletFlow
+    ) { backups, wallet ->
+        val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
+        Pair(hasBackup, wallet)
+    }
+
     init {
         combine(
             settingsRepository.walletPrefsChangedFlow,

@@ -15,7 +15,8 @@ class RemoteConfig(context: Context) {
         DISABLE_BATTERY_CRYPTO_RECHARGE_MODULE("disableBatteryCryptoRechargeModule"),
         HARDCODED_COUNTRY_CODE("hardcodedCountryCode"),
         IN_APP_UPDATE_AVAILABLE("inAppUpdateAvailable"),
-        IS_COUNTRY_PICKER_DISABLE("isCountryPickerDisable");
+        IS_COUNTRY_PICKER_DISABLE("isCountryPickerDisable"),
+        IS_TRON_DISABLED("isTronDisabled");
     }
 
     init {
@@ -28,7 +29,8 @@ class RemoteConfig(context: Context) {
             FeatureFlag.IS_SWAP_DISABLE.key to true,
             FeatureFlag.IS_STAKING_DISABLE.key to true,
             FeatureFlag.IS_DAPPS_DISABLE.key to true,
-            FeatureFlag.DISABLE_BATTERY_CRYPTO_RECHARGE_MODULE.key to true
+            FeatureFlag.DISABLE_BATTERY_CRYPTO_RECHARGE_MODULE.key to true,
+            FeatureFlag.IS_TRON_DISABLED.key to false
         )
 
         remoteConfig.setDefaultsAsync(defaults)
@@ -64,4 +66,7 @@ class RemoteConfig(context: Context) {
 
     val isBatteryCryptoRechargeDisable: Boolean
         get() = remoteConfig.getBoolean(FeatureFlag.DISABLE_BATTERY_CRYPTO_RECHARGE_MODULE.key)
+
+    val isTronDisabled: Boolean
+        get() = remoteConfig.getBoolean(FeatureFlag.IS_TRON_DISABLED.key)
 }

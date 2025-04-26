@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.usecase.sign
 
 import android.content.Context
 import com.tonapps.blockchain.ton.connect.TONProof
+import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet

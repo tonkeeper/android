@@ -119,7 +119,7 @@ fun QrContent(
     content: String?,
     tokenImage: Uri,
     blockchainImage: Int?,
-    onShareClick: () -> Unit,
+    onCopyClick: () -> Unit,
 ) {
     val accentOrangeColor = UIKit.colors.accentOrange
     val backgroundContentTintColor = UIKit.colors.backgroundContentTint
@@ -158,7 +158,7 @@ fun QrContent(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onShareClick() }
+                .clickable { onCopyClick() }
         )
 
         if (walletType == Wallet.Type.Watch) {
@@ -351,7 +351,7 @@ fun QrComposable(
                 content = qrContent,
                 tokenImage = token.imageUri,
                 blockchainImage = if (showBlockchain && (token.isUsdt || token.isTrc20)) blockchainImage else null,
-                onShareClick = { onShareClick() }
+                onCopyClick = { onCopyClick() }
             )
             Spacer(modifier = Modifier.height(Dimens.offsetMedium))
             QrActions(

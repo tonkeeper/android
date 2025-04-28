@@ -62,11 +62,7 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
     private fun share() {
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = "text/plain"
-        if (viewModel.token.isTon || viewModel.token.isTrc20) {
-            intent.putExtra(Intent.EXTRA_TEXT, viewModel.address)
-        } else {
-            intent.putExtra(Intent.EXTRA_TEXT, getQrContent(viewModel.address, viewModel.token))
-        }
+        intent.putExtra(Intent.EXTRA_TEXT, viewModel.address)
         startActivity(Intent.createChooser(intent, getString(Localization.share)))
     }
 

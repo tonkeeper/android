@@ -40,6 +40,24 @@
         <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
     </style>
 
+    <style name="Widget.App.Button.Medium" parent="Base.Widget.App.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:background">@drawable/bg_medium_button_primary</item>
+        <item name="android:textColor">@color/button_primary_foreground_selector</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textAppearance">@style/TextAppearance.Label1</item>
+        <item name="minHeight">0dp</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+    </style>
+
+    <style name="Widget.App.Button.Medium.Secondary" parent="Widget.App.Button.Medium">
+        <item name="android:background">@drawable/bg_small_button_secondary</item>
+        <item name="android:textColor">?attr/buttonSecondaryForegroundColor</item>
+    </style>
+
     <style name="Widget.App.Button.Small" parent="Base.Widget.App.Button">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">@dimen/tertiaryHeight</item>

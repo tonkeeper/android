@@ -97,6 +97,7 @@ class SettingsScreen(
             is Item.V4R2 -> viewModel.createV4R2Wallet()
             is Item.Notifications -> navigation?.add(NotificationsManageScreen.newInstance(screenContext.wallet))
             is Item.FAQ -> navigation?.openURL(item.url)
+            is Item.TronToggle -> viewModel.toggleTron()
             else -> return
         }
     }

@@ -626,7 +626,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Camera && !wallet.isWatchOnly) {
             openScreen(CameraScreen.newInstance())
         } else if (route is DeepLinkRoute.Receive) {
-            openScreen(QRScreen.newInstance(wallet, TokenEntity.TON))
+            openScreen(QRScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.ManageAssets) {
             openScreen(TokensManageScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.WalletPicker) {

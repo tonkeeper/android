@@ -2,91 +2,68 @@ package com.tonapps.tonkeeper.ui.screen.qr
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import androidx.appcompat.widget.AppCompatTextView
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.getParcelableCompat
-import com.tonapps.qr.ui.QRView
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.ui.base.WalletContextScreen
-import com.tonapps.tonkeeperx.R
+import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.backgroundContentTintColor
-import com.tonapps.uikit.color.stateList
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
+import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
-import uikit.widget.FrescoView
-import uikit.widget.HeaderView
-import uikit.widget.TextHeaderView
 
-class QRScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_qr, wallet), BaseFragment.BottomSheet {
+class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment.BottomSheet {
 
     override val fragmentName: String = "QRScreen"
 
-    private val token: TokenEntity by lazy {
-        arguments?.getParcelableCompat(ARG_TOKEN) ?: TokenEntity.TON
+    override val viewModel: QRViewModel by walletViewModel {
+        parametersOf(arguments?.getParcelableCompat(ARG_TOKEN) ?: TokenEntity.TON)
     }
 
-    override val viewModel: QRViewModel by walletViewModel()
+    private val hasToken: Boolean
+        get() = arguments?.getBoolean(ARG_HAS_TOKEN) ?: false
 
-    private lateinit var headerView: HeaderView
-    private lateinit var infoView: TextHeaderView
-    private lateinit var qrView: QRView
-    private lateinit var iconView: FrescoView
-    private lateinit var addressView: AppCompatTextView
-    private lateinit var walletTypeView: AppCompatTextView
-    private lateinit var copyView: View
-    private lateinit var shareView: View
+    private val enableTronDialog: EnableTronDialog by lazy {
+        EnableTronDialog(this, wallet, onDone = viewModel::setTron)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AnalyticsHelper.simpleTrackEvent("receive_open", viewModel.installId)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        headerView = view.findViewById(R.id.header)
-        headerView.doOnCloseClick = { finish() }
-
-        infoView = view.findViewById(R.id.info)
-        infoView.title = getString(Localization.receive_coin, token.name)
-        infoView.desciption = getString(Localization.receive_coin_description, token.name)
-
-        qrView = view.findViewById(R.id.qr)
-        qrView.setContent(getDeepLink())
-
-        iconView = view.findViewById(R.id.icon)
-        iconView.setImageURI(token.imageUri)
-
-        addressView = view.findViewById(R.id.address)
-        addressView.setOnClickListener { copy() }
-        addressView.text = wallet.address
-
-        walletTypeView = view.findViewById(R.id.wallet_type)
-        if (wallet.type == Wallet.Type.Watch) {
-            walletTypeView.visibility = View.VISIBLE
-            walletTypeView.setText(Localization.watch_only)
-            walletTypeView.backgroundTintList = requireContext().accentOrangeColor.stateList
-        } else {
-            walletTypeView.visibility = View.GONE
+    private fun getQrContent(address: String, token: TokenEntity): String {
+        if (token.isTrc20) {
+            return address
         }
 
-        copyView = view.findViewById(R.id.copy)
-        copyView.setOnClickListener { copy() }
-
-        shareView = view.findViewById(R.id.share)
-        shareView.setOnClickListener {
-            val intent = Intent(Intent.ACTION_SEND)
-            intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_TEXT, wallet.address)
-            startActivity(Intent.createChooser(intent, getString(Localization.share)))
+        var value = "ton://transfer/${address}"
+        if (!token.isTon) {
+            value += "?jetton=${
+                token.address.toUserFriendly(
+                    wallet = false,
+                    testnet = wallet.type == Wallet.Type.Testnet
+                )
+            }"
         }
+        return value
+    }
+
+    private fun share() {
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = "text/plain"
+        intent.putExtra(Intent.EXTRA_TEXT, viewModel.address)
+        startActivity(Intent.createChooser(intent, getString(Localization.share)))
     }
 
     private fun copy() {
@@ -95,30 +72,61 @@ class QRScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_qr, 
             else -> requireContext().backgroundContentTintColor
         }
         navigation?.toast(getString(Localization.copied), color)
-        context?.copyToClipboard(wallet.address)
+        context?.copyToClipboard(viewModel.address)
     }
 
-    private fun getDeepLink(): String {
-        var deepLink = "ton://transfer/${wallet.address}"
-        if (!token.isTon) {
-            deepLink += "?jetton=${token.address.toUserFriendly(
-                wallet = false,
-                testnet = wallet.type == Wallet.Type.Testnet
-            )}"
+    @Composable
+    override fun ScreenContent() {
+        val isTronDisabled = remoteConfig?.isTronDisabled ?: false
+        val tabsVisible = !hasToken && wallet.hasPrivateKey && !wallet.testnet && !isTronDisabled
+        val qrContent by remember {
+            derivedStateOf {
+                if (viewModel.address.isNotEmpty()) {
+                    getQrContent(viewModel.address, viewModel.token)
+                } else {
+                    null
+                }
+            }
         }
-        return deepLink
+        QrComposable(
+            wallet = wallet,
+            tabsVisible = tabsVisible,
+            token = viewModel.token,
+            address = viewModel.address,
+            qrContent = qrContent,
+            showBlockchain = viewModel.tronUsdtEnabled,
+            onFinishClick = { finish() },
+            onShareClick = { share() },
+            onCopyClick = { copy() },
+            onTabClick = {
+                when (it) {
+                    QRViewModel.Tab.TON -> viewModel.setTon()
+                    QRViewModel.Tab.TRON -> {
+                        if (!viewModel.tronUsdtEnabled) {
+                            if (!enableTronDialog.isShowing) {
+                                enableTronDialog.show()
+                            }
+                        } else {
+                            viewModel.setTron()
+                        }
+                    }
+                }
+            }
+        )
     }
 
     companion object {
 
         private const val ARG_TOKEN = "token"
+        private const val ARG_HAS_TOKEN = "has_token"
 
         fun newInstance(
             wallet: WalletEntity,
-            token: TokenEntity
-        ): QRScreen {
+            token: TokenEntity? = null
+        ): BaseFragment {
             val screen = QRScreen(wallet)
-            screen.putParcelableArg(ARG_TOKEN, token)
+            screen.putParcelableArg(ARG_TOKEN, token ?: TokenEntity.TON)
+            screen.putBooleanArg(ARG_HAS_TOKEN, token != null)
             return screen
         }
     }

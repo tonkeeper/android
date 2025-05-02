@@ -135,10 +135,12 @@ class FrescoView @JvmOverloads constructor(
     }
 
     fun clear(callerContext: Any?) {
-        controller = Fresco.newDraweeControllerBuilder()
-            .setOldController(controller)
-            .setCallerContext(callerContext)
-            .setAutoPlayAnimations(true)
-            .build()
+        try {
+            controller = Fresco.newDraweeControllerBuilder()
+                .setOldController(controller)
+                .setCallerContext(callerContext)
+                .setAutoPlayAnimations(true)
+                .build()
+        } catch (ignored: Throwable) { }
     }
 }

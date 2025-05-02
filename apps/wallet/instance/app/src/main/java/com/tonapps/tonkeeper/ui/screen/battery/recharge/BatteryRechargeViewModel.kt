@@ -2,13 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
@@ -17,7 +15,6 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.toGrams
-import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackEntity
@@ -53,7 +50,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -158,7 +154,7 @@ class BatteryRechargeViewModel(
                 Item.Address.State.Loading
             } else if (destination is SendDestination.NotFound) {
                 Item.Address.State.Error
-            } else if (destination is SendDestination.Account) {
+            } else if (destination is SendDestination.TonAccount) {
                 Item.Address.State.Success
             } else {
                 Item.Address.State.Default
@@ -231,7 +227,7 @@ class BatteryRechargeViewModel(
         }
 
         val isValidGiftAddress = if (args.isGift) {
-            destination is SendDestination.Account
+            destination is SendDestination.TonAccount
         } else {
             true
         }
@@ -345,7 +341,7 @@ class BatteryRechargeViewModel(
         }
 
         val fundReceiver = config.fundReceiver ?: return@combine
-        val recipientAddress = if (destination is SendDestination.Account) {
+        val recipientAddress = if (destination is SendDestination.TonAccount) {
             destination.address
         } else null
         val payload = wallet.contract.createBatteryBody(
@@ -530,7 +526,7 @@ class BatteryRechargeViewModel(
         val account = accountDeferred.await() ?: return@withContext SendDestination.NotFound
         val publicKey = publicKeyDeferred.await()
 
-        SendDestination.Account(address, publicKey, account)
+        SendDestination.TonAccount(address, publicKey, account)
     }
 
     fun applyPromo(promo: String) {

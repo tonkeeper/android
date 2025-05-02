@@ -6,6 +6,7 @@ import androidx.collection.ArrayMap
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
@@ -92,9 +93,24 @@ class BatteryRepository(
         val balance = if (ignoreCache) {
             fetchBalance(publicKey, tonProofToken, testnet)
         } else {
-            localDataSource.getBalance(publicKey, testnet) ?: fetchBalance(publicKey, tonProofToken, testnet)
+            localDataSource.getBalance(publicKey, testnet) ?: fetchBalance(
+                publicKey,
+                tonProofToken,
+                testnet
+            )
         }
         balance
+    }
+
+    suspend fun getCharges(
+        tonProofToken: String,
+        publicKey: PublicKeyEd25519,
+        testnet: Boolean,
+        ignoreCache: Boolean = false,
+    ): Int = withContext(Dispatchers.IO) {
+        val balance = getBalance(tonProofToken, publicKey, testnet, ignoreCache)
+        val charges = BatteryMapper.convertToCharges(balance.balance, api.config.batteryMeanFees)
+        charges
     }
 
     private suspend fun fetchBalance(
@@ -102,7 +118,8 @@ class BatteryRepository(
         tonProofToken: String,
         testnet: Boolean
     ): BatteryBalanceEntity {
-        val balance = remoteDataSource.fetchBalance(tonProofToken, testnet) ?: return BatteryBalanceEntity.Empty
+        val balance = remoteDataSource.fetchBalance(tonProofToken, testnet)
+            ?: return BatteryBalanceEntity.Empty
         localDataSource.setBalance(publicKey, testnet, balance)
         _balanceUpdatedFlow.emit(Unit)
         return balance

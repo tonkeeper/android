@@ -110,7 +110,7 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
     }
 
     private fun openQRCode() {
-        navigation?.add(QRScreen.newInstance(screenContext.wallet, TokenEntity.TON))
+        navigation?.add(QRScreen.newInstance(screenContext.wallet))
     }
 
     private fun setEmptyState() {

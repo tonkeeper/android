@@ -7,53 +7,79 @@
         android:id="@+id/header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:icon="@drawable/ic_chevron_left_16"/>
+        android:icon="@drawable/ic_chevron_left_16" />
 
 
     <uikit.widget.TextHeaderView
+        android:id="@+id/text_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:description="@string/phrase_description"
+        android:title="@string/phrase_title" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tron_warning"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/offsetMedium"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
-        android:title="@string/phrase_title"
-        android:description="@string/phrase_description"/>
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_button_orange"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:paddingVertical="12dp"
+        android:text="@string/prhase_tron_warning"
+        android:textAppearance="@style/TextAppearance.Body3"
+        android:textColor="@color/constantBlack"
+        android:visibility="gone"/>
 
-    <FrameLayout
+    <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="@dimen/offsetMedium"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:gravity="center_horizontal">
 
         <uikit.widget.PhraseWords
             android:id="@+id/words"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"/>
+            android:layout_height="wrap_content" />
 
-    </FrameLayout>
+        <Button
+            android:id="@+id/copy"
+            style="@style/Widget.App.Button.Medium.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:drawableLeft="@drawable/ic_copy_16"
+            android:text="@string/copy_phrase"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/tron"
+            style="@style/Widget.App.Button.Medium.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:drawableLeft="@drawable/ic_share_16"
+            android:text="@string/export_tron"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:visibility="gone" />
+
+    </uikit.widget.ColumnLayout>
+
 
     <Button
-        style="@style/Widget.App.Button.Secondary"
-        android:id="@+id/copy"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
-        android:layout_marginTop="@dimen/offsetLarge"
-        android:layout_marginBottom="@dimen/offsetMedium"
-        android:visibility="gone"
-        android:text="@string/copy"
-        android:textAppearance="@style/TextAppearance.Label1"/>
-
-    <Button
-        style="@style/Widget.App.Button"
         android:id="@+id/check"
+        style="@style/Widget.App.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/offsetLarge"
         android:layout_marginTop="@dimen/offsetLarge"
         android:layout_marginBottom="@dimen/offsetMedium"
-        android:visibility="gone"
         android:text="@string/manual_backup_check"
-        android:textAppearance="@style/TextAppearance.Label1"/>
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:visibility="gone" />
 
 </uikit.widget.ColumnLayout>

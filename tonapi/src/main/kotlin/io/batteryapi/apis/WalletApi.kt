@@ -16,7 +16,7 @@
 package io.batteryapi.apis
 
 import java.io.IOException
-import okhttp3.OkHttpClient
+import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.batteryapi.models.GetTonConnectPayloadDefaultResponse
@@ -39,7 +39,7 @@ import io.batteryapi.infrastructure.ResponseType
 import io.batteryapi.infrastructure.Success
 import io.batteryapi.infrastructure.toMultiValue
 
-class WalletApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient = ApiClient.defaultClient) : ApiClient(basePath, client) {
+class WalletApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = ApiClient.defaultClient) : ApiClient(basePath, client) {
     companion object {
         @JvmStatic
         val defaultBasePath: String by lazy {
@@ -48,6 +48,7 @@ class WalletApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient 
     }
 
     /**
+     * POST /tonconnect/proof
      * 
      * Account verification and token issuance
      * @param tonConnectProofRequest Data that is expected from TON Connect
@@ -79,6 +80,7 @@ class WalletApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient 
     }
 
     /**
+     * POST /tonconnect/proof
      * 
      * Account verification and token issuance
      * @param tonConnectProofRequest Data that is expected from TON Connect

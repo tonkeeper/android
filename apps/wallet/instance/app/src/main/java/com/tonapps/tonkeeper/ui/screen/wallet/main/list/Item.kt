@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
@@ -187,6 +188,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val wallet: WalletEntity,
         val token: TokenEntity,
         val swapUri: Uri,
+        val tronEnabled: Boolean,
     ): Item(TYPE_ACTIONS) {
 
         val address: String
@@ -198,13 +200,15 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         constructor(parcel: Parcel) : this(
             parcel.readParcelableCompat()!!,
             parcel.readParcelableCompat()!!,
-            parcel.readParcelableCompat()!!
+            parcel.readParcelableCompat()!!,
+            parcel.readBooleanCompat()
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
             dest.writeParcelable(wallet, flags)
             dest.writeParcelable(token, flags)
             dest.writeParcelable(swapUri, flags)
+            dest.writeBooleanCompat(tronEnabled)
         }
 
         companion object CREATOR : Parcelable.Creator<Actions> {
@@ -304,11 +308,14 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val hiddenBalance: Boolean,
         val blacklist: Boolean,
         val wallet: WalletEntity,
+        val showNetwork: Boolean,
+        val blockchain: Blockchain,
     ): Item(TYPE_TOKEN) {
 
         val isTON = symbol == TokenEntity.TON.symbol
 
-        val isUSDT = symbol == TokenEntity.USDT.symbol
+        val isUSDT = address == TokenEntity.USDT.address
+        val isTRC20 = address == TokenEntity.TRON_USDT.address
 
         constructor(
             position: ListCell.Position,
@@ -316,7 +323,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             hiddenBalance: Boolean,
             testnet: Boolean,
             currencyCode: String,
-            wallet: WalletEntity
+            wallet: WalletEntity,
+            showNetwork: Boolean,
         ) : this(
             position = position,
             iconUri = token.imageUri,
@@ -327,7 +335,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             balanceFormat = CurrencyFormatter.format(value = token.balance.value),
             fiat = token.fiat,
             fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat),
-            rate = if (token.isUsdt) {
+            rate = if (token.isUsdt || token.isTrc20) {
                 CurrencyFormatter.formatFiat(
                     currency = currencyCode,
                     value = token.rateNow,
@@ -342,7 +350,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             testnet = testnet,
             hiddenBalance = hiddenBalance,
             blacklist = token.blacklist,
-            wallet = wallet
+            wallet = wallet,
+            showNetwork = showNetwork,
+            blockchain = token.token.blockchain,
         )
 
         constructor(parcel: Parcel) : this(
@@ -361,7 +371,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
-            parcel.readParcelableCompat()!!
+            parcel.readParcelableCompat()!!,
+            parcel.readBooleanCompat(),
+            parcel.readEnum(Blockchain::class.java)!!,
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -381,6 +393,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(hiddenBalance)
             dest.writeBooleanCompat(blacklist)
             dest.writeParcelable(wallet, flags)
+            dest.writeBooleanCompat(showNetwork)
+            dest.writeEnum(blockchain)
         }
 
         companion object CREATOR : Parcelable.Creator<Token> {

@@ -16,7 +16,7 @@
 package io.batteryapi.apis
 
 import java.io.IOException
-import okhttp3.OkHttpClient
+import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.batteryapi.models.GetTonConnectPayload200Response
@@ -38,7 +38,7 @@ import io.batteryapi.infrastructure.ResponseType
 import io.batteryapi.infrastructure.Success
 import io.batteryapi.infrastructure.toMultiValue
 
-class ConnectApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient = ApiClient.defaultClient) : ApiClient(basePath, client) {
+class ConnectApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = ApiClient.defaultClient) : ApiClient(basePath, client) {
     companion object {
         @JvmStatic
         val defaultBasePath: String by lazy {
@@ -47,6 +47,7 @@ class ConnectApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /tonconnect/payload
      * 
      * Get a payload for further token receipt
      * @return GetTonConnectPayload200Response
@@ -77,6 +78,7 @@ class ConnectApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /tonconnect/payload
      * 
      * Get a payload for further token receipt
      * @return ApiResponse<GetTonConnectPayload200Response?>

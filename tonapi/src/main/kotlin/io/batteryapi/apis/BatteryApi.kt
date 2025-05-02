@@ -16,29 +16,45 @@
 package io.batteryapi.apis
 
 import java.io.IOException
-import okhttp3.OkHttpClient
+import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.batteryapi.models.AndroidBatteryPurchaseRequest
 import io.batteryapi.models.AndroidBatteryPurchaseStatus
 import io.batteryapi.models.AppStoreNotificationRequest
+import io.batteryapi.models.ApplyPromoRequest
 import io.batteryapi.models.Balance
+import io.batteryapi.models.BatteryCharged
 import io.batteryapi.models.Config
 import io.batteryapi.models.CreateCustomRefundRequest
+import io.batteryapi.models.CreatePromoCampaign200Response
+import io.batteryapi.models.CreatePromoCampaignRequest
 import io.batteryapi.models.EmulateMessageToWalletRequest
+import io.batteryapi.models.EnterpriseEstimate200Response
+import io.batteryapi.models.EnterpriseEstimateRequest
+import io.batteryapi.models.EnterpriseGetMessage200Response
+import io.batteryapi.models.EnterpriseGetStatus200Response
+import io.batteryapi.models.EnterpriseSend200Response
+import io.batteryapi.models.EnterpriseWalletConfig
 import io.batteryapi.models.EstimateGaslessCostRequest
+import io.batteryapi.models.EstimatedTronTx
 import io.batteryapi.models.GaslessEstimation
 import io.batteryapi.models.GetTonConnectPayloadDefaultResponse
+import io.batteryapi.models.GetTronConfig200Response
 import io.batteryapi.models.IOSBatteryPurchaseStatus
 import io.batteryapi.models.IosBatteryPurchaseRequest
 import io.batteryapi.models.PromoCodeBatteryPurchaseRequest
 import io.batteryapi.models.PromoCodeBatteryPurchaseStatus
+import io.batteryapi.models.PromoUsed
 import io.batteryapi.models.Purchases
 import io.batteryapi.models.RechargeMethods
 import io.batteryapi.models.RequestRefundRequest
 import io.batteryapi.models.ResetUserBalanceRequest
+import io.batteryapi.models.SentTronTx
 import io.batteryapi.models.Status
 import io.batteryapi.models.Transactions
+import io.batteryapi.models.TronSendRequest
+import io.batteryapi.models.TronTransactionsList
 
 import com.squareup.moshi.Json
 
@@ -56,7 +72,7 @@ import io.batteryapi.infrastructure.ResponseType
 import io.batteryapi.infrastructure.Success
 import io.batteryapi.infrastructure.toMultiValue
 
-class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient = ApiClient.defaultClient) : ApiClient(basePath, client) {
+class BatteryApi(basePath: kotlin.String = defaultBasePath, client: Call.Factory = ApiClient.defaultClient) : ApiClient(basePath, client) {
     companion object {
         @JvmStatic
         val defaultBasePath: String by lazy {
@@ -65,6 +81,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /purchase-battery/android
      * 
      * verify an in-app purchase
      * @param xTonConnectAuth 
@@ -97,6 +114,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /purchase-battery/android
      * 
      * verify an in-app purchase
      * @param xTonConnectAuth 
@@ -141,6 +159,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /purchase-battery/ios/app-store-notification
      * 
      * 
      * @param appStoreNotificationRequest 
@@ -172,6 +191,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /purchase-battery/ios/app-store-notification
      * 
      * 
      * @param appStoreNotificationRequest 
@@ -213,6 +233,87 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /restricted/apply-promo
+     * 
+     * 
+     * @param token 
+     * @param applyPromoRequest 
+     * @return PromoCodeBatteryPurchaseStatus
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun applyPromo(token: kotlin.String, applyPromoRequest: ApplyPromoRequest) : PromoCodeBatteryPurchaseStatus {
+        val localVarResponse = applyPromoWithHttpInfo(token = token, applyPromoRequest = applyPromoRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PromoCodeBatteryPurchaseStatus
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /restricted/apply-promo
+     * 
+     * 
+     * @param token 
+     * @param applyPromoRequest 
+     * @return ApiResponse<PromoCodeBatteryPurchaseStatus?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun applyPromoWithHttpInfo(token: kotlin.String, applyPromoRequest: ApplyPromoRequest) : ApiResponse<PromoCodeBatteryPurchaseStatus?> {
+        val localVariableConfig = applyPromoRequestConfig(token = token, applyPromoRequest = applyPromoRequest)
+
+        return request<ApplyPromoRequest, PromoCodeBatteryPurchaseStatus>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation applyPromo
+     *
+     * @param token 
+     * @param applyPromoRequest 
+     * @return RequestConfig
+     */
+    fun applyPromoRequestConfig(token: kotlin.String, applyPromoRequest: ApplyPromoRequest) : RequestConfig<ApplyPromoRequest> {
+        val localVariableBody = applyPromoRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/apply-promo",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /restricted/create-custom-refund
      * 
      * 
      * @param token 
@@ -245,6 +346,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /restricted/create-custom-refund
      * 
      * 
      * @param token 
@@ -291,6 +393,489 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /restricted/promo-campaign
+     * 
+     * 
+     * @param token 
+     * @param createPromoCampaignRequest 
+     * @return CreatePromoCampaign200Response
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun createPromoCampaign(token: kotlin.String, createPromoCampaignRequest: CreatePromoCampaignRequest) : CreatePromoCampaign200Response {
+        val localVarResponse = createPromoCampaignWithHttpInfo(token = token, createPromoCampaignRequest = createPromoCampaignRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as CreatePromoCampaign200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /restricted/promo-campaign
+     * 
+     * 
+     * @param token 
+     * @param createPromoCampaignRequest 
+     * @return ApiResponse<CreatePromoCampaign200Response?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun createPromoCampaignWithHttpInfo(token: kotlin.String, createPromoCampaignRequest: CreatePromoCampaignRequest) : ApiResponse<CreatePromoCampaign200Response?> {
+        val localVariableConfig = createPromoCampaignRequestConfig(token = token, createPromoCampaignRequest = createPromoCampaignRequest)
+
+        return request<CreatePromoCampaignRequest, CreatePromoCampaign200Response>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation createPromoCampaign
+     *
+     * @param token 
+     * @param createPromoCampaignRequest 
+     * @return RequestConfig
+     */
+    fun createPromoCampaignRequestConfig(token: kotlin.String, createPromoCampaignRequest: CreatePromoCampaignRequest) : RequestConfig<CreatePromoCampaignRequest> {
+        val localVariableBody = createPromoCampaignRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/promo-campaign",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /enterprise/wallets/{wallet_id}/estimate
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @param enterpriseEstimateRequest bag-of-cells serialized to base64
+     * @param acceptLanguage  (optional, default to "en")
+     * @param emulate  (optional, default to false)
+     * @return EnterpriseEstimate200Response
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun enterpriseEstimate(xEnterpriseAuth: kotlin.String, walletId: kotlin.String, enterpriseEstimateRequest: EnterpriseEstimateRequest, acceptLanguage: kotlin.String? = "en", emulate: kotlin.Boolean? = false) : EnterpriseEstimate200Response {
+        val localVarResponse = enterpriseEstimateWithHttpInfo(xEnterpriseAuth = xEnterpriseAuth, walletId = walletId, enterpriseEstimateRequest = enterpriseEstimateRequest, acceptLanguage = acceptLanguage, emulate = emulate)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as EnterpriseEstimate200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /enterprise/wallets/{wallet_id}/estimate
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @param enterpriseEstimateRequest bag-of-cells serialized to base64
+     * @param acceptLanguage  (optional, default to "en")
+     * @param emulate  (optional, default to false)
+     * @return ApiResponse<EnterpriseEstimate200Response?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun enterpriseEstimateWithHttpInfo(xEnterpriseAuth: kotlin.String, walletId: kotlin.String, enterpriseEstimateRequest: EnterpriseEstimateRequest, acceptLanguage: kotlin.String?, emulate: kotlin.Boolean?) : ApiResponse<EnterpriseEstimate200Response?> {
+        val localVariableConfig = enterpriseEstimateRequestConfig(xEnterpriseAuth = xEnterpriseAuth, walletId = walletId, enterpriseEstimateRequest = enterpriseEstimateRequest, acceptLanguage = acceptLanguage, emulate = emulate)
+
+        return request<EnterpriseEstimateRequest, EnterpriseEstimate200Response>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation enterpriseEstimate
+     *
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @param enterpriseEstimateRequest bag-of-cells serialized to base64
+     * @param acceptLanguage  (optional, default to "en")
+     * @param emulate  (optional, default to false)
+     * @return RequestConfig
+     */
+    fun enterpriseEstimateRequestConfig(xEnterpriseAuth: kotlin.String, walletId: kotlin.String, enterpriseEstimateRequest: EnterpriseEstimateRequest, acceptLanguage: kotlin.String?, emulate: kotlin.Boolean?) : RequestConfig<EnterpriseEstimateRequest> {
+        val localVariableBody = enterpriseEstimateRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (emulate != null) {
+                    put("emulate", listOf(emulate.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xEnterpriseAuth.apply { localVariableHeaders["X-Enterprise-Auth"] = this.toString() }
+        acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/enterprise/wallets/{wallet_id}/estimate".replace("{"+"wallet_id"+"}", encodeURIComponent(walletId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /enterprise/messages/{msg_id}
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param msgId 
+     * @return EnterpriseGetMessage200Response
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun enterpriseGetMessage(xEnterpriseAuth: kotlin.String, msgId: kotlin.String) : EnterpriseGetMessage200Response {
+        val localVarResponse = enterpriseGetMessageWithHttpInfo(xEnterpriseAuth = xEnterpriseAuth, msgId = msgId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as EnterpriseGetMessage200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /enterprise/messages/{msg_id}
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param msgId 
+     * @return ApiResponse<EnterpriseGetMessage200Response?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun enterpriseGetMessageWithHttpInfo(xEnterpriseAuth: kotlin.String, msgId: kotlin.String) : ApiResponse<EnterpriseGetMessage200Response?> {
+        val localVariableConfig = enterpriseGetMessageRequestConfig(xEnterpriseAuth = xEnterpriseAuth, msgId = msgId)
+
+        return request<Unit, EnterpriseGetMessage200Response>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation enterpriseGetMessage
+     *
+     * @param xEnterpriseAuth 
+     * @param msgId 
+     * @return RequestConfig
+     */
+    fun enterpriseGetMessageRequestConfig(xEnterpriseAuth: kotlin.String, msgId: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xEnterpriseAuth.apply { localVariableHeaders["X-Enterprise-Auth"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/enterprise/messages/{msg_id}".replace("{"+"msg_id"+"}", encodeURIComponent(msgId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /enterprise/status
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @return EnterpriseGetStatus200Response
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun enterpriseGetStatus(xEnterpriseAuth: kotlin.String) : EnterpriseGetStatus200Response {
+        val localVarResponse = enterpriseGetStatusWithHttpInfo(xEnterpriseAuth = xEnterpriseAuth)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as EnterpriseGetStatus200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /enterprise/status
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @return ApiResponse<EnterpriseGetStatus200Response?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun enterpriseGetStatusWithHttpInfo(xEnterpriseAuth: kotlin.String) : ApiResponse<EnterpriseGetStatus200Response?> {
+        val localVariableConfig = enterpriseGetStatusRequestConfig(xEnterpriseAuth = xEnterpriseAuth)
+
+        return request<Unit, EnterpriseGetStatus200Response>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation enterpriseGetStatus
+     *
+     * @param xEnterpriseAuth 
+     * @return RequestConfig
+     */
+    fun enterpriseGetStatusRequestConfig(xEnterpriseAuth: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xEnterpriseAuth.apply { localVariableHeaders["X-Enterprise-Auth"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/enterprise/status",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /enterprise/wallets/{wallet_id}/config
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @return EnterpriseWalletConfig
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun enterpriseGetWalletConfig(xEnterpriseAuth: kotlin.String, walletId: kotlin.String) : EnterpriseWalletConfig {
+        val localVarResponse = enterpriseGetWalletConfigWithHttpInfo(xEnterpriseAuth = xEnterpriseAuth, walletId = walletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as EnterpriseWalletConfig
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /enterprise/wallets/{wallet_id}/config
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @return ApiResponse<EnterpriseWalletConfig?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun enterpriseGetWalletConfigWithHttpInfo(xEnterpriseAuth: kotlin.String, walletId: kotlin.String) : ApiResponse<EnterpriseWalletConfig?> {
+        val localVariableConfig = enterpriseGetWalletConfigRequestConfig(xEnterpriseAuth = xEnterpriseAuth, walletId = walletId)
+
+        return request<Unit, EnterpriseWalletConfig>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation enterpriseGetWalletConfig
+     *
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @return RequestConfig
+     */
+    fun enterpriseGetWalletConfigRequestConfig(xEnterpriseAuth: kotlin.String, walletId: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xEnterpriseAuth.apply { localVariableHeaders["X-Enterprise-Auth"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/enterprise/wallets/{wallet_id}/config".replace("{"+"wallet_id"+"}", encodeURIComponent(walletId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /enterprise/wallets/{wallet_id}/send
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @param enterpriseEstimateRequest bag-of-cells serialized to base64
+     * @return EnterpriseSend200Response
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun enterpriseSend(xEnterpriseAuth: kotlin.String, walletId: kotlin.String, enterpriseEstimateRequest: EnterpriseEstimateRequest) : EnterpriseSend200Response {
+        val localVarResponse = enterpriseSendWithHttpInfo(xEnterpriseAuth = xEnterpriseAuth, walletId = walletId, enterpriseEstimateRequest = enterpriseEstimateRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as EnterpriseSend200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /enterprise/wallets/{wallet_id}/send
+     * 
+     * 
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @param enterpriseEstimateRequest bag-of-cells serialized to base64
+     * @return ApiResponse<EnterpriseSend200Response?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun enterpriseSendWithHttpInfo(xEnterpriseAuth: kotlin.String, walletId: kotlin.String, enterpriseEstimateRequest: EnterpriseEstimateRequest) : ApiResponse<EnterpriseSend200Response?> {
+        val localVariableConfig = enterpriseSendRequestConfig(xEnterpriseAuth = xEnterpriseAuth, walletId = walletId, enterpriseEstimateRequest = enterpriseEstimateRequest)
+
+        return request<EnterpriseEstimateRequest, EnterpriseSend200Response>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation enterpriseSend
+     *
+     * @param xEnterpriseAuth 
+     * @param walletId 
+     * @param enterpriseEstimateRequest bag-of-cells serialized to base64
+     * @return RequestConfig
+     */
+    fun enterpriseSendRequestConfig(xEnterpriseAuth: kotlin.String, walletId: kotlin.String, enterpriseEstimateRequest: EnterpriseEstimateRequest) : RequestConfig<EnterpriseEstimateRequest> {
+        val localVariableBody = enterpriseEstimateRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xEnterpriseAuth.apply { localVariableHeaders["X-Enterprise-Auth"] = this.toString() }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/enterprise/wallets/{wallet_id}/send".replace("{"+"wallet_id"+"}", encodeURIComponent(walletId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /gasless/estimate-cost/{jetton_master}
      * 
      * 
      * @param jettonMaster 
@@ -326,6 +911,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /gasless/estimate-cost/{jetton_master}
      * 
      * 
      * @param jettonMaster 
@@ -384,6 +970,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /restricted/purchases/{purchase_id}/extend-refund-period
      * 
      * 
      * @param purchaseId 
@@ -416,6 +1003,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /restricted/purchases/{purchase_id}/extend-refund-period
      * 
      * 
      * @param purchaseId 
@@ -465,10 +1053,20 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
      */
      enum class UnitsGetBalance(val value: kotlin.String) {
          @Json(name = "usd") usd("usd"),
-         @Json(name = "ton") ton("ton")
+         @Json(name = "ton") ton("ton");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): kotlin.String = "$value"
      }
 
     /**
+     * GET /balance
      * 
      * This method returns information about a user&#39;s balance.
      * @param xTonConnectAuth 
@@ -501,6 +1099,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /balance
      * 
      * This method returns information about a user&#39;s balance.
      * @param xTonConnectAuth 
@@ -549,6 +1148,83 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /battery-charged
+     * 
+     * This method returns information about a user&#39;s balance.
+     * @param accountId 
+     * @return BatteryCharged
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getBatteryCharged(accountId: kotlin.String) : BatteryCharged {
+        val localVarResponse = getBatteryChargedWithHttpInfo(accountId = accountId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as BatteryCharged
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /battery-charged
+     * 
+     * This method returns information about a user&#39;s balance.
+     * @param accountId 
+     * @return ApiResponse<BatteryCharged?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getBatteryChargedWithHttpInfo(accountId: kotlin.String) : ApiResponse<BatteryCharged?> {
+        val localVariableConfig = getBatteryChargedRequestConfig(accountId = accountId)
+
+        return request<Unit, BatteryCharged>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getBatteryCharged
+     *
+     * @param accountId 
+     * @return RequestConfig
+     */
+    fun getBatteryChargedRequestConfig(accountId: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                put("account_id", listOf(accountId.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/battery-charged",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /config
      * 
      * This method returns information about Battery Service.
      * @return Config
@@ -579,6 +1255,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /config
      * 
      * This method returns information about Battery Service.
      * @return ApiResponse<Config?>
@@ -617,6 +1294,83 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /promo-used
+     * 
+     * 
+     * @param promo 
+     * @return PromoUsed
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getPromoUsed(promo: kotlin.String) : PromoUsed {
+        val localVarResponse = getPromoUsedWithHttpInfo(promo = promo)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PromoUsed
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /promo-used
+     * 
+     * 
+     * @param promo 
+     * @return ApiResponse<PromoUsed?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getPromoUsedWithHttpInfo(promo: kotlin.String) : ApiResponse<PromoUsed?> {
+        val localVariableConfig = getPromoUsedRequestConfig(promo = promo)
+
+        return request<Unit, PromoUsed>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getPromoUsed
+     *
+     * @param promo 
+     * @return RequestConfig
+     */
+    fun getPromoUsedRequestConfig(promo: kotlin.String) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                put("promo", listOf(promo.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/promo-used",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /purchases
      * 
      * This method returns a list of purchases made by a specific user.
      * @param xTonConnectAuth 
@@ -651,6 +1405,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /purchases
      * 
      * This method returns a list of purchases made by a specific user.
      * @param xTonConnectAuth 
@@ -709,6 +1464,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /recharge-methods
      * 
      * This method returns on-chain recharge methods.
      * @param includeRechargeOnly  (optional, default to true)
@@ -740,6 +1496,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /recharge-methods
      * 
      * This method returns on-chain recharge methods.
      * @param includeRechargeOnly  (optional, default to true)
@@ -785,6 +1542,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /status
      * 
      * This method returns information about the current status of Battery Service.
      * @param xTonConnectAuth 
@@ -816,6 +1574,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /status
      * 
      * This method returns information about the current status of Battery Service.
      * @param xTonConnectAuth 
@@ -857,6 +1616,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /transactions
      * 
      * This method returns a list of transactions made by a specific user.
      * @param xTonConnectAuth 
@@ -890,6 +1650,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /transactions
      * 
      * This method returns a list of transactions made by a specific user.
      * @param xTonConnectAuth 
@@ -943,6 +1704,165 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /v0/tron/config
+     * 
+     * 
+     * @return GetTronConfig200Response
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getTronConfig() : GetTronConfig200Response {
+        val localVarResponse = getTronConfigWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as GetTronConfig200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /v0/tron/config
+     * 
+     * 
+     * @return ApiResponse<GetTronConfig200Response?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getTronConfigWithHttpInfo() : ApiResponse<GetTronConfig200Response?> {
+        val localVariableConfig = getTronConfigRequestConfig()
+
+        return request<Unit, GetTronConfig200Response>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getTronConfig
+     *
+     * @return RequestConfig
+     */
+    fun getTronConfigRequestConfig() : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v0/tron/config",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /v0/tron/transactions
+     * 
+     * 
+     * @param xTonConnectAuth 
+     * @param limit  (optional, default to 1000)
+     * @param maxTimestamp  (optional)
+     * @return TronTransactionsList
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getTronTransactions(xTonConnectAuth: kotlin.String, limit: kotlin.Int? = 1000, maxTimestamp: kotlin.Long? = null) : TronTransactionsList {
+        val localVarResponse = getTronTransactionsWithHttpInfo(xTonConnectAuth = xTonConnectAuth, limit = limit, maxTimestamp = maxTimestamp)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as TronTransactionsList
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /v0/tron/transactions
+     * 
+     * 
+     * @param xTonConnectAuth 
+     * @param limit  (optional, default to 1000)
+     * @param maxTimestamp  (optional)
+     * @return ApiResponse<TronTransactionsList?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getTronTransactionsWithHttpInfo(xTonConnectAuth: kotlin.String, limit: kotlin.Int?, maxTimestamp: kotlin.Long?) : ApiResponse<TronTransactionsList?> {
+        val localVariableConfig = getTronTransactionsRequestConfig(xTonConnectAuth = xTonConnectAuth, limit = limit, maxTimestamp = maxTimestamp)
+
+        return request<Unit, TronTransactionsList>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation getTronTransactions
+     *
+     * @param xTonConnectAuth 
+     * @param limit  (optional, default to 1000)
+     * @param maxTimestamp  (optional)
+     * @return RequestConfig
+     */
+    fun getTronTransactionsRequestConfig(xTonConnectAuth: kotlin.String, limit: kotlin.Int?, maxTimestamp: kotlin.Long?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (limit != null) {
+                    put("limit", listOf(limit.toString()))
+                }
+                if (maxTimestamp != null) {
+                    put("max_timestamp", listOf(maxTimestamp.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v0/tron/transactions",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /purchase-battery/ios
      * 
      * verify an in-app purchase
      * @param xTonConnectAuth 
@@ -975,6 +1895,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /purchase-battery/ios
      * 
      * verify an in-app purchase
      * @param xTonConnectAuth 
@@ -1019,6 +1940,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /purchase-battery/promo-code
      * 
      * charge battery with promo code
      * @param xTonConnectAuth 
@@ -1052,6 +1974,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /purchase-battery/promo-code
      * 
      * charge battery with promo code
      * @param xTonConnectAuth 
@@ -1099,6 +2022,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /request-refund
      * 
      * 
      * @param xTonConnectAuth 
@@ -1130,6 +2054,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /request-refund
      * 
      * 
      * @param xTonConnectAuth 
@@ -1173,6 +2098,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /restricted/users/{user_id}/reset-balance
      * 
      * 
      * @param userId 
@@ -1206,6 +2132,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /restricted/users/{user_id}/reset-balance
      * 
      * 
      * @param userId 
@@ -1254,6 +2181,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /message
      * 
      * Send message to blockchain
      * @param xTonConnectAuth 
@@ -1285,6 +2213,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * POST /message
      * 
      * Send message to blockchain
      * @param xTonConnectAuth 
@@ -1328,6 +2257,173 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /v0/tron/estimate
+     * 
+     * Estimate cost of sending a tx in Tron network
+     * @param wallet 
+     * @param energy  (optional)
+     * @param bandwidth  (optional)
+     * @return EstimatedTronTx
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun tronEstimate(wallet: kotlin.String, energy: kotlin.Int? = null, bandwidth: kotlin.Int? = null) : EstimatedTronTx {
+        val localVarResponse = tronEstimateWithHttpInfo(wallet = wallet, energy = energy, bandwidth = bandwidth)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as EstimatedTronTx
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * GET /v0/tron/estimate
+     * 
+     * Estimate cost of sending a tx in Tron network
+     * @param wallet 
+     * @param energy  (optional)
+     * @param bandwidth  (optional)
+     * @return ApiResponse<EstimatedTronTx?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun tronEstimateWithHttpInfo(wallet: kotlin.String, energy: kotlin.Int?, bandwidth: kotlin.Int?) : ApiResponse<EstimatedTronTx?> {
+        val localVariableConfig = tronEstimateRequestConfig(wallet = wallet, energy = energy, bandwidth = bandwidth)
+
+        return request<Unit, EstimatedTronTx>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation tronEstimate
+     *
+     * @param wallet 
+     * @param energy  (optional)
+     * @param bandwidth  (optional)
+     * @return RequestConfig
+     */
+    fun tronEstimateRequestConfig(wallet: kotlin.String, energy: kotlin.Int?, bandwidth: kotlin.Int?) : RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<kotlin.String, kotlin.collections.List<kotlin.String>>()
+            .apply {
+                if (energy != null) {
+                    put("energy", listOf(energy.toString()))
+                }
+                if (bandwidth != null) {
+                    put("bandwidth", listOf(bandwidth.toString()))
+                }
+                put("wallet", listOf(wallet.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v0/tron/estimate",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * POST /v0/tron/send
+     * 
+     * send TRON tx
+     * @param xTonConnectAuth 
+     * @param tronSendRequest 
+     * @return SentTronTx
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     * @throws UnsupportedOperationException If the API returns an informational or redirection response
+     * @throws ClientException If the API returns a client error response
+     * @throws ServerException If the API returns a server error response
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun tronSend(xTonConnectAuth: kotlin.String, tronSendRequest: TronSendRequest) : SentTronTx {
+        val localVarResponse = tronSendWithHttpInfo(xTonConnectAuth = xTonConnectAuth, tronSendRequest = tronSendRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as SentTronTx
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    /**
+     * POST /v0/tron/send
+     * 
+     * send TRON tx
+     * @param xTonConnectAuth 
+     * @param tronSendRequest 
+     * @return ApiResponse<SentTronTx?>
+     * @throws IllegalStateException If the request is not correctly configured
+     * @throws IOException Rethrows the OkHttp execute method exception
+     */
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun tronSendWithHttpInfo(xTonConnectAuth: kotlin.String, tronSendRequest: TronSendRequest) : ApiResponse<SentTronTx?> {
+        val localVariableConfig = tronSendRequestConfig(xTonConnectAuth = xTonConnectAuth, tronSendRequest = tronSendRequest)
+
+        return request<TronSendRequest, SentTronTx>(
+            localVariableConfig
+        )
+    }
+
+    /**
+     * To obtain the request config of the operation tronSend
+     *
+     * @param xTonConnectAuth 
+     * @param tronSendRequest 
+     * @return RequestConfig
+     */
+    fun tronSendRequestConfig(xTonConnectAuth: kotlin.String, tronSendRequest: TronSendRequest) : RequestConfig<TronSendRequest> {
+        val localVariableBody = tronSendRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/v0/tron/send",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    /**
+     * GET /purchase-battery/verify-purchase-promo
      * 
      * 
      * @param promo  (optional)
@@ -1359,6 +2455,7 @@ class BatteryApi(basePath: kotlin.String = defaultBasePath, client: OkHttpClient
     }
 
     /**
+     * GET /purchase-battery/verify-purchase-promo
      * 
      * 
      * @param promo  (optional)

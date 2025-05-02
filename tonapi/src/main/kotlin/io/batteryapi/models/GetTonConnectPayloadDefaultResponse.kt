@@ -23,13 +23,21 @@ import com.squareup.moshi.JsonClass
  * 
  *
  * @param error 
+ * @param errorKey 
+ * @param errorDetails 
  */
 
 
 data class GetTonConnectPayloadDefaultResponse (
 
     @Json(name = "error")
-    val error: kotlin.String
+    val error: kotlin.String,
+
+    @Json(name = "error-key")
+    val errorKey: kotlin.String? = null,
+
+    @Json(name = "error-details")
+    val errorDetails: kotlin.String? = null
 
 ) {
 

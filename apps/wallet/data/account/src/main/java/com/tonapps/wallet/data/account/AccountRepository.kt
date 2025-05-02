@@ -2,21 +2,19 @@ package com.tonapps.wallet.data.account
 
 import android.app.KeyguardManager
 import android.content.Context
-import android.util.Log
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.blockchain.tron.KeychainTrxAccountsProvider
 import com.tonapps.ledger.ton.LedgerAccount
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.account.entities.WalletEvent
 import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
@@ -27,15 +25,12 @@ import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -43,8 +38,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
+import org.ton.mnemonic.Mnemonic
+import java.math.BigInteger
 import java.util.UUID
 
 class AccountRepository(
@@ -255,6 +251,31 @@ class AccountRepository(
     suspend fun getPrivateKey(id: String): PrivateKeyEd25519? {
         val wallet = database.getAccount(id) ?: return null
         return vaultSource.getPrivateKey(wallet.publicKey)
+    }
+
+    private suspend fun getTrxAccountsProvider(id: String): KeychainTrxAccountsProvider? {
+        val mnemonic = getMnemonic(id)?.toList() ?: return null
+        if (MnemonicHelper.isValidStandardTonMnemonic(mnemonic)) {
+            val entropy = Mnemonic.toEntropy(mnemonic)
+            return KeychainTrxAccountsProvider.fromEntropy(entropy)
+        } else {
+            return KeychainTrxAccountsProvider.fromMnemonic(mnemonic)
+        }
+    }
+
+    suspend fun getTronMnemonic(id: String): Array<String>? {
+        val trxAccountsProvider = getTrxAccountsProvider(id) ?: return null
+        return trxAccountsProvider.mnemonics.toTypedArray()
+    }
+
+    suspend fun getTronAddress(id: String): String? {
+        val trxAccountsProvider = getTrxAccountsProvider(id) ?: return null
+        return trxAccountsProvider.getAddress()
+    }
+
+    suspend fun getTronPrivateKey(id: String): BigInteger? {
+        val trxAccountsProvider = getTrxAccountsProvider(id) ?: return null
+        return trxAccountsProvider.getPrivateKey()
     }
 
     suspend fun pairLedger(

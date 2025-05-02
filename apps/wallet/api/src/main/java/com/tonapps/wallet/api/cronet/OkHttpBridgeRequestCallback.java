@@ -1,10 +1,12 @@
 package com.tonapps.wallet.api.cronet;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.android.gms.common.internal.Preconditions.checkArgument;
+import static com.google.android.gms.common.internal.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -23,8 +25,6 @@ import okio.Timeout;
 import org.chromium.net.CronetException;
 import org.chromium.net.UrlRequest;
 import org.chromium.net.UrlResponseInfo;
-
-import javax.annotation.Nullable;
 
 /**
  * An implementation of Cronet's callback. This is the heart of the bridge and deals with most of

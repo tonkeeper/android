@@ -3,7 +3,6 @@ package com.tonapps.wallet.api
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
-import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -30,6 +29,7 @@ import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.api.internal.ConfigRepository
 import com.tonapps.wallet.api.internal.InternalApi
+import com.tonapps.wallet.api.tron.TronApi
 import io.batteryapi.apis.BatteryApi
 import io.batteryapi.apis.BatteryApi.UnitsGetBalance
 import io.batteryapi.models.Balance
@@ -71,7 +71,7 @@ import java.util.Locale
 class API(
     private val context: Context,
     private val scope: CoroutineScope
-): CoreAPI(context) {
+) : CoreAPI(context) {
 
     private val internalApi = InternalApi(context, defaultHttpClient, appVersionName)
     private val configRepository = ConfigRepository(context, scope, internalApi)
@@ -134,12 +134,17 @@ class API(
     }
 
     private val batteryApi by lazy {
-        SourceAPI(BatteryApi(config.batteryHost, tonAPIHttpClient), BatteryApi(config.batteryTestnetHost, tonAPIHttpClient))
+        SourceAPI(
+            BatteryApi(config.batteryHost, tonAPIHttpClient),
+            BatteryApi(config.batteryTestnetHost, tonAPIHttpClient)
+        )
     }
 
     private val emulationJSONAdapter: JsonAdapter<MessageConsequences> by lazy {
         Serializer.moshi.adapter(MessageConsequences::class.java)
     }
+
+    val tron = TronApi(config, defaultHttpClient, batteryApi.get(false))
 
     fun accounts(testnet: Boolean) = provider.accounts.get(testnet)
 
@@ -300,7 +305,8 @@ class API(
         currency: String,
     ): BalanceEntity? {
         val account = getAccount(accountId, testnet, currency) ?: return null
-        val initializedAccount = account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
+        val initializedAccount =
+            account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
         return BalanceEntity(
             token = TokenEntity.TON,
             value = Coins.of(account.balance),
@@ -387,7 +393,11 @@ class API(
             wallets.map { AccountDetailsEntity(query, it, testnet) }.map {
                 if (it.walletVersion == WalletVersion.UNKNOWN) {
                     it.copy(
-                        walletVersion = BaseWalletContract.resolveVersion(pk, it.address.toRawAddress(), testnet)
+                        walletVersion = BaseWalletContract.resolveVersion(
+                            pk,
+                            it.address.toRawAddress(),
+                            testnet
+                        )
                     )
                 } else {
                     it
@@ -466,14 +476,15 @@ class API(
         }
     }
 
-    suspend fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            battery(testnet).verifyPurchasePromo(code)
-            true
-        } catch (e: Throwable) {
-            false
+    suspend fun batteryVerifyPurchasePromo(testnet: Boolean, code: String): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                battery(testnet).verifyPurchasePromo(code)
+                true
+            } catch (e: Throwable) {
+                false
+            }
         }
-    }
 
     fun tonconnectProof(address: String, proof: String): String {
         val url = "${config.tonapiMainnetHost}/v2/wallet/auth/proof"
@@ -589,10 +600,6 @@ class API(
 
         val request = io.batteryapi.models.EmulateMessageToWalletRequest(
             boc = boc,
-            platform = "android",
-            version = appVersionName,
-            source = source,
-            confirmationTime = confirmationTime
         )
 
         withRetry {
@@ -761,7 +768,8 @@ class API(
         firebaseToken: String,
     ): Boolean {
         return try {
-            val uriBuilder = Uri.parse("${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect").buildUpon()
+            val uriBuilder =
+                Uri.parse("${config.tonapiMainnetHost}/v1/internal/pushes/tonconnect").buildUpon()
             uriBuilder.appendQueryParameter("firebase_token", firebaseToken)
             uriBuilder.appendQueryParameter("app_url", appUrl)
             uriBuilder.appendQueryParameter("account", accountId)
@@ -821,7 +829,8 @@ class API(
         endDate: Long
     ): List<ChartEntity> {
         try {
-            val url = "${config.tonapiMainnetHost}/v2/rates/chart?token=$token&currency=$currency&start_date=$startDate&end_date=$endDate"
+            val url =
+                "${config.tonapiMainnetHost}/v2/rates/chart?token=$token&currency=$currency&start_date=$startDate&end_date=$endDate"
             val array = JSONObject(tonAPIHttpClient.get(url)).getJSONArray("points")
             return (0 until array.length()).map { index ->
                 ChartEntity(array.getJSONArray(index))

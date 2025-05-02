@@ -40,6 +40,8 @@ data class ConfigEntity(
     val batteryMeanPriceNft: String,
     val batteryMeanPriceSwap: String,
     val batteryMeanPriceJetton: String,
+    val batteryMeanPriceTrcMin: String,
+    val batteryMeanPriceTrcMax: String,
     val disableBatteryIapModule: Boolean,
     val batteryReservedAmount: String,
     val batteryMaxInputAmount: String,
@@ -55,6 +57,7 @@ data class ConfigEntity(
     val stories: List<String>,
     val apkDownloadUrl: String?,
     val apkName: AppVersion?,
+    val tronApiUrl: String,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -112,6 +115,8 @@ data class ConfigEntity(
         batteryMeanPriceNft = json.optString("batteryMeanPrice_nft", "0.03"),
         batteryMeanPriceSwap = json.optString("batteryMeanPrice_swap", "0.22"),
         batteryMeanPriceJetton = json.optString("batteryMeanPrice_jetton", "0.06"),
+        batteryMeanPriceTrcMin = json.optString("batteryMeanPrice_trc20_min", "0.312"),
+        batteryMeanPriceTrcMax = json.optString("batteryMeanPrice_trc20_max", "0.78"),
         batteryReservedAmount = json.optString("batteryReservedAmount", "0.3"),
         batteryMaxInputAmount = json.optString("batteryMaxInputAmount", "3"),
         batteryRefundEndpoint = json.optString("batteryRefundEndpoint", "https://battery-refund-app.vercel.app"),
@@ -127,7 +132,8 @@ data class ConfigEntity(
         reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
         stories = json.getJSONArray("stories").toStringList(),
         apkDownloadUrl = json.optString("apk_download_url"),
-        apkName = json.optString("apk_name")?.let { AppVersion(it.removePrefix("v")) }
+        apkName = json.optString("apk_name")?.let { AppVersion(it.removePrefix("v")) },
+        tronApiUrl = json.optString("tron_api_url", "https://api.trongrid.io"),
     )
 
     constructor() : this(
@@ -161,6 +167,8 @@ data class ConfigEntity(
         batteryMeanPriceNft = "0.03",
         batteryMeanPriceSwap = "0.22",
         batteryMeanPriceJetton = "0.06",
+        batteryMeanPriceTrcMin = "0.312",
+        batteryMeanPriceTrcMax = "0.78",
         batteryReservedAmount = "0.3",
         batteryMaxInputAmount = "3",
         batteryRefundEndpoint = "https://battery-refund-app.vercel.app",
@@ -174,7 +182,8 @@ data class ConfigEntity(
         reportAmount = Coins.of("0.03"),
         stories = emptyList(),
         apkDownloadUrl = null,
-        apkName = null
+        apkName = null,
+        tronApiUrl = "https://api.trongrid.io",
     )
 
     companion object {

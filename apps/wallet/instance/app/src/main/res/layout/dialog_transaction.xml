@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:orientation="vertical"
     android:padding="@dimen/offsetMedium">
 
@@ -59,27 +61,46 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <uikit.widget.FrescoView
-        android:id="@+id/icon"
+    <FrameLayout
+        android:id="@+id/icon_container"
         android:layout_width="96dp"
         android:layout_height="96dp"
-        android:layout_marginBottom="22dp"
-        app:roundAsCircle="true"
-        android:layout_gravity="center"/>
-    
+        android:layout_gravity="center"
+        android:layout_marginBottom="22dp">
+
+        <uikit.widget.FrescoView
+            android:id="@+id/icon"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            app:roundAsCircle="true" />
+
+        <uikit.widget.FrescoView
+            android:id="@+id/network_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="end|bottom"
+            android:translationX="8dp"
+            android:translationY="8dp"
+            android:visibility="gone"
+            app:roundAsCircle="true"
+            app:roundingBorderColor="?attr/backgroundPageColor"
+            app:roundingBorderPadding="1dp"
+            app:roundingBorderWidth="4dp" />
+    </FrameLayout>
+
     <uikit.widget.RowLayout
         android:id="@+id/icon_swap"
         android:layout_width="wrap_content"
         android:layout_height="78dp"
-        android:layout_marginBottom="22dp"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:layout_marginBottom="22dp">
 
         <uikit.widget.FrescoView
             android:id="@+id/icon_swap1"
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:layout_gravity="center"
-            app:roundAsCircle="true"/>
+            app:roundAsCircle="true" />
 
         <FrameLayout
             android:layout_width="78dp"
@@ -88,12 +109,13 @@
             android:layout_marginLeft="-16dp"
             android:background="@drawable/bg_oval"
             android:backgroundTint="?attr/backgroundPageColor">
+
             <uikit.widget.FrescoView
                 android:id="@+id/icon_swap2"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:layout_gravity="center"
-                app:roundAsCircle="true"/>
+                app:roundAsCircle="true" />
         </FrameLayout>
 
     </uikit.widget.RowLayout>
@@ -104,16 +126,16 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginBottom="6dp"
-        android:text="@string/spam"
-        android:textAllCaps="true"
-        android:gravity="center"
-        android:singleLine="true"
-        android:paddingHorizontal="8dp"
-        android:paddingVertical="4dp"
         android:background="@drawable/bg_content_tint_8"
         android:backgroundTint="?attr/accentOrangeColor"
+        android:gravity="center"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:singleLine="true"
+        android:text="@string/spam"
+        android:textAllCaps="true"
         android:textAppearance="@style/TextAppearance.Label2"
-        android:textColor="?attr/textPrimaryColor"/>
+        android:textColor="?attr/textPrimaryColor" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/amount2"
@@ -121,9 +143,9 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:singleLine="true"
-        android:visibility="gone"
         android:textAppearance="@style/TextAppearance.H2"
-        android:textColor="?attr/textTertiaryColor"/>
+        android:textColor="?attr/textTertiaryColor"
+        android:visibility="gone" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/amount"
@@ -132,7 +154,7 @@
         android:gravity="center"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.H2"
-        android:textColor="?attr/textPrimaryColor"/>
+        android:textColor="?attr/textPrimaryColor" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/currency"
@@ -142,7 +164,7 @@
         android:gravity="center"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="?attr/textSecondaryColor"/>
+        android:textColor="?attr/textSecondaryColor" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/unverified"
@@ -151,10 +173,22 @@
         android:layout_marginTop="@dimen/offsetExtraSmall"
         android:gravity="center"
         android:singleLine="true"
-        android:visibility="gone"
         android:text="@string/unverified_token"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="?attr/accentOrangeColor"/>
+        android:textColor="?attr/accentOrangeColor"
+        android:visibility="gone" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/failed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:gravity="center"
+        android:singleLine="true"
+        android:text="@string/failed"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/accentOrangeColor"
+        android:visibility="gone" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/date"
@@ -164,7 +198,7 @@
         android:gravity="center"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Body1"
-        android:textColor="?attr/textSecondaryColor"/>
+        android:textColor="?attr/textSecondaryColor" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/data"
@@ -176,60 +210,60 @@
         <com.tonapps.tonkeeper.view.TransactionDetailView
             android:id="@+id/account_name"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
         <com.tonapps.tonkeeper.view.TransactionDetailView
             android:id="@+id/account_address"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
         <com.tonapps.tonkeeper.view.TransactionDetailView
             android:id="@+id/fee"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
         <com.tonapps.tonkeeper.view.TransactionDetailView
             android:id="@+id/comment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <uikit.widget.RowLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="@dimen/offsetLarge"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:layout_marginVertical="@dimen/offsetLarge">
 
         <androidx.appcompat.widget.AppCompatTextView
-            style="@style/Widget.App.Button.Small.Secondary"
             android:id="@+id/open_explorer"
-            android:paddingHorizontal="@dimen/offsetMedium"
+            style="@style/Widget.App.Button.Small.Secondary"
             android:drawableLeft="@drawable/ic_globe_16"
             android:drawablePadding="8dp"
             android:drawableTint="?attr/iconPrimaryColor"
+            android:paddingHorizontal="@dimen/offsetMedium"
             android:text="@string/transaction" />
 
         <Button
-            style="@style/Widget.App.Button.Orange"
             android:id="@+id/report_spam"
+            style="@style/Widget.App.Button.Orange"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:paddingHorizontal="@dimen/offsetMedium"
             android:singleLine="true"
-            android:textAppearance="@style/TextAppearance.Label2"
-            android:text="@string/report_spam"/>
+            android:text="@string/report_spam"
+            android:textAppearance="@style/TextAppearance.Label2" />
 
         <Button
-            style="@style/Widget.App.Button.Secondary"
             android:id="@+id/not_spam"
+            style="@style/Widget.App.Button.Secondary"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:layout_marginLeft="8dp"
             android:paddingHorizontal="@dimen/offsetMedium"
             android:singleLine="true"
-            android:textAppearance="@style/TextAppearance.Label2"
-            android:text="@string/not_spam"/>
+            android:text="@string/not_spam"
+            android:textAppearance="@style/TextAppearance.Label2" />
 
     </uikit.widget.RowLayout>
 

@@ -19,6 +19,7 @@ sealed class Item(type: Int) : BaseListItem(type) {
         val supportedTransaction: BatteryTransaction,
         val enabled: Boolean,
         val changes: Int,
+        val changesRange: Pair<Int, Int>? = null,
         val showToggle: Boolean
     ) : Item(TYPE_SUPPORTED_TRANSACTION) {
 
@@ -30,12 +31,13 @@ sealed class Item(type: Int) : BaseListItem(type) {
                 BatteryTransaction.NFT -> Localization.battery_nft
                 BatteryTransaction.SWAP -> Localization.battery_swap
                 BatteryTransaction.JETTON -> Localization.battery_jetton
+                BatteryTransaction.TRC20 -> Localization.battery_trc20
                 else -> throw IllegalArgumentException("Unsupported transaction type: $supportedTransaction")
             }
 
         val typeTitleRes: Int
             get() = when(supportedTransaction) {
-                BatteryTransaction.NFT, BatteryTransaction.JETTON -> Localization.battery_transfer_single
+                BatteryTransaction.NFT, BatteryTransaction.JETTON, BatteryTransaction.TRC20 -> Localization.battery_transfer_single
                 BatteryTransaction.SWAP -> Localization.battery_swap_single
                 else -> throw IllegalArgumentException("Unsupported transaction type: $supportedTransaction")
             }

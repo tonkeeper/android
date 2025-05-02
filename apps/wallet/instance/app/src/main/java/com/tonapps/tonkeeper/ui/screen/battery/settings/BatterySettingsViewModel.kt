@@ -21,12 +21,15 @@ import kotlinx.coroutines.flow.map
 
 class BatterySettingsViewModel(
     app: Application,
-    wallet: WalletEntity,
+    private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val batteryRepository: BatteryRepository,
     private val api: API,
-): BaseWalletVM(app) {
+) : BaseWalletVM(app) {
+
+    val tronUsdtEnabled: Boolean
+        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
 
     val titleFlow = batteryRepository.balanceUpdatedFlow.map { _ ->
         val batteryBalance = getBatteryBalance(wallet)
@@ -50,8 +53,15 @@ class BatterySettingsViewModel(
         }
 
         val types = BatteryTransaction.entries
+
+        val size = if (tronUsdtEnabled) {
+            types.size + 1
+        } else {
+            types.size
+        }
+
         for ((index, type) in types.withIndex()) {
-            val position = ListCell.getPosition(types.size, index)
+            val position = ListCell.getPosition(size, index)
             val meanPrice = getTransactionMeanPrice(config, type)
             val charges = BatteryMapper.calculateChargesAmount(meanPrice, config.batteryMeanFees)
             val enabled = settingsRepository.batteryIsEnabledTx(wallet.accountId, type)
@@ -66,13 +76,30 @@ class BatterySettingsViewModel(
             uiItems.add(item)
         }
 
+        if (tronUsdtEnabled) {
+            val minCharges = BatteryMapper.calculateChargesAmount(config.batteryMeanPriceTrcMin, config.batteryMeanFees)
+            val maxCharges = BatteryMapper.calculateChargesAmount(config.batteryMeanPriceTrcMax, config.batteryMeanFees)
+            uiItems.add(
+                Item.SupportedTransaction(
+                    wallet = wallet,
+                    position = ListCell.Position.LAST,
+                    supportedTransaction = BatteryTransaction.TRC20,
+                    enabled = true,
+                    showToggle = hasBalance,
+                    changes = 0,
+                    changesRange = minCharges to maxCharges,
+                )
+            )
+        }
+
         uiItems.toList()
     }.flowOn(Dispatchers.IO)
 
     private suspend fun getBatteryBalance(
         wallet: WalletEntity
     ): BatteryBalanceEntity {
-        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return BatteryBalanceEntity.Empty
+        val tonProofToken =
+            accountRepository.requestTonProofToken(wallet) ?: return BatteryBalanceEntity.Empty
         return batteryRepository.getBalance(
             tonProofToken = tonProofToken,
             publicKey = wallet.publicKey,

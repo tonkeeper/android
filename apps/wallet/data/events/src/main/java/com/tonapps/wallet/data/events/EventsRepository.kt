@@ -2,34 +2,24 @@ package com.tonapps.wallet.data.events
 
 import android.content.Context
 import android.util.Log
-import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.prefs
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.collectibles.CollectiblesRepository
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.api.tron.entity.TronEventEntity
 import com.tonapps.wallet.data.events.entities.AccountEventsResult
-import com.tonapps.wallet.data.events.entities.EventEntity
+import com.tonapps.wallet.data.events.entities.LatestRecipientEntity
 import com.tonapps.wallet.data.events.source.LocalDataSource
 import com.tonapps.wallet.data.events.source.RemoteDataSource
-import com.tonapps.wallet.data.rates.entity.RatesEntity
-import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 class EventsRepository(
-    scope: CoroutineScope,
-    context: Context,
-    private val api: API
+    scope: CoroutineScope, context: Context, private val api: API
 ) {
 
     private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -46,6 +36,20 @@ class EventsRepository(
         localDataSource.saveDecryptedComment(txId, comment)
     }
 
+    suspend fun tronLatestSentTransactions(
+        tronWalletAddress: String, tonProofToken: String
+    ): List<TronEventEntity> {
+        val events =
+            getTronLocal(tronWalletAddress) ?: loadTronEvents(tronWalletAddress, tonProofToken)
+            ?: emptyList()
+
+        val sentTransactions =
+            events.filter { it.from == tronWalletAddress && it.to != tronWalletAddress }
+                .distinctBy { it.to }
+
+        return sentTransactions.take(6)
+    }
+
     fun latestRecipientsFlow(accountId: String, testnet: Boolean) = flow {
         localDataSource.getLatestRecipients(cacheLatestRecipientsKey(accountId, testnet))?.let {
             emit(it)
@@ -55,17 +59,19 @@ class EventsRepository(
         emit(remote)
     }.flowOn(Dispatchers.IO)
 
-    private fun loadLatestRecipients(accountId: String, testnet: Boolean): List<AccountAddress> {
+    private fun loadLatestRecipients(
+        accountId: String, testnet: Boolean
+    ): List<LatestRecipientEntity> {
         val list = remoteDataSource.getLatestRecipients(accountId, testnet)
         localDataSource.setLatestRecipients(cacheLatestRecipientsKey(accountId, testnet), list)
         return list
     }
 
-    suspend fun getSingle(eventId: String, testnet: Boolean) = remoteDataSource.getSingle(eventId, testnet)
+    suspend fun getSingle(eventId: String, testnet: Boolean) =
+        remoteDataSource.getSingle(eventId, testnet)
 
     suspend fun getLast(
-        accountId: String,
-        testnet: Boolean
+        accountId: String, testnet: Boolean
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.get(accountId, testnet, limit = 2)
@@ -75,10 +81,7 @@ class EventsRepository(
     }
 
     suspend fun loadForToken(
-        tokenAddress: String,
-        accountId: String,
-        testnet: Boolean,
-        beforeLt: Long? = null
+        tokenAddress: String, accountId: String, testnet: Boolean, beforeLt: Long? = null
     ): AccountEvents? = withContext(Dispatchers.IO) {
         if (tokenAddress == TokenEntity.TON.address) {
             getRemote(accountId, testnet, beforeLt)
@@ -91,9 +94,28 @@ class EventsRepository(
         }
     }
 
+    suspend fun loadTronEvents(
+        tronWalletAddress: String,
+        tonProofToken: String,
+        beforeLt: Long? = null,
+        limit: Int = 30
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val events = api.tron.getTronHistory(tronWalletAddress, tonProofToken, limit, beforeLt)
+
+            if (beforeLt == null) {
+                localDataSource.setTronEvents(tronWalletAddress, events)
+            }
+
+            events
+        } catch (e: Throwable) {
+            Log.d("API", "loadTronEvents: error", e)
+            null
+        }
+    }
+
     fun getFlow(
-        accountId: String,
-        testnet: Boolean
+        accountId: String, testnet: Boolean
     ) = flow {
         try {
             val local = getLocal(accountId, testnet)
@@ -103,19 +125,16 @@ class EventsRepository(
 
             val remote = getRemote(accountId, testnet) ?: return@flow
             emit(AccountEventsResult(cache = false, events = remote))
-        } catch (ignored: Throwable) { }
+        } catch (ignored: Throwable) {
+        }
     }.cancellable()
 
     suspend fun get(
-        accountId: String,
-        testnet: Boolean
+        accountId: String, testnet: Boolean
     ) = getLocal(accountId, testnet) ?: getRemote(accountId, testnet)
 
     suspend fun getRemote(
-        accountId: String,
-        testnet: Boolean,
-        beforeLt: Long? = null,
-        limit: Int = 10
+        accountId: String, testnet: Boolean, beforeLt: Long? = null, limit: Int = 10
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             val accountEvents = if (beforeLt != null) {
@@ -159,18 +178,13 @@ class EventsRepository(
     }
 
     suspend fun getRemoteSpam(
-        accountId: String,
-        testnet: Boolean,
-        startBeforeLt: Long? = null
+        accountId: String, testnet: Boolean, startBeforeLt: Long? = null
     ) = withContext(Dispatchers.IO) {
         val list = mutableListOf<AccountEvent>()
         var beforeLt: Long? = startBeforeLt
         for (i in 0 until 10) {
             val events = remoteDataSource.get(
-                accountId = accountId,
-                testnet = testnet,
-                beforeLt = beforeLt,
-                limit = 50
+                accountId = accountId, testnet = testnet, beforeLt = beforeLt, limit = 50
             )?.events ?: emptyList()
 
             if (events.isEmpty() || events.size >= 500) {
@@ -185,9 +199,14 @@ class EventsRepository(
         spamList
     }
 
+    suspend fun getTronLocal(
+        tronWalletAddress: String,
+    ): List<TronEventEntity>? = withContext(Dispatchers.IO) {
+        localDataSource.getTronEvents(tronWalletAddress)
+    }
+
     suspend fun getLocal(
-        accountId: String,
-        testnet: Boolean
+        accountId: String, testnet: Boolean
     ): AccountEvents? = withContext(Dispatchers.IO) {
         localDataSource.getEvents(cacheEventsKey(accountId, testnet))
     }

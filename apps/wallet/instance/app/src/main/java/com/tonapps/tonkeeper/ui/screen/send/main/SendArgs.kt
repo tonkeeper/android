@@ -28,10 +28,6 @@ data class SendArgs(
         private const val ARG_TYPE = "type"
         private const val ARG_BIN = "bin"
 
-        private fun normalizeTokenAddress(address: String?): String {
-            return if (address.isNullOrBlank()) "TON" else address.toRawAddress()
-        }
-
         private fun normalizeAmount(amount: Long): Long {
             return if (amount < 0) 0 else amount
         }
@@ -42,7 +38,7 @@ data class SendArgs(
 
     constructor(bundle: Bundle) : this(
         targetAddress = bundle.getString(ARG_TARGET_ADDRESS),
-        tokenAddress = normalizeTokenAddress(bundle.getString(ARG_TOKEN_ADDRESS)),
+        tokenAddress = bundle.getString(ARG_TOKEN_ADDRESS),
         amountNano = normalizeAmount(bundle.getLong(ARG_AMOUNT_NANO)),
         text = bundle.getString(ARG_TEXT),
         nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: "",

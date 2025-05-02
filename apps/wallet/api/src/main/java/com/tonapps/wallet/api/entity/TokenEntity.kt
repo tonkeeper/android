@@ -19,6 +19,7 @@ import org.ton.tlb.asRef
 
 @Parcelize
 data class TokenEntity(
+    val blockchain: Blockchain,
     val address: String,
     val name: String,
     val symbol: String,
@@ -84,6 +85,7 @@ data class TokenEntity(
         val USDT_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_usdt_with_bg.toString()).build()
 
         val TON = TokenEntity(
+            blockchain = Blockchain.TON,
             address = "TON",
             name = "Toncoin",
             symbol = "TON",
@@ -96,7 +98,21 @@ data class TokenEntity(
         )
 
         val USDT = TokenEntity(
+            blockchain = Blockchain.TON,
             address = "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+            name = "Tether USD",
+            symbol = "USD₮",
+            imageUri = USDT_ICON_URI,
+            decimals = 6,
+            verification = Verification.whitelist,
+            isRequestMinting = false,
+            isTransferable = true,
+            customPayloadApiUri = null
+        )
+
+        val TRON_USDT = TokenEntity(
+            blockchain = Blockchain.TRON,
+            address = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
             name = "Tether USD",
             symbol = "USD₮",
             imageUri = USDT_ICON_URI,
@@ -122,6 +138,9 @@ data class TokenEntity(
     val isUsdt: Boolean
         get() = address == USDT.address
 
+    val isTrc20: Boolean
+        get() = address == TRON_USDT.address
+
     val verified: Boolean
         get() = verification == Verification.whitelist
 
@@ -133,6 +152,7 @@ data class TokenEntity(
         extensions: List<String>? = null,
         lock: JettonBalanceLock? = null
     ) : this(
+        blockchain = Blockchain.TON,
         address = jetton.address.toRawAddress(),
         name = jetton.name,
         symbol = jetton.symbol,
@@ -150,6 +170,7 @@ data class TokenEntity(
         extensions: List<String>? = null,
         lock: JettonBalanceLock? = null
     ) : this(
+        blockchain = Blockchain.TON,
         address = jetton.metadata.address.toRawAddress(),
         name = jetton.metadata.name,
         symbol = jetton.metadata.symbol,

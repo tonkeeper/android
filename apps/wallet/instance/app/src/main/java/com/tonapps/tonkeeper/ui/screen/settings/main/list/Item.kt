@@ -18,6 +18,7 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         const val TYPE_TEXT = 2
         const val TYPE_ICON = 3
         const val TYPE_LOGO = 4
+        const val TYPE_TRON = 5
     }
 
     data class Account(
@@ -40,6 +41,10 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
             get() = wallet.version
 
     }
+
+    data class TronToggle(
+        val enabled: Boolean,
+    ): Item(TYPE_TRON, "tron")
 
     data object Space: Item(TYPE_SPACE, "")
 

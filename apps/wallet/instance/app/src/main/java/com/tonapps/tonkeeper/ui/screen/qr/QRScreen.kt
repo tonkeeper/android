@@ -34,7 +34,7 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
         get() = arguments?.getBoolean(ARG_HAS_TOKEN) ?: false
 
     private val enableTronDialog: EnableTronDialog by lazy {
-        EnableTronDialog(this, wallet, onDone = viewModel::setTron)
+        EnableTronDialog(this, wallet, onEnable = viewModel::enableTron)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

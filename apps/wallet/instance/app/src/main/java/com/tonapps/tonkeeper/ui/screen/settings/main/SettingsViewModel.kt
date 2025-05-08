@@ -14,7 +14,10 @@ import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
 import com.tonapps.tonkeeper.extensions.capitalized
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
@@ -34,6 +37,7 @@ import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Language
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +47,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -58,8 +63,11 @@ class SettingsViewModel(
     private val passcodeManager: PasscodeManager,
     private val rnLegacy: RNLegacy,
     private val environment: Environment,
-    private val remoteConfig: RemoteConfig
+    private val remoteConfig: RemoteConfig,
+    private val tokenRepository: TokenRepository,
 ) : BaseWalletVM(application) {
+
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }
@@ -73,6 +81,19 @@ class SettingsViewModel(
     ) { backups, wallet ->
         val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
         Pair(hasBackup, wallet)
+    }
+
+    private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
+        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet).mapNotNull { token ->
+            if (safeMode && !token.verified) {
+                return@mapNotNull null
+            }
+            AssetsExtendedEntity(
+                raw = AssetsEntity.Token(token),
+                prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
+                accountId = wallet.accountId,
+            )
+        }.filter { !it.isTon }.sortedBy { it.index }
     }
 
     init {
@@ -137,26 +158,24 @@ class SettingsViewModel(
     }
 
     fun toggleTron() {
-        viewModelScope.launch(Dispatchers.IO) {
+        tokensFlow.collectFlow { tokens ->
+            val usdtIndex = tokens.indexOfFirst { it.address == TokenEntity.USDT.address }
+            val sortAddresses = mutableListOf<String>()
+            tokens.forEachIndexed { index, token ->
+                sortAddresses.add(token.address)
+                if (index == usdtIndex + 1 && token.address != TokenEntity.TRON_USDT.address) {
+                    sortAddresses.add(TokenEntity.TRON_USDT.address)
+                }
+            }
+
             val tronPrefs =
                 settingsRepository.getTokenPrefs(wallet.id, TokenEntity.TRON_USDT.address)
             val isHidden = !tronPrefs.isHidden
             settingsRepository.setTokenHidden(wallet.id, TokenEntity.TRON_USDT.address, isHidden)
-
-//            if (!isHidden) {
-//                try {
-//                    val tronAddress = accountRepository.getTronAddress(wallet.id) ?: return@launch
-//                    val tonProofToken =
-//                        accountRepository.requestTonProofToken(wallet) ?: return@launch
-//                    api.tron.activateWallet(
-//                        tronAddress = tronAddress,
-//                        tonProofToken = tonProofToken
-//                    )
-//
-//                } catch (e: Exception) {
-//                    Log.d("SettingsViewModel", "Error activating Tron wallet", e)
-//                }
-//            }
+            settingsRepository.setTokenPinned(wallet.id, TokenEntity.TRON_USDT.address, !isHidden)
+            if (!isHidden) {
+                settingsRepository.setTokensSort(wallet.id, sortAddresses)
+            }
         }
     }
 

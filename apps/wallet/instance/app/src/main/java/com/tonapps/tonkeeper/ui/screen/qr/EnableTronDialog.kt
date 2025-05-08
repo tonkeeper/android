@@ -16,7 +16,7 @@ import uikit.widget.HeaderView
 class EnableTronDialog(
     fragment: BaseFragment,
     private val wallet: WalletEntity,
-    private val onDone: () -> Unit
+    private val onEnable: suspend () -> Unit
 ) :
     ModalDialog(fragment.requireContext(), R.layout.dialog_enable_tron) {
 
@@ -40,13 +40,8 @@ class EnableTronDialog(
         networkIconView.setLocalRes(R.drawable.ic_tron)
         buttonView.setOnClickListener {
             lifecycleScope.launch {
-                context.settingsRepository?.setTokenHidden(
-                    wallet.id,
-                    TokenEntity.TRON_USDT.address,
-                    false
-                )
+                onEnable()
                 dismiss()
-                onDone()
             }
         }
         laterButtonView.setOnClickListener { dismiss() }

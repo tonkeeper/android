@@ -27,7 +27,7 @@ fun UIKit(
         LocalAppTypography provides typography
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().background(colors.backgroundPage)
+            modifier = Modifier.background(colors.backgroundPage)
         ) {
             content()
         }

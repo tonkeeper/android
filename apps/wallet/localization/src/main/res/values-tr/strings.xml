@@ -552,5 +552,9 @@
     <string name="send_wrong_blockchain">Adres %1$s ağına aittir.</string>
     <string name="send_wrong_blockchain_swap">%3$s üzerinden USD₮ %1$s\'yi USD₮ %2$s ile takas ederek transferi gerçekleştirin.</string>
     <string name="enable_usdt_tron">USD₮ TRC20\'yi Etkinleştir</string>
+    <string name="dapp_share_title">%1$s Paylaş</string>
+    <string name="dapp_share_subtitle">Bu bağlantı %1$s uygulamasını doğrudan Tonkeeper içinde açar. Daha sonra tekrar kullanabilir veya gerekirse paylaşabilirsiniz.</string>
+    <string name="copy_link">Bağlantıyı Kopyala</string>
+    <string name="dapp_disclaimer">Tonkeeper tarafından işletilmeyen harici bir uygulamayı açıyorsunuz. Yalnızca kaynağa güveniyorsanız devam edin.</string>
 
 </resources>

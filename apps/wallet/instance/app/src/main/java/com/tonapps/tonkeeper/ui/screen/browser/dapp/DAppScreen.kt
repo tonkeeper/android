@@ -4,12 +4,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
-import android.webkit.WebSettings
-import android.webkit.WebView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -23,7 +20,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import com.facebook.drawee.backends.pipeline.Fresco
-import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
@@ -37,6 +33,7 @@ import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
+import com.tonapps.tonkeeper.ui.screen.browser.share.DAppShareScreen
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
@@ -290,11 +287,14 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
     }
 
     private fun shareLink() {
-        val sendIntent = Intent(Intent.ACTION_SEND)
-        sendIntent.putExtra(Intent.EXTRA_TEXT, currentUrl)
-        sendIntent.type = "text/plain"
-        val shareIntent = Intent.createChooser(sendIntent, null)
-        startActivity(shareIntent)
+        lifecycleScope.launch {
+            try {
+                val app = viewModel.getApp()
+                navigation?.add(DAppShareScreen.newInstance(wallet, app, currentUrl))
+            } catch (e: Throwable) {
+                navigation?.toast(Localization.unknown_error)
+            }
+        }
     }
 
     override fun onResume() {

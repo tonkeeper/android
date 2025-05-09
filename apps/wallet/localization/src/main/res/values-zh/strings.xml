@@ -547,5 +547,9 @@
     <string name="send_wrong_blockchain">该地址属于 %1$s 网络。</string>
     <string name="send_wrong_blockchain_swap">通过 %3$s 将 USD₮ %1$s 兑换为 USD₮ %2$s 以继续转账。</string>
     <string name="enable_usdt_tron">启用 USD₮ TRC20</string>
+    <string name="dapp_share_title">分享 %1$s</string>
+    <string name="dapp_share_subtitle">此链接将在 Tonkeeper 中直接打开 %1$s。你可以稍后再次使用或根据需要分享它。</string>
+    <string name="copy_link">复制链接</string>
+    <string name="dapp_disclaimer">你正在打开一个非 Tonkeeper 运营的外部应用。只有在你信任该来源时才继续操作。</string>
 
 </resources>

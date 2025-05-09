@@ -320,6 +320,10 @@ class SettingsRepository(
 
     fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
 
+    fun isDAppOpenConfirm(walletId: String) = walletPrefsFolder.isDAppOpenConfirm(walletId)
+
+    fun setDAppOpenConfirm(walletId: String, enabled: Boolean) = walletPrefsFolder.setDAppOpenConfirm(walletId, enabled)
+
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
     fun incrementCopyCount() {

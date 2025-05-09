@@ -22,6 +22,7 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         private const val SPAM_STATE_TRANSACTION_PREFIX = "spam_state_transaction_"
         private const val BATTERY_TX_ENABLED_PREFIX = "batter_tx_enabled_"
         private const val USDT_W5_PREFIX = "usdt_w5_"
+        private const val DAPP_CONFIRM_PREFIX = "dapp_confirm_"
     }
 
     fun isUSDTW5(walletId: String): Boolean {
@@ -92,6 +93,14 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
 
     fun disablePurchaseOpenConfirm(walletId: String, id: String) {
         putInt(keyPurchaseOpenConfirm(walletId, id), 1)
+    }
+
+    fun isDAppOpenConfirm(walletId: String): Boolean {
+        return getBoolean(key(DAPP_CONFIRM_PREFIX, walletId), true)
+    }
+
+    fun setDAppOpenConfirm(walletId: String, value: Boolean) {
+        putBoolean(key(DAPP_CONFIRM_PREFIX, walletId), value)
     }
 
     fun isPushEnabled(walletId: String): Boolean {

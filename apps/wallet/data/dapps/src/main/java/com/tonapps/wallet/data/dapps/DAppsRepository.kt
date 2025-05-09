@@ -2,7 +2,6 @@ package com.tonapps.wallet.data.dapps
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -292,7 +291,7 @@ class DAppsRepository(
 
     suspend fun getApps(urls: List<Uri>): List<AppEntity> {
         val apps = database.getApps(urls).toMutableList()
-        val notFoundApps = urls.filter { url -> apps.none { it.url == url } }
+        val notFoundApps = urls.filter { url -> apps.none { it.host == url.host } }
         if (notFoundApps.isNotEmpty()) {
             for (url in notFoundApps) {
                 val app = resolveAppByHost(url)

@@ -61,6 +61,7 @@ import com.tonapps.tonkeeper.ui.component.UpdateAvailableDialog
 import com.tonapps.tonkeeper.ui.screen.add.AddWalletScreen
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
+import com.tonapps.tonkeeper.ui.screen.browser.confirm.DAppConfirmScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
@@ -88,6 +89,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.passcode.LockScreen
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -130,8 +132,9 @@ class RootViewModel(
     private val passcodeManager: PasscodeManager,
     private val apkManager: APKManager,
     private val referrerClientHelper: ReferrerClientHelper,
+    private val dAppsRepository: DAppsRepository,
     savedStateHandle: SavedStateHandle,
-): BaseWalletVM(app) {
+) : BaseWalletVM(app) {
 
     private val savedState = RootModelState(savedStateHandle)
 
@@ -154,7 +157,8 @@ class RootViewModel(
 
     val lockscreenFlow = combine(
         passcodeManager.lockscreenFlow,
-        accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }.take(1)
+        accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }
+            .take(1)
     ) { lockscreen, state ->
         if ((lockscreen is LockScreen.State.Input || lockscreen is LockScreen.State.Biometric) && state !is AccountRepository.SelectedState.Wallet) {
             passcodeManager.reset()
@@ -197,7 +201,8 @@ class RootViewModel(
 
     private fun observeTonConnectSignData() {
         tonConnectManager.signDataRequestFlow.collectFlow { event ->
-            val wallet = accountRepository.getWalletByAccountId(event.connection.accountId) ?: return@collectFlow
+            val wallet = accountRepository.getWalletByAccountId(event.connection.accountId)
+                ?: return@collectFlow
             val params = event.message.params.firstOrNull() ?: return@collectFlow
             val payload = SignDataRequestPayload.parse(params) ?: return@collectFlow
             signData(wallet, event.connection, payload, event.message.id)
@@ -223,7 +228,8 @@ class RootViewModel(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     try {
                         WebView.setDataDirectorySuffix("wallet_${state.wallet.id.replace("-", "")}")
-                    } catch (ignored: Throwable) { }
+                    } catch (ignored: Throwable) {
+                    }
                 }
             }
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
@@ -283,7 +289,8 @@ class RootViewModel(
     }
 
     private suspend fun showStories(storiesIds: List<String>) = withContext(Dispatchers.IO) {
-        val firstStoryId = storiesIds.firstOrNull { !settingsRepository.isStoriesViewed(it) } ?: return@withContext
+        val firstStoryId =
+            storiesIds.firstOrNull { !settingsRepository.isStoriesViewed(it) } ?: return@withContext
         showStory(firstStoryId, "wallet")
     }
 
@@ -303,15 +310,16 @@ class RootViewModel(
         }
     }
 
-    private suspend fun startUpdateFlow(appUpdateInfo: AppUpdateInfo) = withContext(Dispatchers.Main) {
-        val activity = context.activity ?: return@withContext
-        appUpdateManager.startUpdateFlowForResult(
-            appUpdateInfo,
-            activity,
-            AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
-            0
-        )
-    }
+    private suspend fun startUpdateFlow(appUpdateInfo: AppUpdateInfo) =
+        withContext(Dispatchers.Main) {
+            val activity = context.activity ?: return@withContext
+            appUpdateManager.startUpdateFlowForResult(
+                appUpdateInfo,
+                activity,
+                AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
+                0
+            )
+        }
 
     fun connectTonConnectBridge() {
         tonConnectManager.connectBridge()
@@ -333,7 +341,11 @@ class RootViewModel(
             }
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
-            tonConnectManager.sendBridgeError(tx.connection, BridgeError.unknown(e.bestMessage), eventId)
+            tonConnectManager.sendBridgeError(
+                tx.connection,
+                BridgeError.unknown(e.bestMessage),
+                eventId
+            )
         }
 
         tx.returnUri?.let {
@@ -346,19 +358,36 @@ class RootViewModel(
         connection: AppConnectEntity,
         signRequest: SignRequestEntity
     ) {
-        if (signRequest.from != null && !signRequest.from!!.toAccountId().equalsAddress(connection.accountId)) {
-            DevSettings.tonConnectLog("Invalid \"from\" address.\nReceived: ${signRequest.from?.toAccountId()}\nExpected: ${connection.accountId}", error = true)
-            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Invalid \"from\" address. Specified wallet address not connected to this app."), eventId)
+        if (signRequest.from != null && !signRequest.from!!.toAccountId()
+                .equalsAddress(connection.accountId)
+        ) {
+            DevSettings.tonConnectLog(
+                "Invalid \"from\" address.\nReceived: ${signRequest.from?.toAccountId()}\nExpected: ${connection.accountId}",
+                error = true
+            )
+            tonConnectManager.sendBridgeError(
+                connection,
+                BridgeError.badRequest("Invalid \"from\" address. Specified wallet address not connected to this app."),
+                eventId
+            )
             return
         }
 
         val now = currentTimeSeconds()
         val max = now + 86400
         if (signRequest.validUntil != 0L && now >= signRequest.validUntil) {
-            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Transaction has expired"), eventId)
+            tonConnectManager.sendBridgeError(
+                connection,
+                BridgeError.badRequest("Transaction has expired"),
+                eventId
+            )
             return
         } else if (signRequest.validUntil != 0L && signRequest.validUntil > max) {
-            tonConnectManager.sendBridgeError(connection, BridgeError.badRequest("Invalid validUntil field. Transaction validity duration exceeds maximum limit of 24 hours. Max: $max Received: ${signRequest.validUntil}"), eventId)
+            tonConnectManager.sendBridgeError(
+                connection,
+                BridgeError.badRequest("Invalid validUntil field. Transaction validity duration exceeds maximum limit of 24 hours. Max: $max Received: ${signRequest.validUntil}"),
+                eventId
+            )
             return
         }
 
@@ -377,12 +406,23 @@ class RootViewModel(
             val boc = SendTransactionScreen.run(context, wallet, signRequest)
             tonConnectManager.sendTransactionResponseSuccess(connection, boc, eventId)
         } catch (e: Throwable) {
-            DevSettings.tonConnectLog("Error while signing transaction: ${e.bestMessage}", error = true)
+            DevSettings.tonConnectLog(
+                "Error while signing transaction: ${e.bestMessage}",
+                error = true
+            )
             if (e is CancellationException) {
                 tonConnectManager.showLogoutAppBar(wallet, context, connection.appUrl)
-                tonConnectManager.sendBridgeError(connection, BridgeError.userDeclinedTransaction(), eventId)
+                tonConnectManager.sendBridgeError(
+                    connection,
+                    BridgeError.userDeclinedTransaction(),
+                    eventId
+                )
             } else {
-                tonConnectManager.sendBridgeError(connection, BridgeError.unknown(e.bestMessage), eventId)
+                tonConnectManager.sendBridgeError(
+                    connection,
+                    BridgeError.unknown(e.bestMessage),
+                    eventId
+                )
             }
         }
     }
@@ -393,7 +433,12 @@ class RootViewModel(
         val wallets = accountRepository.getWallets()
         val list = mutableListOf<ShortcutInfoCompat>()
         if (!currentWallet.testnet) {
-            ShortcutHelper.shortcutAction(context, Localization.send, R.drawable.ic_send_shortcut, "tonkeeper://send")?.let {
+            ShortcutHelper.shortcutAction(
+                context,
+                Localization.send,
+                R.drawable.ic_send_shortcut,
+                "tonkeeper://send"
+            )?.let {
                 list.add(it)
             }
         }
@@ -470,15 +515,18 @@ class RootViewModel(
     private suspend fun processDAppPush(bundle: Bundle) {
         val accountId = bundle.getString("account") ?: return
         val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
-        val openUrl = bundle.getString("link")?.toUriOrNull() ?: bundle.getString("dapp_url")?.toUriOrNull()
+        val openUrl =
+            bundle.getString("link")?.toUriOrNull() ?: bundle.getString("dapp_url")?.toUriOrNull()
         if (openUrl != null) {
-            openScreen(DAppScreen.newInstance(
-                wallet = wallet,
-                title = openUrl.host ?: "unknown",
-                url = openUrl,
-                source = "push",
-                sendAnalytics = true,
-            ))
+            openScreen(
+                DAppScreen.newInstance(
+                    wallet = wallet,
+                    title = openUrl.host ?: "unknown",
+                    url = openUrl,
+                    source = "push",
+                    sendAnalytics = true,
+                )
+            )
         }
     }
 
@@ -490,8 +538,10 @@ class RootViewModel(
 
     private suspend fun deeplinkResolveWallet(bundle: Bundle): WalletEntity? {
         try {
-            val accountId = bundle.getString("account") ?: throw IllegalArgumentException("Key 'account' not found")
-            return accountRepository.getWalletByAccountId(accountId) ?: throw IllegalArgumentException("Wallet not found")
+            val accountId = bundle.getString("account")
+                ?: throw IllegalArgumentException("Key 'account' not found")
+            return accountRepository.getWalletByAccountId(accountId)
+                ?: throw IllegalArgumentException("Wallet not found")
         } catch (e: Throwable) {
             return accountRepository.selectedWalletFlow.firstOrNull()
         }
@@ -535,10 +585,16 @@ class RootViewModel(
         )
     }
 
-    private suspend fun processDeepLink(wallet: WalletEntity, deeplink: DeepLink, fromPackageName: String?) {
+    private suspend fun processDeepLink(
+        wallet: WalletEntity,
+        deeplink: DeepLink,
+        fromPackageName: String?
+    ) {
         val route = deeplink.route
         if (route is DeepLinkRoute.TonConnect) {
-            if (!wallet.isTonConnectSupported && accountRepository.getWallets().count { it.isTonConnectSupported } == 0) {
+            if (!wallet.isTonConnectSupported && accountRepository.getWallets()
+                    .count { it.isTonConnectSupported } == 0
+            ) {
                 openScreen(AddWalletScreen.newInstance(true))
                 return
             }
@@ -564,13 +620,15 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.PickWallet) {
             accountRepository.setSelectedWallet(route.walletId)
         } else if (route is DeepLinkRoute.Swap) {
-            _eventFlow.tryEmit(RootEvent.Swap(
-                wallet = wallet,
-                uri = api.config.swapUri,
-                address = wallet.address,
-                from = route.from,
-                to = route.to
-            ))
+            _eventFlow.tryEmit(
+                RootEvent.Swap(
+                    wallet = wallet,
+                    uri = api.config.swapUri,
+                    address = wallet.address,
+                    from = route.from,
+                    to = route.to
+                )
+            )
         } else if (route is DeepLinkRoute.Battery && !wallet.isWatchOnly) {
             openBattery(wallet, route)
         } else if (route is DeepLinkRoute.Purchase && !wallet.isWatchOnly) {
@@ -584,12 +642,14 @@ class RootViewModel(
             if (method == null) {
                 toast(Localization.payment_method_not_found)
             } else {
-                BrowserHelper.openPurchase(context, WalletPurchaseMethodEntity(
-                    method = method,
-                    wallet = wallet,
-                    currency = api.getCurrencyCodeByCountry(settingsRepository),
-                    config = api.config
-                ))
+                BrowserHelper.openPurchase(
+                    context, WalletPurchaseMethodEntity(
+                        method = method,
+                        wallet = wallet,
+                        currency = api.getCurrencyCodeByCountry(settingsRepository),
+                        config = api.config
+                    )
+                )
             }
         } else if (route is DeepLinkRoute.Backups && wallet.hasPrivateKey) {
             openScreen(BackupScreen.newInstance(wallet))
@@ -597,21 +657,19 @@ class RootViewModel(
             openScreen(SettingsScreen.newInstance(wallet, from = "deeplink"))
         } else if (route is DeepLinkRoute.DApp && !wallet.isWatchOnly) {
             val dAppUri = route.url.toUri()
-            val dApp = browserRepository.getApps(
-                country = settingsRepository.country,
-                testnet = wallet.testnet,
-                locale = context.locale
-            ).find { it.url.host == dAppUri.host }
+            val app = dAppsRepository.getApp(dAppUri)
 
-            if (dApp == null) {
-                toast(Localization.app_not_found)
+            if (settingsRepository.isDAppOpenConfirm(wallet.id)) {
+                openScreen(DAppConfirmScreen.newInstance(wallet, app, dAppUri))
             } else {
-                openScreen(DAppScreen.newInstance(
-                    wallet = wallet,
-                    title = dApp.name,
-                    url = dAppUri,
-                    source = "deep-link",
-                ))
+                openScreen(
+                    DAppScreen.newInstance(
+                        wallet = wallet,
+                        title = app.name,
+                        url = dAppUri,
+                        source = "deep-link",
+                    )
+                )
             }
         } else if (route is DeepLinkRoute.SettingsSecurity) {
             openScreen(SecurityScreen.newInstance(wallet))
@@ -661,7 +719,14 @@ class RootViewModel(
             val validCode = api.batteryVerifyPurchasePromo(wallet.testnet, promoCode)
             loading(false)
             if (validCode) {
-                openScreen(BatteryScreen.newInstance(wallet, promoCode, "deeplink", jetton = route.jetton))
+                openScreen(
+                    BatteryScreen.newInstance(
+                        wallet,
+                        promoCode,
+                        "deeplink",
+                        jetton = route.jetton
+                    )
+                )
             } else {
                 toast(Localization.wrong_promocode)
             }
@@ -669,7 +734,8 @@ class RootViewModel(
     }
 
     private suspend fun openTokenViewer(wallet: WalletEntity, route: DeepLinkRoute.Jetton) {
-        val token = tokenRepository.getToken(wallet.accountId, wallet.testnet, route.address) ?: return
+        val token =
+            tokenRepository.getToken(wallet.accountId, wallet.testnet, route.address) ?: return
         openScreen(TokenScreen.newInstance(wallet, token.address, token.name, token.symbol))
     }
 
@@ -679,29 +745,36 @@ class RootViewModel(
         }
     }
 
-    private suspend fun processTransferDeepLink(wallet: WalletEntity, route: DeepLinkRoute.Transfer) {
+    private suspend fun processTransferDeepLink(
+        wallet: WalletEntity,
+        route: DeepLinkRoute.Transfer
+    ) {
         if (route.isExpired) {
             toast(Localization.expired_link)
             return
         }
 
-        _eventFlow.tryEmit(RootEvent.Transfer(
-            wallet = wallet,
-            address = route.address,
-            amount = route.amount,
-            text = route.text,
-            jettonAddress = route.jettonAddress,
-            bin = route.bin,
-            initStateBase64 = route.initStateBase64
-        ))
+        _eventFlow.tryEmit(
+            RootEvent.Transfer(
+                wallet = wallet,
+                address = route.address,
+                amount = route.amount,
+                text = route.text,
+                jettonAddress = route.jettonAddress,
+                bin = route.bin,
+                initStateBase64 = route.initStateBase64
+            )
+        )
     }
 
     fun processSignerDeepLink(route: DeepLinkRoute.Signer, fromQR: Boolean) {
-        _eventFlow.tryEmit(RootEvent.Singer(
-            publicKey = route.publicKey,
-            name = route.name,
-            qr = fromQR || !route.local
-        ))
+        _eventFlow.tryEmit(
+            RootEvent.Singer(
+                publicKey = route.publicKey,
+                name = route.name,
+                qr = fromQR || !route.local
+            )
+        )
     }
 
     private suspend fun showTransaction(hash: String) {
@@ -729,17 +802,36 @@ class RootViewModel(
         openScreen(TransactionScreen.newInstance(tx))
     }
 
-    private suspend fun signData(wallet: WalletEntity, connection: AppConnectEntity, payload: SignDataRequestPayload, eventId: Long) {
+    private suspend fun signData(
+        wallet: WalletEntity,
+        connection: AppConnectEntity,
+        payload: SignDataRequestPayload,
+        eventId: Long
+    ) {
         try {
             val proof = SignDataScreen.run(context, wallet, connection.appUrl, payload)
-            tonConnectManager.sendSignDataResponseSuccess(connection, proof, wallet.address, payload, eventId)
+            tonConnectManager.sendSignDataResponseSuccess(
+                connection,
+                proof,
+                wallet.address,
+                payload,
+                eventId
+            )
         } catch (e: Throwable) {
             DevSettings.tonConnectLog("Error while signing data: ${e.bestMessage}", error = true)
             if (e is CancellationException) {
                 tonConnectManager.showLogoutAppBar(wallet, context, connection.appUrl)
-                tonConnectManager.sendBridgeError(connection, BridgeError.userDeclinedTransaction(), eventId)
+                tonConnectManager.sendBridgeError(
+                    connection,
+                    BridgeError.userDeclinedTransaction(),
+                    eventId
+                )
             } else {
-                tonConnectManager.sendBridgeError(connection, BridgeError.unknown(e.bestMessage), eventId)
+                tonConnectManager.sendBridgeError(
+                    connection,
+                    BridgeError.unknown(e.bestMessage),
+                    eventId
+                )
             }
         }
     }

@@ -548,4 +548,8 @@
     <string name="send_wrong_blockchain">Manzil %1$s tarmog‘iga tegishli.</string>
     <string name="send_wrong_blockchain_swap">USD₮ %1$s ni USD₮ %2$s ga %3$s orqali almashtirib, pul o‘tkazmasini davom eting.</string>
     <string name="enable_usdt_tron">USD₮ TRC20 ni yoqish</string>
+    <string name="dapp_share_title">%1$s ulashish</string>
+    <string name="dapp_share_subtitle">Ushbu havola %1$s ni bevosita Tonkeeper’da ochadi. Keyinroq yana foydalanishingiz yoki kerak bo‘lsa, boshqalar bilan ulashishingiz mumkin.</string>
+    <string name="copy_link">Havolani nusxalash</string>
+    <string name="dapp_disclaimer">Siz Tonkeeper tomonidan boshqarilmaydigan tashqi ilovani ochyapsiz. Faqat manbaga ishonsangiz davom eting.</string>
 </resources>

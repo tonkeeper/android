@@ -598,4 +598,9 @@
     <string name="send_wrong_blockchain">Адресът принадлежи на мрежата %1$s.</string>
     <string name="send_wrong_blockchain_swap">Разменете USD₮ %1$s за USD₮ %2$s чрез %3$s, за да продължите с трансфера.</string>
     <string name="enable_usdt_tron">Активирайте USD₮ TRC20</string>
+    <string name="dapp_share_title">Сподели %1$s</string>
+    <string name="dapp_share_subtitle">Този линк отваря %1$s директно в Tonkeeper. Можете да го използвате по-късно или да го споделите при нужда.</string>
+    <string name="copy_link">Копирай линк</string>
+    <string name="dapp_disclaimer">Отваряте външно приложение, което не се управлява от Tonkeeper. Продължете само ако се доверявате на източника.</string>
+
 </resources>

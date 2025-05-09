@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
-import android.util.Log
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
@@ -207,8 +206,12 @@ sealed class DeepLinkRoute {
     data class DApp(val url: String): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
-            url = uri.pathOrNull?.let {
-                "https://$it"
+            url = uri.lastPathSegment?.let {
+                if (it.startsWith("http")) {
+                    Uri.decode(it)
+                } else {
+                    "https://${Uri.decode(it)}"
+                }
             } ?: throw IllegalArgumentException("DApp url is required")
         )
     }

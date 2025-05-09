@@ -623,5 +623,9 @@
     <string name="send_wrong_blockchain_swap">Обменяйте USD₮ %1$s на USD₮ %2$s через %3$s, чтобы продолжить отправку.</string>
     <string name="enable_usdt_tron">Включить USD₮ TRC20</string>
     <string name="tron">TRON</string>
+    <string name="dapp_share_title">Поделиться %1$s</string>
+    <string name="dapp_share_subtitle">Эта ссылка откроет %1$s напрямую в Tonkeeper. Вы можете сохранить её для себя или поделиться ею.</string>
+    <string name="copy_link">Скопировать ссылку</string>
+    <string name="dapp_disclaimer">Вы открываете внешнее приложение, которым не управляет Tonkeeper. Переходите только если доверяете источнику.</string>
 
 </resources>

@@ -290,11 +290,11 @@ class TonConnectManager(
                 fromPackageName = fromPackageName
             )
 
-            safeModeClient.isReadyFlow.take(1).onEach {
+            scope.launch {
                 if (!isScam(context, WalletEntity.EMPTY, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
                     connectRemoteApp(activity, tonConnect)
                 }
-            }.launchIn(scope)
+            }
             return null
         } catch (e: Exception) {
             if (uri.isEmptyQuery || uri.hasQuery("open") || uri.hasQuery("ret")) {

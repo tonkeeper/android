@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.app.ShareCompat
+import androidx.core.content.IntentCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -22,6 +24,7 @@ import androidx.webkit.WebViewFeature
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.deeplink.DeepLinkBuilder
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.loadSquare
@@ -39,7 +42,9 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
@@ -76,6 +81,9 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
 
     private val currentUrl: Uri
         get() = webView.url?.toUri() ?: args.url
+
+    private val currentTitle: String
+        get() = webView.title ?: args.title
 
     private val webViewCallback = object : WebViewFixed.Callback() {
         override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
@@ -226,7 +234,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         val actionSheet = ActionSheet(requireContext())
         actionSheet.addItem(REFRESH_ID, Localization.refresh, UIKitIcon.ic_refresh_16)
         actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
-        actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
+        actionSheet.addItem(COPY_ID, Localization.copy_link, UIKitIcon.ic_copy_16)
         if (isRequestPinShortcutSupported) {
             actionSheet.addItem(ADD_HOME_SCREEN_ID, Localization.add_to_home_screen, UIKitIcon.ic_apps_16)
         }
@@ -241,7 +249,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             actionSheet.addItem(MUTE_ID, Localization.mute, UIKitIcon.ic_bell_disable_16)
         }
         actionSheet.addItem(SHARE_ID, Localization.share, UIKitIcon.ic_share_16)
-        actionSheet.addItem(COPY_ID, Localization.copy, UIKitIcon.ic_copy_16)
+        actionSheet.addItem(COPY_ID, Localization.copy_link, UIKitIcon.ic_copy_16)
         actionSheet.addItem(DISCONNECT_ID, Localization.disconnect, UIKitIcon.ic_disconnect_16)
         if (isRequestPinShortcutSupported) {
             actionSheet.addItem(ADD_HOME_SCREEN_ID, Localization.add_to_home_screen, UIKitIcon.ic_apps_16)
@@ -253,7 +261,7 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
     private fun addToHomeScreen() {
         lifecycleScope.launch {
             try {
-                val app = viewModel.getApp()
+                val app = buildAppEntity()
                 val title = app.name
                 val bitmap = Fresco.getImagePipeline().loadSquare(app.iconUrl.toUri(), 512) ?: throw IllegalArgumentException("Failed to load icon")
 
@@ -280,21 +288,60 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             REFRESH_ID -> webView.reload()
             MUTE_ID -> viewModel.mute()
             SHARE_ID -> shareLink()
-            COPY_ID -> requireContext().copyToClipboard(currentUrl)
+            COPY_ID -> {
+                analyticsSharingCopy("Copy link")
+                requireContext().copyToClipboard(DeepLinkBuilder.dAppShare(currentUrl.toString()))
+            }
             DISCONNECT_ID -> viewModel.disconnect()
             ADD_HOME_SCREEN_ID -> addToHomeScreen()
         }
     }
 
-    private fun shareLink() {
-        lifecycleScope.launch {
-            try {
-                val app = viewModel.getApp()
-                navigation?.add(DAppShareScreen.newInstance(wallet, app, currentUrl))
-            } catch (e: Throwable) {
-                navigation?.toast(Localization.unknown_error)
+    private fun buildAppEntity(): AppEntity {
+        if (args.url.host == webView.uri?.host) {
+            val iconUrl = args.iconUrl.ifBlank {
+                "https://www.google.com/s2/favicons?sz=256&domain=${currentUrl.host}"
             }
+            val title = args.title.ifBlank { webView.title ?: "unknown" }
+            return AppEntity(
+                url = currentUrl,
+                name = title,
+                iconUrl = iconUrl,
+                empty = false,
+            )
+        } else {
+            return AppEntity(
+                url = currentUrl,
+                name = DAppsRepository.fixAppTitle(currentTitle),
+                iconUrl = "https://www.google.com/s2/favicons?sz=256&domain=${currentUrl.host}",
+                empty = true,
+            )
         }
+    }
+
+    private fun analyticsSharingCopy(from: String) {
+        val app = buildAppEntity()
+        AnalyticsHelper.dappSharingCopy(
+            installId = viewModel.installId,
+            name = app.name,
+            from = from,
+            url = currentUrl.toString()
+        )
+    }
+
+    private fun shareLink() {
+        analyticsSharingCopy("Share")
+        if (DeepLinkBuilder.dAppIsSpecialUrl(currentUrl)) {
+            ShareCompat.IntentBuilder(requireContext())
+                .setType("text/plain")
+                .setChooserTitle(getString(Localization.share))
+                .setText(currentUrl.toString())
+                .startChooser()
+        } else {
+            val app = buildAppEntity()
+            navigation?.add(DAppShareScreen.newInstance(wallet, app, currentUrl))
+        }
+
     }
 
     override fun onResume() {
@@ -326,10 +373,11 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             wallet: WalletEntity,
             title: String,
             url: Uri,
+            iconUrl: String,
             source: String,
             sendAnalytics: Boolean = true,
         ): DAppScreen {
-            return newInstance(wallet, DAppArgs(title, url, source, sendAnalytics))
+            return newInstance(wallet, DAppArgs(title, url, source, iconUrl, sendAnalytics))
         }
 
         fun newInstance(

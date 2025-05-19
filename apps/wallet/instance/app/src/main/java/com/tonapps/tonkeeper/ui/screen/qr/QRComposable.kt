@@ -175,7 +175,7 @@ fun QrContent(
                         color = walletSpecificColor,
                         shape = RoundedCornerShape(Dimens.cornerExtraSmall)
                     )
-                    .padding(horizontal = Dimens.offsetExtraSmall)
+                    .padding(Dimens.offsetExtraSmall)
             )
         }
     }

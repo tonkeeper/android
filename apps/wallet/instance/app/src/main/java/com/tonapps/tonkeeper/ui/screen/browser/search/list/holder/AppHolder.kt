@@ -9,7 +9,7 @@ import uikit.widget.FrescoView
 
 class AppHolder(
     parent: ViewGroup,
-    private val onClick: (title: String, url: String, sendAnalytics: Boolean) -> Unit
+    private val onClick: (title: String, url: String, iconUrl: String, sendAnalytics: Boolean) -> Unit
 ): Holder<Item.App>(parent, R.layout.view_browser_search_app) {
 
     private val iconView = findViewById<FrescoView>(R.id.icon)
@@ -18,7 +18,7 @@ class AppHolder(
 
     override fun onBind(item: Item.App) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onClick(item.name, item.url, true) }
+        itemView.setOnClickListener { onClick(item.name, item.url,  item.icon.toString(), true) }
 
         iconView.setImageURI(item.icon)
 

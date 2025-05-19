@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
 import android.util.Log
+import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import kotlinx.coroutines.CoroutineScope
 

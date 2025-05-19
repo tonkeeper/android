@@ -10,6 +10,7 @@ import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import com.tonapps.extensions.activity
 import com.tonapps.extensions.locale
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.showToast
@@ -43,6 +44,7 @@ object BrowserHelper {
                 wallet = wallet,
                 title = name,
                 url = url,
+                iconUrl = icon.toString(),
                 source = source
             ))
         }
@@ -127,8 +129,9 @@ object BrowserHelper {
         if (uri.scheme == "blob") {
             return
         }
+        val url = uri.toString().replace("intent://", "https://").toUriOrNull() ?: return
         try {
-            val intent = Intent(Intent.ACTION_VIEW, uri)
+            val intent = Intent(Intent.ACTION_VIEW, url)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             activity.startActivity(intent)
         } catch (e: Throwable) {

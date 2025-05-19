@@ -1,6 +1,9 @@
 package com.tonapps.wallet.data.browser
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
@@ -10,6 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 class BrowserRepository(context: Context, api: API) {
 
@@ -18,6 +23,7 @@ class BrowserRepository(context: Context, api: API) {
     }
 
     private val remoteDataSource = RemoteDataSource(api)
+    private val appCacheByHost = ConcurrentHashMap<String, BrowserAppEntity>(100, 1.0f, 2)
 
     suspend fun search(
         country: String,
@@ -34,8 +40,39 @@ class BrowserRepository(context: Context, api: API) {
         }.distinctBy { it.url }
     }
 
+    suspend fun isTrustedApp(country: String, testnet: Boolean, locale: Locale, deeplink: Uri): Boolean {
+        val host = deeplink.host ?: return false
+        val apps = getApps(country, testnet, locale)
+        for (app in apps) {
+            if (app.useTG) {
+                continue
+            } else if (host == app.host) {
+                return true
+            }
+        }
+        return false
+    }
+
     suspend fun getApps(country: String, testnet: Boolean, locale: Locale): List<BrowserAppEntity> {
         return load(country, testnet, locale)?.categories?.map { it.apps }?.flatten() ?: emptyList()
+    }
+
+    suspend fun getApp(country: String, testnet: Boolean, locale: Locale, uri: Uri): BrowserAppEntity? {
+        val host = uri.host ?: return null
+        val browserApp = appCacheByHost[host]
+        if (browserApp != null) {
+            return browserApp
+        }
+        val apps = getApps(country, testnet, locale)
+        for (app in apps) {
+            if (app.useTG) {
+                continue
+            } else if (app.host == host) {
+                appCacheByHost[host] = app
+                return app
+            }
+        }
+        return null
     }
 
     fun dataFlow(

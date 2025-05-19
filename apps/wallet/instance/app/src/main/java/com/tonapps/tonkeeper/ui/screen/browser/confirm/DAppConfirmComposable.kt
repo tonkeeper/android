@@ -125,7 +125,7 @@ fun DAppConfirmComposable(
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            DAppIcon(icon = icon)
+            // DAppIcon(icon = icon)
             Spacer(modifier = Modifier.height(Dimens.offsetMedium))
             Box(modifier = Modifier.padding(horizontal = Dimens.offsetMedium)) {
                 TextHeader(

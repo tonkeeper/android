@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.share
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -43,7 +44,10 @@ import uikit.compose.components.SecondaryButton
 import uikit.compose.components.TextHeader
 
 @Composable
-fun UrlView(url: Uri) {
+fun UrlView(
+    url: Uri,
+    onCopy: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -58,7 +62,8 @@ fun UrlView(url: Uri) {
             style = UIKit.typography.body1,
             maxLines = 1,
             color = UIKit.colors.textPrimary,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.clickable { onCopy() }
         )
         Box(
             modifier = Modifier
@@ -86,17 +91,21 @@ fun DAppIcon(
                 .background(UIKit.colors.backgroundContent),
             contentAlignment = Alignment.Center
         ) {
-            if (icon != null) {
-                AsyncImage(
-                    model = icon,
-                    modifier = Modifier.size(96.dp)
-                )
-            } else {
+            Box(
+                modifier = Modifier.size(96.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Image(
                     painter = painterResource(id = UIKitIcon.ic_globe_56),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(UIKit.colors.iconSecondary)
                 )
+                if (icon != null) {
+                    AsyncImage(
+                        model = icon,
+                        modifier = Modifier.size(96.dp)
+                    )
+                }
             }
         }
         Box(
@@ -155,7 +164,7 @@ fun DAppShareComposable(
                 )
             }
             Spacer(modifier = Modifier.height(Dimens.offsetLarge))
-            UrlView(url = url)
+            UrlView(url = url, onCopy = onCopy)
             Spacer(modifier = Modifier.height(Dimens.offsetMedium))
             PrimaryButton(
                 modifier = Modifier.fillMaxWidth(),

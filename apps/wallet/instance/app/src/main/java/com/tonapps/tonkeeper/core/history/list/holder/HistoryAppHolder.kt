@@ -35,6 +35,7 @@ class HistoryAppHolder(
                     wallet = item.wallet,
                     title = item.title,
                     url = item.deepLink.toUri(),
+                    iconUrl = "",
                     source = "activity"
                 ))
             }

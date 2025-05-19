@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -33,14 +34,12 @@ class SafeModeClient(
     private val scope: CoroutineScope,
 ) {
 
-    private val scamDomains = mutableListOf<String>()
-
     private val blobCache: BlobDataSource<BadDomainsEntity> by lazy {
         BlobDataSource.simple<BadDomainsEntity>(context, "safemode")
     }
 
-    private val _isReadyFlow = MutableStateFlow<Boolean?>(null)
-    val isReadyFlow = _isReadyFlow.asStateFlow().filterNotNull()
+    private val _scamDomainsFlow = MutableStateFlow<Array<String>?>(null)
+    val scamDomainsFlow = _scamDomainsFlow.asStateFlow().filterNotNull()
 
     init {
         scope.launch(Dispatchers.IO) {
@@ -49,7 +48,7 @@ class SafeModeClient(
         }
     }
 
-    private suspend fun applyCachedDomains() {
+    private fun applyCachedDomains() {
         val domains = getCachedBadDomains()
         if (!domains.isEmpty) {
             setDomains(domains)
@@ -63,21 +62,32 @@ class SafeModeClient(
         }
     }
 
-    private suspend fun setDomains(domains: BadDomainsEntity) = withContext(Dispatchers.Main) {
-        scamDomains.addAll(domains.array)
-        _isReadyFlow.value = true
+    private fun setDomains(domains: BadDomainsEntity) {
+        _scamDomainsFlow.value = domains.array
     }
 
-    fun isHasScamUris(vararg uris: Uri): Boolean {
-        for (uri in uris) {
-            if (uri == Uri.EMPTY || uri.scheme != "https") {
-                continue
-            }
+    suspend fun isHasScamUris(vararg uris: Uri): Boolean {
+        val scamDomains = scamDomainsFlow.first()
+        val masks = scamDomains.filter { it.startsWith("*.") }.map { it.removePrefix("*.") }
+        val telegramDomains = scamDomains.filter { it.startsWith("t.me/") }
+        val exactDomains = scamDomains.filterNot { it.startsWith("*.") || it.startsWith("t.me/") }
+
+        val fixedUris = uris.filter { it != Uri.EMPTY && it.scheme == "https" }
+        for (uri in fixedUris) {
             var host = uri.host ?: continue
             if (host.startsWith("www.")) {
                 host = host.substring(4)
             }
-            if (scamDomains.indexOf(host) != -1) {
+            if (host == "t.me") {
+                val path = uri.path.orEmpty().removePrefix("/")
+                if (path.isNotEmpty() && "t.me/$path" in telegramDomains) {
+                    return true
+                }
+            }
+            if (host in exactDomains) {
+                return true
+            }
+            if (masks.any { mask -> host == mask || host.endsWith(".$mask") }) {
                 return true
             }
         }

@@ -1,8 +1,11 @@
 package com.tonapps.tonkeeper.core.entities
 
 import android.net.Uri
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.BalanceEntity
+import com.tonapps.wallet.api.entity.TokenEntity.Companion.TON_USDT
+import com.tonapps.wallet.api.entity.TokenEntity.Companion.TRC20_USDT
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
@@ -48,6 +51,12 @@ data class AssetsExtendedEntity(
 
     val address: String
         get() = token.address
+
+    val isUsdt: Boolean
+        get() = token.isUsdt
+
+    val isTrc20Usdt: Boolean
+        get() = token.isTrc20
 
     val symbol: String
         get() = token.symbol

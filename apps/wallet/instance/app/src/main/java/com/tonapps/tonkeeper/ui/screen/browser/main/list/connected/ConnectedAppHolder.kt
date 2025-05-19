@@ -23,6 +23,7 @@ class ConnectedAppHolder(
                 wallet = item.wallet,
                 title = item.name,
                 url = item.url,
+                iconUrl = item.icon.toString(),
                 source = "browser_connected"
             ))
         }

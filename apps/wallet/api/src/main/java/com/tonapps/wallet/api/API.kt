@@ -216,6 +216,36 @@ class API(
         return seeHttpClient.sse(url, onFailure = onFailure)
     }
 
+    suspend fun getPageTitle(url: String): String = withContext(Dispatchers.IO) {
+        try {
+            val headers = ArrayMap<String, String>().apply {
+                set("Connection", "close")
+            }
+            val html = defaultHttpClient.get(url, headers)
+
+            val ogTitle = Regex("""<meta\s+property=["']og:title["']\s+content=["'](.+?)["']""", RegexOption.IGNORE_CASE)
+                .find(html)?.groupValues?.get(1)
+
+            if (!ogTitle.isNullOrBlank()) {
+                return@withContext ogTitle
+            }
+
+            val metaTitle = Regex("""<meta\s+name=["']title["']\s+content=["'](.+?)["']""", RegexOption.IGNORE_CASE)
+                .find(html)?.groupValues?.get(1)
+
+            if (!metaTitle.isNullOrBlank()) {
+                return@withContext metaTitle
+            }
+
+            val title = Regex("""(?i)<title[^>]*>(.*?)</title>""", RegexOption.DOT_MATCHES_ALL)
+                .find(html)?.groupValues?.get(1)
+
+            title?.trim() ?: ""
+        } catch (e: Throwable) {
+            ""
+        }
+    }
+
     fun get(url: String): String {
         val headers = ArrayMap<String, String>().apply {
             set("Connection", "close")

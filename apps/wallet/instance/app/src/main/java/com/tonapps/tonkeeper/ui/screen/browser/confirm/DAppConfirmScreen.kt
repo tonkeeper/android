@@ -34,6 +34,7 @@ class DAppConfirmScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
             wallet = wallet,
             title = app.name,
             url = dAppUrl,
+            iconUrl = app.iconUrl,
             source = "deep-link",
         ))
         finish()
@@ -47,7 +48,7 @@ class DAppConfirmScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
             name = app.name,
             onOpen = ::openDApp,
             onCheckedChange = { checked ->
-                context?.settingsRepository?.setDAppOpenConfirm(wallet.id, !checked)
+                context?.settingsRepository?.setDAppOpenConfirm(wallet.id, app.host, !checked)
             },
             onFinishClick = { finish() }
         )

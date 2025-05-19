@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.search
 
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,17 +13,24 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.deeplink.DeepLink
+import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.browser.safe.DAppSafeScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
+import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.drawable.FooterDrawable
 import uikit.extensions.collectFlow
@@ -39,9 +47,11 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
     override val fragmentName: String = "BrowserSearchScreen"
 
+    private val rootViewMode: RootViewModel by activityViewModel()
+
     override val viewModel: BrowserSearchViewModel by viewModel()
 
-    private val adapter = Adapter { title, url, sendAnalytics ->
+    private val adapter = Adapter { title, url, iconUrl, sendAnalytics ->
         val uri = url.toUriOrNull() ?: return@Adapter
         if (uri.host?.endsWith("mercuryo.io") == true) {
             BrowserHelper.open(requireContext(), url)
@@ -50,6 +60,7 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
                 wallet = screenContext.wallet,
                 title = title,
                 url = url.toUri(),
+                iconUrl = iconUrl,
                 source = "browser_search",
                 sendAnalytics = sendAnalytics,
             ))
@@ -122,25 +133,26 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
     private fun inputDone() {
         val query = searchInput.text.toString()
-        val url = BrowserSearchViewModel.parseIfUrl(query)
-        if (url != null && !viewModel.isScamUri(url)) {
-            navigation?.add(DAppScreen.newInstance(
-                wallet = wallet,
-                title = url.host ?: "unknown",
-                url = url,
-                source = "browser_search_direct"
-            ))
+        val uri = BrowserSearchViewModel.parseIfUrl(query)?.let {
+            DeepLinkRoute.normalize(it)
+        } ?: viewModel.createSearchUrl(query)
+
+        if (uri.scheme == "tonkeeper") {
+            rootViewMode.processDeepLink(uri, false, Uri.EMPTY, false, requireContext().packageName)
         } else {
-            context?.let {
-                TonConnectSafeModeDialog(it).show(wallet)
+            lifecycleScope.launch {
+                if (viewModel.isScamUri(uri)) {
+                    navigation?.add(DAppSafeScreen.newInstance(wallet))
+                } else {
+                    navigation?.add(DAppScreen.newInstance(
+                        wallet = wallet,
+                        title = uri.host ?: "unknown",
+                        url = uri,
+                        iconUrl = "",
+                        source = "browser_search_direct"
+                    ))
+                }
             }
-            /*navigation?.add(DAppScreen.newInstance(
-                wallet = wallet,
-                title = url?.host ?: "unknown",
-                url = viewModel.createSearchUrl(query),
-                source = "browser_search_direct",
-                sendAnalytics = false
-            ))*/
         }
 
         searchInput.hideKeyboard()

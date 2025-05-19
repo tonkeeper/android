@@ -150,10 +150,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         val domainRenewButton = view.findViewById<Button>(R.id.domain_renew)
 
         if (nftEntity.isDomain && nftEntity.metadata.buttons.isEmpty()) {
-            val url = Uri.parse("https://dns.tonkeeper.com/manage?v=${nftEntity.userFriendlyAddress}")
+            val url = "https://dns.tonkeeper.com/manage?v=${nftEntity.userFriendlyAddress}".toUri()
             val dAppArgs = DAppArgs(
                 title = url.host ?: nftEntity.name,
                 url = url,
+                iconUrl = "",
                 source = "nft",
                 sendAnalytics = true
             )
@@ -272,6 +273,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
                 wallet = wallet,
                 title = uri.host ?: nftEntity.name,
                 url = uri,
+                iconUrl = "",
                 source = "nft"
             ))
         }

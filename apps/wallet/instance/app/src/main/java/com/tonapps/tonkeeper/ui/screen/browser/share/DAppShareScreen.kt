@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.core.net.toUri
 import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.deeplink.DeepLinkBuilder
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -21,15 +23,21 @@ class DAppShareScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
 
     override val viewModel: BaseWalletVM.EmptyViewViewModel by viewModel()
 
-    private val app: AppEntity
-        get() = arguments?.getParcelableCompat(ARG_APP)!!
+    private val app: AppEntity by lazy {
+        requireArguments().getParcelableCompat(ARG_APP)!!
+    }
 
-    private val url: Uri
-        get() = "https://app.tonkeeper.com/dapp/${Uri.encode(arguments?.getString(ARG_URL)!!)}".toUri()
+    private val appUrl: String by lazy {
+        requireArguments().getString(ARG_URL)!!
+    }
+
+    private val deepLink: String by lazy {
+        DeepLinkBuilder.dAppShare(appUrl)
+    }
 
     private fun shareLink() {
         val sendIntent = Intent(Intent.ACTION_SEND)
-        sendIntent.putExtra(Intent.EXTRA_TEXT, url.toString())
+        sendIntent.putExtra(Intent.EXTRA_TEXT, deepLink)
         sendIntent.type = "text/plain"
         val shareIntent = Intent.createChooser(sendIntent, null)
         startActivity(shareIntent)
@@ -37,14 +45,14 @@ class DAppShareScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
 
     private fun copyLink() {
         navigation?.toast(getString(Localization.copied))
-        context?.copyToClipboard(url)
+        context?.copyToClipboard(deepLink)
     }
 
     @Composable
     override fun ScreenContent() {
         DAppShareComposable(
-            url = url,
-            icon = app.iconUrl.toUri(),
+            url = deepLink.toUri(),
+            icon = app.iconUrl.toUriOrNull(),
             name = app.name,
             onCopy = ::copyLink,
             onShare = ::shareLink,

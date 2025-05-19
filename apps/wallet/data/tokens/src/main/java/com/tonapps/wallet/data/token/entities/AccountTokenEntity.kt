@@ -64,10 +64,10 @@ data class AccountTokenEntity(
         get() = balance.token.isLiquid
 
     val isUsdt: Boolean
-        get() = address == TokenEntity.USDT.address
+        get() = address == TokenEntity.TON_USDT
 
     val isTrc20: Boolean
-        get() = address == TokenEntity.TRON_USDT.address
+        get() = address == TokenEntity.TRC20_USDT
 
     val fiat: Coins
         get() = fiatRate?.fiat ?: Coins.ZERO

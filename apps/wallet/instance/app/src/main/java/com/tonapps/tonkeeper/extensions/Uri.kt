@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.util.Size
 import androidx.annotation.ColorInt
 import com.tonapps.extensions.containsQuery
 import com.tonapps.extensions.isLocal

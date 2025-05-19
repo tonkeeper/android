@@ -22,6 +22,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import androidx.core.net.toUri
+import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
+import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 
 class BrowserSearchViewModel(
     app: Application,
@@ -34,9 +37,11 @@ class BrowserSearchViewModel(
     private val _queryFlow = MutableEffectFlow<String>()
 
     @OptIn(FlowPreview::class)
-    val uiItemsFlow = _queryFlow.asSharedFlow()
-        .map { it.trim().lowercase() }
+    private val queryFlow = _queryFlow.asSharedFlow()
         .debounce(300)
+        .map { it.trim().lowercase() }
+
+    val uiItemsFlow = queryFlow
         .map(::search)
         .flowOn(Dispatchers.IO)
 
@@ -44,11 +49,7 @@ class BrowserSearchViewModel(
         _queryFlow.tryEmit(value)
     }
 
-    fun isScamUri(url: String): Boolean {
-        return isScamUri(url.toUriOrNull())
-    }
-
-    fun isScamUri(uri: Uri?): Boolean {
+    suspend fun isScamUri(uri: Uri?): Boolean {
         return uri?.let {
             safeModeClient.isHasScamUris(it)
         } ?: false
@@ -59,12 +60,27 @@ class BrowserSearchViewModel(
             return@withContext emptyList()
         }
 
-        val uri = uri(query)
+        val isSafeModeEnabled = settingsRepository.isSafeModeEnabled(api)
+
+        var uri = uri(query)?.let { DeepLinkRoute.normalize(it) }
+        if (uri?.scheme == "tonkeeper") {
+            val deeplink = uri.toString()
+            uri = if (deeplink.startsWith("tonkeeper://dapp/")) {
+                var dappUrl = deeplink.replace("tonkeeper://dapp/", "")
+                if (!dappUrl.startsWith("http")) {
+                    dappUrl = "https://$dappUrl"
+                }
+                Uri.decode(dappUrl).toUriOrNull()
+            } else {
+                null
+            }
+        }
+
         val apps = browserRepository.search(
             country = settingsRepository.country,
             query = query,
             locale = settingsRepository.getLocale()
-        ).filter { !safeModeClient.isHasScamUris(it.url) }
+        )
 
         val appsCount = if (uri == null) {
             apps.size
@@ -93,13 +109,13 @@ class BrowserSearchViewModel(
 
     private fun uri(query: String): Uri? {
         if (isDomain(query)) {
-            return Uri.parse("https://$query")
+            return "https://$query".toUriOrNull()
         }
         if (query.startsWith("http://")) {
             return uri(query.replace("http://", "https://"))
         }
         return try {
-            val uri = Uri.parse(query)
+            val uri = query.toUriOrNull() ?: return null
             if (uri.scheme != "https") {
                 return null
             }
@@ -116,9 +132,9 @@ class BrowserSearchViewModel(
     fun createSearchUrl(query: String): Uri {
         val searchEngine = settingsRepository.searchEngine
         return if (searchEngine == SearchEngine.GOOGLE) {
-            Uri.parse("https://www.google.com/search?q=$query")
+            "https://www.google.com/search?q=$query".toUri()
         } else {
-            Uri.parse("https://duckduckgo.com/?q=$query")
+            "https://duckduckgo.com/?q=$query".toUri()
         }
     }
 
@@ -202,9 +218,9 @@ class BrowserSearchViewModel(
         fun parseIfUrl(query: String): Uri? {
             try {
                 val uri = if (query.startsWith("https://")) {
-                    Uri.parse(query)
+                    query.toUri()
                 } else if (isDomain(query)) {
-                    Uri.parse("https://$query")
+                    "https://$query".toUri()
                 } else {
                     null
                 } ?: return null

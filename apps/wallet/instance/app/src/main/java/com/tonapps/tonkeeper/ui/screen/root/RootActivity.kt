@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -71,6 +72,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.findFragment
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
+import androidx.core.net.toUri
 
 class RootActivity : BaseWalletActivity() {
 
@@ -278,7 +280,8 @@ class RootActivity : BaseWalletActivity() {
                         text = event.text,
                         wallet = event.wallet,
                         bin = event.bin,
-                        initStateBase64 = event.initStateBase64
+                        initStateBase64 = event.initStateBase64,
+                        validUnit = event.validUnit
                     )
                 }
             }
@@ -296,6 +299,7 @@ class RootActivity : BaseWalletActivity() {
                     wallet = wallet,
                     title = uri.host ?: "unknown",
                     url = uri,
+                    iconUrl = "",
                     source = "shortcut",
                 )
             )
@@ -328,6 +332,7 @@ class RootActivity : BaseWalletActivity() {
         }
     }
 
+    @SuppressLint("UseKtx")
     private suspend fun openSign(
         wallet: WalletEntity,
         targetAddress: String,
@@ -335,7 +340,8 @@ class RootActivity : BaseWalletActivity() {
         amountNano: Long,
         bin: Cell?,
         initStateBase64: String?,
-        comment: String? = null
+        comment: String? = null,
+        validUnit: Long?
     ) {
         val message = if (tokenAddress != null) {
             val tokens =
@@ -370,12 +376,13 @@ class RootActivity : BaseWalletActivity() {
             )
         }
 
+        val validUnitOrDefault = validUnit ?: (currentTimeSeconds() + 10 * 60)
         val request = SignRequestEntity.Builder()
             .setFrom(wallet.contract.address)
-            .setValidUntil(currentTimeSeconds() + 10 * 60)
+            .setValidUntil(validUnitOrDefault)
             .addMessage(message)
             .setTestnet(wallet.testnet)
-            .build(Uri.parse("tonkeeper://signRaw/"))
+            .build("tonkeeper://signRaw/".toUri())
 
         val screen = SendTransactionScreen.newInstance(wallet, request)
         add(screen)
@@ -395,7 +402,8 @@ class RootActivity : BaseWalletActivity() {
         text: String? = null,
         nftAddress: String? = null,
         bin: Cell? = null,
-        initStateBase64: String? = null
+        initStateBase64: String? = null,
+        validUnit: Long?
     ) {
         if ((bin != null || initStateBase64 != null) && !amountNano.isPositive()) {
             toast(Localization.invalid_link)
@@ -414,6 +422,7 @@ class RootActivity : BaseWalletActivity() {
                     bin = bin,
                     initStateBase64 = initStateBase64,
                     comment = text,
+                    validUnit = validUnit
                 )
             } else {
                 openDirectSend(

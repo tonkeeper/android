@@ -95,12 +95,12 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         putInt(keyPurchaseOpenConfirm(walletId, id), 1)
     }
 
-    fun isDAppOpenConfirm(walletId: String): Boolean {
-        return getBoolean(key(DAPP_CONFIRM_PREFIX, walletId), true)
+    fun isDAppOpenConfirm(walletId: String, appHost: String): Boolean {
+        return getBoolean(key(DAPP_CONFIRM_PREFIX, walletId, appHost), true)
     }
 
-    fun setDAppOpenConfirm(walletId: String, value: Boolean) {
-        putBoolean(key(DAPP_CONFIRM_PREFIX, walletId), value)
+    fun setDAppOpenConfirm(walletId: String, appHost: String, value: Boolean) {
+        putBoolean(key(DAPP_CONFIRM_PREFIX, walletId, appHost), value)
     }
 
     fun isPushEnabled(walletId: String): Boolean {
@@ -156,7 +156,11 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         return key(TELEGRAM_CHANNEL_PREFIX, walletId)
     }
 
-    private fun key(prefix: String, walletId: String): String {
-        return "$prefix$walletId"
+    private fun key(prefix: String, walletId: String, vararg keys: String): String {
+        return if (keys.isEmpty()) {
+            "$prefix$walletId"
+        } else {
+            keys.joinToString(separator = "_", prefix = "$prefix$walletId")
+        }
     }
 }

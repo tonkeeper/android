@@ -14,6 +14,7 @@ import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
 import com.tonapps.tonkeeper.extensions.capitalized
@@ -48,6 +49,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -110,7 +112,9 @@ class SettingsViewModel(
     }
 
     fun setSearchEngine(searchEngine: SearchEngine?) {
-        settingsRepository.searchEngine = searchEngine ?: SearchEngine.GOOGLE
+        val engine = searchEngine ?: SearchEngine.GOOGLE
+        settingsRepository.searchEngine = engine
+        FirebaseHelper.searchEngine(engine.title)
     }
 
     fun signOut(callback: () -> Unit) {
@@ -158,21 +162,27 @@ class SettingsViewModel(
     }
 
     fun toggleTron() {
-        tokensFlow.collectFlow { tokens ->
-            val usdtIndex = tokens.indexOfFirst { it.address == TokenEntity.USDT.address }
-            val sortAddresses = mutableListOf<String>()
-            tokens.forEachIndexed { index, token ->
-                sortAddresses.add(token.address)
-                if (index == usdtIndex + 1 && token.address != TokenEntity.TRON_USDT.address) {
-                    sortAddresses.add(TokenEntity.TRON_USDT.address)
-                }
+        tokensFlow.take(1).collectFlow { tokens ->
+            val index = tokens.indexOfFirst { it.isTrc20Usdt }
+            val sortAddresses = tokens.filter {
+                !it.isTrc20Usdt
+            }.map { it.address }.toMutableList()
+
+            if (sortAddresses.isEmpty() && index != -1) {
+                sortAddresses.add(TokenEntity.TRON_USDT.address)
+            } else if (sortAddresses.size > index && index != -1) {
+                sortAddresses.add(index, TokenEntity.TRON_USDT.address)
+            } else {
+                sortAddresses.add(1, TokenEntity.TRON_USDT.address)
+                settingsRepository.setTokenPinned(wallet.id, TokenEntity.TRC20_USDT , true)
             }
 
-            val tronPrefs =
-                settingsRepository.getTokenPrefs(wallet.id, TokenEntity.TRON_USDT.address)
+            val tronPrefs = settingsRepository.getTokenPrefs(wallet.id, TokenEntity.TRC20_USDT)
             val isHidden = !tronPrefs.isHidden
-            settingsRepository.setTokenHidden(wallet.id, TokenEntity.TRON_USDT.address, isHidden)
-            settingsRepository.setTokenPinned(wallet.id, TokenEntity.TRON_USDT.address, !isHidden)
+            settingsRepository.setTokenHidden(wallet.id, TokenEntity.TRC20_USDT, isHidden)
+
+            FirebaseHelper.trc20Enabled(!isHidden)
+
             if (!isHidden) {
                 settingsRepository.setTokensSort(wallet.id, sortAddresses)
             }

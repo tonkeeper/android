@@ -9,6 +9,7 @@ import com.tonapps.extensions.deviceCountry
 import com.tonapps.extensions.getStoreCountry
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
+import com.tonapps.extensions.map
 import com.tonapps.network.get
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
@@ -85,17 +86,20 @@ internal class InternalApi(
             okHttpClient.get("https://scam.tonkeeper.com/v1/scam/domains")
         }?.let { JSONObject(it).getJSONArray("items") } ?: return emptyArray()
 
-        val domains = mutableListOf<String>()
-        for (i in 0 until array.length()) {
-            var url = array.getJSONObject(i).getString("url")
-            if (url.startsWith("www.")) {
-                url = url.substring(5)
-            } else if (url.startsWith("@")) {
-                continue
+        val domains = array.map { it.getString("url") }.map {
+            if (it.startsWith("www.")) {
+                "*.${it.substring(4)}"
+            } else {
+                it
             }
-            domains.add(url)
         }
-        return domains.toTypedArray()
+        val telegramBots = domains.filter { it.startsWith("@") }.map { "t.me/${it.substring(1)}" }
+        val maskDomains = domains.filter { it.startsWith("*.") }
+        val cleanDomains = domains.filter { domain ->
+            !domain.startsWith("@") && !domain.startsWith("*.") && maskDomains.none { mask -> domain.endsWith(".$mask") }
+        }
+
+        return (maskDomains + cleanDomains + telegramBots).toTypedArray()
     }
 
     fun getBrowserApps(testnet: Boolean, locale: Locale): JSONObject {

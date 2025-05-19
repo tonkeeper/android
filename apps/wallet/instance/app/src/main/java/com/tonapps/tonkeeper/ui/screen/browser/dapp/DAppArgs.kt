@@ -11,6 +11,7 @@ data class DAppArgs(
     val title: String,
     val url: Uri,
     val source: String,
+    val iconUrl: String,
     val sendAnalytics: Boolean,
 ): BaseArgs() {
 
@@ -19,14 +20,15 @@ data class DAppArgs(
         private const val ARG_URL = "url"
         private const val ARG_SOURCE = "source"
         private const val ARG_SEND_ANALYTICS = "send_analytics"
-
+        private const val ARG_ICON_URL = "icon_url"
     }
 
     constructor(bundle: Bundle) : this(
         title = bundle.getString(ARG_TITLE)!!,
         url = bundle.getParcelableCompat(ARG_URL)!!,
         source = bundle.getString(ARG_SOURCE) ?: "",
-        sendAnalytics = bundle.getBoolean(ARG_SEND_ANALYTICS, true)
+        sendAnalytics = bundle.getBoolean(ARG_SEND_ANALYTICS, true),
+        iconUrl = bundle.getString(ARG_ICON_URL) ?: "",
     )
 
     override fun toBundle(): Bundle = Bundle().apply {
@@ -34,5 +36,6 @@ data class DAppArgs(
         putParcelable(ARG_URL, url)
         putString(ARG_SOURCE, source)
         putBoolean(ARG_SEND_ANALYTICS, sendAnalytics)
+        putString(ARG_ICON_URL, iconUrl)
     }
 }

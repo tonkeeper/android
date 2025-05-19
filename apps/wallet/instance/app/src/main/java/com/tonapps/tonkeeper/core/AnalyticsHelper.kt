@@ -47,6 +47,7 @@ object AnalyticsHelper {
         "swap_click",
         "swap_success",
         "token_open",
+        "dapp_sharing_copy"
     )*/
 
     private data class QueuedEvent(
@@ -112,6 +113,17 @@ object AnalyticsHelper {
             "dapp_url" to url
         )
         trackEvent("tc_request", props)
+    }
+
+    @UiThread
+    fun dappSharingCopy(installId: String, name: String, from: String, url: String) {
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "name" to name,
+            "from" to from,
+            "url" to url
+        )
+        trackEvent("dapp_sharing_copy", props)
     }
 
     @UiThread

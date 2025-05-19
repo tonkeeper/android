@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.app.Application
 import android.content.Context
+import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
@@ -38,6 +39,7 @@ class SecurityViewModel(
 
     fun setSafeModeState(state: SafeModeState) {
         settingsRepository.setSafeModeState(state)
+        FirebaseHelper.secureModeEnabled(state)
     }
 
     fun enableBiometric(context: Context, value: Boolean) = flow {

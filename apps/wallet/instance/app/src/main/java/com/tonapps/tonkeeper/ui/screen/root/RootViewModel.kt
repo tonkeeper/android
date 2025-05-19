@@ -23,6 +23,7 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.google.firebase.ktx.Firebase
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.isValidTonDomain
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.bestMessage
@@ -35,6 +36,7 @@ import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
+import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
@@ -43,6 +45,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
+import com.tonapps.tonkeeper.extensions.getAppFixIcon
 import com.tonapps.tonkeeper.extensions.hasRefer
 import com.tonapps.tonkeeper.extensions.hasUtmSource
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
@@ -63,6 +66,7 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.confirm.DAppConfirmScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.browser.safe.DAppSafeScreen
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
@@ -91,6 +95,7 @@ import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.passcode.LockScreen
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.purchase.PurchaseRepository
@@ -116,6 +121,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import uikit.extensions.activity
 import java.util.concurrent.CancellationException
+import kotlin.math.abs
 
 class RootViewModel(
     app: Application,
@@ -133,6 +139,7 @@ class RootViewModel(
     private val apkManager: APKManager,
     private val referrerClientHelper: ReferrerClientHelper,
     private val dAppsRepository: DAppsRepository,
+    private val safeModeClient: SafeModeClient,
     savedStateHandle: SavedStateHandle,
 ) : BaseWalletVM(app) {
 
@@ -374,18 +381,24 @@ class RootViewModel(
         }
 
         val now = currentTimeSeconds()
-        val max = now + 86400
-        if (signRequest.validUntil != 0L && now >= signRequest.validUntil) {
+        val validUntil = signRequest.validUntil.let { parsedExp ->
+            if (0 >= parsedExp) {
+                now + DeepLinkRoute.Transfer.MAX_EXP
+            } else {
+                val maxExp = now + DeepLinkRoute.Transfer.MAX_EXP
+                minOf(parsedExp, maxExp)
+            }
+        }
+
+        val isExpired = run {
+            val fixedExp = abs(validUntil - 15L)
+            now >= fixedExp
+        }
+
+        if (isExpired) {
             tonConnectManager.sendBridgeError(
                 connection,
                 BridgeError.badRequest("Transaction has expired"),
-                eventId
-            )
-            return
-        } else if (signRequest.validUntil != 0L && signRequest.validUntil > max) {
-            tonConnectManager.sendBridgeError(
-                connection,
-                BridgeError.badRequest("Invalid validUntil field. Transaction validity duration exceeds maximum limit of 24 hours. Max: $max Received: ${signRequest.validUntil}"),
                 eventId
             )
             return
@@ -515,19 +528,21 @@ class RootViewModel(
     private suspend fun processDAppPush(bundle: Bundle) {
         val accountId = bundle.getString("account") ?: return
         val wallet = accountRepository.getWalletByAccountId(accountId) ?: return
-        val openUrl =
-            bundle.getString("link")?.toUriOrNull() ?: bundle.getString("dapp_url")?.toUriOrNull()
-        if (openUrl != null) {
-            openScreen(
-                DAppScreen.newInstance(
-                    wallet = wallet,
-                    title = openUrl.host ?: "unknown",
-                    url = openUrl,
-                    source = "push",
-                    sendAnalytics = true,
-                )
-            )
+        val openUrl = bundle.getString("link")?.toUriOrNull() ?: bundle.getString("dapp_url")?.toUriOrNull()
+        if (openUrl == null) {
+            return
         }
+        val app = dAppsRepository.getAppFixIcon(openUrl, wallet, browserRepository, settingsRepository)
+        openScreen(
+            DAppScreen.newInstance(
+                wallet = wallet,
+                title = openUrl.host ?: "unknown",
+                url = openUrl,
+                iconUrl = app.iconUrl,
+                source = "push",
+                sendAnalytics = true,
+            )
+        )
     }
 
     private suspend fun processDeepLinkPush(uri: Uri, bundle: Bundle) {
@@ -655,11 +670,34 @@ class RootViewModel(
             openScreen(BackupScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.Settings) {
             openScreen(SettingsScreen.newInstance(wallet, from = "deeplink"))
-        } else if (route is DeepLinkRoute.DApp && !wallet.isWatchOnly) {
-            val dAppUri = route.url.toUri()
-            val app = dAppsRepository.getApp(dAppUri)
+        } else if (route is DeepLinkRoute.DApp) {
+            val dAppUri = route.url.toUriOrNull()
+            if (dAppUri == null) {
+                toast(Localization.invalid_link)
+                return
+            }
 
-            if (settingsRepository.isDAppOpenConfirm(wallet.id)) {
+            val host = dAppUri.host
+            if (host == null || !host.contains(".")) {
+                toast(Localization.invalid_link)
+                return
+            }
+
+            if (safeModeClient.isHasScamUris(dAppUri)) {
+                openScreen(DAppSafeScreen.newInstance(wallet))
+                return
+            }
+
+            val app = dAppsRepository.getAppFixIcon(dAppUri, wallet, browserRepository, settingsRepository)
+
+            val isTrustedApp = browserRepository.isTrustedApp(
+                country = settingsRepository.country,
+                testnet = wallet.testnet,
+                locale = settingsRepository.getLocale(),
+                deeplink = dAppUri
+            )
+
+            if (!isTrustedApp && settingsRepository.isDAppOpenConfirm(wallet.id, app.host)) {
                 openScreen(DAppConfirmScreen.newInstance(wallet, app, dAppUri))
             } else {
                 openScreen(
@@ -667,6 +705,7 @@ class RootViewModel(
                         wallet = wallet,
                         title = app.name,
                         url = dAppUri,
+                        iconUrl = app.iconUrl,
                         source = "deep-link",
                     )
                 )
@@ -762,7 +801,8 @@ class RootViewModel(
                 text = route.text,
                 jettonAddress = route.jettonAddress,
                 bin = route.bin,
-                initStateBase64 = route.initStateBase64
+                initStateBase64 = route.initStateBase64,
+                validUnit = route.exp
             )
         )
     }

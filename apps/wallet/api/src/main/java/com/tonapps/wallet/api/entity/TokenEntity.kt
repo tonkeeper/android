@@ -3,6 +3,7 @@ package com.tonapps.wallet.api.entity
 import android.net.Uri
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.cellFromHex
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.wallet.api.R
 import io.tonapi.models.JettonBalanceLock
@@ -84,6 +85,9 @@ data class TokenEntity(
         val TON_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_ton_with_bg.toString()).build()
         val USDT_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_usdt_with_bg.toString()).build()
 
+        const val TRC20_USDT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+        const val TON_USDT = "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
+
         val TON = TokenEntity(
             blockchain = Blockchain.TON,
             address = "TON",
@@ -99,7 +103,7 @@ data class TokenEntity(
 
         val USDT = TokenEntity(
             blockchain = Blockchain.TON,
-            address = "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+            address = TON_USDT,
             name = "Tether USD",
             symbol = "USD₮",
             imageUri = USDT_ICON_URI,
@@ -112,7 +116,7 @@ data class TokenEntity(
 
         val TRON_USDT = TokenEntity(
             blockchain = Blockchain.TRON,
-            address = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+            address = TRC20_USDT,
             name = "Tether USD",
             symbol = "USD₮",
             imageUri = USDT_ICON_URI,
@@ -135,11 +139,15 @@ data class TokenEntity(
     val isTon: Boolean
         get() = address == TON.address
 
-    val isUsdt: Boolean
-        get() = address == USDT.address
+    @IgnoredOnParcel
+    val isUsdt: Boolean by lazy {
+        address.equalsAddress(TON_USDT)
+    }
 
-    val isTrc20: Boolean
-        get() = address == TRON_USDT.address
+    @IgnoredOnParcel
+    val isTrc20: Boolean by lazy {
+        address == TRC20_USDT
+    }
 
     val verified: Boolean
         get() = verification == Verification.whitelist

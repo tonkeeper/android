@@ -32,6 +32,10 @@
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>
     <string name="downloading">Downloading…</string>
+    <string name="close">Close</string>
+    <string name="dapp_safe_modal_title">The link leads to a scam service</string>
+    <string name="dapp_safe_model_button">How to stay safe</string>
+    <string name="dapp_safe_modal_subtitle">We didn’t open it for safety reasons</string>
     <string name="emulation_failed_warning">After confirmation, anything can happen, including losing all your funds. All transactions are irreversible. We couldn’t emulate the transaction and don’t know what will happen next.</string>
     <string name="update_tonkeeper">Update Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">A new version of Tonkeeper is available. You can download it now.</string>
@@ -642,7 +646,7 @@
     <string name="send_wrong_blockchain">The address belongs to the %1$s network.</string>
     <string name="send_wrong_blockchain_swap">Swap USD₮ %1$s to USD₮ %2$s via %3$s to proceed with the transfer.</string>
     <string name="enable_usdt_tron">Enable USD₮ TRC20</string>
-    <string name="tron">TRON</string>
+    <string name="tron" translatable="false">TRON</string>
     <string name="dapp_share_title">Share %1$s</string>
     <string name="dapp_share_subtitle">This link opens %1$s directly in Tonkeeper. You can use it again later or share it if needed.</string>
     <string name="copy_link">Copy Link</string>

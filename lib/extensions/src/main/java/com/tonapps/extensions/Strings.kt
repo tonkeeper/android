@@ -83,7 +83,7 @@ fun String.fromHex(): ByteArray {
 fun String.toUriOrNull(): Uri? {
     return try {
         val uri = toUri()
-        if (uri.scheme.isNullOrBlank()) {
+        if (uri.scheme.isNullOrBlank() || uri == Uri.EMPTY) {
             null
         } else {
             uri

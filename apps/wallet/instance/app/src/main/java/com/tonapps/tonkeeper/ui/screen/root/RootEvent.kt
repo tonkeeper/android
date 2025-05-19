@@ -46,7 +46,8 @@ sealed class RootEvent {
         val text: String?,
         val jettonAddress: String?,
         val bin: Cell?,
-        val initStateBase64: String?
+        val initStateBase64: String?,
+        val validUnit: Long?,
     ): RootEvent()
 
     data object CloseCurrentTonConnect: RootEvent()

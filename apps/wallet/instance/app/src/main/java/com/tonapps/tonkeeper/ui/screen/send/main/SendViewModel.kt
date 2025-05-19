@@ -810,6 +810,8 @@ class SendViewModel(
             it.supportGasless && it.jettonMaster == tokenAddress
         }
 
+        // val balanaceT = consequences.trace.transaction.totalFees + consequences.risk.ton
+
         val isSupportsGasless =
             wallet.isSupportedFeature(WalletFeature.GASLESS) && tonProofToken != null && excessesAddress != null && isGaslessToken
         val isPreferGasless = batteryRepository.getPreferGasless(wallet.testnet)
@@ -881,6 +883,7 @@ class SendViewModel(
             boc = message,
             safeModeEnabled = settingsRepository.isSafeModeEnabled(api)
         ) ?: return calculateFeeDefault(transfer, isSupportsGasless)
+
 
         sendTransferType = if (withBattery) {
             SendTransferType.Battery(excessesAddress)

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.name.edit
 
 import android.app.Application
+import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
 import com.tonapps.wallet.data.account.AccountRepository
@@ -13,6 +14,7 @@ class EditNameViewModel(
 ): BaseWalletVM(app) {
 
     fun save(name: String, emoji: CharSequence, color: Int) {
+        FirebaseHelper.setTitleEmoji(emoji.toString())
         accountRepository.editLabel(
             walletId = wallet.id,
             name = name,

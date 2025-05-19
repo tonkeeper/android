@@ -320,9 +320,9 @@ class SettingsRepository(
 
     fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
 
-    fun isDAppOpenConfirm(walletId: String) = walletPrefsFolder.isDAppOpenConfirm(walletId)
+    fun isDAppOpenConfirm(walletId: String, appHost: String) = walletPrefsFolder.isDAppOpenConfirm(walletId, appHost)
 
-    fun setDAppOpenConfirm(walletId: String, enabled: Boolean) = walletPrefsFolder.setDAppOpenConfirm(walletId, enabled)
+    fun setDAppOpenConfirm(walletId: String, appHost: String, enabled: Boolean) = walletPrefsFolder.setDAppOpenConfirm(walletId, appHost, enabled)
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
@@ -403,8 +403,8 @@ class SettingsRepository(
         hidden: Boolean
     ) = withContext(Dispatchers.IO) {
         tokenPrefsFolder.setHidden(walletId, tokenAddress, hidden)
-        rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
         setTokenState(walletId, tokenAddress, TokenPrefsEntity.State.NONE)
+        rnLegacy.setTokenHidden(walletId, tokenAddress, hidden)
     }
 
     suspend fun setTokenState(

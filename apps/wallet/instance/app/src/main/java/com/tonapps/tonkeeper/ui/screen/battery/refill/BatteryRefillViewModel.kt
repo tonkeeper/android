@@ -11,6 +11,8 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.billing.priceFormatted
+import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
@@ -45,6 +47,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
@@ -348,6 +351,10 @@ class BatteryRefillViewModel(
                 batteryRepository.getBalance(
                     tonProofToken, wallet.publicKey, wallet.testnet, ignoreCache = true
                 )
+                val promoCode = (_promoStateFlow.value as? PromoState.Applied)?.appliedPromo ?: "null"
+                withContext(Dispatchers.Main) {
+                    AnalyticsHelper.batterySuccess(settingsRepository.installId, "fiat", promoCode, "")
+                }
                 billingManager.consumeProduct(purchase.purchaseToken)
             }
             toast(Localization.battery_refilled)
@@ -359,6 +366,15 @@ class BatteryRefillViewModel(
     }
 
     fun makePurchase(productId: String, activity: Activity) {
+        promoStateFlow.take(1).collectFlow { promoState ->
+            val promoCode = (promoState as? PromoState.Applied)?.appliedPromo ?: "null"
+            AnalyticsHelper.simpleTrackEvent("battery_select", settingsRepository.installId, hashMapOf(
+                "size" to productId,
+                "promo" to promoCode,
+                "type" to "fiat"
+            ))
+        }
+
         billingManager.productFlow(productId).collectFlow { product ->
             billingManager.requestPurchase(activity, wallet, product)
         }

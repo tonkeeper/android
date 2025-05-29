@@ -20,7 +20,7 @@ class PushHolder(parent: ViewGroup): Holder<Item.Push>(parent, R.layout.view_wal
 
     init {
         itemView.setOnClickListener {
-            Navigation.from(context)?.openURL("tonkeeper://activity")
+            Navigation.from(context)?.openURL("tonkeeper://activity?from=push")
         }
     }
 

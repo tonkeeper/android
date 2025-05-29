@@ -7,3 +7,4 @@ fun ByteArray.toHex(): String = buildString(size * 2) {
         append(Character.forDigit(b and 0x0F, 16))
     }
 }
+

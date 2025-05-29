@@ -2,8 +2,9 @@ package com.tonapps.tonkeeper.manager.tonconnect.bridge
 
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.proof.TONProof
+import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -13,6 +14,19 @@ internal object JsonBuilder {
     fun responseDisconnect(id: Long): JSONObject {
         val json = JSONObject()
         json.put("result", JSONObject())
+        json.put("id", id)
+        return json
+    }
+
+    fun responseSignData(id: Long, proof: TONProof.Result, address: String, payload: SignDataRequestPayload): JSONObject {
+        val json = JSONObject()
+        json.put("result", JSONObject().apply {
+            put("address", address)
+            put("domain", proof.domain.value)
+            put("payload", payload.toJSON())
+            put("timestamp", proof.timestamp)
+            put("signature", proof.signature)
+        })
         json.put("id", id)
         return json
     }
@@ -151,6 +165,8 @@ internal object JsonBuilder {
     private fun features(maxMessages: Int): JSONArray {
         val array = JSONArray()
         array.put("SendTransaction")
+        array.put("SignData")
+        array.put(signDataFeature())
         array.put(sendTransactionFeature(maxMessages))
         return array
     }
@@ -159,6 +175,17 @@ internal object JsonBuilder {
         val json = JSONObject()
         json.put("name", "SendTransaction")
         json.put("maxMessages", maxMessages)
+        return json
+    }
+
+    private fun signDataFeature(): JSONObject {
+        val json = JSONObject()
+        json.put("name", "SignData")
+        json.put("types", JSONArray().apply {
+            put("text")
+            put("binary")
+            put("cell")
+        })
         return json
     }
 }

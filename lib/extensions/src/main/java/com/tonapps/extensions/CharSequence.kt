@@ -25,3 +25,10 @@ val CharSequence.withPlus: CharSequence
         builder.append(this)
         return builder
     }
+
+fun CharSequence.plus(text: String): CharSequence {
+    val builder = SpannableStringBuilder()
+    builder.append(this)
+    builder.append(text)
+    return builder
+}

@@ -4,13 +4,16 @@ import android.app.Application
 import android.util.Log
 import androidx.collection.ArrayMap
 import androidx.lifecycle.viewModelScope
+import com.tonapps.extensions.filterList
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.assets.WalletBalanceEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.WalletCurrency
@@ -31,12 +34,15 @@ import kotlinx.coroutines.flow.flattenConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PickerViewModel(
     app: Application,
     private val mode: PickerMode,
+    private val from: String,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val assetsManager: AssetsManager
@@ -91,6 +97,13 @@ class PickerViewModel(
                 loadRemoteBalances(wallets)
             }
         }
+
+        uiItemsFlow.take(1).filterList { it is Item.Wallet }.map { it as List<Item.Wallet> }.onEach { wallets ->
+            AnalyticsHelper.simpleTrackEvent("wallet_click", settingsRepository.installId, hashMapOf(
+                "wallet_count" to wallets.size,
+                "wallet_type_list" to wallets.map { it.wallet.version.name }.distinct().joinToString(",")
+            ))
+        }.launch()
     }
 
     fun toggleEditMode() {

@@ -18,7 +18,11 @@ import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.ledger.LedgerException
 import com.tonapps.ledger.ble.BleTransport
+import com.tonapps.ledger.ble.ConnectedDevice
+import com.tonapps.ledger.ble.LedgerBle
+import com.tonapps.ledger.devices.DeviceModel
 import com.tonapps.ledger.devices.Devices
 import com.tonapps.ledger.ton.AccountPath
 import com.tonapps.ledger.ton.LedgerAccount
@@ -27,6 +31,7 @@ import com.tonapps.ledger.ton.TonPayloadFormat
 import com.tonapps.ledger.ton.TonTransport
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.ledger.transport.TransportStatusException
+import com.tonapps.ledger.usb.LedgerUsb
 import com.tonapps.tonkeeper.extensions.isVersionLowerThan
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Item
@@ -49,10 +54,17 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import uikit.extensions.collectFlow
 import uikit.extensions.context
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -66,6 +78,7 @@ class LedgerConnectionViewModel(
     private val api: API,
 ) : AndroidViewModel(app) {
     private val bleManager: BleManager = BleManagerFactory.newInstance(context)
+    private val usbLedger = LedgerUsb(context)
     private var pollTonAppJob: Job? = null
     private var disconnectTimeoutJob: Job? = null
 
@@ -77,6 +90,15 @@ class LedgerConnectionViewModel(
     private var _transactionIndex: Int = 0
     private var _transactionCount: Int = 0
 
+    private val _connectionType = MutableStateFlow(
+        if (settingsRepository.ledgerConnectUsb) {
+            LedgerConnectionType.USB
+        } else {
+            LedgerConnectionType.BLUETOOTH
+        }
+    )
+    val connectionType = _connectionType.asStateFlow()
+
     private val _connectionState = MutableEffectFlow<ConnectionState>()
 
     private val _eventFlow = MutableEffectFlow<LedgerEvent>()
@@ -84,12 +106,12 @@ class LedgerConnectionViewModel(
 
     val currentStepFlow = _connectionState.map { state ->
         when (state) {
-            ConnectionState.Idle -> LedgerStep.Connect
-            ConnectionState.Scanning -> LedgerStep.Connect
-            is ConnectionState.Connected -> LedgerStep.OpenTonApp
-            is ConnectionState.TonAppOpened -> if (_walletId != null) LedgerStep.ConfirmTx else LedgerStep.Done
-            is ConnectionState.Disconnected -> LedgerStep.Connect
-            ConnectionState.Signed -> LedgerStep.Done
+            ConnectionState.Idle -> LedgerStep.CONNECT
+            ConnectionState.Scanning -> LedgerStep.CONNECT
+            is ConnectionState.Connected -> LedgerStep.OPEN_TON_APP
+            is ConnectionState.TonAppOpened -> if (_walletId != null) LedgerStep.CONFIRM_TX else LedgerStep.DONE
+            is ConnectionState.Disconnected -> LedgerStep.CONNECT
+            ConnectionState.Signed -> LedgerStep.DONE
         }
     }
 
@@ -99,7 +121,7 @@ class LedgerConnectionViewModel(
 
     val displayTextFlow = currentStepFlow.map { state ->
         when {
-            _walletId != null && (state == LedgerStep.ConfirmTx || state == LedgerStep.Done) -> "Review"
+            _walletId != null && (state == LedgerStep.CONFIRM_TX || state == LedgerStep.DONE) -> "Review"
             else -> "TON ready"
         }
     }
@@ -116,7 +138,74 @@ class LedgerConnectionViewModel(
         }
     }
 
+    private var ledgerUsbJob: Job? = null
+
+    private val isBluetooth: Boolean
+        get() = _connectionType.value == LedgerConnectionType.BLUETOOTH
+
     init {
+        collectFlow(connectionType) { type ->
+            if (type == LedgerConnectionType.USB) {
+                stopBle()
+                startWaitUsbDevice()
+                settingsRepository.ledgerConnectUsb = true
+            } else {
+                stopUsb()
+                startWaitBleDevice()
+                settingsRepository.ledgerConnectUsb = false
+            }
+        }
+    }
+
+    private fun startWaitUsbDevice() {
+        _connectionState.tryEmit(ConnectionState.Scanning)
+        ledgerUsbJob = usbLedger
+            .deviceFlow()
+            .map(usbLedger::connectDevice)
+            .map { transport ->
+                _connectionState.tryEmit(ConnectionState.Connected)
+                setConnectedDevice(
+                    ConnectedDevice(
+                        transport.serialNumber,
+                        Devices.fromUSBProductId(transport.productId)
+                    )
+                )
+                usbLedger.createTonTransport(transport)
+            }
+            .filterNotNull()
+            .map {
+                delay(1000)
+                waitForTonAppOpen(it, LedgerConnectionType.USB)
+            }
+            .retry { cause ->
+                disconnectUsb()
+
+                cause is LedgerException.USBWriteException || cause is LedgerException.USBReadException || cause is LedgerException
+            }
+            .catch {
+                disconnectUsb()
+
+                if (it is SecurityException) {
+                    _eventFlow.tryEmit(LedgerEvent.Error(context.getString(Localization.ledger_usb_permission_error)))
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun stopUsb() {
+        ledgerUsbJob?.cancel()
+        ledgerUsbJob = null
+    }
+
+    private fun disconnectUsb() {
+        pollTonAppJob?.cancel()
+        setConnectedDevice(null)
+        setTonTransport(null, LedgerConnectionType.USB)
+        _connectionState.tryEmit(ConnectionState.Disconnected())
+    }
+
+    private fun startWaitBleDevice() {
+
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         context.registerReceiver(bluetoothReceiver, filter)
 
@@ -131,9 +220,107 @@ class LedgerConnectionViewModel(
         _connectionState.tryEmit(ConnectionState.Idle)
     }
 
+    private fun unregisterReceiverBle() {
+        try {
+            context.unregisterReceiver(bluetoothReceiver)
+        } catch (ignored: Throwable) {
+        }
+    }
+
+    private fun stopBle() {
+        unregisterReceiverBle()
+
+        try {
+            bleManager.stopScanning()
+        } catch (_: Exception) {
+        }
+
+        disconnectBle()
+    }
+
+    fun disconnectBle() {
+        disconnectTimeoutJob?.cancel()
+        pollTonAppJob?.cancel()
+        bleManager.disconnect()
+        setConnectedDevice(null)
+        setTonTransport(null, LedgerConnectionType.BLUETOOTH)
+        _connectionState.tryEmit(ConnectionState.Disconnected())
+    }
+
+    fun onBleReady() {
+        if (_connectionType.value != LedgerConnectionType.BLUETOOTH) {
+            return
+        }
+
+        if (_walletId != null) {
+            viewModelScope.launch {
+                try {
+                    val ledgerConfig = getLedgerConfig()
+                    connectBle(ledgerConfig.deviceId)
+                } catch (e: Exception) {
+                    _eventFlow.tryEmit(
+                        LedgerEvent.Error(
+                            e.message ?: context.getString(Localization.error)
+                        )
+                    )
+                }
+            }
+        } else {
+            _connectionState.tryEmit(ConnectionState.Scanning)
+            bleManager.startScanning {
+                val device = it.first()
+
+                try {
+                    bleManager.stopScanning()
+                } catch (_: Exception) {
+                }
+
+                connectBle(device.id)
+            }
+        }
+    }
+
+    private fun connectBle(deviceId: String) {
+        if (_connectionType.value != LedgerConnectionType.BLUETOOTH) {
+            return
+        }
+
+        bleManager.connect(address = deviceId, onConnectError = {
+            pollTonAppJob?.cancel()
+
+            viewModelScope.launch {
+                delay(1000)
+                Log.d("LEDGER", "Reconnecting to device $deviceId")
+                connectBle(deviceId)
+            }
+
+            disconnectTimeoutJob?.cancel()
+            disconnectTimeoutJob = viewModelScope.launch {
+                delay(4000)
+                setTonTransport(null, LedgerConnectionType.BLUETOOTH)
+                setConnectedDevice(null)
+                _connectionState.tryEmit(ConnectionState.Disconnected())
+            }
+        }, onConnectSuccess = {
+            disconnectTimeoutJob?.cancel()
+            setConnectedDevice(ConnectedDevice(deviceId, Devices.fromServiceUuid(it.serviceId!!)))
+            _connectionState.tryEmit(ConnectionState.Connected)
+
+            val tonTransport = TonTransport(BleTransport(bleManager))
+
+            waitForTonAppOpen(tonTransport, LedgerConnectionType.BLUETOOTH)
+        })
+    }
+
+    fun setConnectionType(type: LedgerConnectionType) {
+        _connectionType.value = type
+    }
+
     override fun onCleared() {
         super.onCleared()
-        context.unregisterReceiver(bluetoothReceiver)
+        unregisterReceiverBle()
+        ledgerUsbJob?.cancel()
+        _tonTransport?.close()
     }
 
     fun setSignData(
@@ -153,85 +340,29 @@ class LedgerConnectionViewModel(
         _walletId = walletId
     }
 
+    private fun hasConnectedDevice(): Boolean {
+        return connectionType.value == LedgerConnectionType.USB || _connectedDevice != null
+    }
+
     private fun setConnectedDevice(device: ConnectedDevice?) {
         _connectedDevice = device
     }
 
-    private fun setTonTransport(transport: TonTransport?) {
+    private fun setTonTransport(transport: TonTransport?, type: LedgerConnectionType) {
+        if (_connectionType.value != type) {
+            return
+        }
+
+        if (transport != null) {
+            _connectionState.tryEmit(ConnectionState.TonAppOpened)
+        }
         _tonTransport = transport
 
         _eventFlow.tryEmit(LedgerEvent.Ready(_tonTransport != null))
     }
 
-    fun scanOrConnect() {
-        if (_walletId != null) {
-            viewModelScope.launch {
-                try {
-                    val ledgerConfig = getLedgerConfig()
-                    connect(ledgerConfig.deviceId)
-                } catch (e: Exception) {
-                    _eventFlow.tryEmit(
-                        LedgerEvent.Error(
-                            e.message ?: context.getString(Localization.error)
-                        )
-                    )
-                }
-            }
-        } else {
-            scan()
-        }
-    }
-
-    private fun scan() {
-        _connectionState.tryEmit(ConnectionState.Scanning)
-        bleManager.startScanning {
-            val device = it.first()
-
-            try {
-                bleManager.stopScanning()
-            } catch (_: Exception) {}
-
-            connect(device.id)
-        }
-    }
-
-    private fun connect(deviceId: String) {
-        bleManager.connect(address = deviceId, onConnectError = {
-            pollTonAppJob?.cancel()
-
-            viewModelScope.launch {
-                delay(1000)
-                Log.d("LEDGER", "Reconnecting to device $deviceId")
-                connect(deviceId)
-            }
-
-            disconnectTimeoutJob?.cancel()
-            disconnectTimeoutJob = viewModelScope.launch {
-                delay(4000)
-                setTonTransport(null)
-                setConnectedDevice(null)
-                _connectionState.tryEmit(ConnectionState.Disconnected())
-            }
-        }, onConnectSuccess = {
-            disconnectTimeoutJob?.cancel()
-            setConnectedDevice(ConnectedDevice(deviceId, Devices.fromServiceUuid(it.serviceId!!)))
-            _connectionState.tryEmit(ConnectionState.Connected)
-
-            waitForTonAppOpen()
-        })
-    }
-
-    fun disconnect() {
-        disconnectTimeoutJob?.cancel()
-        pollTonAppJob?.cancel()
-        bleManager.disconnect()
-        setConnectedDevice(null)
-        setTonTransport(null)
-        _connectionState.tryEmit(ConnectionState.Disconnected())
-    }
-
     suspend fun getConnectData() {
-        if (_tonTransport == null || _connectedDevice == null) {
+        if (_tonTransport == null || !hasConnectedDevice()) {
             return
         }
         try {
@@ -262,7 +393,7 @@ class LedgerConnectionViewModel(
     suspend fun signDomainProof() {
         viewModelScope.launch {
             try {
-                if (_tonTransport == null || _connectedDevice == null || _walletId == null || _proofData == null) {
+                if (_tonTransport == null || !hasConnectedDevice() || _walletId == null || _proofData == null) {
                     throw IllegalStateException()
                 }
 
@@ -304,7 +435,7 @@ class LedgerConnectionViewModel(
     suspend fun signTransaction() {
         viewModelScope.launch {
             try {
-                if (_tonTransport == null || _connectedDevice == null || _walletId == null || _transaction == null) {
+                if (_tonTransport == null || !hasConnectedDevice() || _walletId == null || _transaction == null) {
                     throw IllegalStateException()
                 }
 
@@ -435,44 +566,56 @@ class LedgerConnectionViewModel(
             _eventFlow.tryEmit(LedgerEvent.Next(connectData = ledgerData, accounts = items))
         }
 
-    private fun waitForTonAppOpen() {
-        setTonTransport(null)
+    private fun waitForTonAppOpen(tonTransport: TonTransport, type: LedgerConnectionType) {
+        setTonTransport(null, type)
         pollTonAppJob?.cancel()
         pollTonAppJob = viewModelScope.launch {
-            val tonTransport = TonTransport(BleTransport(bleManager))
+            try {
+                suspend fun isAppOpen() = try {
+                    tonTransport.isTONAppOpen()
+                } catch (_: Exception) {
+                    false
+                }
 
-            suspend fun isAppOpen() = try {
-                tonTransport.isAppOpen()
-            } catch (_: Exception) {
-                false
+                while (!isAppOpen()) {
+                    Log.d("LEDGER", "Waiting for app to open")
+                    delay(1000)
+                }
+
+                setTonTransport(tonTransport, type)
+            } catch (e: Throwable) {
+                Log.d("LEDGER", "Error waiting for TON app", e)
+                _connectionState.tryEmit(ConnectionState.Disconnected())
             }
-
-            while (!isAppOpen()) {
-                Log.d("LEDGER", "Waiting for app to open")
-                delay(1000)
-            }
-
-            _connectionState.tryEmit(ConnectionState.TonAppOpened)
-            setTonTransport(tonTransport)
         }
     }
 
     private fun createList(currentStep: LedgerStep): List<Item> {
         val uiItems = mutableListOf<Item>()
 
-        uiItems.add(
-            Item.Step(
-                context.getString(Localization.ledger_connect),
-                currentStep !== LedgerStep.Connect,
-                currentStep == LedgerStep.Connect
+        if (isBluetooth) {
+            uiItems.add(
+                Item.Step(
+                    context.getString(Localization.ledger_connect),
+                    currentStep !== LedgerStep.CONNECT,
+                    currentStep == LedgerStep.CONNECT
+                )
             )
-        )
+        } else {
+            uiItems.add(
+                Item.Step(
+                    context.getString(Localization.ledger_usb_connect),
+                    currentStep !== LedgerStep.CONNECT,
+                    currentStep == LedgerStep.CONNECT
+                )
+            )
+        }
 
         uiItems.add(
             Item.Step(
                 context.getString(Localization.ledger_open_ton_app),
-                currentStep == LedgerStep.Done || currentStep == LedgerStep.ConfirmTx,
-                currentStep == LedgerStep.OpenTonApp,
+                currentStep == LedgerStep.DONE || currentStep == LedgerStep.CONFIRM_TX,
+                currentStep == LedgerStep.OPEN_TON_APP,
                 _walletId == null
             )
         )
@@ -487,7 +630,7 @@ class LedgerConnectionViewModel(
                     Item.Step(
                         context.getString(Localization.ledger_confirm_tx_step, i + 1),
                         _transactionIndex > i,
-                        currentStep == LedgerStep.ConfirmTx && _transactionIndex == i
+                        currentStep == LedgerStep.CONFIRM_TX && _transactionIndex == i
                     )
                 )
             }
@@ -497,8 +640,8 @@ class LedgerConnectionViewModel(
                     if (_proofData !== null) context.getString(Localization.ledger_confirm_proof) else context.getString(
                         Localization.ledger_confirm_tx
                     ),
-                    currentStep == LedgerStep.Done,
-                    currentStep == LedgerStep.ConfirmTx
+                    currentStep == LedgerStep.DONE,
+                    currentStep == LedgerStep.CONFIRM_TX
                 )
             )
         }

@@ -7,6 +7,8 @@ import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonDomain
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
+import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.extensions.hasUnsupportedQuery
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
@@ -43,7 +45,7 @@ sealed class DeepLinkRoute {
             private companion object {
 
                 private fun buildBrowserUri(category: String?): String {
-                    val builder = Uri.parse("tonkeeper://browser").buildUpon()
+                    val builder = "tonkeeper://browser".toUri().buildUpon()
                     if (!category.isNullOrBlank()) {
                         builder.appendQueryParameter("category", category)
                     }
@@ -126,7 +128,7 @@ sealed class DeepLinkRoute {
             address = uri.pathOrNull ?: throw IllegalArgumentException("Address is required"),
             amount = uri.queryLong("amount"),
             text = uri.query("text"),
-            jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
+            jettonAddress = (uri.query("jettonAddress") ?: uri.query("jetton"))?.toRawAddress(),
             bin = uri.query("bin")?.cellFromBase64(),
             initStateBase64 = uri.query("init")
         ) {
@@ -134,7 +136,7 @@ sealed class DeepLinkRoute {
                 throw IllegalArgumentException("Unsupported query parameters")
             }
 
-            if (address.isNotBlank() && (!address.isValidTonAddress() && !address.isValidTonDomain())) {
+            if (address.isNotBlank() && (!address.isValidTonAddress() && !address.isValidTronAddress() && !address.isValidTonDomain())) {
                 throw IllegalArgumentException("Invalid address")
             }
 
@@ -165,10 +167,14 @@ sealed class DeepLinkRoute {
         )
     }
 
-    data class Battery(val promocode: String?): DeepLinkRoute() {
+    data class Battery(
+        val jetton: String?,
+        val promocode: String?
+    ): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
-            promocode = uri.query("promocode")
+            jetton = uri.query("jetton"),
+            promocode = uri.query("promocode"),
         )
     }
 
@@ -277,7 +283,6 @@ sealed class DeepLinkRoute {
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {
-                Log.e("ApkDownloadWorker", "Failed to resolve deep link: $uri", e)
                 return Unknown(uri)
             }
         }

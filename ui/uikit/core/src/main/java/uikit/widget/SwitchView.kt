@@ -81,6 +81,16 @@ class SwitchView @JvmOverloads constructor(
 
     fun isChecked() = checked
 
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+
+        alpha = if (enabled) {
+            1f
+        } else {
+            0.64f
+        }
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         drawTrack(canvas)

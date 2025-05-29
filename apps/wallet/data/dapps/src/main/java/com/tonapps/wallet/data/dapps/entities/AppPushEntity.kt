@@ -36,7 +36,7 @@ data class AppPushEntity(
         get() = body.dappUrl
 
     @IgnoredOnParcel
-    val deeplink: String
+    val deeplink: String?
         get() = body.link
 
     @Parcelize
@@ -44,7 +44,7 @@ data class AppPushEntity(
         val dappUrl: Uri,
         val title: String,
         val message: String,
-        val link: String,
+        val link: String?,
         val account: String,
         val dateCreate: Long
     ): Parcelable {
@@ -53,7 +53,7 @@ data class AppPushEntity(
             dappUrl = json.getString("dapp_url").toUriOrNull() ?: Uri.EMPTY,
             title = json.getString("title"),
             message = json.getString("message"),
-            link = json.getString("link"),
+            link = json.optString("link") ?: "",
             account = json.getString("account"),
             dateCreate = json.getLongCompat("date_create")
         )

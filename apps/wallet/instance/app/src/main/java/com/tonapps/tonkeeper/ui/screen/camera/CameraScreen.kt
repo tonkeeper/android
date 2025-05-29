@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.camera
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.activity.result.PickVisualMediaRequest
@@ -13,18 +12,20 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.mlkit.vision.common.InputImage
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.deeplink.DeepLink
 import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.constantWhiteColor
 import com.tonapps.uikit.color.stateList
+import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
@@ -39,20 +40,29 @@ import uikit.extensions.pinToBottomInsets
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
 
-class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.BottomSheet {
+class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
     override val fragmentName: String = "CameraScreen"
 
     private val mode: CameraMode by lazy { requireArguments().getParcelableCompat(ARG_MODE)!! }
-
-    private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        uri?.let { readQRCodeFromImage(it) }
+    private val chains: List<Blockchain> by lazy {
+       requireArguments().getStringArrayList(ARG_CHAINS)!!.map { Blockchain.valueOf(it) }
     }
+
+    private val imagePickerLauncher =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { readQRCodeFromImage(it) }
+        }
 
     private val rootViewModel: RootViewModel by activityViewModel()
 
     override lateinit var cameraView: PreviewView
     private lateinit var galleryButton: Button
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("scan_open", rootViewModel.installId)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -119,7 +129,8 @@ class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.Botto
         try {
             val inputImage = InputImage.fromFilePath(requireContext(), uri)
             val task = barcodeScanner.process(inputImage).await()
-            val rawValue = task.firstOrNull()?.rawValue ?: throw IllegalStateException("No barcode found")
+            val rawValue =
+                task.firstOrNull()?.rawValue ?: throw IllegalStateException("No barcode found")
             createUri(rawValue)
         } catch (e: Throwable) {
             null
@@ -139,7 +150,9 @@ class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.Botto
     }
 
     private fun createTransferUri(value: String): Uri? {
-        if (value.isValidTonAddress()) {
+        if (chains.contains(Blockchain.TON) && value.isValidTonAddress()) {
+            return "tonkeeper://transfer/$value".toUri()
+        } else if (chains.contains(Blockchain.TRON) && value.isValidTronAddress()) {
             return "tonkeeper://transfer/$value".toUri()
         }
         return null
@@ -148,10 +161,18 @@ class CameraScreen: QRCameraScreen(R.layout.fragment_camera), BaseFragment.Botto
     companion object {
 
         private const val ARG_MODE = "mode"
+        private const val ARG_CHAINS = "chains"
 
-        fun newInstance(mode: CameraMode = CameraMode.Default): CameraScreen {
+        fun newInstance(
+            mode: CameraMode = CameraMode.Default,
+            chains: List<Blockchain> = listOf(Blockchain.TON)
+        ): CameraScreen {
             val fragment = CameraScreen()
-            fragment.putParcelableArg(ARG_MODE, mode)
+            val bundle = Bundle().apply {
+                putParcelable(ARG_MODE, mode)
+                putStringArrayList(ARG_CHAINS, ArrayList(chains.map { it.name }))
+            }
+            fragment.setArgs(bundle)
             return fragment
         }
     }

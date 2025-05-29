@@ -5,6 +5,6 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class ApkEntity(
-    val apkDownloadUrl: String,
-    val apkName: AppVersion
+    val apkDownloadUrl: String = "",
+    val apkName: AppVersion = AppVersion("5.0.21"),
 ): Parcelable

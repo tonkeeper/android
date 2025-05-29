@@ -17,13 +17,7 @@ class FilterHolder(
 
     override fun onBind(item: FilterItem) {
         itemView.setOnClickListener { onClick(item) }
-        if (item.type == FilterItem.TYPE_SEND) {
-            titleView.setText(Localization.sent)
-        } else if (item.type == FilterItem.TYPE_RECEIVE) {
-            titleView.setText(Localization.received)
-        } else if (item.type == FilterItem.TYPE_SPAM) {
-            titleView.setText(Localization.spam)
-        }
+        titleView.setText(item.localization)
         updateSelected(item)
     }
 

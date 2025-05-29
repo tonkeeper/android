@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -38,4 +39,12 @@ dependencies {
         exclude(group = "com.facebook.fresco", module = "memory-type-native")
         exclude(group = "com.facebook.fresco", module = "imagepipeline-native")
     }
+
+    implementation(platform(Dependence.AndroidX.Compose.bom))
+    implementation(Dependence.AndroidX.Compose.foundation)
+    implementation(Dependence.AndroidX.Compose.foundationLayout)
+    implementation(Dependence.AndroidX.Compose.ui)
+    implementation(Dependence.AndroidX.Compose.material3)
+    implementation(Dependence.AndroidX.Compose.preview)
+    debugImplementation(Dependence.AndroidX.Compose.debugTooling)
 }

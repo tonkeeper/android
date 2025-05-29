@@ -87,6 +87,7 @@ sealed class State {
         val lt: Long?,
         val isOnline: Boolean,
         val apkStatus: APKManager.Status,
+        val tronUsdtEnabled: Boolean,
     ): State() {
 
         val totalBalanceFiat: Coins
@@ -136,6 +137,7 @@ sealed class State {
                         testnet = wallet.testnet,
                         currencyCode = currencyCode,
                         wallet = wallet,
+                        showNetwork = tronUsdtEnabled && (asset.token.isUsdt || asset.token.isTrc20),
                     )
                     uiItems.add(item)
                 }
@@ -167,12 +169,13 @@ sealed class State {
         }
 
         private fun uiItemActions(
-            config: ConfigEntity
+            config: ConfigEntity,
         ): Item.Actions {
             return Item.Actions(
                 wallet = wallet,
                 token = TokenEntity.TON,
-                swapUri = config.swapUri
+                swapUri = config.swapUri,
+                tronEnabled = tronUsdtEnabled
             )
         }
 
@@ -272,7 +275,7 @@ sealed class State {
             prefixYourAddress: Boolean,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
-            if (apkStatus != APKManager.Status.Default) {
+            if (apkStatus != APKManager.Status.Default && apkStatus !is APKManager.Status.UpdateAvailable) {
                 uiItems.add(Item.ApkStatus(apkStatus))
             }
             if (alerts.isNotEmpty()) {

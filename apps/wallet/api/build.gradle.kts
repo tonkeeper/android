@@ -23,8 +23,8 @@ android {
 }
 
 dependencies {
-    api(Dependence.guava)
     implementation(Dependence.Koin.core)
+    implementation(Dependence.KotlinX.guava)
     implementation(project(Dependence.Module.tonApi))
     implementation(project(Dependence.Lib.network))
     implementation(project(Dependence.Lib.blockchain))

@@ -73,7 +73,11 @@ class BillingManager(
         productType: String = ProductType.INAPP
     ) {
         val products = withTimeoutOrNull(5.seconds) {
-            getProducts(productIds, productType)
+            try {
+                getProducts(productIds, productType)
+            } catch (e: Throwable) {
+                null
+            }
         } ?: emptyList()
 
         _productsFlow.value = products

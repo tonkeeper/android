@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.component.MainRecyclerView
 import com.tonapps.tonkeeper.ui.component.wallet.WalletHeaderView
@@ -38,8 +39,8 @@ class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wal
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
-        headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance()) }
-        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(wallet)) }
+        headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance(from = "wallet")) }
+        headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(wallet, "wallet")) }
         headerView.doWalletSwipe = { right ->
             if (right) {
                 viewModel.prevWallet()

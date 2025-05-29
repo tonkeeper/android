@@ -8,3 +8,7 @@ captures
 .cxx
 *.apk
 .kotlin
+build
+
+build/
+*/build/

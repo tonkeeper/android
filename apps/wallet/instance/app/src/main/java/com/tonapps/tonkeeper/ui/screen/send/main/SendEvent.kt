@@ -20,15 +20,22 @@ sealed class SendEvent {
     data object Confirm: SendEvent()
 
     data class Fee(
-        val balance: Coins,
-        val amount: Coins,
-        val fee: com.tonapps.tonkeeper.core.Fee,
-        val format: CharSequence,
-        val convertedFormat: CharSequence,
-        val isBattery: Boolean,
-        val isGasless: Boolean,
-        val showGaslessToggle: Boolean,
-        val tokenSymbol: String,
-        val insufficientFunds: Boolean
+        val balance: Coins = Coins.ZERO,
+        val amount: Coins = Coins.ZERO,
+        val fee: com.tonapps.tonkeeper.core.Fee = com.tonapps.tonkeeper.core.Fee(0L),
+        val format: CharSequence = "",
+        val convertedFormat: CharSequence = "",
+        val isBattery: Boolean = false,
+        val isGasless: Boolean = false,
+        val showGaslessToggle: Boolean = false,
+        val tokenSymbol: String = "",
+        val insufficientFunds: Boolean = false,
+        val failed: Boolean,
+        val charges: Int? = null,
+        val chargesFormat: CharSequence? = null,
+        val chargesBalance: Int? = null,
+        val chargesBalanceFormat: CharSequence? = null,
     ): SendEvent()
+
+    data object ResetAddress: SendEvent()
 }

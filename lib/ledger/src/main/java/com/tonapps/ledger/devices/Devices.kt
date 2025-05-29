@@ -65,7 +65,7 @@ object Devices {
         ),
         DeviceModelId.EUROPA to DeviceModel(
             id = DeviceModelId.EUROPA,
-            productName = "Ledger Europa",
+            productName = "Ledger Flex",
             productIdMM = 0x70,
             legacyUsbProductId = 0x0007,
             usbOnly = false,
@@ -96,5 +96,13 @@ object Devices {
         }
 
         return device ?: devices[DeviceModelId.NANO_X]!!
+    }
+
+    fun fromUSBProductId(usbProductId: Int): DeviceModel {
+        val legacy = devices.values.find { it.legacyUsbProductId == usbProductId }
+        if (legacy != null) return legacy
+
+        val mm = usbProductId shr 8
+        return devices.values.find { it.productIdMM == mm } ?: devices[DeviceModelId.NANO_S]!!
     }
 }

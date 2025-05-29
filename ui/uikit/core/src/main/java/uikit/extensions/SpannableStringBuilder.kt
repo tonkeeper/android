@@ -9,6 +9,7 @@ import androidx.core.text.inSpans
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.accentPurpleColor
+import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.textSecondaryColor
 import uikit.span.BadgeSpan
@@ -62,6 +63,11 @@ inline fun SpannableStringBuilder.badgeGreen(
     context: Context,
     builderAction: SpannableStringBuilder.() -> Unit
 ) = badgeAccentColor(context, context.accentGreenColor, builderAction)
+
+inline fun SpannableStringBuilder.badgeRed(
+    context: Context,
+    builderAction: SpannableStringBuilder.() -> Unit
+) = badgeAccentColor(context, context.accentRedColor, builderAction)
 
 inline fun SpannableStringBuilder.ellipsis(
     maxWidth: Int,

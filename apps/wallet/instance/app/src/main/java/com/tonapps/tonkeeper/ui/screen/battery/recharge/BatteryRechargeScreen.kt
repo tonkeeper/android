@@ -12,9 +12,11 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -176,7 +178,7 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
 
     private fun onSuccess() {
         requireContext().showToast(Localization.battery_please_wait)
-        navigation?.openURL("tonkeeper://activity")
+        navigation?.openURL("tonkeeper://activity?from=battery")
         navigation?.removeByClass({
             finish()
         }, BatteryScreen::class.java)

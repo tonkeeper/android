@@ -126,7 +126,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
         bottomTabsView.doOnLongClick = { itemId ->
             if (itemId == R.id.wallet) {
-                navigation?.add(PickerScreen.newInstance())
+                navigation?.add(PickerScreen.newInstance(from = getCurrentFrom()))
             }
         }
         collectFlow(viewModel.childBottomScrolled) {
@@ -136,7 +136,6 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 bottomTabsView.setDivider(it)
             }
         }
-
         rootViewModel.eventFlow.filterIsInstance<RootEvent.OpenTab>().onEach {
             val itemId = resolveId(it.link.toString())
             bottomTabsView.selectedItemId = itemId
@@ -186,8 +185,18 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         bottomTabsView.doOnClick = { itemId ->
             setFragment(itemId, wallet, "wallet",null, false)
             if (itemId == R.id.browser) {
-                AnalyticsHelper.trackEvent("browser_click", rootViewModel.installId)
+                AnalyticsHelper.simpleTrackEvent("browser_click", rootViewModel.installId)
             }
+        }
+    }
+
+    private fun getCurrentFrom(): String {
+        return when(bottomTabsView.selectedItemId) {
+            R.id.wallet -> "wallet"
+            R.id.activity -> "activity"
+            R.id.collectibles -> "collectibles"
+            R.id.browser -> "browser"
+            else -> "unknown"
         }
     }
 
@@ -242,10 +251,19 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         transaction.runOnCommit {
             checkBottomDivider(fragment)
             if (fragment is BrowserBaseScreen) {
-                AnalyticsHelper.trackBrowserOpen(rootViewModel.installId, from)
+                AnalyticsHelper.simpleTrackScreenEvent("browser_open", rootViewModel.installId, from)
                 if (!extra.isNullOrBlank()) {
                     fragment.openCategory(extra)
                 }
+            } else if (fragment is EventsScreen) {
+                AnalyticsHelper.simpleTrackScreenEvent("history_open", rootViewModel.installId, from)
+            } else if (fragment is CollectiblesScreen) {
+                AnalyticsHelper.simpleTrackScreenEvent("collectibles_open", rootViewModel.installId, from)
+            } else if (fragment is WalletScreen) {
+                AnalyticsHelper.simpleTrackEvent("wallet_open", rootViewModel.installId, hashMapOf(
+                    "from" to from,
+                    "wallet_type" to fragment.wallet.version.title
+                ))
             }
         }
         try {

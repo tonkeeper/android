@@ -33,7 +33,7 @@ class RechargePackHolder(
         itemView.isEnabled = item.isEnabled
 
         titleView.text = context.resources.getQuantityString(
-            Plurals.battery_current_charges, item.charges, item.charges
+            Plurals.battery_charges, item.charges, item.charges
         )
         titleView.setRightDrawable(itemView.getDrawable(UIKitIcon.ic_information_circle_16))
         titleView.setOnClickListener {

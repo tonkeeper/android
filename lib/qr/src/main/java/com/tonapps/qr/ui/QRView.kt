@@ -50,7 +50,7 @@ class QRView @JvmOverloads constructor(
             qrDrawable.color = value
         }
 
-    private var withCutout: Boolean
+    var withCutout: Boolean
         get() = qrDrawable.withCutout
         set(value) {
             qrDrawable.withCutout = value
@@ -70,7 +70,6 @@ class QRView @JvmOverloads constructor(
             }
         }
     }
-
 
     fun setCorrectionLevelL() {
         errorCorrectionLevel = ErrorCorrectionLevel.L

@@ -104,7 +104,7 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)
-            navigation?.openURL("tonkeeper://activity")
+            navigation?.openURL("tonkeeper://activity?from=stake")
             delay(2000)
             finish()
         }.launchIn(lifecycleScope)

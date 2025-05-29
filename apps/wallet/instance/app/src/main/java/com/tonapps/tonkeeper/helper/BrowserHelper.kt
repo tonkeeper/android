@@ -5,17 +5,48 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Browser
+import android.util.Log
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import com.tonapps.extensions.activity
 import com.tonapps.extensions.locale
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.showToast
+import com.tonapps.tonkeeper.koin.installId
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textPrimaryColor
+import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import com.tonapps.wallet.localization.Localization
+import uikit.navigation.Navigation
 
 object BrowserHelper {
+
+    fun BrowserAppEntity.openDApp(context: Context, wallet: WalletEntity, source: String) {
+        if (useCustomTabs || useTG) {
+            if (useCustomTabs) {
+                open(context, url.toString())
+            } else if (useTG) {
+                openTG(context, url)
+            }
+            AnalyticsHelper.trackEventClickDApp(
+                url = url.toString(),
+                name = name,
+                installId = context.installId,
+                source = source
+            )
+        } else {
+            Navigation.from(context)?.add(
+                DAppScreen.newInstance(
+                wallet = wallet,
+                title = name,
+                url = url,
+                source = source
+            ))
+        }
+    }
 
     fun openPurchase(context: Context, method: WalletPurchaseMethodEntity) {
         context.activity?.let {
@@ -66,6 +97,29 @@ object BrowserHelper {
             intent.launchUrl(activity, uri)
         } catch (e: Throwable) {
             external(activity, uri)
+        }
+    }
+
+    fun openTG(context: Context, uri: Uri) {
+        context.activity?.let {
+            openTG(it, uri)
+        }
+    }
+
+    fun openTG(activity: Activity, uri: Uri) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.setPackage("org.telegram.messenger")
+            activity.startActivity(intent)
+        } catch (e: Throwable) {
+            external(activity, uri)
+        }
+    }
+
+    fun external(context: Context, uri: Uri) {
+        context.activity?.let {
+            external(it, uri)
         }
     }
 

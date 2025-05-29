@@ -7,7 +7,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class BleTransport(private val bleManager: BleManager) : Transport {
+class BleTransport(
+    private val bleManager: BleManager
+) : Transport {
     override suspend fun exchange(apdu: ByteArray): ByteArray {
         if (bleManager.isConnected) {
             return send(apdu)
@@ -17,10 +19,23 @@ class BleTransport(private val bleManager: BleManager) : Transport {
     }
 
     private suspend fun send(apdu: ByteArray) = suspendCancellableCoroutine { continuation ->
-        bleManager.send(apduHex = hex(apdu), onSuccess = { response ->
-            continuation.resume(hex(response))
-        }, onError = { error ->
-            continuation.resumeWithException(IllegalStateException(error))
-        })
+        try {
+            bleManager.send(
+                apduHex = hex(apdu),
+                onSuccess = { response ->
+                    continuation.resume(hex(response))
+                },
+                onError = { error ->
+                    continuation.resumeWithException(IllegalStateException(error))
+                }
+            )
+        } catch (e: Exception) {
+            continuation.resumeWithException(e)
+        }
+    }
+
+    override fun close() {
+        super.close()
+        bleManager.disconnect()
     }
 }

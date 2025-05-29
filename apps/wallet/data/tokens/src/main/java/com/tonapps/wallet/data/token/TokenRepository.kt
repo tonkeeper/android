@@ -39,15 +39,16 @@ class TokenRepository(
         return remoteDataSource.getJetton(accountId, testnet)
     }
 
-    suspend fun getTokens(testnet: Boolean, accountIds: List<String>): List<TokenEntity> = withContext(Dispatchers.IO) {
-        if (accountIds.isEmpty()) {
-            return@withContext emptyList()
+    suspend fun getTokens(testnet: Boolean, accountIds: List<String>): List<TokenEntity> =
+        withContext(Dispatchers.IO) {
+            if (accountIds.isEmpty()) {
+                return@withContext emptyList()
+            }
+            val deferredTokens = accountIds.map { accountId ->
+                async { getToken(accountId, testnet) }
+            }
+            deferredTokens.mapNotNull { it.await() }
         }
-        val deferredTokens = accountIds.map { accountId ->
-            async { getToken(accountId, testnet) }
-        }
-        deferredTokens.mapNotNull { it.await() }
-    }
 
     fun getToken(accountId: String): TokenEntity? {
         return getToken(accountId, false) ?: getToken(accountId, true)
@@ -74,20 +75,42 @@ class TokenRepository(
         return tokens.firstOrNull { it.isTon }
     }
 
+
+    suspend fun refreshTron(
+        accountId: String,
+        testnet: Boolean,
+        tronAddress: String
+    ) {
+        val tronUsdtBalance = remoteDataSource.loadTronUsdt(tronAddress)
+
+        val cached = localDataSource.getCache(cacheKey(accountId, false)) ?: return
+        val entities = cached.toMutableList()
+        val index = entities.indexOfFirst { it.token.address.equalsAddress(TokenEntity.TRON_USDT.address) }
+
+        if (index != -1) {
+            entities[index] = tronUsdtBalance
+        } else {
+            entities.add(tronUsdtBalance)
+        }
+
+        localDataSource.setCache(cacheKey(accountId, testnet), entities)
+    }
+
     suspend fun get(
         currency: WalletCurrency,
         accountId: String,
         testnet: Boolean,
         refresh: Boolean = false,
+        tronAddress: String? = null,
     ): List<AccountTokenEntity>? {
         if (refresh) {
-            return getRemote(currency, accountId, testnet)
+            return getRemote(currency, accountId, tronAddress, testnet)
         }
         val tokens = getLocal(currency, accountId, testnet)
         if (tokens.isNotEmpty()) {
             return tokens
         }
-        return getRemote(currency, accountId, testnet)
+        return getRemote(currency, accountId, tronAddress, testnet)
     }
 
     suspend fun mustGet(
@@ -102,9 +125,10 @@ class TokenRepository(
     private suspend fun getRemote(
         currency: WalletCurrency,
         accountId: String,
+        tronAddress: String?,
         testnet: Boolean
     ): List<AccountTokenEntity>? = withContext(Dispatchers.IO) {
-        val balances = load(currency, accountId, testnet) ?: return@withContext null
+        val balances = load(currency, accountId, tronAddress, testnet) ?: return@withContext null
         if (testnet) {
             return@withContext buildTokens(
                 currency = currency,
@@ -221,14 +245,24 @@ class TokenRepository(
     private suspend fun load(
         currency: WalletCurrency,
         accountId: String,
+        tronAddress: String?,
         testnet: Boolean
     ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
         val tonBalanceDeferred = async { remoteDataSource.loadTON(currency, accountId, testnet) }
         val jettonsDeferred = async { remoteDataSource.loadJettons(currency, accountId, testnet) }
+        val tronUsdtDeferred = async {
+            if (tronAddress != null && !testnet) {
+                remoteDataSource.loadTronUsdt(tronAddress)
+            } else {
+                null
+            }
+        }
 
         val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
 
         val jettons = jettonsDeferred.await()?.toMutableList() ?: mutableListOf()
+
+        val tronUsdt = tronUsdtDeferred.await()
 
         val usdtIndex = jettons.indexOfFirst {
             it.token.address == TokenEntity.USDT.address
@@ -236,15 +270,22 @@ class TokenRepository(
 
         val entities = mutableListOf<BalanceEntity>()
         entities.add(tonBalance)
+
+        if (tronUsdt != null) {
+            entities.add(tronUsdt)
+        }
+
         if (usdtIndex == -1 && !testnet) {
-            entities.add(BalanceEntity(
-                token = TokenEntity.USDT,
-                value = Coins.ZERO,
-                walletAddress = accountId,
-                initializedAccount = tonBalance.initializedAccount,
-                isRequestMinting = false,
-                isTransferable = true
-            ))
+            entities.add(
+                BalanceEntity(
+                    token = TokenEntity.USDT,
+                    value = Coins.ZERO,
+                    walletAddress = accountId,
+                    initializedAccount = tonBalance.initializedAccount,
+                    isRequestMinting = false,
+                    isTransferable = true
+                )
+            )
         } else if (usdtIndex >= 0) {
             jettons[usdtIndex] = jettons[usdtIndex].copy(
                 token = TokenEntity.USDT

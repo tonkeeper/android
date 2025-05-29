@@ -42,5 +42,10 @@
 
 -keepnames class com.tonapps.tonkeeper.ui.screen.** { *; }
 
+-dontwarn com.fasterxml.jackson.databind.ext.Java7SupportImpl
+-keep class com.fasterxml.jackson.databind.ext.** { *; }
+-dontwarn org.slf4j.**
+-dontwarn org.w3c.dom.**
+-dontwarn com.fasterxml.jackson.databind.ext.DOMSerializer
 
 

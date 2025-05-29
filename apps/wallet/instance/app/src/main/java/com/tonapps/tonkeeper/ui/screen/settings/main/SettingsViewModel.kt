@@ -12,6 +12,7 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.appVersionCode
 import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.Environment
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -23,6 +24,7 @@ import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
@@ -56,20 +58,32 @@ class SettingsViewModel(
     private val passcodeManager: PasscodeManager,
     private val rnLegacy: RNLegacy,
     private val environment: Environment,
-): BaseWalletVM(application) {
+    private val remoteConfig: RemoteConfig
+) : BaseWalletVM(application) {
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }
 
+    val installId: String
+        get() = settingsRepository.installId
+
+    private val walletInfoFlow = combine(
+        backupRepository.stream,
+        accountRepository.selectedWalletFlow
+    ) { backups, wallet ->
+        val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
+        Pair(hasBackup, wallet)
+    }
+
     init {
         combine(
+            settingsRepository.walletPrefsChangedFlow,
             settingsRepository.currencyFlow,
             settingsRepository.languageFlow,
             settingsRepository.searchEngineFlow,
-            backupRepository.stream,
-            accountRepository.selectedWalletFlow,
-        ) { currency, language, searchEngine, backups, wallet ->
-            val hasBackup = backups.indexOfFirst { it.walletId == wallet.id } > -1
+            walletInfoFlow,
+        ) { _, currency, language, searchEngine, walletInfo ->
+            val (hasBackup, wallet) = walletInfo
             buildUiItems(wallet, currency, language, searchEngine, hasBackup)
         }.launchIn(viewModelScope)
     }
@@ -79,7 +93,7 @@ class SettingsViewModel(
     }
 
     fun signOut(callback: () -> Unit) {
-        AnalyticsHelper.trackEvent("delete_wallet", settingsRepository.installId)
+        AnalyticsHelper.simpleTrackEvent("delete_wallet", settingsRepository.installId)
         viewModelScope.launch(Dispatchers.IO) {
             tonConnectManager.clear(wallet)
             PushToggleWorker.run(context, wallet, PushManager.State.Delete)
@@ -109,14 +123,40 @@ class SettingsViewModel(
             val versions = listOf(version)
 
             rnLegacy.addMnemonics(passcode, walletIds, mnemonic)
-            accountRepository.importWallet(walletIds, Wallet.NewLabel(
-                names = listOf(newLabel.name),
-                emoji = newLabel.emoji,
-                color = newLabel.color,
-            ), mnemonic, versions, wallet.testnet, listOf(false))
+            accountRepository.importWallet(
+                walletIds, Wallet.NewLabel(
+                    names = listOf(newLabel.name),
+                    emoji = newLabel.emoji,
+                    color = newLabel.color,
+                ), mnemonic, versions, wallet.testnet, listOf(false)
+            )
             backupRepository.addBackup(walletId)
             accountRepository.setSelectedWallet(walletId)
             finish()
+        }
+    }
+
+    fun toggleTron() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val tronPrefs =
+                settingsRepository.getTokenPrefs(wallet.id, TokenEntity.TRON_USDT.address)
+            val isHidden = !tronPrefs.isHidden
+            settingsRepository.setTokenHidden(wallet.id, TokenEntity.TRON_USDT.address, isHidden)
+
+//            if (!isHidden) {
+//                try {
+//                    val tronAddress = accountRepository.getTronAddress(wallet.id) ?: return@launch
+//                    val tonProofToken =
+//                        accountRepository.requestTonProofToken(wallet) ?: return@launch
+//                    api.tron.activateWallet(
+//                        tronAddress = tronAddress,
+//                        tonProofToken = tonProofToken
+//                    )
+//
+//                } catch (e: Exception) {
+//                    Log.d("SettingsViewModel", "Error activating Tron wallet", e)
+//                }
+//            }
         }
     }
 
@@ -164,6 +204,13 @@ class SettingsViewModel(
         }
 
         uiItems.add(Item.Space)
+
+        if (wallet.hasPrivateKey && !wallet.testnet && !remoteConfig.isTronDisabled) {
+            val tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(displayWallet.id)
+            uiItems.add(Item.TronToggle(enabled = tronUsdtEnabled))
+            uiItems.add(Item.Space)
+        }
+
         uiItems.add(Item.Notifications(ListCell.Position.FIRST))
 
         if (wallet.hasPrivateKey) {
@@ -212,7 +259,7 @@ class SettingsViewModel(
             uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label, !wallet.hasPrivateKey))
         }
         uiItems.add(Item.Space)
-        uiItems.add(Item.Logo)
+        uiItems.add(Item.Logo(environment.installerSource))
 
         _uiItemsFlow.value = uiItems
     }

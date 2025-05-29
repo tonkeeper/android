@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <FrameLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="84dp">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingEnd="56dp"
+            android:layout_gravity="center">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.H3"
+                android:textColor="?attr/textPrimaryColor" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor" />
+
+        </uikit.widget.ColumnLayout>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:filterTouchesWhenObscured="true"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor" />
+
+    </FrameLayout>
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/text_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_content"
+            android:padding="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/text_value"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textSize="14sp"
+                android:minHeight="96dp"
+                android:maxHeight="220dp"
+                android:scrollbars="vertical"
+                android:nestedScrollingEnabled="true"
+                android:fontFamily="@font/roboto_mono"
+                android:textColor="?attr/textPrimaryColor"/>
+
+            <Button
+                style="@style/Widget.App.Button.Small.Tertiary"
+                android:id="@+id/text_copy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:text="@string/copy"/>
+
+        </FrameLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/sign_text_subtitle"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/binary_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetMedium"
+        android:visibility="gone"
+        android:background="@drawable/bg_content_20"
+        android:backgroundTint="?attr/accentOrangeColor">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="@color/constantBlack"
+            android:text="@string/sign_data_binary_title"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/sign_data_binary_message"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="@color/constantBlack"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/cell_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_content"
+            android:padding="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/cell_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingEnd="52dp"
+                android:textSize="14sp"
+                android:minHeight="96dp"
+                android:maxHeight="220dp"
+                android:scrollbars="vertical"
+                android:nestedScrollingEnabled="true"
+                android:fontFamily="@font/roboto_mono"
+                android:textColor="?attr/textPrimaryColor"
+                android:maxLines="4"/>
+
+        </FrameLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/sign_text_subtitle"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <FrameLayout
+        android:id="@+id/action"
+        android:layout_width="match_parent"
+        android:layout_height="124dp"
+        android:layout_marginTop="8dp">
+
+        <uikit.widget.SlideActionView
+            android:id="@+id/slide"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/offsetMedium"
+            android:text="@string/slide_to_sign"
+            android:filterTouchesWhenObscured="true"/>
+
+        <uikit.widget.ProcessTaskView
+            android:id="@+id/task"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            app:successLabel="@string/done"
+            app:errorLabel="@string/error"/>
+
+    </FrameLayout>
+
+</uikit.widget.ColumnLayout>

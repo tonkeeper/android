@@ -50,13 +50,14 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
         }
     }
 
-    private val mode: PickerMode by lazy {  requireArguments().getParcelableCompat<PickerMode>(ARG_MODE)!! }
+    private val mode: PickerMode by lazy { requireArguments().getParcelableCompat<PickerMode>(ARG_MODE)!! }
+    private val from: String by lazy { requireArguments().getString(ARG_FROM)!! }
     private var hasWalletPicked = false
 
     override val scaleBackground: Boolean
         get() = mode !is PickerMode.TonConnect
 
-    override val viewModel: PickerViewModel by viewModel { parametersOf(mode) }
+    override val viewModel: PickerViewModel by viewModel { parametersOf(mode, from) }
 
     private val adapter = Adapter { wallet ->
         if (mode is PickerMode.TonConnect) {
@@ -178,12 +179,15 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
     companion object {
 
         private const val ARG_MODE = "mode"
+        private const val ARG_FROM = "from"
 
         fun newInstance(
-            type: PickerMode = PickerMode.Default
+            type: PickerMode = PickerMode.Default,
+            from: String
         ): PickerScreen {
             val fragment = PickerScreen()
             fragment.putParcelableArg(ARG_MODE, type)
+            fragment.putStringArg(ARG_FROM, from)
             return fragment
         }
     }

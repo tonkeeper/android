@@ -7,12 +7,12 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.TonTransferHelper
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.toGrams
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -154,7 +154,7 @@ class BatteryRechargeViewModel(
                 Item.Address.State.Loading
             } else if (destination is SendDestination.NotFound) {
                 Item.Address.State.Error
-            } else if (destination is SendDestination.Account) {
+            } else if (destination is SendDestination.TonAccount) {
                 Item.Address.State.Success
             } else {
                 Item.Address.State.Default
@@ -227,7 +227,7 @@ class BatteryRechargeViewModel(
         }
 
         val isValidGiftAddress = if (args.isGift) {
-            destination is SendDestination.Account
+            destination is SendDestination.TonAccount
         } else {
             true
         }
@@ -265,6 +265,23 @@ class BatteryRechargeViewModel(
                 _tokenFlow.tryEmit(supportedTokens.first())
             }
         }
+
+        combine(
+            promoStateFlow,
+            tokenFlow.map { it.token.symbol },
+            _customAmountFlow,
+            _selectedPackTypeFlow
+        ) { promoState, tokenSymbol, amount, rechargePackType ->
+            val promoCode = (promoState as? PromoState.Applied)?.appliedPromo ?: "null"
+            val size = if (amount) "custom" else rechargePackType?.name?.lowercase() ?: "null"
+
+            AnalyticsHelper.simpleTrackEvent("battery_select", settingsRepository.installId, hashMapOf(
+                "size" to size,
+                "promo" to promoCode,
+                "jetton" to tokenSymbol,
+                "type" to "crypto"
+            ))
+        }.launch()
     }
 
     fun setToken(token: TokenEntity) {
@@ -324,7 +341,7 @@ class BatteryRechargeViewModel(
         }
 
         val fundReceiver = config.fundReceiver ?: return@combine
-        val recipientAddress = if (destination is SendDestination.Account) {
+        val recipientAddress = if (destination is SendDestination.TonAccount) {
             destination.address
         } else null
         val payload = wallet.contract.createBatteryBody(
@@ -509,7 +526,7 @@ class BatteryRechargeViewModel(
         val account = accountDeferred.await() ?: return@withContext SendDestination.NotFound
         val publicKey = publicKeyDeferred.await()
 
-        SendDestination.Account(address, publicKey, account)
+        SendDestination.TonAccount(address, publicKey, account)
     }
 
     fun applyPromo(promo: String) {
@@ -536,6 +553,9 @@ class BatteryRechargeViewModel(
     }
 
     fun sign(request: SignRequestEntity, forceRelayer: Boolean) = flow {
+        val promoCode = (promoStateFlow.value as? PromoState.Applied)?.appliedPromo ?: "null"
+        val tokenSymbol = _tokenFlow.value?.token?.symbol ?: "null"
+        AnalyticsHelper.batterySuccess(settingsRepository.installId, "crypto", promoCode, tokenSymbol)
         val boc = SendTransactionScreen.run(context, wallet, request, forceRelayer = forceRelayer)
         emit(boc)
     }.flowOn(Dispatchers.IO)

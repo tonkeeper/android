@@ -24,7 +24,12 @@ class LogoHolder(
     }
 
     override fun onBind(item: Item.Logo) {
-        versionView.text = context.getString(Localization.version, context.appVersionName, context.appVersionCode)
+        val builder = StringBuilder()
+        builder.append(context.getString(Localization.version, context.appVersionName, context.appVersionCode))
+        builder.append("\n")
+        builder.append(item.installerSource.title)
+
+        versionView.text = builder
     }
 
 

@@ -1,5 +1,7 @@
 package com.tonapps.wallet.api
 
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -11,28 +13,28 @@ class FileDownloader(private val okHttpClient: OkHttpClient) {
 
     sealed class DownloadStatus {
         data class Progress(
-            val downloadedBytes: Long,
-            val totalBytes: Long,
-            val percent: Int,
-            val downloadSpeed: String
+            val downloadedBytes: Long = 0,
+            val totalBytes: Long = 0,
+            val percent: Int = 0,
+            val downloadSpeed: String = ""
         ) : DownloadStatus()
 
         data class Error(val throwable: Throwable) : DownloadStatus()
+
         data class Success(val file: File) : DownloadStatus()
     }
 
     fun download(
         url: String,
         outputFile: File,
-        bufferSize: Int = DEFAULT_BUFFER_SIZE,
-        callback: (DownloadStatus) -> Unit
-    ) {
+        bufferSize: Int = DEFAULT_BUFFER_SIZE
+    ) = callbackFlow {
+        val request = Request.Builder()
+            .url(url)
+            .build()
+        val call = okHttpClient.newCall(request)
         try {
-            val request = Request.Builder()
-                .url(url)
-                .build()
-
-            okHttpClient.newCall(request).execute().use { response ->
+            call.execute().use { response ->
                 if (!response.isSuccessful) {
                     throw IOException("Unexpected response code: ${response.code}")
                 }
@@ -65,7 +67,7 @@ class FileDownloader(private val okHttpClient: OkHttpClient) {
                                     } else 0,
                                     downloadSpeed = formatSpeed(speedBytesPerSec)
                                 )
-                                callback(progress)
+                                trySend(progress)
 
                                 lastEmitTime = currentTime
                                 bytesFromLastEmit = 0
@@ -74,12 +76,14 @@ class FileDownloader(private val okHttpClient: OkHttpClient) {
                         }
                     }
                 }
-                callback(DownloadStatus.Success(outputFile))
+                trySend(DownloadStatus.Success(outputFile))
             }
         } catch (e: Exception) {
-            callback(DownloadStatus.Error(e))
+            trySend(DownloadStatus.Error(e))
             outputFile.delete()
         }
+
+        awaitClose { call.cancel() }
     }
 
     private fun formatSpeed(bytesPerSec: Int): String {

@@ -1,8 +1,8 @@
 package com.tonapps.wallet.api.cronet;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.firebase.components.Preconditions.checkArgument;
+import static com.google.firebase.components.Preconditions.checkNotNull;
+import static com.google.firebase.components.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.util.Log;
@@ -239,7 +239,7 @@ public final class CronetCallFactory implements Call.Factory {
     }
 
     private static Response toCronetCallFactoryResponse(CronetCall call, Response response) {
-        checkNotNull(response.body());
+        assert response.body() != null;
 
         return response
                 .newBuilder()

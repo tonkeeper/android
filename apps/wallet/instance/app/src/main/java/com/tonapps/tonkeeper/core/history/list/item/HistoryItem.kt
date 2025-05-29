@@ -19,6 +19,7 @@ import com.tonapps.tonkeeper.core.history.ActionType
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
@@ -201,6 +202,8 @@ sealed class HistoryItem(
         val wallet: WalletEntity,
     ): HistoryItem(TYPE_APP) {
 
+        val isClickable: Boolean
+            get() = deepLink.isNotBlank()
 
         constructor(context: Context, wallet: WalletEntity, push: AppPushEntity) : this(
             iconUri = push.iconUrl.toUri(),
@@ -209,7 +212,7 @@ sealed class HistoryItem(
             date = DateHelper.formattedDate(push.timestamp, context.locale),
             url = push.url,
             timestamp = push.timestamp,
-            deepLink = push.deeplink,
+            deepLink = push.deeplink ?: push.url.toString(),
             wallet = wallet
         )
 
@@ -278,6 +281,7 @@ sealed class HistoryItem(
 
     data class Event(
         val index: Int,
+        val blockchain: Blockchain = Blockchain.TON,
         val txId: String,
         val iconURL: String? = null,
         val action: ActionType,
@@ -289,6 +293,7 @@ sealed class HistoryItem(
         val value2: CharSequence = "",
         val currency: CharSequence? = null,
         val nft: NftEntity? = null,
+        val tokenAddress: String? = null,
         val tokenCode: String? = null,
         val date: String = "",
         val dateDetails: String = "",
@@ -312,6 +317,7 @@ sealed class HistoryItem(
         val isMaybeSpam: Boolean = false,
         val spamState: SpamTransactionState = SpamTransactionState.UNKNOWN,
         val actionOutStatus: ActionOutStatus,
+        val showNetwork: Boolean = false,
     ): HistoryItem(TYPE_ACTION) {
 
         val account: Account?

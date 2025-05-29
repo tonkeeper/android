@@ -5,4 +5,5 @@ enum class ActionOutStatus {
     Send,
     Any,
     App,
+    dApps
 }

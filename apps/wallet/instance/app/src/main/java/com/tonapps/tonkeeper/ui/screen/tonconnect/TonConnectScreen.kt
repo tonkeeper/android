@@ -9,10 +9,11 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.proof.TONProof
+import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.ui.component.TonConnectCryptoView
 import com.tonapps.tonkeeper.extensions.debugToast
 import com.tonapps.tonkeeper.extensions.getWalletBadges
@@ -122,6 +123,8 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         }
 
         setDefaultState()
+
+        AnalyticsHelper.tcRequest(viewModel.installId, args.app.url.toString())
     }
 
     private fun connect(wallet: WalletEntity) {
@@ -154,6 +157,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         proof: TONProof.Result? = null,
         proofError: BridgeError? = null,
     ) {
+        AnalyticsHelper.tcConnect(viewModel.installId, args.app.url.toString(), pushCheckBoxView.checked)
         setResponse(TonConnectResponse(
             notifications = pushCheckBoxView.checked,
             proof = proof,
@@ -295,7 +299,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     }
 
     private fun openWalletPicker(wallet: WalletEntity) {
-        val fragment = PickerScreen.newInstance(PickerMode.TonConnect(wallet.id))
+        val fragment = PickerScreen.newInstance(PickerMode.TonConnect(wallet.id), from = "tonconnect")
         navigation?.addForResult(fragment) { bundle ->
             fragment.contract.parseResult(bundle)?.let {
                 viewModel.setWallet(it)

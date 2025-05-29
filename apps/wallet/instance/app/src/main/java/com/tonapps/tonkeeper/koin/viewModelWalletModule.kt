@@ -33,6 +33,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.apps.AppsViewModel
+import com.tonapps.tonkeeper.ui.screen.sign.SignDataViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawViewModel
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionViewModel
 import org.koin.core.module.dsl.viewModel
@@ -73,4 +74,5 @@ val viewModelWalletModule = module {
     viewModelOf(::BrowserMoreViewModel)
     viewModelOf(::BrowserBaseViewModel)
     viewModelOf(::SpamEventsViewModel)
+    viewModelOf(::SignDataViewModel)
 }

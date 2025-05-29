@@ -12,13 +12,14 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.iconSecondaryColor
-import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
+import uikit.extensions.withDefaultBadge
 import uikit.widget.FrescoView
 
 @SuppressLint("ClickableViewAccessibility")
@@ -30,6 +31,7 @@ class TokenHolder(
 ): Holder<Item.Token>(parent, R.layout.view_wallet_manage_token) {
 
     private val iconView = findViewById<FrescoView>(R.id.icon)
+    private val networkIconView = findViewById<FrescoView>(R.id.network_icon)
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
     private val balanceView = findViewById<AppCompatTextView>(R.id.balance)
     private val pinnedView = findViewById<AppCompatImageView>(R.id.pinned)
@@ -48,7 +50,13 @@ class TokenHolder(
     override fun onBind(item: Item.Token) {
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
-        titleView.text = item.symbol
+        titleView.text = if (item.isUSDT) {
+            item.symbol.withDefaultBadge(context, Localization.ton)
+        } else if (item.isTRC20) {
+            item.symbol.withDefaultBadge(context, Localization.trc20)
+        } else {
+            item.symbol
+        }
         if (item.verified) {
             balanceView.setTextColor(context.textSecondaryColor)
             balanceView.text = if (item.hiddenBalance) {
@@ -77,6 +85,20 @@ class TokenHolder(
             applyHiddenState(hidden, item.pinned)
         }
         applyHiddenState(item.hidden, item.pinned)
+
+        val showNetwork = item.isUSDT || item.isTRC20
+
+        networkIconView.visibility = if (showNetwork) View.VISIBLE else View.GONE
+        setNetworkIcon(item.blockchain)
+    }
+
+    private fun setNetworkIcon(blockchain: Blockchain) {
+        val icon = when (blockchain) {
+            Blockchain.TON -> R.drawable.ic_ton
+            Blockchain.TRON -> R.drawable.ic_tron
+        }
+
+        networkIconView.setLocalRes(icon)
     }
 
     private fun applyPinnedState(pinned: Boolean) {

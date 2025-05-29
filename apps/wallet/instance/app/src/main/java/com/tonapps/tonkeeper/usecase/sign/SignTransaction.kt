@@ -1,11 +1,13 @@
 package com.tonapps.tonkeeper.usecase.sign
 
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.ledger.ton.Transaction
+import com.tonapps.security.tryCallGC
 import com.tonapps.tonkeeper.core.signer.SignerHelper
 import com.tonapps.tonkeeper.extensions.requestPrivateKey
+import com.tonapps.tonkeeper.extensions.sign
 import com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign.KeystoneSignScreen
 import com.tonapps.tonkeeper.ui.screen.external.qr.signer.sign.SignerSignScreen
 import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen
@@ -21,7 +23,6 @@ import kotlinx.coroutines.withContext
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
-import org.ton.crypto.hex
 import uikit.extensions.addForResult
 import uikit.navigation.NavigationActivity
 import java.util.concurrent.CancellationException
@@ -31,6 +32,26 @@ class SignTransaction(
     private val passcodeManager: PasscodeManager,
     private val rnLegacy: RNLegacy,
 ) {
+
+    suspend fun tron(
+        activity: NavigationActivity,
+        wallet: WalletEntity,
+        transaction: TronTransaction,
+    ): TronTransaction {
+        if (!wallet.hasPrivateKey) {
+            throw SendException.UnableSendTransaction()
+        }
+        val isValidPasscode =
+            passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        if (!isValidPasscode) {
+            throw SendException.WrongPasscode()
+        }
+
+        val privateKey = accountRepository.getTronPrivateKey(wallet.id)
+            ?: throw SendException.UnableSendTransaction()
+
+        return transaction.sign(privateKey)
+    }
 
     suspend fun ledger(
         activity: NavigationActivity,
@@ -53,20 +74,33 @@ class SignTransaction(
         return BagOfCells(signerMessage).first()
     }
 
-    suspend fun requestSignedMessage(
+    suspend fun requestSignature(
         activity: NavigationActivity,
         wallet: WalletEntity,
         unsignedBody: Cell
-    ): Cell {
-        val signature = when (wallet.type) {
+    ): BitString {
+        return when (wallet.type) {
             Wallet.Type.SignerQR -> signerQR(activity, wallet, unsignedBody)
             Wallet.Type.Signer -> signerApp(activity, wallet, unsignedBody)
-            Wallet.Type.Default, Wallet.Type.Testnet, Wallet.Type.Lockup -> default(activity, wallet, unsignedBody)
+            Wallet.Type.Default, Wallet.Type.Testnet, Wallet.Type.Lockup -> default(
+                activity,
+                wallet,
+                unsignedBody
+            )
+
             Wallet.Type.Keystone -> keystone(activity, wallet, unsignedBody)
             else -> {
                 throw IllegalArgumentException("Unsupported wallet type: ${wallet.type}")
             }
         }
+    }
+
+    suspend fun requestSignedMessage(
+        activity: NavigationActivity,
+        wallet: WalletEntity,
+        unsignedBody: Cell
+    ): Cell {
+        val signature = requestSignature(activity, wallet, unsignedBody)
         return wallet.contract.signedBody(signature, unsignedBody)
     }
 
@@ -107,7 +141,7 @@ class SignTransaction(
         return hash ?: throw CancellationException("Signer cancelled")
     }
 
-    private suspend fun default(
+    suspend fun default(
         activity: NavigationActivity,
         wallet: WalletEntity,
         unsignedBody: Cell
@@ -115,12 +149,29 @@ class SignTransaction(
         if (!wallet.hasPrivateKey) {
             throw SendException.UnableSendTransaction()
         }
+        val isValidPasscode =
+            passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        if (!isValidPasscode) {
+            throw SendException.WrongPasscode()
+        }
+        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id)
+            ?: throw SendException.UnableSendTransaction()
+        val hash = privateKey.sign(unsignedBody.hash())
+        BitString(hash)
+    }
+
+    suspend fun default(
+        activity: NavigationActivity,
+        wallet: WalletEntity,
+        bytes: ByteArray
+    ): ByteArray = withContext(Dispatchers.IO) {
+        if (!wallet.hasPrivateKey) {
+            throw SendException.UnableSendTransaction()
+        }
         val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
         if (!isValidPasscode) {
             throw SendException.WrongPasscode()
         }
-        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id) ?: throw SendException.UnableSendTransaction()
-        val hash = privateKey.sign(unsignedBody.hash())
-        BitString(hash)
+        accountRepository.sign(activity, rnLegacy, wallet.id, bytes)
     }
 }

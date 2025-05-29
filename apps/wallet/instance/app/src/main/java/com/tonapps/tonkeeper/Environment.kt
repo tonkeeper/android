@@ -1,14 +1,29 @@
 package com.tonapps.tonkeeper
 
 import android.content.Context
-import android.os.Build
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.os.AppInstall
+import com.tonapps.wallet.data.settings.SettingsRepository
+import uikit.compose.AppTheme
 
-class Environment(context: Context) {
+class Environment(
+    private val context: Context,
+    private val settingsRepository: SettingsRepository,
+) {
 
-    private val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
+    val theme: AppTheme
+        get() {
+            return when(settingsRepository.theme.key) {
+                "blue" -> AppTheme.BLUE
+                "dark" -> AppTheme.DARK
+                "light" -> AppTheme.LIGHT
+                else -> if (context.isDarkMode) AppTheme.DARK else AppTheme.LIGHT
+            }
+        }
+
+    val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
 
     val isFromGooglePlay: Boolean by lazy {
         installerSource == AppInstall.Source.GOOGLE_PLAY

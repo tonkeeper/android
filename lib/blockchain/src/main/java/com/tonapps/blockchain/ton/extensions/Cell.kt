@@ -1,5 +1,6 @@
 package com.tonapps.blockchain.ton.extensions
 
+import android.util.Log
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
 import org.json.JSONObject

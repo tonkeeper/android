@@ -8,7 +8,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.contacts.entities.ContactEntity
 import io.tonapi.models.AccountAddress
 
-sealed class Item(type: Int): BaseListItem(type) {
+sealed class Item(type: Int) : BaseListItem(type) {
 
     companion object {
         const val TYPE_MY_WALLET = 1
@@ -18,18 +18,18 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_LOADING = 5
     }
 
-    data object Space: Item(TYPE_SPACE)
+    data object Space : Item(TYPE_SPACE)
 
     sealed class Address(
         type: Int,
         open val position: ListCell.Position,
-        val address: String
-    ): Item(type)
+        open val address: String
+    ) : Item(type)
 
     data class MyWallet(
         override val position: ListCell.Position,
         val wallet: WalletEntity
-    ): Address(TYPE_MY_WALLET, position, wallet.address) {
+    ) : Address(TYPE_MY_WALLET, position, wallet.address) {
 
         val emoji: CharSequence
             get() = wallet.label.emoji
@@ -40,24 +40,41 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     data class LatestContact(
         override val position: ListCell.Position,
-        val account: AccountAddress,
-        val testnet: Boolean
-    ): Address(TYPE_LATEST_CONTACT, position, account.address.toUserFriendly(testnet = testnet)) {
+        override val address: String,
+        val name: String,
+        val timestamp: Long,
+    ) : Address(TYPE_LATEST_CONTACT, position, address) {
 
-        val name: String
-            get() = account.name ?: address.short8
+        constructor(
+            position: ListCell.Position,
+            account: AccountAddress,
+            timestamp: Long,
+            testnet: Boolean
+        ) : this(
+            position = position,
+            address = account.address.toUserFriendly(testnet = testnet),
+            name = account.name ?: account.address.toUserFriendly(testnet = testnet).short8,
+            timestamp = timestamp
+        )
+
+        constructor(position: ListCell.Position, address: String, timestamp: Long) : this(
+            position = position,
+            address = address,
+            name = address.short8,
+            timestamp = timestamp
+        )
     }
 
     data class SavedContact(
         override val position: ListCell.Position,
         val contact: ContactEntity,
         val testnet: Boolean
-    ): Address(TYPE_SAVED_CONTACT, position, contact.address) {
+    ) : Address(TYPE_SAVED_CONTACT, position, contact.address) {
 
         val name: String
             get() = contact.name
     }
 
-    data object Loading: Item(TYPE_LOADING)
+    data object Loading : Item(TYPE_LOADING)
 
 }

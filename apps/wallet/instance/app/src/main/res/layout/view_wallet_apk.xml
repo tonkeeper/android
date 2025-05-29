@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="68dp"
+    android:layout_height="wrap_content"
+    android:minHeight="68dp"
     android:background="@drawable/bg_content_tint_16"
     android:padding="@dimen/offsetMedium">
 

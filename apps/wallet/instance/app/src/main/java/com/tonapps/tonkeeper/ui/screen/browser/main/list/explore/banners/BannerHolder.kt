@@ -3,7 +3,10 @@ package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.banners
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.imagepipeline.common.ResizeOptions
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.helper.BrowserHelper.openDApp
+import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListHolder
@@ -19,16 +22,7 @@ class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.l
 
     override fun onBind(item: BannerAppItem) {
         itemView.setOnClickListener {
-            if (item.app.useCustomTabs) {
-                BrowserHelper.open(context, item.url.toString())
-            } else {
-                Navigation.from(context)?.add(DAppScreen.newInstance(
-                    wallet = item.wallet,
-                    title = item.name,
-                    url = item.url,
-                    source = "banner"
-                ))
-            }
+            item.app.openDApp(context, item.wallet, "banner")
         }
 
         bgView.setImageURI(item.poster, ResizeOptions.forSquareSize(712))

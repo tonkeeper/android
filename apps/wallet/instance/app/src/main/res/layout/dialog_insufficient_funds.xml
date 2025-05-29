@@ -9,39 +9,48 @@
         android:layout_width="@dimen/actionSize"
         android:layout_height="@dimen/actionSize"
         android:layout_gravity="end|center"
-        android:src="@drawable/ic_close_16"
-        android:tint="?attr/buttonSecondaryForegroundColor"
-        android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
         android:background="@drawable/bg_oval_button_secondary"
-        android:scaleType="centerInside"/>
+        android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_close_16"
+        android:tint="?attr/buttonSecondaryForegroundColor" />
 
     <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/icon"
         android:layout_width="84dp"
         android:layout_height="84dp"
         android:layout_gravity="center"
         android:src="@drawable/ic_exclamationmark_circle_84"
-        android:tint="?attr/iconSecondaryColor"/>
+        android:tint="?attr/iconSecondaryColor" />
+
+    <com.tonapps.tonkeeper.view.BatteryView
+        android:id="@+id/battery_view"
+        style="@style/Battery.VeryBig"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
     <uikit.widget.TextHeaderView
         android:id="@+id/text"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="@dimen/offsetMedium" />
 
     <Button
-        style="@style/Widget.App.Button"
         android:id="@+id/battery"
+        style="@style/Widget.App.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/offsetMedium"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:text="@string/recharge_battery"/>
+        android:text="@string/recharge_battery"
+        android:textAppearance="@style/TextAppearance.Label1" />
 
     <Button
-        style="@style/Widget.App.Button.Secondary"
         android:id="@+id/ton"
+        style="@style/Widget.App.Button.Secondary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/offsetMedium"
-        android:textAppearance="@style/TextAppearance.Label1"
-        android:text="@string/buy_ton"/>
+        android:text="@string/buy_ton"
+        android:textAppearance="@style/TextAppearance.Label1" />
 </uikit.widget.ColumnLayout>

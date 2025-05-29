@@ -10,6 +10,15 @@ import com.tonapps.extensions.containsQuery
 import com.tonapps.extensions.isLocal
 import com.tonapps.extensions.query
 import uikit.extensions.drawable
+import androidx.core.net.toUri
+
+private val utmQueryKeys = listOf(
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content"
+)
 
 fun Uri.isTonSite(): Boolean {
     return this.host?.endsWith(".ton") ?: false
@@ -38,7 +47,7 @@ fun Uri.normalizeTONSites(): Uri {
     }
 
     val fixedUrl = "https://$fixedHost.$proxyServerHost$fixedPath"
-    return Uri.parse(fixedUrl)
+    return fixedUrl.toUri()
 }
 
 fun Uri.loadDrawable(
@@ -54,4 +63,17 @@ fun Uri.loadDrawable(
         val resourceId = pathSegments[0].toInt()
         context.drawable(resourceId, color)
     }
+}
+
+fun Uri.hasUtmSource(): Boolean {
+    for (utmKey in utmQueryKeys) {
+        if (containsQuery(utmKey)) {
+            return true
+        }
+    }
+    return false
+}
+
+fun Uri.hasRefer(): Boolean {
+    return containsQuery("referrer") || containsQuery("ref")
 }

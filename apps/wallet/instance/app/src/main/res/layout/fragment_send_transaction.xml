@@ -48,6 +48,32 @@
     </FrameLayout>
 
     <FrameLayout
+        android:id="@+id/warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:padding="@dimen/offsetMedium"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_content_20">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="28dp"
+            android:textAppearance="@style/TextAppearance.Body3"
+            android:textColor="?attr/accentOrangeColor"
+            android:text="@string/emulation_failed_warning"/>
+        
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="end"
+            android:src="@drawable/ic_exclamationmark_triangle_28"/>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/emulated"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="@dimen/offsetMedium">
@@ -72,11 +98,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|bottom"
-            android:layout_marginBottom="@dimen/offsetMedium"
+            android:layout_margin="@dimen/offsetMedium"
             android:visibility="gone"
             android:background="@drawable/bg_button_tertiary"
             android:paddingHorizontal="@dimen/offsetMedium"
             android:paddingVertical="8dp"
+            android:gravity="center"
+            android:breakStrategy="high_quality"
             android:text="@string/send_transaction_scroll"
             android:textAppearance="@style/TextAppearance.Label2"
             android:textColor="?attr/textPrimaryColor"/>
@@ -86,7 +114,7 @@
     <FrameLayout
         android:id="@+id/action"
         android:layout_width="match_parent"
-        android:layout_height="124dp"
+        android:layout_height="wrap_content"
         android:paddingHorizontal="@dimen/offsetMedium">
 
         <uikit.widget.ColumnLayout

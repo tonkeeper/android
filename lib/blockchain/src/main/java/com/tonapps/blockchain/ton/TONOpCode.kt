@@ -16,4 +16,5 @@ enum class TONOpCode(val code: Long) {
     WHALES_WITHDRAW(3665837821),
     GASLESS(0x878da6e3),
     BATTERY_PAYLOAD(0xb7b2515f),
+    SIGN_DATA(0x75569022),
 }

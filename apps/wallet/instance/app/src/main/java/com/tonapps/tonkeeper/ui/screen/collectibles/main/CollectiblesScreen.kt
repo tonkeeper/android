@@ -7,6 +7,7 @@ import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.UiListState
@@ -50,13 +51,6 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
         } else {
             headerView.setColor(requireContext().backgroundTransparentColor)
         }
-        headerView.setAction(UIKitIcon.ic_sliders_16)
-        headerView.doOnActionClick = {
-            navigation?.add(CollectiblesManageScreen.newInstance(wallet))
-        }
-        headerView.setRightButton(Localization.spam) {
-            navigation?.add(CollectiblesManageScreen.newInstance(wallet, true))
-        }
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.setOnRefreshListener { viewModel.refresh() }
@@ -72,27 +66,51 @@ class CollectiblesScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragme
         emptyView.doOnButtonClick = { openQRCode() }
 
         collectFlow(viewModel.uiListStateFlow) { state ->
-            if (state is UiListState.Loading) {
-                adapter.applySkeleton()
-                headerView.setSubtitle(Localization.updating)
-            } else if (state is UiListState.Empty) {
-                refreshView.isRefreshing = false
-                setEmptyState()
-                headerView.setSubtitle(null)
-            } else if (state is UiListState.Items) {
-                setListState()
-                adapter.submitList(state.items) {
-                    if (!state.cache) {
-                        headerView.setSubtitle(null)
-                        refreshView.isRefreshing = false
+            when (state) {
+                is UiListState.Loading -> {
+                    removeActionIcons()
+                    adapter.applySkeleton()
+                    headerView.setSubtitle(Localization.updating)
+                }
+                is UiListState.Empty -> {
+                    removeActionIcons()
+                    refreshView.isRefreshing = false
+                    setEmptyState()
+                    headerView.setSubtitle(null)
+                    headerView.setAction(0)
+                }
+                is UiListState.Items -> {
+                    applyActionIcons()
+                    setListState()
+                    adapter.submitList(state.items) {
+                        if (!state.cache) {
+                            headerView.setSubtitle(null)
+                            refreshView.isRefreshing = false
+                        }
                     }
                 }
             }
         }
     }
 
+    private fun applyActionIcons() {
+        headerView.setAction(UIKitIcon.ic_sliders_16)
+        headerView.doOnActionClick = {
+            navigation?.add(CollectiblesManageScreen.newInstance(wallet))
+        }
+        headerView.setRightButton(Localization.spam) {
+            navigation?.add(CollectiblesManageScreen.newInstance(wallet, true))
+        }
+    }
+
+    private fun removeActionIcons() {
+        headerView.setAction(0)
+        headerView.doOnActionClick = null
+        headerView.setRightContent(null)
+    }
+
     private fun openQRCode() {
-        navigation?.add(QRScreen.newInstance(screenContext.wallet, TokenEntity.TON))
+        navigation?.add(QRScreen.newInstance(screenContext.wallet))
     }
 
     private fun setEmptyState() {

@@ -2,7 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.send.transaction
 
 import android.content.Context
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
+import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnNextLayout
@@ -19,6 +24,7 @@ import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
+import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -42,13 +48,18 @@ import uikit.extensions.isMaxScrollReached
 import uikit.extensions.setOnClickListener
 import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
+import uikit.extensions.withAlpha
 import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 import java.util.concurrent.CancellationException
+import androidx.core.view.isVisible
+import uikit.extensions.getDimensionPixelSize
 
-class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal, BaseFragment.SingleTask {
+class SendTransactionScreen(wallet: WalletEntity) :
+    WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal,
+    BaseFragment.SingleTask {
 
     override val fragmentName: String = "SendTransactionScreen"
 
@@ -71,10 +82,15 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
 
     private val headerDrawable: HeaderDrawable by lazy { HeaderDrawable(requireContext()) }
     private val footerDrawable: FooterDrawable by lazy { FooterDrawable(requireContext()) }
-    private val totalDialog: SendTransactionTotalDialog by lazy { SendTransactionTotalDialog(requireContext()) }
+    private val totalDialog: SendTransactionTotalDialog by lazy {
+        SendTransactionTotalDialog(
+            requireContext()
+        )
+    }
 
     private lateinit var headerView: View
     private lateinit var walletView: AppCompatTextView
+    private lateinit var emulatedView: View
     private lateinit var slideView: SlideActionView
     private lateinit var totalView: AppCompatTextView
     private lateinit var loaderView: LoaderView
@@ -83,6 +99,7 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
     private lateinit var scrollAllView: View
     private lateinit var taskView: ProcessTaskView
     private lateinit var bodyView: View
+    private lateinit var warningView: View
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -92,6 +109,8 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
         walletView = view.findViewById(R.id.wallet)
         view.setOnClickListener(R.id.close) { finish() }
 
+        emulatedView = view.findViewById(R.id.emulated)
+
         loaderView = view.findViewById(R.id.loader)
 
         listView = view.findViewById(R.id.list)
@@ -99,15 +118,19 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
 
         actionView = view.findViewById(R.id.action)
         actionView.background = footerDrawable
-        actionView.applyNavBottomMargin()
+        actionView.applyNavBottomMargin(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
 
         slideView = view.findViewById(R.id.slide)
         slideView.isEnabled = false
+        slideView.setText(buildConfirmText())
 
         bodyView = view.findViewById(R.id.body)
         taskView = view.findViewById(R.id.task)
         totalView = view.findViewById(R.id.total)
         scrollAllView = view.findViewById(R.id.scroll_all)
+
+        warningView = view.findViewById(R.id.warning)
+        warningView.background.setTint(requireContext().accentOrangeColor.withAlpha(0.24f))
 
         applyWallet()
 
@@ -132,6 +155,28 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
                 setSuccessTask(bocList.first())
             }
         }.launchIn(lifecycleScope)
+    }
+
+    private fun buildConfirmText(): SpannableStringBuilder {
+        val secondLineText = getString(Localization.swipe_right)
+        val slideTextBuilder = SpannableStringBuilder()
+        slideTextBuilder.append(getString(Localization.confirm))
+        slideTextBuilder.append("\n")
+        slideTextBuilder.append(SpannableString(secondLineText).apply {
+            setSpan(
+                RelativeSizeSpan(0.8f),
+                0,
+                secondLineText.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            setSpan(
+                ForegroundColorSpan(
+                    requireContext().resolveColor(com.tonapps.uikit.color.R.attr.textTertiaryColor)
+                        .withAlpha(0.7f)
+                ), 0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        })
+        return slideTextBuilder
     }
 
     private fun setDefaultTask() {
@@ -163,7 +208,8 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
                 putParcelable(ERROR, error)
             })
         } catch (e: Throwable) {
-            FirebaseCrashlytics.getInstance().recordException(Throwable("Error: $error\nAppUrl: ${args.request.appUri}", e))
+            FirebaseCrashlytics.getInstance()
+                .recordException(Throwable("Error: $error\nAppUrl: ${args.request.appUri}", e))
         }
     }
 
@@ -174,9 +220,13 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
     }
 
     private fun setSuccessResult(boc: String) {
-        setResult(Bundle().apply {
-            putString(BOC, boc)
-        })
+        try {
+            setResult(Bundle().apply {
+                putString(BOC, boc)
+            })
+        } catch (_: Throwable) {
+            finish()
+        }
     }
 
     private fun applyState(state: SendTransactionState) {
@@ -185,20 +235,42 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
             is SendTransactionState.Failed -> setErrorTask(BridgeException(message = "Failed to send transaction in client"))
             is SendTransactionState.FailedEmulation -> setErrorTask(BridgeException(message = "Transaction emulation failed. Verify 'payload' and 'stateInit' field validity. Invalid message assembly detected or base64 decoding error."))
             is SendTransactionState.InsufficientBalance -> {
-                insufficientFundsDialog.show(state.wallet, state.balance, state.required, state.withRechargeBattery, state.singleWallet, state.type)
+                insufficientFundsDialog.show(
+                    state.wallet,
+                    state.balance,
+                    state.required,
+                    state.withRechargeBattery,
+                    state.singleWallet,
+                    state.type
+                )
                 finish()
             }
-            else -> { }
+
+            else -> {}
         }
     }
 
     private fun applyDetails(state: SendTransactionState.Details) {
-        applyTotal(state)
         historyAdapter.submitList(state.uiItems) {
             loaderView.visibility = View.GONE
             listView.visibility = View.VISIBLE
             listView.doOnNextLayout { checkScrollable() }
         }
+        if (state.failed) {
+            showFailedEmulate()
+        } else {
+            applyTotal(state)
+        }
+    }
+
+    private fun showFailedEmulate() {
+        slideView.setTint(requireContext().accentOrangeColor)
+        totalView.visibility = View.GONE
+        emulatedView.visibility = View.GONE
+        warningView.visibility = View.VISIBLE
+
+        slideView.isEnabled = true
+        slideView.doOnDone = { send() }
     }
 
     private fun checkScrollable() {
@@ -216,7 +288,7 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
     private fun checkSlideButton() {
         if (listView.visibility != View.VISIBLE || slideView.isEnabled) {
             return
-        } else if (scrollAllView.visibility == View.VISIBLE && listView.isMaxScrollReached) {
+        } else if (scrollAllView.isVisible && listView.isMaxScrollReached) {
             scrollAllView.visibility = View.GONE
             slideView.isEnabled = true
             slideView.doOnDone = { send() }
@@ -232,6 +304,7 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
         val drawable = getDrawable(UIKitIcon.ic_information_circle_16, color)
 
         totalView.text = state.totalFormat
+        totalView.visibility = View.VISIBLE
         totalView.setTextColor(color)
         totalView.setRightDrawable(drawable)
         totalView.setOnClickListener { showTotalDialog(state) }
@@ -276,7 +349,8 @@ class SendTransactionScreen(wallet: WalletEntity) : WalletContextScreen(R.layout
             batteryTxType: BatteryTransaction = BatteryTransaction.UNKNOWN,
             forceRelayer: Boolean = false,
         ): String {
-            val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
+            val activity =
+                context.activity ?: throw IllegalArgumentException("Context must be an Activity")
             val fragment = newInstance(wallet, request, batteryTxType, forceRelayer)
             val result = activity.addForResult(fragment)
             if (result.containsKey(ERROR)) {

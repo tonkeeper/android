@@ -22,6 +22,12 @@ val String.short6: String
         return substring(0, 6) + "…" + substring(length - 6, length)
     }
 
+val String.shortTron: String
+    get() {
+        if (length < 12) return this
+        return substring(0, 4) + "…" + substring(length - 8, length)
+    }
+
 val String.short4: String
     get() {
         if (length < 8) return this

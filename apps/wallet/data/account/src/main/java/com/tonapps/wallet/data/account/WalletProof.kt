@@ -1,6 +1,6 @@
 package com.tonapps.wallet.data.account
 
-import com.tonapps.blockchain.ton.proof.TONProof
+import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.wallet.data.account.entities.ProofDomainEntity
 import com.tonapps.wallet.data.account.entities.ProofEntity
 import org.ton.api.pk.PrivateKeyEd25519
@@ -20,7 +20,7 @@ object WalletProof {
         payload: String,
         stateInit: String,
     ): ProofEntity {
-        val domain = ProofDomainEntity("tonkeeper.com")
+        val domain = ProofDomainEntity("tonkeeper")
         val result = TONProof.sign(address, secretKey, payload, domain.value)
         return ProofEntity(
             timestamp = result.timestamp,

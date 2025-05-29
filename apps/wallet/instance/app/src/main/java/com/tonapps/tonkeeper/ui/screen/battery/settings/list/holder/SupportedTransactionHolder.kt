@@ -34,8 +34,14 @@ class SupportedTransactionHolder(
     override fun onBind(item: Item.SupportedTransaction) {
         itemView.background = item.position.drawable(context)
         if (item.showToggle) {
-            itemView.setOnClickListener { switchView.toggle(true) }
+            val isToggleEnabled = item.supportedTransaction != BatteryTransaction.TRC20
+            itemView.setOnClickListener {
+                if (isToggleEnabled) {
+                    switchView.toggle(true)
+                }
+            }
             switchView.setChecked(item.enabled, false)
+            switchView.isEnabled = isToggleEnabled
             switchView.visibility = View.VISIBLE
             switchView.doCheckedChanged = { checked, byUser ->
                 if (byUser) {
@@ -51,10 +57,17 @@ class SupportedTransactionHolder(
         }
 
         titleView.text = context.getString(item.titleRes).capitalized
+
+        val chargesFormat = if (item.changesRange != null) {
+            "${item.changesRange.first} - ${item.changesRange.second}"
+        } else {
+            item.changes
+        }
+
         subtitleView.text = context.resources.getQuantityString(
             Plurals.battery_charges_per_action,
             item.changes,
-            item.changes,
+            chargesFormat,
             getString(item.typeTitleRes)
         )
     }

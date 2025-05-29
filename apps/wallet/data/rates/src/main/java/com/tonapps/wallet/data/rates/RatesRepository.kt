@@ -37,7 +37,11 @@ class RatesRepository(
         if (!tokens.contains(TokenEntity.USDT.address)) {
             tokens.add(TokenEntity.USDT.address)
         }
-        val rates = api.getRates(currency.code, tokens) ?: return
+        val rates = api.getRates(currency.code, tokens)?.toMutableMap() ?: return
+        val usdtRate = rates[TokenEntity.USDT.address]
+        usdtRate?.let {
+            rates.put(TokenEntity.TRON_USDT.address, usdtRate)
+        }
         insertRates(currency, rates)
     }
 

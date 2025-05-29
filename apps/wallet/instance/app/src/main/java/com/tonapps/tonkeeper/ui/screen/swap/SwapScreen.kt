@@ -75,7 +75,7 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AnalyticsHelper.trackEvent("swap_open", settingsRepository.installId)
+        AnalyticsHelper.simpleTrackEvent("swap_open", settingsRepository.installId)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -128,8 +128,13 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
     private suspend fun sing(
         request: SignRequestEntity
     ): String {
+        AnalyticsHelper.simpleTrackEvent("swap_click", settingsRepository.installId)
         return try {
-            SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP)
+            val boc = SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP)
+            if (boc.isNotBlank()) {
+                AnalyticsHelper.simpleTrackEvent("swap_success", settingsRepository.installId)
+            }
+            boc
         } catch (e: Throwable) {
             ""
         }

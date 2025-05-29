@@ -41,7 +41,9 @@ internal class TokenPrefsFolder(context: Context, scope: CoroutineScope): BaseSe
     }
 
     fun getHidden(walletId: String, tokenAddress: String): Boolean {
-        return getBoolean(keyHidden(walletId, tokenAddress))
+        // trc20 usdt
+        val defValue = tokenAddress == "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+        return getBoolean(keyHidden(walletId, tokenAddress), defValue)
     }
 
     fun getPinned(walletId: String, tokenAddress: String): Boolean {

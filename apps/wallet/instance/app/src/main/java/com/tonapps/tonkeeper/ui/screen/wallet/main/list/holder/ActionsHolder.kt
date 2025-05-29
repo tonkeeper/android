@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 
@@ -24,13 +25,18 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     private val scanView = findViewById<View>(R.id.scan)
     private val stakeView = findViewById<View>(R.id.stake)
 
-    init {
-        scanView.setOnClickListener { navigation?.add(CameraScreen.newInstance()) }
-    }
-
     override fun onBind(item: Item.Actions) {
+        scanView.setOnClickListener {
+            val chains = mutableListOf(Blockchain.TON)
+
+            if (item.tronEnabled) {
+                chains.add(Blockchain.TRON)
+            }
+
+            navigation?.add(CameraScreen.newInstance(chains = chains))
+        }
         receiveView.setOnClickListener {
-            navigation?.add(QRScreen.newInstance(item.wallet, item.token))
+            navigation?.add(QRScreen.newInstance(item.wallet))
         }
         swapView.setOnClickListener {
             navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.address, TokenEntity.TON.address))
@@ -48,7 +54,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         val isSwapDisable = context.remoteConfig?.isSwapDisable == true
         val isStakingDisable = context.remoteConfig?.isStakingDisable == true
 
-        swapView.isEnabled = item.walletType != Wallet.Type.Watch && !isSwapDisable
+        swapView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !isSwapDisable
         sendView.isEnabled = item.walletType != Wallet.Type.Watch
         scanView.isEnabled = item.walletType != Wallet.Type.Watch
         stakeView.isEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !isStakingDisable

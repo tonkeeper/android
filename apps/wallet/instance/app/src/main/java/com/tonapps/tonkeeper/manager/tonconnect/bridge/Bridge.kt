@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge
 
+import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.base64.encodeBase64
+import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.optStringCompatJS
 import com.tonapps.security.CryptoBox
@@ -9,6 +11,7 @@ import com.tonapps.security.hex
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +29,19 @@ internal class Bridge(private val api: API) {
     ): String {
         val message = JsonBuilder.responseDisconnect(id).toString()
         DevSettings.tonConnectLog("Send Disconnect Response to ${connection.clientId}\nMessage: $message")
+        send(connection, message)
+        return message
+    }
+
+    suspend fun sendSignDataResponseSuccess(
+        connection: AppConnectEntity,
+        proof: TONProof.Result,
+        address: String,
+        payload: SignDataRequestPayload,
+        id: Long,
+    ): String {
+        val message = JsonBuilder.responseSignData(id, proof, address, payload).toString()
+        DevSettings.tonConnectLog("Send SignData Response to ${connection.clientId}\nMessage: $message")
         send(connection, message)
         return message
     }

@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
+import android.view.View
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
@@ -21,6 +22,7 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
+import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -66,8 +68,10 @@ class BrowserMainViewModel(
         }
     }
 
-    fun deleteConnect(app: AppEntity) {
-        tonConnectManager.disconnect(wallet, app.url)
+    fun showDisconnect(app: AppEntity) {
+        viewModelScope.launch {
+            tonConnectManager.showLogoutAppBar(wallet, context, app.url)
+        }
     }
 
     private fun getDebugApps(): List<BrowserAppEntity> {

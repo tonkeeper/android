@@ -1,15 +1,11 @@
 package uikit.widget
 
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
-import android.util.Log
-import android.view.Gravity
-import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.extensions.dp
-import uikit.extensions.scale
+import uikit.extensions.setPaddingEnd
 import uikit.extensions.setPaddingVertical
 
 class PhraseWords @JvmOverloads constructor(
@@ -60,10 +56,9 @@ class PhraseWords @JvmOverloads constructor(
 
         var row = insertWordRow()
 
-        addView(View(context), LayoutParams(72.dp, LayoutParams.MATCH_PARENT))
-
         for ((index, word) in words.withIndex()) {
             if (index == words.size / 2) {
+                row.setPaddingEnd(72.dp)
                 row = insertWordRow()
             }
             val wordView = PhraseWord(context)

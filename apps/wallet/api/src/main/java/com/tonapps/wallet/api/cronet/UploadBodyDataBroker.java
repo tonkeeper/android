@@ -1,6 +1,6 @@
 package com.tonapps.wallet.api.cronet;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.android.gms.common.internal.Preconditions.checkState;
 
 import android.util.Pair;
 import com.google.common.util.concurrent.Futures;

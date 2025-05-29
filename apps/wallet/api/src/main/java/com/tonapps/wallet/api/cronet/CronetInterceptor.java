@@ -1,6 +1,6 @@
 package com.tonapps.wallet.api.cronet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.firebase.components.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.util.Log;
@@ -124,7 +124,7 @@ public final class CronetInterceptor implements Interceptor, AutoCloseable {
     }
 
     private Response toInterceptorResponse(Response response, Call call) {
-        checkNotNull(response.body());
+        assert response.body() != null;
 
         if (response.body() instanceof CronetInterceptorResponseBody) {
             return response;

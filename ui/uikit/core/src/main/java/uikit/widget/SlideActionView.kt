@@ -15,6 +15,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.math.MathUtils
 import androidx.customview.widget.ViewDragHelper
+import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.R
@@ -115,6 +116,14 @@ class SlideActionView @JvmOverloads constructor(
         context.useAttributes(attrs, R.styleable.SlideActionView) {
             textView.text = it.getString(R.styleable.SlideActionView_android_text)
         }
+    }
+
+    fun setTint(color: Int) {
+        buttonView.backgroundTintList = color.stateList
+    }
+
+    fun setText(text: CharSequence) {
+        textView.text = text
     }
 
     fun reset() {

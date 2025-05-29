@@ -91,7 +91,9 @@
     <string name="manual_backup_check">Periksa Cadangan</string>
     <string name="backup_check">Pemeriksaan Cadangan</string>
     <string name="backup_check_subtitle">Mari kita lihat apakah Anda sudah benar. Masukkan kata %1$d, %2$d, dan %3$d.</string>
+    <string name="sign_data_binary_title">Konten terenkripsi</string>
     <string name="slide_to_confirm">Geser untuk Konfirmasi</string>
+    <string name="sign_text_subtitle">Tinjau pesan tersebut dengan saksama, dan jika Anda setuju, tandatangani transaksinya.</string>
     <string name="refresh">Segarkan</string>
     <string name="mute">Bisukan</string>
     <string name="disconnect">Putuskan Koneksi</string>
@@ -376,6 +378,7 @@
     <string name="ledger_confirm_title">Konfirmasi Tindakan</string>
     <string name="ledger_connect_title">Hubungkan Ledger</string>
     <string name="ledger_connect">Hubungkan Ledger ke perangkat Anda melalui Bluetooth</string>
+    <string name="ledger_usb_connect">Hubungkan Ledger ke perangkat Anda melalui USB</string>
     <string name="ledger_open_ton_app">Buka kunci dan buka Aplikasi TON</string>
     <string name="ledger_install_ton_app">Pasang Aplikasi TON</string>
     <string name="ledger_confirm_tx">Konfirmasi transaksi Anda di Ledger</string>
@@ -386,6 +389,7 @@
     <string name="ledger_update_text">Jenis transaksi ini tidak didukung di versi aplikasi Anda saat ini.</string>
     <string name="ledger_update_button">OKE</string>
     <string name="ledger_comment_error">Gunakan hanya karakter ASCII: angka, huruf alfabet latin, dan tanda baca.</string>
+    <string name="ledger_usb_permission_error">Izin perangkat ditolak. Harap sambungkan kembali perangkat USB.</string>
     <string name="bluetooth_permissions_alert_title">Izin Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Silakan aktifkan izin Bluetooth di pengaturan Anda untuk menggunakan fitur ini</string>
     <string name="bluetooth_permissions_alert_open_settings">Buka Pengaturan</string>
@@ -399,7 +403,7 @@
     <string name="battery">Baterai</string>
     <string name="battery_refill_title">Baterai Tonkeeper</string>
     <string name="battery_refill_subtitle">Tukar melalui Tonkeeper, kirim token dan NFT.</string>
-    <plurals name="battery_current_charges">
+    <plurals name="battery_charges">
         <item quantity="other">%1$s pengisian</item>
     </plurals>
     <string name="battery_refill_crypto">Isi ulang dengan %1$s</string>
@@ -412,6 +416,7 @@
     <string name="battery_nft">Transfer NFT</string>
     <string name="battery_swap">penukaran melalui Tonkeeper</string>
     <string name="battery_jetton">transfer token</string>
+    <string name="battery_trc20">Transfer USD₮ TRC20</string>
     <string name="battery_swap_single">penukaran</string>
     <string name="battery_transfer_single">transfer</string>
     <plurals name="battery_charges_per_action">
@@ -522,5 +527,25 @@
     <string name="words24">24 kata</string>
     <string name="theme_deep_blue">Biru Tua</string>
     <string name="theme_dark">Gelap</string>
+    <string name="sign_data_binary_message">Anda menandatangani secara membabi buta. Tanda tangani hanya dari sumber yang tepercaya.</string>
+    <string name="slide_to_sign">Geser untuk Menandatangani</string>
+    <string name="insufficient_battery_charges">Pengisian Baterai Tidak Cukup</string>
+    <string name="insufficient_balance_charges">Diperlukan untuk biaya: %1$s.\nTersedia: %2$s.</string>
+    <string name="receive_tron_description">Kirim hanya %1$s ke alamat ini, atau Anda mungkin kehilangan dana Anda.</string>
+    <string name="open_explorer">Buka di penjelajah</string>
+    <string name="out_of_available_charges">habis %1$s tersedia</string>
+    <string name="tron_toggle_text">Gunakan USD₮ TRC20 tanpa TRX. Biaya ditanggung oleh Tonkeeper Battery.</string>
+    <string name="trc20">TRC20</string>
+    <string name="copy_phrase">Salin Frasa</string>
+    <string name="export_tron">Ekspor Dompet TRC20</string>
+    <string name="phrase_title_tron">Dompet TRC20</string>
+    <string name="phrase_description_tron">Tuliskan kata-kata ini dengan nomornya dan simpan di tempat yang aman.</string>
+    <string name="prhase_tron_warning">Frasa ini hanya untuk TRC20. Ini tidak dapat memulihkan dompet TON Anda. Gunakan frasa pemulihan TON Anda untuk pemulihan dompet TON.</string>
+    <string name="battery_required_title">Tonkeeper Battery diperlukan untuk %1$s</string>
+    <string name="battery_required_text">Pengisian baterai digunakan untuk menutupi biaya transaksi, membuat transfer lebih sederhana dan lebih ekonomis.</string>
+    <string name="charge_battery">Isi Baterai</string>
+    <string name="send_wrong_blockchain">Alamat ini milik jaringan %1$s.</string>
+    <string name="send_wrong_blockchain_swap">Tukar USD₮ %1$s ke USD₮ %2$s melalui %3$s untuk melanjutkan transfer.</string>
+    <string name="enable_usdt_tron">Aktifkan USD₮ TRC20</string>
 
 </resources>

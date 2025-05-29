@@ -95,7 +95,7 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)
-            navigation?.openURL("tonkeeper://activity")
+            navigation?.openURL("tonkeeper://activity?from=unstake")
             close()
         }.launchIn(lifecycleScope)
     }

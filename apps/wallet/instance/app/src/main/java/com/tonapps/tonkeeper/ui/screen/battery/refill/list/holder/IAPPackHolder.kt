@@ -37,7 +37,7 @@ class IAPPackHolder(
         titleView.text = getPackName(item.packType)
 
         subtitleView.text = context.resources.getQuantityString(
-            Plurals.battery_current_charges, item.charges, item.charges
+            Plurals.battery_charges, item.charges, item.charges
         )
         subtitleView.setRightDrawable(itemView.getDrawable(UIKitIcon.ic_information_circle_16))
         subtitleView.setOnClickListener {

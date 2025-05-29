@@ -8,6 +8,7 @@ value class BatteryTransaction(val code: Int) {
         val SWAP = BatteryTransaction(0)
         val JETTON = BatteryTransaction(1)
         val NFT = BatteryTransaction(2)
+        val TRC20 = BatteryTransaction(3)
 
         val entries = arrayOf(SWAP, JETTON, NFT)
 

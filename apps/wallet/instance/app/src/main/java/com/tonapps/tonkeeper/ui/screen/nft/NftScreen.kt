@@ -20,6 +20,7 @@ import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
 import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.toast
@@ -83,6 +84,11 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
     private var lottieView: LottieView? = null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackEvent("collectibles_select", rootViewModel.installId)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
@@ -96,6 +102,8 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         collectFlow(contentView.topScrolled, headerView::setDivider)
 
         spamView = view.findViewById(R.id.spam)
+
+        previewView = view.findViewById(R.id.preview)
 
         view.findViewById<Button>(R.id.report_spam).setOnClickListener { reportSpam(true) }
         view.findViewById<Button>(R.id.not_spam).setOnClickListener { reportSpam(false) }
@@ -354,6 +362,12 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        lottieView?.destroy()
+        lottieView = null
+    }
+
     private fun showTrustState() {
         spamView.visibility = View.GONE
         headerView.setSubtitle(null)
@@ -409,12 +423,6 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
 
         val addressView = view.findViewById<AppCompatTextView>(R.id.address)
         addressView.text = address.short4
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        lottieView?.destroy()
-        lottieView = null
     }
 
     companion object {

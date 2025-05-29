@@ -4,6 +4,7 @@ plugins {
     id("kotlin-parcelize")
     id("kotlinx-serialization")
     id("kotlin-kapt")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -12,6 +13,7 @@ android {
 
     defaultConfig {
         minSdk = Build.minSdkVersion
+
         ndk {
             abiFilters.add("armeabi-v7a")
             abiFilters.add("arm64-v8a")
@@ -22,6 +24,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
 
     compileOptions {
@@ -83,7 +86,6 @@ dependencies {
     implementation(Dependence.AndroidX.webkit)
     implementation(Dependence.AndroidX.browser)
 
-    implementation(Dependence.guava)
 
     implementation(Dependence.UI.material)
     implementation(Dependence.UI.flexbox)
@@ -136,4 +138,15 @@ dependencies {
         exclude(group = "com.facebook.fresco", module = "memory-type-native")
         exclude(group = "com.facebook.fresco", module = "imagepipeline-native")
     }
+
+    implementation(platform(Dependence.AndroidX.Compose.bom))
+    implementation(Dependence.AndroidX.Compose.foundation)
+    implementation(Dependence.AndroidX.Compose.foundationLayout)
+    implementation(Dependence.AndroidX.Compose.ui)
+    implementation(Dependence.AndroidX.Compose.material3)
+    implementation(Dependence.AndroidX.Compose.preview)
+    debugImplementation(Dependence.AndroidX.Compose.debugTooling)
+
+
+    implementation(Dependence.AndroidX.Compose.viewModel)
 }

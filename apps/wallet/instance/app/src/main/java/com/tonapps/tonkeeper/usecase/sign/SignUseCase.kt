@@ -1,7 +1,8 @@
 package com.tonapps.tonkeeper.usecase.sign
 
 import android.content.Context
-import com.tonapps.blockchain.ton.proof.TONProof
+import com.tonapps.blockchain.ton.connect.TONProof
+import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
@@ -10,8 +11,10 @@ import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.ton.bitstring.BitString
 import org.ton.cell.Cell
 import uikit.extensions.activity
+import uikit.navigation.NavigationActivity
 
 class SignUseCase(
     private val accountRepository: AccountRepository,
@@ -25,8 +28,17 @@ class SignUseCase(
     suspend operator fun invoke(
         context: Context,
         wallet: WalletEntity,
+        bytes: ByteArray
+    ): ByteArray {
+        val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
+        return signTransaction.default(activity, wallet, bytes)
+    }
+
+    suspend operator fun invoke(
+        context: Context,
+        wallet: WalletEntity,
         domain: String,
-        payload: String
+        payload: String,
     ): TONProof.Result = withContext(Dispatchers.Main) {
         val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
         if (wallet.type == Wallet.Type.Keystone) {
@@ -68,6 +80,15 @@ class SignUseCase(
     suspend operator fun invoke(
         context: Context,
         wallet: WalletEntity,
+        unsignedBody: Cell
+    ): BitString {
+        val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
+        return signTransaction.requestSignature(activity, wallet, unsignedBody)
+    }
+
+    suspend operator fun invoke(
+        context: Context,
+        wallet: WalletEntity,
         unsignedBody: Cell,
         seqNo: Int,
         ledgerTransaction: Transaction? = null,
@@ -94,6 +115,17 @@ class SignUseCase(
             seqno = seqNo,
             transferBody = signedBody
         )
+    }
+
+    suspend operator fun invoke(
+        context: Context,
+        wallet: WalletEntity,
+        transaction: TronTransaction,
+    ): TronTransaction = withContext(Dispatchers.Main) {
+        val activity =
+            context.activity ?: throw IllegalArgumentException("Context must be an Activity")
+
+        signTransaction.tron(activity, wallet, transaction)
     }
 
 }

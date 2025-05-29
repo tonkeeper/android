@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder
 
 import android.view.View
 import android.view.ViewGroup
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
@@ -32,7 +33,11 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         }
         swapView.isEnabled = item.swap
         swapView.setOnClickListener {
-            navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.walletAddress, item.tokenAddress))
+            if (item.swapMethod != null) {
+                BrowserHelper.openPurchase(context, item.swapMethod)
+            } else {
+                navigation?.add(SwapScreen.newInstance(item.wallet, item.swapUri, item.walletAddress, item.tokenAddress))
+            }
         }
     }
 }

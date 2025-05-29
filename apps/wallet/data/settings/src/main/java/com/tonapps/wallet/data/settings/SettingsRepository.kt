@@ -59,6 +59,7 @@ class SettingsRepository(
         private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
         private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
         private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
+        private const val LEDGER_CONNECT_USB = "ledger_connect_usb"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -95,7 +96,7 @@ class SettingsRepository(
         _walletPush.tryEmit(Unit)
     }
 
-    private val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
+    val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context, scope)
     private val walletPrefsFolder = WalletPrefsFolder(context, scope)
     private val migrationHelper = RNMigrationHelper(scope, context, rnLegacy)
@@ -111,6 +112,14 @@ class SettingsRepository(
             val id = java.util.UUID.randomUUID().toString()
             prefs.edit().putString(INSTALL_ID_KEY, id).apply()
             id
+        }
+
+    var ledgerConnectUsb: Boolean = prefs.getBoolean(LEDGER_CONNECT_USB, false)
+        set(value) {
+            if (value != field) {
+                prefs.edit().putBoolean(LEDGER_CONNECT_USB, value).apply()
+                field = value
+            }
         }
 
     var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)
@@ -420,6 +429,10 @@ class SettingsRepository(
 
     fun setWalletLastUpdated(walletId: String) {
         walletPrefsFolder.setLastUpdated(walletId)
+    }
+
+    fun getTronUsdtEnabled(walletId: String): Boolean {
+        return !tokenPrefsFolder.getHidden(walletId, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
     }
 
     suspend fun getTokenPrefs(

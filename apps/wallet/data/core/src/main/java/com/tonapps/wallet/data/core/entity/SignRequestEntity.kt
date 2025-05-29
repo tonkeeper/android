@@ -39,6 +39,12 @@ data class SignRequestEntity(
     val hasBattery: Boolean
         get() = messagesVariants?.battery.isNullOrEmpty().not()
 
+    val isTestnet: Boolean
+        get() = network == TonNetwork.TESTNET
+
+    val targetAddressValue: String
+        get() = messages.first().addressValue
+
     constructor(json: JSONObject, appUri: Uri) : this(
         appUri = appUri,
         fromValue = json.optStringCompatJS("from"),

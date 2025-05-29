@@ -34,6 +34,7 @@ import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
 import org.ton.tlb.CellRef
 import java.math.BigInteger
+import java.nio.ByteOrder
 
 data class TransferEntity(
     val wallet: WalletEntity,
@@ -397,7 +398,7 @@ data class TransferEntity(
 
         fun newWalletQueryId(): BigInteger {
             return try {
-                val tonkeeperSignature = 0x546de4ef.toByteArray()
+                val tonkeeperSignature = 0x546de4ef.toByteArray(ByteOrder.LITTLE_ENDIAN)
                 val randomBytes = Security.randomBytes(4)
                 val value = tonkeeperSignature + randomBytes
                 val hexString = hex(value)

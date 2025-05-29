@@ -3,24 +3,44 @@
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="76dp"
+    android:orientation="horizontal"
     android:paddingHorizontal="@dimen/offsetMedium"
-    android:orientation="horizontal">
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <uikit.widget.FrescoView
-        android:id="@+id/icon"
-        fresco:roundAsCircle="true"
+    <FrameLayout
         android:layout_width="44dp"
         android:layout_height="44dp"
-        android:layout_gravity="center"
-        android:background="@drawable/bg_oval"
-        android:backgroundTint="?attr/backgroundContentTintColor"/>
+        android:layout_gravity="center">
+
+        <uikit.widget.FrescoView
+            android:id="@+id/icon"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_oval"
+            android:backgroundTint="?attr/backgroundContentTintColor"
+            fresco:roundAsCircle="true" />
+
+        <uikit.widget.FrescoView
+            android:id="@+id/network_icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="end|bottom"
+            android:translationX="6dp"
+            android:translationY="6dp"
+            fresco:roundAsCircle="true"
+            fresco:roundingBorderColor="?attr/backgroundContentColor"
+            fresco:roundingBorderPadding="1dp"
+            fresco:roundingBorderWidth="2dp" />
+    </FrameLayout>
+
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginStart="@dimen/offsetMedium"
         android:layout_gravity="center"
+        android:layout_marginStart="@dimen/offsetMedium"
+        android:layout_weight="1"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -45,20 +65,20 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:orientation="vertical">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/balance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
             android:layout_gravity="end"
+            android:layout_marginTop="2dp"
             android:gravity="end"
-            android:singleLine="true"
             android:maxLength="12"
+            android:singleLine="true"
             android:textAppearance="@style/TextAppearance.Label1"
-            android:textColor="?attr/textPrimaryColor"/>
+            android:textColor="?attr/textPrimaryColor" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/balance_currency"

@@ -8,6 +8,7 @@ import com.google.android.gms.tasks.Task
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
@@ -42,6 +43,8 @@ class SettingsScreen(
 
     override val fragmentName: String = "SettingsScreen"
 
+    private val from: String by lazy { requireArguments().getString(ARG_FROM)!! }
+
     override val viewModel: SettingsViewModel by walletViewModel()
 
     private val reviewManager: ReviewManager by lazy {
@@ -54,6 +57,11 @@ class SettingsScreen(
 
     private val adapter = Adapter(::onClickItem)
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        AnalyticsHelper.simpleTrackScreenEvent("settings_open", viewModel.installId, from)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setTitle(getString(Localization.settings))
@@ -63,6 +71,9 @@ class SettingsScreen(
     }
 
     private fun onClickItem(item: Item) {
+        AnalyticsHelper.simpleTrackEvent("settings_select", viewModel.installId, hashMapOf(
+            "type" to item.name
+        ))
         when (item) {
             is Item.Backup -> navigation?.add(BackupScreen.newInstance(screenContext.wallet))
             is Item.Currency -> navigation?.add(CurrencyScreen.newInstance())
@@ -77,7 +88,7 @@ class SettingsScreen(
             is Item.Contact -> navigation?.openURL(item.url)
             is Item.Tester -> navigation?.openURL(item.url)
             is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance(!screenContext.wallet.isW5))
-            is Item.Battery -> navigation?.add(BatteryScreen.newInstance(screenContext.wallet))
+            is Item.Battery -> navigation?.add(BatteryScreen.newInstance(screenContext.wallet, from = "settings"))
             is Item.Logout -> if (item.delete) deleteAccount() else showSignOutDialog()
             is Item.ConnectedApps -> navigation?.add(AppsScreen.newInstance(screenContext.wallet))
             is Item.SearchEngine -> searchPicker(item)
@@ -86,6 +97,7 @@ class SettingsScreen(
             is Item.V4R2 -> viewModel.createV4R2Wallet()
             is Item.Notifications -> navigation?.add(NotificationsManageScreen.newInstance(screenContext.wallet))
             is Item.FAQ -> navigation?.openURL(item.url)
+            is Item.TronToggle -> viewModel.toggleTron()
             else -> return
         }
     }
@@ -173,6 +185,13 @@ class SettingsScreen(
     }
 
     companion object {
-        fun newInstance(wallet: WalletEntity) = SettingsScreen(wallet)
+
+        private const val ARG_FROM = "from"
+
+        fun newInstance(wallet: WalletEntity, from: String): SettingsScreen {
+            val screen = SettingsScreen(wallet)
+            screen.putStringArg(ARG_FROM, from)
+            return screen
+        }
     }
 }

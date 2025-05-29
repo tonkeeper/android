@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
 import com.tonapps.tonkeeper.core.entities.StakedEntity
@@ -34,6 +35,7 @@ class AssetsManager(
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
     private val api: API,
+    private val remoteConfig: RemoteConfig,
 ) {
 
     private val cache = TotalBalanceCache(context)
@@ -55,6 +57,7 @@ class AssetsManager(
         val staked = getStaked(wallet, tokens.map { it.token }, currency, refresh)
         val filteredTokens = tokens.filter { !it.token.isLiquid }
         val list = (filteredTokens + staked).sortedBy { it.fiat }.reversed()
+        Log.d("AssetsManager", "getAssets: $list")
         if (list.isEmpty()) {
             return null
         }
@@ -67,7 +70,10 @@ class AssetsManager(
         refresh: Boolean,
     ): List<AssetsEntity.Token>  {
         val safeMode = settingsRepository.isSafeModeEnabled(api)
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh) ?: return emptyList()
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && !remoteConfig.isTronDisabled) {
+            accountRepository.getTronAddress(wallet.id)
+        } else null
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh, tronAddress) ?: return emptyList()
         tokens.firstOrNull()?.let {
             if (wallet.initialized != it.balance.initializedAccount) {
                 accountRepository.setInitialized(wallet.accountId, it.balance.initializedAccount)

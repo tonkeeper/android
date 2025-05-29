@@ -91,7 +91,9 @@
     <string name="manual_backup_check">Перевірити резервну копію</string>
     <string name="backup_check">Перевірка резервної копії</string>
     <string name="backup_check_subtitle">Перевіримо, чи все у вас правильно. Введіть слова %1$d, %2$d та %3$d.</string>
+    <string name="sign_data_binary_title">Зашифрований вміст</string>
     <string name="slide_to_confirm">Підтвердити</string>
+    <string name="sign_text_subtitle">Уважно перегляньте повідомлення і, якщо ви згодні, підпишіть транзакцію.</string>
     <string name="refresh">Оновити</string>
     <string name="mute">Вимкнути звук</string>
     <string name="disconnect">Відключити</string>
@@ -376,6 +378,7 @@
     <string name="ledger_confirm_title">Підтвердити дію</string>
     <string name="ledger_connect_title">Підключити Ledger</string>
     <string name="ledger_connect">Підключіть Ledger до вашого пристрою через Bluetooth</string>
+    <string name="ledger_usb_connect">Підключіть Ledger до свого пристрою через USB</string>
     <string name="ledger_open_ton_app">Розблокуйте його та відкрийте додаток TON</string>
     <string name="ledger_install_ton_app">Встановіть додаток TON</string>
     <string name="ledger_confirm_tx">Підтвердіть вашу транзакцію на Ledger</string>
@@ -386,6 +389,7 @@
     <string name="ledger_update_text">Цей тип транзакцій не підтримується поточною версією програми.</string>
     <string name="ledger_update_button">OK</string>
     <string name="ledger_comment_error">Використовуйте лише символи ASCII: цифри, літери латинського алфавіту та знаки пунктуації.</string>
+    <string name="ledger_usb_permission_error">У дозволі пристрою відмовлено. Повторно підключіть USB-пристрій.</string>
     <string name="bluetooth_permissions_alert_title">Дозволи Bluetooth</string>
     <string name="bluetooth_permissions_alert_message">Будь ласка, увімкніть дозволи на використання Bluetooth у налаштуваннях, щоб скористатися цією функцією</string>
     <string name="bluetooth_permissions_alert_open_settings">Відкрити Налаштування</string>
@@ -399,7 +403,7 @@
     <string name="battery">Батарея</string>
     <string name="battery_refill_title">Батарея Tonkeeper</string>
     <string name="battery_refill_subtitle">Обмін через Tonkeeper, надсилання токенів і NFT.</string>
-    <plurals name="battery_current_charges">
+    <plurals name="battery_charges">
         <item quantity="one">%1$s заряд</item>
         <item quantity="few">%1$s заряди</item>
         <item quantity="many">%1$s зарядів</item>
@@ -415,6 +419,7 @@
     <string name="battery_nft">Трансфери NFT</string>
     <string name="battery_swap">обміни через Tonkeeper</string>
     <string name="battery_jetton">трансфери токенів</string>
+    <string name="battery_trc20">Перекази USD₮ TRC20</string>
     <string name="battery_swap_single">обмін</string>
     <string name="battery_transfer_single">трансфер</string>
     <plurals name="battery_charges_per_action">
@@ -537,4 +542,25 @@
     <string name="words24">24 слова</string>
     <string name="theme_deep_blue">Темно-синя</string>
     <string name="theme_dark">Темна</string>
+    <string name="sign_data_binary_message">Ви підписуєтеся наосліп. Підписуйте лише з надійних джерел.</string>
+    <string name="slide_to_sign">Свайп щоб підписати</string>
+    <string name="insufficient_battery_charges">Недостатньо зарядів батареї</string>
+    <string name="insufficient_balance_charges">Потрібно для комісії: %1$s.\nДоступно: %2$s.</string>
+    <string name="receive_tron_description">Надсилайте лише %1$s на цю адресу, інакше можете втратити кошти.</string>
+    <string name="open_explorer">Відкрити в оглядачі</string>
+    <string name="out_of_available_charges">з %1$s доступних</string>
+    <string name="tron_toggle_text">Використовуйте USD₮ TRC20 без TRX. Комісії покриваються Tonkeeper Battery.</string>
+    <string name="trc20">TRC20</string>
+    <string name="copy_phrase">Скопіювати фразу</string>
+    <string name="export_tron">Експортувати TRC20-гаманець</string>
+    <string name="phrase_title_tron">TRC20-гаманець</string>
+    <string name="phrase_description_tron">Запишіть ці слова з їхніми номерами та збережіть у безпечному місці.</string>
+    <string name="prhase_tron_warning">Ця фраза тільки для TRC20. Вона не відновить ваш TON-гаманець. Використовуйте фразу відновлення TON для відновлення TON-гаманця.</string>
+    <string name="battery_required_title">Потрібна Tonkeeper Battery для %1$s</string>
+    <string name="battery_required_text">Заряди батареї використовуються для покриття комісій, що робить перекази простішими та вигіднішими.</string>
+    <string name="charge_battery">Зарядити батарею</string>
+    <string name="send_wrong_blockchain">Адреса належить мережі %1$s.</string>
+    <string name="send_wrong_blockchain_swap">Обміняйте USD₮ %1$s на USD₮ %2$s через %3$s, щоб продовжити переказ.</string>
+    <string name="enable_usdt_tron">Увімкніть USD₮ TRC20</string>
+
 </resources>

@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:icon="@drawable/ic_chevron_left_16"
-        app:ignoreSystemOffset="true"/>
+        app:ignoreSystemOffset="true" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -19,24 +19,45 @@
 
         <uikit.widget.ColumnLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
-            <uikit.widget.FrescoView
-                android:id="@+id/review_icon"
+            <FrameLayout
                 android:layout_width="96dp"
                 android:layout_height="96dp"
-                android:layout_gravity="center"
-                app:roundAsCircle="true"/>
+                android:layout_gravity="center">
+
+                <uikit.widget.FrescoView
+                    android:id="@+id/review_icon"
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    app:roundAsCircle="true" />
+
+                <uikit.widget.FrescoView
+                    android:id="@+id/network_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="end|bottom"
+                    android:translationX="8dp"
+                    android:translationY="8dp"
+                    android:visibility="gone"
+                    app:roundAsCircle="true"
+                    app:roundingBorderColor="?attr/backgroundPageColor"
+                    app:roundingBorderPadding="1dp"
+                    app:roundingBorderWidth="4dp" />
+            </FrameLayout>
+
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/review_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetMedium"
-                android:text="@string/confirm_action"
                 android:gravity="center"
+                android:text="@string/confirm_action"
                 android:textAppearance="@style/TextAppearance.Body1"
-                android:textColor="?attr/textSecondaryColor"/>
+                android:textColor="?attr/textSecondaryColor" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/review_subtitle"
@@ -45,51 +66,51 @@
                 android:layout_marginTop="@dimen/offsetExtraSmall"
                 android:gravity="center"
                 android:textAppearance="@style/TextAppearance.H3"
-                android:textColor="?attr/textPrimaryColor"/>
+                android:textColor="?attr/textPrimaryColor" />
 
             <uikit.widget.ColumnLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginVertical="@dimen/offsetLarge"
                 android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:layout_marginVertical="@dimen/offsetLarge"
                 android:background="@drawable/bg_content">
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_wallet"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="@string/wallet"/>
+                    android:title="@string/wallet" />
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_recipient"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="@string/recipient"/>
+                    android:title="@string/recipient" />
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_recipient_address"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="@string/recipient_address"/>
+                    android:title="@string/recipient_address" />
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_amount"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:title="@string/amount"/>
+                    android:title="@string/amount"
+                    android:visibility="gone" />
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_fee"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="@string/fee"/>
+                    android:title="@string/fee" />
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_comment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:title="@string/comment"/>
+                    android:title="@string/comment" />
 
             </uikit.widget.ColumnLayout>
 
@@ -104,22 +125,22 @@
         android:padding="@dimen/offsetMedium">
 
         <Button
-            style="@style/Widget.App.Button"
             android:id="@+id/confirm_button"
+            style="@style/Widget.App.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:enabled="false"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:text="@string/confirm"/>
+            android:text="@string/confirm"
+            android:textAppearance="@style/TextAppearance.Label1" />
 
         <uikit.widget.ProcessTaskView
             android:id="@+id/process_task"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:successLabel="@string/done"
-            app:errorLabel="@string/sending_error"/>
+            app:errorLabel="@string/sending_error"
+            app:successLabel="@string/done" />
 
     </FrameLayout>
 

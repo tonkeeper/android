@@ -35,7 +35,7 @@ class UnStakeScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
             is UnStakeEvent.RouteToAmount -> setFragment(UnStakeAmountFragment.newInstance())
             is UnStakeEvent.OpenConfirm -> setFragment(UnStakeConfirmFragment.newInstance())
             is UnStakeEvent.Finish -> {
-                navigation?.openURL("tonkeeper://activity")
+                navigation?.openURL("tonkeeper://activity?from=unstake")
                 navigation?.removeByClass({
                     finish()
                 }, UnStakeScreen::class.java, StakeViewerScreen::class.java)

@@ -25,12 +25,11 @@ import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import com.tonapps.qr.QRImageAnalyzer
 import com.tonapps.signer.deeplink.DeeplinkSource
 import uikit.extensions.applyBottomInsets
-import uikit.widget.ModalView
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
 

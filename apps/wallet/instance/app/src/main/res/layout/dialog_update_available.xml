@@ -35,7 +35,7 @@
                 android:layout_gravity="end|bottom"
                 android:background="@drawable/bg_oval"
                 android:scaleType="centerInside"
-                android:backgroundTint="?attr/accentBlueColor"
+                android:tint="?attr/accentBlueColor"
                 android:src="@drawable/ic_arrow_down_28"/>
 
         </FrameLayout>

@@ -41,8 +41,7 @@ class SignTransaction(
         if (!wallet.hasPrivateKey) {
             throw SendException.UnableSendTransaction()
         }
-        val isValidPasscode =
-            passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
         if (!isValidPasscode) {
             throw SendException.WrongPasscode()
         }
@@ -149,8 +148,7 @@ class SignTransaction(
         if (!wallet.hasPrivateKey) {
             throw SendException.UnableSendTransaction()
         }
-        val isValidPasscode =
-            passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
         if (!isValidPasscode) {
             throw SendException.WrongPasscode()
         }

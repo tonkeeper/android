@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.AtomicDouble
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
@@ -14,6 +15,7 @@ import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
+import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
@@ -61,7 +63,8 @@ class SendTransactionViewModel(
     private val historyHelper: HistoryHelper,
     private val emulationUseCase: EmulationUseCase,
     private val transactionManager: TransactionManager,
-    private val batteryRepository: BatteryRepository
+    private val batteryRepository: BatteryRepository,
+    private val assetsManager: AssetsManager
 ) : BaseWalletVM(app) {
 
     private val currency = settingsRepository.currency
@@ -89,7 +92,10 @@ class SendTransactionViewModel(
                     forceRelayer = forceRelayer,
                     params = true
                 )
+
                 isBattery.set(emulated.withBattery)
+
+                emulationReadyDate.set(System.currentTimeMillis())
 
                 val details = historyHelper.create(wallet, emulated)
 
@@ -98,32 +104,15 @@ class SendTransactionViewModel(
                     totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
                 }
 
-                val jettons = emulated.loadTokens(wallet.testnet, tokenRepository)
-                val hasCompressedJetton = jettons.any { it.isRequestMinting || it.customPayloadApiUri != null }
+                // val jettons = emulated.loadTokens(wallet.testnet, tokenRepository)
+                // val hasCompressedJetton = jettons.any { it.isRequestMinting || it.customPayloadApiUri != null }
                 val tonBalance = getTONBalance()
-                val transferAmount = EmulationUseCase.calculateTransferAmount(transfers)
-                var transferFee = (if (!emulated.extra.isRefund) {
-                    Coins.ZERO
-                } else {
-                    emulated.extra.value
-                }) + Coins.of(0.05)
-
-                if (hasCompressedJetton) {
-                    transferFee += Coins.of(0.1)
-                }
-                if (jettons.size > 1) {
-                    transferFee += Coins.of(0.05)
-                }
-
-                val transferTotal = transferAmount + transferFee
-
-                emulationReadyDate.set(System.currentTimeMillis())
-
-                if (!emulated.withBattery && transferTotal > tonBalance) {
+                val transferTonTotal = emulated.totalTon + emulated.totalFees
+                if (!emulated.withBattery && transferTonTotal > tonBalance) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
                         balance = Amount(tonBalance),
-                        required = Amount(transferTotal),
+                        required = Amount(transferTonTotal),
                         withRechargeBattery = forceRelayer || useBattery,
                         singleWallet = isSingleWallet(),
                         type = InsufficientBalanceType.InsufficientTONBalance

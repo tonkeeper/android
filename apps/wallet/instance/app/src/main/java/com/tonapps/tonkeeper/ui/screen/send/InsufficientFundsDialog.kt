@@ -22,8 +22,7 @@ import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation
 import uikit.widget.TextHeaderView
 
-class InsufficientFundsDialog(private val fragment: BaseFragment) :
-    ModalDialog(fragment.requireContext(), R.layout.dialog_insufficient_funds) {
+class InsufficientFundsDialog(private val fragment: BaseFragment) : ModalDialog(fragment.requireContext(), R.layout.dialog_insufficient_funds) {
 
     private val navigation: Navigation?
         get() = Navigation.from(context)

@@ -590,8 +590,7 @@ class SendViewModel(
                 }
             } else {
                 val totalFee = fee.fee + TransferEntity.BASE_FORWARD_AMOUNT
-                val gaslessFee =
-                    (sendTransferType as? SendTransferType.Gasless)?.gaslessFee ?: Coins.ZERO
+                val gaslessFee = (sendTransferType as? SendTransferType.Gasless)?.gaslessFee ?: Coins.ZERO
                 val insufficientBalanceType = when {
                     tokenBalance.isZero -> InsufficientBalanceType.EmptyJettonBalance
                     isUseGasless && gaslessFee > tokenAmount -> InsufficientBalanceType.InsufficientGaslessBalance
@@ -983,8 +982,7 @@ class SendViewModel(
         transferType: Type
     ): SendEvent.Fee? {
         return try {
-            val withRelayer =
-                sendTransferType is SendTransferType.Gasless || sendTransferType is SendTransferType.Battery
+            val withRelayer = sendTransferType is SendTransferType.Gasless || sendTransferType is SendTransferType.Battery
             val isDirectTransfer = transferType == SendScreen.Companion.Type.Direct
             val feeToken = if (sendTransferType is SendTransferType.Gasless) {
                 transfer.token.token
@@ -992,8 +990,7 @@ class SendViewModel(
                 TokenEntity.TON
             }
 
-            val gaslessFee =
-                (sendTransferType as? SendTransferType.Gasless)?.gaslessFee ?: Coins.ZERO
+            val gaslessFee = (sendTransferType as? SendTransferType.Gasless)?.gaslessFee ?: Coins.ZERO
             val tonBalance = getTONBalance()
 
             val rates = ratesRepository.getRates(currency, feeToken.address)

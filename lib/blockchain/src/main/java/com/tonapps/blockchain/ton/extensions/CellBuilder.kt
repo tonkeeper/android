@@ -50,6 +50,10 @@ fun CellBuilder.storeMaybeStringTail(src: String?) = apply {
     }
 }
 
+fun CellBuilder.storeStringRefTail(src: String) = apply {
+    storeRef(beginCell().storeStringTail(src).endCell())
+}
+
 private fun writeBytes(src: ByteArray, builder: CellBuilder) {
     if (src.isNotEmpty()) {
         val bytes = floor(builder.availableBits / 8f).toInt()

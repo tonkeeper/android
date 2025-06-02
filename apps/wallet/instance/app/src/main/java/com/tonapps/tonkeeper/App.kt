@@ -13,6 +13,7 @@ import com.facebook.imagepipeline.core.DownsampleMode
 import com.facebook.imagepipeline.core.ImagePipelineConfig
 import com.facebook.imagepipeline.core.ImageTranscoderType
 import com.facebook.imagepipeline.core.MemoryChunkType
+import com.facebook.imagepipeline.decoder.ImageDecoderConfig
 import com.google.firebase.FirebaseApp
 import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
@@ -108,8 +109,11 @@ class App: Application(), CameraXConfig.Provider, KoinComponent {
         configBuilder.experiment().setNativeCodeDisabled(true)
         configBuilder.experiment().setPartialImageCachingEnabled(false)
         configBuilder.setDownsampleMode(DownsampleMode.ALWAYS)
-        configBuilder.setBitmapsConfig(Bitmap.Config.ARGB_8888)
-
+        if (Build.VERSION_CODES.O > Build.VERSION.SDK_INT) {
+            configBuilder.setBitmapsConfig(Bitmap.Config.ARGB_8888)
+        } else {
+            configBuilder.setBitmapsConfig(Bitmap.Config.ARGB_4444)
+        }
         Fresco.initialize(this, configBuilder.build())
     }
 

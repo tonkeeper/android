@@ -73,6 +73,7 @@ import uikit.extensions.findFragment
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
 import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 
 class RootActivity : BaseWalletActivity() {
 
@@ -344,11 +345,10 @@ class RootActivity : BaseWalletActivity() {
         validUnit: Long?
     ) {
         val message = if (tokenAddress != null) {
-            val tokens =
-                tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
-                    ?: emptyList()
-            val token = tokens.find { it.address == AddrStd(tokenAddress).toAccountId() }
-                ?: throw IllegalStateException("Token not found")
+            val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
+            val token = tokens.find {
+                it.address.equalsAddress(tokenAddress)
+            }  ?: throw IllegalStateException("Token not found")
             val message = RawMessageEntity(
                 addressValue = token.balance.walletAddress,
                 amount = TransferEntity.BASE_FORWARD_AMOUNT.toLong(),
@@ -363,7 +363,6 @@ class RootActivity : BaseWalletActivity() {
                     },
                 ).base64()
             )
-
             message.copy(amount = getJettonForwardAmount(wallet, message).toLong())
         } else {
             RawMessageEntity(
@@ -414,16 +413,20 @@ class RootActivity : BaseWalletActivity() {
 
         if (targetAddress != null && amountNano.isPositive() && nftAddress.isNullOrBlank()) {
             if (bin != null || initStateBase64 != null) {
-                openSign(
-                    wallet = wallet,
-                    targetAddress = targetAddress,
-                    tokenAddress = tokenAddress,
-                    amountNano = amountNano!!,
-                    bin = bin,
-                    initStateBase64 = initStateBase64,
-                    comment = text,
-                    validUnit = validUnit
-                )
+                try {
+                    openSign(
+                        wallet = wallet,
+                        targetAddress = targetAddress,
+                        tokenAddress = tokenAddress,
+                        amountNano = amountNano!!,
+                        bin = bin,
+                        initStateBase64 = initStateBase64,
+                        comment = text,
+                        validUnit = validUnit
+                    )
+                } catch (ignored: Throwable) {
+                    toast(Localization.invalid_link)
+                }
             } else {
                 openDirectSend(
                     SendScreen.Companion.Builder(wallet)

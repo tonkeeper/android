@@ -57,7 +57,6 @@ class AssetsManager(
         val staked = getStaked(wallet, tokens.map { it.token }, currency, refresh)
         val filteredTokens = tokens.filter { !it.token.isLiquid }
         val list = (filteredTokens + staked).sortedBy { it.fiat }.reversed()
-        Log.d("AssetsManager", "getAssets: $list")
         if (list.isEmpty()) {
             return null
         }

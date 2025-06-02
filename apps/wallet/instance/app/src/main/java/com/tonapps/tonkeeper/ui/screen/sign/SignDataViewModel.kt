@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.sign
 
 import android.app.Application
 import android.net.Uri
-import com.tonapps.base64.base64Encoded
+import android.util.Log
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
 import com.tonapps.blockchain.ton.TONOpCode
@@ -11,12 +11,12 @@ import com.tonapps.blockchain.ton.connect.TCDomain
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.blockchain.ton.extensions.storeAddress
 import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.blockchain.ton.extensions.storeStringRefTail
 import com.tonapps.blockchain.ton.extensions.storeStringTail
 import com.tonapps.extensions.toByteArray
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import io.github.andreypfau.kotlinx.crypto.crc32.crc32
 import io.github.andreypfau.kotlinx.crypto.crc32.crc32c
@@ -28,6 +28,7 @@ import org.ton.crypto.digest.sha256
 import org.ton.crypto.hex
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.net.IDN
 import java.nio.ByteOrder
 
 class SignDataViewModel(
@@ -75,20 +76,52 @@ class SignDataViewModel(
         )
     }
 
+    private fun encodeDnsName(domain: String): String {
+        if (domain.isEmpty()) {
+            throw IllegalArgumentException("Domain must be non-empty")
+        }
+
+        val norm = domain.lowercase().removeSuffix(".")
+
+        if (norm.isEmpty()) {
+            return "\u0000"
+        }
+
+        val labelsAscii = norm.split(".").map { label ->
+            if (label.isEmpty()) {
+                throw IllegalArgumentException("Empty label (\"..\") not allowed")
+            }
+
+            val ascii = IDN.toASCII(label)
+            if (ascii.length > 63 || ascii.any { it.code in 0..32 }) {
+                throw IllegalArgumentException("Invalid label \"$label\"")
+            }
+            ascii
+        }
+
+        val result = labelsAscii.reversed()
+            .joinToString("") { label -> label + '\u0000' }
+
+        if (result.toByteArray(Charsets.UTF_8).size > 126) {
+            throw IllegalArgumentException("Encoded name is ${result.toByteArray(Charsets.UTF_8).size} bytes; TEP-81 allows at most 126")
+        }
+
+        return result
+    }
+
     private fun buildCell(payload: SignDataRequestPayload.Cell, timestamp: Long): Cell {
         val cell = payload.value
         val schemaHash = crc32(payload.schema.toByteArray())
+        val encodedDomain = encodeDnsName(domain.value)
 
-        val domainCell = CellBuilder.beginCell().apply {
-            storeStringTail(domain.value)
-        }.endCell()
+        Log.d("SignDataValueLog", "encodedDomain: $encodedDomain")
 
         return CellBuilder.beginCell().apply {
             storeOpCode(TONOpCode.SIGN_DATA)
             storeUInt(schemaHash, 32)
             storeUInt(timestamp, 64)
             storeAddress(wallet.contract.address)
-            storeRef(domainCell)
+            storeStringRefTail(encodedDomain)
             storeRef(cell)
         }.endCell()
     }

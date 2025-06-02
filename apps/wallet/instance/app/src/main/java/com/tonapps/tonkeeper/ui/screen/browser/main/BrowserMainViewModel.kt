@@ -118,7 +118,7 @@ class BrowserMainViewModel(
                 }
             }
 
-            for (app in apps) {
+            for (app in apps.take(8)) {
                 items.add(ExploreItem.App(
                     app = app,
                     wallet = wallet,

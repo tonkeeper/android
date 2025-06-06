@@ -2,15 +2,10 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker.list
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.ViewGroup
-import androidx.collection.ArrayMap
-import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.extensions.isUIThread
-import com.tonapps.extensions.putEnum
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.manager.assets.WalletBalanceEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.AddHolder
@@ -19,7 +14,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.SkeletonHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.WalletHolder
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 import java.util.Collections
 

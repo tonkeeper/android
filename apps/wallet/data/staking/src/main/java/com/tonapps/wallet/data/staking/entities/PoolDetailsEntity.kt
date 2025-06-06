@@ -24,4 +24,14 @@ data class PoolDetailsEntity(
         links.addAll(socials)
         return links.toList()
     }
+
+    companion object {
+
+        val ethena = PoolDetailsEntity(
+            name = "Ethena",
+            description = "The tsUSDe token represents USDe held through Ethena, a decentralized staking service. tsUSDe automatically accrues staking rewards, with minimal lock up.",
+            url = "https://ethena.fi/",
+            socials = listOf("https://t.me/ethena_labs", "https://x.com/ethena_labs", "https://github.com/ethena-labs")
+        )
+    }
 }

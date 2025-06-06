@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
+import com.tonapps.tonkeeper.ui.screen.onramp.main.OnRampScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.tonkeeper.view.BatteryView
@@ -61,7 +62,7 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) : ModalDialog(
         tonButton.text = context.getString(Localization.buy_ton).replace("TON", required.symbol)
         tonButton.setOnClickListener {
             if (required.isTon) {
-                navigation?.add(PurchaseScreen.newInstance(wallet, "insufficientFunds"))
+                navigation?.add(OnRampScreen.newInstance(context, wallet, "insufficientFunds"))
             } else {
                 fragment.finish()
                 navigation?.add(BrowserMoreScreen.newInstance(wallet, "defi"))

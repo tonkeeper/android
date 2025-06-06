@@ -2,13 +2,17 @@ package com.tonapps.tonkeeper.ui.component
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnLayout
+import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeperx.R
+import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
@@ -20,9 +24,9 @@ class SnackBarView @JvmOverloads constructor(
 ) : RowLayout(context, attrs, defStyle) {
 
     private val offsetMedium = context.getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+    private val size = context.getDimensionPixelSize(uikit.R.dimen.itemHeight)
     private val textView: AppCompatTextView
     private val button: AppCompatTextView
-    private var hideRunnable: Runnable? = null
 
     init {
         inflate(context, R.layout.view_snack_bar, this)
@@ -30,11 +34,6 @@ class SnackBarView @JvmOverloads constructor(
         textView = findViewById(R.id.text)
         button = findViewById(R.id.button)
         setBackgroundResource(uikit.R.drawable.bg_content)
-    }
-
-    private fun clearPendingHide() {
-        hideRunnable?.let { removeCallbacks(it) }
-        hideRunnable = null
     }
 
     fun setButtonOnClickListener(onClickListener: OnClickListener) {
@@ -48,41 +47,29 @@ class SnackBarView @JvmOverloads constructor(
         textView.text = text
     }
 
-    private fun removeSelf() {
-        clearPendingHide()
-        animate().cancel()
-        (parent as? ViewGroup)?.removeView(this)
+    private fun hide() {
+        (parent as? ViewGroup)?.let {
+            removeView(this)
+        }
     }
 
     fun show() {
+        translationY = -size.toFloat()
         doOnLayout {
-            translationY = -measuredHeight.toFloat()
             startShowAnimation()
         }
     }
 
     private fun startShowAnimation() {
-        clearPendingHide()
-        animate().cancel()
-
-        val targetY = (statusBarHeight + offsetMedium).toFloat()
-
-        animate()
-            .translationY(targetY)
-            .setDuration(300)
-            .withEndAction(::hideDelayed)
-            .start()
+        animate().translationY((statusBarHeight + offsetMedium).toFloat()).setDuration(300).withEndAction {
+            hideDelayed()
+        }
     }
 
     private fun startHideAnimation() {
-        clearPendingHide()
-        animate().cancel()
-
-        animate()
-            .translationY(-measuredHeight.toFloat())
-            .setDuration(220)
-            .withEndAction(::removeSelf)
-            .start()
+        animate().translationY(-size.toFloat()).setDuration(220).withEndAction {
+            hide()
+        }
     }
 
     private fun hideDelayed() {
@@ -91,17 +78,11 @@ class SnackBarView @JvmOverloads constructor(
         }, 3000)
     }
 
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        clearPendingHide()
-        animate().cancel()
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY))
     }
 
     companion object {
-
-        fun show(context: Context, text: String, onClick: () -> Unit) {
-            show(context, text, OnClickListener { onClick() })
-        }
 
         fun show(context: Context, text: String, onClickListener: OnClickListener) {
             val baseView = BaseWalletActivity.findBaseView(context) ?: return

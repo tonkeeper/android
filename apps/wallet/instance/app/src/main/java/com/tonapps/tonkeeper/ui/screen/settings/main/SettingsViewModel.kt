@@ -2,15 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.settings.main
 
 import android.app.Application
 import android.os.Build
-import android.util.Log
 import androidx.core.net.toUri
-import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.appVersionCode
-import com.tonapps.extensions.appVersionName
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -25,7 +22,6 @@ import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.worker.PushToggleWorker
-import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -34,7 +30,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.core.SearchEngine
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -52,7 +48,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 
 class SettingsViewModel(
     application: Application,

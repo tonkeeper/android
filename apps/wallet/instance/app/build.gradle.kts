@@ -71,6 +71,7 @@ dependencies {
     implementation(project(Dependence.Wallet.Data.contacts))
 
     implementation(project(Dependence.UIKit.core))
+    implementation(project(Dependence.UIKit.flag))
 
     implementation(Dependence.AndroidX.core)
     implementation(Dependence.AndroidX.shortcuts)

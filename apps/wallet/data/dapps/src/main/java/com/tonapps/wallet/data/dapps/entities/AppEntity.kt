@@ -45,4 +45,14 @@ data class AppEntity(
     )
 
     constructor(value: String) : this(JSONObject(value))
+
+    companion object {
+
+        val ethena = AppEntity(
+            url = "https://ethena.ston.fi/".toUri(),
+            name = "ethena.ston.fi",
+            iconUrl = "https://static.ston.fi/logo/external-logo.jpg",
+            empty = false
+        )
+    }
 }

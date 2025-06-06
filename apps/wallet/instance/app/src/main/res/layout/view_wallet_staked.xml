@@ -14,6 +14,7 @@
         android:layout_height="44dp">
 
         <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/currency_icon"
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:src="@drawable/ic_ton_with_bg" />
@@ -25,6 +26,7 @@
             android:layout_gravity="end|bottom"
             android:translationX="6dp"
             android:translationY="6dp"
+            android:scaleType="centerCrop"
             fresco:roundAsCircle="true"
             fresco:roundingBorderColor="?attr/backgroundContentColor"
             fresco:roundingBorderPadding="1dp"
@@ -39,6 +41,7 @@
         android:layout_weight="1">
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:singleLine="true"

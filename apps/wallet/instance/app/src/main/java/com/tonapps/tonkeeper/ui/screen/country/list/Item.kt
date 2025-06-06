@@ -1,7 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.country.list
 
-import com.tonapps.tonkeeper.extensions.countryEmoji
-import com.tonapps.tonkeeper.extensions.countryName
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 
@@ -16,8 +14,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val position: ListCell.Position,
         val code: String,
         val name: String,
-        val emoji: String,
         val selected: Boolean,
+        val icon: Int
     ): Item(TYPE_COUNTRY)
 
     data object Space: Item(TYPE_SPACE)

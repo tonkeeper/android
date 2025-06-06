@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.extensions.countryName
 import com.tonapps.tonkeeper.extensions.getNormalizeCountryFlow
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.country.list.Item
+import com.tonapps.uikit.flag.getFlagDrawable
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -18,6 +19,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import uikit.extensions.asCircle
+import uikit.extensions.drawable
 import java.util.Locale
 
 class CountryPickerViewModel(
@@ -80,7 +84,9 @@ class CountryPickerViewModel(
         val uiItems = mutableListOf<Item>()
         for ((index, data) in filteredList.withIndex()) {
             val position = ListCell.getPosition(filteredList.size, index)
-            uiItems.add(createItem(position, data, selectedCountry))
+            createItem(position, data, selectedCountry)?.let {
+                uiItems.add(it)
+            }
         }
         return uiItems
     }
@@ -89,13 +95,17 @@ class CountryPickerViewModel(
         val uiItems = mutableListOf<Item>()
         for ((index, data) in suggest.withIndex()) {
             val position = ListCell.getPosition(suggest.size, index)
-            uiItems.add(createItem(position, data, selectedCountry))
+            createItem(position, data, selectedCountry)?.let {
+                uiItems.add(it)
+            }
         }
         uiItems.add(Item.Space)
 
         for ((index, data) in countries.withIndex()) {
             val position = ListCell.getPosition(countries.size, index)
-            uiItems.add(createItem(position, data, selectedCountry))
+            createItem(position, data, selectedCountry)?.let {
+                uiItems.add(it)
+            }
         }
         return uiItems
     }
@@ -118,27 +128,26 @@ class CountryPickerViewModel(
         position: ListCell.Position,
         data: Country,
         selectedCountry: String
-    ): Item.Country {
+    ): Item.Country? = withContext(Dispatchers.IO) {
         val selected: Boolean
-        val emoji: String
         val code: String
 
         if (data.code.equals("auto", true)) {
             val apiCountry = api.resolveCountry() ?: settingsRepository.getLocale().country
             selected = selectedCountry.equals("auto", true)
             code = apiCountry
-            emoji = apiCountry.countryEmoji
         } else {
             selected = data.code.equals(selectedCountry, ignoreCase = true)
             code = data.code
-            emoji = data.emoji
         }
 
-        return Item.Country(
+        val iconRes = getFlagDrawable(code) ?: return@withContext null
+
+        Item.Country(
             position = position,
             code = code,
             name = data.name,
-            emoji = emoji,
+            icon = iconRes,
             selected = selected
         )
     }

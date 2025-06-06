@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+  <path
+      android:pathData="M0,0h32v32h-32z"
+      android:fillColor="#0071BC"
+      android:strokeColor="#00000000"/>
+  <path
+      android:pathData="M30.398,15.68C30.398,23.633 23.953,30.078 16,30.078C8.047,30.078 1.602,23.633 1.602,15.68C1.602,7.727 8.047,1.281 16,1.281C23.953,1.281 30.398,7.727 30.398,15.68ZM30.398,15.68"
+      android:strokeLineJoin="miter"
+      android:strokeWidth="0.122"
+      android:fillColor="#FFFFFF"
+      android:strokeColor="#000000"
+      android:fillType="nonZero"
+      android:strokeLineCap="butt"/>
+  <path
+      android:pathData="M26.559,15.68C26.559,21.512 21.832,26.238 16,26.238C10.168,26.238 5.441,21.512 5.441,15.68C5.441,9.848 10.168,5.121 16,5.121C21.832,5.121 26.559,9.848 26.559,15.68ZM26.559,15.68"
+      android:strokeLineJoin="miter"
+      android:strokeWidth="0.122"
+      android:fillColor="#0071BC"
+      android:strokeColor="#000000"
+      android:fillType="nonZero"
+      android:strokeLineCap="butt"/>
+  <path
+      android:pathData="M20.461,28.801C20.504,29.504 19.961,30.078 19.258,30.078L12.711,30.078C12.008,30.078 11.461,29.504 11.496,28.801L12.563,8C12.602,7.297 13.203,6.719 13.906,6.719L17.836,6.719C18.539,6.719 19.148,7.297 19.195,8ZM20.461,28.801"
+      android:strokeLineJoin="miter"
+      android:strokeWidth="0.122"
+      android:fillColor="#8C8A8C"
+      android:strokeColor="#000000"
+      android:fillType="nonZero"
+      android:strokeLineCap="butt"/>
+  <path
+      android:pathData="M15.871,7.297L17.793,13.246L24,13.246L19.008,16.832L20.863,22.719L15.871,19.137L10.879,22.785L12.801,16.832L7.742,13.184L13.953,13.184ZM15.871,7.297"
+      android:strokeLineJoin="round"
+      android:strokeWidth="0.128"
+      android:fillColor="#FFFFFF"
+      android:strokeColor="#000000"
+      android:fillType="nonZero"
+      android:strokeLineCap="butt"/>
+</vector>

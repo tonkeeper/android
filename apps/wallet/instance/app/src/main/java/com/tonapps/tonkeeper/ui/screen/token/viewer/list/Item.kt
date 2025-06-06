@@ -10,7 +10,8 @@ import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.settings.ChartPeriod
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -43,6 +44,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val swapUri: Uri,
         val swapMethod: WalletPurchaseMethodEntity?,
         val token: TokenEntity,
+        val stakeApp: AppEntity?
     ): Item(TYPE_ACTIONS) {
 
         val walletAddress: String
@@ -54,6 +56,9 @@ sealed class Item(type: Int): BaseListItem(type) {
         val walletType: Wallet.Type
             get() = wallet.type
 
+        val stake: Boolean
+            get() = stakeApp != null
+
         val send: Boolean
             get() = !wallet.isWatchOnly && token.isTransferable
 
@@ -62,6 +67,13 @@ sealed class Item(type: Int): BaseListItem(type) {
                 wallet.hasPrivateKey && swapMethod != null
             } else {
                 token.verified && !wallet.isWatchOnly
+            }
+
+        val maxColumnCount: Int
+            get() = if (swap && stake) {
+                4
+            } else {
+                3
             }
     }
 

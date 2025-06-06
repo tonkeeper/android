@@ -53,6 +53,9 @@ class DAppViewModel(
     val installId: String
         get() = settingsRepository.installId
 
+    val country: String
+        get() = settingsRepository.country
+
     fun mute() {
         DAppPushToggleWorker.run(
             context = context,

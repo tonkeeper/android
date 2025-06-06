@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:ignoreSystemOffset="true"
+            android:title="@string/buy_or_sell_dot"
+            android:icon="@drawable/ic_chevron_left_16"
+            android:action="@drawable/ic_close_16"/>
+
+        <com.tonapps.tonkeeper.ui.component.CountryFlagView
+            android:id="@+id/country"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:layout_marginStart="@dimen/offsetMedium"
+            android:padding="6dp"/>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <uikit.widget.SlideBetweenView
+            android:id="@+id/slides"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <include
+                layout="@layout/fragment_onramp_inputs"/>
+            <include
+                layout="@layout/fragment_onramp_review"/>
+        </uikit.widget.SlideBetweenView>
+
+        <uikit.widget.ColumnLayout
+            android:id="@+id/next_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/pair_not_available"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:visibility="gone"
+                android:text="@string/pair_not_available"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/provider_title"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textTertiaryColor"
+                android:gravity="center"
+                android:visibility="gone"
+                android:drawableEnd="@drawable/ic_switch_16"
+                android:drawablePadding="2dp"
+                android:drawableTint="?attr/textSecondaryColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"/>
+
+            <uikit.widget.LoadableButton
+                android:id="@+id/next_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:enabled="false"
+                android:text="@string/continue_action"/>
+
+        </uikit.widget.ColumnLayout>
+
+
+    </FrameLayout>
+
+
+</uikit.widget.ColumnLayout>

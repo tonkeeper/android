@@ -60,10 +60,12 @@
     <string name="liquid_staking">Ліквідний стейкинг</string>
     <string name="other">Інше</string>
     <string name="minimum_amount">Мінімум %1$s</string>
+    <string name="stake_ethena_disclaimer">Це розрахункова річна прибутковість, що базується на середній винагороді за протоколом за минулий тиждень та середній сумі стейкінгу в USDe. Прибуток обчислюється на рік з тижневим складним коефіцієнтом. <annotation colorAttr="textSecondaryColor">Минулі показники не гарантують майбутніх результатів.</annotation> Стейкінг та винагороди надаються Ethena, стороннім сервісом, і підлягають їхнім <annotation colorAttr="textAccentColor">умовам</annotation>.</string>
     <string name="stake_tonstakers_description">Коли ви робите ставку TON у пулі Tonstakers, ви отримуєте токен під назвою tsTON, який представляє вашу частку в пулі. Оскільки пул накопичує прибуток, ваш tsTON представляє більшу кількість TON.</string>
     <string name="edit">Редагувати</string>
     <string name="pinned">Закріплено</string>
     <string name="all_assets">Усі активи</string>
+    <string name="all_ton_assets">Усі активи TON</string>
     <string name="sorted_by_price">Сортувати за ціною</string>
     <string name="staking_minimum_deposit">Мінімальний депозит %1$s.</string>
     <string name="staking_options">Опції</string>
@@ -183,6 +185,7 @@
     <string name="empty_collectibles_subtitle">Отримайте свій перший предмет!</string>
     <string name="new_wallet">Новий гаманець</string>
     <string name="buy_toncoin">Купити Toncoin</string>
+    <string name="buy_or_sell_dot">Купівля · Продати</string>
     <string name="buy_or_sell">Купити або продати</string>
     <string name="fiat_open_description">Ви відкриваєте зовнішній додаток, який не управляється Tonkeeper.</string>
     <string name="buy">Купити</string>
@@ -519,9 +522,12 @@
     <string name="all">Всі</string>
     <string name="report_encrypted_comment">Коментар цієї транзакції буде надіслано зі звітом у розшифрованому вигляді.</string>
     <string name="select_from_gallery">Виберати із галереї</string>
+    <string name="swipe_right">"Проведіть пальцем "</string>
     <string name="open">Відкрити</string>
     <string name="theme_light">Світла</string>
+    <string name="payment_method">Спосіб оплати</string>
     <string name="downloading">Завантаження…</string>
+    <string name="emulation_failed_warning">Після підтвердження може статися що завгодно, зокрема втратити всі ваші кошти. Усі транзакції є незворотними. Ми не змогли імітувати транзакцію та не знаємо, що станеться далі.</string>
     <string name="update_tonkeeper">Оновити Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Доступна нова версія Tonkeeper. Ви можете завантажити його зараз.</string>
     <string name="download_error">Помилка завантаження. Торкніться, щоб повторити спробу.</string>
@@ -540,6 +546,7 @@
     <string name="default_font_size">Розмір шрифту за замовчуванням</string>
     <string name="words12">12 слів</string>
     <string name="words24">24 слова</string>
+    <string name="provider">Постачальник</string>
     <string name="theme_deep_blue">Темно-синя</string>
     <string name="theme_dark">Темна</string>
     <string name="sign_data_binary_message">Ви підписуєтеся наосліп. Підписуйте лише з надійних джерел.</string>
@@ -566,5 +573,20 @@
     <string name="dapp_share_subtitle">Це посилання відкриє %1$s безпосередньо в Tonkeeper. Ви можете використати його пізніше або поділитися ним за потреби.</string>
     <string name="copy_link">Скопіювати посилання</string>
     <string name="dapp_disclaimer">Ви відкриваєте зовнішній додаток, який не керується Tonkeeper. Продовжуйте лише якщо довіряєте джерелу.</string>
+    <string name="sign">Підписати</string>
+    <string name="ton_assets">Активи TON</string>
+    <string name="pair_not_available">Ця валютна пара недоступна. Будь ласка, спробуйте іншу.</string>
+    <string name="balance_prefix">Баланс: %1$s</string>
+    <string name="all_currencies">Усі валюти</string>
+    <string name="crypto">Криптовалюта</string>
+    <string name="close">Закрити</string>
+    <string name="dapp_safe_modal_title">Посилання веде на шахрайський сервіс</string>
+    <string name="dapp_safe_model_button">Як залишатися в безпеці</string>
+    <string name="dapp_safe_modal_subtitle">Ми не відкрили його з міркувань безпеки.</string>
+    <string name="credit_card">Кредитна картка</string>
+    <string name="credit_card_subtitle">Visa або Mastercard</string>
+    <string name="currency_not_found">Валюта не знайдена</string>
+    <string name="onrmap_provider_description">Інші постачальники доступні для різних валютних пар.</string>
+    <string name="stake_ethena_description">Токен tsUSDe представляє USDe, що зберігається через Ethena, децентралізований сервіс стейкінгу. tsUSDe автоматично накопичує винагороду за стейкінг з мінімальним блокуванням.</string>
 
 </resources>

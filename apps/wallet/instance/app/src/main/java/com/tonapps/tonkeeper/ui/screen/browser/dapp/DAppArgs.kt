@@ -11,8 +11,7 @@ data class DAppArgs(
     val title: String,
     val url: Uri,
     val source: String,
-    val iconUrl: String,
-    val sendAnalytics: Boolean,
+    val iconUrl: String
 ): BaseArgs() {
 
     private companion object {
@@ -27,7 +26,6 @@ data class DAppArgs(
         title = bundle.getString(ARG_TITLE)!!,
         url = bundle.getParcelableCompat(ARG_URL)!!,
         source = bundle.getString(ARG_SOURCE) ?: "",
-        sendAnalytics = bundle.getBoolean(ARG_SEND_ANALYTICS, true),
         iconUrl = bundle.getString(ARG_ICON_URL) ?: "",
     )
 
@@ -35,7 +33,6 @@ data class DAppArgs(
         putString(ARG_TITLE, title)
         putParcelable(ARG_URL, url)
         putString(ARG_SOURCE, source)
-        putBoolean(ARG_SEND_ANALYTICS, sendAnalytics)
         putString(ARG_ICON_URL, iconUrl)
     }
 }

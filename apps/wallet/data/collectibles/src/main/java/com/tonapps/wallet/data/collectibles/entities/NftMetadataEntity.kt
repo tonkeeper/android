@@ -33,6 +33,10 @@ data class NftMetadataEntity(
         get() = strings["description"]
 
     @IgnoredOnParcel
+    val isNotRender: Boolean
+        get() = strings["render_type"] == "hidden"
+
+    @IgnoredOnParcel
     val lottie: String? by lazy {
         val originalUrl = strings["lottie"] ?: return@lazy null
         val encoded = Base64.encodeToString(originalUrl.toByteArray(), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING).trim()

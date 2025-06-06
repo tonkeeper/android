@@ -61,8 +61,7 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
                 title = title,
                 url = url.toUri(),
                 iconUrl = iconUrl,
-                source = "browser_search",
-                sendAnalytics = sendAnalytics,
+                source = "browser_search"
             ))
         }
         finish()

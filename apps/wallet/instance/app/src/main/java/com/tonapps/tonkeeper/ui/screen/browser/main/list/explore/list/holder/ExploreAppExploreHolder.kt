@@ -28,7 +28,7 @@ class ExploreAppExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.App>
 
     override fun onBind(item: ExploreItem.App) {
         itemView.setOnClickListener {
-            item.app.openDApp(context, item.wallet, "browser")
+            item.app.openDApp(context, item.wallet, "browser", item.country)
         }
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(172)!!)
         nameView.text = item.name

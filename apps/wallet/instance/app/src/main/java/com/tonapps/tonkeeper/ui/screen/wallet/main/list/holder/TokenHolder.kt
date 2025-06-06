@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -50,7 +51,6 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             setTokenIcon(item.iconUri)
 
             networkIconView.visibility = if (item.showNetwork) View.VISIBLE else View.GONE
-
             setNetworkIcon(item.blockchain)
         }
 

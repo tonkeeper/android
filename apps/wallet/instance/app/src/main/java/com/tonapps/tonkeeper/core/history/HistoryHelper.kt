@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
-import android.util.Log
 import androidx.collection.arrayMapOf
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
@@ -39,7 +38,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.events.CommentEncryption
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -89,8 +88,7 @@ class HistoryHelper(
                 calendar.timeInMillis = timestamp * 1000
                 val now = Calendar.getInstance()
                 val yearDiff = now.get(Calendar.YEAR) - calendar.get(Calendar.YEAR)
-                val monthDiff =
-                    yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
+                val monthDiff = yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
 
                 return if (monthDiff < 1) {
                     dayMonthFormatter.format(calendar.time)
@@ -180,8 +178,7 @@ class HistoryHelper(
         }
         it
     }.map { wallet ->
-        val privateKey =
-            accountRepository.getPrivateKey(wallet.id) ?: throw Exception("Private key not found")
+        val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw Exception("Private key not found")
         val decrypted = CommentEncryption.decryptComment(
             wallet.publicKey,
             privateKey,
@@ -300,8 +297,7 @@ class HistoryHelper(
         }
 
         val feeFormat = "≈ " + CurrencyFormatter.format("TON", emulated.extra.value)
-        val feeFiatFormat =
-            CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
+        val feeFiatFormat = CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
 
         items.add(
             HistoryItem.Event(
@@ -385,8 +381,7 @@ class HistoryHelper(
         options: ActionOptions,
     ): List<HistoryItem> {
         if (event == null) {
-            val position =
-                if (options.positionExtra == 0) ListCell.Position.SINGLE else ListCell.Position.FIRST
+            val position = if (options.positionExtra == 0) ListCell.Position.SINGLE else ListCell.Position.FIRST
             return listOf(createFakeUnknown(position))
         }
         return mapping(wallet, listOf(event), options)
@@ -521,8 +516,7 @@ class HistoryHelper(
             var actionOutStatusAny = 0
 
             for ((actionIndex, action) in actions.withIndex()) {
-                val isScam =
-                    event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
+                val isScam = event.isScam || settingsRepository.isSpamTransaction(wallet.id, event.eventId)
 
                 if (options.spamFilter == ActionOptions.SpamFilter.SPAM && !isScam) {
                     continue
@@ -546,16 +540,13 @@ class HistoryHelper(
                     ActionOutStatus.Any -> actionOutStatusAny++
                     ActionOutStatus.Received -> actionOutStatusReceived++
                     ActionOutStatus.Send -> actionOutStatusSend++
-                    ActionOutStatus.App, ActionOutStatus.dApps -> {}
+                    ActionOutStatus.App, ActionOutStatus.dApps -> { }
                 }
 
                 chunkItems.add(
                     item.copy(
                         pending = pending,
-                        position = ListCell.getPosition(
-                            actions.size + options.positionExtra,
-                            actionIndex
-                        ),
+                        position = ListCell.getPosition(actions.size + options.positionExtra, actionIndex),
                         fee = if (fee.isPositive) CurrencyFormatter.format(
                             TokenEntity.TON.symbol,
                             fee,
@@ -619,8 +610,7 @@ class HistoryHelper(
     ): HistoryItem.Event? {
         val simplePreview = action.simplePreview
         val date = DateHelper.formatTransactionTime(timestamp, settingsRepository.getLocale())
-        val dateDetails =
-            DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
+        val dateDetails = DateHelper.formatTransactionDetailsTime(timestamp, settingsRepository.getLocale())
 
         // actionArgs.isTon && !actionArgs.isOut && !actionArgs.isScam && actionArgs.comment != null
         if (action.jettonSwap != null) {
@@ -854,13 +844,17 @@ class HistoryHelper(
                 subtitle = sender?.getNameOrAddress(wallet.testnet, true) ?: ""
             }
 
-            val nftItem = if (isScam) null else collectiblesRepository.getNft(
+            var nftItem = if (isScam) null else collectiblesRepository.getNft(
                 accountId = wallet.accountId,
                 testnet = wallet.testnet,
                 address = nftItemTransfer.nft
             )?.let {
                 val pref = settingsRepository.getTokenPrefs(wallet.id, it.address)
                 it.with(pref)
+            }
+
+            if (nftItem?.isNotRender == true) {
+                nftItem = null
             }
 
             if (options.safeMode && nftItem?.verified != true) {

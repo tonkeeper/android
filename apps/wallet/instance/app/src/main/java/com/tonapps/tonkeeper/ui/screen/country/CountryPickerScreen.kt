@@ -65,7 +65,7 @@ class CountryPickerScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragmen
     companion object {
         private const val ARG_REQUEST_KEY = "request_key"
 
-        fun newInstance(requestKey: String): CountryPickerScreen {
+        fun newInstance(requestKey: String = ""): CountryPickerScreen {
             val fragment = CountryPickerScreen()
             fragment.arguments = Bundle().apply {
                 putString(ARG_REQUEST_KEY, requestKey)

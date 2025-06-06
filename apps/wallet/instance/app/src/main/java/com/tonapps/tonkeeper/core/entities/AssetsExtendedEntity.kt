@@ -38,6 +38,14 @@ data class AssetsExtendedEntity(
                     isTransferable = true
                 ),
             )
+            is AssetsEntity.Currency -> AccountTokenEntity(
+                balance = BalanceEntity.create(
+                    accountId = accountId,
+                    value = Coins.ZERO,
+                    isRequestMinting = false,
+                    isTransferable = false
+                ),
+            )
         }
 
     val imageUri: Uri

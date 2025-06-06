@@ -22,6 +22,9 @@ data class StakingEntity(
     }
 
     fun getDetails(implementation: StakingPool.Implementation): PoolDetailsEntity? {
+        if (implementation == StakingPool.Implementation.Ethena) {
+            return PoolDetailsEntity.ethena
+        }
         return pools.find { it.implementation == implementation }?.details
     }
 

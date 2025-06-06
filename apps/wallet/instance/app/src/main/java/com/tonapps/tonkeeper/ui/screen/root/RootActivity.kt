@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
+import android.util.Log
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
@@ -36,6 +37,7 @@ import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.base.WalletFragmentFactory
+import com.tonapps.tonkeeper.ui.component.SnackBarView
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
@@ -510,7 +512,7 @@ class RootActivity : BaseWalletActivity() {
         val extras = intent.extras
         val dappDeepLink = extras?.getStringValue("dapp_deeplink")?.toUriOrNull()
         if (dappDeepLink != null) {
-            viewModel.openDApp(dappDeepLink)
+            viewModel.openDApp(dappDeepLink, "push")
             return
         } else if (extras != null && !extras.isEmpty && viewModel.processIntentExtras(extras)) {
             return

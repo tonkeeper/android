@@ -16,7 +16,9 @@ class RemoteConfig(context: Context) {
         HARDCODED_COUNTRY_CODE("hardcodedCountryCode"),
         IN_APP_UPDATE_AVAILABLE("inAppUpdateAvailable"),
         IS_COUNTRY_PICKER_DISABLE("isCountryPickerDisable"),
-        IS_TRON_DISABLED("isTronDisabled");
+        IS_TRON_DISABLED("isTronDisabled"),
+        NATIVE_ONRAMP_ENABLED("native_onrmap_enabled"),
+        ETHENA_ENABLED("ethena_enabled");
     }
 
     init {
@@ -52,6 +54,9 @@ class RemoteConfig(context: Context) {
     val isSwapDisable: Boolean
         get() = remoteConfig.getBoolean(FeatureFlag.IS_SWAP_DISABLE.key)
 
+    val nativeOnrmapEnabled: Boolean
+        get() = remoteConfig.getBoolean(FeatureFlag.NATIVE_ONRAMP_ENABLED.key)
+
     val isCountryPickerDisable: Boolean
         get() = remoteConfig.getBoolean(FeatureFlag.IS_COUNTRY_PICKER_DISABLE.key)
 
@@ -69,4 +74,7 @@ class RemoteConfig(context: Context) {
 
     val isTronDisabled: Boolean
         get() = remoteConfig.getBoolean(FeatureFlag.IS_TRON_DISABLED.key)
+
+    val isEthenaEnabled: Boolean
+        get() = remoteConfig.getBoolean(FeatureFlag.ETHENA_ENABLED.key)
 }

@@ -6,6 +6,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StyleRes
 import androidx.core.text.inSpans
+import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.accentPurpleColor
@@ -68,6 +69,11 @@ inline fun SpannableStringBuilder.badgeRed(
     context: Context,
     builderAction: SpannableStringBuilder.() -> Unit
 ) = badgeAccentColor(context, context.accentRedColor, builderAction)
+
+inline fun SpannableStringBuilder.badgeBlue(
+    context: Context,
+    builderAction: SpannableStringBuilder.() -> Unit
+) = badgeAccentColor(context, context.accentBlueColor, builderAction)
 
 inline fun SpannableStringBuilder.ellipsis(
     maxWidth: Int,

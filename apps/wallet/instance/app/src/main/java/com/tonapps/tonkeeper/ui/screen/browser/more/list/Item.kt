@@ -10,6 +10,7 @@ data class Item(
     val wallet: WalletEntity,
     val app: BrowserAppEntity,
     val position: ListCell.Position,
+    val country: String
 ): BaseListItem(0) {
 
     val icon: Uri

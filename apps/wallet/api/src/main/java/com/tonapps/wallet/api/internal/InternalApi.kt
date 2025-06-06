@@ -11,8 +11,10 @@ import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.map
 import com.tonapps.network.get
+import com.tonapps.network.postJSON
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
+import com.tonapps.wallet.api.entity.OnRampArgsEntity
 import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.api.withRetry
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.json.JSONObject
+import java.math.BigDecimal
 import java.util.Locale
 
 internal class InternalApi(
@@ -69,6 +72,20 @@ internal class InternalApi(
             okHttpClient.get(url, headers)
         } ?: throw IllegalStateException("Internal API request failed")
         return JSONObject(body)
+    }
+
+    fun getOnRampData(country: String) = withRetry {
+        okHttpClient.get("https://swap.tonkeeper.com/v2/onramp/currencies?country=${country.uppercase()}")
+    }
+
+    fun getEthenaStakingAPY(address: String): BigDecimal = withRetry {
+        val json = request("ethena/staking?address=$address", false, locale = context.locale)
+        BigDecimal.valueOf(json.getDouble("value"))
+    } ?: BigDecimal.ZERO
+
+    fun calculateOnRamp(args: OnRampArgsEntity) = withRetry {
+        val url = "https://swap.tonkeeper.com/v2/onramp/calculate"
+        okHttpClient.postJSON(url, args.toJSON().toString()).body?.string()
     }
 
     fun getNotifications(): List<NotificationEntity> {

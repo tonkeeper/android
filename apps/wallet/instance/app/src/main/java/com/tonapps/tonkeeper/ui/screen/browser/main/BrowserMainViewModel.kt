@@ -91,7 +91,7 @@ class BrowserMainViewModel(
     private fun setData(data: BrowserDataEntity) {
         val items = mutableListOf<ExploreItem>()
         if (data.apps.isNotEmpty()) {
-            items.add(ExploreItem.Banners(data.apps, api.config.featuredPlayInterval, wallet))
+            items.add(ExploreItem.Banners(data.apps, api.config.featuredPlayInterval, wallet, settingsRepository.country))
         }
 
         var adsItem: ExploreItem.Ads? = null
@@ -122,7 +122,8 @@ class BrowserMainViewModel(
                 items.add(ExploreItem.App(
                     app = app,
                     wallet = wallet,
-                    singleLine = !isDigitalNomads
+                    singleLine = !isDigitalNomads,
+                    country = settingsRepository.country
                 ))
             }
         }
@@ -138,7 +139,8 @@ class BrowserMainViewModel(
                 debugItems.add(ExploreItem.App(
                     app = app,
                     wallet = wallet,
-                    singleLine = false
+                    singleLine = false,
+                    country = settingsRepository.country
                 ))
             }
             items.addAll(5, debugItems)

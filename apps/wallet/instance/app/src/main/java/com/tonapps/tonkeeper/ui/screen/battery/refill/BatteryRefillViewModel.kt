@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.app.Activity
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -12,7 +11,6 @@ import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.billing.priceFormatted
 import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
@@ -30,7 +28,7 @@ import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodType
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -40,7 +38,6 @@ import com.tonapps.wallet.localization.Localization
 import io.batteryapi.models.AndroidBatteryPurchaseRequest
 import io.batteryapi.models.AndroidBatteryPurchaseRequestPurchasesInner
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine

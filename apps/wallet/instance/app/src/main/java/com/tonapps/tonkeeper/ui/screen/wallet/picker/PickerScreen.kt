@@ -90,13 +90,16 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
 
         setTouchHelperCallback(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
 
-            override fun isLongPressDragEnabled() = true
+            override fun isLongPressDragEnabled() = viewModel.isEditModeEnabled
 
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
+                if (!viewModel.isEditModeEnabled) {
+                    return false
+                }
                 if (viewHolder !is WalletHolder || target !is WalletHolder) {
                     return false
                 }

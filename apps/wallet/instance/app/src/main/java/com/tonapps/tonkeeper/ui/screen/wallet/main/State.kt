@@ -1,5 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
+import android.content.Context
+import android.text.SpannableStringBuilder
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
@@ -15,12 +17,14 @@ import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
-import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.localization.Localization
+import uikit.extensions.badgeGreen
+import uikit.extensions.badgeRed
+import uikit.extensions.withGreenBadge
 
 sealed class State {
 
@@ -99,7 +103,7 @@ sealed class State {
         private val balanceType: Int
             get() = assets.getBalanceType(wallet)
 
-        private fun uiItemsTokens(hiddenBalance: Boolean): List<Item> {
+        private fun uiItemsTokens(context: Context, hiddenBalance: Boolean): List<Item> {
             val currencyCode = assets.currency.code
             val uiItems = mutableListOf<Item>()
             uiItems.add(Item.Space(true))
@@ -127,6 +131,7 @@ sealed class State {
                         pendingWithdraw = staked.pendingWithdraw,
                         pendingWithdrawFormat = CurrencyFormatter.formatFiat("TON", staked.pendingWithdraw),
                         cycleEnd = staked.cycleEnd,
+                        apy = staked.pool.apy
                     )
                     uiItems.add(item)
                 } else if (asset is AssetsEntity.Token) {
@@ -264,6 +269,7 @@ sealed class State {
         }
 
         fun uiItems(
+            context: Context,
             wallet: WalletEntity,
             hiddenBalance: Boolean,
             status: Item.Status,
@@ -297,7 +303,7 @@ sealed class State {
                 }
             }
 
-            uiItems.addAll(uiItemsTokens(hiddenBalance))
+            uiItems.addAll(uiItemsTokens(context, hiddenBalance))
             return uiItems.toList()
         }
     }

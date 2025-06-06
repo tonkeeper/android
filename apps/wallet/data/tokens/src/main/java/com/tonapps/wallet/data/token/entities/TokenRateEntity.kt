@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.token.entities
 
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 
 data class TokenRateEntity(
     val currency: WalletCurrency,

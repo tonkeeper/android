@@ -14,6 +14,7 @@ import com.tonapps.tonkeeper.extensions.flagEmoji
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeper.ui.component.CountryFlagView
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.connected.ConnectedAdapter
@@ -71,7 +72,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     private lateinit var slideView: SlideBetweenView
     private lateinit var exploreTabView: AppCompatTextView
     private lateinit var connectedTabView: AppCompatTextView
-    private lateinit var countryView: AppCompatTextView
+    private lateinit var countryView: CountryFlagView
     private lateinit var connectedPlaceholder: View
     private lateinit var connectedListView: RecyclerView
     private lateinit var exploreListView: RecyclerView
@@ -159,7 +160,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         })
         collectFlow(viewModel.uiConnectedItemsFlow, ::setConnectedList)
         collectFlow(viewModel.uiExploreItemsFlow, exploreAdapter::submitList)
-        collectFlow(viewModel.countryFlow.map { it.flagEmoji }, countryView::setText)
+        collectFlow(viewModel.countryFlow.map { it.country }, countryView::setCountry)
 
         baseViewModel?.insetsRootFlow?.let { insets ->
             collectFlow(insets, ::onApplyWindowInsets)

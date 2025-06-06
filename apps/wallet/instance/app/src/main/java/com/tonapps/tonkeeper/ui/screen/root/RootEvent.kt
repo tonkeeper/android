@@ -54,6 +54,7 @@ sealed class RootEvent {
 
     data class OpenDAppByShortcut(
         val wallet: WalletEntity,
-        val url: Uri
+        val url: Uri,
+        val source: String
     ): RootEvent()
 }

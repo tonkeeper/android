@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.manager.assets
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.tonkeeper.RemoteConfig
@@ -12,7 +12,7 @@ import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingRepository
@@ -21,6 +21,7 @@ import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -54,8 +55,11 @@ class AssetsManager(
         refresh: Boolean,
     ): List<AssetsEntity>? {
         val tokens = getTokens(wallet, currency, refresh)
-        val staked = getStaked(wallet, tokens.map { it.token }, currency, refresh)
-        val filteredTokens = tokens.filter { !it.token.isLiquid }
+        var staked = getStaked(wallet, tokens.map { it.token }, currency, refresh)
+        if (!remoteConfig.isEthenaEnabled) {
+            staked = staked.filter { !it.staked.isEthena }
+        }
+        val filteredTokens = if (remoteConfig.isEthenaEnabled) tokens.filter { !it.token.isLiquid } else tokens.filter { !it.token.isTsTON }
         val list = (filteredTokens + staked).sortedBy { it.fiat }.reversed()
         if (list.isEmpty()) {
             return null
@@ -63,7 +67,31 @@ class AssetsManager(
         return list
     }
 
-    private suspend fun getTokens(
+    suspend fun getToken(
+        wallet: WalletEntity,
+        token: String,
+        currency: WalletCurrency = settingsRepository.currency
+    ): AssetsEntity.Token? {
+        val tokens = getTokens(wallet, currency, false)
+        return tokens.firstOrNull { it.token.address.equalsAddress(token) }
+    }
+
+    suspend fun getTokens(
+        wallet: WalletEntity,
+        accountIds: List<String>,
+        currency: WalletCurrency = settingsRepository.currency
+    ): List<AssetsEntity.Token> = withContext(Dispatchers.IO) {
+        if (accountIds.isEmpty()) {
+            emptyList()
+        } else {
+            val deferredTokens = accountIds.map { accountId ->
+                async { getToken(wallet, accountId, currency) }
+            }
+            deferredTokens.mapNotNull { it.await() }
+        }
+    }
+
+    suspend fun getTokens(
         wallet: WalletEntity,
         currency: WalletCurrency = settingsRepository.currency,
         refresh: Boolean,
@@ -92,7 +120,7 @@ class AssetsManager(
         refresh: Boolean,
     ): List<AssetsEntity.Staked> {
         val staking = getStaking(wallet, refresh)
-        val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
+        val staked = StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
         return staked.map { AssetsEntity.Staked(it) }
     }
 

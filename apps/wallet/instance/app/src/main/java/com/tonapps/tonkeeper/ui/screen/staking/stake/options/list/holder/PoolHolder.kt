@@ -9,9 +9,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.wallet.data.staking.StakingPool
-import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
-import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.withAlpha
 import uikit.widget.FrescoView

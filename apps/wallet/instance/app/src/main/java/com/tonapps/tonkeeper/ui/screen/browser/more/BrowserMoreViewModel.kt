@@ -38,7 +38,8 @@ class BrowserMoreViewModel(
             uiItems.add(Item(
                 wallet = wallet,
                 app = app,
-                position = position
+                position = position,
+                country = settingsRepository.country
             ))
         }
         uiItems.toList()

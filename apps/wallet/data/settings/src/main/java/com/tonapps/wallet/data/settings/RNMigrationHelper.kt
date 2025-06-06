@@ -1,11 +1,10 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
-import android.util.Log
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNWallets
 import com.tonapps.wallet.localization.Language
@@ -50,7 +49,7 @@ internal class RNMigrationHelper(
 
     fun getLegacyCurrency(): WalletCurrency {
         val value = getTonPrice().optString("currency") ?: WalletCurrency.FIAT.first()
-        return WalletCurrency(value.uppercase())
+        return WalletCurrency.ofOrDefault(value.uppercase())
     }
 
     fun setLegacyCurrency(currency: WalletCurrency) {

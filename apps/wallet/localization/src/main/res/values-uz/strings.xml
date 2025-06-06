@@ -60,10 +60,13 @@
     <string name="liquid_staking">Suyuqlikni to\'ldirish</string>
     <string name="other">Boshqa</string>
     <string name="minimum_amount">Minimal %1$s</string>
+    <string name="stake_ethena_description">tsUSDe tokeni markazlashtirilmagan staking xizmati Ethena orqali o\'tkaziladigan USDe ni ifodalaydi. tsUSDe minimal blokirovka bilan avtomatik ravishda staking mukofotlarini oladi.</string>
+    <string name="stake_ethena_disclaimer">Bu o\'tgan haftadagi o\'rtacha protokol mukofotlari va stavkaga qo\'yilgan o\'rtacha USDe miqdoriga asoslangan taxminiy yillik daromaddir. Daromad haftalik birikma bilan yillik hisoblanadi. <annotation colorAttr="textSecondaryColor">O‘tgan ishlash kelajakdagi natijalarni kafolatlamaydi.</annotation> Staking va mukofotlar uchinchi tomon xizmati Ethena tomonidan taqdim etiladi va ularning <annotation colorAttr="textAccentColor">shartlariga</annotation> bo‘ysunadi.</string>
     <string name="stake_tonstakers_description">Tonstakerlar hovuziga TON qo‘shganingizda, siz hovuzdagi ulushingizni ifodalovchi tsTON deb nomlangan token olasiz. Hovuz daromadni to\'plaganligi sababli, sizning tsTON ko\'proq TON miqdorini bildiradi.</string>
     <string name="edit">Tahrirlash</string>
     <string name="pinned">Qaydnoma qilindi</string>
     <string name="all_assets">Barcha aktivlar</string>
+    <string name="all_ton_assets">Barcha TON aktivlari</string>
     <string name="sorted_by_price">Narx bo\'yicha saralangan</string>
     <string name="staking_minimum_deposit">Minimal depozit %1$s.</string>
     <string name="staking_options">Opsiyalar</string>
@@ -183,6 +186,7 @@
     <string name="empty_collectibles_subtitle">Birinchi narsangizni oling!</string>
     <string name="new_wallet">Yangi hamyon</string>
     <string name="buy_toncoin">Toncoin sotib olish</string>
+    <string name="buy_or_sell_dot">Sotib olish · Sotish</string>
     <string name="buy_or_sell">Sotib olish yoki sotish</string>
     <string name="fiat_open_description">Siz Tonkeeper tomonidan boshqarilmaydigan tashqi ilovani ochmoqdasiz.</string>
     <string name="buy">Sotib olish</string>
@@ -306,6 +310,7 @@
     <string name="view_details">Tafsilotlarni ko\'rish</string>
     <string name="receive_coin">Qabul qilish %1$s</string>
     <string name="receive_coin_description">Faqat %1$s va TON tarmog\'idagi tokenlarni ushbu manzilga yuboring, aks holda mablag\'ingiz yo\'qolishi mumkin.</string>
+    <string name="receive_tron_description">Bu manzilga atigi %1$s yuboring, aks holda mablagʻingiz yoʻqolishi mumkin.</string>
     <string name="copy">Nusxa ko\'chirish</string>
     <string name="legal">Huquqiy</string>
     <string name="terms">Foydalanish shartlari</string>
@@ -468,6 +473,8 @@
     <string name="payment_method_not_found">Toʻlov usuli mavjud emas</string>
     <string name="app_not_found">Ilova topilmadi</string>
     <string name="insufficient_balance_in_wallet">Hamyonda mablag\' yetarli emas</string>
+    <string name="insufficient_battery_charges">Yetarli emas\\nBatareya zaryati</string>
+    <string name="insufficient_balance_charges">Toʻlov uchun talab qilinadi: %1$s\\nMavjud: %2$s</string>
     <string name="insufficient_balance_fees">Blokcheyn to‘lovlari uchun talab qilinadi: %1$s.\nBalansingiz: %2$s.</string>
     <string name="insufficient_balance_default">Toʻlanishi kerak: %1$s.\nBalansingiz: %2$s.</string>
     <string name="buy_ton">TON sotib oling</string>
@@ -503,6 +510,7 @@
     <string name="stories_safemode_2_title">Faqat tasdiqlangan NFTlar</string>
     <string name="stories_safemode_2_subtitle">Spam va soxta narsalarni oldini olish uchun.</string>
     <string name="stories_safemode_3_title">Faqat tasdiqlangan tokenlar</string>
+    <string name="open_explorer">Explorerda oching</string>
     <string name="tx_marked_as_spam">Tranzaksiya Spam sifatida belgilandi</string>
     <string name="address_prefix">Manzil:</string>
     <string name="your_address">Sizning manzilingiz:</string>
@@ -510,9 +518,12 @@
     <string name="all">Hammasi</string>
     <string name="report_encrypted_comment">Ushbu tranzaksiyaga oid fikr shifrlangan koʻrinishda hisobot bilan yuboriladi.</string>
     <string name="select_from_gallery">Galereyadan tanlang</string>
+    <string name="swipe_right">O‘ngga suring</string>
     <string name="open">Ochiq</string>
     <string name="theme_light">Nur</string>
+    <string name="payment_method">To\'lov usuli</string>
     <string name="downloading">Yuklab olinmoqda…</string>
+    <string name="emulation_failed_warning">Tasdiqlangandan so\'ng, hamma narsa yuz berishi mumkin, jumladan, barcha mablag\'laringizni yo\'qotish. Barcha operatsiyalar qaytarilmasdir. Biz tranzaksiyani taqlid qila olmadik va keyin nima bo\'lishini bilmaymiz.</string>
     <string name="update_tonkeeper">Tonkeeper-ni yangilang</string>
     <string name="update_tonkeeper_subtitle">Tonkeeper ilovasining yangi versiyasi mavjud. Uni hozir yuklab olishingiz mumkin.</string>
     <string name="download_error">Yuklab olish xatosi. Qayta urinish uchun bosing.</string>
@@ -531,6 +542,7 @@
     <string name="default_font_size">Standart shrift hajmi</string>
     <string name="words12">12 so\'z</string>
     <string name="words24">24 so\'z</string>
+    <string name="provider">Provayder</string>
     <string name="theme_deep_blue">Chuqur moviy</string>
     <string name="theme_dark">Qorong\'i</string>
     <string name="sign_data_binary_message">Siz ko\'r-ko\'rona imzo chekyapsiz. Faqat ishonchli manbalardan kiring.</string>
@@ -552,4 +564,18 @@
     <string name="dapp_share_subtitle">Ushbu havola %1$s ni bevosita Tonkeeper’da ochadi. Keyinroq yana foydalanishingiz yoki kerak bo‘lsa, boshqalar bilan ulashishingiz mumkin.</string>
     <string name="copy_link">Havolani nusxalash</string>
     <string name="dapp_disclaimer">Siz Tonkeeper tomonidan boshqarilmaydigan tashqi ilovani ochyapsiz. Faqat manbaga ishonsangiz davom eting.</string>
+    <string name="sign">Obuna boʻling</string>
+    <string name="ton_assets">TON aktivlari</string>
+    <string name="pair_not_available">Bu valyuta juftligi mavjud emas. Iltimos, boshqa sinab koʻring.</string>
+    <string name="balance_prefix">Balans: %1$s</string>
+    <string name="all_currencies">Barcha valyutalar</string>
+    <string name="crypto">Kripto</string>
+    <string name="close">Yopish</string>
+    <string name="dapp_safe_modal_title">Havola firibgarlik xizmatiga olib keladi</string>
+    <string name="dapp_safe_model_button">Qanday qilib xavfsiz bo\'lish kerak</string>
+    <string name="dapp_safe_modal_subtitle">Biz uni xavfsizlik nuqtai nazaridan ochmadik</string>
+    <string name="credit_card">Kredit kartasi</string>
+    <string name="credit_card_subtitle">Visa yoki Mastercard</string>
+    <string name="currency_not_found">Valyuta topilmadi</string>
+    <string name="onrmap_provider_description">Turli valyuta juftliklari uchun boshqa provayderlar mavjud.</string>
 </resources>

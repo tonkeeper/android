@@ -4,10 +4,12 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.Formatter
+import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.core.history.ActionOptions
@@ -23,6 +25,8 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
+import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.settings.ChartPeriod
@@ -57,6 +61,7 @@ class TokenViewModel(
     private val historyHelper: HistoryHelper,
     private val batteryRepository: BatteryRepository,
     private val purchaseRepository: PurchaseRepository,
+    private val remoteConfig: RemoteConfig
 ) : BaseWalletVM(app) {
 
     val burnAddress: String by lazy {
@@ -168,6 +173,11 @@ class TokenViewModel(
     ) {
         val currency = settingsRepository.currency.code
         val items = mutableListOf<Item>()
+
+        val stakeApp = if (remoteConfig.isEthenaEnabled && token.address.equalsAddress(WalletCurrency.USDE_TON_ETHENA_ADDRESS)) {
+            AppEntity.ethena
+        } else null
+
         items.add(
             Item.Balance(
                 balance = CurrencyFormatter.format(
@@ -188,6 +198,7 @@ class TokenViewModel(
                 swapMethod = if (token.isTrc20) getSwapMethod() else null,
                 token = token.balance.token,
                 wallet = wallet,
+                stakeApp = stakeApp
             )
         )
         if (token.isUsdt && !wallet.isW5 && wallet.hasPrivateKey && settingsRepository.isUSDTW5(

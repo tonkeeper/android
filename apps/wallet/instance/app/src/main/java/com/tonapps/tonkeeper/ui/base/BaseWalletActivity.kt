@@ -3,8 +3,8 @@ package com.tonapps.tonkeeper.ui.base
 import android.content.Context
 import android.os.Bundle
 import android.widget.FrameLayout
-import com.tonapps.extensions.activity
 import com.tonapps.tonkeeperx.R
+import com.tonapps.extensions.activity
 import uikit.navigation.NavigationActivity
 
 abstract class BaseWalletActivity: NavigationActivity(), BaseWalletVM.Holder {

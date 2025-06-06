@@ -60,10 +60,13 @@
     <string name="liquid_staking">流动性质押</string>
     <string name="other">其他</string>
     <string name="minimum_amount">最低 %1$s</string>
+    <string name="stake_ethena_description">tsUSDe 代币代表通过 Ethena（一种去中心化的质押服务）持有的 USDe。tsUSDe 会自动累积质押奖励，且锁定时间最少。</string>
+    <string name="stake_ethena_disclaimer">这是根据过去一周的平均协议奖励和平均质押 USDe 数量估算的年化收益。收益按周复利计算，以年化形式呈现。<annotation colorAttr="textSecondaryColor">过往表现不保证未来结果。</annotation> 质押和奖励由第三方服务商 Ethena 提供，并受其<annotation colorAttr="textAccentColor">条款</annotation>约束。</string>
     <string name="stake_tonstakers_description">当您在 Tonstakers 池中质押 TON 时，您会收到一个名为 tsTON 的代币，它代表您在池中的份额。随着池子积累利润，您的 tsTON 代表的 TON 数量会越来越多。</string>
     <string name="edit">编辑</string>
     <string name="pinned">置顶</string>
     <string name="all_assets">所有资产</string>
+    <string name="all_ton_assets">所有 TON 资产</string>
     <string name="sorted_by_price">按价格排序</string>
     <string name="staking_minimum_deposit">最低存款 %1$s。</string>
     <string name="staking_options">选项</string>
@@ -183,6 +186,7 @@
     <string name="empty_collectibles_subtitle">获取你的第一个物品！</string>
     <string name="new_wallet">新钱包</string>
     <string name="buy_toncoin">购买Toncoin</string>
+    <string name="buy_or_sell_dot">买入·卖出</string>
     <string name="buy_or_sell">买或卖</string>
     <string name="fiat_open_description">您正在打开一个非由Tonkeeper操作的外部应用程序。</string>
     <string name="buy">购买</string>
@@ -504,9 +508,12 @@
     <string name="all">全部</string>
     <string name="report_encrypted_comment">此交易的评论将与报告一起以解密形式发送。</string>
     <string name="select_from_gallery">从画廊中选择</string>
+    <string name="swipe_right">向右滑动</string>
     <string name="open">打开</string>
     <string name="theme_light">光</string>
+    <string name="payment_method">付款方式</string>
     <string name="downloading">正在下载…</string>
+    <string name="emulation_failed_warning">确认后，任何事情都可能发生，包括损失所有资金。所有交易均不可逆转。我们无法模拟该交易，也不知道接下来会发生什么。</string>
     <string name="update_tonkeeper">更新 Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Tonkeeper 有新版本可用。您现在就可以下载。</string>
     <string name="download_error">下载错误。点击重试。</string>
@@ -525,6 +532,7 @@
     <string name="default_font_size">默认字体大小</string>
     <string name="words12">12 个字</string>
     <string name="words24">24 个字</string>
+    <string name="provider">提供者</string>
     <string name="theme_deep_blue">深蓝</string>
     <string name="theme_dark">黑暗的</string>
     <string name="sign_data_binary_message">您正在盲目签名。请仅从可信赖的来源签名。</string>
@@ -551,5 +559,19 @@
     <string name="dapp_share_subtitle">此链接将在 Tonkeeper 中直接打开 %1$s。你可以稍后再次使用或根据需要分享它。</string>
     <string name="copy_link">复制链接</string>
     <string name="dapp_disclaimer">你正在打开一个非 Tonkeeper 运营的外部应用。只有在你信任该来源时才继续操作。</string>
+    <string name="sign">符号</string>
+    <string name="ton_assets">TON 资产</string>
+    <string name="pair_not_available">此货币对不可用。请尝试其他货币对。</string>
+    <string name="balance_prefix">余额：%1$s</string>
+    <string name="all_currencies">所有货币</string>
+    <string name="crypto">加密</string>
+    <string name="close">关闭</string>
+    <string name="dapp_safe_modal_title">该链接指向一个诈骗服务</string>
+    <string name="dapp_safe_model_button">如何保证安全</string>
+    <string name="dapp_safe_modal_subtitle">出于安全原因，我们没有打开它</string>
+    <string name="credit_card">信用卡</string>
+    <string name="credit_card_subtitle">Visa或Mastercard</string>
+    <string name="currency_not_found">未找到货币</string>
+    <string name="onrmap_provider_description">其他提供商可提供不同的货币对。</string>
 
 </resources>

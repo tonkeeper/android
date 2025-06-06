@@ -2,16 +2,15 @@ package com.tonapps.tonkeeper.ui.screen.settings.currency
 
 import android.app.Application
 import androidx.annotation.StringRes
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.tonkeeper.os.AndroidCurrency
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.currency.list.Item
 import com.tonapps.tonkeeper.worker.TotalBalancesWorker
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
@@ -34,7 +33,7 @@ class CurrencyViewModel(
     }
 
     fun selectCurrency(currency: String) {
-        settings.currency = WalletCurrency(currency)
+        settings.currency = WalletCurrency.ofOrDefault(currency)
         TotalBalancesWorker.run(context)
     }
 
@@ -42,9 +41,15 @@ class CurrencyViewModel(
         val currencies = WalletCurrency.ALL
         val items = mutableListOf<Item>()
         for ((index, currency) in currencies.withIndex()) {
+            val titleRes = getNameResIdForCurrency(currency)
+            val name = if (titleRes == 0) {
+                AndroidCurrency.resolveBySign(currency)?.displayName ?: continue
+            } else {
+                getString(titleRes)
+            }
             val item = Item(
                 currency = currency,
-                nameResId = getNameResIdForCurrency(currency),
+                name = name,
                 selected = currency == selectedCurrency.code,
                 position = ListCell.getPosition(currencies.size, index)
             )
@@ -90,7 +95,7 @@ class CurrencyViewModel(
 
             "ton" -> Localization.toncoin
             "btc" -> Localization.bitcoin
-            else -> throw IllegalArgumentException("Unsupported currency: $currency")
+            else -> 0
         }
 
     }

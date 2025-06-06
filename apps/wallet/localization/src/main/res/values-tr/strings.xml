@@ -60,10 +60,13 @@
     <string name="liquid_staking">Sıvı Hisse Senedi</string>
     <string name="other">Diğer</string>
     <string name="minimum_amount">En az %1$s</string>
+    <string name="stake_ethena_description">tsUSDe token\'ı, merkezi olmayan bir staking hizmeti olan Ethena aracılığıyla tutulan USDE\'yi temsil eder. tsUSDe, minimum kilitlemeyle otomatik olarak staking ödülleri biriktirir.</string>
+    <string name="stake_ethena_disclaimer">Bu, geçen haftanın ortalama protokol ödüllerine ve stake edilmiş ortalama USDe miktarına dayalı tahmini yıllık getiridir. Getiri, haftalık bileşik faizle yıllık hale getirilir. <annotation colorAttr="textSecondaryColor">Geçmiş performans gelecekteki sonuçları garanti etmez.</annotation> Stake ve ödüller, üçüncü taraf bir hizmet olan Ethena tarafından sağlanır ve <annotation colorAttr="textAccentColor">şartlarına</annotation> tabidir.</string>
     <string name="stake_tonstakers_description">Tonstakers havuzunda TON stake ettiğinizde, havuzdaki payınızı temsil eden tsTON adlı bir token alırsınız. Havuz kar biriktirdikçe, tsTON\'unuz daha büyük miktarda TON\'u temsil eder.</string>
     <string name="edit">Düzenle</string>
     <string name="pinned">Sabitlenmiş</string>
     <string name="all_assets">Tüm Varlıklar</string>
+    <string name="all_ton_assets">Tüm TON Varlıkları</string>
     <string name="sorted_by_price">Fiyata Göre Sıralandı</string>
     <string name="staking_minimum_deposit">Minimum mevduat %1$s.</string>
     <string name="staking_options">Seçenekler</string>
@@ -183,6 +186,7 @@
     <string name="empty_collectibles_subtitle">İlk öğenizi alın!</string>
     <string name="new_wallet">Yeni cüzdan</string>
     <string name="buy_toncoin">Toncoin Satın Al</string>
+    <string name="buy_or_sell_dot">Satın al · Sat</string>
     <string name="buy_or_sell">Satın al veya sat</string>
     <string name="fiat_open_description">Tonkeeper tarafından işletilmeyen harici bir uygulama açıyorsunuz.</string>
     <string name="buy">Satın Al</string>
@@ -509,9 +513,12 @@
     <string name="all">Tüm</string>
     <string name="report_encrypted_comment">Bu işlemden gelen yorum, şifresi çözülmüş bir şekilde raporla birlikte gönderilecektir.</string>
     <string name="select_from_gallery">Galeriden seç</string>
+    <string name="swipe_right">Sağa kaydırın</string>
     <string name="open">Açık</string>
     <string name="theme_light">Işık</string>
+    <string name="payment_method">Ödeme yöntemi</string>
     <string name="downloading">İndiriliyor…</string>
+    <string name="emulation_failed_warning">Onaylandıktan sonra, tüm fonlarınızı kaybetmek de dahil olmak üzere her şey olabilir. Tüm işlemler geri alınamaz. İşlemi taklit edemedik ve bundan sonra ne olacağını bilmiyoruz.</string>
     <string name="update_tonkeeper">Tonkeeper\'ı güncelle</string>
     <string name="update_tonkeeper_subtitle">Tonkeeper\'ın yeni bir sürümü mevcut. Şimdi indirebilirsiniz.</string>
     <string name="download_error">İndirme hatası. Tekrar denemek için dokunun.</string>
@@ -530,6 +537,7 @@
     <string name="default_font_size">Varsayılan Yazı Tipi Boyutu</string>
     <string name="words12">12 kelime</string>
     <string name="words24">24 kelime</string>
+    <string name="provider">Sağlayıcı</string>
     <string name="theme_deep_blue">Derin Mavi</string>
     <string name="theme_dark">Karanlık</string>
     <string name="sign_data_binary_message">Körü körüne imza atıyorsunuz. Sadece güvenilir kaynaklardan imza atın.</string>
@@ -556,5 +564,19 @@
     <string name="dapp_share_subtitle">Bu bağlantı %1$s uygulamasını doğrudan Tonkeeper içinde açar. Daha sonra tekrar kullanabilir veya gerekirse paylaşabilirsiniz.</string>
     <string name="copy_link">Bağlantıyı Kopyala</string>
     <string name="dapp_disclaimer">Tonkeeper tarafından işletilmeyen harici bir uygulamayı açıyorsunuz. Yalnızca kaynağa güveniyorsanız devam edin.</string>
+    <string name="sign">İmza</string>
+    <string name="ton_assets">TON varlıkları</string>
+    <string name="pair_not_available">Bu döviz çifti mevcut değil. Lütfen başka bir çift deneyin.</string>
+    <string name="balance_prefix">Bakiye: %1$s</string>
+    <string name="all_currencies">Tüm para birimleri</string>
+    <string name="crypto">Kripto</string>
+    <string name="close">Kapalı</string>
+    <string name="dapp_safe_modal_title">Bağlantı bir dolandırıcılık hizmetine yönlendiriyor</string>
+    <string name="dapp_safe_model_button">Güvende kalmak için neler yapmalısınız?</string>
+    <string name="dapp_safe_modal_subtitle">Güvenlik nedeniyle açmadık</string>
+    <string name="credit_card">Kredi kartı</string>
+    <string name="credit_card_subtitle">Visa veya Mastercard</string>
+    <string name="currency_not_found">Para birimi bulunamadı</string>
+    <string name="onrmap_provider_description">Farklı döviz çiftleri için diğer sağlayıcılar mevcuttur.</string>
 
 </resources>

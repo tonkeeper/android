@@ -33,8 +33,14 @@ data class TokenEntity(
     val customPayloadApiUri: String?
 ): Parcelable {
 
-    val isLiquid: Boolean
+    val isTsTON: Boolean
         get() = verification == Verification.whitelist && symbol.equals("tsTON", true)
+
+    val isTsUSDe: Boolean
+        get() = verification == Verification.whitelist && symbol.equals("tsUSDe", true)
+
+    val isLiquid: Boolean
+        get() = isTsTON || isTsUSDe
 
     enum class Verification {
         whitelist, blacklist, none
@@ -104,7 +110,7 @@ data class TokenEntity(
         val USDT = TokenEntity(
             blockchain = Blockchain.TON,
             address = TON_USDT,
-            name = "Tether USD",
+            name = "Tether",
             symbol = "USD₮",
             imageUri = USDT_ICON_URI,
             decimals = 6,
@@ -117,7 +123,7 @@ data class TokenEntity(
         val TRON_USDT = TokenEntity(
             blockchain = Blockchain.TRON,
             address = TRC20_USDT,
-            name = "Tether USD",
+            name = "Tether",
             symbol = "USD₮",
             imageUri = USDT_ICON_URI,
             decimals = 6,

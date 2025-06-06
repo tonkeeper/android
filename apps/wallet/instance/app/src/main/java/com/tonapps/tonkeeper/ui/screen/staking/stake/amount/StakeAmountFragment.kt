@@ -11,8 +11,6 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.stake.confirm.StakeConfirmFragment
 import com.tonapps.tonkeeper.ui.screen.staking.stake.options.StakeOptionsFragment
-import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
-import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
@@ -27,7 +25,6 @@ import uikit.extensions.collectFlow
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 import uikit.extensions.withAlpha
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 import uikit.widget.HeaderView
 
@@ -55,7 +52,7 @@ class StakeAmountFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, S
 
         amountView = view.findViewById(R.id.stake_amount)
         amountView.suffix = "TON"
-        amountView.doOnValueChange = primaryViewModel::updateAmount
+        amountView.doOnValueChange = { value, _ -> primaryViewModel.updateAmount(value) }
 
         currencyView = view.findViewById(R.id.stake_currency)
 

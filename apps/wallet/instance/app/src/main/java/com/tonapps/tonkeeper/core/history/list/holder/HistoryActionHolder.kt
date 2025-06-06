@@ -44,6 +44,7 @@ import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.FrescoView
 import uikit.widget.LoaderView
+import androidx.core.net.toUri
 
 class HistoryActionHolder(
     parent: ViewGroup,
@@ -110,7 +111,7 @@ class HistoryActionHolder(
             iconView.imageTintList = context.iconSecondaryColor.stateList
             warningView.visibility = View.GONE
         } else {
-            loadIcon(Uri.parse(item.iconURL))
+            loadIcon(item.iconURL.toUri())
             warningView.visibility = View.GONE
         }
 

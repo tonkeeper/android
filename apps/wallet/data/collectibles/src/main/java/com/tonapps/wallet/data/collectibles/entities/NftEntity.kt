@@ -49,6 +49,9 @@ data class NftEntity(
             return name ?: ""
         }
 
+    val isNotRender: Boolean
+        get() = metadata.isNotRender
+
     val collectionDescription: String
         get() = collection?.description ?: ""
 

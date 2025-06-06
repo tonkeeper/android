@@ -60,10 +60,12 @@
     <string name="liquid_staking">Replanteo líquido</string>
     <string name="other">Otro</string>
     <string name="minimum_amount">Mínimo %1$s</string>
+    <string name="stake_ethena_disclaimer">Este es el rendimiento anual estimado basado en las recompensas promedio del protocolo de la semana pasada y la cantidad promedio de USDe apostados. El rendimiento está anualizado con capitalización semanal. <annotation colorAttr="textSecondaryColor">El rendimiento pasado no garantiza resultados futuros.</annotation> El staking y las recompensas son proporcionados por Ethena, un servicio externo, y están sujetos a sus <annotation colorAttr="textAccentColor">términos</annotation>.</string>
     <string name="stake_tonstakers_description">Cuando haces staking de TON en un pool de Tonstakers, recibes un token llamado tsTON que representa tu participación en el pool. A medida que el pool acumula ganancias, tu tsTON representa una mayor cantidad de TON.</string>
     <string name="edit">Editar</string>
     <string name="pinned">Fijado</string>
     <string name="all_assets">Todos los activos</string>
+    <string name="all_ton_assets">Todos los activos de TON</string>
     <string name="sorted_by_price">Ordenado por Precio</string>
     <string name="staking_minimum_deposit">Depósito mínimo %1$s.</string>
     <string name="staking_options">Opciones</string>
@@ -183,6 +185,7 @@
     <string name="empty_collectibles_subtitle">¡Consigue tu primer objeto!</string>
     <string name="new_wallet">Nuevo monedero</string>
     <string name="buy_toncoin">Comprar Toncoin</string>
+    <string name="buy_or_sell_dot">Comprar · Vender</string>
     <string name="buy_or_sell">Comprar o vender</string>
     <string name="fiat_open_description">Está abriendo una aplicación externa que no es operada por Tonkeeper.</string>
     <string name="buy">Comprar</string>
@@ -509,9 +512,12 @@
     <string name="all">Todo</string>
     <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
     <string name="select_from_gallery">Seleccionar de la galería</string>
+    <string name="swipe_right">Desliza hacia la derecha</string>
     <string name="open">Abierto</string>
     <string name="theme_light">Ligero</string>
+    <string name="payment_method">Método de pago</string>
     <string name="downloading">Descargando…</string>
+    <string name="emulation_failed_warning">Tras la confirmación, cualquier cosa puede pasar, incluso perder todos tus fondos. Todas las transacciones son irreversibles. No pudimos emular la transacción y desconocemos qué ocurrirá después.</string>
     <string name="update_tonkeeper">Actualizar Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Hay una nueva versión de Tonkeeper disponible. Puedes descargarla ahora.</string>
     <string name="download_error">Error de descarga. Pulsa para volver a intentarlo.</string>
@@ -530,6 +536,7 @@
     <string name="default_font_size">Tamaño de fuente predeterminado</string>
     <string name="words12">12 palabras</string>
     <string name="words24">24 palabras</string>
+    <string name="provider">Proveedor</string>
     <string name="theme_deep_blue">Azul profundo</string>
     <string name="theme_dark">Oscuro</string>
     <string name="sign_data_binary_message">Estás firmando a ciegas. Firma solo con fuentes confiables.</string>
@@ -556,5 +563,20 @@
     <string name="dapp_share_subtitle">Este enlace abre %1$s directamente en Tonkeeper. Puedes usarlo más tarde o compartirlo si es necesario.</string>
     <string name="copy_link">Copiar enlace</string>
     <string name="dapp_disclaimer">Estás abriendo una aplicación externa que no es operada por Tonkeeper. Procede solo si confías en la fuente.</string>
+    <string name="sign">Firmar</string>
+    <string name="ton_assets">Activos de TON</string>
+    <string name="pair_not_available">Este par de divisas no está disponible. Intente con otro.</string>
+    <string name="balance_prefix">Saldo: %1$s</string>
+    <string name="all_currencies">Todas las monedas</string>
+    <string name="crypto">Cripto</string>
+    <string name="close">Cerca</string>
+    <string name="dapp_safe_modal_title">El enlace conduce a un servicio fraudulento.</string>
+    <string name="dapp_safe_model_button">Cómo mantenerse seguro</string>
+    <string name="dapp_safe_modal_subtitle">No lo abrimos por razones de seguridad.</string>
+    <string name="credit_card">Tarjeta de crédito</string>
+    <string name="credit_card_subtitle">Visa o Mastercard</string>
+    <string name="currency_not_found">Moneda no encontrada</string>
+    <string name="onrmap_provider_description">Otros proveedores disponibles para diferentes pares de divisas.</string>
+    <string name="stake_ethena_description">El token tsUSDe representa USDe mantenido a través de Ethena, un servicio de staking descentralizado. tsUSDe acumula automáticamente recompensas de staking, con un bloqueo mínimo.</string>
 
 </resources>

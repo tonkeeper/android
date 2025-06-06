@@ -39,7 +39,7 @@ class ExploreBannersExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.
     }
 
     override fun onBind(item: ExploreItem.Banners) {
-        val items = BannerAppItem.createApps(item.wallet, item.apps)
+        val items = BannerAppItem.createApps(item.wallet, item.apps, item.country)
         interval = item.interval.toLong()
         adapter.submitList(items) {
             if (currentPosition == 0) {

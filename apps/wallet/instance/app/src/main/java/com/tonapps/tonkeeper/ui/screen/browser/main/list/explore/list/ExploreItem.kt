@@ -36,7 +36,8 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
     data class App(
         val app: BrowserAppEntity,
         val wallet: WalletEntity,
-        val singleLine: Boolean
+        val singleLine: Boolean,
+        val country: String
     ): ExploreItem(TYPE_APP) {
 
         val icon: Uri
@@ -59,6 +60,7 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
         val apps: List<BrowserAppEntity>,
         val interval: Int,
         val wallet: WalletEntity,
+        val country: String
     ): ExploreItem(TYPE_BANNERS)
 
 }

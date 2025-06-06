@@ -18,11 +18,19 @@ class ButtonsLayout @JvmOverloads constructor(
         private val ROW_HEIGHT = 80.dp
     }
 
+    var maxColumnCount: Int = MAX_COLUMN_COUNT
+        set(value) {
+            if (field != value) {
+                field = value
+                requestLayout()
+            }
+        }
+
     private val childVisibleCount: Int
         get() = getVisibleChildViews().size
 
     private val columnCount: Int
-        get() = childVisibleCount.coerceAtMost(MAX_COLUMN_COUNT)
+        get() = childVisibleCount.coerceAtMost(maxColumnCount)
 
     private val rowCount: Int
         get() = (childVisibleCount + columnCount - 1) / columnCount

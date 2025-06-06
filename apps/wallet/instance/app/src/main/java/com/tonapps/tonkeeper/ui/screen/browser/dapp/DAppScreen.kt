@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ShareCompat
-import androidx.core.content.IntentCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -121,14 +120,13 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (args.sendAnalytics) {
-            AnalyticsHelper.trackEventClickDApp(
-                url = args.url.toString(),
-                name = args.title,
-                installId = installId,
-                source = args.source
-            )
-        }
+        AnalyticsHelper.trackEventClickDApp(
+            url = args.url.toString(),
+            name = args.title,
+            installId = installId,
+            source = args.source,
+            country = viewModel.country
+        )
     }
 
     private fun applyHost(url: String) {
@@ -374,10 +372,17 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
             title: String,
             url: Uri,
             iconUrl: String,
-            source: String,
-            sendAnalytics: Boolean = true,
+            source: String
         ): DAppScreen {
-            return newInstance(wallet, DAppArgs(title, url, source, iconUrl, sendAnalytics))
+            return newInstance(wallet, DAppArgs(title, url, source, iconUrl))
+        }
+
+        fun newInstance(
+            wallet: WalletEntity,
+            app: AppEntity,
+            source: String
+        ): DAppScreen {
+            return newInstance(wallet, app.name, app.url, app.iconUrl, source)
         }
 
         fun newInstance(

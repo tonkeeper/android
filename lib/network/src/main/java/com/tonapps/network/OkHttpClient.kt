@@ -104,6 +104,7 @@ fun OkHttpClient.sse(
     onFailure: ((Throwable) -> Unit)?
 ): Flow<SSEvent> = callbackFlow {
     val listener = object : EventSourceListener() {
+
         override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
             if (!this@callbackFlow.trySend(SSEvent(id, type, data)).isSuccess) {
                 eventSource.cancel()

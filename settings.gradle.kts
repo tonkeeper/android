@@ -37,6 +37,7 @@ include(":ui:uikit:core")
 include(":ui:uikit:color")
 include(":ui:uikit:icon")
 include(":ui:uikit:list")
+include(":ui:uikit:flag")
 
 include(":lib:extensions")
 include(":lib:security")

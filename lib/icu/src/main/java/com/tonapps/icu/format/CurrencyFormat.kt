@@ -55,10 +55,20 @@ internal class CurrencyFormat(val locale: Locale) {
         private val tokenSymbols = ArrayMap<String, String>().apply {
             put("BTC", "₿")
             put("ETH", "Ξ")
-            put("USDT", "₮")
             put("USDC", "₵")
             put("DOGE", "Ð")
             put("TON", TON_SYMBOL)
+            put("USDT", "USD₮")
+        }
+
+        private fun fixSymbol(value: String): String {
+            if (value.equals("USDT", ignoreCase = true)) {
+                return "USD₮"
+            }
+            if (value.equals("USDC", ignoreCase = true)) {
+                return "USD₵"
+            }
+            return value
         }
 
         private val symbols = fiatSymbols + tokenSymbols
@@ -122,7 +132,7 @@ internal class CurrencyFormat(val locale: Locale) {
         value: String,
         replaceSymbol: Boolean,
     ): CharSequence {
-        val symbol = if (replaceSymbol) symbols[currency] else currency
+        val symbol = if (replaceSymbol) symbols[currency] else fixSymbol(currency)
         val builder = StringBuilder()
         if (symbol != null) {
             if (monetarySymbolFirstPosition && isFiat(currency)) {

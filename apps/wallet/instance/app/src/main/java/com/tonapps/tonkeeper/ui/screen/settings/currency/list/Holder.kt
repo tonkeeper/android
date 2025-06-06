@@ -24,7 +24,7 @@ class Holder(
         itemIconView.setOnClickListener { onClick(item.currency) }
         itemIconView.position = item.position
         itemIconView.text = item.currency
-        itemIconView.description = context.getString(item.nameResId)
+        itemIconView.description = item.name
 
         if (item.selected) {
             itemIconView.iconRes = UIKitIcon.ic_donemark_thin_28

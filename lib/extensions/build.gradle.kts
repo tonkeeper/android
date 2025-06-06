@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -24,6 +25,8 @@ android {
 
 dependencies {
     implementation(Dependence.KotlinX.coroutines)
+    implementation(Dependence.KotlinX.serialization)
+    implementation(Dependence.KotlinX.serializationJSON)
     implementation(Dependence.Koin.core)
     implementation(Dependence.AndroidX.core)
     implementation(Dependence.AndroidX.security)
@@ -31,5 +34,5 @@ dependencies {
     implementation(project(Dependence.Lib.icu))
     implementation(project(Dependence.Lib.base64))
     implementation(Dependence.GooglePlay.installreferrer)
-    implementation("com.google.android.gms:play-services-base:18.5.0")
+    implementation("com.google.android.gms:play-services-base:18.6.0")
 }

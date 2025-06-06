@@ -35,7 +35,7 @@ class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen,
 
         amountView = view.findViewById(R.id.unstake_amount)
         amountView.suffix = "TON"
-        amountView.doOnValueChange = primaryViewModel::updateAmount
+        amountView.doOnValueChange = { value, _ -> primaryViewModel.updateAmount(value) }
 
         currencyView = view.findViewById(R.id.unstake_currency)
 

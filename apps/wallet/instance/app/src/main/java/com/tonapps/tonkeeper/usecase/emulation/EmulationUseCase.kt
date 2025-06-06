@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.usecase.emulation
 
-import android.util.Log
 import com.tonapps.blockchain.ton.AndroidSecureRandom
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
@@ -13,8 +12,8 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.MessageBodyEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
-import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.entity.TransferType
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.JettonQuantity
@@ -209,24 +208,5 @@ class EmulationUseCase(
                 Coins.of(it.coins.coins.amount.toLong())
             }
         }
-
-        /*fun Emulated.getInsufficientBalance(
-            tonBalance: Coins,
-            tokenBalance: BalanceEntity
-        ): InsufficientBalance? {
-            val consequences = consequences ?: return null
-            val isTon = consequences.risk.jettons.isEmpty()
-            val totalFees = consequences.trace.transaction.totalFees
-            val requiredAmount = if (isTon) {
-                consequences.risk.ton + totalFees
-            } else {
-
-            }
-
-
-            val extra = consequences.event.extra
-            val isRefund = extra > 0
-            return null
-        }*/
     }
 }

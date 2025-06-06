@@ -66,6 +66,9 @@ fun String.isValidTonDomain(): Boolean {
 }
 
 fun String.equalsAddress(other: String): Boolean {
+    if (other.equals("TON", ignoreCase = true)) {
+        return true
+    }
     return try {
         toRawAddress().equals(other.toRawAddress(), ignoreCase = true)
     } catch (e: Throwable) {

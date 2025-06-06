@@ -23,6 +23,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.usecase.emulation.Emulated
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
@@ -66,6 +67,7 @@ class StakeWithdrawViewModel(
     private val signUseCase: SignUseCase,
     private val emulationUseCase: EmulationUseCase,
     private val accountRepository: AccountRepository,
+    private val api: API
 ): BaseWalletVM(app) {
 
     val taskStateFlow = MutableEffectFlow<ProcessTaskView.State>()
@@ -96,7 +98,7 @@ class StakeWithdrawViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: return@launch
             val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
-            val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
+            val staked = StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
             val item = staked.find { it.pool.address.equalsAddress(poolAddress) } ?: return@launch
             val details = staking.getDetails(item.pool.implementation) ?: return@launch
             _poolFlow.value = Pair(item, details)

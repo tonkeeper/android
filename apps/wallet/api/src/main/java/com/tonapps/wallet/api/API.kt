@@ -3,6 +3,7 @@ package com.tonapps.wallet.api
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
+import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -11,6 +12,7 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.extensions.map
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.network.SSEvent
@@ -26,6 +28,8 @@ import com.tonapps.wallet.api.entity.AccountEventEntity
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
+import com.tonapps.wallet.api.entity.OnRampArgsEntity
+import com.tonapps.wallet.api.entity.OnRampMerchantEntity
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.api.internal.ConfigRepository
 import com.tonapps.wallet.api.internal.InternalApi
@@ -35,6 +39,7 @@ import io.batteryapi.apis.BatteryApi.UnitsGetBalance
 import io.batteryapi.models.Balance
 import io.batteryapi.models.Config
 import io.batteryapi.models.RechargeMethods
+import io.tonapi.infrastructure.ClientError
 import io.tonapi.infrastructure.ClientException
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.Account
@@ -66,6 +71,7 @@ import org.json.JSONObject
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
 import org.ton.crypto.hex
+import java.math.BigDecimal
 import java.util.Locale
 
 class API(
@@ -174,6 +180,18 @@ class API(
 
     fun getBatteryRechargeMethods(testnet: Boolean): RechargeMethods? {
         return withRetry { battery(testnet).getRechargeMethods(false) }
+    }
+
+    fun getOnRampData(country: String) = internalApi.getOnRampData(country)
+
+    suspend fun calculateOnRamp(args: OnRampArgsEntity): List<OnRampMerchantEntity> = withContext(Dispatchers.IO) {
+        val data = internalApi.calculateOnRamp(args) ?: return@withContext emptyList()
+        val items = JSONObject(data).getJSONArray("items")
+        items.map { OnRampMerchantEntity(it) }
+    }
+
+    suspend fun getEthenaStakingAPY(address: String): BigDecimal = withContext(Dispatchers.IO) {
+        internalApi.getEthenaStakingAPY(address)
     }
 
     fun getBatteryBalance(

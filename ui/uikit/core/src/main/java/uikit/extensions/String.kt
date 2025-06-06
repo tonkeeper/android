@@ -52,3 +52,13 @@ fun CharSequence.withRedBadge(
     builder.badgeRed(context) { append(context.getString(resId)) }
     return builder
 }
+
+fun CharSequence.withBlueBadge(
+    context: Context,
+    @StringRes resId: Int
+): CharSequence {
+    val builder = SpannableStringBuilder(this)
+    builder.append(" ")
+    builder.badgeBlue(context) { append(context.getString(resId)) }
+    return builder
+}

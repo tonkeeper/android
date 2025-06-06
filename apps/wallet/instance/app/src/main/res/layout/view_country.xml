@@ -4,11 +4,11 @@
     android:layout_height="56dp"
     android:paddingHorizontal="@dimen/offsetMedium">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/emoji"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.Label1"/>
+    <com.tonapps.tonkeeper.ui.component.CountryFlagView
+        android:id="@+id/flag"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"/>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/title"

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.tonapps.tonkeeper.ui.screen.onramp.main.view.CurrencyInputView
+                android:id="@+id/sell_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:title="@string/sell"/>
+
+            <com.tonapps.tonkeeper.ui.screen.onramp.main.view.CurrencyInputView
+                android:id="@+id/buy_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:title="@string/buy"/>
+
+        </uikit.widget.ColumnLayout>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/switch_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_swap_vertical_16"
+            android:scaleType="centerInside"
+            android:background="@drawable/bg_button_tertiary"/>
+
+    </FrameLayout>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/price"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="12dp"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="?attr/textSecondaryColor"/>
+
+</uikit.widget.ColumnLayout>

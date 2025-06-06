@@ -76,11 +76,11 @@
             <option value="$PROJECT_DIR$/ui/uikit" />
             <option value="$PROJECT_DIR$/ui/uikit/color" />
             <option value="$PROJECT_DIR$/ui/uikit/core" />
+            <option value="$PROJECT_DIR$/ui/uikit/flag" />
             <option value="$PROJECT_DIR$/ui/uikit/icon" />
             <option value="$PROJECT_DIR$/ui/uikit/list" />
           </set>
         </option>
-        <option name="resolveExternalAnnotations" value="false" />
       </GradleProjectSettings>
     </option>
   </component>

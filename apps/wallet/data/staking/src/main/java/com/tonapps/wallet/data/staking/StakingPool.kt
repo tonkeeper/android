@@ -5,16 +5,10 @@ import io.tonapi.models.PoolImplementationType
 
 object StakingPool {
 
-    val knownImplementations = arrayOf(
-        PoolImplementationType.whales,
-        PoolImplementationType.tf,
-        PoolImplementationType.liquidTF
-    )
-
     enum class Implementation(
         val title: String
     ) {
-        Whales("whales"), TF("tf"), LiquidTF("liquidTF")
+        Whales("whales"), TF("tf"), LiquidTF("liquidTF"), Ethena("ethena")
     }
 
     fun implementation(type: PoolImplementationType): Implementation {
@@ -30,6 +24,7 @@ object StakingPool {
             Implementation.Whales -> R.string.stake_whales
             Implementation.TF -> R.string.stake_nominators
             Implementation.LiquidTF -> R.string.stake_tonstakers
+            Implementation.Ethena -> R.string.stake_ethena
         }
     }
 
@@ -38,6 +33,7 @@ object StakingPool {
             Implementation.Whales -> R.drawable.whales
             Implementation.TF -> R.drawable.tf
             Implementation.LiquidTF -> R.drawable.ic_tonstakers
+            Implementation.Ethena -> R.drawable.ethena
         }
     }
 

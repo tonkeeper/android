@@ -24,7 +24,7 @@ class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_brow
     override fun onBind(item: Item) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
-            item.app.openDApp(context, item.wallet, "browser_all")
+            item.app.openDApp(context, item.wallet, "browser_all", item.country)
         }
 
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(128)!!)

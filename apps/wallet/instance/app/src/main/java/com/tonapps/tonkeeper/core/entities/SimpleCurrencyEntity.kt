@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.core.entities
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
 data class SimpleCurrencyEntity(

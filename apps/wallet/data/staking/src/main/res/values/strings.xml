@@ -3,4 +3,5 @@
     <string name="stake_tonstakers" translatable="false">Tonstakers</string>
     <string name="stake_whales" translatable="false">TON Whales</string>
     <string name="stake_nominators" translatable="false">TON Nominators</string>
+    <string name="stake_ethena" translatable="false">Ethena</string>
 </resources>

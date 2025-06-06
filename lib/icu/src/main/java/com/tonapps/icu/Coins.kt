@@ -158,7 +158,7 @@ data class Coins(
     }
 
     val isZero: Boolean
-        get() = value == ZERO.value
+        get() = value == ZERO.value || value == BigDecimal.ZERO
 
     val isPositive: Boolean
         get() = value > ZERO.value
@@ -253,6 +253,16 @@ data class Coins(
     fun setScale(scale: Int, roundingMode: RoundingMode = RoundingMode.HALF_UP): Coins {
         return of(value.setScale(scale, roundingMode), scale)
     }
+
+    fun isAlmostEqual(coins: Coins, epsilon: BigDecimal): Boolean {
+        return value.subtract(coins.value).abs() <= epsilon
+    }
+
+    /*
+    public static boolean isAlmostEqual(BigDecimal a, BigDecimal b, BigDecimal epsilon) {
+        return a.subtract(b).abs().compareTo(epsilon) <= 0;
+    }
+     */
 
     override fun describeContents(): Int {
         return 0

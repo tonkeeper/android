@@ -36,6 +36,7 @@
         android:layout_gravity="center">
 
         <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/currency_icon"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:src="@drawable/ic_ton_with_bg"/>

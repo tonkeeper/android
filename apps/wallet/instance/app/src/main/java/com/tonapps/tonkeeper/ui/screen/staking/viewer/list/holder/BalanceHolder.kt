@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder
 
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
@@ -16,11 +17,13 @@ class BalanceHolder(
     private val balanceView = findViewById<AppCompatTextView>(R.id.balance)
     private val fiatView = findViewById<AppCompatTextView>(R.id.fiat)
     private val iconView = findViewById<FrescoView>(R.id.icon)
+    private val currencyIconView = findViewById<AppCompatImageView>(R.id.currency_icon)
 
     override fun onBind(item: Item.Balance) {
         balanceView.text = if (item.hiddenBalance) HIDDEN_BALANCE else item.balanceFormat.withCustomSymbol(context)
         fiatView.text = if (item.hiddenBalance) HIDDEN_BALANCE else item.fiatFormat.withCustomSymbol(context)
         iconView.setLocalRes(StakingPool.getIcon(item.poolImplementation))
+        currencyIconView.setImageResource(item.currencyIcon)
     }
 
 }

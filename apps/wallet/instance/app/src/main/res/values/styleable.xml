@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <declare-styleable name="PaymentTypeView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:subtitle" format="string|reference"/>
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:checked" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="CurrencyInputView">
+        <attr name="android:title" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="ReviewInputView">
+        <attr name="android:title" format="string|reference"/>
+    </declare-styleable>
+
     <declare-styleable name="LabelEditorView">
         <attr name="android:button" format="string|reference"/>
     </declare-styleable>

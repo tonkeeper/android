@@ -2,11 +2,13 @@ package uikit.widget
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.VectorDrawable
 import android.net.Uri
 import android.util.AttributeSet
+import android.util.Log
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.backends.pipeline.Fresco
@@ -18,7 +20,10 @@ import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.common.ResizeOptions
 import com.facebook.imagepipeline.request.ImageRequest
 import com.facebook.imagepipeline.request.ImageRequestBuilder
+import uikit.extensions.asCircle
 import uikit.extensions.getDrawable
+import androidx.core.net.toUri
+import uikit.extensions.asBitmapDrawable
 
 class FrescoView @JvmOverloads constructor(
     context: Context,
@@ -58,7 +63,7 @@ class FrescoView @JvmOverloads constructor(
         if (uriString == null) {
             clear(callerContext)
         } else {
-            super.setImageURI(Uri.parse(uriString), callerContext)
+            super.setImageURI(uriString.toUri(), callerContext)
         }
     }
 
@@ -76,8 +81,10 @@ class FrescoView @JvmOverloads constructor(
     private fun loadLocalUri(uri: Uri, callerContext: Any?) {
         currentUri = uri
         val drawable = requestDrawable(uri)
-        if (drawable == null) {
+        if (drawable is BitmapDrawable) {
             super.setImageURI(uri, callerContext)
+        } else if (isCircular) {
+            setImageDrawable(drawable.asCircle(), callerContext)
         } else {
             setImageDrawable(drawable, callerContext)
         }
@@ -108,30 +115,21 @@ class FrescoView @JvmOverloads constructor(
 
     private fun setImageDrawable(drawable: Drawable, callerContext: Any?) {
         clear(callerContext)
-        if (scaleType == ScaleType.CENTER_INSIDE) {
+        setPlaceholder(drawable)
+        /*if (scaleType == ScaleType.CENTER_INSIDE || drawable is BitmapDrawable) {
             setImageDrawable(drawable)
         } else {
             setPlaceholder(drawable)
-        }
+        }*/
     }
 
-    private fun requestDrawable(uri: Uri): Drawable? {
-        val drawable = if (uri.pathSegments.isEmpty()) {
+    private fun requestDrawable(uri: Uri): Drawable {
+        return if (uri.pathSegments.isEmpty()) {
             ColorDrawable()
         } else {
             val resourceId = uri.pathSegments[0].toInt()
             getDrawable(resourceId)
         }
-        val iconDrawable = if (drawable is VectorDrawable || drawable is ColorDrawable) {
-            drawable
-        } else return null
-
-        if (isCircular) {
-            return RoundedCornersDrawable(iconDrawable).apply {
-                setType(RoundedCornersDrawable.Type.CLIPPING)
-            }
-        }
-        return iconDrawable
     }
 
     fun clear(callerContext: Any?) {

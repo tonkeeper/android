@@ -10,6 +10,5 @@ class TokenView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : View(context, attrs, defStyle) {
 
-
     override fun hasOverlappingRendering() = false
 }

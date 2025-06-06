@@ -18,6 +18,7 @@ import com.tonapps.extensions.putParcelable
 import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.extensions.safeCanRequestPackageInstalls
 import com.tonapps.tonkeeper.worker.ApkDownloadWorker
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ApkEntity
 import com.tonapps.wallet.api.entity.AppVersion
@@ -119,7 +120,7 @@ class APKManager(
     }
 
     private fun checkUpdates(apk: ApkEntity) {
-        if (environment.isFromGooglePlay || !remoteConfig.inAppUpdateAvailable || !isShowReminder()) {
+        if (BuildConfig.DEBUG || environment.isFromGooglePlay || !remoteConfig.inAppUpdateAvailable || !isShowReminder()) {
             return
         }
 

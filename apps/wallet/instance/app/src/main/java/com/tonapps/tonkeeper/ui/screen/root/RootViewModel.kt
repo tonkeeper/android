@@ -70,6 +70,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.safe.DAppSafeScreen
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
+import com.tonapps.tonkeeper.ui.screen.onramp.main.OnRampScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.PurchaseScreen
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
@@ -141,7 +142,7 @@ class RootViewModel(
     private val dAppsRepository: DAppsRepository,
     private val safeModeClient: SafeModeClient,
     savedStateHandle: SavedStateHandle,
-) : BaseWalletVM(app) {
+): BaseWalletVM(app) {
 
     private val savedState = RootModelState(savedStateHandle)
 
@@ -164,8 +165,7 @@ class RootViewModel(
 
     val lockscreenFlow = combine(
         passcodeManager.lockscreenFlow,
-        accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }
-            .take(1)
+        accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }.take(1)
     ) { lockscreen, state ->
         if ((lockscreen is LockScreen.State.Input || lockscreen is LockScreen.State.Biometric) && state !is AccountRepository.SelectedState.Wallet) {
             passcodeManager.reset()
@@ -208,8 +208,7 @@ class RootViewModel(
 
     private fun observeTonConnectSignData() {
         tonConnectManager.signDataRequestFlow.collectFlow { event ->
-            val wallet = accountRepository.getWalletByAccountId(event.connection.accountId)
-                ?: return@collectFlow
+            val wallet = accountRepository.getWalletByAccountId(event.connection.accountId) ?: return@collectFlow
             val params = event.message.params.firstOrNull() ?: return@collectFlow
             val payload = SignDataRequestPayload.parse(params) ?: return@collectFlow
             signData(wallet, event.connection, payload, event.message.id)
@@ -235,8 +234,7 @@ class RootViewModel(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     try {
                         WebView.setDataDirectorySuffix("wallet_${state.wallet.id.replace("-", "")}")
-                    } catch (ignored: Throwable) {
-                    }
+                    } catch (ignored: Throwable) { }
                 }
             }
         }.flowOn(Dispatchers.IO).launchIn(viewModelScope)
@@ -296,8 +294,7 @@ class RootViewModel(
     }
 
     private suspend fun showStories(storiesIds: List<String>) = withContext(Dispatchers.IO) {
-        val firstStoryId =
-            storiesIds.firstOrNull { !settingsRepository.isStoriesViewed(it) } ?: return@withContext
+        val firstStoryId = storiesIds.firstOrNull { !settingsRepository.isStoriesViewed(it) } ?: return@withContext
         showStory(firstStoryId, "wallet")
     }
 
@@ -317,16 +314,15 @@ class RootViewModel(
         }
     }
 
-    private suspend fun startUpdateFlow(appUpdateInfo: AppUpdateInfo) =
-        withContext(Dispatchers.Main) {
-            val activity = context.activity ?: return@withContext
-            appUpdateManager.startUpdateFlowForResult(
-                appUpdateInfo,
-                activity,
-                AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
-                0
-            )
-        }
+    private suspend fun startUpdateFlow(appUpdateInfo: AppUpdateInfo) = withContext(Dispatchers.Main) {
+        val activity = context.activity ?: return@withContext
+        appUpdateManager.startUpdateFlowForResult(
+            appUpdateInfo,
+            activity,
+            AppUpdateOptions.defaultOptions(AppUpdateType.FLEXIBLE),
+            0
+        )
+    }
 
     fun connectTonConnectBridge() {
         tonConnectManager.connectBridge()
@@ -348,11 +344,7 @@ class RootViewModel(
             }
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
-            tonConnectManager.sendBridgeError(
-                tx.connection,
-                BridgeError.unknown(e.bestMessage),
-                eventId
-            )
+            tonConnectManager.sendBridgeError(tx.connection, BridgeError.unknown(e.bestMessage), eventId)
         }
 
         tx.returnUri?.let {
@@ -431,11 +423,7 @@ class RootViewModel(
                     eventId
                 )
             } else {
-                tonConnectManager.sendBridgeError(
-                    connection,
-                    BridgeError.unknown(e.bestMessage),
-                    eventId
-                )
+                tonConnectManager.sendBridgeError(connection, BridgeError.unknown(e.bestMessage), eventId)
             }
         }
     }
@@ -500,9 +488,9 @@ class RootViewModel(
         _eventFlow.tryEmit(RootEvent.Ledger(connectData, accounts))
     }
 
-    fun openDApp(url: Uri) {
+    fun openDApp(url: Uri, source: String) {
         selectedWalletFlow.take(1).collectFlow {
-            _eventFlow.tryEmit(RootEvent.OpenDAppByShortcut(it, url))
+            _eventFlow.tryEmit(RootEvent.OpenDAppByShortcut(it, url, source))
         }
     }
 
@@ -539,8 +527,7 @@ class RootViewModel(
                 title = openUrl.host ?: "unknown",
                 url = openUrl,
                 iconUrl = app.iconUrl,
-                source = "push",
-                sendAnalytics = true,
+                source = "push"
             )
         )
     }
@@ -553,10 +540,8 @@ class RootViewModel(
 
     private suspend fun deeplinkResolveWallet(bundle: Bundle): WalletEntity? {
         try {
-            val accountId = bundle.getString("account")
-                ?: throw IllegalArgumentException("Key 'account' not found")
-            return accountRepository.getWalletByAccountId(accountId)
-                ?: throw IllegalArgumentException("Wallet not found")
+            val accountId = bundle.getString("account") ?: throw IllegalArgumentException("Key 'account' not found")
+            return accountRepository.getWalletByAccountId(accountId) ?: throw IllegalArgumentException("Wallet not found")
         } catch (e: Throwable) {
             return accountRepository.selectedWalletFlow.firstOrNull()
         }
@@ -607,9 +592,7 @@ class RootViewModel(
     ) {
         val route = deeplink.route
         if (route is DeepLinkRoute.TonConnect) {
-            if (!wallet.isTonConnectSupported && accountRepository.getWallets()
-                    .count { it.isTonConnectSupported } == 0
-            ) {
+            if (!wallet.isTonConnectSupported && accountRepository.getWallets().count { it.isTonConnectSupported } == 0) {
                 openScreen(AddWalletScreen.newInstance(true))
                 return
             }
@@ -647,7 +630,7 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.Battery && !wallet.isWatchOnly) {
             openBattery(wallet, route)
         } else if (route is DeepLinkRoute.Purchase && !wallet.isWatchOnly) {
-            openScreen(PurchaseScreen.newInstance(wallet, "deep-link"))
+            openScreen(OnRampScreen.newInstance(context, wallet, "deep-link"))
         } else if (route is DeepLinkRoute.Exchange && !wallet.isWatchOnly) {
             val method = purchaseRepository.getMethod(
                 id = route.methodName,

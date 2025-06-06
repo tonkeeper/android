@@ -5,7 +5,7 @@ import com.tonapps.uikit.list.ListCell
 
 data class Item(
     val currency: String,
-    val nameResId: Int,
+    val name: String,
     val selected: Boolean,
     val position: ListCell.Position
 ): BaseListItem()

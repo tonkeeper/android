@@ -36,7 +36,7 @@
         android:tint="?attr/iconSecondaryColor"
         android:src="@drawable/ic_xmark_circle_16"/>
 
-    <com.tonapps.tonkeeper.ui.component.TokenPickerView
+    <com.tonapps.tonkeeper.ui.component.token.TokenPickerView
         android:id="@+id/coin_input_token"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

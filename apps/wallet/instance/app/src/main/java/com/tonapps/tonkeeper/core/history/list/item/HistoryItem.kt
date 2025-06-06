@@ -323,6 +323,9 @@ sealed class HistoryItem(
         val account: Account?
             get() = if (isOut) recipient else sender
 
+        val isStake: Boolean
+            get() = action == ActionType.WithdrawStake || action == ActionType.WithdrawStakeRequest || action == ActionType.DepositStake
+
         @Parcelize
         data class Comment(
             val type: Type,

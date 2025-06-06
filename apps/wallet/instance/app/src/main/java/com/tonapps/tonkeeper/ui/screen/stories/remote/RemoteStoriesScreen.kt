@@ -64,7 +64,8 @@ class RemoteStoriesScreen: BaseStoriesScreen() {
         AnalyticsHelper.trackStoryClick(
             installId = installId,
             storiesId = stories.id,
-            button = button
+            button = button,
+            index = index
         )
 
         if (button.type == "deeplink") {

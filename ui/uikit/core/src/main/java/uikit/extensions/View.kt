@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import uikit.insets.KeyboardAnimationCallback
 import kotlin.math.sin
+import androidx.core.graphics.drawable.toDrawable
 
 var View.scale: Float
     get() = scaleX
@@ -81,7 +82,16 @@ fun View.getRootWindowInsetsCompat(): WindowInsetsCompat? {
 }
 
 val View.statusBarHeight: Int
-    get() = getRootWindowInsetsCompat()?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+    get() {
+        val top = getRootWindowInsetsCompat()?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
+        if (top == 0) {
+            val resId = context.resources.getIdentifier("status_bar_height", "dimen", "android")
+            if (resId > 0) {
+                return context.resources.getDimensionPixelSize(resId)
+            }
+        }
+        return top
+    }
 
 fun ViewGroup.inflate(
     @LayoutRes
@@ -147,6 +157,16 @@ fun View.roundBottom(radius: Int) {
     }
 }
 
+fun View.circle() {
+    outlineProvider = object : ViewOutlineProvider() {
+        override fun getOutline(view: View, outline: Outline) {
+            val size = minOf(view.width, view.height)
+            outline.setOval(0, 0, size, size)
+        }
+    }
+    clipToOutline = true
+}
+
 fun View.round(radius: Int) {
     if (radius == 0) {
         outlineProvider = null
@@ -169,7 +189,7 @@ fun View.getDrawable(@DrawableRes resId: Int): Drawable {
     return try {
         AppCompatResources.getDrawable(context, resId) ?: throw IllegalArgumentException()
     } catch (e: Throwable) {
-        ColorDrawable(Color.TRANSPARENT)
+        Color.TRANSPARENT.toDrawable()
     }
 }
 

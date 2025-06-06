@@ -3,6 +3,7 @@ package uikit.widget
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
+import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatTextView
 import uikit.R
 import uikit.drawable.HeaderDrawable
@@ -38,6 +39,14 @@ class ModalHeader @JvmOverloads constructor(
         context.useAttributes(attrs, R.styleable.ModalHeader) {
             titleView.text = it.getString(R.styleable.ModalHeader_android_text)
         }
+    }
+
+    fun setTitle(title: CharSequence) {
+        titleView.text = title
+    }
+
+    fun setTitle(@StringRes resId: Int) {
+        titleView.setText(resId)
     }
 
     fun setDivider(value: Boolean) {

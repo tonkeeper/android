@@ -9,6 +9,7 @@ import com.tonapps.wallet.data.events.entities.AccountEventsResult
 import com.tonapps.wallet.data.events.entities.LatestRecipientEntity
 import com.tonapps.wallet.data.events.source.LocalDataSource
 import com.tonapps.wallet.data.events.source.RemoteDataSource
+import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +20,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 
 class EventsRepository(
-    scope: CoroutineScope, context: Context, private val api: API
+    scope: CoroutineScope,
+    context: Context,
+    private val api: API
 ) {
 
     private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -59,19 +62,17 @@ class EventsRepository(
         emit(remote)
     }.flowOn(Dispatchers.IO)
 
-    private fun loadLatestRecipients(
-        accountId: String, testnet: Boolean
-    ): List<LatestRecipientEntity> {
+    private fun loadLatestRecipients(accountId: String, testnet: Boolean): List<LatestRecipientEntity> {
         val list = remoteDataSource.getLatestRecipients(accountId, testnet)
         localDataSource.setLatestRecipients(cacheLatestRecipientsKey(accountId, testnet), list)
         return list
     }
 
-    suspend fun getSingle(eventId: String, testnet: Boolean) =
-        remoteDataSource.getSingle(eventId, testnet)
+    suspend fun getSingle(eventId: String, testnet: Boolean) = remoteDataSource.getSingle(eventId, testnet)
 
     suspend fun getLast(
-        accountId: String, testnet: Boolean
+        accountId: String,
+        testnet: Boolean
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             remoteDataSource.get(accountId, testnet, limit = 2)
@@ -81,7 +82,10 @@ class EventsRepository(
     }
 
     suspend fun loadForToken(
-        tokenAddress: String, accountId: String, testnet: Boolean, beforeLt: Long? = null
+        tokenAddress: String,
+        accountId: String,
+        testnet: Boolean,
+        beforeLt: Long? = null
     ): AccountEvents? = withContext(Dispatchers.IO) {
         if (tokenAddress == TokenEntity.TON.address) {
             getRemote(accountId, testnet, beforeLt)
@@ -115,7 +119,8 @@ class EventsRepository(
     }
 
     fun getFlow(
-        accountId: String, testnet: Boolean
+        accountId: String,
+        testnet: Boolean
     ) = flow {
         try {
             val local = getLocal(accountId, testnet)
@@ -125,16 +130,19 @@ class EventsRepository(
 
             val remote = getRemote(accountId, testnet) ?: return@flow
             emit(AccountEventsResult(cache = false, events = remote))
-        } catch (ignored: Throwable) {
-        }
+        } catch (ignored: Throwable) { }
     }.cancellable()
 
     suspend fun get(
-        accountId: String, testnet: Boolean
+        accountId: String,
+        testnet: Boolean
     ) = getLocal(accountId, testnet) ?: getRemote(accountId, testnet)
 
     suspend fun getRemote(
-        accountId: String, testnet: Boolean, beforeLt: Long? = null, limit: Int = 10
+        accountId: String,
+        testnet: Boolean,
+        beforeLt: Long? = null,
+        limit: Int = 10
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             val accountEvents = if (beforeLt != null) {
@@ -178,13 +186,18 @@ class EventsRepository(
     }
 
     suspend fun getRemoteSpam(
-        accountId: String, testnet: Boolean, startBeforeLt: Long? = null
+        accountId: String,
+        testnet: Boolean,
+        startBeforeLt: Long? = null
     ) = withContext(Dispatchers.IO) {
         val list = mutableListOf<AccountEvent>()
         var beforeLt: Long? = startBeforeLt
         for (i in 0 until 10) {
             val events = remoteDataSource.get(
-                accountId = accountId, testnet = testnet, beforeLt = beforeLt, limit = 50
+                accountId = accountId,
+                testnet = testnet,
+                beforeLt = beforeLt,
+                limit = 50
             )?.events ?: emptyList()
 
             if (events.isEmpty() || events.size >= 500) {
@@ -206,7 +219,8 @@ class EventsRepository(
     }
 
     suspend fun getLocal(
-        accountId: String, testnet: Boolean
+        accountId: String,
+        testnet: Boolean
     ): AccountEvents? = withContext(Dispatchers.IO) {
         localDataSource.getEvents(cacheEventsKey(accountId, testnet))
     }

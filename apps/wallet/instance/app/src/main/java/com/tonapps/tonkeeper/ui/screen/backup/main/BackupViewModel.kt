@@ -15,6 +15,7 @@ import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.uikit.list.ListCell
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -45,6 +46,7 @@ class BackupViewModel(
     private val ratesRepository: RatesRepository,
     private val stakingRepository: StakingRepository,
     private val tokenRepository: TokenRepository,
+    private val api: API
 ): BaseWalletVM(app) {
 
     val uiItemsFlow = backupRepository.stream.filterList { backup ->
@@ -127,12 +129,12 @@ class BackupViewModel(
     }
 
     private suspend fun getAssets(
-        wallet: WalletEntity
+        wallet: WalletEntity,
     ): List<AssetsEntity> {
         val currency = settingsRepository.currency
         val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: emptyList()
         val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
-        val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
+        val staked = StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
         val liquid = staked.find { it.isTonstakers }?.liquidToken
         val filteredTokens = if (liquid == null) tokens else tokens.filter { !liquid.token.address.contains(it.address)  }
         return (filteredTokens.map { AssetsEntity.Token(it) } + staked.map {

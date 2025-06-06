@@ -3,7 +3,7 @@ package com.tonapps.wallet.data.rates.entity
 import android.os.Parcelable
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import kotlinx.parcelize.Parcelize
 import java.math.RoundingMode
 
@@ -25,6 +25,9 @@ data class RatesEntity(
 
     private val isUSD: Boolean
         get() = currency.code == "USD"
+
+    val currencyCode: String
+        get() = currency.code
 
     fun hasToken(token: String): Boolean {
         return map.containsKey(token)

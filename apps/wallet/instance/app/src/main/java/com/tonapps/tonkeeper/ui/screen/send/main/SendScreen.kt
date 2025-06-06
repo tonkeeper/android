@@ -172,8 +172,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         amountView = view.findViewById(R.id.amount)
         amountView.setWallet(wallet)
         amountView.doOnValueChanged = viewModel::userInputAmount
-        amountView.doOnTokenChanged = {
-            viewModel.userInputToken(it)
+        amountView.doOnTokenValueChanged = {
+            viewModel.userInputToken(it.token!!)
         }
         amountView.setOnDoneActionListener { commentInput.requestFocus() }
 

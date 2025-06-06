@@ -1,12 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.app.Application
-import android.util.Log
-import androidx.collection.ArrayMap
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.filterList
 import com.tonapps.icu.Coins
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
@@ -16,22 +13,14 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flattenConcat
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -78,6 +67,9 @@ class PickerViewModel(
             walletIdFocus = walletIdFocus
         )
     }.flowOn(Dispatchers.IO)
+
+    val isEditModeEnabled: Boolean
+        get() = _editModeFlow.value
 
     init {
         viewModelScope.launch(Dispatchers.IO) {

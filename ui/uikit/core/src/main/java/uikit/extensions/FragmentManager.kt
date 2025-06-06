@@ -14,7 +14,6 @@ inline fun <reified F> FragmentManager.isFragmentExists(): Boolean {
     return findFragment<F>() != null
 }
 
-
 fun FragmentManager.findFragments(id: Int): List<Fragment> {
     return fragments.filter { fragment ->
         val parent = fragment.view?.parent as? View ?: return@filter false

@@ -31,7 +31,7 @@ platform :android do
         )
 
         max = internal_version_codes[0] > production_version_codes[0] ? internal_version_codes[0] : production_version_codes[0]
-        updated_version_code = max + 1
+        updated_version_code = max + 2
 
         increment_version_code(
             gradle_file_path: "./apps/wallet/instance/main/build.gradle.kts",

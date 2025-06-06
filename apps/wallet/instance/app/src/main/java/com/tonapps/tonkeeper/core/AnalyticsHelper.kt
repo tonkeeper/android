@@ -195,6 +195,53 @@ object AnalyticsHelper {
     }
 
     @UiThread
+    fun onRampEnterAmount(installId: String, type: String, sellAsset: String, buyAsset: String, countryCode: String) {
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "type" to type,
+            "sell_asset" to sellAsset,
+            "buy_asset" to buyAsset,
+            "country_code" to countryCode
+        )
+        trackEvent("onramp_enter_amount", props)
+    }
+
+    @UiThread
+    fun onRampOpenWebview(
+        installId: String,
+        type: String,
+        sellAsset: String,
+        buyAsset: String,
+        countryCode: String,
+        paymentMethod: String,
+        providerName: String,
+        providerDomain: String
+    ) {
+
+        fun fixPaymentMethodName(value: String): String {
+            return when (value) {
+                "card" -> "Credit Card"
+                "google_pay" -> "Google Pay"
+                "paypal" -> "PayPal"
+                "revolut" -> "Revolut"
+                else -> value
+            }
+        }
+
+        val props = hashMapOf(
+            "firebase_user_id" to installId,
+            "type" to type,
+            "sell_asset" to sellAsset,
+            "buy_asset" to buyAsset,
+            "country_code" to countryCode,
+            "payment_method" to fixPaymentMethodName(paymentMethod),
+            "provider_name" to providerName,
+            "provider_domain" to providerDomain
+        )
+        trackEvent("onramp_continue_to_provider", props)
+    }
+
+    @UiThread
     fun onRampClick(installId: String, type: String, placement: String, location: String, name: String, url: String) {
         trackEvent("onramp_click", hashMapOf(
             "firebase_user_id" to installId,
@@ -216,13 +263,19 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun trackStoryClick(installId: String, storiesId: String, button: StoryEntity.Button) {
+    fun trackStoryClick(
+        installId: String,
+        storiesId: String,
+        button: StoryEntity.Button,
+        index: Int
+    ) {
         trackEvent("story_click", hashMapOf(
             "firebase_user_id" to installId,
             "story_id" to storiesId,
             "button_title" to button.title,
             "button_type" to button.type,
             "button_payload" to button.payload,
+            "page_number" to index + 1
         ))
     }
 
@@ -245,12 +298,19 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun trackEventClickDApp(url: String, name: String, source: String, installId: String) {
+    fun trackEventClickDApp(
+        url: String,
+        name: String,
+        source: String,
+        installId: String,
+        country: String,
+    ) {
         trackEvent("click_dapp", hashMapOf(
             "url" to url,
             "name" to name,
             "from" to source,
             "firebase_user_id" to installId,
+            "location" to country
         ))
     }
 

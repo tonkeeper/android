@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.base.picker.currency.CurrencyPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.add.AddWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
@@ -42,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -85,7 +87,7 @@ val koinModel = module {
     viewModelOf(::RootViewModel)
     viewModelOf(::PickerViewModel)
     viewModelOf(::TonConnectViewModel)
-
+    viewModelOf(::CurrencyPickerViewModel)
 
     viewModelOf(::LedgerConnectionViewModel)
     viewModelOf(::W5StoriesViewModel)

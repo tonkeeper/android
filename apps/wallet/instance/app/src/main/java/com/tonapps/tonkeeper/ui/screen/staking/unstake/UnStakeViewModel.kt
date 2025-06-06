@@ -27,11 +27,12 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.usecase.emulation.Emulated
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
@@ -78,6 +79,7 @@ class UnStakeViewModel(
     private val transactionManager: TransactionManager,
     private val signUseCase: SignUseCase,
     private val emulationUseCase: EmulationUseCase,
+    private val api: API
 ): BaseWalletVM(app) {
 
     data class AvailableUiState(
@@ -337,7 +339,7 @@ class UnStakeViewModel(
         try {
             val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: return null
             val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
-            val staked = StakedEntity.create(staking, tokens, currency, ratesRepository)
+            val staked = StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
             return staked.find { it.pool.address.equalsAddress(poolAddress) }
         } catch (e: Throwable) {
             return null

@@ -155,8 +155,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
                 title = url.host ?: nftEntity.name,
                 url = url,
                 iconUrl = "",
-                source = "nft",
-                sendAnalytics = true
+                source = "nft"
             )
             domainLinkButton.setOnClickListener {
                 navigation?.add(DAppScreen.newInstance(wallet, dAppArgs))

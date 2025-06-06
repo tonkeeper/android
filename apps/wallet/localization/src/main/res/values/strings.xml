@@ -28,9 +28,16 @@
     <string name="open">Open</string>
     <string name="words12">12 words</string>
     <string name="words24">24 words</string>
+    <string name="ton_assets">TON assets</string>
+    <string name="pair_not_available">This currency pair is not available. Please try another one.</string>
+    <string name="balance_prefix">Balance: %1$s</string>
+    <string name="all_currencies">All currencies</string>
+    <string name="crypto">Crypto</string>
+    <string name="provider">Provider</string>
     <string name="theme_deep_blue">Deep Blue</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>
+    <string name="payment_method">Payment Method</string>
     <string name="downloading">Downloading…</string>
     <string name="close">Close</string>
     <string name="dapp_safe_modal_title">The link leads to a scam service</string>
@@ -51,6 +58,12 @@
     <string name="remind_me_later">Remind me later</string>
     <string name="multi_account_secret_wrong">Please use Tonkeeper Desktop for Multi-Wallet Account</string>
     <string name="total">Total: %1$s</string>
+    <string name="credit_card">Credit Card</string>
+    <string name="best" translatable="false">Best</string>
+    <string name="credit_card_subtitle">Visa or Mastercard</string>
+    <string name="google_pay" translatable="false">Google Pay</string>
+    <string name="revolut" translatable="false">Revolut</string>
+    <string name="paypal" translatable="false">Paypal</string>
     <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>
     <string name="staking_pending_deposit">%1$s will be deposited in %2$s</string>
     <string name="staking_pending_withdraw">%1$s will be withdrawn in %2$s</string>
@@ -157,10 +170,15 @@
     <string name="liquid_staking">Liquid Staking</string>
     <string name="other">Other</string>
     <string name="minimum_amount">Minimum %1$s</string>
+    <string name="stake_ethena_description">The tsUSDe token represents USDe held through Ethena, a decentralized staking service. tsUSDe automatically accrues staking rewards, with minimal lock up.</string>
+    <string name="stake_ethena_disclaimer">This is the estimated annual return based on the past week’s average protocol rewards and the average amount of staked USDe. The return is annualized with weekly compounding. <annotation colorAttr="textSecondaryColor">Past performance does not guarantee future results.</annotation> Staking and rewards are provided by Ethena, a third-party service, and are subject to their <annotation colorAttr="textAccentColor">terms</annotation>.</string>
     <string name="stake_tonstakers_description">When you stake TON in a Tonstakers pool, you receive a token called tsTON that represents your share in the pool. As the pool accumulates profits, your tsTON represents larger amount of TON.</string>
     <string name="edit">Edit</string>
     <string name="pinned">Pinned</string>
     <string name="all_assets">All Assets</string>
+    <string name="currency_not_found">Currency not found</string>
+    <string name="onrmap_provider_description">Other providers available for different currency pairs.</string>
+    <string name="all_ton_assets">All TON Assets</string>
     <string name="sorted_by_price">Sorted by Price</string>
     <string name="staking_max_apy" translatable="false">MAX APY</string>
     <string name="staking_minimum_deposit">Minimum deposit %1$s.</string>
@@ -301,6 +319,7 @@
     <string name="new_wallet">New wallet</string>
     <string name="buy_toncoin">Buy Toncoin</string>
     <string name="buy_ton">Buy TON</string>
+    <string name="buy_or_sell_dot">Buy · Sell</string>
     <string name="buy_or_sell">Buy or sell</string>
     <string name="fiat_open_description">You are opening an external app not operated by Tonkeeper.</string>
     <string name="buy">Buy</string>

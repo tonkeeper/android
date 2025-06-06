@@ -22,10 +22,11 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation
+import androidx.core.net.toUri
 
 object BrowserHelper {
 
-    fun BrowserAppEntity.openDApp(context: Context, wallet: WalletEntity, source: String) {
+    fun BrowserAppEntity.openDApp(context: Context, wallet: WalletEntity, source: String, country: String) {
         if (useCustomTabs || useTG) {
             if (useCustomTabs) {
                 open(context, url.toString())
@@ -36,7 +37,8 @@ object BrowserHelper {
                 url = url.toString(),
                 name = name,
                 installId = context.installId,
-                source = source
+                source = source,
+                country = country
             )
         } else {
             Navigation.from(context)?.add(
@@ -63,7 +65,13 @@ object BrowserHelper {
     }
 
     fun open(activity: Activity, url: String) {
-        open(activity, Uri.parse(url))
+        open(activity, url.toUri())
+    }
+
+    fun open(context: Context, uri: Uri) {
+        context.activity?.let {
+            open(it, uri)
+        }
     }
 
     fun open(activity: Activity, uri: Uri) {

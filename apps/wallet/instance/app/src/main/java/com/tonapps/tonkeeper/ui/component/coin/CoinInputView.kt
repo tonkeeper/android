@@ -10,11 +10,12 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.ui.component.TokenPickerView
 import com.tonapps.tonkeeper.ui.component.coin.drawable.SuffixDrawable
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingConfig
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingFilter
 import com.tonapps.tonkeeper.ui.component.coin.format.CoinFormattingTextWatcher
+import com.tonapps.tonkeeper.ui.component.token.CurrencyPickerView
+import com.tonapps.tonkeeper.ui.component.token.TokenPickerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -23,7 +24,6 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.dp
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
-import uikit.extensions.replaceAll
 import uikit.extensions.setRightDrawable
 import uikit.widget.input.BaseInputView
 import uikit.widget.input.InputTextView
@@ -36,7 +36,7 @@ class CoinInputView @JvmOverloads constructor(
 ) : BaseInputView(context, attrs, defStyle) {
 
     var doOnValueChanged: ((Coins) -> Unit)? = null
-    var doOnTokenChanged: ((TokenEntity) -> Unit)? = null
+    var doOnTokenValueChanged: ((CurrencyPickerView.Value) -> Unit)? = null
 
     private val suffixDrawable = SuffixDrawable(context, TextPaint(TextPaint.ANTI_ALIAS_FLAG).apply {
         textSize = 14f.dp
@@ -84,8 +84,8 @@ class CoinInputView @JvmOverloads constructor(
         clearView.setOnClickListener { clear() }
 
         tokenPickerView = findViewById(R.id.coin_input_token)
-        tokenPickerView.doOnTokenChanged = ::onTokenChanged
-        onTokenChanged(tokenPickerView.token)
+        tokenPickerView.doOnValueChanged = ::onValueChanged
+        onValueChanged(CurrencyPickerView.Value(tokenPickerView.token))
         findViewById<View>(R.id.coin_input_container).setOnClickListener { focusWithKeyboard() }
     }
 
@@ -152,13 +152,13 @@ class CoinInputView @JvmOverloads constructor(
         editText.hideKeyboard()
     }
 
-    private fun onTokenChanged(token: TokenEntity) {
+    private fun onValueChanged(value: CurrencyPickerView.Value) {
         clear()
         formattingConfig = CoinFormattingConfig(
-            decimals = token.decimals
+            decimals = value.decimals
         )
 
-        doOnTokenChanged?.invoke(token)
+        doOnTokenValueChanged?.invoke(value)
     }
 
     private fun onEmptyInput(empty: Boolean) {

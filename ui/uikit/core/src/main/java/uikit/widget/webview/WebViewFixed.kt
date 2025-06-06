@@ -5,40 +5,38 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
+import android.os.CancellationSignal
 import android.os.Message
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
-import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.ServiceWorkerController
-import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.appcompat.app.AlertDialog
+import androidx.webkit.OutcomeReceiverCompat
+import androidx.webkit.PrefetchException
 import androidx.webkit.Profile
+import androidx.webkit.SpeculativeLoadingConfig
+import androidx.webkit.SpeculativeLoadingParameters
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import uikit.R
-import uikit.base.BaseDialog
 import java.util.LinkedList
+import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 
 open class WebViewFixed @JvmOverloads constructor(
@@ -241,7 +239,8 @@ open class WebViewFixed @JvmOverloads constructor(
     }
 
     private fun openNewWindow(resultMsg: Message): Boolean {
-        val dialog = NewWindowDialog(context, getProfile().name)
+        val name = getProfile()?.name ?: return false
+        val dialog = NewWindowDialog(context, name)
         dialog.show()
 
         val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
@@ -370,29 +369,18 @@ open class WebViewFixed @JvmOverloads constructor(
         if (WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)) {
             WebViewCompat.setProfile(this, name)
         }
-        val profile = getProfile()
-        profile.cookieManager.apply {
-            setAcceptCookie(true)
-            setAcceptThirdPartyCookies(this@WebViewFixed, true)
-            flush()
+        getProfile()?.apply {
+            cookieManager.setAcceptCookie(true)
+            cookieManager.setAcceptThirdPartyCookies(this@WebViewFixed, true)
+            cookieManager.flush()
         }
     }
 
-    fun getProfile(): Profile {
+    fun getProfile(): Profile? {
         if (WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)) {
             return WebViewCompat.getProfile(this)
         }
-        return object : Profile {
-            override fun getName() = "default"
-
-            override fun getCookieManager() = CookieManager.getInstance()
-
-            override fun getWebStorage() = WebStorage.getInstance()
-
-            override fun getGeolocationPermissions() = GeolocationPermissions.getInstance()
-
-            override fun getServiceWorkerController() = ServiceWorkerController.getInstance()
-        }
+        return null
     }
 
     inner class AndroidWebViewBridge {

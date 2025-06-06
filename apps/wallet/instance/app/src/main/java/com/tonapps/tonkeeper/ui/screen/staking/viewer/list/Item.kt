@@ -27,7 +27,16 @@ sealed class Item(type: Int): BaseListItem(type) {
         val fiat: Coins,
         val fiatFormat: CharSequence,
         val hiddenBalance: Boolean,
-    ): Item(TYPE_BALANCE)
+    ): Item(TYPE_BALANCE) {
+
+        val currencyIcon: Int by lazy {
+            if (poolImplementation == StakingPool.Implementation.Ethena) {
+                com.tonapps.wallet.api.R.drawable.ic_udse_ethena_with_bg
+            } else {
+                com.tonapps.wallet.api.R.drawable.ic_ton_with_bg
+            }
+        }
+    }
 
     data class Actions(
         val poolAddress: String,
@@ -65,6 +74,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     data object Space: Item(TYPE_SPACE)
 
     data class Description(
-        @StringRes val resId: Int
+        @StringRes val resId: Int,
+        val uri: Uri? = null,
     ): Item(TYPE_DESCRIPTION)
 }

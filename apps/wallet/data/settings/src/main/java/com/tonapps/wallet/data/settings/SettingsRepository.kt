@@ -1,17 +1,19 @@
 package com.tonapps.wallet.data.settings
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
-import android.icu.util.Currency
-import android.util.Log
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
 import com.tonapps.extensions.locale
+import com.tonapps.extensions.putBoolean
+import com.tonapps.extensions.putInt
+import com.tonapps.extensions.putString
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
@@ -110,14 +112,14 @@ class SettingsRepository(
     val installId: String
         get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
             val id = java.util.UUID.randomUUID().toString()
-            prefs.edit().putString(INSTALL_ID_KEY, id).apply()
+            prefs.putString(INSTALL_ID_KEY, id)
             id
         }
 
     var ledgerConnectUsb: Boolean = prefs.getBoolean(LEDGER_CONNECT_USB, false)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(LEDGER_CONNECT_USB, value).apply()
+                prefs.putBoolean(LEDGER_CONNECT_USB, value)
                 field = value
             }
         }
@@ -125,7 +127,7 @@ class SettingsRepository(
     var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)
         set(value) {
             if (value != field) {
-                prefs.edit().putString(SEARCH_ENGINE_KEY, value.title).apply()
+                prefs.putString(SEARCH_ENGINE_KEY, value.title)
                 field = value
                 _searchEngineFlow.tryEmit(value)
                 migrationHelper.setLegacySearchEngine(value)
@@ -135,7 +137,7 @@ class SettingsRepository(
     var theme: Theme = Theme.getByKey(prefs.getString(THEME_KEY, "blue")!!)
         set(value) {
             if (value != field) {
-                prefs.edit().putString(THEME_KEY, value.key).apply()
+                prefs.putString(THEME_KEY, value.key)
                 field = value
                 migrationHelper.setLegacyTheme(value)
             }
@@ -144,7 +146,7 @@ class SettingsRepository(
     var chartPeriod: ChartPeriod = ChartPeriod.of(prefs.getString(CHART_PERIOD_KEY, ""))
         set(value) {
             if (value != field) {
-                prefs.edit().putString(CHART_PERIOD_KEY, value.value).apply()
+                prefs.putString(CHART_PERIOD_KEY, value.value)
                 field = value
             }
         }
@@ -152,7 +154,7 @@ class SettingsRepository(
     var showEncryptedCommentModal: Boolean = prefs.getBoolean(ENCRYPTED_COMMENT_MODAL_KEY, true)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(ENCRYPTED_COMMENT_MODAL_KEY, value).apply()
+                prefs.putBoolean(ENCRYPTED_COMMENT_MODAL_KEY, value)
                 field = value
             }
         }
@@ -160,15 +162,15 @@ class SettingsRepository(
     var firebaseToken: String? = prefs.getString(FIREBASE_TOKEN_KEY, null)
         set(value) {
             if (value != field) {
-                prefs.edit().putString(FIREBASE_TOKEN_KEY, value).apply()
+                prefs.putString(FIREBASE_TOKEN_KEY, value)
                 field = value
             }
         }
 
-    var currency: WalletCurrency = WalletCurrency.of(prefs.getString(CURRENCY_CODE_KEY, null))
+    var currency: WalletCurrency = WalletCurrency.ofOrDefault(prefs.getString(CURRENCY_CODE_KEY, null))
         set(value) {
             if (field != value && value.code.isNotEmpty()) {
-                prefs.edit().putString(CURRENCY_CODE_KEY, value.code).apply()
+                prefs.putString(CURRENCY_CODE_KEY, value.code)
                 field = value
                 _currencyFlow.tryEmit(value)
                 migrationHelper.setLegacyCurrency(value)
@@ -176,10 +178,11 @@ class SettingsRepository(
         }
 
     var language: Language = Language(prefs.getString(LANGUAGE_CODE_KEY, Language.DEFAULT) ?: Language.DEFAULT)
+        @SuppressLint("UseKtx")
         set(value) {
             if (value != field) {
                 field = value
-                prefs.edit().putString(LANGUAGE_CODE_KEY, field.code).apply()
+                prefs.putString(LANGUAGE_CODE_KEY, field.code)
                 _languageFlow.tryEmit(field)
                 migrationHelper.setLegacyLanguage(value)
             }
@@ -198,7 +201,7 @@ class SettingsRepository(
     var lockScreen: Boolean = prefs.getBoolean(LOCK_SCREEN_KEY, false)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(LOCK_SCREEN_KEY, value).apply()
+                prefs.putBoolean(LOCK_SCREEN_KEY, value)
                 field = value
                 _lockscreenFlow.tryEmit(value)
                 migrationHelper.setLockScreenEnabled(value)
@@ -208,7 +211,7 @@ class SettingsRepository(
     var biometric: Boolean = if (isAvailableBiometric(context)) prefs.getBoolean(BIOMETRIC_KEY, false) else false
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(BIOMETRIC_KEY, value).apply()
+                prefs.putBoolean(BIOMETRIC_KEY, value)
                 field = value
                 _biometricFlow.tryEmit(value)
                 migrationHelper.setBiometryEnabled(value)
@@ -218,7 +221,7 @@ class SettingsRepository(
     var country: String = fixCountryCode(prefs.getString(COUNTRY_KEY, null))
         set(value) {
             if (value != field) {
-                prefs.edit().putString(COUNTRY_KEY, value).apply()
+                prefs.putString(COUNTRY_KEY, value)
                 field = value
                 _countryFlow.tryEmit(value)
                 migrationHelper.setLegacySelectedCountry(value)
@@ -228,7 +231,7 @@ class SettingsRepository(
     var hiddenBalances: Boolean = prefs.getBoolean(HIDDEN_BALANCES_KEY, false)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(HIDDEN_BALANCES_KEY, value).apply()
+                prefs.putBoolean(HIDDEN_BALANCES_KEY, value)
                 field = value
                 _hiddenBalancesFlow.tryEmit(value)
                 migrationHelper.setHiddenBalance(value)
@@ -238,7 +241,7 @@ class SettingsRepository(
     var batteryViewed: Boolean = prefs.getBoolean(BATTERY_VIEWED_KEY, false)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(BATTERY_VIEWED_KEY, value).apply()
+                prefs.putBoolean(BATTERY_VIEWED_KEY, value)
                 field = value
             }
         }
@@ -246,7 +249,7 @@ class SettingsRepository(
     var showSafeModeSetup: Boolean = prefs.getBoolean(SHOW_SAFE_MODE_SETUP_KEY, false)
         set(value) {
             if (value != field) {
-                prefs.edit().putBoolean(SHOW_SAFE_MODE_SETUP_KEY, value).apply()
+                prefs.putBoolean(SHOW_SAFE_MODE_SETUP_KEY, value)
                 field = value
             }
         }
@@ -289,7 +292,7 @@ class SettingsRepository(
     }
 
     fun setStoriesViewed(storyId: String) {
-        prefs.edit().putBoolean(STORIES_VIEWED_PREFIX + storyId, true).apply()
+        prefs.putBoolean(STORIES_VIEWED_PREFIX + storyId, true)
     }
 
     fun setSafeModeState(state: SafeModeState) {
@@ -328,7 +331,7 @@ class SettingsRepository(
 
     fun incrementCopyCount() {
         val count = addressCopyCount + 1
-        prefs.edit().putInt(ADDRESS_COPY_COUNT_KEY, count).apply()
+        prefs.putInt(ADDRESS_COPY_COUNT_KEY, count)
         walletPrefsFolder.notifyChanged()
     }
 

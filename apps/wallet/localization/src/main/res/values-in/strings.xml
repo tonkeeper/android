@@ -60,10 +60,12 @@
     <string name="liquid_staking">Taruhan Cair</string>
     <string name="other">Lainnya</string>
     <string name="minimum_amount">Minimal %1$s</string>
+    <string name="stake_ethena_disclaimer">Ini adalah estimasi pengembalian tahunan berdasarkan imbalan protokol rata-rata minggu lalu dan jumlah rata-rata USDe yang dipertaruhkan. Pengembalian tersebut dihitung per tahun dengan peracikan mingguan. <annotation colorAttr="textSecondaryColor">Kinerja masa lalu tidak menjamin hasil di masa mendatang.</annotation> Staking dan imbalan disediakan oleh Ethena, layanan pihak ketiga, dan tunduk pada <annotation colorAttr="textAccentColor">persyaratan</annotation> mereka.</string>
     <string name="stake_tonstakers_description">Saat Anda mempertaruhkan TON di pool Tonstakers, Anda menerima token yang disebut tsTON yang mewakili bagian Anda di pool tersebut. Saat pool tersebut mengumpulkan keuntungan, tsTON Anda mewakili jumlah TON yang lebih besar.</string>
     <string name="edit">Edit</string>
     <string name="pinned">Disematkan</string>
     <string name="all_assets">Semua Aset</string>
+    <string name="all_ton_assets">Semua Aset TON</string>
     <string name="sorted_by_price">Diurutkan berdasarkan Harga</string>
     <string name="staking_minimum_deposit">Setoran minimum %1$s.</string>
     <string name="staking_options">Opsi</string>
@@ -183,6 +185,7 @@
     <string name="empty_collectibles_subtitle">Dapatkan item pertama Anda!</string>
     <string name="new_wallet">Dompet baru</string>
     <string name="buy_toncoin">Beli Toncoin</string>
+    <string name="buy_or_sell_dot">Beli · Jual</string>
     <string name="buy_or_sell">Beli atau jual</string>
     <string name="fiat_open_description">Anda membuka aplikasi eksternal yang tidak dioperasikan oleh Tonkeeper.</string>
     <string name="buy">Beli</string>
@@ -504,9 +507,12 @@
     <string name="all">Semua</string>
     <string name="report_encrypted_comment">Komentar dari transaksi ini akan dikirim dengan laporan dalam bentuk terdekripsi.</string>
     <string name="select_from_gallery">Pilih Dari Galeri</string>
+    <string name="swipe_right">Geser ke kanan</string>
     <string name="open">Membuka</string>
     <string name="theme_light">Lampu</string>
+    <string name="payment_method">Metode Pembayaran</string>
     <string name="downloading">Sedang mengunduh…</string>
+    <string name="emulation_failed_warning">Setelah konfirmasi, apa pun bisa terjadi, termasuk kehilangan semua dana Anda. Semua transaksi tidak dapat dibatalkan. Kami tidak dapat meniru transaksi tersebut dan tidak tahu apa yang akan terjadi selanjutnya.</string>
     <string name="update_tonkeeper">Perbarui Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Versi baru Tonkeeper sudah tersedia. Anda dapat mengunduhnya sekarang.</string>
     <string name="download_error">Terjadi kesalahan pengunduhan. Ketuk untuk mencoba lagi.</string>
@@ -525,6 +531,7 @@
     <string name="default_font_size">Ukuran Font Default</string>
     <string name="words12">12 kata</string>
     <string name="words24">24 kata</string>
+    <string name="provider">Penyedia</string>
     <string name="theme_deep_blue">Biru Tua</string>
     <string name="theme_dark">Gelap</string>
     <string name="sign_data_binary_message">Anda menandatangani secara membabi buta. Tanda tangani hanya dari sumber yang tepercaya.</string>
@@ -551,5 +558,20 @@
     <string name="dapp_share_subtitle">Tautan ini membuka %1$s langsung di Tonkeeper. Anda dapat menggunakannya lagi nanti atau membagikannya jika diperlukan.</string>
     <string name="copy_link">Salin Tautan</string>
     <string name="dapp_disclaimer">Anda membuka aplikasi eksternal yang tidak dioperasikan oleh Tonkeeper. Lanjutkan hanya jika Anda mempercayai sumbernya.</string>
+    <string name="sign">Tanda</string>
+    <string name="ton_assets">Aset TON</string>
+    <string name="pair_not_available">Pasangan mata uang ini tidak tersedia. Silakan coba yang lain.</string>
+    <string name="balance_prefix">Saldo: %1$s</string>
+    <string name="all_currencies">Semua mata uang</string>
+    <string name="crypto">Kripto</string>
+    <string name="close">Menutup</string>
+    <string name="dapp_safe_modal_title">Tautan tersebut mengarah ke layanan penipuan</string>
+    <string name="dapp_safe_model_button">Cara agar tetap aman</string>
+    <string name="dapp_safe_modal_subtitle">Kami tidak membukanya karena alasan keamanan</string>
+    <string name="credit_card">Kartu kredit</string>
+    <string name="credit_card_subtitle">Visa atau Mastercard</string>
+    <string name="currency_not_found">Mata uang tidak ditemukan</string>
+    <string name="onrmap_provider_description">Penyedia lain tersedia untuk pasangan mata uang yang berbeda.</string>
+    <string name="stake_ethena_description">Token tsUSDe mewakili USDe yang disimpan melalui Ethena, layanan staking yang terdesentralisasi. tsUSDe secara otomatis mengumpulkan imbalan staking, dengan penguncian minimal.</string>
 
 </resources>

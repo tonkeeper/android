@@ -5,6 +5,7 @@
     android:layout_margin="@dimen/offsetMedium">
 
     <uikit.widget.ButtonsLayout
+        android:id="@+id/buttons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal">
@@ -22,6 +23,13 @@
             android:layout_height="wrap_content"
             android:icon="@drawable/ic_arrow_down_28"
             android:title="@string/receive"/>
+
+        <uikit.widget.IconButtonView
+            android:id="@+id/stake"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:icon="@drawable/ic_staking_outline_28"
+            android:title="@string/stake"/>
 
         <uikit.widget.IconButtonView
             android:id="@+id/swap"

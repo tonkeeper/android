@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
 import android.util.Log
+import android.view.View
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.equalsAddress
@@ -187,7 +188,7 @@ class TonConnectManager(
         type: AppConnectEntity.Type
     ): AppConnectEntity? {
         val apps = dAppsRepository.getConnections(accountId, testnet)
-        if (apps.isEmpty) {
+        if (apps.isEmpty()) {
             return null
         }
         val connections = apps.filter {
@@ -323,8 +324,10 @@ class TonConnectManager(
         }
 
         val clientId = tonConnect.clientId
+        var appUrl = Uri.EMPTY
         try {
             val app = readManifest(tonConnect.manifestUrl)
+            appUrl = app.url
             if (isScam(activity, wallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
                 return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
             }
@@ -373,6 +376,7 @@ class TonConnectManager(
                 activity.appVersionName
             )
         } catch (e: CancellationException) {
+            wallet?.let { showLogoutAppBar(it, activity, appUrl) }
             JsonBuilder.connectEventError(BridgeError.userDeclinedTransaction())
         } catch (e: ManifestException) {
             if (e is ManifestException.NotFound) {

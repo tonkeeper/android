@@ -27,9 +27,9 @@ object Dependence {
         const val serialization = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0"
         const val serializationJSON = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0"
         const val serializationCBOR = "org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.8.0"
-        const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.1"
-        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.6.0"
         const val guava = "org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.10.2"
+        const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.6.2"
+        const val io = "org.jetbrains.kotlinx:kotlinx-io-core:0.7.0"
     }
 
     object GooglePlay {
@@ -46,8 +46,8 @@ object Dependence {
     }
 
     object Koin {
-        const val core = "io.insert-koin:koin-android:4.0.1"
-        const val workmanager = "io.insert-koin:koin-androidx-workmanager:4.0.1"
+        const val core = "io.insert-koin:koin-android:4.0.2"
+        const val workmanager = "io.insert-koin:koin-androidx-workmanager:4.0.2"
     }
 
     object ML {
@@ -58,21 +58,21 @@ object Dependence {
         const val core = "androidx.core:core-ktx:1.15.0"
         const val shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
         const val appCompat = "androidx.appcompat:appcompat:1.7.0"
-        const val activity = "androidx.activity:activity-ktx:1.9.3"
-        const val fragment = "androidx.fragment:fragment-ktx:1.8.5"
-        const val recyclerView = "androidx.recyclerview:recyclerview:1.3.2"
+        const val activity = "androidx.activity:activity-ktx:1.10.1"
+        const val fragment = "androidx.fragment:fragment-ktx:1.8.6"
+        const val recyclerView = "androidx.recyclerview:recyclerview:1.4.0"
         const val viewPager2 = "androidx.viewpager2:viewpager2:1.1.0"
         const val security = "androidx.security:security-crypto:1.0.0"
         const val workManager = "androidx.work:work-runtime-ktx:2.10.0"
         const val biometric = "androidx.biometric:biometric:1.1.0"
         const val annotation = "androidx.annotation:annotation:1.9.1"
         const val splashscreen = "androidx.core:core-splashscreen:1.0.1"
-        const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.2.0"
+        const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.2.1"
         const val browser = "androidx.browser:browser:1.8.0"
 
         const val swiperefreshlayout = "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
         const val profileinstaller = "androidx.profileinstaller:profileinstaller:1.4.1"
-        const val webkit = "androidx.webkit:webkit:1.12.1"
+        const val webkit = "androidx.webkit:webkit:1.13.0"
 
         const val concurrent = "androidx.concurrent:concurrent-futures:1.2.0"
 
@@ -113,7 +113,7 @@ object Dependence {
     }
 
     object Firebase {
-        const val bom = "com.google.firebase:firebase-bom:33.7.0"
+        const val bom = "com.google.firebase:firebase-bom:33.10.0"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
         const val config = "com.google.firebase:firebase-config-ktx:21.6.1"
         const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
@@ -151,6 +151,7 @@ object Dependence {
         const val color = ":ui:uikit:color"
         const val icon = ":ui:uikit:icon"
         const val list = ":ui:uikit:list"
+        const val flag = ":ui:uikit:flag"
     }
 
     object Wallet {

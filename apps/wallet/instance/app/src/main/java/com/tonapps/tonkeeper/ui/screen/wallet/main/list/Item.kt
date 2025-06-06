@@ -12,6 +12,7 @@ import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
 import com.tonapps.extensions.readParcelableCompat
+import com.tonapps.extensions.readSerializableCompat
 import com.tonapps.extensions.writeArrayCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
@@ -19,6 +20,7 @@ import com.tonapps.extensions.writeEnum
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.view.BatteryView
+import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.Blockchain
@@ -30,6 +32,8 @@ import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import kotlinx.parcelize.IgnoredOnParcel
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 sealed class Item(type: Int): BaseListItem(type), Parcelable {
@@ -237,10 +241,22 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val pendingWithdraw: Coins,
         val pendingWithdrawFormat: CharSequence,
         val cycleEnd: Long,
+        val apy: BigDecimal
     ): Item(TYPE_STAKED) {
 
-        val iconUri: Uri
-            get() = UriUtil.getUriForResourceId(StakingPool.getIcon(poolImplementation))
+        @IgnoredOnParcel
+        val iconRes: Int by lazy {
+            StakingPool.getIcon(poolImplementation)
+        }
+
+        @IgnoredOnParcel
+        val currencyIcon: Int by lazy {
+            if (poolImplementation == StakingPool.Implementation.Ethena) {
+                com.tonapps.wallet.api.R.drawable.ic_udse_ethena_with_bg
+            } else {
+                com.tonapps.wallet.api.R.drawable.ic_ton_with_bg
+            }
+        }
 
         constructor(parcel: Parcel) : this(
             parcel.readEnum(ListCell.Position::class.java)!!,
@@ -260,7 +276,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readCharSequenceCompat()!!,
             parcel.readParcelableCompat()!!,
             parcel.readCharSequenceCompat()!!,
-            parcel.readLong()
+            parcel.readLong(),
+            parcel.readSerializableCompat<BigDecimal>()!!
         )
 
         override fun marshall(dest: Parcel, flags: Int) {
@@ -282,6 +299,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeParcelable(pendingWithdraw, flags)
             dest.writeCharSequenceCompat(pendingWithdrawFormat)
             dest.writeLong(cycleEnd)
+            dest.writeSerializable(apy)
         }
 
         companion object CREATOR : Parcelable.Creator<Stake> {

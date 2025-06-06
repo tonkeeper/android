@@ -25,9 +25,10 @@ abstract class BlobDataSource<D>(
 
         inline fun <reified T: Parcelable> simple(
             context: Context,
-            path: String
+            path: String,
+            timeout: Long = TimeUnit.DAYS.toMillis(90)
         ): BlobDataSource<T> {
-            return object : BlobDataSource<T>(context, path) {
+            return object : BlobDataSource<T>(context, path, timeout) {
                 override fun onMarshall(data: T) = data.toByteArray()
                 override fun onUnmarshall(bytes: ByteArray) = bytes.toParcel<T>()
             }
@@ -35,9 +36,10 @@ abstract class BlobDataSource<D>(
 
         inline fun <reified T> simpleJSON(
             context: Context,
-            path: String
+            path: String,
+            timeout: Long = TimeUnit.DAYS.toMillis(90)
         ): BlobDataSource<T> {
-            return object : BlobDataSource<T>(context, path) {
+            return object : BlobDataSource<T>(context, path, timeout) {
                 override fun onMarshall(data: T) = toJSON(data).toByteArray()
 
                 override fun onUnmarshall(bytes: ByteArray): T? {

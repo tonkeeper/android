@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/itemHeight"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <uikit.widget.FrescoView
+        android:id="@+id/image"
+        android:layout_width="@dimen/iconSize"
+        android:layout_height="@dimen/iconSize"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        app:roundAsCircle="true"/>
+
+    <com.tonapps.tonkeeper.ui.component.CountryFlagView
+        android:id="@+id/icon"
+        android:layout_width="@dimen/iconSize"
+        android:layout_height="@dimen/iconSize"
+        android:layout_gravity="center"/>
+    
+    <FrameLayout
+        android:id="@+id/images"
+        android:layout_width="29dp"
+        android:layout_height="21dp"
+        android:layout_gravity="center"
+        android:visibility="gone">
+
+        <uikit.widget.FrescoView
+            android:id="@+id/image1"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginLeft="10dp"
+            app:roundAsCircle="true"/>
+
+        <uikit.widget.FrescoView
+            android:id="@+id/image2"
+            android:layout_width="21dp"
+            android:layout_height="21dp"
+            app:roundingBorderWidth="2dp"
+            app:roundingBorderPadding="1dp"
+            app:roundingBorderColor="?attr/backgroundContentColor"
+            app:roundAsCircle="true"/>
+
+    </FrameLayout>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/symbol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginLeft="@dimen/offsetMedium"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="?attr/textPrimaryColor"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginLeft="10dp"
+        android:layout_gravity="center"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/textSecondaryColor"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/check"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:src="@drawable/ic_donemark_otline_28"
+        android:tint="?attr/accentBlueColor"
+        android:scaleType="centerInside"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/arrow"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_chevron_right_16"
+        android:tint="?attr/iconSecondaryColor"
+        android:scaleType="centerInside"/>
+
+</uikit.widget.RowLayout>

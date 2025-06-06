@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.rates.entity
 
 import android.os.Parcelable
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import io.tonapi.models.TokenRates
 import kotlinx.parcelize.Parcelize
 

@@ -5,7 +5,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
-import com.tonapps.wallet.data.core.WalletCurrency
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import java.math.BigDecimal

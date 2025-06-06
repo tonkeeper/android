@@ -86,6 +86,7 @@
     <string name="domain_link_button">Привязать домен</string>
     <string name="manual_start_button">Сделать копию вручную</string>
     <string name="manual">Вручную</string>
+    <string name="dapp_safe_modal_subtitle">Мы не открывали его из соображений безопасности.</string>
     <string name="emulation_failed_warning">После подтверждения может произойти что угодно, включая потерю всех ваших средств. Все транзакции необратимы. Мы не смогли проэмулировать транзакцию и не знаем, что произойдёт дальше.</string>
     <string name="manual_description">Создайте резервную копию своего кошелька вручную, записав секретный ключ.</string>
     <string name="manual_backup_done">Резервная копия сделана</string>
@@ -106,6 +107,7 @@
     <string name="comment_encrypted_hint">Будет виден только получателю и вам.</string>
     <string name="decrypt_comment">Расшифровать</string>
     <string name="unnamed_collection">Коллекция без названия</string>
+    <string name="all_ton_assets">Все TON активы</string>
     <string name="sorted_by_price">По стоимости</string>
     <string name="liquid_staking">Ликвидный стейкинг</string>
     <string name="staking_options">Варианты</string>
@@ -176,6 +178,7 @@
     <string name="explore">Витрина</string>
     <string name="connected">Подключённые</string>
     <string name="browser_search_placeholder">Введите адрес или начните поиск</string>
+    <string name="buy_or_sell_dot">Купить · Продать</string>
     <string name="buy_or_sell">Купить TON</string>
     <string name="stake">Застейкать</string>
     <string name="add_wallet">Добавить кошелёк</string>
@@ -257,6 +260,7 @@
     <string name="unstake_amount">Сумма снятия ставки</string>
     <string name="other">Другое</string>
     <string name="minimum_amount">Минимум %1$s</string>
+    <string name="stake_ethena_disclaimer">Это предполагаемая годовая доходность, основанная на средних наградах протокола за прошлую неделю и средней сумме поставленных USDe. Доходность рассчитывается на основе годового процента с еженедельным начислением процентов. <annotation colorAttr="textSecondaryColor">Прошлые результаты не гарантируют будущих результатов.</annotation> Ставки и вознаграждения предоставляются Ethena, сторонним сервисом, и подчиняются их <annotation colorAttr="textAccentColor">условиям</annotation>.</string>
     <string name="stake_tonstakers_description">Когда вы делаете ставку TON в пуле Tonstakers, вы получаете токен под названием tsTON, который представляет вашу долю в пуле. По мере того, как пул накапливает прибыль, ваш tsTON представляет большее количество TON.</string>
 
     <string name="view_details">Подробнее</string>
@@ -584,8 +588,11 @@
     <string name="stories_safemode_2_subtitle">Чтобы избежать спама и подделок</string>
     <string name="stories_safemode_3_title">Только проверенные токены</string>
     <string name="select_from_gallery">Выбрать из галереи</string>
+    <string name="sign">Подписать</string>
+    <string name="swipe_right">Свайп вправо</string>
     <string name="open">Открыть</string>
     <string name="theme_light">Светлая</string>
+    <string name="payment_method">Способ оплаты</string>
     <string name="downloading">Загрузка…</string>
     <string name="update_tonkeeper">Обновление Tonkeeper</string>
     <string name="update_tonkeeper_subtitle">Доступна новая версия Tonkeeper. Вы можете скачать ее сейчас.</string>
@@ -604,6 +611,9 @@
     <string name="app_icon_changed">Иконка приложения изменен</string>
     <string name="default_font_size">Стандартный размер шрифта</string>
     <string name="words24">24 слова</string>
+    <string name="all_currencies">Все валюты</string>
+    <string name="crypto">Крипта</string>
+    <string name="provider">Провайдер</string>
     <string name="theme_deep_blue">Тёмно-синяя</string>
     <string name="theme_dark">Тёмная</string>
     <string name="words12">12 слов</string>
@@ -622,10 +632,20 @@
     <string name="send_wrong_blockchain">Указан адрес сети %1$s.</string>
     <string name="send_wrong_blockchain_swap">Обменяйте USD₮ %1$s на USD₮ %2$s через %3$s, чтобы продолжить отправку.</string>
     <string name="enable_usdt_tron">Включить USD₮ TRC20</string>
-    <string name="tron">TRON</string>
     <string name="dapp_share_title">Поделиться %1$s</string>
     <string name="dapp_share_subtitle">Эта ссылка откроет %1$s напрямую в Tonkeeper. Вы можете сохранить её для себя или поделиться ею.</string>
     <string name="copy_link">Скопировать ссылку</string>
     <string name="dapp_disclaimer">Вы открываете внешнее приложение, которым не управляет Tonkeeper. Переходите, только если доверяете источнику.</string>
+    <string name="credit_card_subtitle">Visa или Mastercard</string>
+    <string name="ton_assets">Активы TON</string>
+    <string name="pair_not_available">Валютная пара недоступна. Пожалуйста, попробуйте другую.</string>
+    <string name="currency_not_found">Валюта не найдена</string>
+    <string name="onrmap_provider_description">Список провайдеров зависит от выбранной валютной пары.</string>
+    <string name="credit_card">Кредитная карта</string>
+    <string name="balance_prefix">Баланс: %1$s</string>
+    <string name="close">Закрыть</string>
+    <string name="dapp_safe_modal_title">Ссылка ведет на мошеннический сервис</string>
+    <string name="dapp_safe_model_button">Как оставаться в безопасности</string>
+    <string name="stake_ethena_description">Токен tsUSDe представляет собой USDe, хранящиеся через Ethena, децентрализованный сервис ставок. tsUSDe автоматически накапливает вознаграждения за ставки с минимальной блокировкой.</string>
 
 </resources>

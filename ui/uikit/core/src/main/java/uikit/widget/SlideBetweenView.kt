@@ -18,6 +18,15 @@ class SlideBetweenView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyle) {
 
     private var currentIndex: Int = 0
+        set(value) {
+            field = value
+            doOnChange?.invoke(value)
+        }
+
+    val isFirst: Boolean
+        get() = currentIndex == 0
+
+    var doOnChange: ((Int) -> Unit)? = null
 
     private fun getFromToView(
         fromIndex: Int,

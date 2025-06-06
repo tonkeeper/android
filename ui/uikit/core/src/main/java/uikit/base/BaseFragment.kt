@@ -34,6 +34,7 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomSheetLayout
 import uikit.widget.ModalView
 import uikit.widget.SwipeBackLayout
+import java.io.Serializable
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -152,6 +153,28 @@ open class BaseFragment(
     fun putParcelableArg(key: String, value: Parcelable) {
         setArgs(Bundle().apply {
             putParcelable(key, value)
+        })
+    }
+
+    fun putParcelableArrayListArg(key: String, value: ArrayList<out Parcelable>) {
+        setArgs(Bundle().apply {
+            putParcelableArrayList(key, value)
+        })
+    }
+
+    fun putParcelableListArg(key: String, value: List<out Parcelable>) {
+        putParcelableArrayListArg(key, ArrayList(value))
+    }
+
+    fun putStringList(key: String, value: List<String>) {
+        setArgs(Bundle().apply {
+            putStringArrayList(key, ArrayList(value))
+        })
+    }
+
+    fun putSerializable(key: String, value: Serializable) {
+        setArgs(Bundle().apply {
+            putSerializable(key, value)
         })
     }
 

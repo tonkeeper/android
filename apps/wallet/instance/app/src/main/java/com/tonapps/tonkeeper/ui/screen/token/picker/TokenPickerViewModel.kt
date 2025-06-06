@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.token.picker
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
@@ -19,12 +20,15 @@ import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import uikit.extensions.context
 
 class TokenPickerViewModel(
@@ -40,7 +44,10 @@ class TokenPickerViewModel(
     private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
 
     private val _selectedTokenFlow = MutableStateFlow(selectedToken)
-    private val selectedTokenFlow = _selectedTokenFlow.asStateFlow().filterNotNull()
+
+    private val selectedTokenFlow = _selectedTokenFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+        .filterNotNull()
 
     private val _queryFlow = MutableStateFlow("")
     private val queryFlow = _queryFlow.asSharedFlow()

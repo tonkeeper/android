@@ -2,14 +2,18 @@ package com.tonapps.tonkeeper.ui.screen.staking.unstake
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.amount.UnStakeAmountFragment
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.confirm.UnStakeConfirmFragment
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.staking.entities.PoolEntity
 import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -52,7 +56,10 @@ class UnStakeScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
 
         private const val POOL_ADDRESS_KEY = "pool_address"
 
-        fun newInstance(wallet: WalletEntity, poolAddress: String): UnStakeScreen {
+        fun newInstance(wallet: WalletEntity, poolAddress: String): BaseFragment {
+            if (poolAddress.equalsAddress(PoolEntity.ethena.address)) {
+                return DAppScreen.newInstance(wallet, AppEntity.ethena, "unstaking")
+            }
             val fragment = UnStakeScreen(wallet)
             fragment.putStringArg(POOL_ADDRESS_KEY, poolAddress)
             return fragment

@@ -31,6 +31,7 @@
     </uikit.widget.RowLayout>
 
     <uikit.widget.RowLayout
+        android:id="@+id/min_deposit_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/tertiaryHeight">
 

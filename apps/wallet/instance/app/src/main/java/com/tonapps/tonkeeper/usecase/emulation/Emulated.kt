@@ -4,8 +4,8 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.WalletCurrency
 import com.tonapps.wallet.data.core.entity.TransferType
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.token.TokenRepository
 import io.tonapi.models.JettonQuantity
 import io.tonapi.models.MessageConsequences

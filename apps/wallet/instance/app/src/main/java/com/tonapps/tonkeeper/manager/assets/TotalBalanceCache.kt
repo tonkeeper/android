@@ -1,15 +1,13 @@
 package com.tonapps.tonkeeper.manager.assets
 
 import android.content.Context
-import android.util.Log
 import androidx.core.content.edit
 import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putParcelable
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.WalletCurrency
-import java.util.concurrent.ConcurrentHashMap
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 
 internal class TotalBalanceCache(context: Context) {
 

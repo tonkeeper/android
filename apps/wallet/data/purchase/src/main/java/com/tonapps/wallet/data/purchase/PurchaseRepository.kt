@@ -2,14 +2,33 @@ package com.tonapps.wallet.data.purchase
 
 import android.content.Context
 import android.util.Log
+import com.tonapps.extensions.JSON
+import com.tonapps.extensions.getParcelable
+import com.tonapps.extensions.prefs
+import com.tonapps.extensions.putParcelable
+import com.tonapps.extensions.putString
+import com.tonapps.extensions.state
 import com.tonapps.extensions.toByteArray
-import com.tonapps.extensions.toListParcel
 import com.tonapps.extensions.toParcel
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.BlobDataSource
+import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.wallet.data.purchase.entity.OnRamp
 import com.tonapps.wallet.data.purchase.entity.PurchaseCategoryEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseDataEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 import org.ton.crypto.digest.sha512
 import org.ton.crypto.hex
 import java.util.Locale
@@ -18,12 +37,69 @@ import java.util.concurrent.TimeUnit
 
 class PurchaseRepository(
     private val context: Context,
+    private val scope: CoroutineScope,
     private val api: API
 ) : BlobDataSource<PurchaseDataEntity>(
     context = context,
     path = "purchase",
     timeout = TimeUnit.DAYS.toMillis(1)
 ) {
+
+    private companion object {
+        private const val SEND_CURRENCY_KEY = "send_currency"
+        private const val RECEIVE_CURRENCY_KEY = "receive_currency"
+    }
+
+    private val prefs = context.prefs("onramp")
+    private val onRampCache = simple<OnRamp.Data>(context, "onRamp", TimeUnit.DAYS.toMillis(1))
+
+    private val _sendCurrencyFlow = MutableStateFlow<WalletCurrency?>(null)
+    val sendCurrencyFlow = _sendCurrencyFlow.asStateFlow()
+
+    private val _receiveCurrencyFlow = MutableStateFlow(WalletCurrency.TON)
+    val receiveCurrencyFlow = _receiveCurrencyFlow.asStateFlow()
+
+    var sendCurrency: WalletCurrency?
+        get() = prefs.getParcelable(SEND_CURRENCY_KEY)
+        set(value) {
+            _sendCurrencyFlow.value = value
+            prefs.putParcelable(SEND_CURRENCY_KEY, value)
+        }
+
+    var receiveCurrency: WalletCurrency
+        get() = prefs.getParcelable(RECEIVE_CURRENCY_KEY) ?: WalletCurrency.TON
+        set(value) {
+            _receiveCurrencyFlow.value = value
+            prefs.putParcelable(RECEIVE_CURRENCY_KEY, value)
+        }
+
+    init {
+        _sendCurrencyFlow.value = sendCurrency
+        _receiveCurrencyFlow.value = receiveCurrency
+    }
+
+    suspend fun getOnRamp(country: String): OnRamp.Data? = withContext(Dispatchers.IO) {
+        getOnRampData(country)
+    }
+
+    private suspend fun loadOnRampData(country: String): OnRamp.Data? = withContext(Dispatchers.IO) {
+        val data = api.getOnRampData(country) ?: return@withContext null
+        try {
+            JSON.decodeFromString<OnRamp.Data>(data)
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
+    private suspend fun getOnRampData(country: String): OnRamp.Data? {
+        val cacheKey = "data_$country"
+        var data = onRampCache.getCache(cacheKey)
+        if (data == null) {
+            data = loadOnRampData(country) ?: return null
+            onRampCache.setCache(cacheKey, data)
+        }
+        return data
+    }
 
     fun get(
         testnet: Boolean,

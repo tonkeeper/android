@@ -2,6 +2,7 @@ package com.tonapps.extensions
 
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.core.os.BundleCompat
 import java.io.Serializable
 

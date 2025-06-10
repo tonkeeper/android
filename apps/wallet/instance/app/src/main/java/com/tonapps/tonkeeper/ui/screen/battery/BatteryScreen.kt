@@ -40,6 +40,8 @@ class BatteryScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
                 BatteryRoute.Settings -> BatterySettingsScreen.newInstance(screenContext.wallet)
             }
         }) { setFragment(it) }
+
+        viewModel.setBatteryViewed()
     }
 
     companion object {

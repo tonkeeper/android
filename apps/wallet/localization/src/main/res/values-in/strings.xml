@@ -439,6 +439,7 @@
     <string name="promocode_hint">Kode Promo</string>
     <string name="refund">Pengembalian</string>
     <string name="gasless_switch_label">Ketuk untuk membayar dalam %1$s</string>
+    <string name="change_fee_method">Ubah metode pembayaran</string>
     <string name="battery_large_pack">Besar</string>
     <string name="battery_medium_pack">Sedang</string>
     <string name="battery_small_pack">Kecil</string>

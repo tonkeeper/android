@@ -81,7 +81,8 @@ class BatteryRechargeViewModel(
     private val promoStateFlow = MutableStateFlow<PromoState>(PromoState.Default)
 
     private val _amountFlow = MutableStateFlow(0.0)
-    private val amountFlow = combine(_amountFlow, tokenFlow) { amount, token -> Coins.of(amount, token.decimals) }
+    private val amountFlow =
+        combine(_amountFlow, tokenFlow) { amount, token -> Coins.of(amount, token.decimals) }
 
     private val _addressFlow = MutableStateFlow("")
 
@@ -145,7 +146,8 @@ class BatteryRechargeViewModel(
         val hasEnoughTonBalance = ton.balance.value >= Coins.of(0.1)
         val hasBatteryBalance = batteryBalance.balance > Coins.ZERO
         val rechargeMethod = getRechargeMethod(wallet, token)
-        val shouldMinusReservedAmount = batteryBalance.reservedBalance.value == BigDecimal.ZERO || args.isGift
+        val shouldMinusReservedAmount =
+            batteryBalance.reservedBalance.value == BigDecimal.ZERO || args.isGift
 
         val batteryReservedAmount = rechargeMethod.fromTon(api.config.batteryReservedAmount)
 
@@ -275,12 +277,14 @@ class BatteryRechargeViewModel(
             val promoCode = (promoState as? PromoState.Applied)?.appliedPromo ?: "null"
             val size = if (amount) "custom" else rechargePackType?.name?.lowercase() ?: "null"
 
-            AnalyticsHelper.simpleTrackEvent("battery_select", settingsRepository.installId, hashMapOf(
-                "size" to size,
-                "promo" to promoCode,
-                "jetton" to tokenSymbol,
-                "type" to "crypto"
-            ))
+            AnalyticsHelper.simpleTrackEvent(
+                "battery_select", settingsRepository.installId, hashMapOf(
+                    "size" to size,
+                    "promo" to promoCode,
+                    "jetton" to tokenSymbol,
+                    "type" to "crypto"
+                )
+            )
         }.launch()
     }
 
@@ -360,6 +364,7 @@ class BatteryRechargeViewModel(
             rechargeMethod.minBootstrapValue != null -> {
                 amount.value >= rechargeMethod.minBootstrapValue!!.toBigDecimal()
             }
+
             else -> false
         }
 
@@ -367,12 +372,14 @@ class BatteryRechargeViewModel(
             val request = SignRequestEntity.Builder()
                 .setFrom(wallet.contract.address)
                 .setValidUntil(validUntil)
-                .addMessage(RawMessageEntity(
-                    addressValue = fundReceiver,
-                    amount = amount.toLong(),
-                    stateInitValue = null,
-                    payloadValue = payload.base64()
-                ))
+                .addMessage(
+                    RawMessageEntity(
+                        addressValue = fundReceiver,
+                        amount = amount.toLong(),
+                        stateInitValue = null,
+                        payloadValue = payload.base64()
+                    )
+                )
                 .setNetwork(network)
                 .build(Uri.parse("https://battery.tonkeeper.com/"))
 
@@ -397,12 +404,14 @@ class BatteryRechargeViewModel(
             val request = SignRequestEntity.Builder()
                 .setFrom(wallet.contract.address)
                 .setValidUntil(validUntil)
-                .addMessage(RawMessageEntity(
-                    addressValue = token.balance.walletAddress,
-                    amount = Coins.of(0.1).toLong(),
-                    stateInitValue = null,
-                    payloadValue = jettonPayload.base64()
-                ))
+                .addMessage(
+                    RawMessageEntity(
+                        addressValue = token.balance.walletAddress,
+                        amount = Coins.of(0.1).toLong(),
+                        stateInitValue = null,
+                        payloadValue = jettonPayload.base64()
+                    )
+                )
                 .setNetwork(network)
                 .build(Uri.parse("https://battery.tonkeeper.com/"))
 
@@ -434,7 +443,16 @@ class BatteryRechargeViewModel(
                 )
             )
         }
-        uiItems.add(Item.CustomAmount(position = ListCell.Position.LAST, selected = isCustomAmount))
+        uiItems.add(
+            Item.CustomAmount(
+                position = if (packs.isNotEmpty()) {
+                    ListCell.Position.LAST
+                } else {
+                    ListCell.Position.SINGLE
+                },
+                selected = isCustomAmount
+            )
+        )
         return uiItems.toList()
     }
 
@@ -514,7 +532,7 @@ class BatteryRechargeViewModel(
                 willBePaidManually = willBePaidManually,
                 currency = settingsRepository.currency,
             )
-        }
+        }.filter { it.isAvailableToBuy }
     }
 
     private suspend fun getDestinationAccount(
@@ -555,7 +573,12 @@ class BatteryRechargeViewModel(
     fun sign(request: SignRequestEntity, forceRelayer: Boolean) = flow {
         val promoCode = (promoStateFlow.value as? PromoState.Applied)?.appliedPromo ?: "null"
         val tokenSymbol = _tokenFlow.value?.token?.symbol ?: "null"
-        AnalyticsHelper.batterySuccess(settingsRepository.installId, "crypto", promoCode, tokenSymbol)
+        AnalyticsHelper.batterySuccess(
+            settingsRepository.installId,
+            "crypto",
+            promoCode,
+            tokenSymbol
+        )
         val boc = SendTransactionScreen.run(context, wallet, request, forceRelayer = forceRelayer)
         emit(boc)
     }.flowOn(Dispatchers.IO)

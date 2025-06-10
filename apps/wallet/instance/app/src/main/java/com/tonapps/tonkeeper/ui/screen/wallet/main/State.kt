@@ -167,7 +167,7 @@ sealed class State {
                 balanceType = balanceType,
                 lastUpdatedFormat = lastUpdatedFormat,
                 batteryBalance = battery.balance,
-                showBattery = !battery.disabled && (!battery.beta || !battery.balance.isZero),
+                showBattery = !battery.disabled,
                 batteryEmptyState = if (battery.viewed) BatteryView.EmptyState.SECONDARY else BatteryView.EmptyState.ACCENT,
                 prefixYourAddress = prefixYourAddress
             )

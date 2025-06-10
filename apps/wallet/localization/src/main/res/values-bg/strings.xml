@@ -90,6 +90,7 @@
     <string name="staking_minimum_deposit">Минимален депозит %1$s.</string>
     <string name="staking_options">Опции</string>
     <string name="gasless_switch_label">Докоснете, за да платите в %1$s</string>
+    <string name="change_fee_method">Промяна на метода на плащане</string>
     <string name="battery_disclaimer">Едно таксуване покрива средната такса за транзакция. Някои транзакции може да струват повече.</string>
     <string name="restore_purchases">Възстановяване на покупките</string>
     <string name="battery_refilled">Заредена батерия</string>

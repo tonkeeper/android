@@ -503,7 +503,7 @@
         <item quantity="many">%1$s зарядов</item>
         <item quantity="other">%1$s зарядов</item>
     </plurals>
-    <string name="out_of_available_charges">из %1$s доступных</string>
+    <string name="out_of_available_charges">из %1$s</string>
     <string name="battery_refill_crypto">Зарядить за %1$s</string>
     <string name="battery_refill_gift">Батарейка в подарок</string>
     <string name="battery_refill_gift_subtitle">Поделись с друзьями</string>
@@ -555,6 +555,7 @@
     <string name="promocode_hint">Промокод</string>
     <string name="refund">Возврат</string>
     <string name="gasless_switch_label">Оплатить в %1$s</string>
+    <string name="change_fee_method">Изменить способ оплаты</string>
     <string name="or">или</string>
     <string name="battery_large_pack">Большой</string>
     <string name="battery_medium_pack">Средний</string>

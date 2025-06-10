@@ -17,6 +17,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import org.koin.androidx.viewmodel.ext.android.getViewModel
@@ -85,6 +86,9 @@ val Context.serverConfig: ConfigEntity?
 
 val Context.settingsRepository: SettingsRepository?
     get() = koin?.get<SettingsRepository>()
+
+val Context.ratesRepository: RatesRepository?
+    get() = koin?.get<RatesRepository>()
 
 val Context.passcodeManager: PasscodeManager?
     get() = koin?.get<PasscodeManager>()

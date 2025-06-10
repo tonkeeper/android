@@ -2,8 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 
 import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.core.Amount
+import com.tonapps.tonkeeper.core.Fee
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
+import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.data.core.currency.WalletCurrency
 
 sealed class SendEvent {
     data class Failed(val throwable: Throwable): SendEvent()
@@ -20,21 +23,17 @@ sealed class SendEvent {
     data object Confirm: SendEvent()
 
     data class Fee(
-        val balance: Coins = Coins.ZERO,
-        val amount: Coins = Coins.ZERO,
-        val fee: com.tonapps.tonkeeper.core.Fee = com.tonapps.tonkeeper.core.Fee(0L),
+        val fee: SendFee = SendFee.Ton(
+            amount = Fee(0L),
+            extra = 0L,
+            fiatAmount = Coins.ZERO,
+            fiatCurrency = WalletCurrency.DEFAULT
+        ),
         val format: CharSequence = "",
         val convertedFormat: CharSequence = "",
-        val isBattery: Boolean = false,
-        val isGasless: Boolean = false,
-        val showGaslessToggle: Boolean = false,
-        val tokenSymbol: String = "",
+        val showToggle: Boolean = false,
         val insufficientFunds: Boolean = false,
         val failed: Boolean,
-        val charges: Int? = null,
-        val chargesFormat: CharSequence? = null,
-        val chargesBalance: Int? = null,
-        val chargesBalanceFormat: CharSequence? = null,
     ): SendEvent()
 
     data object ResetAddress: SendEvent()

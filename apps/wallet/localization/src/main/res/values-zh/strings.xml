@@ -440,6 +440,7 @@
     <string name="promocode_hint">促销代码</string>
     <string name="refund">退款</string>
     <string name="gasless_switch_label">%1$s 后即可轻触付款</string>
+    <string name="change_fee_method">更改付款方式</string>
     <string name="battery_large_pack">大的</string>
     <string name="battery_medium_pack">中等的</string>
     <string name="battery_small_pack">小的</string>

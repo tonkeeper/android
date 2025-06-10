@@ -25,6 +25,7 @@ class IAPPackHolder(
     private val subtitleView = itemView.findViewById<AppCompatTextView>(R.id.subtitle)
     private val detailsView = itemView.findViewById<AppCompatTextView>(R.id.details)
     private val batteryView = itemView.findViewById<BatteryView>(R.id.battery)
+    private val amountContainerView = itemView.findViewById<View>(R.id.amount_container)
     private val amountView = itemView.findViewById<Button>(R.id.amount)
 
     override fun onBind(item: Item.IAPPack) {
@@ -33,6 +34,8 @@ class IAPPackHolder(
         amountView.text = item.formattedPrice
         amountView.setOnClickListener { onPackSelect(item.productId) }
         amountView.isEnabled = item.isEnabled
+        amountContainerView.setOnClickListener { onPackSelect(item.productId) }
+        amountContainerView.isEnabled = item.isEnabled
 
         titleView.text = getPackName(item.packType)
 
@@ -40,7 +43,7 @@ class IAPPackHolder(
             Plurals.battery_charges, item.charges, item.charges
         )
         subtitleView.setRightDrawable(itemView.getDrawable(UIKitIcon.ic_information_circle_16))
-        subtitleView.setOnClickListener {
+        itemView.setOnClickListener {
             detailsView.visibility = if (detailsView.visibility == View.VISIBLE) {
                 View.GONE
             } else {

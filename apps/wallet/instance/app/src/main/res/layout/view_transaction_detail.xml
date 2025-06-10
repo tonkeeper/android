@@ -53,7 +53,6 @@
                     android:id="@+id/subtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableTint="?attr/textTertiaryColor"
                     android:textAppearance="@style/TextAppearance.Body2"
                     android:textColor="?attr/textTertiaryColor"
                     android:visibility="gone" />

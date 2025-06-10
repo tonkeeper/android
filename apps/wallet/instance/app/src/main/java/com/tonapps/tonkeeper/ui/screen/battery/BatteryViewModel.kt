@@ -31,6 +31,7 @@ class BatteryViewModel(
     private val settingsRepository: SettingsRepository,
     private val batteryRepository: BatteryRepository,
     private val tokenRepository: TokenRepository,
+    private val accountRepository: AccountRepository,
 ) : BaseWalletVM(app) {
 
     private val _routeFlow = MutableEffectFlow<BatteryRoute>()
@@ -48,9 +49,14 @@ class BatteryViewModel(
 
     private fun openRecharge(jetton: String) {
         viewModelScope.launch {
-            val rechargeToken = batteryRepository.getRechargeMethodByJetton(wallet.testnet, jetton)?.jettonMaster ?: "TON"
-            val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: return@launch
-            val token = tokens.firstOrNull { it.address.equalsAddress(rechargeToken) } ?: return@launch
+            val rechargeToken =
+                batteryRepository.getRechargeMethodByJetton(wallet.testnet, jetton)?.jettonMaster
+                    ?: "TON"
+            val tokens =
+                tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
+                    ?: return@launch
+            val token =
+                tokens.firstOrNull { it.address.equalsAddress(rechargeToken) } ?: return@launch
             openScreen(BatteryRechargeScreen.newInstance(wallet, token))
         }
     }
@@ -61,5 +67,21 @@ class BatteryViewModel(
 
     private fun routeToRefill() {
         _routeFlow.tryEmit(BatteryRoute.Refill)
+    }
+
+    fun setBatteryViewed() {
+        if (!settingsRepository.batteryViewed) {
+            viewModelScope.launch {
+                settingsRepository.batteryViewed = true
+                val tonProofToken =
+                    accountRepository.requestTonProofToken(wallet) ?: return@launch
+                batteryRepository.getBalance(
+                    tonProofToken = tonProofToken,
+                    publicKey = wallet.publicKey,
+                    testnet = wallet.testnet,
+                    ignoreCache = true
+                )
+            }
+        }
     }
 }

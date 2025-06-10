@@ -445,6 +445,7 @@
     <string name="promocode_hint">Промокод</string>
     <string name="refund">Повернення</string>
     <string name="gasless_switch_label">Торкніться, щоб оплатити %1$s</string>
+    <string name="change_fee_method">Змінити спосіб оплати</string>
     <string name="battery_large_pack">Великий</string>
     <string name="battery_medium_pack">Середній</string>
     <string name="battery_small_pack">Маленький</string>

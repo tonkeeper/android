@@ -1,8 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
-<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/list_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingTop="@dimen/barHeight"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:paddingBottom="@dimen/offsetMedium" />
 
     <FrameLayout
         android:id="@+id/header_container"
@@ -14,14 +22,4 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </FrameLayout>
-
-    <uikit.widget.SimpleRecyclerView
-        android:id="@+id/list"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingHorizontal="@dimen/offsetMedium"
-        android:paddingBottom="@dimen/offsetMedium"/>
-
-</uikit.widget.ColumnLayout>
+</FrameLayout>

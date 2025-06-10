@@ -27,6 +27,7 @@ import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
@@ -45,7 +46,9 @@ import uikit.widget.FrescoView
 import uikit.widget.InputView
 import java.util.UUID
 
-class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
+class BatteryRechargeScreen(wallet: WalletEntity) :
+    BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)),
+    BaseFragment.BottomSheet {
 
     override val fragmentName: String = "BatteryRechargeScreen"
 
@@ -111,8 +114,10 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
         rightContentView.findViewById<LinearLayoutCompat>(R.id.token)
             .setOnClickListener { openTokenSelector() }
 
+        headerView.hideCloseIcon()
         headerView.setRightContent(rightContentView)
-        headerView.hideIcon()
+        headerView.setAction(UIKitIcon.ic_close_16)
+        headerView.doOnActionClick = { finish() }
         headerView.setTitleGravity(Gravity.START)
         headerView.title = when (args.isGift) {
             true -> getString(Localization.battery_gift_title)
@@ -163,7 +168,8 @@ class BatteryRechargeScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenCo
             viewModel.supportedTokensFlow.take(1),
             viewModel.tokenFlow.take(1)
         ) { allowedTokens, selectedToken ->
-            navigation?.add(TokenPickerScreen.newInstance(
+            navigation?.add(
+                TokenPickerScreen.newInstance(
                 wallet = screenContext.wallet,
                 requestKey = tokenRequestKey,
                 selectedToken = selectedToken.balance.token,

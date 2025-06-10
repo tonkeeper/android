@@ -584,7 +584,7 @@
         <item quantity="many">%1$s charges</item>
         <item quantity="other">%1$s charges</item>
     </plurals>
-    <string name="out_of_available_charges">out of %1$s available</string>
+    <string name="out_of_available_charges">out of %1$s</string>
     <string name="battery_refill_crypto">Recharge with %1$s</string>
     <string name="battery_refill_gift">Battery Gift</string>
     <string name="battery_refill_gift_subtitle">Share with friends</string>
@@ -636,6 +636,7 @@
     <string name="promocode_hint">Promo Code</string>
     <string name="refund">Refund</string>
     <string name="gasless_switch_label">Tap to pay in %1$s</string>
+    <string name="change_fee_method">Change Payment Method</string>
     <string name="recharge_battery">Recharge Battery</string>
     <string name="or">or</string>
     <string name="battery_large_pack">Large</string>

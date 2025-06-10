@@ -6,6 +6,7 @@ import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.style.ForegroundColorSpan
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -16,6 +17,8 @@ import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.isPositive
 import com.tonapps.extensions.short4
 import com.tonapps.extensions.shortTron
+import com.tonapps.extensions.uri
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.core.AnalyticsHelper
@@ -25,7 +28,9 @@ import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.helper.BrowserHelper
+import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinInputView
 import com.tonapps.tonkeeper.ui.screen.camera.CameraMode
@@ -36,6 +41,7 @@ import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
+import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
@@ -45,7 +51,9 @@ import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.fieldActiveBorderColor
 import com.tonapps.uikit.color.fieldErrorBorderColor
+import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -95,6 +103,10 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
         InsufficientFundsDialog(this)
+    }
+
+    private val feeMethodSelector: ActionSheet by lazy {
+        ActionSheet(requireContext())
     }
 
     private lateinit var slidesView: SlideBetweenView
@@ -586,7 +598,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun applyTransactionAmount(amount: SendTransaction.Amount) {
-        if (amount.value.isNegative) {
+        if (amount.value.isNegative || amount.value.isZero) {
             reviewRecipientAmountView.visibility = View.GONE
             return
         }
@@ -660,47 +672,65 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             button.isEnabled = true
         } else {
             reviewRecipientFeeView.title =
-                if (event.fee.isRefund) getString(Localization.refund) else getString(Localization.fee)
-            if (event.charges != null) {
-                reviewRecipientFeeView.value = "≈ " + requireContext().resources.getQuantityString(
-                    Plurals.battery_charges, event.charges, event.chargesFormat
+                if (event.fee is SendFee.Ton && event.fee.amount.isRefund) getString(Localization.refund) else getString(
+                    Localization.fee
                 )
-                reviewRecipientFeeView.description = if (event.chargesBalance != null) {
-                    requireContext().getString(
+
+            when (event.fee) {
+                is SendFee.TokenFee -> {
+                    if (event.fee.amount.value.isZero) {
+                        reviewRecipientFeeView.value = getString(Localization.unknown)
+                        reviewRecipientFeeView.description = ""
+                    } else {
+                        reviewRecipientFeeView.value =
+                            "≈ ${event.format}".withCustomSymbol(requireContext())
+                        reviewRecipientFeeView.description =
+                            "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
+                    }
+                }
+
+                is SendFee.Battery -> {
+                    reviewRecipientFeeView.value =
+                        "≈ " + requireContext().resources.getQuantityString(
+                            Plurals.battery_charges,
+                            event.fee.charges,
+                            CurrencyFormatter.format(value = event.fee.charges.toBigDecimal())
+                        )
+                    reviewRecipientFeeView.description = requireContext().getString(
                         Localization.out_of_available_charges,
-                        event.chargesBalanceFormat
+                        CurrencyFormatter.format(
+                            value = event.fee.chargesBalance.toBigDecimal()
+                        )
                     )
-                } else ""
-            } else if (event.fee.value.isZero) {
-                reviewRecipientFeeView.value = getString(Localization.unknown)
-                reviewRecipientFeeView.description = ""
-            } else {
-                reviewRecipientFeeView.value =
-                    "≈ ${event.format}".withCustomSymbol(requireContext())
-                reviewRecipientFeeView.description =
-                    "≈ ${event.convertedFormat}".withCustomSymbol(requireContext())
+                }
+
+                else -> {}
             }
 
-            reviewRecipientFeeView.subtitle = if (event.isBattery) {
-                getString(Localization.will_be_paid_with_battery)
-            } else if (event.showGaslessToggle) {
-                val symbol = if (event.isGasless) TokenEntity.TON.symbol else event.tokenSymbol
-                getString(Localization.gasless_switch_label, symbol)
-            } else {
-                null
-            }
-            if (event.showGaslessToggle && !event.isBattery) {
-                reviewRecipientFeeView.subtitleView.setOnClickListener {
-                    reviewRecipientFeeView.setLoading()
-                    confirmButton.isEnabled = false
-                    viewModel.toggleGasless()
+            if (event.showToggle) {
+                val paymentMethodViewed =
+                    requireContext().settingsRepository?.paymentMethodViewed ?: false
+                reviewRecipientFeeView.subtitle = getString(Localization.change_fee_method)
+                reviewRecipientFeeView.setOnClickListener {
+                    showFeeMethods(event.fee, reviewRecipientFeeView)
                 }
                 reviewRecipientFeeView.subtitleView.expandTouchArea(8.dp)
                 reviewRecipientFeeView.subtitleView.isEnabled = true
-                reviewRecipientFeeView.subtitleView.setEndDrawable(UIKitIcon.ic_chevron_right_12)
+                reviewRecipientFeeView.subtitleView.setTextColor(if (paymentMethodViewed) requireContext().textTertiaryColor else requireContext().textAccentColor)
+                reviewRecipientFeeView.subtitleView.setEndDrawable(
+                    getDrawable(
+                        UIKitIcon.ic_chevron_right_12,
+                        if (paymentMethodViewed) requireContext().textTertiaryColor else requireContext().textAccentColor
+                    )
+                )
+
             } else {
+                reviewRecipientFeeView.subtitle = ""
+                reviewRecipientFeeView.setOnClickListener(null)
                 reviewRecipientFeeView.subtitleView.setEndDrawable(null)
+                reviewRecipientFeeView.subtitleView.isEnabled = false
             }
+
             reviewRecipientFeeView.subtitleView.isEnabled = true
             reviewRecipientFeeView.setDefault()
             confirmButton.isEnabled = !event.insufficientFunds
@@ -767,6 +797,71 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     override fun onDragging() {
         super.onDragging()
         context?.hideKeyboard()
+    }
+
+    private fun showFeeMethods(currentFee: SendFee, targetView: View) {
+        feeMethodSelector.width = 264.dp
+
+        if (feeMethodSelector.isShowing) {
+            return
+        }
+
+        feeMethodSelector.clearItems()
+
+        viewModel.feeOptions.forEach { fee ->
+            when (fee) {
+                is SendFee.TokenFee -> {
+                    val formattedAmount = CurrencyFormatter.format(
+                        fee.amount.token.symbol,
+                        fee.amount.value,
+                        2
+                    )
+                    val formattedFiat = CurrencyFormatter.formatFiat(
+                        fee.fiatCurrency.code,
+                        fee.fiatAmount,
+                    )
+                    feeMethodSelector.addItem(
+                        id = fee.amount.token.symbol.hashCode().toLong(),
+                        title = fee.amount.token.symbol,
+                        subtitle = "≈ $formattedAmount · $formattedFiat",
+                        imageUri = fee.amount.token.imageUri,
+                        icon = if (currentFee == fee) {
+                            getDrawable(UIKitIcon.ic_done_16)
+                        } else null,
+                        onClick = {
+                            requireContext().settingsRepository?.paymentMethodViewed = true
+                            viewModel.setFeeMethod(fee)
+                        }
+                    )
+                }
+
+                is SendFee.Battery -> {
+                    val formattedCharges = requireContext().resources.getQuantityString(
+                        Plurals.battery_charges,
+                        fee.charges,
+                        CurrencyFormatter.format(value = fee.charges.toBigDecimal())
+                    )
+                    feeMethodSelector.addItem(
+                        id = "battery".hashCode().toLong(),
+                        title = getString(Localization.battery_refill_title),
+                        subtitle = "≈ $formattedCharges",
+                        imageUri = UIKitIcon.ic_flash_24.uri(),
+                        imageTintColor = requireContext().accentGreenColor,
+                        icon = if (currentFee == fee) {
+                            getDrawable(UIKitIcon.ic_done_16)
+                        } else null,
+                        onClick = {
+                            requireContext().settingsRepository?.paymentMethodViewed = true
+                            viewModel.setFeeMethod(fee)
+                        }
+                    )
+                }
+
+                else -> {}
+            }
+        }
+
+        feeMethodSelector.showPopupAboveRight(targetView)
     }
 
     companion object {

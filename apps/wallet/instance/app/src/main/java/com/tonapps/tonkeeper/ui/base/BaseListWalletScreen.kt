@@ -5,9 +5,12 @@ import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.R
 import uikit.extensions.applyNavBottomPadding
@@ -37,6 +40,8 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
         headerView = view.findViewById(R.id.header)
         listView = view.findViewById(R.id.list)
 
+        headerView.setBackgroundColor(requireContext().backgroundPageColor)
+
         if (this is SwipeBack) {
             headerView.setIcon(UIKitIcon.ic_chevron_left_16)
             headerView.doOnCloseClick = { finish() }
@@ -49,6 +54,14 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
             headerView.ignoreSystemOffset = true
         } else {
             headerView.ignoreSystemOffset = false
+        }
+
+        if (!headerView.ignoreSystemOffset) {
+            ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+                val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                listView.updatePadding(top = listView.paddingTop + statusInsets.top)
+                insets
+            }
         }
 
         if (hasApplyWindowInsets) {

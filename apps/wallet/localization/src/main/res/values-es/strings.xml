@@ -441,6 +441,7 @@
     <string name="promocode_hint">Código promocional</string>
     <string name="refund">Reembolso</string>
     <string name="gasless_switch_label">Toque para pagar en %1$s</string>
+    <string name="change_fee_method">Cambiar método de pago</string>
     <string name="battery_large_pack">Grande</string>
     <string name="battery_medium_pack">Medio</string>
     <string name="battery_small_pack">Pequeño</string>
@@ -545,7 +546,7 @@
     <string name="insufficient_balance_charges">Requerido para la tarifa: %1$s.\nDisponible: %2$s.</string>
     <string name="receive_tron_description">Envía solo %1$s a esta dirección, o podrías perder tus fondos.</string>
     <string name="open_explorer">Abrir en el explorador</string>
-    <string name="out_of_available_charges">agotado %1$s disponible</string>
+    <string name="out_of_available_charges">agotado de %1$s</string>
     <string name="tron_toggle_text">Usa USD₮ TRC20 sin TRX. Las tarifas son cubiertas por Tonkeeper Battery.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Copiar frase</string>

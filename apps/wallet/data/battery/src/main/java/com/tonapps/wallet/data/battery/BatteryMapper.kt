@@ -16,15 +16,19 @@ object BatteryMapper {
     }
 
     fun calculateChargesAmount(
-        transactionCost: String,
+        transactionCostBigDecimal: BigDecimal,
         meanFees: String
     ): Int {
         val meanFeesBigDecimal = BigDecimal(meanFees)
-        val transactionCostBigDecimal = BigDecimal(transactionCost)
 
         return transactionCostBigDecimal.divide(meanFeesBigDecimal, 0, RoundingMode.HALF_UP)
             .toInt()
     }
+
+    fun calculateChargesAmount(
+        transactionCost: String,
+        meanFees: String
+    ) = calculateChargesAmount(BigDecimal(transactionCost), meanFees)
 
     fun calculateCryptoCharges(method: RechargeMethodEntity, meanFees: String, amount: Coins): Int {
         val meanFeesBigDecimal = BigDecimal(meanFees)

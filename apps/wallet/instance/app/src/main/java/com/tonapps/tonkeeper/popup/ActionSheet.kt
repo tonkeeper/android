@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.popup
 
 import android.content.Context
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.Log
@@ -8,6 +10,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.PopupWindow
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
@@ -29,7 +32,7 @@ import uikit.widget.FrescoView
 
 open class ActionSheet(
     val context: Context
-): PopupWindow() {
+) : PopupWindow() {
 
     companion object {
         private val singleLineItemHeight = 48.dp
@@ -42,6 +45,8 @@ open class ActionSheet(
         val subtitle: CharSequence?,
         val icon: Drawable?,
         val imageUri: Uri?,
+        val imageTintColor: Int?,
+        val onClick: ((Item) -> Unit)? = null
     )
 
     private val container: LinearLayoutCompat
@@ -75,10 +80,18 @@ open class ActionSheet(
         addItem(id, context.getString(titleRes), null, drawable, imageUri)
     }
 
-    fun addItem(id: Long, title: CharSequence, subtitle: CharSequence? = null, icon: Drawable? = null, imageUri: Uri? = null) {
+    fun addItem(
+        id: Long,
+        title: CharSequence,
+        subtitle: CharSequence? = null,
+        icon: Drawable? = null,
+        imageUri: Uri? = null,
+        imageTintColor: Int? = null,
+        onClick: ((Item) -> Unit)? = null
+    ) {
         val index = items.indexOfFirst { it.id == id }
         if (index == -1) {
-            items.add(Item(id, title, subtitle, icon, imageUri))
+            items.add(Item(id, title, subtitle, icon, imageUri, imageTintColor, onClick))
         }
     }
 
@@ -95,8 +108,26 @@ open class ActionSheet(
         }
     }
 
-    fun getDrawable(@DrawableRes resId: Int): Drawable {
-        return container.getDrawable(resId)
+    fun showPopupAboveRight(target: View) {
+        if (isShowing) {
+            dismiss()
+            return
+        }
+
+        buildView()
+
+        val marginBottom = 8.dp
+
+        contentView.measure(
+            View.MeasureSpec.UNSPECIFIED,
+            View.MeasureSpec.UNSPECIFIED
+        )
+        val popupHeight = contentView.measuredHeight
+
+        val x = target.width - width
+        val y = -popupHeight - marginBottom
+
+        showAsDropDown(target, x, y, Gravity.NO_GRAVITY)
     }
 
     private fun buildView() {
@@ -109,6 +140,7 @@ open class ActionSheet(
             val position = ListCell.getPosition(items.size, index)
             val itemView = createItemView(item)
             itemView.setOnClickListener {
+                item.onClick?.invoke(item)
                 doOnItemClick?.invoke(item)
                 dismiss()
             }
@@ -118,7 +150,10 @@ open class ActionSheet(
             } else {
                 subtitleLineItemHeight
             }
-            container.addView(itemView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, itemHeight))
+            container.addView(
+                itemView,
+                ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, itemHeight)
+            )
             popupHeight += itemHeight
         }
 
@@ -157,6 +192,11 @@ open class ActionSheet(
         } else {
             imageView.visibility = View.VISIBLE
             imageView.setImageURI(item.imageUri)
+        }
+
+        if (item.imageTintColor != null) {
+            imageView.colorFilter =
+                PorterDuffColorFilter(item.imageTintColor, PorterDuff.Mode.SRC_IN)
         }
 
         return itemView

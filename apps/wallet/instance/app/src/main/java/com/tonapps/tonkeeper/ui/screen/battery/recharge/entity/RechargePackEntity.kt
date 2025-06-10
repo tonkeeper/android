@@ -80,7 +80,7 @@ data class RechargePackEntity(
             )
         )
 
-    private val isAvailableToBuy: Boolean
+    val isAvailableToBuy: Boolean
         get() = willBePaidManually || rechargeMethod.minBootstrapValue?.let { amountInToken >= it.toBigDecimal() } ?: false
 
     private val isEnoughBalance: Boolean

@@ -56,6 +56,7 @@ class SettingsRepository(
         private const val SEARCH_ENGINE_KEY = "search_engine"
         private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
         private const val BATTERY_VIEWED_KEY = "battery_viewed"
+        private const val PAYMENT_METHOD_VIEWED_KEY = "payment_method_viewed"
         private const val CHART_PERIOD_KEY = "chart_period"
         private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
         private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
@@ -242,6 +243,14 @@ class SettingsRepository(
         set(value) {
             if (value != field) {
                 prefs.putBoolean(BATTERY_VIEWED_KEY, value)
+                field = value
+            }
+        }
+
+    var paymentMethodViewed: Boolean = prefs.getBoolean(PAYMENT_METHOD_VIEWED_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.putBoolean(PAYMENT_METHOD_VIEWED_KEY, value)
                 field = value
             }
         }

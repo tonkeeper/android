@@ -37,6 +37,7 @@ import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setRightDrawable
 import androidx.core.net.toUri
+import com.tonapps.tonkeeper.helper.ExternalLinkHelper
 
 class TokenScreen(wallet: WalletEntity) :
     BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)),
@@ -67,7 +68,8 @@ class TokenScreen(wallet: WalletEntity) :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val padding = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
-        setListPadding(0, padding, 0, padding)
+        updateListPadding(left = 0, right = 0)
+        // setListPadding(0, padding, 0, padding)
         setTitle(args.symbol)
         if (args.address == TokenEntity.TRON_USDT.address) {
             headerView.setSubtitle(Localization.trc20)
@@ -126,13 +128,13 @@ class TokenScreen(wallet: WalletEntity) :
     }
 
     private fun actionMenu(view: View, token: AccountTokenEntity) {
-        val detailsUrl = if (token.isTon) {
-            "https://tonviewer.com/${screenContext.wallet.address}".toUri()
-        } else if (token.isTrc20) {
-            "https://tronscan.org/#/address/${viewModel.tronAddress}".toUri()
-        } else {
-            "https://tonviewer.com/${screenContext.wallet.address}/jetton/${token.address}".toUri()
-        }
+        val detailsUrl = with(screenContext.wallet) {
+            if (token.isTrc20) {
+                ExternalLinkHelper.tronToken(address, testnet)
+            } else {
+                ExternalLinkHelper.tonToken(address, token.address, testnet)
+            }
+        }.toUri()
 
         val actionSheet = ActionSheet(view.context)
         actionSheet.addItem(VIEWER_ID, Localization.view_details, R.drawable.ic_globe_16)

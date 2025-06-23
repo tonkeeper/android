@@ -73,7 +73,7 @@ import com.squareup.moshi.JsonClass
 data class Action (
 
     @Json(name = "type")
-    val type: Action.Type,
+    val type: String,
 
     @Json(name = "status")
     val status: Action.Status,
@@ -145,36 +145,6 @@ data class Action (
     val inscriptionMint: InscriptionMintAction? = null
 
 ) {
-
-    /**
-     * 
-     *
-     * Values: tonTransfer,jettonTransfer,jettonBurn,jettonMint,nftItemTransfer,contractDeploy,subscribe,unSubscribe,auctionBid,nftPurchase,depositStake,withdrawStake,withdrawStakeRequest,jettonSwap,smartContractExec,electionsRecoverStake,electionsDepositStake,domainRenew,inscriptionTransfer,inscriptionMint,unknown
-     */
-    @JsonClass(generateAdapter = false)
-    enum class Type(val value: kotlin.String) {
-        @Json(name = "TonTransfer") tonTransfer("TonTransfer"),
-        @Json(name = "JettonTransfer") jettonTransfer("JettonTransfer"),
-        @Json(name = "JettonBurn") jettonBurn("JettonBurn"),
-        @Json(name = "JettonMint") jettonMint("JettonMint"),
-        @Json(name = "NftItemTransfer") nftItemTransfer("NftItemTransfer"),
-        @Json(name = "ContractDeploy") contractDeploy("ContractDeploy"),
-        @Json(name = "Subscribe") subscribe("Subscribe"),
-        @Json(name = "UnSubscribe") unSubscribe("UnSubscribe"),
-        @Json(name = "AuctionBid") auctionBid("AuctionBid"),
-        @Json(name = "NftPurchase") nftPurchase("NftPurchase"),
-        @Json(name = "DepositStake") depositStake("DepositStake"),
-        @Json(name = "WithdrawStake") withdrawStake("WithdrawStake"),
-        @Json(name = "WithdrawStakeRequest") withdrawStakeRequest("WithdrawStakeRequest"),
-        @Json(name = "JettonSwap") jettonSwap("JettonSwap"),
-        @Json(name = "SmartContractExec") smartContractExec("SmartContractExec"),
-        @Json(name = "ElectionsRecoverStake") electionsRecoverStake("ElectionsRecoverStake"),
-        @Json(name = "ElectionsDepositStake") electionsDepositStake("ElectionsDepositStake"),
-        @Json(name = "DomainRenew") domainRenew("DomainRenew"),
-        @Json(name = "InscriptionTransfer") inscriptionTransfer("InscriptionTransfer"),
-        @Json(name = "InscriptionMint") inscriptionMint("InscriptionMint"),
-        @Json(name = "Unknown") unknown("Unknown");
-    }
     /**
      * 
      *

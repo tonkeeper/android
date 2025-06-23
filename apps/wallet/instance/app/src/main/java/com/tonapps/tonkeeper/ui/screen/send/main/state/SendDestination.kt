@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.send.main.state
 
+import com.tonapps.blockchain.ton.extensions.isTestnetAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.wallet.api.entity.Blockchain
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -26,12 +27,13 @@ sealed class SendDestination {
         val name: String?,
         val isScam: Boolean,
         val isBounce: Boolean,
-        val existing: Boolean
+        val existing: Boolean,
+        val testnet: Boolean
     ) : SendDestination() {
 
         companion object {
             private fun isBounce(query: String, account: io.tonapi.models.Account): Boolean {
-                if (account.status != AccountStatus.active && query.startsWith("EQ")) {
+                if (account.status != AccountStatus.active && (query.startsWith("EQ") || query.isTestnetAddress())) {
                     return false
                 }
                 val bounce = query.startsWith("EQ") || !query.startsWith("U")
@@ -53,13 +55,18 @@ sealed class SendDestination {
 
         val displayAddress: String
             get() {
-                return address.toString(userFriendly = true, bounceable = isBounce)
+                return address.toString(
+                    userFriendly = true,
+                    testOnly = testnet,
+                    bounceable = isBounce
+                )
             }
 
         constructor(
             query: String,
             publicKey: PublicKeyEd25519,
-            account: io.tonapi.models.Account
+            account: io.tonapi.models.Account,
+            testnet: Boolean
         ) : this(
             query = query,
             publicKey = publicKey,
@@ -70,7 +77,8 @@ sealed class SendDestination {
             name = account.name,
             isScam = account.isScam ?: false,
             isBounce = isBounce(query, account),
-            existing = (account.status == AccountStatus.active || account.status == AccountStatus.frozen)
+            existing = (account.status == AccountStatus.active || account.status == AccountStatus.frozen),
+            testnet = testnet
         )
     }
 

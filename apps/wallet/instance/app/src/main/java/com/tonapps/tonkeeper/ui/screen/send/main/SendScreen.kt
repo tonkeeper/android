@@ -611,7 +611,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     private fun applyTransactionAccount(destination: SendDestination) {
         if (destination is SendDestination.TonAccount) {
             if (destination.displayName == null) {
-                reviewRecipientView.value = destination.displayAddress.short4
+                reviewRecipientView.value = destination.displayAddress
                 reviewRecipientView.setOnClickListener {
                     requireContext().copyToClipboard(destination.displayAddress)
                 }
@@ -624,7 +624,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 }
 
                 reviewRecipientAddressView.visibility = View.VISIBLE
-                reviewRecipientAddressView.value = destination.displayAddress.short4
+                reviewRecipientAddressView.value = destination.displayAddress
                 reviewRecipientAddressView.setOnClickListener {
                     requireContext().copyToClipboard(
                         destination.displayAddress

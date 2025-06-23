@@ -1,0 +1,29 @@
+name: Publish tagged commit to public repo
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout private repo at tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push tag to public repo
+        env:
+          TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          TAG:   ${{ github.ref_name }}
+        run: |
+          git config --global user.name  "mirror-bot"
+          git config --global user.email "mirror-bot@example.com"
+
+          git remote add public https://$TOKEN@github.com/ORG/PUBLIC_REPO.git
+
+          git push --force --tags public $TAG

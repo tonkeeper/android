@@ -1,7 +1,9 @@
 package com.tonapps.tonkeeper.core.history
 
 import android.content.Context
+import android.util.Log
 import androidx.collection.arrayMapOf
+import com.squareup.moshi.Json
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.extensions.max24
@@ -41,6 +43,7 @@ import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.events.CommentEncryption
 import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.data.events.TxActionType
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
@@ -1052,7 +1055,7 @@ class HistoryHelper(
                 wallet = wallet,
                 actionOutStatus = ActionOutStatus.Send
             )
-        } else if (action.type == Action.Type.unknown) {
+        } else if (action.type == TxActionType.Unknown) {
             return createUnknown(
                 index,
                 txId,
@@ -1266,8 +1269,8 @@ class HistoryHelper(
         title = simplePreview.description,
         coinIconUrl = simplePreview.valueImage ?: "",
         subtitle = action.simplePreview.description.max24,
-        value = MINUS_SYMBOL,
-        tokenCode = "TON",
+        tokenCode = action.simplePreview.name,
+        value = action.simplePreview.value ?: MINUS_SYMBOL,
         timestamp = timestamp,
         date = date,
         dateDetails = dateDetails,

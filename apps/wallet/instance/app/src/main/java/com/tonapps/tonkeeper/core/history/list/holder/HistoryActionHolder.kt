@@ -93,6 +93,9 @@ class HistoryActionHolder(
         if (item.isScam) {
             titleView.setText(Localization.spam)
             subtitleView.setTextColor(amountColorTertiary)
+        } else if (item.action == ActionType.Unknown) {
+            titleView.text = item.tokenCode
+            subtitleView.setTextColor(context.textSecondaryColor)
         } else {
             titleView.setText(item.action.nameRes)
             subtitleView.setTextColor(context.textSecondaryColor)

@@ -52,7 +52,9 @@ data class Coins(
             decimals: Int = DEFAULT_DECIMALS
         ): Coins {
             if (value.length > 19) {
-                return of(BigInteger(value), decimals)
+                val bigDecimal = BigDecimal(BigInteger(value)).movePointLeft(decimals)
+                return Coins(bigDecimal, decimals)
+                // return of(BigInteger(value), decimals)
             }
             val long = value.toLongOrNull() ?: return ZERO
             return of(long, decimals)
@@ -230,6 +232,13 @@ data class Coins(
 
     fun stripTrailingZeros(): Coins = Coins(value.stripTrailingZeros(), decimals)
 
+    fun toBigInteger(): BigInteger {
+        val multiplier = BigDecimal.TEN.pow(decimals)
+        val multipliedValue = value.multiply(multiplier)
+        return multipliedValue.toBigInteger()
+    }
+
+    @Deprecated("Use toBigInteger() instead")
     fun toLong(): Long {
         val multiplier = BigDecimal.TEN.pow(decimals)
         val multipliedValue = value.multiply(multiplier)

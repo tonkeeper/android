@@ -93,7 +93,7 @@ data class TransferEntity(
 
     private val coins: org.ton.block.Coins
         get() {
-            return org.ton.block.Coins.ofNano(amount.toLong())
+            return org.ton.block.Coins.ofNano(amount.toBigInteger())
         }
 
     private fun getCommentForwardPayload(

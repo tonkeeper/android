@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events.main
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.mapList

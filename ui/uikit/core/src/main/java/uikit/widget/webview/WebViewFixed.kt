@@ -8,9 +8,11 @@ import android.graphics.Color
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Message
 import android.util.AttributeSet
+import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.CookieManager
@@ -18,7 +20,9 @@ import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.ServiceWorkerController
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebChromeClient.FileChooserParams
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebStorage
@@ -35,6 +39,7 @@ import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import uikit.R
+import uikit.navigation.Navigation
 import java.util.LinkedList
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
@@ -57,6 +62,7 @@ open class WebViewFixed @JvmOverloads constructor(
         open fun onLoadResource(url: String): Boolean { return true }
         open fun onWindowClose() { }
         open fun onNewTab(url: String) { }
+        open fun openFilePicker(fileChooserParams: FileChooserParams) { }
     }
 
     private var isPageLoaded = false
@@ -66,6 +72,8 @@ open class WebViewFixed @JvmOverloads constructor(
                 executeJsQueue()
             }
         }
+
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
 
     private val androidWebViewBridgeJS: String by lazy {
         context.resources.openRawResource(R.raw.webview_ext).readBytes().decodeToString()
@@ -153,9 +161,10 @@ open class WebViewFixed @JvmOverloads constructor(
                 callbacks.forEach { it.onProgressChanged(newProgress) }
             }
 
-            override fun onPermissionRequest(request: PermissionRequest) {
-                request.deny()
-            }
+            /*override fun onPermissionRequest(request: PermissionRequest) {
+                val resources = request.resources
+                request.grant(resources)
+            }*/
 
             override fun onCreateWindow(
                 view: WebView,
@@ -176,9 +185,27 @@ open class WebViewFixed @JvmOverloads constructor(
                 super.onCloseWindow(window)
                 callbacks.forEach { it.onWindowClose() }
             }
+
+            override fun onShowFileChooser(
+                webView: WebView?,
+                callback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                filePathCallback?.onReceiveValue(null)
+                val params = fileChooserParams ?: return false
+                filePathCallback = callback
+                callbacks.forEach { it.openFilePicker(params) }
+                return true
+            }
         }
 
         applyAndroidWebViewBridge()
+    }
+
+    fun setFilePickerResult(arrays: Array<Uri>) {
+        Log.d("DAppScreenLog", "setFilePickerResult: ${arrays.joinToString(", ")}")
+        filePathCallback?.onReceiveValue(arrays)
+        filePathCallback = null
     }
 
     private fun onNewTab(url: String) {

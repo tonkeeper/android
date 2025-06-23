@@ -477,12 +477,12 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
         } else if (address != null) {
             accountAddressView.visibility = View.VISIBLE
             accountAddressView.title = getAccountTitle(out)
-            val shortAddress = if (blockchain == Blockchain.TRON) {
+            /*val shortAddress = if (blockchain == Blockchain.TRON) {
                 address.shortTron
             } else {
                 address.shortAddress
-            }
-            accountAddressView.setData(shortAddress, "")
+            }*/
+            accountAddressView.setData(address, "")
             accountAddressView.setOnClickListener {
                 context?.copyWithToast(address)
             }
@@ -505,7 +505,7 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
                 Localization.recipient_address
             } else Localization.sender_address
         )
-        accountAddressView.setData(address.shortAddress, "")
+        accountAddressView.setData(address, "")
         accountAddressView.setOnClickListener {
             context?.copyWithToast(address)
         }

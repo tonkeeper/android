@@ -544,7 +544,7 @@ class BatteryRechargeViewModel(
         val account = accountDeferred.await() ?: return@withContext SendDestination.NotFound
         val publicKey = publicKeyDeferred.await()
 
-        SendDestination.TonAccount(address, publicKey, account)
+        SendDestination.TonAccount(address, publicKey, account, wallet.testnet)
     }
 
     fun applyPromo(promo: String) {

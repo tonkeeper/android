@@ -7,7 +7,7 @@ import io.tonapi.models.Action
 
 val Action.isTransfer: Boolean
     get() {
-        return type == Action.Type.tonTransfer || type == Action.Type.jettonTransfer || type == Action.Type.nftItemTransfer
+        return type == TxActionType.TonTransfer || type == TxActionType.JettonTransfer || type == TxActionType.NftItemTransfer
     }
 
 fun AccountEvent.isOutTransfer(accountId: String): Boolean {

@@ -394,7 +394,12 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     }
 
     private fun openTonViewer() {
-        navigation?.openURL("https://tonviewer.com/${nftEntity.address}")
+        val url = if (wallet.testnet) {
+            "https://testnet.tonviewer.com/${nftEntity.address}"
+        } else {
+            "https://tonviewer.com/${nftEntity.address}"
+        }
+        navigation?.openURL(url)
     }
 
     private fun setOwner(view: View, address: String) {
@@ -411,9 +416,7 @@ class NftScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_nft
     private fun setAddress(view: View, address: String) {
         val explorerView = view.findViewById<AppCompatTextView>(R.id.open_explorer)
         explorerView.setOnClickListener {
-            val nftExplorer = context?.serverConfig?.nftExplorer ?: return@setOnClickListener
-            val explorerUrl = nftExplorer.format(address)
-            navigation?.openURL(explorerUrl)
+            openTonViewer()
         }
 
         val addressContainerView = view.findViewById<View>(R.id.address_container)

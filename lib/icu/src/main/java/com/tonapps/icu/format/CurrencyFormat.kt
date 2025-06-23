@@ -91,11 +91,27 @@ internal class CurrencyFormat(val locale: Locale) {
             if (value == BigDecimal.ZERO) {
                 return 0
             }
+            val absValue = value.abs()
             return when {
-                value >= BigDecimal.ONE -> 2
-                value >= BigDecimal("0.1") -> 2
-                value >= BigDecimal("0.01") -> 3
-                else -> 4
+                absValue >= BigDecimal.ONE -> 2
+                absValue >= BigDecimal("0.1") -> 2
+                absValue >= BigDecimal("0.01") -> 3
+                else -> {
+                    val plainString = absValue.stripTrailingZeros().toPlainString()
+                    val dotIndex = plainString.indexOf('.')
+                    if (dotIndex == -1) {
+                        return 2
+                    }
+                    var zerosAfterDot = 0
+                    for (i in (dotIndex + 1) until plainString.length) {
+                        if (plainString[i] == '0') {
+                            zerosAfterDot++
+                        } else {
+                            break
+                        }
+                    }
+                    maxOf(4, minOf(zerosAfterDot + 4, 12))
+                }
             }
         }
     }

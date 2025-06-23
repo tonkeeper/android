@@ -4,8 +4,10 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ShareCompat
@@ -115,6 +117,19 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         override fun onNewTab(url: String) {
             super.onNewTab(url)
             openNewTab(DeepLink.fixBadUrl(url))
+        }
+
+        override fun openFilePicker(fileChooserParams: WebChromeClient.FileChooserParams) {
+            super.openFilePicker(fileChooserParams)
+            startActivityForResult(fileChooserParams.createIntent(), REQUEST_CODE_FILE)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_FILE) {
+            val uris = data?.data?.let { arrayOf(it) } ?: emptyArray()
+            webView.setFilePickerResult(uris)
         }
     }
 
@@ -366,6 +381,8 @@ class DAppScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         private const val COPY_ID = 4L
         private const val DISCONNECT_ID = 5L
         private const val ADD_HOME_SCREEN_ID = 6L
+
+        private const val REQUEST_CODE_FILE = 1933
 
         fun newInstance(
             wallet: WalletEntity,

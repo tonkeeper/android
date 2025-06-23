@@ -68,7 +68,7 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
 
     private fun copy() {
         val color = when (wallet.type) {
-            Wallet.Type.Watch -> requireContext().accentOrangeColor
+            Wallet.Type.Watch, Wallet.Type.Testnet -> requireContext().accentOrangeColor
             else -> requireContext().backgroundContentTintColor
         }
         navigation?.toast(getString(Localization.copied), color)

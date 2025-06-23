@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.token.viewer
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -133,13 +134,15 @@ class TokenViewModel(
     }
 
     private suspend fun load(token: AccountTokenEntity) = withContext(Dispatchers.IO) {
-        if (token.verified) {
+        /*if (token.verified) {
             loadHistory(token)
             loadChartPeriod(token, settingsRepository.chartPeriod)
         } else {
             _chartFlow.value = emptyList()
             loadHistory(token)
-        }
+        }*/
+        loadHistory(token)
+        loadChartPeriod(token, settingsRepository.chartPeriod)
     }
 
     fun loadMore() {
@@ -225,7 +228,12 @@ class TokenViewModel(
             }
         }
 
-        if (token.hasRate && !token.isUsdt && !token.isTrc20) {
+        if (!token.isUsdt && !token.isTrc20) {
+            if ((charts.size == 1 && charts.first().isEmpty) || !token.hasRate) {
+                _uiItemsFlow.value = items
+                return
+            }
+
             val period = settingsRepository.chartPeriod
             val fiatPrice: CharSequence
             val rateDiff24h: String
@@ -262,7 +270,6 @@ class TokenViewModel(
                 rateDiff24h = growPercentFormat
                 delta = priceDeltaFormat
             }
-
 
             items.add(
                 Item.Chart(
@@ -380,16 +387,18 @@ class TokenViewModel(
         startDateSeconds: Long,
         endDateSeconds: Long
     ) = withContext(Dispatchers.IO) {
-        if (token.verified && !token.isUsdt && !token.isTrc20) {
-            _chartFlow.value = api.loadChart(
+        val chart = if (!token.isUsdt && !token.isTrc20) {
+            api.loadChart(
                 token.address,
                 settingsRepository.currency.code,
                 startDateSeconds,
                 endDateSeconds
             )
         } else {
-            _chartFlow.value = emptyList()
+            emptyList()
         }
+
+        _chartFlow.value = chart.ifEmpty { listOf(ChartEntity.EMPTY) }
     }
 
     private suspend fun loadHourChart(token: AccountTokenEntity) {

@@ -47,9 +47,11 @@ fun <R> withRetry(
             SystemClock.sleep(delay + 100)
             return null
         } catch (e: IOException) {
+            Log.e("WithRetryLog", "IOException: ${e.message}", e)
             SystemClock.sleep(delay + 100)
             return null
         } catch (e: Throwable) {
+            Log.e("WithRetryLog", "Error: ${e.message}", e)
             val statusCode = e.getHttpStatusCode()
             if (statusCode == 429 || statusCode == 401 || statusCode == 502 || statusCode == 520) {
                 SystemClock.sleep(delay + 100)

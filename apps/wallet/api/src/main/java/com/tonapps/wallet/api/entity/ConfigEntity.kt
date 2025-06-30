@@ -18,6 +18,7 @@ data class ConfigEntity(
     val mercuryoSecret: String,
     val tonapiMainnetHost: String,
     val tonapiTestnetHost: String,
+    val tonConnectBridgeHost: String,
     val stonfiUrl: String,
     val tonNFTsMarketplaceEndpoint: String,
     val directSupportUrl: String,
@@ -70,7 +71,7 @@ data class ConfigEntity(
 
     @IgnoredOnParcel
     val domains: List<String> by lazy {
-        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, "https://bridge.tonapi.io/", "https://tonapi.io/")
+        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, tonConnectBridgeHost, "https://tonapi.io/")
     }
 
     @IgnoredOnParcel
@@ -88,6 +89,7 @@ data class ConfigEntity(
         mercuryoSecret = json.getString("mercuryoSecret"),
         tonapiMainnetHost = json.getString("tonapiMainnetHost"),
         tonapiTestnetHost = json.getString("tonapiTestnetHost"),
+        tonConnectBridgeHost = json.optString("ton_connect_bridge", "https://bridge.tonapi.io"),
         stonfiUrl = json.getString("stonfiUrl"),
         tonNFTsMarketplaceEndpoint = json.getString("tonNFTsMarketplaceEndpoint"),
         directSupportUrl = json.getString("directSupportUrl"),
@@ -144,6 +146,7 @@ data class ConfigEntity(
         mercuryoSecret = "",
         tonapiMainnetHost = "https://keeper.tonapi.io",
         tonapiTestnetHost = "https://testnet.tonapi.io",
+        tonConnectBridgeHost = "https://bridge.tonapi.io",
         stonfiUrl = "https://swap-widget.tonkeeper.com",
         tonNFTsMarketplaceEndpoint = "https://ton.diamonds",
         directSupportUrl = "https://t.me/tonkeeper_supportbot",

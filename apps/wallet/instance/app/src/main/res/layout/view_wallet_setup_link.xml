@@ -14,16 +14,28 @@
         android:backgroundTint="?attr/backgroundContentTintColor"
         android:tint="@color/constantWhite"/>
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/text"
+    <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_gravity="center"
-        android:paddingHorizontal="@dimen/offsetMedium"
-        android:breakStrategy="high_quality"
-        android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="?attr/textPrimaryColor"/>
+        android:paddingHorizontal="@dimen/offsetMedium">
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/text"
+            android:breakStrategy="high_quality"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/subtitle"
+            android:visibility="gone"
+            android:breakStrategy="high_quality"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+    </uikit.widget.ColumnLayout>
 
     <Button
         style="@style/Widget.App.Button.Small.Tertiary"

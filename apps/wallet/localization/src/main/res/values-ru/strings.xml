@@ -57,8 +57,10 @@
     <string name="setup_finish_title">Завершить установку</string>
     <string name="setup_finish_push">Включите уведомления о транзакциях</string>
     <string name="setup_finish_biometry">Включите биометрию для подтверждения транзакций</string>
-    <string name="setup_finish_backup">Создайте резервную копию секретного ключа кошелька</string>
+    <string name="setup_finish_backup">Сохраните секретный ключ</string>
+    <string name="setup_finish_backup_subtitle">Без ключа восстановить кошелёк невозможно</string>
     <string name="setup_finish_telegram">Присоединяйтесь к каналу Tonkeeper</string>
+    <string name="setup_onboarding">Изучите возможности своего кошелька</string>
     <string name="staked">Стейкинг</string>
     <string name="sending_error">Ошибка отправки. Попробуйте позже</string>
     <string name="sign_data_binary_title">Зашифрованный контент</string>
@@ -648,5 +650,7 @@
     <string name="dapp_safe_modal_title">Ссылка ведет на мошеннический сервис</string>
     <string name="dapp_safe_model_button">Как оставаться в безопасности</string>
     <string name="stake_ethena_description">Токен tsUSDe представляет собой USDe, хранящиеся через Ethena, децентрализованный сервис ставок. tsUSDe автоматически накапливает вознаграждения за ставки с минимальной блокировкой.</string>
-
+    <string name="support_title">Нужна помощь?</string>
+    <string name="support_subtitle">Задайте свой вопрос в нашем боте в Telegram — поможем разобраться.</string>
+    <string name="ask_question">Задать вопрос</string>
 </resources>

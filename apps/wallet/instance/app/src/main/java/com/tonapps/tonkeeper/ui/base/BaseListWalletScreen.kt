@@ -57,9 +57,10 @@ abstract class BaseListWalletScreen<C: ScreenContext>(
         }
 
         if (!headerView.ignoreSystemOffset) {
+            val paddingTop = listView.paddingTop
             ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
                 val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-                listView.updatePadding(top = listView.paddingTop + statusInsets.top)
+                listView.updatePadding(top = paddingTop + statusInsets.top)
                 insets
             }
         }

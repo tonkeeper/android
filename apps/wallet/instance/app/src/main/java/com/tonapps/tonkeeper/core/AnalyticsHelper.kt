@@ -70,7 +70,11 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun simpleTrackEvent(eventName: String, installId: String, props: MutableMap<String, Any> = hashMapOf()) {
+    fun simpleTrackEvent(
+        eventName: String,
+        installId: String,
+        props: MutableMap<String, Any> = hashMapOf()
+    ) {
         props["firebase_user_id"] = installId
         trackEvent(eventName, props)
     }
@@ -89,9 +93,11 @@ object AnalyticsHelper {
 
     @UiThread
     fun simpleTrackScreenEvent(eventName: String, installId: String, from: String) {
-        simpleTrackEvent(eventName, installId, hashMapOf(
-            "from" to from
-        ))
+        simpleTrackEvent(
+            eventName, installId, hashMapOf(
+                "from" to from
+            )
+        )
     }
 
     fun setConfig(context: Context, config: ConfigEntity) {
@@ -181,12 +187,21 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun batterySuccess(installId: String, type: String, promo: String, token: String) {
-        simpleTrackEvent("battery_success", installId, hashMapOf(
-            "type" to type,
-            "promo" to promo,
-            "jetton" to token
-        ))
+    fun batterySuccess(
+        installId: String,
+        type: String,
+        promo: String,
+        token: String,
+        size: String? = null
+    ) {
+        simpleTrackEvent(
+            "battery_success", installId, hashMapOf(
+                "type" to type,
+                "promo" to promo,
+                "jetton" to token,
+                "size" to (size ?: "null")
+            )
+        )
     }
 
     @UiThread
@@ -195,7 +210,13 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun onRampEnterAmount(installId: String, type: String, sellAsset: String, buyAsset: String, countryCode: String) {
+    fun onRampEnterAmount(
+        installId: String,
+        type: String,
+        sellAsset: String,
+        buyAsset: String,
+        countryCode: String
+    ) {
         val props = hashMapOf(
             "firebase_user_id" to installId,
             "type" to type,
@@ -242,24 +263,35 @@ object AnalyticsHelper {
     }
 
     @UiThread
-    fun onRampClick(installId: String, type: String, placement: String, location: String, name: String, url: String) {
-        trackEvent("onramp_click", hashMapOf(
-            "firebase_user_id" to installId,
-            "type" to type,
-            "placement" to placement,
-            "location" to location,
-            "name" to name,
-            "url" to url
-        ))
+    fun onRampClick(
+        installId: String,
+        type: String,
+        placement: String,
+        location: String,
+        name: String,
+        url: String
+    ) {
+        trackEvent(
+            "onramp_click", hashMapOf(
+                "firebase_user_id" to installId,
+                "type" to type,
+                "placement" to placement,
+                "location" to location,
+                "name" to name,
+                "url" to url
+            )
+        )
     }
 
     @UiThread
     fun trackPushClick(installId: String, pushId: String, payload: String) {
-        trackEvent("push_click", hashMapOf(
-            "firebase_user_id" to installId,
-            "push_id" to pushId,
-            "payload" to removePrivateDataFromUrl(payload)
-        ))
+        trackEvent(
+            "push_click", hashMapOf(
+                "firebase_user_id" to installId,
+                "push_id" to pushId,
+                "payload" to removePrivateDataFromUrl(payload)
+            )
+        )
     }
 
     @UiThread
@@ -269,32 +301,38 @@ object AnalyticsHelper {
         button: StoryEntity.Button,
         index: Int
     ) {
-        trackEvent("story_click", hashMapOf(
-            "firebase_user_id" to installId,
-            "story_id" to storiesId,
-            "button_title" to button.title,
-            "button_type" to button.type,
-            "button_payload" to button.payload,
-            "page_number" to index + 1
-        ))
+        trackEvent(
+            "story_click", hashMapOf(
+                "firebase_user_id" to installId,
+                "story_id" to storiesId,
+                "button_title" to button.title,
+                "button_type" to button.type,
+                "button_payload" to button.payload,
+                "page_number" to index + 1
+            )
+        )
     }
 
     @UiThread
     fun trackStoryView(installId: String, storiesId: String, index: Int) {
-        trackEvent("story_page_view", hashMapOf(
-            "firebase_user_id" to installId,
-            "story_id" to storiesId,
-            "page_number" to index
-        ))
+        trackEvent(
+            "story_page_view", hashMapOf(
+                "firebase_user_id" to installId,
+                "story_id" to storiesId,
+                "page_number" to index
+            )
+        )
     }
 
     @UiThread
     fun trackStoryOpen(installId: String, storiesId: String, from: String) {
-        trackEvent("story_open", hashMapOf(
-            "firebase_user_id" to installId,
-            "story_id" to storiesId,
-            "from" to from
-        ))
+        trackEvent(
+            "story_open", hashMapOf(
+                "firebase_user_id" to installId,
+                "story_id" to storiesId,
+                "from" to from
+            )
+        )
     }
 
     @UiThread
@@ -305,13 +343,15 @@ object AnalyticsHelper {
         installId: String,
         country: String,
     ) {
-        trackEvent("click_dapp", hashMapOf(
-            "url" to url,
-            "name" to name,
-            "from" to source,
-            "firebase_user_id" to installId,
-            "location" to country
-        ))
+        trackEvent(
+            "click_dapp", hashMapOf(
+                "url" to url,
+                "name" to name,
+                "from" to source,
+                "firebase_user_id" to installId,
+                "location" to country
+            )
+        )
     }
 
     private fun processEventQueue() {

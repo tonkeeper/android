@@ -670,6 +670,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         } else if (event.failed) {
             button.isLoading = false
             button.isEnabled = true
+            confirmButton.isEnabled = false
         } else {
             reviewRecipientFeeView.title =
                 if (event.fee is SendFee.Ton && event.fee.amount.isRefund) getString(Localization.refund) else getString(
@@ -716,11 +717,11 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 }
                 reviewRecipientFeeView.subtitleView.expandTouchArea(8.dp)
                 reviewRecipientFeeView.subtitleView.isEnabled = true
-                reviewRecipientFeeView.subtitleView.setTextColor(if (paymentMethodViewed) requireContext().textTertiaryColor else requireContext().textAccentColor)
+                reviewRecipientFeeView.subtitleView.setTextColor(if (paymentMethodViewed) requireContext().textSecondaryColor else requireContext().textAccentColor)
                 reviewRecipientFeeView.subtitleView.setEndDrawable(
                     getDrawable(
                         UIKitIcon.ic_chevron_right_12,
-                        if (paymentMethodViewed) requireContext().textTertiaryColor else requireContext().textAccentColor
+                        if (paymentMethodViewed) requireContext().textSecondaryColor else requireContext().textAccentColor
                     )
                 )
 
@@ -829,7 +830,6 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                             getDrawable(UIKitIcon.ic_done_16)
                         } else null,
                         onClick = {
-                            requireContext().settingsRepository?.paymentMethodViewed = true
                             viewModel.setFeeMethod(fee)
                         }
                     )
@@ -851,7 +851,6 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                             getDrawable(UIKitIcon.ic_done_16)
                         } else null,
                         onClick = {
-                            requireContext().settingsRepository?.paymentMethodViewed = true
                             viewModel.setFeeMethod(fee)
                         }
                     )

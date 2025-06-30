@@ -124,8 +124,10 @@
     <string name="setup_finish_title">Finish setting up</string>
     <string name="setup_finish_push">Enable transaction notifications</string>
     <string name="setup_finish_biometry">Use biometry to approve transactions</string>
-    <string name="setup_finish_backup">Back up the wallet recovery phrase</string>
+    <string name="setup_finish_backup">Back up your recovery phrase</string>
+    <string name="setup_finish_backup_subtitle">Without it, you can’t restore your wallet</string>
     <string name="setup_finish_telegram">Join Tonkeeper channel</string>
+    <string name="setup_onboarding">Learn how to use your wallet</string>
     <string name="contacts">Address Book</string>
     <string name="step_1">Step 1</string>
     <string name="step_2">Step 2</string>
@@ -671,4 +673,7 @@
     <string name="dapp_share_subtitle">This link opens %1$s directly in Tonkeeper. You can use it again later or share it if needed.</string>
     <string name="copy_link">Copy Link</string>
     <string name="dapp_disclaimer">You are opening an external app not operated by Tonkeeper. Proceed only if you trust the source.</string>
+    <string name="support_title">Need help?</string>
+    <string name="support_subtitle">Ask us on Telegram — we’ll do our best to help.</string>
+    <string name="ask_question">Ask a Question</string>
 </resources>

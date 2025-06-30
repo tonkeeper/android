@@ -3,7 +3,6 @@ package com.tonapps.wallet.api
 import android.content.Context
 import android.net.Uri
 import android.util.ArrayMap
-import android.util.Log
 import com.squareup.moshi.JsonAdapter
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -39,7 +38,6 @@ import io.batteryapi.apis.BatteryApi.UnitsGetBalance
 import io.batteryapi.models.Balance
 import io.batteryapi.models.Config
 import io.batteryapi.models.RechargeMethods
-import io.tonapi.infrastructure.ClientError
 import io.tonapi.infrastructure.ClientException
 import io.tonapi.infrastructure.Serializer
 import io.tonapi.models.Account
@@ -91,6 +89,9 @@ class API(
     private val tonAPIHttpClient: OkHttpClient by lazy {
         tonAPIHttpClient { config }
     }
+
+    private val bridgeUrl: String
+        get() = "${config.tonConnectBridgeHost}/bridge"
 
     @Volatile
     private var cachedCountry: String? = null
@@ -508,7 +509,7 @@ class API(
             return emptyFlow()
         }
         val value = publicKeys.joinToString(",")
-        val url = "${BRIDGE_URL}/events?client_id=$value"
+        val url = "${bridgeUrl}/events?client_id=$value"
         return seeHttpClient.sse(url, lastEventId, onFailure).filter { it.type == "message" }
     }
 
@@ -553,7 +554,7 @@ class API(
         body: String
     ) {
         val mimeType = "text/plain".toMediaType()
-        val url = "${BRIDGE_URL}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
+        val url = "${bridgeUrl}/message?client_id=$publicKeyHex&to=$clientId&ttl=300"
         withRetry {
             tonAPIHttpClient.post(url, body.toRequestBody(mimeType))
         }
@@ -931,9 +932,5 @@ class API(
             throw Exception("Failed creating proof: ${response.code}")
         }
         response.body?.string() ?: throw Exception("Empty response")
-    }
-
-    companion object {
-        const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"
     }
 }

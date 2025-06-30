@@ -52,6 +52,6 @@
     <color name="accentPurpleLight">#7665E5</color>
     <color name="tabBarActiveIconLight">#007AFF</color>
     <color name="tabBarInactiveIconLight">#95A0AD</color>
-    <color name="separatorCommonLight">#143C3C43</color>
+    <color name="separatorCommonLight">#1F3C3C43</color>
     <color name="separatorAlternateLight">#143C3C43</color>
 </resources>

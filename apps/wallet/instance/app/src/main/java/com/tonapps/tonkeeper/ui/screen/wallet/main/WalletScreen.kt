@@ -11,6 +11,7 @@ import com.tonapps.tonkeeper.ui.component.wallet.WalletHeaderView
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
+import com.tonapps.tonkeeper.ui.screen.support.SupportScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
 import com.tonapps.tonkeeperx.R
@@ -40,6 +41,7 @@ class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wal
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance(from = "wallet")) }
+        headerView.onSupportClick = { navigation?.add(SupportScreen.newInstance(wallet)) }
         headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(wallet, "wallet")) }
         headerView.doWalletSwipe = { right ->
             if (right) {

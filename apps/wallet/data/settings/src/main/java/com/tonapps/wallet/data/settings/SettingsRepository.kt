@@ -16,6 +16,7 @@ import com.tonapps.wallet.data.core.Theme
 import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
@@ -66,25 +67,30 @@ class SettingsRepository(
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
-    val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull().distinctUntilChanged()
+    val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+        .distinctUntilChanged()
 
     private val _languageFlow = MutableEffectFlow<Language>()
     val languageFlow = _languageFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _hiddenBalancesFlow = MutableEffectFlow<Boolean>()
-    val hiddenBalancesFlow = _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    val hiddenBalancesFlow =
+        _hiddenBalancesFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _countryFlow = MutableEffectFlow<String>()
-    val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull().map { fixCountryCode(it) }
+    val countryFlow = _countryFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+        .map { fixCountryCode(it) }
 
     private val _biometricFlow = MutableStateFlow<Boolean?>(null)
     val biometricFlow = _biometricFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _lockscreenFlow = MutableStateFlow<Boolean?>(null)
-    val lockscreenFlow = _lockscreenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    val lockscreenFlow =
+        _lockscreenFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _searchEngineFlow = MutableEffectFlow<SearchEngine>()
-    val searchEngineFlow = _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
+    val searchEngineFlow =
+        _searchEngineFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
 
     private val _walletPush = MutableEffectFlow<Unit>()
     val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
@@ -168,7 +174,8 @@ class SettingsRepository(
             }
         }
 
-    var currency: WalletCurrency = WalletCurrency.ofOrDefault(prefs.getString(CURRENCY_CODE_KEY, null))
+    var currency: WalletCurrency =
+        WalletCurrency.ofOrDefault(prefs.getString(CURRENCY_CODE_KEY, null))
         set(value) {
             if (field != value && value.code.isNotEmpty()) {
                 prefs.putString(CURRENCY_CODE_KEY, value.code)
@@ -178,7 +185,8 @@ class SettingsRepository(
             }
         }
 
-    var language: Language = Language(prefs.getString(LANGUAGE_CODE_KEY, Language.DEFAULT) ?: Language.DEFAULT)
+    var language: Language =
+        Language(prefs.getString(LANGUAGE_CODE_KEY, Language.DEFAULT) ?: Language.DEFAULT)
         @SuppressLint("UseKtx")
         set(value) {
             if (value != field) {
@@ -209,7 +217,8 @@ class SettingsRepository(
             }
         }
 
-    var biometric: Boolean = if (isAvailableBiometric(context)) prefs.getBoolean(BIOMETRIC_KEY, false) else false
+    var biometric: Boolean =
+        if (isAvailableBiometric(context)) prefs.getBoolean(BIOMETRIC_KEY, false) else false
         set(value) {
             if (value != field) {
                 prefs.putBoolean(BIOMETRIC_KEY, value)
@@ -270,7 +279,8 @@ class SettingsRepository(
         get() {
             if (theme.isSystem) {
                 val uiMode = context.resources.configuration.uiMode
-                val isDarkMode = uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                val isDarkMode =
+                    uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
                 return !isDarkMode
             } else {
                 return theme.light
@@ -322,19 +332,26 @@ class SettingsRepository(
 
     fun disableUSDTW5(walletId: String) = walletPrefsFolder.disableUSDTW5(walletId)
 
-    fun getSpamStateTransaction(walletId: String, id: String) = walletPrefsFolder.getSpamStateTransaction(walletId, id)
+    fun getSpamStateTransaction(walletId: String, id: String) =
+        walletPrefsFolder.getSpamStateTransaction(walletId, id)
 
-    fun setSpamStateTransaction(walletId: String, id: String, state: SpamTransactionState) = walletPrefsFolder.setSpamStateTransaction(walletId, id, state)
+    fun setSpamStateTransaction(walletId: String, id: String, state: SpamTransactionState) =
+        walletPrefsFolder.setSpamStateTransaction(walletId, id, state)
 
-    fun isSpamTransaction(walletId: String, id: String) = getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
+    fun isSpamTransaction(walletId: String, id: String) =
+        getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
 
-    fun isPurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.isPurchaseOpenConfirm(walletId, id)
+    fun isPurchaseOpenConfirm(walletId: String, id: String) =
+        walletPrefsFolder.isPurchaseOpenConfirm(walletId, id)
 
-    fun disablePurchaseOpenConfirm(walletId: String, id: String) = walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
+    fun disablePurchaseOpenConfirm(walletId: String, id: String) =
+        walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
 
-    fun isDAppOpenConfirm(walletId: String, appHost: String) = walletPrefsFolder.isDAppOpenConfirm(walletId, appHost)
+    fun isDAppOpenConfirm(walletId: String, appHost: String) =
+        walletPrefsFolder.isDAppOpenConfirm(walletId, appHost)
 
-    fun setDAppOpenConfirm(walletId: String, appHost: String, enabled: Boolean) = walletPrefsFolder.setDAppOpenConfirm(walletId, appHost, enabled)
+    fun setDAppOpenConfirm(walletId: String, appHost: String, enabled: Boolean) =
+        walletPrefsFolder.setDAppOpenConfirm(walletId, appHost, enabled)
 
     fun getPushWallet(walletId: String): Boolean = walletPrefsFolder.isPushEnabled(walletId)
 
@@ -451,6 +468,11 @@ class SettingsRepository(
         return !tokenPrefsFolder.getHidden(walletId, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
     }
 
+    fun getPreferredFeeMethod(walletId: String) = walletPrefsFolder.getPreferredFeeMethod(walletId)
+
+    fun setPreferredFeeMethod(walletId: String, method: PreferredFeeMethod) =
+        walletPrefsFolder.setPreferredFeeMethod(walletId, method)
+
     suspend fun getTokenPrefs(
         walletId: String,
         tokenAddress: String,
@@ -544,11 +566,19 @@ class SettingsRepository(
 
             val spamTransactions = rnLegacy.getSpamTransactions(walletId)
             for (transactionId in spamTransactions.spam) {
-                walletPrefsFolder.setSpamStateTransaction(walletId, transactionId, SpamTransactionState.SPAM)
+                walletPrefsFolder.setSpamStateTransaction(
+                    walletId,
+                    transactionId,
+                    SpamTransactionState.SPAM
+                )
             }
 
             for (transactionId in spamTransactions.nonSpam) {
-                walletPrefsFolder.setSpamStateTransaction(walletId, transactionId, SpamTransactionState.NOT_SPAM)
+                walletPrefsFolder.setSpamStateTransaction(
+                    walletId,
+                    transactionId,
+                    SpamTransactionState.NOT_SPAM
+                )
             }
         }
     }

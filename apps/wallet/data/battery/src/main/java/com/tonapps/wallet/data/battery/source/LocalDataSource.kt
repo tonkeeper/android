@@ -58,20 +58,6 @@ internal class LocalDataSource(
         }
     }
 
-    fun getPreferGasless(testnet: Boolean): Boolean {
-        return prefs.getBoolean(gaslessKey(testnet), false)
-    }
-
-    fun setPreferGasless(testnet: Boolean, value: Boolean) {
-        prefs.edit {
-            putBoolean(gaslessKey(testnet), value)
-        }
-    }
-
-    private fun gaslessKey(testnet: Boolean): String {
-        return "prefer_gasless_${if (testnet) "testnet" else "mainnet"}"
-    }
-
     private fun promoKey(testnet: Boolean): String {
         return "promo_${if (testnet) "testnet" else "mainnet"}"
     }

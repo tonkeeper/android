@@ -34,6 +34,7 @@ sealed class State {
         Telegram,
         Backup,
         SafeMode,
+        OnboardingStories,
     }
 
     data class Battery(
@@ -48,7 +49,8 @@ sealed class State {
         val biometryEnabled: Boolean,
         val hasBackup: Boolean,
         val showTelegramChannel: Boolean,
-        val safeModeBlock: Boolean
+        val safeModeBlock: Boolean,
+        val onboardingStoriesEnabled: Boolean,
     ): State()
 
     data class Assets(
@@ -201,6 +203,7 @@ sealed class State {
                         position = position,
                         iconRes = UIKitIcon.ic_key_28,
                         textRes = Localization.setup_finish_backup,
+                        subtitleRes = Localization.setup_finish_backup_subtitle,
                         link = "tonkeeper://backups",
                         blue = false,
                         walletId = wallet.id,
@@ -215,6 +218,15 @@ sealed class State {
                         walletId = wallet.id,
                         settingsType = Item.SetupLink.TYPE_TELEGRAM_CHANNEL
                     )
+                    SetupType.OnboardingStories -> Item.SetupLink(
+                        position = position,
+                        iconRes = UIKitIcon.ic_stories_44,
+                        textRes = Localization.setup_onboarding,
+                        link = "tonkeeper://stories/onboarding",
+                        blue = false,
+                        walletId = wallet.id,
+                        settingsType = Item.SetupLink.TYPE_STORIES
+                    )
                     SetupType.Biometry -> Item.SetupSwitch(
                         position = position,
                         iconRes = UIKitIcon.ic_faceid_28,
@@ -224,7 +236,7 @@ sealed class State {
                         settingsType = Item.SetupSwitch.TYPE_BIOMETRIC
                     )
                     SetupType.Push -> Item.SetupSwitch(
-                        position = ListCell.Position.FIRST,
+                        position = position,
                         iconRes = UIKitIcon.ic_bell_28,
                         textRes = Localization.setup_finish_push,
                         enabled = false,
@@ -250,6 +262,9 @@ sealed class State {
             setup: Setup,
         ): List<SetupType> {
             val setupTypes = mutableListOf<SetupType>()
+            if (!hasBackup) {
+                setupTypes.add(SetupType.Backup)
+            }
             if (!setup.pushEnabled) {
                 setupTypes.add(SetupType.Push)
             }
@@ -259,12 +274,13 @@ sealed class State {
             if (setup.showTelegramChannel) {
                 setupTypes.add(SetupType.Telegram)
             }
-            if (!hasBackup) {
-                setupTypes.add(SetupType.Backup)
-            }
             if (setup.safeModeBlock) {
                 setupTypes.add(SetupType.SafeMode)
             }
+            if (setup.onboardingStoriesEnabled) {
+                setupTypes.add(SetupType.OnboardingStories)
+            }
+
             return setupTypes.toList()
         }
 

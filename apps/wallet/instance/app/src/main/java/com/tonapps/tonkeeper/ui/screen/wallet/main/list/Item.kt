@@ -11,12 +11,14 @@ import com.tonapps.extensions.readArrayCompat
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
 import com.tonapps.extensions.readEnum
+import com.tonapps.extensions.readNullableInt
 import com.tonapps.extensions.readParcelableCompat
 import com.tonapps.extensions.readSerializableCompat
 import com.tonapps.extensions.writeArrayCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
+import com.tonapps.extensions.writeNullableInt
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.view.BatteryView
@@ -592,6 +594,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val walletId: String,
         val iconRes: Int,
         val textRes: Int,
+        val subtitleRes: Int? = null,
         val link: String,
         val blue: Boolean,
         val settingsType: Int
@@ -601,6 +604,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             const val TYPE_NONE = 1
             const val TYPE_TELEGRAM_CHANNEL = 2
             const val TYPE_SAFE_MODE = 3
+            const val TYPE_STORIES = 4
 
             @JvmField
             val CREATOR = object : Parcelable.Creator<SetupLink> {
@@ -615,6 +619,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readString()!!,
             parcel.readInt(),
             parcel.readInt(),
+            parcel.readNullableInt(),
             parcel.readString()!!,
             parcel.readBooleanCompat(),
             parcel.readInt(),
@@ -625,6 +630,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeString(walletId)
             dest.writeInt(iconRes)
             dest.writeInt(textRes)
+            dest.writeNullableInt(subtitleRes)
             dest.writeString(link)
             dest.writeBooleanCompat(blue)
             dest.writeInt(settingsType)

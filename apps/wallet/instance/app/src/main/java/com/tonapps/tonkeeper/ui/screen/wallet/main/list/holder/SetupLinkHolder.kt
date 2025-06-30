@@ -12,7 +12,6 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.stateList
 import uikit.extensions.drawable
 import uikit.extensions.withAlpha
-import uikit.navigation.Navigation
 
 class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layout.view_wallet_setup_link) {
 
@@ -20,6 +19,7 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
 
     private val iconView = findViewById<AppCompatImageView>(R.id.icon)
     private val textView = findViewById<AppCompatTextView>(R.id.text)
+    private val subtitleView = findViewById<AppCompatTextView>(R.id.subtitle)
     private val buttonView = findViewById<View>(R.id.button)
     private val chevronView = findViewById<View>(R.id.chevron)
 
@@ -27,8 +27,18 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
         itemView.background = item.position.drawable(context)
         iconView.setImageResource(item.iconRes)
         textView.setText(item.textRes)
+        if (item.subtitleRes != null) {
+            subtitleView.setText(item.subtitleRes)
+            subtitleView.visibility = View.VISIBLE
+        } else {
+            subtitleView.visibility = View.GONE
+        }
         itemView.setOnClickListener { click(item) }
         setIconColor(if (item.blue) context.accentBlueColor else context.accentOrangeColor)
+        if (item.settingsType == Item.SetupLink.TYPE_STORIES) {
+            setIconColor(null)
+            iconView.background = null
+        }
         if (item.settingsType == Item.SetupLink.TYPE_TELEGRAM_CHANNEL) {
             buttonView.visibility = View.VISIBLE
             buttonView.setOnClickListener { click(item) }
@@ -47,9 +57,9 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
         }
     }
 
-    private fun setIconColor(color: Int) {
-        iconView.imageTintList = color.stateList
-        iconView.backgroundTintList = color.withAlpha(.12f).stateList
+    private fun setIconColor(color: Int?) {
+        iconView.imageTintList = color?.stateList
+        iconView.backgroundTintList = color?.withAlpha(.12f)?.stateList
     }
 
 }

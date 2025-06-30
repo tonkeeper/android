@@ -53,3 +53,16 @@ fun <T: Parcelable> Parcel.readArrayCompat(clazz: Class<T>): Array<T>? {
 fun Parcel.writeArrayCompat(list: Array<Parcelable>) {
     writeArray(list)
 }
+
+fun Parcel.writeNullableInt(value: Int?) {
+    if (value == null) {
+        writeInt(-1)
+    } else {
+        writeInt(value)
+    }
+}
+
+fun Parcel.readNullableInt(): Int? {
+    val value = readInt()
+    return if (value == -1) null else value
+}

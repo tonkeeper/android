@@ -74,6 +74,7 @@ class WalletHeaderView @JvmOverloads constructor(
     }
 
     private val swipeDetector = GestureDetector(context, swipeGestureListener, handler)
+    private val supportView: View
     private val settingsView: View
     private val walletView: View
     private val emojiView: EmojiView
@@ -87,6 +88,12 @@ class WalletHeaderView @JvmOverloads constructor(
             setColor(context.backgroundTransparentColor)
         }
     }
+
+    var onSupportClick: (() -> Unit)? = null
+        set(value) {
+            field = value
+            supportView.setOnClickListener { value?.invoke() }
+        }
 
     var onSettingsClick: (() -> Unit)? = null
         set(value) {
@@ -109,6 +116,7 @@ class WalletHeaderView @JvmOverloads constructor(
         )
         super.setBackground(drawable)
         inflate(context, R.layout.view_wallet_header, this)
+        supportView = findViewById(R.id.support)
         settingsView = findViewById(R.id.settings)
         walletView = findViewById(R.id.wallet)
         walletView.setOnTouchListener { v, event -> swipeDetector.onTouchEvent(event) }

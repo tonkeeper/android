@@ -29,8 +29,10 @@
     <string name="setup_finish_title">Завершіть налаштування</string>
     <string name="setup_finish_push">Увімкнути сповіщення про транзакції</string>
     <string name="setup_finish_biometry">Використовуйте біометрію для підтвердження транзакцій</string>
-    <string name="setup_finish_backup">Зробіть резервну копію фрази для відновлення гаманця</string>
+    <string name="setup_finish_backup">Зробіть резервну копію фрази відновлення</string>
+    <string name="setup_finish_backup_subtitle">Без неї ви не зможете відновити гаманець</string>
     <string name="setup_finish_telegram">Приєднуйтесь до каналу Tonkeeper</string>
+    <string name="setup_onboarding">Дізнайтеся, як користуватися своїм гаманцем</string>
     <string name="contacts">Контакти</string>
     <string name="step_1">Крок 1</string>
     <string name="step_2">Крок 2</string>
@@ -589,5 +591,7 @@
     <string name="currency_not_found">Валюта не знайдена</string>
     <string name="onrmap_provider_description">Інші постачальники доступні для різних валютних пар.</string>
     <string name="stake_ethena_description">Токен tsUSDe представляє USDe, що зберігається через Ethena, децентралізований сервіс стейкінгу. tsUSDe автоматично накопичує винагороду за стейкінг з мінімальним блокуванням.</string>
-
+    <string name="support_title">Потрібна допомога?</string>
+    <string name="support_subtitle">Напишіть нам у Telegram — ми зробимо все можливе, щоб допомогти.</string>
+    <string name="ask_question">Поставити запитання</string>
 </resources>

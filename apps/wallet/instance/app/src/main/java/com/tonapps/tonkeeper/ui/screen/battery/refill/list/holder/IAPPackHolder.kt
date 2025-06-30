@@ -24,6 +24,7 @@ class IAPPackHolder(
     private val titleView = itemView.findViewById<AppCompatTextView>(R.id.title)
     private val subtitleView = itemView.findViewById<AppCompatTextView>(R.id.subtitle)
     private val detailsView = itemView.findViewById<AppCompatTextView>(R.id.details)
+    private val batteryContainerView = itemView.findViewById<View>(R.id.battery_container)
     private val batteryView = itemView.findViewById<BatteryView>(R.id.battery)
     private val amountContainerView = itemView.findViewById<View>(R.id.amount_container)
     private val amountView = itemView.findViewById<Button>(R.id.amount)
@@ -36,6 +37,8 @@ class IAPPackHolder(
         amountView.isEnabled = item.isEnabled
         amountContainerView.setOnClickListener { onPackSelect(item.productId) }
         amountContainerView.isEnabled = item.isEnabled
+        batteryContainerView.setOnClickListener { onPackSelect(item.productId) }
+        batteryContainerView.isEnabled = item.isEnabled
 
         titleView.text = getPackName(item.packType)
 

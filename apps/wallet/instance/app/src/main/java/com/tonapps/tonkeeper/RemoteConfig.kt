@@ -18,7 +18,8 @@ class RemoteConfig(context: Context) {
         IS_COUNTRY_PICKER_DISABLE("isCountryPickerDisable"),
         IS_TRON_DISABLED("isTronDisabled"),
         NATIVE_ONRAMP_ENABLED("native_onrmap_enabled"),
-        ETHENA_ENABLED("ethena_enabled");
+        ETHENA_ENABLED("ethena_enabled"),
+        ONBOARDING_STORIES_ENABLED("onboarding_stories_enabled");
     }
 
     init {
@@ -32,7 +33,8 @@ class RemoteConfig(context: Context) {
             FeatureFlag.IS_STAKING_DISABLE.key to true,
             FeatureFlag.IS_DAPPS_DISABLE.key to true,
             FeatureFlag.DISABLE_BATTERY_CRYPTO_RECHARGE_MODULE.key to true,
-            FeatureFlag.IS_TRON_DISABLED.key to false
+            FeatureFlag.IS_TRON_DISABLED.key to false,
+            FeatureFlag.ONBOARDING_STORIES_ENABLED.key to true
         )
 
         remoteConfig.setDefaultsAsync(defaults)
@@ -77,4 +79,7 @@ class RemoteConfig(context: Context) {
 
     val isEthenaEnabled: Boolean
         get() = remoteConfig.getBoolean(FeatureFlag.ETHENA_ENABLED.key)
+
+    val isOnboardingStoriesEnabled: Boolean
+        get() = remoteConfig.getBoolean(FeatureFlag.ONBOARDING_STORIES_ENABLED.key)
 }

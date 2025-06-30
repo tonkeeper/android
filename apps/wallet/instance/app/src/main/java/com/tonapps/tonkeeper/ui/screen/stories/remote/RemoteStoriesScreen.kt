@@ -13,7 +13,7 @@ import org.koin.android.ext.android.inject
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.stories.BaseStoriesScreen
 
-class RemoteStoriesScreen: BaseStoriesScreen() {
+class RemoteStoriesScreen : BaseStoriesScreen() {
 
     override val fragmentName: String = "RemoteStoriesScreen"
 
@@ -75,6 +75,10 @@ class RemoteStoriesScreen: BaseStoriesScreen() {
                 builder.appendQueryParameter("from", "story")
             }
             navigation?.openURL(builder.build().toString())
+            finish()
+        } else if (button.type == "link") {
+            val uri = button.payload.toUriOrNull() ?: return
+            navigation?.openURL(uri.toString())
             finish()
         }
     }

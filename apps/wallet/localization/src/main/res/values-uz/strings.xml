@@ -29,8 +29,10 @@
     <string name="setup_finish_title">Sozlashni yakunlash</string>
     <string name="setup_finish_push">Tranzaksiya bildirishnomalarini yoqing</string>
     <string name="setup_finish_biometry">Tranzaksiyalarni tasdiqlash uchun biometrikani qo\'llang</string>
-    <string name="setup_finish_backup">Hamyonni tiklash iborasini zaxiralash</string>
+    <string name="setup_finish_backup">Qayta tiklash iborangizni zaxiralang</string>
+    <string name="setup_finish_backup_subtitle">U holda, hamyoningizni tiklay olmaysiz</string>
     <string name="setup_finish_telegram">Tonkeeper kanaliga qo\'shiling</string>
+    <string name="setup_onboarding">Hamyoningizdan qanday foydalanishni o\'rganing</string>
     <string name="contacts">Kontaktlar</string>
     <string name="step_1">1-qadam</string>
     <string name="step_2">2-qadam</string>
@@ -579,4 +581,7 @@
     <string name="credit_card_subtitle">Visa yoki Mastercard</string>
     <string name="currency_not_found">Valyuta topilmadi</string>
     <string name="onrmap_provider_description">Turli valyuta juftliklari uchun boshqa provayderlar mavjud.</string>
+    <string name="support_title">Yordam kerakmi?</string>
+    <string name="support_subtitle">Telegram orqali bizga murojaat qiling — yordam berishga harakat qilamiz.</string>
+    <string name="ask_question">Savol berish</string>
 </resources>

@@ -339,6 +339,9 @@ class HistoryHelper(
         } else {
             removeServiceItems(items)
         }
+        val newItems = items.toMutableList()
+        newItems.add(HistoryItem.Failed(context))
+        return newItems
     }
 
     fun withFailedItem(items: List<HistoryItem>): List<HistoryItem> {

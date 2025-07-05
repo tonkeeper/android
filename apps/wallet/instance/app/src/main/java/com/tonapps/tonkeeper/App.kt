@@ -53,7 +53,6 @@ import java.util.concurrent.Executors
 class App: Application(), CameraXConfig.Provider, KoinComponent {
 
     companion object {
-
         lateinit var instance: App
 
         fun applyConfiguration(newConfig: Configuration) {

@@ -344,6 +344,33 @@ class EventsViewModel(
             } catch (e: Throwable) {
                 setError()
             }
+        } catch (_: Throwable) {
+        }
+    }
+
+    private suspend fun loadMoreTron() {
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && !remoteConfig.isTronDisabled) {
+            accountRepository.getTronAddress(wallet.id)
+        } else null
+
+        if (tronAddress.isNullOrEmpty()) {
+            return
+        }
+
+        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
+        try {
+            val tronLastLt = getTronLastLt()
+            if (tronLastLt != null) {
+                val tronEvents = eventsRepository.loadTronEvents(
+                    tronAddress, tonProofToken, beforeLt = tronLastLt
+                ) ?: throw IllegalStateException("Failed to load tron events")
+
+                _tronEventsFlow.update { currentEvents ->
+                    (currentEvents + tronEvents).distinctBy { it.transactionHash }
+                        .sortedBy { it.timestamp }.reversed()
+                }
+            }
+        } catch (_: Throwable) {
         }
     }
 

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/confirm_page"
+    android:paddingBottom="32dp"
+    android:visibility="gone"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.tonapps.tonkeeper.ui.screen.onramp.main.view.ReviewInputView
+                    android:id="@+id/review_send"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/send"/>
+
+                <com.tonapps.tonkeeper.ui.screen.onramp.main.view.ReviewInputView
+                    android:id="@+id/review_receive"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/receive"
+                    android:layout_marginTop="8dp"/>
+
+            </uikit.widget.ColumnLayout>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/edit"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/tertiaryHeight"
+                android:layout_gravity="center|end"
+                android:background="@drawable/bg_button_tertiary_18"
+                android:layout_marginEnd="24dp"
+                android:paddingVertical="6dp"
+                android:paddingHorizontal="14dp"
+                android:gravity="center"
+                android:textColor="?attr/textPrimaryColor"
+                android:text="@string/edit"
+                android:textAppearance="@style/TextAppearance.Label2"/>
+
+        </FrameLayout>
+
+        <uikit.widget.ColumnLayout
+            android:id="@+id/payment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/payment_title"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="?attr/textPrimaryColor"
+                android:text="@string/payment_method"/>
+        </uikit.widget.ColumnLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="116dp"/>
+
+    </uikit.widget.ColumnLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/offsetMedium">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sign_transaction"
+            android:textAppearance="@style/TextAppearance.H3"
+            android:textColor="?attr/textPrimaryColor"
+            android:singleLine="true"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"
+            android:singleLine="true"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/title" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never"
+        android:paddingVertical="@dimen/offsetMedium"/>
+
+    <FrameLayout
+        android:id="@+id/audit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/show_audit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="4dp"
+            android:text="@string/audit_transaction"
+            android:gravity="center"
+            android:textColor="?attr/textSecondaryColor"
+            android:textAppearance="@style/TextAppearance.Body2"/>
+
+        <uikit.widget.ColumnLayout
+            android:id="@+id/raw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_content"
+            android:visibility="gone"
+            android:padding="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/boc_raw"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:fontFamily="@font/roboto_mono"
+                android:textColor="?attr/textPrimaryColor"
+                android:maxLines="4"
+                android:ellipsize="end"/>
+
+            <com.google.android.flexbox.FlexboxLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="@dimen/cornerExtraSmall"
+                app:flexDirection="row"
+                app:flexWrap="wrap"
+                app:layout_flexGrow="1">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    style="@style/Widget.App.Button.Tertiary"
+                    android:id="@+id/emulate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/tertiaryHeight"
+                    android:layout_marginTop="@dimen/cornerExtraSmall"
+                    android:text="@string/emulate"/>
+
+                <View
+                    android:layout_width="@dimen/cornerExtraSmall"
+                    android:layout_height="0dp"/>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    style="@style/Widget.App.Button.Tertiary"
+                    android:id="@+id/copy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/tertiaryHeight"
+                    android:layout_marginTop="@dimen/cornerExtraSmall"
+                    android:text="@string/copy"/>
+
+                <View
+                    android:layout_width="@dimen/cornerExtraSmall"
+                    android:layout_height="0dp"/>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/qr"
+                    android:layout_width="@dimen/tertiaryHeight"
+                    android:layout_height="@dimen/tertiaryHeight"
+                    android:layout_marginTop="@dimen/cornerExtraSmall"
+                    android:scaleType="centerInside"
+                    android:background="@drawable/bg_button_tertiary"
+                    android:src="@drawable/ic_qr_code_16"/>
+
+            </com.google.android.flexbox.FlexboxLayout>
+
+
+        </uikit.widget.ColumnLayout>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/action"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/itemHeight"
+        android:layout_marginTop="24dp">
+
+        <uikit.widget.SlideActionView
+            android:id="@+id/slide"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/slide_to_sign"/>
+
+        <uikit.widget.LoaderView
+            android:id="@+id/process_loader"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
+    </FrameLayout>
+
+
+</uikit.widget.ColumnLayout>

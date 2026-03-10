@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/body"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <uikit.widget.ModalHeader
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/edit"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <uikit.widget.InputView
+            android:id="@+id/name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLength="32"
+            android:hint="@string/name"/>
+
+        <uikit.widget.InputView
+            android:id="@+id/address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:hint="@string/wallet_address"/>
+
+        <uikit.widget.RowLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                style="@style/Widget.App.Button.Secondary"
+                android:id="@+id/delete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginVertical="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:text="@string/delete"/>
+
+            <View
+                android:layout_width="@dimen/offsetMedium"
+                android:layout_height="0dp"/>
+
+            <Button
+                style="@style/Widget.App.Button"
+                android:id="@+id/save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginVertical="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:text="@string/save"/>
+
+        </uikit.widget.RowLayout>
+
+    </uikit.widget.ColumnLayout>
+
+</uikit.widget.ColumnLayout>

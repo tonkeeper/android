@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.SlideBetweenView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/slides"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include
+        layout="@layout/fragment_send_create"/>
+
+    <include
+        layout="@layout/fragment_send_review"/>
+
+</uikit.widget.SlideBetweenView>

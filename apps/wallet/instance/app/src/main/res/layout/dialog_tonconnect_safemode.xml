@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <uikit.widget.ModalHeader
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_exclamationmark_circle_84"
+        android:tint="?attr/accentBlueColor"/>
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetMedium"
+        android:title="@string/safe_mode_tonconnect_title"
+        android:description="@string/safe_mode_tonconnect_description"/>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/open_settings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:text="@string/open_settings"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="?attr/textPrimaryColor"/>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/cancel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetMedium"
+        android:text="@string/cancel"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="?attr/textPrimaryColor"/>
+
+</uikit.widget.ColumnLayout>

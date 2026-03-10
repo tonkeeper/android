@@ -1,0 +1,35 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/list_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingTop="@dimen/barHeight"
+        android:paddingHorizontal="@dimen/offsetMedium"
+        android:paddingBottom="@dimen/offsetMedium" />
+
+    <FrameLayout
+        android:id="@+id/header_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="@dimen/offsetMedium"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:visibility="gone"/>
+</FrameLayout>

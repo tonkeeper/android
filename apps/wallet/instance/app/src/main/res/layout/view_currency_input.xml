@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uikit.widget.RowLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/input_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/input_token_balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_gravity="center"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/input_token_max"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:visibility="gone"
+            android:layout_gravity="center"
+            android:textAllCaps="true"
+            android:text="@string/max"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textAccentColor"/>
+
+    </uikit.widget.RowLayout>
+
+    <uikit.widget.RowLayout
+        android:id="@+id/input_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/input_prefix"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="?attr/textPrimaryColor"
+            android:fontFamily="@font/montserrat_semi_bold"
+            android:textSize="28sp"
+            android:visibility="gone"/>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <com.tonapps.tonkeeper.ui.component.coin.CoinEditText
+                android:id="@+id/input_value"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:singleLine="true"
+                android:digits="0123456789.,"
+                android:maxLength="9"
+                android:inputType="numberDecimal|textNoSuggestions"
+                android:textCursorDrawable="@drawable/cursor"
+                android:textColor="?attr/textPrimaryColor"
+                android:textColorHint="?attr/textSecondaryColor"
+                android:textSize="28sp"
+                android:fontFamily="@font/montserrat_semi_bold"
+                android:hint="0"/>
+
+            <view class="uikit.widget.SlideActionView$GradientTextView"
+                android:id="@+id/placeholder_value"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="2dp"
+                android:visibility="gone"
+                android:textColor="?attr/textPrimaryColor"
+                android:textColorHint="?attr/textSecondaryColor"
+                android:textSize="28sp"
+                android:fontFamily="@font/montserrat_semi_bold"/>
+
+        </FrameLayout>
+
+        <com.tonapps.tonkeeper.ui.component.token.CurrencyPickerView
+            android:id="@+id/input_currency"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/input_currency_empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:paddingVertical="8dp"
+            android:background="@drawable/bg_button_tertiary_18"
+            android:visibility="gone"
+            android:textAllCaps="true"
+            android:textColor="?attr/textPrimaryColor"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:gravity="center"
+            android:text="@string/staking_choose"/>
+
+    </uikit.widget.RowLayout>
+
+</merge>

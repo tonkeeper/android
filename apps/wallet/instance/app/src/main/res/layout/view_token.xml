@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="76dp"
+    android:padding="@dimen/offsetMedium"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <FrameLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="center">
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_oval"
+            android:backgroundTint="?attr/backgroundContentTintColor"
+            app:roundAsCircle="true" />
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/network_icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="end|bottom"
+            android:translationX="6dp"
+            android:translationY="6dp"
+            app:roundAsCircle="true"
+            app:roundingBorderColor="?attr/backgroundContentColor"
+            app:roundingBorderWidth="2dp" />
+    </FrameLayout>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraExtraSmall"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/check"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:tint="?attr/accentBlueColor"
+        android:src="@drawable/ic_donemark_otline_28"/>
+
+</uikit.widget.RowLayout>

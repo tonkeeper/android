@@ -1,0 +1,62 @@
+name: Mirror GitHub release tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to push (e.g. 4.8.0)'
+        required: true
+        type: string
+
+jobs:
+  push:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout private repo
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify tag exists
+        run: |
+          if ! git rev-parse "refs/tags/${{ inputs.tag }}" >/dev/null 2>&1; then
+            echo "::error::Tag '${{ inputs.tag }}' does not exist"
+            exit 1
+          fi
+
+      - name: Configure deploy key
+        env:
+          DEPLOY_KEY: ${{ secrets.PUBLIC_REPO_DEPLOY_KEY }}
+        run: |
+          # Remove the HTTPS override that actions/checkout sets
+          git config --global --unset-all url."https://github.com/".insteadOf || true
+          git config --global --unset-all http.https://github.com/.extraheader || true
+
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git config --global core.sshCommand "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes"
+
+      - name: Push squashed commit to public repo
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          git config --global user.name  "mirror-bot"
+          git config --global user.email "mirror-bot@example.com"
+
+          git remote add public git@github.com:tonkeeper/android.git
+
+          # Create a squashed commit with the release name
+          git checkout --orphan squashed
+          git commit -m "Release $TAG"
+
+          # Push squashed commit to test branch
+          git push --force public squashed:refs/heads/test
+
+          # Tag the squashed commit and push
+          git tag -f "$TAG"
+          git push --force public "refs/tags/$TAG"

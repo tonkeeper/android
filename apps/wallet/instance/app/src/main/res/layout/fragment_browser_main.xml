@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.RowLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/barHeight"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/Widget.App.TextTab"
+            android:id="@+id/explore_tab"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:text="@string/explore"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/Widget.App.TextTab"
+            android:id="@+id/connected_tab"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:text="@string/connected"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_weight="1"/>
+
+        <com.tonapps.tonkeeper.ui.component.CountryFlagView
+            android:id="@+id/country"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:padding="6dp"
+            android:visibility="gone"/>
+    </uikit.widget.RowLayout>
+
+    <uikit.widget.SlideBetweenView
+        android:id="@+id/slide"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/explore_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"/>
+
+        <FrameLayout
+            android:id="@+id/connected"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <uikit.widget.TextHeaderView
+                android:id="@+id/connected_placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
+                android:visibility="gone"
+                android:title="@string/connected_placeholder_title"
+                android:description="@string/connected_placeholder_subtitle"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/connected_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"/>
+
+        </FrameLayout>
+
+    </uikit.widget.SlideBetweenView>
+</uikit.widget.ColumnLayout>

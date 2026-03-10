@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/create_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:action="@drawable/ic_close_16"
+            android:icon="@drawable/ic_qr_viewfinder_outline_28"
+            android:iconTint="?attr/accentBlueColor"
+            android:title="@string/send"
+            app:ignoreSystemOffset="true" />
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <uikit.widget.InputView
+                    android:id="@+id/address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/address_hint" />
+
+                <uikit.widget.RowLayout
+                    android:id="@+id/address_actions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginRight="@dimen/offsetMedium">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/paste"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_button_tertiary"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/offsetMedium"
+                        android:text="@string/paste"
+                        android:textAppearance="@style/TextAppearance.Label2"
+                        android:textColor="?attr/buttonTertiaryForegroundColor" />
+
+                    <View
+                        android:layout_width="@dimen/offsetMedium"
+                        android:layout_height="wrap_content" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/address_book"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_address_book_28"
+                        android:tint="?attr/accentBlueColor" />
+
+                </uikit.widget.RowLayout>
+
+            </FrameLayout>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/address_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="@dimen/offsetMedium"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"
+                android:visibility="gone" />
+
+            <com.tonapps.tonkeeper.ui.component.coin.CoinInputView
+                android:id="@+id/amount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium" />
+
+            <uikit.widget.RowLayout
+                android:id="@+id/converted_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/converted"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/swap"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="4dp"
+                    android:src="@drawable/ic_swap_vertical_16"
+                    android:tint="?attr/iconTertiaryColor" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textSecondaryColor" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/max"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="4dp"
+                    android:text="@string/max"
+                    android:textAllCaps="true"
+                    android:textAppearance="@style/TextAppearance.Body2"
+                    android:textColor="?attr/textAccentColor" />
+
+            </uikit.widget.RowLayout>
+
+            <uikit.widget.InputView
+                android:id="@+id/comment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge"
+                android:hint="@string/comment" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/accentRedColor"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_encrypt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_decrypt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/comment_required"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/send_request_comment"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/accentOrangeColor"
+                android:visibility="gone" />
+
+        </uikit.widget.ColumnLayout>
+
+    </uikit.widget.ColumnLayout>
+
+    <uikit.widget.LoadableButton
+        android:id="@+id/button"
+        style="@style/Widget.App.Button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:enabled="false"
+        android:text="@string/continue_action"
+        android:textAppearance="@style/TextAppearance.Label1" />
+</FrameLayout>

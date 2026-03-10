@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="@string/tokens"
+        android:action="@drawable/ic_close_16"
+        app:ignoreSystemOffset="true"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/search_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <uikit.widget.RowLayout
+                android:id="@+id/search"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginBottom="@dimen/offsetMedium"
+                android:background="@drawable/bg_content">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="44dp"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerInside"
+                    android:tint="?attr/iconSecondaryColor"
+                    android:src="@drawable/ic_magnifying_glass_16"/>
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/search_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:singleLine="true"
+                    android:textAppearance="@style/TextAppearance.Body1"
+                    android:textColorHint="?attr/textSecondaryColor"
+                    android:textColor="?attr/textPrimaryColor"
+                    android:gravity="center_vertical"
+                    android:background="@android:color/transparent"
+                    android:hint="@string/search"/>
+
+            </uikit.widget.RowLayout>
+
+        </FrameLayout>
+
+        <uikit.widget.SimpleRecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:clipToPadding="false"/>
+
+    </uikit.widget.ColumnLayout>
+
+</uikit.widget.ColumnLayout>

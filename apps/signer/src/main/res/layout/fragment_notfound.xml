@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fresco="http://schemas.android.com/tools">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:action="@drawable/ic_close_16"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/offsetLarge"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_gravity="center"
+            android:tint="?attr/iconSecondaryColor"
+            android:src="@drawable/ic_exclamationmark_circle_84"/>
+
+        <uikit.widget.TextHeaderView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:title="@string/notfound_title"
+            android:description="@string/notfound_description"/>
+
+        <Button
+            style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/ok"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/ok"/>
+
+    </uikit.widget.ColumnLayout>
+
+</uikit.widget.ColumnLayout>

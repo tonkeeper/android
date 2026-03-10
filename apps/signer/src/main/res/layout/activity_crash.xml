@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgroundPageColor">
+
+    <uikit.widget.HeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="@string/unknown_error"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:clipToPadding="false">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/stack"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="@dimen/offsetMedium"
+                android:typeface="monospace"
+                android:textColor="?attr/accentGreenColor"
+                android:textSize="12sp" />
+        </FrameLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/copy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="@string/copy"/>
+
+</uikit.widget.ColumnLayout>

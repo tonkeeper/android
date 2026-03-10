@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="textPrimaryLight">#000000</color>
+    <color name="textSecondaryLight">#818C99</color>
+    <color name="textTertiaryLight">#95A0AD</color>
+    <color name="textAccentLight">#007AFF</color>
+    <color name="textPrimaryAlternateLight">#FFFFFF</color>
+    <color name="backgroundPageLight">#EFEEF3</color>
+    <color name="backgroundTransparentLight">#F5FFFFFF</color>
+    <color name="backgroundContentLight">#FFFFFF</color>
+    <color name="backgroundContentTintLight">#E7E6EB</color>
+    <color name="backgroundContentAttentionLight">#F0F0F0</color>
+    <color name="backgroundHighlightedLight">#14818C99</color>
+    <color name="backgroundOverlayStrongLight">#B8141414</color>
+    <color name="backgroundOverlayLightLight">#7A141414</color>
+    <color name="backgroundOverlayExtraLightLight">#3D141414</color>
+    <color name="iconPrimaryLight">#000000</color>
+    <color name="iconSecondaryLight">#818C99</color>
+    <color name="iconTertiaryLight">#95A0AD</color>
+    <color name="iconPrimaryAlternateLight">#FFFFFF</color>
+    <color name="buttonPrimaryBackgroundLight">#007AFF</color>
+    <color name="buttonPrimaryBackgroundDisabledLight">#3D9AFF</color>
+    <color name="buttonPrimaryBackgroundHighlightedLight">#1F8AFF</color>
+    <color name="buttonPrimaryForegroundLight">#FFFFFF</color>
+
+    <color name="buttonSecondaryBackgroundLight">#D3D4DB</color>
+    <color name="buttonSecondaryBackgroundDisabledLight">#D8D9E0</color>
+    <color name="buttonSecondaryBackgroundHighlightedLight">#C9CAD1</color>
+    <color name="buttonSecondaryForegroundLight">#000000</color>
+
+    <color name="buttonTertiaryBackgroundLight">#D3D4DB</color>
+    <color name="buttonTertiaryBackgroundDisabledLight">#D8D9E0</color>
+    <color name="buttonTertiaryBackgroundHighlightedLight">#C9CAD1</color>
+    <color name="buttonTertiaryForegroundLight">#000000</color>
+
+    <color name="buttonGreenBackgroundLight">#25B86F</color>
+    <color name="buttonGreenBackgroundDisabledLight">#2B9962</color>
+    <color name="buttonGreenBackgroundHighlightedLight">#17C26D</color>
+
+    <color name="buttonOrangeBackgroundLight">#F5A73B</color>
+    <color name="buttonOrangeBackgroundDisabledLight">#D68B2F</color>
+    <color name="buttonOrangeBackgroundHighlightedLight">#FFC25E</color>
+
+    <color name="fieldBackgroundLight">#1F818C99</color>
+    <color name="fieldActiveBorderLight">#007AFF</color>
+    <color name="fieldErrorBorderLight">#FF3B30</color>
+    <color name="fieldErrorBackgroundLight">#14FF3B30</color>
+    <color name="accentBlueLight">#007AFF</color>
+    <color name="accentGreenLight">#25B86F</color>
+    <color name="accentRedLight">#FF3B30</color>
+    <color name="accentOrangeLight">#F5A73B</color>
+    <color name="accentPurpleLight">#7665E5</color>
+    <color name="tabBarActiveIconLight">#007AFF</color>
+    <color name="tabBarInactiveIconLight">#95A0AD</color>
+    <color name="separatorCommonLight">#1F3C3C43</color>
+    <color name="separatorAlternateLight">#143C3C43</color>
+</resources>

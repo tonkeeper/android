@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <uikit.widget.ModalHeader
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/provider"/>
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:nestedScrollingEnabled="true"
+        android:paddingHorizontal="@dimen/offsetMedium"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetMedium"
+        android:text="@string/onrmap_provider_description"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="?attr/textSecondaryColor"/>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetMedium"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:text="Done"/>
+
+</uikit.widget.ColumnLayout>

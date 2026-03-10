@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.tonapps.tonkeeper.ui.screen.onramp.main.view.CurrencyInputView
+                    android:id="@+id/send_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/send"/>
+
+                <com.tonapps.tonkeeper.ui.screen.onramp.main.view.CurrencyInputView
+                    android:id="@+id/receive_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:title="@string/receive"
+                    app:valueScale="3"
+                    android:clickable="false"/>
+
+            </uikit.widget.ColumnLayout>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/switch_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_swap_vertical_16"
+                android:scaleType="centerInside"
+                android:tint="?attr/iconPrimaryColor"
+                android:background="@drawable/bg_button_tertiary"/>
+
+        </FrameLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/price_reversed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/action_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/itemHeight"
+        android:layout_gravity="bottom"
+        android:layout_marginVertical="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/disclaimer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/offsetMedium"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/actionSize"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"/>
+
+        <uikit.widget.LoadableButton
+            android:id="@+id/continue_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="@dimen/offsetMedium"
+            android:text="@string/continue_action"/>
+
+
+    </uikit.widget.ColumnLayout>
+
+</FrameLayout>

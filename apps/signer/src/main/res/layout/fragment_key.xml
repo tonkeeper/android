@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/ic_chevron_left_16"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:layout_weight="1">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/offsetMedium">
+
+            <include layout="@layout/view_key_export_qr"/>
+
+            <uikit.widget.item.ItemIconView
+                android:id="@+id/export_tonkeeper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:text="@string/key_export_tonkeeper"
+                android:tint="?attr/iconSecondaryColor"/>
+
+            <uikit.widget.ActionCellView
+                android:id="@+id/export_tonkeeper_web"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:singleLine="true"
+                android:title="@string/key_export_tonkeeper_web"
+                android:subtitle="@string/web_wallet_host"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:minHeight="@dimen/offsetLarge"
+                android:layout_weight="1"/>
+
+            <uikit.widget.ActionCellView
+                android:id="@+id/name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:singleLine="true"
+                android:title="@string/name"
+                android:action="@drawable/ic_pencil_28"/>
+
+            <uikit.widget.ActionCellView
+                android:id="@+id/hex"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:title="@string/hex_address"
+                android:action="@drawable/ic_copy_28"/>
+
+            <uikit.widget.item.ItemIconView
+                android:id="@+id/phrase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/recover_phrase"
+                android:icon="@drawable/ic_key_28"/>
+
+            <uikit.widget.item.ItemIconView
+                android:id="@+id/delete_key"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge"
+                android:text="@string/delete_key"
+                android:icon="@drawable/ic_trash_bin_28"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

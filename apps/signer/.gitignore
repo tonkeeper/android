@@ -1,0 +1,6 @@
+/build
+/release
+/benchmarkRelease
+.gradle
+/nonMinifiedRelease
+/src/release

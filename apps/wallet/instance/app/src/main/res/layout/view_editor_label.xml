@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginTop="@dimen/offsetLarge">
+
+        <uikit.widget.InputView
+            android:id="@+id/label_name_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            app:disableClearButton="true"
+            android:hint="@string/wallet_name"/>
+
+        <FrameLayout
+            android:id="@+id/label_color"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_gravity="center|end"
+            android:background="@drawable/bg_emoji_edit">
+            <com.tonapps.emoji.ui.EmojiView
+                android:id="@+id/label_emoji"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"/>
+        </FrameLayout>
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/label_color_picker"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="26dp"
+                android:paddingHorizontal="26dp"
+                android:clipToPadding="false"
+                android:overScrollMode="never"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/label_emoji_picker"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:layout_marginHorizontal="26dp"
+                android:overScrollMode="never"
+                android:foreground="@drawable/fg_emoji_picker"/>
+        </uikit.widget.ColumnLayout>
+
+        <View
+            android:id="@+id/label_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"/>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/label_action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_gradient"
+        android:paddingHorizontal="@dimen/offsetLarge"
+        android:paddingTop="@dimen/offsetMedium"
+        android:paddingBottom="@dimen/offsetLarge">
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/label_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:text="@string/continue_action"/>
+    </FrameLayout>
+
+</merge>

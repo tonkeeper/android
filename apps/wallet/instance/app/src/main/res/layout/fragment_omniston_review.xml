@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone"
+    android:paddingHorizontal="@dimen/offsetMedium"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <uikit.widget.ColumnLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.tonapps.tonkeeper.ui.screen.onramp.main.view.ReviewInputView
+                    android:id="@+id/review_send"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:title="@string/send"/>
+
+                <com.tonapps.tonkeeper.ui.screen.onramp.main.view.ReviewInputView
+                    android:id="@+id/review_receive"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_content_top"
+                    android:title="@string/receive"
+                    android:layout_marginTop="8dp"/>
+
+            </uikit.widget.ColumnLayout>
+            
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center|end"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/bg_oval_button_tertiary"
+                android:scaleType="centerInside"
+                android:tint="?attr/textPrimaryColor"
+                android:src="@drawable/ic_arrow_down_16"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/edit"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/tertiaryHeight"
+                android:layout_gravity="center|end"
+                android:background="@drawable/bg_button_tertiary_18"
+                android:layout_marginEnd="24dp"
+                android:paddingVertical="6dp"
+                android:paddingHorizontal="14dp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:textColor="?attr/textPrimaryColor"
+                android:text="@string/edit"
+                android:textAppearance="@style/TextAppearance.Label2"/>
+
+        </FrameLayout>
+
+        <uikit.widget.ColumnLayout
+            android:id="@+id/details_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:background="@drawable/bg_content_bottom">
+
+            <uikit.widget.DividerView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <uikit.widget.item.ItemLineView
+                android:id="@+id/details_rate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:name="@string/exchange_rate"/>
+
+            <uikit.widget.item.ItemLineView
+                android:id="@+id/details_fee"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:name="@string/fee"/>
+
+            <uikit.widget.item.ItemLineView
+                android:id="@+id/details_slippage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:name="@string/slippage"/>
+
+            <uikit.widget.item.ItemLineView
+                android:id="@+id/details_provider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:name="@string/provider"/>
+
+        </uikit.widget.ColumnLayout>
+
+    </uikit.widget.ColumnLayout>
+
+    <FrameLayout
+        android:id="@+id/bottom_review"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom">
+
+        <uikit.widget.ProcessTaskView
+            android:id="@+id/task"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginVertical="@dimen/offsetMedium"
+            android:visibility="gone"
+            app:successLabel="@string/done"
+            app:errorLabel="@string/error"/>
+
+        <uikit.widget.SlideActionView
+            android:id="@+id/slide_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/offsetMedium"
+            android:text="@string/slide_to_confirm"
+            android:filterTouchesWhenObscured="true"/>
+    </FrameLayout>
+
+</FrameLayout>

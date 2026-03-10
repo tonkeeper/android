@@ -1,0 +1,142 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+
+platform :android do
+    desc "Fetches the latest version code from the Play Console and increments it by 1"
+    lane :fetch_and_increment_build_number do |options|
+        app_identifier = options[:app_identifier] || "com.ton_keeper"
+
+        internal_version_codes = google_play_track_version_codes(
+            package_name: app_identifier,
+            track: "internal",
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
+        )
+
+        production_version_codes = google_play_track_version_codes(
+            package_name: app_identifier,
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
+        )
+
+        max = internal_version_codes[0] > production_version_codes[0] ? internal_version_codes[0] : production_version_codes[0]
+        updated_version_code = max + 2
+
+        ENV["VERSION_CODE"] = updated_version_code.to_s
+        sh("echo VERSION_CODE=#{updated_version_code} >> $GITHUB_ENV")
+    end
+
+    desc "Start android baselineprofile"
+    lane :baseline do
+        gradle(
+            tasks: [":baselineprofile:main:generateBaselineProfile"]
+        )
+    end
+
+    desc "Build the android aab for release"
+    lane :build_release do |options|
+        flavor = options[:flavor] || "default"
+        gradle(task: 'clean')
+
+        gradle(
+            task: "bundle",
+            build_type: "release",
+            flavor: flavor,
+            properties: {
+                "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
+                "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+                "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+                "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+                "isApk" => "false"
+            }
+        )
+
+        puts "Debug"
+        puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
+        puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
+
+        sh("echo AAB_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]} >> $GITHUB_ENV")
+    end
+
+    desc "Build the android apk"
+    lane :assemble_release do |options|
+        flavor = options[:flavor] || "site"
+        gradle(
+            task: "assemble",
+            build_type: "release",
+            flavor: flavor,
+            properties: {
+                "android.injected.signing.store.file" => ENV["KEYSTORE_FILE"],
+                "android.injected.signing.store.password" => ENV["KEYSTORE_PASSWORD"],
+                "android.injected.signing.key.alias" => ENV["KEY_ALIAS"],
+                "android.injected.signing.key.password" => ENV["KEY_PASSWORD"],
+                "isApk" => "true"
+            }
+        )
+
+        puts "Debug"
+        puts Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_AAB_OUTPUT_PATHS]
+        puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+        puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
+
+        sh("echo APK_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]} >> $GITHUB_ENV")
+    end
+
+    desc "Upload to GooglePlay"
+    lane :upload_release do |options|
+        app_identifier = options[:app_identifier] || "com.ton_keeper"
+        aab_path = lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+
+        upload_to_play_store(
+            track: "internal",
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"],
+            aab: aab_path,
+            package_name: app_identifier,
+        )
+    end
+
+    desc "Build and upload to GooglePlay"
+    lane :beta do
+        fetch_and_increment_build_number(app_identifier: "com.ton_keeper")
+        build_release(flavor: "default")
+        upload_release(app_identifier: "com.ton_keeper")
+
+        assemble_release(flavor: "site")
+    end
+
+    desc "Fetch latest version code from GP (no increment) and build site APK"
+    lane :site_apk do
+        app_identifier = "com.ton_keeper"
+
+        internal_version_codes = google_play_track_version_codes(
+            package_name: app_identifier,
+            track: "internal",
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
+        )
+
+        production_version_codes = google_play_track_version_codes(
+            package_name: app_identifier,
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
+        )
+
+        version_code = [internal_version_codes[0], production_version_codes[0]].max
+        ENV["VERSION_CODE"] = version_code.to_s
+        sh("echo VERSION_CODE=#{version_code} >> $GITHUB_ENV")
+
+        assemble_release(flavor: "site")
+    end
+end

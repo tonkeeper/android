@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:minHeight="76dp"
+    android:orientation="horizontal"
+    android:layout_marginHorizontal="@dimen/offsetMedium"
+    android:padding="@dimen/offsetMedium">
+
+    <FrameLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/currency_icon"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_udse_ethena_with_bg" />
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="end|bottom"
+            android:translationX="6dp"
+            android:translationY="6dp"
+            android:scaleType="centerCrop"
+            app:roundAsCircle="true"
+            app:roundingBorderColor="?attr/backgroundContentColor"
+            app:roundingBorderWidth="2dp" />
+    </FrameLayout>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="14dp"
+        android:layout_weight="1">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/apy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor" />
+
+    </uikit.widget.ColumnLayout>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/balance_fiat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="2dp"
+            android:gravity="end"
+            android:maxLength="12"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:gravity="end"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textSecondaryColor" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</uikit.widget.RowLayout>

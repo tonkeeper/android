@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/battery_icon"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <com.tonapps.tonkeeper.view.BatteryView
+            style="@style/Battery.VeryBig"
+            android:id="@+id/battery_view"
+            android:layout_gravity="center"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="24dp"
+            app:emptyState="accent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/beta"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_wallet_type"
+            android:gravity="center"
+            android:paddingHorizontal="@dimen/offsetExtraSmall"
+            android:singleLine="true"
+            android:text="@string/beta"
+            android:textAppearance="@style/TextAppearance.Body4CAPS"
+            android:textColor="?attr/accentOrangeColor"
+            android:visibility="gone" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:gravity="center"
+            android:text="@string/battery_refill_title"
+            android:textAppearance="@style/TextAppearance.H2"
+            android:textColor="?attr/textPrimaryColor" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/battery_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/battery_refill_subtitle"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:textColor="?attr/textSecondaryColor" />
+
+    </uikit.widget.ColumnLayout>
+
+</FrameLayout>

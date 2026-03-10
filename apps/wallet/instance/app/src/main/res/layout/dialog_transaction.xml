@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:orientation="vertical"
+    android:padding="@dimen/offsetMedium">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/more"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_ellipsis_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.H3"
+            android:textColor="?attr/textPrimaryColor"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor"
+            app:layout_constraintEnd_toStartOf="@+id/close"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/title" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <FrameLayout
+        android:id="@+id/icon_container"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="22dp">
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            app:roundAsCircle="true" />
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/network_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="end|bottom"
+            android:translationX="8dp"
+            android:translationY="8dp"
+            android:visibility="gone"
+            app:roundAsCircle="true"
+            app:roundingBorderColor="?attr/backgroundPageColor"
+            app:roundingBorderWidth="4dp" />
+    </FrameLayout>
+
+    <uikit.widget.RowLayout
+        android:id="@+id/icon_swap"
+        android:layout_width="wrap_content"
+        android:layout_height="78dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="22dp">
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon_swap1"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center"
+            app:roundAsCircle="true" />
+
+        <FrameLayout
+            android:layout_width="78dp"
+            android:layout_height="78dp"
+            android:layout_gravity="center"
+            android:layout_marginLeft="-16dp"
+            android:background="@drawable/bg_oval"
+            android:backgroundTint="?attr/backgroundPageColor">
+
+            <uikit.widget.AsyncImageView
+                android:id="@+id/icon_swap2"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                app:roundAsCircle="true" />
+        </FrameLayout>
+
+    </uikit.widget.RowLayout>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/spam"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_content_tint_8"
+        android:backgroundTint="?attr/accentOrangeColor"
+        android:gravity="center"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:singleLine="true"
+        android:text="@string/spam"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.Label2"
+        android:textColor="?attr/textPrimaryColor" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/amount2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.H2"
+        android:textColor="?attr/textTertiaryColor"
+        android:visibility="gone" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/amount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.H2"
+        android:textColor="?attr/textPrimaryColor" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/currency"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:gravity="center"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/textSecondaryColor" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/unverified"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:gravity="center"
+        android:singleLine="true"
+        android:text="@string/unverified_token"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/accentOrangeColor"
+        android:visibility="gone" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/failed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:gravity="center"
+        android:singleLine="true"
+        android:text="@string/failed"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/accentOrangeColor"
+        android:visibility="gone" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:gravity="center"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Body1"
+        android:textColor="?attr/textSecondaryColor" />
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:orientation="vertical">
+
+        <com.tonapps.tonkeeper.view.TransactionDetailView
+            android:id="@+id/account_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <uikit.widget.ColumnLayout
+            android:id="@+id/account_address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="?attr/textSecondaryColor"
+                android:text="@string/recipient_address"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textAppearance="@style/TextAppearance.Label1"
+                android:textColor="?attr/textPrimaryColor"
+                android:scrollbars="vertical" />
+
+        </uikit.widget.ColumnLayout>
+
+        <com.tonapps.tonkeeper.view.TransactionDetailView
+            android:id="@+id/fee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <com.tonapps.tonkeeper.view.TransactionDetailView
+            android:id="@+id/comment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <uikit.widget.RowLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginVertical="@dimen/offsetLarge">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/open_explorer"
+            style="@style/Widget.App.Button.Small.Secondary"
+            android:drawableLeft="@drawable/ic_globe_16"
+            android:drawablePadding="8dp"
+            android:drawableTint="?attr/iconPrimaryColor"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:text="@string/transaction" />
+
+        <Button
+            android:id="@+id/report_spam"
+            style="@style/Widget.App.Button.Orange"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:singleLine="true"
+            android:text="@string/report_spam"
+            android:textAppearance="@style/TextAppearance.Label2" />
+
+        <Button
+            android:id="@+id/not_spam"
+            style="@style/Widget.App.Button.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginLeft="8dp"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:singleLine="true"
+            android:text="@string/not_spam"
+            android:textAppearance="@style/TextAppearance.Label2" />
+
+    </uikit.widget.RowLayout>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

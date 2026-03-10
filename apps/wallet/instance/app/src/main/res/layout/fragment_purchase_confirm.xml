@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:action="@drawable/ic_close_16"/>
+
+    <uikit.widget.ColumnLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center_horizontal"
+            app:roundedCornerRadius="@dimen/offsetMedium"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.H2"
+            android:textColor="?attr/textPrimaryColor"
+            android:gravity="center_horizontal"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:layout_marginHorizontal="@dimen/offsetMedium"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:textColor="?attr/textTertiaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetExtraSmall"
+            android:visibility="gone"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"
+            android:gravity="center_horizontal"/>
+
+        <uikit.widget.RowLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:background="@drawable/bg_content"
+            android:padding="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/fiat_open_description"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textPrimaryColor" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_exclamationmark_circle_16"
+                android:tint="?attr/textSecondaryColor"/>
+
+
+        </uikit.widget.RowLayout>
+
+        <Button
+            style="@style/Widget.App.Button"
+            android:id="@+id/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.Label1"/>
+
+        <uikit.widget.RowLayout
+            android:id="@+id/checkbox_container"
+            android:layout_width="wrap_content"
+            android:layout_height="22dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/offsetMedium">
+
+            <uikit.widget.CheckBoxView
+                android:id="@+id/checkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginLeft="10dp"
+                android:text="@string/do_not_show_again"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColor="?attr/textSecondaryColor"
+                android:singleLine="true"/>
+        </uikit.widget.RowLayout>
+
+
+    </uikit.widget.ColumnLayout>
+</uikit.widget.ColumnLayout>

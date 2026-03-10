@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="108dp"
+        android:padding="@dimen/offsetMedium">
+
+        <View
+            android:id="@+id/shimmer_icon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/bg_oval"
+            android:backgroundTint="?attr/backgroundContentColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/shimmer_title"
+            android:layout_width="156dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/shimmer_subtitle"
+            android:layout_width="72dp"
+            android:layout_height="16dp"
+            android:layout_marginTop="11dp"
+            android:background="@drawable/bg_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/shimmer_title" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <uikit.widget.DividerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <uikit.widget.ButtonsLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <uikit.widget.shimmer.ShimmerIconButtonView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </uikit.widget.ButtonsLayout>
+
+    </FrameLayout>
+
+    <uikit.widget.DividerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/offsetMedium"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="72dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_content"/>
+
+        <View
+            android:layout_width="42dp"
+            android:layout_height="14dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_content"/>
+
+        <View
+            android:layout_width="46dp"
+            android:layout_height="16dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_content"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="176dp"/>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="84dp">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_content"/>
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_content"/>
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_content"/>
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_content"/>
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_content"/>
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </FrameLayout>
+
+    <uikit.widget.DividerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <View
+        android:layout_width="128dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="18dp"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+    <View
+        android:layout_width="128dp"
+        android:layout_height="20dp"
+        android:layout_margin="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="76dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"/>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

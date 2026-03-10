@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="PaymentTypeView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:subtitle" format="string|reference"/>
+        <attr name="android:icon" format="reference"/>
+        <attr name="android:checked" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="CurrencyInputView">
+        <attr name="android:title" format="string|reference"/>
+        <attr name="disableInput" format="boolean"/>
+        <attr name="android:gravity" format="integer"/>
+        <attr name="valueScale" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="ReviewInputView">
+        <attr name="android:title" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="LabelEditorView">
+        <attr name="android:button" format="string|reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="TransactionDetailView">
+        <attr name="position"/>
+        <attr name="android:title" format="string|reference"/>
+        <attr name="android:orientation" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="BatteryView">
+        <attr name="emptyState"/>
+        <attr name="outerRadius" format="dimension|reference"/>
+        <attr name="innerRadius" format="dimension|reference"/>
+        <attr name="levelRadius" format="dimension|reference"/>
+        <attr name="borderSize" format="dimension|reference"/>
+        <attr name="capSize" format="dimension|reference"/>
+        <attr name="capRadius" format="dimension|reference"/>
+        <attr name="capOffset" format="dimension|reference"/>
+        <attr name="iconSize" format="dimension|reference"/>
+    </declare-styleable>
+
+    <attr name="emptyState">
+        <enum name="none" value="0"/>
+        <enum name="secondary" value="1"/>
+        <enum name="accent" value="2"/>
+        <enum name="accentGreen" value="3"/>
+    </attr>
+
+
+    <declare-styleable name="MainRecyclerView">
+        <attr name="android:topOffset" format="dimension|reference"/>
+        <attr name="android:bottomOffset" format="dimension|reference"/>
+    </declare-styleable>
+</resources>

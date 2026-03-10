@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <uikit.widget.CameraOverlayView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/barHeight"
+        android:layout_marginHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="start|center_vertical"
+            android:background="@drawable/bg_oval"
+            android:src="@drawable/ic_chevron_down_16"
+            android:scaleType="centerInside"
+            android:tint="@color/constantWhite"/>
+
+    </FrameLayout>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingHorizontal="48dp">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/constantWhite"
+            android:textAppearance="@style/TextAppearance.H2"
+            android:text="@string/scan_qr_code"/>
+
+        <uikit.widget.SquareImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="@dimen/offsetLarge"/>
+
+        <com.tonapps.tonkeeper.ui.component.CameraFlashIconView
+            android:id="@+id/flash"
+            android:layout_width="@dimen/itemHeight"
+            android:layout_height="@dimen/itemHeight"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
+
+    </uikit.widget.ColumnLayout>
+
+    <Button
+        style="@style/Widget.App.Button"
+        android:id="@+id/gallery"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="@dimen/offsetLarge"
+        android:paddingHorizontal="26dp"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="@color/constantWhite"
+        android:backgroundTint="#454545"
+        android:background="@drawable/bg_content_tint_24"
+        android:text="@string/select_from_gallery"/>
+
+</FrameLayout>

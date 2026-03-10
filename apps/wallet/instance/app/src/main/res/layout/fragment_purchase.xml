@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/itemHeight"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            style="@style/Widget.App.TextTab"
+            android:id="@+id/country"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="center|left"
+            android:background="@drawable/bg_button_secondary"/>
+
+        <uikit.widget.RowLayout
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_content_20"
+            android:padding="4dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tab_buy"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:textColor="?attr/textPrimaryColor"
+                android:text="@string/buy"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/offsetMedium"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tab_sell"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:textColor="?attr/textPrimaryColor"
+                android:text="@string/sell"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/offsetMedium"/>
+        </uikit.widget.RowLayout>
+
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:layout_gravity="center|right"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"
+            android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:scaleType="centerInside"/>
+
+    </FrameLayout>
+
+    <uikit.widget.SimpleRecyclerView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingHorizontal="@dimen/offsetMedium"/>
+
+</uikit.widget.ColumnLayout>

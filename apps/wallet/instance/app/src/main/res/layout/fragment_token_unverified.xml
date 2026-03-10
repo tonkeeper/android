@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:ignoreSystemOffset="true"
+        android:action="@drawable/ic_close_16"/>
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:title="@string/unverified_token"
+        android:description="@string/unverified_token_description"/>
+
+    <uikit.widget.ColumnLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/offsetMedium"
+        android:background="@drawable/bg_content"
+        android:padding="@dimen/offsetMedium">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/unverified_token_reason_1"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:text="@string/unverified_token_reason_2"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:text="@string/unverified_token_reason_3"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetMedium"
+            android:text="@string/unverified_token_reason_4"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textPrimaryColor"/>
+    </uikit.widget.ColumnLayout>
+
+    <Button
+        style="@style/Widget.App.Button.Secondary"
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="OK"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginBottom="@dimen/offsetMedium"/>
+
+</uikit.widget.ColumnLayout>

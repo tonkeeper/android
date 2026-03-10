@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <uikit.widget.HeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="@string/browser"/>
+
+        <Button style="@style/Widget.App.Button.Secondary"
+            android:id="@+id/cancel_button"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_gravity="end|bottom"
+            android:layout_margin="@dimen/offsetMedium"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="0dp"
+            android:text="@string/cancel"/>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <uikit.widget.SimpleRecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/offsetMedium"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/offsetLarge"
+            android:layout_gravity="center"
+            android:textColor="?attr/textTertiaryColor"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.Body1"
+            android:text="@string/browser_search_placeholder"/>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/search_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:padding="@dimen/offsetMedium">
+
+        <uikit.widget.RowLayout
+            android:id="@+id/search"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/search_icon"
+                android:layout_width="44dp"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:tint="?attr/iconSecondaryColor"
+                android:src="@drawable/ic_magnifying_glass_16"/>
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/search_input"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Body1"
+                android:textColorHint="?attr/textSecondaryColor"
+                android:textColor="?attr/textPrimaryColor"
+                android:gravity="center_vertical"
+                android:background="@android:color/transparent"
+                android:hint="@string/search_browser"/>
+
+        </uikit.widget.RowLayout>
+
+    </FrameLayout>
+
+</uikit.widget.ColumnLayout>

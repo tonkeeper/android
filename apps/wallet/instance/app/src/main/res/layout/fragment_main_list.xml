@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout
+        android:id="@+id/refresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.tonapps.tonkeeper.ui.component.MainRecyclerView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/offsetMedium"
+            android:clipToPadding="false"/>
+
+    </com.tonapps.tonkeeper.ui.component.MainSwipeRefreshLayout>
+
+    <uikit.widget.EmptyLayout
+        android:id="@+id/empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="@dimen/offsetMedium"
+        android:visibility="gone"
+        android:title="@string/empty_collectibles_title"
+        android:description="@string/empty_collectibles_subtitle"
+        android:positiveButtonText="@string/receive"/>
+
+    <uikit.widget.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</FrameLayout>

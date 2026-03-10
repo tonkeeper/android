@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="@dimen/offsetMedium"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="?attr/textPrimaryColor"
+                android:textAppearance="@style/TextAppearance.H3"/>
+
+            <uikit.widget.PinInputView
+                android:id="@+id/passcode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge"
+                android:layout_gravity="center"
+                android:filterTouchesWhenObscured="true"/>
+
+        </uikit.widget.ColumnLayout>
+
+    </FrameLayout>
+
+    <uikit.widget.NumPadView
+        android:id="@+id/num_pad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginVertical="@dimen/offsetLarge"
+        android:orientation="vertical"/>
+
+</uikit.widget.ColumnLayout>

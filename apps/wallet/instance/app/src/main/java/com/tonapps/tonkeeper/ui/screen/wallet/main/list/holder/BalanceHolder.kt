@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.text.SpannableStringBuilder
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +16,7 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.BalanceType
+import com.tonapps.tonkeeper.extensions.badgeDefault
 import com.tonapps.tonkeeper.extensions.badgeGreen
 import com.tonapps.tonkeeper.extensions.badgeOrange
 import com.tonapps.tonkeeper.extensions.badgePurple
@@ -213,6 +213,7 @@ class BalanceHolder(
             Wallet.Type.Testnet -> builder.badgeOrange(context, Localization.testnet)
             Wallet.Type.Watch -> builder.badgeOrange(context, Localization.watch_only)
             Wallet.Type.Keystone -> builder.badgePurple(context, Localization.keystone)
+            Wallet.Type.Tetra -> builder.badgeOrange(context, Localization.tetra)
             Wallet.Type.Default -> builder
             Wallet.Type.Lockup -> builder
         }

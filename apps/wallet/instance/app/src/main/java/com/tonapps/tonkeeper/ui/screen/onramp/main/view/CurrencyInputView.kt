@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.main.view
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -174,7 +174,7 @@ class CurrencyInputView @JvmOverloads constructor(
     fun setInsufficientBalance() {
         tokenBalanceView.visibility = View.VISIBLE
         tokenBalanceMaxView.visibility = View.GONE
-        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.uikit.color.R.attr.accentRedColor))
+        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.ui.uikit.color.R.attr.accentRedColor))
         tokenBalanceView.setText(Localization.insufficient_balance)
     }
 
@@ -197,7 +197,7 @@ class CurrencyInputView @JvmOverloads constructor(
     }
 
     private fun showTokenBalance(value: Coins) {
-        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.uikit.color.R.attr.textSecondaryColor))
+        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.ui.uikit.color.R.attr.textSecondaryColor))
         tokenBalanceView.visibility = View.VISIBLE
         tokenBalanceMaxView.visibility = View.VISIBLE
         tokenBalanceMaxView.setOnClickListener {

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.usecase.sign
 
-import android.util.Log
+import com.tonapps.log.L
+import com.tonapps.blockchain.ton.SignatureDomain
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.tron.TronTransaction
@@ -82,7 +83,7 @@ class SignTransaction(
         return when (wallet.type) {
             Wallet.Type.SignerQR -> signerQR(activity, wallet, unsignedBody)
             Wallet.Type.Signer -> signerApp(activity, wallet, unsignedBody)
-            Wallet.Type.Default, Wallet.Type.Testnet, Wallet.Type.Lockup -> default(
+            Wallet.Type.Default, Wallet.Type.Tetra, Wallet.Type.Testnet, Wallet.Type.Lockup -> default(
                 activity,
                 wallet,
                 unsignedBody
@@ -155,8 +156,9 @@ class SignTransaction(
         }
         val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id)
             ?: throw SendException.UnableSendTransaction()
-        val hash = privateKey.sign(unsignedBody.hash())
-        BitString(hash)
+        val hash = unsignedBody.hash().toByteArray()
+        val dataToSign = wallet.contract.signatureGlobalId?.let { SignatureDomain.prefixedHash(it, hash) } ?: hash
+        BitString(privateKey.sign(dataToSign))
     }
 
     suspend fun default(

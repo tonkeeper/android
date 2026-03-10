@@ -92,14 +92,6 @@ internal class TxPagingSource(
         return processEvents(eventsRepository.fetch(query))
     }
 
-    private suspend fun prevLoad(afterTimestamp: Timestamp, limit: Int): TxPage {
-        val query = query(
-            afterTimestamp = afterTimestamp,
-            limit = limit
-        )
-        return processEvents(eventsRepository.fetch(query))
-    }
-
     private suspend fun initialLoad(limit: Int): TxPage {
         val query = query(
             limit = limit

@@ -5,6 +5,7 @@ import com.tonapps.tonkeeper.core.Amount
 import com.tonapps.tonkeeper.core.Fee
 import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
 import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.tonkeeper.ui.screen.tronfees.TronFeesEmulation
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.currency.WalletCurrency
 
@@ -19,7 +20,9 @@ sealed class SendEvent {
         val required: Amount,
         val withRechargeBattery: Boolean,
         val singleWallet: Boolean,
-        val type: InsufficientBalanceType
+        val type: InsufficientBalanceType,
+        val tronFees: Boolean = false,
+        val tronFeesEmulation: TronFeesEmulation? = null,
     )
 
     data object Confirm: SendEvent()

@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge
 
-import android.util.Log
+import com.tonapps.log.L
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.base64.encodeBase64
 import com.tonapps.blockchain.ton.connect.TONProof

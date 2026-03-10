@@ -2,12 +2,35 @@ package com.tonapps.tonkeeper.deeplink
 
 import android.net.Uri
 import androidx.core.net.toUri
+import com.tonapps.bus.generated.Events
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 
 data class DeepLink(
     val route: DeepLinkRoute,
     val fromQR: Boolean,
     val referrer: Uri?,
+    val isTonConnect: Boolean = false,
 ) {
+
+    enum class Source {
+        Deeplink, QR, TonConnect; // TODO refactor
+
+        val analytic: Events.SendNative.SendNativeFrom get() {
+            return when (this) {
+                Deeplink -> Events.SendNative.SendNativeFrom.DeepLink
+                QR -> Events.SendNative.SendNativeFrom.QrCode
+                TonConnect -> Events.SendNative.SendNativeFrom.TonconnectLocal
+            }
+        }
+    }
+
+    val source: Source get() {
+        return when {
+            isTonConnect -> Source.TonConnect
+            fromQR -> Source.QR
+            else -> Source.Deeplink
+        }
+    }
 
     companion object {
 
@@ -29,7 +52,7 @@ data class DeepLink(
     ): this(
         route = DeepLinkRoute.resolve(uri),
         fromQR = fromQR,
-        referrer = referrer
+        referrer = referrer,
+        isTonConnect = TonConnectManager.isTonConnectDeepLink(uri) // TODO remove from here
     )
-
 }

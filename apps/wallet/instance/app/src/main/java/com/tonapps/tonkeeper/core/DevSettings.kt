@@ -1,15 +1,23 @@
 package com.tonapps.tonkeeper.core
 
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.App
-import androidx.core.content.edit
 import com.tonapps.extensions.putBoolean
 import com.tonapps.extensions.putLong
 import com.tonapps.extensions.putString
+import com.tonapps.tonkeeperx.BuildConfig
 
 object DevSettings {
 
     private val prefs = App.instance.getSharedPreferences("dev_settings", 0)
+
+    var tetraEnabled: Boolean = prefs.getBoolean("tetra_enabled", false)
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.putBoolean("tetra_enabled", value)
+            }
+        }
 
     var country: String? = prefs.getString("country", null)
         set(value) {
@@ -59,6 +67,14 @@ object DevSettings {
             }
         }
 
+    var isLogsEnabled: Boolean = prefs.getBoolean("is_logs_enabled", false)
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.putBoolean("is_logs_enabled", value)
+            }
+        }
+
     var ignoreSystemFontSize: Boolean = prefs.getBoolean("ignore_system_font_size", false)
         set(value) {
             if (field != value) {
@@ -69,11 +85,11 @@ object DevSettings {
 
 
     fun tonConnectLog(message: String, error: Boolean = false) {
-        if (tonConnectLogs) {
+        if (tonConnectLogs || BuildConfig.DEBUG) {
             if (error) {
-                Log.e("TonConnect", message)
+                L.e("TonConnect", message)
             } else {
-                Log.d("TonConnect", message)
+                L.d("TonConnect", message)
             }
         }
     }

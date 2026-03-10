@@ -82,7 +82,7 @@ class OnRampPickerViewModel(
         } else {
             uiItems.add(Item.Currency(TokenEntity.TON, ListCell.Position.FIRST))
             uiItems.add(Item.Currency(TokenEntity.USDT, ListCell.Position.MIDDLE))
-            val tokens = tokenRepository.getTokens(wallet.testnet, jettonAddress).toMutableList()
+            val tokens = tokenRepository.getTokens(wallet.network, jettonAddress).toMutableList()
             tokens.removeIf { it.isTon || it.isUsdt }
             for (token in tokens) {
                 uiItems.add(Item.Currency(token, ListCell.Position.MIDDLE))
@@ -325,7 +325,7 @@ class OnRampPickerViewModel(
 
     private fun setJetton(address: String) {
         viewModelScope.launch {
-            val token = tokenRepository.getToken(wallet.accountId, wallet.testnet, address) ?: return@launch
+            val token = tokenRepository.getToken(wallet.accountId, wallet.network, address) ?: return@launch
             val currency = WalletCurrency.of(token.address) ?: WalletCurrency(
                 code = token.symbol,
                 title = token.name,

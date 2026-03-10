@@ -3,8 +3,10 @@ package com.tonapps.tonkeeper.ui.screen.send.main.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.core.Fee
+import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.extensions.symbol
 import com.tonapps.wallet.data.core.currency.WalletCurrency
+import io.batteryapi.models.EstimatedTronTx
 import org.ton.block.AddrStd
 
 sealed class SendFee {
@@ -34,14 +36,42 @@ sealed class SendFee {
         override val amount: Fee,
         override val fiatAmount: Coins,
         override val fiatCurrency: WalletCurrency,
-        override val excessesAddress: AddrStd
+        override val excessesAddress: AddrStd,
     ) : SendFee(), TokenFee, RelayerFee
 
     data class Battery(
         val charges: Int,
         val chargesBalance: Int,
         override val extra: Long,
-        override val excessesAddress: AddrStd
-    ) : SendFee(), RelayerFee, Extra
+        override val excessesAddress: AddrStd,
+        val fiatAmount: Coins,
+        val fiatCurrency: WalletCurrency,
+        val estimatedTron: EstimatedTronTx? = null,
+        val excessCharges: Long? = null,
+    ) : SendFee(), RelayerFee, Extra {
+        val enoughCharges : Boolean
+            get() = chargesBalance >= charges
+    }
+
+    data class TronTrx(
+        override val amount: Fee,
+        override val fiatAmount: Coins,
+        override val fiatCurrency: WalletCurrency,
+        val balance: Coins,
+    ) : SendFee(), TokenFee {
+        val enoughBalance : Boolean
+            get() = balance >= amount.value
+    }
+
+    data class TronTon(
+        override val amount: Fee,
+        override val fiatAmount: Coins,
+        override val fiatCurrency: WalletCurrency,
+        val sendToAddress: String,
+        val balance: Coins,
+    ) : SendFee(), TokenFee {
+        val enoughBalance : Boolean
+            get() = balance >= amount.value + TransferEntity.POINT_ONE_TON
+    }
 
 }

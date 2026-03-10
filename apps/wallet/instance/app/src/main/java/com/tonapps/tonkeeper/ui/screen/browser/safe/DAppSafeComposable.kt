@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.browser.safe
 
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,16 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
-import ui.components.Header
 import ui.components.TextHeader
 import ui.components.button.TKButton
+import ui.components.moon.MoonTopAppBar
 import ui.theme.ButtonColorsSecondary
 import ui.theme.Dimens
-import ui.theme.UIKit
 
 @Composable
 fun DAppSafeComposable(
@@ -43,7 +40,7 @@ fun DAppSafeComposable(
         verticalArrangement = Arrangement.spacedBy(Dimens.offsetMedium),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Header(
+        MoonTopAppBar(
             title = "",
             actionIconRes = UIKitIcon.ic_close_16,
             onActionClick = onClose,

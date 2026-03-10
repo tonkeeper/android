@@ -5,7 +5,7 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
-import android.util.Log
+import com.tonapps.log.L
 import android.util.TypedValue
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -13,7 +13,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.InsufficientFundsException
 import com.tonapps.tonkeeper.extensions.addFeeItem
 import com.tonapps.tonkeeper.extensions.finishDelay

@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.collectibles.manage
 
 import android.app.Application
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
@@ -41,7 +41,7 @@ class CollectiblesManageViewModel(
     val spamItem = Item.Title(getString(Localization.spam))
 
     private val safeMode: Boolean
-        get() = settingsRepository.isSafeModeEnabled(api)
+        get() = settingsRepository.isSafeModeEnabled(api, wallet.network)
 
     private val _showedAllFlow = MutableStateFlow(false)
     private val showedAllFlow = _showedAllFlow.asStateFlow()
@@ -51,7 +51,7 @@ class CollectiblesManageViewModel(
 
     private val collectiblesFlow = collectiblesRepository.getFlow(
         address = wallet.address,
-        testnet = wallet.testnet,
+        network = wallet.network,
         isOnline = true
     ).map { it.list }
 

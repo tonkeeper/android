@@ -3,7 +3,7 @@ package com.tonapps.sqlite
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
+import com.tonapps.log.L
 
 abstract class SQLiteHelper(context: Context, name: String, version: Int): SQLiteOpenHelper(context, name, null, version) {
 

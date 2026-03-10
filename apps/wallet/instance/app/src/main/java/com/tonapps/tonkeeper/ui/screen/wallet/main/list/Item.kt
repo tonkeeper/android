@@ -196,7 +196,8 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val swapUri: Uri,
         val tronEnabled: Boolean,
         val isSwapDisabled: Boolean,
-        val isStakingDisabled: Boolean
+        val isStakingDisabled: Boolean,
+        val isExchangeDisabled: Boolean
     ): Item(TYPE_ACTIONS) {
 
         val address: String
@@ -211,6 +212,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
+            parcel.readBooleanCompat(),
             parcel.readBooleanCompat()
         )
 
@@ -221,6 +223,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(tronEnabled)
             dest.writeBooleanCompat(isSwapDisabled)
             dest.writeBooleanCompat(isStakingDisabled)
+            dest.writeBooleanCompat(isExchangeDisabled)
         }
 
         companion object CREATOR : Parcelable.Creator<Actions> {
@@ -259,7 +262,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
         @IgnoredOnParcel
         val currencyIcon: Int by lazy {
-            com.tonapps.wallet.api.R.drawable.ic_ton_with_bg
+            com.tonapps.apps.wallet.api.R.drawable.ic_ton_with_bg
         }
 
         constructor(parcel: Parcel) : this(
@@ -357,7 +360,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             symbol = token.symbol,
             name = token.name,
             balance = token.balance.value,
-            balanceFormat = CurrencyFormatter.format(value = token.balance.value),
+            balanceFormat = CurrencyFormatter.format(value = token.balance.uiBalance),
             fiat = token.fiat,
             fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat),
             rate = if (token.isUsdt || token.isTrc20) {

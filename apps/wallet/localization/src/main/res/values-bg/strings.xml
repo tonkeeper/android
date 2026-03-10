@@ -601,6 +601,7 @@
     <string name="open_explorer">Отвори в изследователя</string>
     <string name="out_of_available_charges">изчерпани %1$s налични</string>
     <string name="tron_toggle_text">Използвайте USD₮ TRC20 без TRX. Таксите се покриват от Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">Преводите на USD₮ изискват TRX за мрежови такси.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Копирай фразата</string>
     <string name="export_tron">Експортирай TRC20 портфейл</string>
@@ -676,6 +677,36 @@
         <item quantity="one">Той може да продължи да таксува вашия портфейл. Деактивирайте, за да избегнете бъдещи плащания.</item>
         <item quantity="other">Някои от тях може да продължат да таксуват портфейла ви. Деактивирайте, за да избегнете бъдещи плащания.</item>
     </plurals>
-
+    <string name="no_enough_funds">Няма достатъчно средства</string>
+    <string name="refill">Зареди</string>
+    <string name="get_token">Вземи %1$s</string>
+    <string name="insufficient_trx_balance">Няма достатъчно TRX за покриване на таксите</string>
+    <string name="insufficient_trx_balance_desc">Изберете метод за плащане на таксите и заредете.</string>
+    <string name="tron_not_enough_for_fee_title">Недостатъчно средства за покриване на таксите</string>
+    <string name="tron_not_enough_for_fee_desc">Заредете Battery, TON или TRX баланса за покриване на таксите.</string>
+    <string name="top_up">Зареди</string>
+    <string name="tron_not_enough_trx_for_fee_title">Няма достатъчно TRX за таксите</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Необходимо за таксите ≈ %1$s. Вашият баланс: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">Наличен е %1$s трансфер</item>
+        <item quantity="few">Налични са %1$s трансфера</item>
+        <item quantity="many">Налични са %1$s трансфера</item>
+        <item quantity="other">Налични са %1$s трансфера</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s трансфер</item>
+        <item quantity="few">%1$s трансфера</item>
+        <item quantity="many">%1$s трансфера</item>
+        <item quantity="other">%1$s трансфера</item>
+    </plurals>
+    <string name="trx_balance">Баланс TRX</string>
+    <string name="trx_balance_desc">Заредете баланса си, за да платите мрежовите такси.</string>
+    <string name="blockchain_fees">Блокчейн такси</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery е най-лесният начин за плащане на таксите. Може също да заредите баланса с TON и TRX.</string>
+    <string name="required_prefix">Необходимо: %1$s</string>
+    <string name="tron_fees_learn_more">Таксите се променят в реално време според пазарните условия. <annotation colorAttr="textAccentColor">Научи повече</annotation></string>
+    <string name="tetra_subtitle">Свързване към мрежата Tetra L2</string>
+    <string name="other_options">Други опции</string>
+    <string name="for_developers">За разработчици</string>
 
 </resources>

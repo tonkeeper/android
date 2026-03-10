@@ -18,7 +18,7 @@ class ExtensionsViewModel(
 
     val uiItemsFlow = pluginsRepository.updatedFlow.map { _ ->
         val plugins =
-            pluginsRepository.getPlugins(wallet.accountId, wallet.testnet, refresh = false)
+            pluginsRepository.getPlugins(wallet.accountId, wallet.network, refresh = false)
         plugins.mapIndexed { index, plugin ->
             Item.Plugin(
                 plugin = plugin,

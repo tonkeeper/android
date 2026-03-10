@@ -177,12 +177,12 @@ class SpamEventsViewModel(
 
     private suspend fun getLocalSpam() = eventsRepository.getLocalSpam(
         accountId = wallet.accountId,
-        testnet = wallet.testnet
+        network = wallet.network
     )
 
     private suspend fun getRemoteSpam(startBeforeLt: Long? = null) = eventsRepository.getRemoteSpam(
         accountId = wallet.accountId,
-        testnet = wallet.testnet,
+        network = wallet.network,
         startBeforeLt = startBeforeLt
     )
 

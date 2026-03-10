@@ -15,6 +15,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.circle
 import com.tonapps.extensions.isLocal
@@ -88,11 +89,11 @@ class WidgetUpdaterWorker(
 
     private suspend fun updateRates(widgets: List<WidgetEntity>) = withContext(Dispatchers.IO) {
         val tokens = widgets.map { it.params }.filterIsInstance<WidgetParams.Rate>().map { it.jettonAddress.toRawAddress() }
-        ratesRepository.load(currency, tokens.distinct().toMutableList())
+        ratesRepository.load(TonNetwork.MAINNET, currency, tokens.distinct().toMutableList())
     }
 
     private suspend fun getRates(tokenAddress: String): RateEntity? {
-        return ratesRepository.getRates(currency, tokenAddress).rate(tokenAddress)
+        return ratesRepository.getRates(TonNetwork.MAINNET, currency, tokenAddress).rate(tokenAddress)
     }
 
     private suspend fun updateRateWidget(widget: WidgetEntity) {
@@ -177,7 +178,7 @@ class WidgetUpdaterWorker(
         if (wallet == null) {
             return tokenRepository.getToken(tokenAddress)
         }
-        return tokenRepository.getToken(wallet.accountId, wallet.testnet, tokenAddress)
+        return tokenRepository.getToken(wallet.accountId, wallet.network, tokenAddress)
     }
 
     private suspend fun getWallet(id: String): WalletEntity? {

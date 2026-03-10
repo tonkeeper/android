@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.onramp.main
 
 import android.app.Application
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.singleValue
@@ -146,7 +146,7 @@ class OnRampViewModel(
     val ratesFlow = twinInput.currenciesStateFlow.map { inputCurrencies ->
         val fiatCurrency = inputCurrencies.fiat ?: settingsRepository.currency
         val tokens = inputCurrencies.cryptoTokens.map { it.tokenQuery }
-        ratesRepository.getRates(fiatCurrency, tokens)
+        ratesRepository.getRates(wallet.network, fiatCurrency, tokens)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null).filterNotNull()
 
     val minAmountFlow = combine(

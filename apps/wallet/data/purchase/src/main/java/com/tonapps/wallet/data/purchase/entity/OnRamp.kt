@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.purchase.entity
 
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.purchase.OnRampUtils
 import kotlinx.coroutines.flow.map

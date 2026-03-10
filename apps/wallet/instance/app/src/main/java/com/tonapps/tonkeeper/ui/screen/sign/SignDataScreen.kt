@@ -9,7 +9,7 @@ import android.text.SpannableStringBuilder
 import android.text.method.ScrollingMovementMethod
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.text.color
@@ -86,7 +86,7 @@ class SignDataScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
         slideTextBuilder.append("\n")
         slideTextBuilder.append(SpannableString(secondLineText).apply {
             setSpan(RelativeSizeSpan(0.8f),0, secondLineText.length,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            setSpan(ForegroundColorSpan(requireContext().resolveColor(com.tonapps.uikit.color.R.attr.textTertiaryColor).withAlpha(0.7f)),0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(ForegroundColorSpan(requireContext().resolveColor(com.tonapps.ui.uikit.color.R.attr.textTertiaryColor).withAlpha(0.7f)),0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         })
         return slideTextBuilder
     }

@@ -555,6 +555,7 @@
     <string name="open_explorer">Abrir en el explorador</string>
     <string name="out_of_available_charges">agotado de %1$s</string>
     <string name="tron_toggle_text">Usa USD₮ TRC20 sin TRX. Las tarifas son cubiertas por Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">Las transferencias de USD₮ requieren TRX para pagar las comisiones de red.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Copiar frase</string>
     <string name="export_tron">Exportar billetera TRC20</string>
@@ -630,5 +631,36 @@
         <item quantity="one">Podría seguir cobrando de tu billetera. Desactiva para evitar futuros pagos.</item>
         <item quantity="other">Algunas podrían seguir cobrando de tu billetera. Desactiva para evitar futuros pagos.</item>
     </plurals>
+    <string name="no_enough_funds">Fondos insuficientes</string>
+    <string name="refill">Recargar</string>
+    <string name="get_token">Obtener %1$s</string>
+    <string name="insufficient_trx_balance">No hay suficiente TRX para cubrir las comisiones</string>
+    <string name="insufficient_trx_balance_desc">Elige un método de pago de comisiones y recarga.</string>
+    <string name="tron_not_enough_for_fee_title">Fondos insuficientes para cubrir las comisiones</string>
+    <string name="tron_not_enough_for_fee_desc">Recarga Battery, TON o TRX para cubrir las comisiones.</string>
+    <string name="top_up">Recargar</string>
+    <string name="tron_not_enough_trx_for_fee_title">No hay suficiente TRX para las comisiones</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Requerido para comisiones ≈ %1$s. Tu saldo: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transferencia disponible</item>
+        <item quantity="few">%1$s transferencias disponibles</item>
+        <item quantity="many">%1$s transferencias disponibles</item>
+        <item quantity="other">%1$s transferencias disponibles</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transferencia</item>
+        <item quantity="few">%1$s transferencias</item>
+        <item quantity="many">%1$s transferencias</item>
+        <item quantity="other">%1$s transferencias</item>
+    </plurals>
+    <string name="trx_balance">Saldo de TRX</string>
+    <string name="trx_balance_desc">Recarga tu saldo para pagar las comisiones de la red.</string>
+    <string name="blockchain_fees">Comisiones de Blockchain</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery es la forma más fácil de pagar comisiones de blockchain. También puedes recargar con TON y TRX.</string>
+    <string name="required_prefix">Requerido: %1$s</string>
+    <string name="tron_fees_learn_more">Las comisiones cambian en tiempo real según el mercado. <annotation colorAttr="textAccentColor">Saber más</annotation></string>
+    <string name="tetra_subtitle">Conectar la red Tetra L2</string>
+    <string name="other_options">Otras opciones</string>
+    <string name="for_developers">Para desarrolladores</string>
 
 </resources>

@@ -9,7 +9,7 @@ import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.Shader
-import android.util.Log
+import com.tonapps.log.L
 import androidx.core.graphics.withTranslation
 import com.tonapps.wallet.api.entity.ChartEntity
 import uikit.extensions.withAlpha

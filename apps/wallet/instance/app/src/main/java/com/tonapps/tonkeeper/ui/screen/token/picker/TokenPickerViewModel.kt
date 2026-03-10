@@ -33,7 +33,7 @@ import uikit.extensions.context
 
 class TokenPickerViewModel(
     app: Application,
-    wallet: WalletEntity,
+    private val wallet: WalletEntity,
     selectedToken: TokenEntity,
     allowedTokens: List<String>,
     private val settingsRepository: SettingsRepository,
@@ -41,7 +41,7 @@ class TokenPickerViewModel(
     private val api: API,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api, wallet.network)
 
     private val _selectedTokenFlow = MutableStateFlow(selectedToken)
 
@@ -53,7 +53,7 @@ class TokenPickerViewModel(
     private val queryFlow = _queryFlow.asSharedFlow()
 
     private val tokensFlow = settingsRepository.currencyFlow.map { currency ->
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet)?.filter {
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.network)?.filter {
             it.balance.isTransferable
         } ?: emptyList()
 
@@ -100,7 +100,7 @@ class TokenPickerViewModel(
                 position = ListCell.getPosition(sortedTokens.size, index),
                 raw = token,
                 selected = token.address == selectedToken.address,
-                balance = CurrencyFormatter.format(token.symbol, token.balance.value),
+                balance = CurrencyFormatter.format(token.symbol, token.balance.uiBalance),
                 hiddenBalance = settingsRepository.hiddenBalances,
                 showNetwork = tronUsdtEnabled && (token.isUsdt || token.isTrc20)
             )

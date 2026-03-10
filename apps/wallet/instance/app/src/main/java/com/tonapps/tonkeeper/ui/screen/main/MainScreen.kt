@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.main
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
@@ -278,9 +278,9 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
         try {
             transaction.commitNow()
-            Log.d("MainScreenLog", "Set fragment: $fragment")
+            L.d("MainScreenLog", "Set fragment: $fragment")
         } catch (e: Throwable) {
-            Log.e("MainScreenLog", "Failed to set fragment", e)
+            L.e("MainScreenLog", "Failed to set fragment", e)
             FirebaseCrashlytics.getInstance().recordException(e)
             postDelayed(1000) {
                 setFragment(fragment, forceScrollUp, from,extra, attempt + 1)

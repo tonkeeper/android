@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.init
 import android.app.Application
 import android.content.Context
 import android.graphics.Color
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.MnemonicHelper
@@ -18,15 +17,13 @@ import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.logError
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.security.clear
 import com.tonapps.tonkeeper.Environment
-import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.extensions.consistentBucketFor
 import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -52,30 +49,21 @@ import io.tonapi.models.AccountStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.mnemonic.Mnemonic
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.String
 
 @OptIn(FlowPreview::class)
 class InitViewModel(
@@ -102,6 +90,7 @@ class InitViewModel(
     private val savedState = InitModelState(savedStateHandle)
     private val type = args.type
     private val testnet: Boolean = type == InitArgs.Type.Testnet
+    private val tetra: Boolean = type == InitArgs.Type.Tetra
     private val walletsCount = AtomicInteger(-1)
     val watchRecoveryAccountId = args.watchRecoveryAccountId
 
@@ -110,7 +99,11 @@ class InitViewModel(
     }
 
     private val tonNetwork: TonNetwork
-        get() = if (testnet) TonNetwork.TESTNET else TonNetwork.MAINNET
+        get() = when {
+            testnet -> TonNetwork.TESTNET
+            tetra -> TonNetwork.TETRA
+            else -> TonNetwork.MAINNET
+        }
 
     private val _uiTopOffset = MutableStateFlow(0)
     val uiTopOffset = _uiTopOffset.asStateFlow()
@@ -126,7 +119,7 @@ class InitViewModel(
         .debounce(1000)
         .filter { it.isNotBlank() }
         .map {
-            val account = api.resolveAddressOrName(it, testnet)
+            val account = api.resolveAddressOrName(it, tonNetwork)
             if (account == null || account.walletVersion == WalletVersion.UNKNOWN) {
                 setWatchAccount(null, null)
                 return@map null
@@ -143,7 +136,7 @@ class InitViewModel(
     private val isPinSet = AtomicBoolean(false)
 
     private val requestSetPinCode: Boolean
-        get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !isPinSet.get()
+        get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || type == InitArgs.Type.Tetra) && !isPinSet.get()
 
     var wordsCount: Int
         get() = savedState.wordsCount
@@ -184,7 +177,7 @@ class InitViewModel(
 
         when (type) {
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
-            InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)
+            InitArgs.Type.Import, InitArgs.Type.Testnet, InitArgs.Type.Tetra -> routeTo(InitRoute.ImportWords)
             InitArgs.Type.Signer, InitArgs.Type.SignerQR -> resolveWallets(savedState.publicKey!!)
             InitArgs.Type.Ledger -> routeTo(InitRoute.SelectAccount)
             InitArgs.Type.Keystone -> {
@@ -294,25 +287,26 @@ class InitViewModel(
             val accounts = if (publicKey.new) {
                 mutableListOf()
             } else {
-                api.resolvePublicKey(publicKey.publicKey, testnet).filter {
+                api.resolvePublicKey(publicKey.publicKey, tonNetwork).filter {
                     it.walletVersion != WalletVersion.UNKNOWN
                 }.sortedByDescending { it.walletVersion.index }.toMutableList()
             }
 
             if (accounts.count { it.walletVersion == WalletVersion.V5R1 } == 0) {
-                val contract = WalletV5R1Contract(publicKey.publicKey, tonNetwork)
+                val network = if (tonNetwork.isTetra) TonNetwork.TETRA else tonNetwork
+                val contract = WalletV5R1Contract(publicKey.publicKey, network)
                 val query = contract.address.toAccountId()
                 if (publicKey.new) {
                     accounts.add(
                         0,
-                        AccountDetailsEntity(contract, testnet, new = true, initialized = false)
+                        AccountDetailsEntity(contract, tonNetwork, new = true, initialized = false)
                     )
                 } else {
-                    val apiAccount = api.resolveAccount(query, testnet)
+                    val apiAccount = api.resolveAccount(query, tonNetwork)
                     val account = if (apiAccount == null) {
                         AccountDetailsEntity(
                             contract,
-                            testnet = testnet,
+                            tonNetwork,
                             new = true,
                             initialized = false
                         )
@@ -320,7 +314,7 @@ class InitViewModel(
                         AccountDetailsEntity(
                             query, apiAccount.copy(
                                 interfaces = listOf("wallet_v5r1")
-                            ), testnet, false
+                            ), tonNetwork, false
                         )
                     }
                     accounts.add(0, account)
@@ -332,9 +326,10 @@ class InitViewModel(
             }
 
             val recoveryWallet = getRecoveryWatchWallet(publicKey = publicKey.publicKey)
-            val recoveryAccountItem = accounts.firstOrNull { it.preview.accountId == recoveryWallet?.accountId }?.let {
-                getAccountItem(it, ListCell.Position.SINGLE)
-            }
+            val recoveryAccountItem =
+                accounts.firstOrNull { it.preview.accountId == recoveryWallet?.accountId }?.let {
+                    getAccountItem(it, ListCell.Position.SINGLE)
+                }
 
             val items = mutableListOf<AccountItem>()
             if (recoveryAccountItem != null) {
@@ -419,8 +414,8 @@ class InitViewModel(
                 initialized = false
             )
         } else {
-            val tokensDeferred = async { api.getJettonsBalances(account.address, testnet) }
-            val nftItemsDeferred = async { api.getNftItems(account.address, testnet, 1) }
+            val tokensDeferred = async { api.getJettonsBalances(account.address, tonNetwork) }
+            val nftItemsDeferred = async { api.getNftItems(account.address, tonNetwork, 1) }
             val tokens = tokensDeferred.await() ?: emptyList()
             val nftItems = nftItemsDeferred.await() ?: emptyList()
             val balance = Coins.of(account.balance)
@@ -464,7 +459,7 @@ class InitViewModel(
         }
 
         val publicKey = account?.address?.let {
-            api.safeGetPublicKey(it, testnet)
+            api.safeGetPublicKey(it, tonNetwork)
         }
         setPublicKey(publicKey)
 
@@ -568,20 +563,21 @@ class InitViewModel(
         MnemonicHelper.privateKey(mnemonic).publicKey()
     )
 
-    suspend fun getRecoveryWatchWallet(publicKey: PublicKeyEd25519): WalletEntity? = withContext(Dispatchers.IO) {
-        if (watchRecoveryAccountId == null) {
-            return@withContext null
-        }
+    suspend fun getRecoveryWatchWallet(publicKey: PublicKeyEd25519): WalletEntity? =
+        withContext(Dispatchers.IO) {
+            if (watchRecoveryAccountId == null) {
+                return@withContext null
+            }
 
-        val wallet = accountRepository.getWallets()
-            .first { it.accountId == watchRecoveryAccountId && it.type == Wallet.Type.Watch }
+            val wallet = accountRepository.getWallets()
+                .first { it.accountId == watchRecoveryAccountId && it.type == Wallet.Type.Watch }
 
-        if (wallet.publicKey == publicKey) {
-            wallet
-        } else {
-            null
+            if (wallet.publicKey == publicKey) {
+                wallet
+            } else {
+                null
+            }
         }
-    }
 
     private fun execute(context: Context) {
         setLoading(true)
@@ -593,9 +589,9 @@ class InitViewModel(
                 }
 
                 val alreadyWalletCount = accountRepository.getWallets()
-                if (alreadyWalletCount.isEmpty() && api.config.flags.safeModeEnabled) {
+                if (alreadyWalletCount.isEmpty() && api.getConfig(TonNetwork.MAINNET).flags.safeModeEnabled) {
                     settingsRepository.setSafeModeState(SafeModeState.Enabled)
-                    if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
+                    if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || type == InitArgs.Type.Tetra) {
                         settingsRepository.showSafeModeSetup = true
                     }
                 }
@@ -604,7 +600,7 @@ class InitViewModel(
                 when (type) {
                     InitArgs.Type.Watch -> wallets.add(saveWatchWallet())
                     InitArgs.Type.New -> wallets.add(newWallet(context))
-                    InitArgs.Type.Import, InitArgs.Type.Testnet -> wallets.addAll(
+                    InitArgs.Type.Import, InitArgs.Type.Testnet, InitArgs.Type.Tetra -> wallets.addAll(
                         importWallet(
                             context
                         )
@@ -616,7 +612,7 @@ class InitViewModel(
                     InitArgs.Type.Keystone -> wallets.addAll(keystoneWallet())
                 }
 
-                if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
+                if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || type == InitArgs.Type.Tetra) {
                     backupRepository.addBackups(wallets.map { it.id })
                 }
 
@@ -766,12 +762,18 @@ class InitViewModel(
                 )
             }
 
+            val type = when {
+                testnet -> Wallet.Type.Testnet
+                tetra -> Wallet.Type.Tetra
+                else -> Wallet.Type.Default
+            }
+
             val wallets = accountRepository.importWallet(
                 ids,
                 label,
                 mnemonic,
                 accounts.map { it.walletVersion },
-                testnet,
+                type,
                 accounts.map { it.initialized })
 
             // delete watch only wallet
@@ -780,7 +782,7 @@ class InitViewModel(
                 accountRepository.delete(it)
             }
 
-            if (!testnet) {
+            if (!testnet && !tetra) {
                 checkTronBalance(wallets)
             }
 
@@ -866,10 +868,10 @@ class InitViewModel(
         val contact = BaseWalletContract.create(
             publicKey.publicKey,
             WalletVersion.V4R2.title,
-            tonNetwork.value
+            tonNetwork
         )
         val account =
-            api.resolveAccount(contact.address.toWalletAddress(testnet = testnet), testnet)
+            api.resolveAccount(contact.address.toWalletAddress(testnet = testnet), tonNetwork)
         val initialized =
             account != null && (account.status == AccountStatus.active || account.status == AccountStatus.frozen)
 

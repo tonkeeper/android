@@ -21,6 +21,15 @@ object BatteryMapper {
         return balance.value.divide(meanFeesBigDecimal, 0, RoundingMode.UP).toInt()
     }
 
+    fun convertFromCharges(
+        charges: Int,
+        meanFees: String
+    ): Coins {
+        val meanFeesBigDecimal = BigDecimal(meanFees)
+        val amountBigDecimal = meanFeesBigDecimal.multiply(BigDecimal(charges))
+        return Coins(amountBigDecimal)
+    }
+
     fun calculateChargesAmount(
         transactionCostBigDecimal: BigDecimal,
         meanFees: String

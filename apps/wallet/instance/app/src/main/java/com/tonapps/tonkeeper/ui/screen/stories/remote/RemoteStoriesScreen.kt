@@ -6,7 +6,7 @@ import androidx.core.net.toUri
 import com.tonapps.extensions.containsQuery
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -62,7 +62,9 @@ class RemoteStoriesScreen : BaseStoriesScreen() {
 
         context?.analytics?.trackStoryClick(
             storiesId = stories.id,
-            button = button,
+            payload = button.payload,
+            type = button.type,
+            title = button.title,
             index = index
         )
 

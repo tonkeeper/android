@@ -9,6 +9,7 @@ import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.ChartHolder
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.EthenaBalanceHolder
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.EthenaMethodHolder
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.SpaceHolder
+import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.TronBannerHolder
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder.W5BannerHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
@@ -29,6 +30,7 @@ class TokenAdapter(
             Item.TYPE_SPACE -> SpaceHolder(parent)
             Item.TYPE_ETHENA_BALANCE -> EthenaBalanceHolder(parent)
             Item.TYPE_ETHENA_METHOD -> EthenaMethodHolder(parent)
+            Item.TYPE_TRON_BANNER -> TronBannerHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

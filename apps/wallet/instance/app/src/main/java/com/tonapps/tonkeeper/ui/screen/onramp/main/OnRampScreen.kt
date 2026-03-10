@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.main
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -16,7 +16,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.NestedScrollView
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.helper.TwinInput
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.screen.onramp.main.state.OnRampPaymentMethodState

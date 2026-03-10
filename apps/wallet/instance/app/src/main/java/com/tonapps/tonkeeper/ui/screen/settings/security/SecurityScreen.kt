@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope

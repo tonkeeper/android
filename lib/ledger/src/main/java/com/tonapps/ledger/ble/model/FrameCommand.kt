@@ -2,7 +2,7 @@ package com.tonapps.ledger.ble.model
 
 import com.tonapps.ledger.ble.extension.fromHexStringToBytes
 import com.tonapps.ledger.ble.extension.toHexString
-import timber.log.Timber
+import com.tonapps.log.L
 
 class FrameCommand(
     val id: String,
@@ -37,7 +37,7 @@ class FrameCommand(
         private const val SIZE_LENGTH = 4 //hex string Size
 
         fun fromHex(id: String, hexCommand: String): FrameCommand {
-            Timber.d(hexCommand)
+            L.d(hexCommand)
 
             var cursor = BleCommand.FRAME_PREFIX.length
             val indexString = hexCommand.substring(
@@ -77,7 +77,7 @@ class FrameCommand(
                 "" //No size given if it's not the first frame (index == 0)
             }
 
-            Timber.d("[Header] size for frame ${command.index} ==> $sizeHex")
+            L.d("[Header] size for frame ${command.index} ==> $sizeHex")
 
             return "$header$indexHex$sizeHex"
         }

@@ -17,8 +17,8 @@ import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun SimpleText(
-    modifier: Modifier = Modifier,
     text: String,
+    modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     style: TextStyle = LocalTextStyle.current
 ) {

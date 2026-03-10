@@ -9,14 +9,17 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
@@ -35,21 +38,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil3.compose.AsyncImage
-import ui.components.image.AsyncImage
 import com.tonapps.qr.ui.QRView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
-import ui.components.Header
 import ui.components.TextHeader
+import ui.components.button.TKButton
+import ui.components.image.AsyncImage
+import ui.components.moon.MoonTopAppBar
+import ui.theme.ButtonColorsSecondary
+import ui.theme.ButtonSizeLarge
 import ui.theme.Dimens
 import ui.theme.Shapes
 import ui.theme.UIKit
@@ -201,7 +206,9 @@ fun QrActions(
                 containerColor = UIKit.colorScheme.buttonSecondary.primaryBackground,
                 contentColor = UIKit.colorScheme.buttonSecondary.primaryForeground,
                 disabledContainerColor = UIKit.colorScheme.buttonSecondary.primaryBackgroundDisable,
-                disabledContentColor = UIKit.colorScheme.buttonSecondary.primaryForeground.copy(alpha = 0.48f)
+                disabledContentColor = UIKit.colorScheme.buttonSecondary.primaryForeground.copy(
+                    alpha = 0.48f
+                )
             ),
             elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
             contentPadding = PaddingValues(horizontal = 20.dp)
@@ -293,13 +300,15 @@ fun QrComposable(
     address: String,
     qrContent: String?,
     showBlockchain: Boolean,
+    showBuyButton: Boolean,
     onFinishClick: () -> Unit,
     onShareClick: () -> Unit,
     onCopyClick: () -> Unit,
-    onTabClick: (tab: QRViewModel.Tab) -> Unit
+    onTabClick: (tab: QRViewModel.Tab) -> Unit,
+    onBuyClick: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        Header(
+        MoonTopAppBar(
             title = "",
             navigationIconRes = UIKitIcon.ic_chevron_down_16,
             onNavigationClick = { onFinishClick() },
@@ -319,6 +328,7 @@ fun QrComposable(
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(horizontal = Dimens.offsetLarge)
+                .padding(bottom = if (showBuyButton) 88.dp else 0.dp)
                 .width(IntrinsicSize.Max),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -340,7 +350,7 @@ fun QrComposable(
 
             TextHeader(
                 title = stringResource(id = Localization.receive_coin, name),
-                description = if (token.isTrc20) {
+                description = if (token.isTrc20 || token.isTrx) {
                     stringResource(id = Localization.receive_tron_description, name)
                 } else {
                     stringResource(id = Localization.receive_coin_description, name)
@@ -361,6 +371,23 @@ fun QrComposable(
                 onShareClick = { onShareClick() },
                 onCopyClick = { onCopyClick() }
             )
+        }
+        if (showBuyButton) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(Dimens.offsetMedium)
+                    .windowInsetsPadding(WindowInsets.navigationBars),
+            ) {
+                TKButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onBuyClick,
+                    text = stringResource(id = Localization.buy_ton),
+                    size = ButtonSizeLarge,
+                    buttonColors = ButtonColorsSecondary
+                )
+            }
         }
     }
 }

@@ -565,6 +565,7 @@
     <string name="open_explorer">Відкрити в оглядачі</string>
     <string name="out_of_available_charges">з %1$s доступних</string>
     <string name="tron_toggle_text">Використовуйте USD₮ TRC20 без TRX. Комісії покриваються Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">Перекази USD₮ потребують TRX для оплати мережевих комісій.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Скопіювати фразу</string>
     <string name="export_tron">Експортувати TRC20-гаманець</string>
@@ -644,5 +645,36 @@
         <item quantity="many">Деякі з них можуть продовжити списання коштів. Вимкніть, щоб уникнути подальших платежів.</item>
         <item quantity="other">Деякі з них можуть продовжити списання коштів. Вимкніть, щоб уникнути подальших платежів.</item>
     </plurals>
+    <string name="no_enough_funds">Недостатньо коштів</string>
+    <string name="refill">Поповнити</string>
+    <string name="get_token">Отримати %1$s</string>
+    <string name="insufficient_trx_balance">Недостатньо TRX для оплати комісій</string>
+    <string name="insufficient_trx_balance_desc">Оберіть спосіб оплати комісій та поповніть баланс.</string>
+    <string name="tron_not_enough_for_fee_title">Недостатньо коштів для оплати комісій</string>
+    <string name="tron_not_enough_for_fee_desc">Поповніть Battery, TON або TRX для покриття комісій.</string>
+    <string name="top_up">Поповнити</string>
+    <string name="tron_not_enough_trx_for_fee_title">Недостатньо TRX для комісій</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Потрібно ≈ %1$s. Ваш баланс: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">Доступний %1$s переказ</item>
+        <item quantity="few">Доступно %1$s перекази</item>
+        <item quantity="many">Доступно %1$s переказів</item>
+        <item quantity="other">Доступно %1$s переказів</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s переказ</item>
+        <item quantity="few">%1$s перекази</item>
+        <item quantity="many">%1$s переказів</item>
+        <item quantity="other">%1$s переказів</item>
+    </plurals>
+    <string name="trx_balance">Баланс TRX</string>
+    <string name="trx_balance_desc">Поповніть баланс, щоб сплатити мережеві комісії.</string>
+    <string name="blockchain_fees">Комісії блокчейну</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery — найпростіший спосіб оплачувати комісії. Також можна поповнити TON або TRX.</string>
+    <string name="required_prefix">Потрібно: %1$s</string>
+    <string name="tron_fees_learn_more">Комісії змінюються в режимі реального часу залежно від ринку. <annotation colorAttr="textAccentColor">Дізнатись більше</annotation></string>
+    <string name="tetra_subtitle">Підключити мережу Tetra L2</string>
+    <string name="other_options">Інші варіанти</string>
+    <string name="for_developers">Для розробників</string>
 
 </resources>

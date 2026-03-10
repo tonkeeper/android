@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.manager.widget
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
+import com.tonapps.log.L
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.constructor
 import com.tonapps.extensions.string

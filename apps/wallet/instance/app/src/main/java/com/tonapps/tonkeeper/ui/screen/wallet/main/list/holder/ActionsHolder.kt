@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
 import android.view.ViewGroup
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
 import com.tonapps.tonkeeper.koin.serverFlags
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.onramp.main.OnRampScreen
@@ -31,7 +33,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
         val isSendEnabled = item.walletType != Wallet.Type.Watch
         val isScanEnabled = item.walletType != Wallet.Type.Watch
         val isStakeEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !item.isStakingDisabled
-        val isBuyOrSellEnabled = item.walletType != Wallet.Type.Testnet
+        val isBuyOrSellEnabled = item.walletType != Wallet.Type.Testnet && !item.isExchangeDisabled
 
         scanView.setOnClickListener {
             if (isWatchOnly) {
@@ -82,7 +84,13 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
                 return@setOnClickListener
             }
 
-            navigation?.add(SendScreen.newInstance(item.wallet, type = SendScreen.Companion.Type.Default))
+            navigation?.add(
+                SendScreen.newInstance(
+                    item.wallet,
+                    type = SendScreen.Companion.Type.Default,
+                    from = Events.SendNative.SendNativeFrom.WalletScreen
+                )
+            )
         }
         stakeView.setOnClickListener {
             if (isWatchOnly) {

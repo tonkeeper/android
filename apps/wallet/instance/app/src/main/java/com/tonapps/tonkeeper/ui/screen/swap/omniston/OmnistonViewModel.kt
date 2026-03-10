@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.swap.omniston
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
@@ -115,7 +115,7 @@ class OmnistonViewModel(
         get() = settingsRepository.installId
 
     val swapUri: Uri
-        get() = api.config.swapUri
+        get() = api.getConfig(wallet.network).swapUri
 
     private var swapStreamJob: Job? = null
 
@@ -144,7 +144,7 @@ class OmnistonViewModel(
 
     private val ratesFlow = swapRepository.assetsFlow
         .mapList { it.address }
-        .map { ratesRepository.getRates(settingsRepository.currency, it) }
+        .map { ratesRepository.getRates(wallet.network, settingsRepository.currency, it) }
 
     val sendPlaceholderValueFlow = twinInput.createConvertFlow(ratesFlow, TwinInput.Type.Send).map {
         it.value.asString2(3)
@@ -409,7 +409,7 @@ class OmnistonViewModel(
         return tokenRepository.getTON(
             currency = settingsRepository.currency,
             accountId = wallet.accountId,
-            testnet = wallet.testnet,
+            network = wallet.network,
         )
     }
 
@@ -436,6 +436,7 @@ class OmnistonViewModel(
             val toCurrency = twinInput.state.receive.currency
             val bidUnits = Coins.ofNano(stateMessages.bidUnits, fromCurrency.decimals)
             val askUnits = Coins.ofNano(stateMessages.askUnits, toCurrency.decimals)
+            val isMaxTon = fromCurrency == WalletCurrency.TON && bidUnits.compareTo(stateToken.balance) == 0
             if (bidUnits > stateToken.balance) {
                 throw InsufficientFundsException(
                     currency = fromCurrency,
@@ -455,7 +456,7 @@ class OmnistonViewModel(
             val estimatedGasConsumption = Coins.ofNano(stateMessages.estimatedGasConsumption)
             val totalTonFee = tx.tonEmulated?.totalFees ?: Coins.ZERO
             val maxRequiredFee = listOf(gasBudget, estimatedGasConsumption, totalTonFee).max()
-            if (fromCurrency == WalletCurrency.TON && (bidUnits + maxRequiredFee) > tonBalance.balance.value) {
+            if (fromCurrency == WalletCurrency.TON && !isMaxTon && (bidUnits + maxRequiredFee) > tonBalance.balance.value) {
                 val requiredTONBalance = bidUnits + maxRequiredFee
                 if (requiredTONBalance >= tonBalance.balance.value) {
                     throw InsufficientFundsException(
@@ -555,7 +556,9 @@ class OmnistonViewModel(
     }
 
     fun setFeeMethod(fee: SendFee) {
-        settingsRepository.setPreferredFeeMethod(wallet.id, fee.method)
+        fee.method?.let {
+            settingsRepository.setPreferredFeeMethod(wallet.id, it)
+        }
         _quoteStateFlow.update { state ->
             state.copy(selectedFee = fee)
         }
@@ -568,7 +571,7 @@ class OmnistonViewModel(
             try {
                 val isBattery = state.isPreferredFeeMethodBattery
                 val transfers = transfers(signRequest,false, isBattery)
-                val validUntil = accountRepository.getValidUntil(wallet.testnet)
+                val validUntil = accountRepository.getValidUntil(wallet.network)
                 val message = accountRepository.messageBody(wallet, validUntil, transfers)
                 val unsignedBody = message.createUnsignedBody(isBattery)
                 val ledgerTransactions = getLedgerTransaction(message)
@@ -663,7 +666,7 @@ class OmnistonViewModel(
         params = true
     )
 
-    private suspend fun getTonBalance() = tokenRepository.getTonBalance(settingsRepository.currency, wallet.accountId, wallet.testnet)
+    private suspend fun getTonBalance() = tokenRepository.getTonBalance(settingsRepository.currency, wallet.accountId, wallet.network)
 
     private suspend fun transfers(
         request: SignRequestEntity,
@@ -671,7 +674,7 @@ class OmnistonViewModel(
         batteryEnabled: Boolean
     ): List<WalletTransfer> {
         val excessesAddress = if (false) { // !forEmulation && batteryEnabled
-            batteryRepository.getConfig(wallet.testnet).excessesAddress
+            batteryRepository.getConfig(wallet.network).excessesAddress
         } else null
 
         return request.getTransfers(
@@ -688,7 +691,7 @@ class OmnistonViewModel(
         signRequest: SignRequestEntity,
         batteryEnabled: Boolean
     ): SwapQuoteState.Tx = withContext(Dispatchers.IO) {
-        val validUntil = accountRepository.getValidUntil(wallet.testnet)
+        val validUntil = accountRepository.getValidUntil(wallet.network)
         val messageBody = MessageBodyEntity(
             wallet = wallet,
             seqNo = getSeqNo(),

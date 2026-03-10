@@ -100,7 +100,7 @@ class Environment(
     val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
 
     val isFromGooglePlay: Boolean by lazy {
-        installerSource == AppInstall.Source.GOOGLE_PLAY
+        installerSource == AppInstall.Source.GOOGLE_PLAY || installerSource == AppInstall.Source.AURORA_STORE
     }
 
     val isGooglePlayServicesAvailable: Boolean by lazy {

@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Paint
 import android.text.TextPaint
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged

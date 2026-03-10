@@ -43,11 +43,11 @@ class DNSRenewViewModel(
 ) : BaseWalletVM(app) {
 
     private val dnsExpiringFlow = flow {
-        emit(collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.testnet, 366))
+        emit(collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.network, 366))
     }.stateIn(viewModelScope, SharingStarted.Eagerly, entities)
 
     val uiItemsFlow = dnsExpiringFlow.map {
-        val items = collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.testnet, 366)
+        val items = collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.network, 366)
         val uiItems = items.mapIndexed { index, dnsExpiringEntity ->
             Item(
                 position = ListCell.getPosition(items.size, index),

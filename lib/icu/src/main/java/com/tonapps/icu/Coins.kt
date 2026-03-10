@@ -2,7 +2,7 @@ package com.tonapps.icu
 
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext

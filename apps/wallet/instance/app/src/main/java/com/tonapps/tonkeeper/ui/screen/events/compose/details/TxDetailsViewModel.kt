@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.details
 
 import android.app.Application
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.withApproximately
@@ -185,7 +185,7 @@ class TxDetailsViewModel(
     }
 
     private suspend fun updateData() {
-        val rates = ratesRepository.getRates(currency, action.tokens.map { it.address })
+        val rates = ratesRepository.getRates(wallet.network, currency, action.tokens.map { it.address })
         val rateAmount = if (!isUsdt && primaryValue != null) {
             val value = rates.convert(primaryValue.currency.code, primaryValue.value)
             if (value.isPositive) {
@@ -413,7 +413,8 @@ class TxDetailsViewModel(
     )
 
     fun openTx() {
-        val url = api.config.formatTransactionExplorer(wallet.testnet, tx.blockchain == Blockchain.TRON, txId)
+        val url = api.getConfig(wallet.network)
+            .formatTransactionExplorer(wallet.testnet, tx.blockchain == Blockchain.TRON, txId)
         BrowserHelper.open(context, url)
     }
 
@@ -427,7 +428,7 @@ class TxDetailsViewModel(
             try {
                 val nft = collectiblesRepository.getNft(
                     accountId = wallet.accountId,
-                    testnet = wallet.testnet,
+                    network = wallet.network,
                     address = nftAddress
                 ) ?: throw Throwable()
                 openScreen(NftScreen.newInstance(wallet, nft))
@@ -475,7 +476,7 @@ class TxDetailsViewModel(
 
         viewModelScope.launch {
             settingsRepository.setSpamStateTransaction(wallet.id, txId, SpamTransactionState.NOT_SPAM)
-            eventsRepository.removeSpam(wallet.accountId, wallet.testnet, txId)
+            eventsRepository.removeSpam(wallet.accountId, wallet.network, txId)
             toast(Localization.tx_marked_as_not_spam)
 
             updateUiActionItems()
@@ -500,7 +501,7 @@ class TxDetailsViewModel(
                     comment = comment,
                     recipient = wallet.accountId
                 )
-                eventsRepository.markAsSpam(wallet.accountId, wallet.testnet, txId)
+                eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)
                 loading(false)
                 toast(Localization.tx_marked_as_spam)
             } catch (ignored: Throwable) {

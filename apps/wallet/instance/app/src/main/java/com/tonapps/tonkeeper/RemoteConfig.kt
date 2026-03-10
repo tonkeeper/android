@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.log.L
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.tonapps.wallet.api.API
@@ -10,7 +10,6 @@ class RemoteConfig(context: Context, private val api: API) {
     private val remoteConfig: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
     private enum class FeatureFlag(val key: String) {
-        IS_DAPPS_DISABLE("isDappsDisable"),
         HARDCODED_COUNTRY_CODE("hardcodedCountryCode"),
         IN_APP_UPDATE_AVAILABLE("inAppUpdateAvailable"),
         IS_COUNTRY_PICKER_DISABLE("isCountryPickerDisable"),
@@ -26,7 +25,6 @@ class RemoteConfig(context: Context, private val api: API) {
         remoteConfig.setConfigSettingsAsync(configSettings)
 
         val defaults = mapOf(
-            FeatureFlag.IS_DAPPS_DISABLE.key to true,
             FeatureFlag.ONBOARDING_STORIES_ENABLED.key to true
         )
 
@@ -36,9 +34,9 @@ class RemoteConfig(context: Context, private val api: API) {
     fun fetchAndActivate() {
         remoteConfig.fetchAndActivate().addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Log.d("RemoteConfig", "Fetched and activated successfully")
+                L.d("RemoteConfig", "Fetched and activated successfully")
             } else {
-                Log.e("RemoteConfig", "Fetch failed, using defaults")
+                L.e("RemoteConfig", "Fetch failed, using defaults")
             }
         }
     }
@@ -54,9 +52,6 @@ class RemoteConfig(context: Context, private val api: API) {
 
     val hardcodedCountryCode: String?
         get() = remoteConfig.getString(FeatureFlag.HARDCODED_COUNTRY_CODE.key).takeIf { it.isNotEmpty() }
-
-    val isDappsDisable: Boolean
-        get() = remoteConfig.getBoolean(FeatureFlag.IS_DAPPS_DISABLE.key)
 
     val isOnboardingStoriesEnabled: Boolean
         get() = remoteConfig.getBoolean(FeatureFlag.ONBOARDING_STORIES_ENABLED.key)

@@ -2,12 +2,13 @@ package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
 import android.os.SystemClock
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.BatteryTransaction.Companion.toIntArray
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.SpamTransactionState
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
+import com.tonapps.wallet.data.settings.entities.PreferredTronFeeMethod
 import com.tonapps.wallet.data.settings.entities.WalletPrefsEntity
 import kotlinx.coroutines.CoroutineScope
 
@@ -25,6 +26,7 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         private const val USDT_W5_PREFIX = "usdt_w5_"
         private const val DAPP_CONFIRM_PREFIX = "dapp_confirm_"
         private const val PREFERRED_FEE_PREFIX = "preferred_fee_"
+		private const val PREFERRED_TRON_FEE_PREFIX = "preferred_tron_fee_"
     }
 
     fun isUSDTW5(walletId: String): Boolean {
@@ -138,9 +140,23 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         putInt(key, method.id)
     }
 
+	fun getPreferredTronFeeMethod(walletId: String): PreferredTronFeeMethod {
+		val value = getInt(keyPreferredTronFeeMethod(walletId), PreferredTronFeeMethod.UNSPECIFIED.id)
+		return PreferredTronFeeMethod.fromId(value)
+	}
+
+	fun setPreferredTronFeeMethod(walletId: String, method: PreferredTronFeeMethod) {
+		val key = keyPreferredTronFeeMethod(walletId)
+		putInt(key, method.id)
+	}
+
     private fun keyPreferredFeeMethod(walletId: String): String {
         return key(PREFERRED_FEE_PREFIX, walletId)
     }
+
+	private fun keyPreferredTronFeeMethod(walletId: String): String {
+		return key(PREFERRED_TRON_FEE_PREFIX, walletId)
+	}
 
     private fun keyBatteryTxEnabled(accountId: String): String {
         return key(BATTERY_TX_ENABLED_PREFIX, accountId)

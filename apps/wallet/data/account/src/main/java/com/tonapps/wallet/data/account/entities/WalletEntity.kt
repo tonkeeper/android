@@ -72,9 +72,9 @@ data class WalletEntity(
     ) : Parcelable
 
     val contract: BaseWalletContract by lazy {
-        val network = if (testnet) TonNetwork.TESTNET.value else TonNetwork.MAINNET.value
-
-        BaseWalletContract.create(publicKey, version.title, network)
+        val contractNetwork = if (tetra) TonNetwork.MAINNET else network
+        val signatureNetwork = if (tetra) network else null
+        BaseWalletContract.create(publicKey, version.title, contractNetwork, signatureNetwork)
     }
 
     val maxMessages: Int
@@ -83,11 +83,21 @@ data class WalletEntity(
     val testnet: Boolean
         get() = type == Wallet.Type.Testnet
 
+    val tetra: Boolean
+        get() = type == Wallet.Type.Tetra
+
+    val network: TonNetwork
+        get() = when (type) {
+            Wallet.Type.Testnet -> TonNetwork.TESTNET
+            Wallet.Type.Tetra -> TonNetwork.TETRA
+            else -> TonNetwork.MAINNET
+        }
+
     val signer: Boolean
         get() = type == Wallet.Type.Signer || type == Wallet.Type.SignerQR
 
     val hasPrivateKey: Boolean
-        get() = type == Wallet.Type.Default || type == Wallet.Type.Testnet || type == Wallet.Type.Lockup
+        get() = type == Wallet.Type.Default || type == Wallet.Type.Tetra || type == Wallet.Type.Testnet || type == Wallet.Type.Lockup
 
     val accountId: String = contract.address.toAccountId()
 
@@ -96,7 +106,7 @@ data class WalletEntity(
     val blockchainAddress: BlockchainAddress
         get() = BlockchainAddress(
             value = address,
-            testnet = testnet,
+            network = network,
             blockchain = Blockchain.TON
         )
 

@@ -28,16 +28,13 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
-import ui.components.Header
 import ui.components.TextHeader
 import ui.components.button.TKButton
+import ui.components.moon.MoonTopAppBar
 import ui.theme.ButtonColorsSecondary
 import ui.theme.Dimens
 import ui.theme.Shapes
@@ -141,7 +138,7 @@ fun DAppShareComposable(
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        Header(
+        MoonTopAppBar(
             title = "",
             actionIconRes = UIKitIcon.ic_close_16,
             onActionClick = { onFinishClick() },

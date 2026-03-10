@@ -141,7 +141,8 @@
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Wallet.SplashScreen"
             android:screenOrientation="portrait"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode">
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
+            android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -171,8 +172,10 @@
             android:exported="false"
             android:enabled="true"
             android:fitsSystemWindows="true"
-            android:theme="@style/Theme.Hidden">
+            android:theme="@style/Theme.Hidden"
+            android:taskAffinity="">
         </activity>
+
         <receiver
             android:name="com.tonapps.tonkeeper.manager.widget.WidgetReceiver$Balance"
             android:exported="true"
@@ -193,6 +196,7 @@
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/widget_rate" />
         </receiver>
+
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
@@ -208,6 +212,7 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/constantBlue" />

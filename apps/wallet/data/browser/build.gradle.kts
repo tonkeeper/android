@@ -1,20 +1,18 @@
 plugins {
-    id("com.tonapps.wallet.data")
+    id("target.android.library")
     id("kotlin-parcelize")
-}
-
-android {
-    namespace = Build.namespacePrefix("wallet.data.browser")
 }
 
 dependencies {
     implementation(libs.okhttp)
+    implementation(libs.koin.core)
 
-    implementation(project(ProjectModules.Wallet.api))
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Wallet.Data.account))
+    implementation(projects.apps.wallet.api)
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.account)
 
-    implementation(project(ProjectModules.Lib.network))
-    implementation(project(ProjectModules.Lib.extensions))
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.network)
+    implementation(projects.lib.extensions)
 }
 

@@ -5,15 +5,11 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ShareCompat
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -171,7 +167,7 @@ class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        analytics?.trackEventClickDApp(
+        analytics?.dappClick(
             url = args.url.toString(),
             name = args.title,
             source = args.source,

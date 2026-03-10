@@ -20,17 +20,6 @@ data class RechargeMethodEntity(
     val minBootstrapValue: String? = null
 ) : Parcelable {
 
-    private companion object {
-
-        private fun RechargeMethodsMethodsInner.Type.toRechargeMethodType(): RechargeMethodType {
-            return when (this) {
-                RechargeMethodsMethodsInner.Type.jetton -> RechargeMethodType.JETTON
-                RechargeMethodsMethodsInner.Type.ton -> RechargeMethodType.TON
-                RechargeMethodsMethodsInner.Type.unknown -> RechargeMethodType.TON
-            }
-        }
-    }
-
     constructor(method: RechargeMethodsMethodsInner) : this(
         type = method.type.toRechargeMethodType(),
         rate = method.rate,
@@ -49,4 +38,14 @@ data class RechargeMethodEntity(
     }
 
     fun fromTon(amount: String) = fromTon(amount.toBigDecimal())
+
+    private companion object {
+
+        private fun RechargeMethodsMethodsInner.Type.toRechargeMethodType(): RechargeMethodType {
+            return when (this) {
+                RechargeMethodsMethodsInner.Type.jetton -> RechargeMethodType.JETTON
+                RechargeMethodsMethodsInner.Type.ton -> RechargeMethodType.TON
+            }
+        }
+    }
 }

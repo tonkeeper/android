@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.extensions
 
 import android.content.Context
 import android.text.SpannableString
-import android.util.Log
+import com.tonapps.log.L
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.emoji.Emoji
 import com.tonapps.uikit.color.textPrimaryColor

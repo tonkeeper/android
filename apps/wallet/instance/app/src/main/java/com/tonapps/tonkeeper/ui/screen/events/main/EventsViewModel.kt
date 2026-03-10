@@ -377,7 +377,7 @@ class EventsViewModel(
         val eventItems = historyHelper.mapping(
             wallet = wallet, events = events.map { it.copy() }, options = ActionOptions(
                 spamFilter = ActionOptions.SpamFilter.NOT_SPAM,
-                safeMode = settingsRepository.isSafeModeEnabled(api),
+                safeMode = settingsRepository.isSafeModeEnabled(api, wallet.network),
                 hiddenBalances = settingsRepository.hiddenBalances,
                 tronEnabled = settingsRepository.getTronUsdtEnabled(wallet.id),
             )
@@ -393,7 +393,7 @@ class EventsViewModel(
             tronAddress = tronAddress,
             options = ActionOptions(
                 spamFilter = ActionOptions.SpamFilter.NOT_SPAM,
-                safeMode = settingsRepository.isSafeModeEnabled(api),
+                safeMode = settingsRepository.isSafeModeEnabled(api, wallet.network),
                 hiddenBalances = settingsRepository.hiddenBalances
             )
         )
@@ -419,7 +419,7 @@ class EventsViewModel(
     private suspend fun loadDefault(beforeLt: Long?, limit: Int): List<AccountEventWrap> {
         val response = eventsRepository.getRemote(
             accountId = wallet.accountId,
-            testnet = wallet.testnet,
+            network = wallet.network,
             beforeLt = beforeLt,
             limit = limit,
         ) ?: throw IllegalStateException("Failed to load events")
@@ -435,7 +435,7 @@ class EventsViewModel(
 
     private suspend fun cache(): List<AccountEventWrap> {
         val list = eventsRepository.getLocal(
-            accountId = wallet.accountId, testnet = wallet.testnet
+            accountId = wallet.accountId, network = wallet.network
         )?.events?.map { AccountEventWrap.cached(it) }
         return list ?: emptyList()
     }

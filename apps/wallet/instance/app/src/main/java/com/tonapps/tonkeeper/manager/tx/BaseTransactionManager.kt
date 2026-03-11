@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.manager.tx
 
+import com.tonapps.async.Async
 import com.tonapps.extensions.MutableEffectFlow
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.tonkeeper.manager.tx.model.PendingHash
 import com.tonapps.tonkeeper.manager.tx.model.PendingWrapEvent
 import com.tonapps.wallet.api.API
@@ -16,30 +18,30 @@ open class BaseTransactionManager(
     private val api: API
 ) {
 
-    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    val scope = Async.ioScope()
 
     private val _pendingHashFlow = MutableEffectFlow<PendingHash>()
     private val pendingTxFlow = _pendingHashFlow.mapNotNull(::fetchPendingTx).flowOn(Dispatchers.IO)
 
 
-    fun addPendingHash(accountId: String, testnet: Boolean, hash: String) {
-        _pendingHashFlow.tryEmit(PendingHash(accountId, testnet, hash))
+    fun addPendingHash(accountId: String, network: TonNetwork, hash: String) {
+        _pendingHashFlow.tryEmit(PendingHash(accountId, network, hash))
     }
 
     private suspend fun fetchTx(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         hash: String
     ) = withContext(Dispatchers.IO) {
         withRetry {
-            api.accounts(testnet).getAccountEvent(accountId, hash)
+            api.accounts(network).getAccountEvent(accountId, hash)
         }
     }
 
     private suspend fun fetchPendingTx(hash: PendingHash): PendingWrapEvent? {
         val event = fetchTx(
             accountId = hash.accountId,
-            testnet = hash.testnet,
+            network = hash.network,
             hash = hash.hash
         ) ?: return null
         return PendingWrapEvent(hash, event)

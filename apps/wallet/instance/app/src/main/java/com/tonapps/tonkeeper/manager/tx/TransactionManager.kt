@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.manager.tx
 
-import android.util.Log
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.App
@@ -14,11 +13,9 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -58,6 +55,7 @@ class TransactionManager(
     )
     private val transactionFlow = _transactionFlow.asSharedFlow()
 
+    // TODO
     private val _tronUpdatedFlow = MutableEffectFlow<Unit>()
     val tronUpdatedFlow = _tronUpdatedFlow.asSharedFlow()
 
@@ -91,7 +89,7 @@ class TransactionManager(
         ) { wallet, _, _ ->
             val tronEnabled = settingsRepository.getTronUsdtEnabled(wallet.id)
             val tronAddress = accountRepository.getTronAddress(wallet.id)
-            if (tronEnabled && tronAddress != null && wallet.hasPrivateKey && !wallet.testnet && !api.config.flags.disableBattery) {
+            if (tronEnabled && tronAddress != null && wallet.hasPrivateKey && !wallet.testnet && !api.getConfig(wallet.network).flags.disableBattery) {
                 Pair(wallet, tronAddress)
             } else {
                 null
@@ -99,8 +97,8 @@ class TransactionManager(
         }.filterNotNull().onEach { (wallet, tronAddress) ->
             tronRefreshJob?.cancel()
             tronRefreshJob = scope.launch {
-                delay(30.seconds)
-                tokenRepository.refreshTron(wallet.accountId, wallet.testnet, tronAddress)
+                delay(60.seconds)
+                tokenRepository.refreshTron(wallet.accountId, wallet.network, tronAddress)
 
                 _tronUpdatedFlow.tryEmit(Unit)
             }
@@ -113,7 +111,7 @@ class TransactionManager(
 
     private fun realtime(config: ConfigEntity, wallet: WalletEntity) = api.realtime(
         accountId = wallet.accountId,
-        testnet = wallet.testnet,
+        network = wallet.network,
         config = config,
         onFailure = null
     ).map { it.data }.map { getTransaction(wallet, it) }
@@ -122,7 +120,7 @@ class TransactionManager(
         wallet: WalletEntity,
         hash: String
     ): AccountEventEntity? = withContext(Dispatchers.IO) {
-        api.getTransactionByHash(wallet.accountId, wallet.testnet, hash)
+        api.getTransactionByHash(wallet.accountId, wallet.network, hash)
     }
 
     private suspend fun sendWithBattery(
@@ -136,7 +134,7 @@ class TransactionManager(
         val state = api.sendToBlockchainWithBattery(
             boc = boc,
             tonProofToken = tonProofToken,
-            testnet = wallet.testnet,
+            network = wallet.network,
             source = source,
             confirmationTime = confirmationTime
         )
@@ -144,7 +142,7 @@ class TransactionManager(
             batteryRepository.refreshBalanceDelay(
                 publicKey = wallet.publicKey,
                 tonProofToken = tonProofToken,
-                testnet = wallet.testnet,
+                network = wallet.network,
             )
         }
         return state
@@ -171,7 +169,7 @@ class TransactionManager(
         val state = if (withBattery) {
             sendWithBattery(wallet, boc, source, confirmationTime)
         } else {
-            api.sendToBlockchain(boc, wallet.testnet, source, confirmationTime)
+            api.sendToBlockchain(boc, wallet.network, source, confirmationTime)
         }
         if (state == SendBlockchainState.SUCCESS) {
             // addPendingHash(wallet.accountId, wallet.testnet, normalizedHash.toHex())

@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.ur.UR
 import com.tonapps.ur.registry.CryptoKeypath

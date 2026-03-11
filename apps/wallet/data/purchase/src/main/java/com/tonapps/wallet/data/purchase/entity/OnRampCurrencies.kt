@@ -1,6 +1,6 @@
 package com.tonapps.wallet.data.purchase.entity
 
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.wallet.data.purchase.entity.OnRamp.Asset
 
 data class OnRampCurrencies(

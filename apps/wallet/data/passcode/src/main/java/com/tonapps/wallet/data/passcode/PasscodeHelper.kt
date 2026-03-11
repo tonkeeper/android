@@ -2,7 +2,7 @@ package com.tonapps.wallet.data.passcode
 
 import android.content.Context
 import android.content.res.Configuration
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
 import com.tonapps.wallet.data.settings.SettingsRepository

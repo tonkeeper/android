@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.theme
 
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView

@@ -3,9 +3,9 @@ package com.tonapps.tonkeeper.manager.assets
 import android.content.Context
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
-import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
 import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
+import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sumOfVerifiedFiat
 import com.tonapps.tonkeeper.core.entities.StakedEntity
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.wallet.api.API
@@ -15,7 +15,6 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.token.TokenRepository
@@ -65,6 +64,7 @@ class AssetsManager(
         tokenUsde?.let {
             if (tokenTsUsde != null) {
                 val rates = ratesRepository.getRates(
+                    wallet.network,
                     currency,
                     listOf(it.address, tokenTsUsde.address)
                 )
@@ -134,13 +134,13 @@ class AssetsManager(
         currency: WalletCurrency = settingsRepository.currency,
         refresh: Boolean,
     ): List<AssetsEntity.Token> {
-        val safeMode = settingsRepository.isSafeModeEnabled(api)
+        val safeMode = settingsRepository.isSafeModeEnabled(api, wallet.network)
         val tronAddress =
             if (wallet.hasPrivateKey && !wallet.testnet) {
                 accountRepository.getTronAddress(wallet.id)
             } else null
         val tokens =
-            tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh, tronAddress)
+            tokenRepository.get(currency, wallet.accountId, wallet.network, refresh, tronAddress)
                 ?: return emptyList()
         tokens.firstOrNull()?.let {
             if (wallet.initialized != it.balance.initializedAccount) {
@@ -169,7 +169,7 @@ class AssetsManager(
         wallet: WalletEntity, refresh: Boolean
     ): StakingEntity {
         return stakingRepository.get(
-            accountId = wallet.accountId, testnet = wallet.testnet, ignoreCache = refresh
+            accountId = wallet.accountId, network = wallet.network, ignoreCache = refresh
         )
     }
 
@@ -212,7 +212,6 @@ class AssetsManager(
         if (sorted) {
             assets = assets.sort(wallet, settingsRepository)
         }
-        return assets.map { it.fiat }.sumOf { it }
+        return assets.sumOfVerifiedFiat()
     }
-
 }

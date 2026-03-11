@@ -552,6 +552,7 @@
     <string name="open_explorer">在浏览器中打开</string>
     <string name="out_of_available_charges">已用完 %1$s 可用额度</string>
     <string name="tron_toggle_text">使用 USD₮ TRC20，无需 TRX。手续费由 Tonkeeper Battery 支付。</string>
+    <string name="tron_toggle_trc_text">USD₮ 转账需要 TRX 来支付网络手续费。</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">复制助记词</string>
     <string name="export_tron">导出 TRC20 钱包</string>
@@ -623,5 +624,36 @@
     <plurals name="legacy_subscriptions_alert_message">
         <item quantity="other">它可能仍会从您的钱包扣费。请禁用以避免进一步付款。</item>
     </plurals>
+    <string name="no_enough_funds">资金不足</string>
+    <string name="refill">充值</string>
+    <string name="get_token">获取 %1$s</string>
+    <string name="insufficient_trx_balance">TRX 余额不足，无法支付交易手续费</string>
+    <string name="insufficient_trx_balance_desc">请选择手续费支付方式并充值。</string>
+    <string name="tron_not_enough_for_fee_title">余额不足以支付手续费</string>
+    <string name="tron_not_enough_for_fee_desc">请充值 Battery、TON 或 TRX 以支付手续费。</string>
+    <string name="top_up">充值</string>
+    <string name="tron_not_enough_trx_for_fee_title">TRX 不足以支付手续费</string>
+    <string name="tron_not_enough_trx_for_fee_desc">所需手续费 ≈ %1$s。您的余额：%2$s。</string>
+    <plurals name="transfers_available">
+        <item quantity="one">可进行 %1$s 次转账</item>
+        <item quantity="few">可进行 %1$s 次转账</item>
+        <item quantity="many">可进行 %1$s 次转账</item>
+        <item quantity="other">可进行 %1$s 次转账</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s 次转账</item>
+        <item quantity="few">%1$s 次转账</item>
+        <item quantity="many">%1$s 次转账</item>
+        <item quantity="other">%1$s 次转账</item>
+    </plurals>
+    <string name="trx_balance">TRX 余额</string>
+    <string name="trx_balance_desc">请充值余额以支付网络费用。</string>
+    <string name="blockchain_fees">区块链手续费</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery 是支付区块链手续费的最简单方式。您也可以直接充值 TON 或 TRX。</string>
+    <string name="required_prefix">需要：%1$s</string>
+    <string name="tron_fees_learn_more">手续费会根据市场情况实时变化。<annotation colorAttr="textAccentColor">了解更多</annotation></string>
+    <string name="tetra_subtitle">连接 Tetra L2 网络</string>
+    <string name="other_options">其他选项</string>
+    <string name="for_developers">面向开发者</string>
 
 </resources>

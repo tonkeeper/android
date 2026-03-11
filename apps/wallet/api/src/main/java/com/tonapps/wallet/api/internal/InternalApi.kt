@@ -1,20 +1,21 @@
 package com.tonapps.wallet.api.internal
 
 import android.content.Context
-import android.util.Log
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.map
 import com.tonapps.network.get
 import com.tonapps.network.postJSON
-import com.tonapps.wallet.api.entity.ConfigEntity
+import com.tonapps.wallet.api.entity.ConfigResponseEntity
 import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.OnRampArgsEntity
 import com.tonapps.wallet.api.entity.StoryEntity
+import com.tonapps.wallet.api.readBody
 import com.tonapps.wallet.api.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -47,7 +48,7 @@ internal class InternalApi(
 
     private fun endpoint(
         path: String,
-        testnet: Boolean,
+        network: TonNetwork,
         platform: String,
         build: String,
         boot: Boolean = false,
@@ -61,12 +62,17 @@ internal class InternalApi(
         } else {
             _apiEndpoint.buildUpon()
         }
+        val chainName = when (network) {
+            TonNetwork.TESTNET -> "testnet"
+            TonNetwork.MAINNET -> "mainnet"
+            TonNetwork.TETRA -> "mainnet"
+        }
         builder
             .appendEncodedPath(path)
             .appendQueryParameter("lang", context.locale.language)
             .appendQueryParameter("build", build)
             .appendQueryParameter("platform", platform)
-            .appendQueryParameter("chainName", if (testnet) "testnet" else "mainnet")
+            .appendQueryParameter("chainName", chainName)
             .appendQueryParameter("bundle_id", context.packageName)
 
         _storeCountry?.let {
@@ -85,7 +91,7 @@ internal class InternalApi(
 
     private fun request(
         path: String,
-        testnet: Boolean,
+        network: TonNetwork,
         platform: String = "android",
         build: String = appVersionName,
         locale: Locale,
@@ -93,7 +99,7 @@ internal class InternalApi(
         queryParams: Map<String, String> = emptyMap(),
         bootFallback: Boolean = false,
     ): JSONObject {
-        val url = endpoint(path, testnet, platform, build, boot, queryParams, bootFallback)
+        val url = endpoint(path, network, platform, build, boot, queryParams, bootFallback)
         val headers = ArrayMap<String, String>()
         headers["Accept-Language"] = locale.toString()
         val body = withRetry {
@@ -134,12 +140,17 @@ internal class InternalApi(
             okHttpClient.postJSON(
                 swapEndpoint(prefix, "v2/onramp/calculate"),
                 json.toString()
-            ).body.string()
+            ).readBody()
         }
     }
 
     fun getNotifications(): List<NotificationEntity> {
-        val json = request("notifications", false, locale = context.locale)
+        val json = request(
+            path = "notifications",
+            network = TonNetwork.MAINNET,
+            locale = context.locale,
+            boot = false
+        )
         val array = json.getJSONArray("notifications")
         val list = mutableListOf<NotificationEntity>()
         for (i in 0 until array.length()) {
@@ -173,29 +184,29 @@ internal class InternalApi(
         return (maskDomains + cleanDomains + telegramBots).toTypedArray()
     }
 
-    fun getBrowserApps(testnet: Boolean, locale: Locale): JSONObject {
-        val data = request("apps/popular", testnet, locale = locale)
+    fun getBrowserApps(network: TonNetwork, locale: Locale): JSONObject {
+        val data = request("apps/popular", network, locale = locale)
         return data.getJSONObject("data")
     }
 
-    fun getFiatMethods(testnet: Boolean = false, locale: Locale): JSONObject {
-        val data = request("fiat/methods", testnet, locale = locale)
+    fun getFiatMethods(network: TonNetwork = TonNetwork.MAINNET, locale: Locale): JSONObject {
+        val data = request("fiat/methods", network, locale = locale)
         return data.getJSONObject("data")
     }
 
-    fun downloadConfig(testnet: Boolean, fallback: Boolean = false): ConfigEntity? {
+    fun downloadConfig(fallback: Boolean = false): ConfigResponseEntity? {
         return try {
             val json = request(
-                "keys",
-                testnet,
+                "keys/all",
+                network = TonNetwork.MAINNET,
                 locale = context.locale,
                 boot = true,
                 bootFallback = fallback
             )
-            ConfigEntity(json, context.isDebug)
+            ConfigResponseEntity(json, context.isDebug)
         } catch (e: Throwable) {
             if (!fallback) {
-                downloadConfig(testnet, true)
+                downloadConfig(true)
             } else {
                 FirebaseCrashlytics.getInstance().recordException(e)
                 null
@@ -205,7 +216,12 @@ internal class InternalApi(
 
     fun getStories(id: String): StoryEntity.Stories? {
         return try {
-            val json = request("stories/$id", false, locale = context.locale)
+            val json = request(
+                path = "stories/$id",
+                network = TonNetwork.MAINNET,
+                locale = context.locale,
+                boot = false
+            )
             val pages = json.getJSONArray("pages")
             val list = mutableListOf<StoryEntity>()
             for (i in 0 until pages.length()) {
@@ -224,7 +240,12 @@ internal class InternalApi(
 
     suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
         try {
-            val json = request("my/ip", false, locale = context.locale)
+            val json = request(
+                path = "my/ip",
+                network = TonNetwork.MAINNET,
+                locale = context.locale,
+                boot = false
+            )
             val country = json.getString("country")
             if (country.isNullOrBlank()) {
                 null
@@ -239,9 +260,10 @@ internal class InternalApi(
 
     fun getEthena(accountId: String): EthenaEntity? = withRetry {
         val json = request(
-            "staking/ethena",
-            false,
+            path = "staking/ethena",
+            network = TonNetwork.MAINNET,
             locale = context.locale,
+            boot = false,
             queryParams = mapOf("address" to accountId)
         )
         EthenaEntity(json)

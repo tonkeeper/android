@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.rates.entity
 
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.core.currency.WalletCurrency

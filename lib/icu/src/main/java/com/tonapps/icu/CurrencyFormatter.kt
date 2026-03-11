@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.text.SpannableString
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.icu.format.CurrencyFormat
 import com.tonapps.icu.format.TONSymbolSpan
 import java.math.BigDecimal
@@ -102,8 +102,14 @@ object CurrencyFormatter {
         replaceSymbol: Boolean = true,
         stripTrailingZeros: Boolean = true,
         cutLongSymbol: Boolean = false,
+        scale: Int? = null
     ): CharSequence {
-        return format(currency, value.value, roundingMode, replaceSymbol, stripTrailingZeros, cutLongSymbol)
+        val value = when (scale) {
+            null -> value.value
+            else -> value.value.setScale(scale, RoundingMode.CEILING)
+        }
+
+        return format(currency, value, roundingMode, replaceSymbol, stripTrailingZeros, cutLongSymbol)
     }
 
     fun formatFiat(

@@ -1,7 +1,7 @@
 *.iml
 .gradle
 local.properties
-.idea
+.idea/
 .DS_Store
 captures
 .externalNativeBuild
@@ -9,4 +9,6 @@ captures
 *.apk
 .kotlin
 /build
-
+**/build/
+.build-cache
+tools/build/

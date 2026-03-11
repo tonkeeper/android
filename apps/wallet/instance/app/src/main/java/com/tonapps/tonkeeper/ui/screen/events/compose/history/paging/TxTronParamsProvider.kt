@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history.paging
 
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.TxTronParams
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity

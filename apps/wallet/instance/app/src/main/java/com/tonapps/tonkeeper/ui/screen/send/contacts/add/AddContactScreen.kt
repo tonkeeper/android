@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.add
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import com.tonapps.tonkeeper.extensions.hideKeyboard

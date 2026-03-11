@@ -61,6 +61,9 @@ data class AccountTokenEntity(
     val isTon: Boolean
         get() = address == TokenEntity.TON.address
 
+    val isTrx: Boolean
+        get() = address == TokenEntity.TRX.address
+
     val isLiquid: Boolean
         get() = balance.token.isLiquid
 

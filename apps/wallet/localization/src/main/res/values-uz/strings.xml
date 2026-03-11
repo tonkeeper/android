@@ -557,6 +557,7 @@
     <string name="sign_data_binary_message">Siz ko\'r-ko\'rona imzo chekyapsiz. Faqat ishonchli manbalardan kiring.</string>
     <string name="slide_to_sign">Imzolash uchun suring</string>
     <string name="tron_toggle_text">USD₮ TRC20 ni TRX holda ishlating. Komissiyalar Tonkeeper Battery tomonidan qoplanadi.</string>
+    <string name="tron_toggle_trc_text">USD₮ o‘tkazmalari uchun tarmoq to‘lovlari sifatida TRX talab qilinadi.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Iborani nusxalash</string>
     <string name="export_tron">TRC20 hamyonni eksport qilish</string>
@@ -630,5 +631,36 @@
         <item quantity="one">U hamon hamyoningizdan mablag‘ yechishi mumkin. Kelgusidagi to‘lovlardan qochish uchun o‘chiring.</item>
         <item quantity="other">Ba\'zilari hamon hamyoningizdan mablag‘ yechishi mumkin. Kelgusidagi to‘lovlardan qochish uchun o‘chiring.</item>
     </plurals>
+    <string name="no_enough_funds">Mablag‘ yetarli emas</string>
+    <string name="refill">To‘ldirish</string>
+    <string name="get_token">%1$s olish</string>
+    <string name="insufficient_trx_balance">Komissiyalarni to‘lash uchun TRX yetarli emas</string>
+    <string name="insufficient_trx_balance_desc">Komissiya to‘lash usulini tanlang va balansni to‘ldiring.</string>
+    <string name="tron_not_enough_for_fee_title">Komissiyalar uchun mablag‘ yetarli emas</string>
+    <string name="tron_not_enough_for_fee_desc">Komissiyalarni qoplash uchun Battery, TON yoki TRX balansini to‘ldiring.</string>
+    <string name="top_up">To‘ldirish</string>
+    <string name="tron_not_enough_trx_for_fee_title">Komissiyalar uchun TRX yetarli emas</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Kerak ≈ %1$s. Balansingiz: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer mavjud</item>
+        <item quantity="few">%1$s transfer mavjud</item>
+        <item quantity="many">%1$s transfer mavjud</item>
+        <item quantity="other">%1$s transfer mavjud</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfer</item>
+        <item quantity="many">%1$s transfer</item>
+        <item quantity="other">%1$s transfer</item>
+    </plurals>
+    <string name="trx_balance">TRX balansi</string>
+    <string name="trx_balance_desc">Tarmoq to‘lovlarini to‘lash uchun balansingizni to‘ldiring.</string>
+    <string name="blockchain_fees">Blockchain to‘lovlari</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery — blockchain to‘lovlarini to‘lashning eng oson yo‘li. Siz TON yoki TRX bilan ham to‘ldirishingiz mumkin.</string>
+    <string name="required_prefix">Kerak: %1$s</string>
+    <string name="tron_fees_learn_more">To‘lovlar bozor sharoitiga qarab real vaqt rejimida o‘zgaradi. <annotation colorAttr="textAccentColor">Batafsil</annotation></string>
+    <string name="tetra_subtitle">Tetra L2 tarmog‘ini ulash</string>
+    <string name="other_options">Boshqa variantlar</string>
+    <string name="for_developers">Dasturchilar uchun</string>
 
 </resources>

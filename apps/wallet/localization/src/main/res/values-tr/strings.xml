@@ -557,6 +557,7 @@
     <string name="open_explorer">Gezginde aç</string>
     <string name="out_of_available_charges">%1$s mevcut hak tükendi</string>
     <string name="tron_toggle_text">TRX olmadan USD₮ TRC20 kullanın. Ücretler Tonkeeper Battery tarafından karşılanır.</string>
+    <string name="tron_toggle_trc_text">USD₮ transferleri ağ ücretleri için TRX gerektirir.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">İfadeyi Kopyala</string>
     <string name="export_tron">TRC20 Cüzdanını Dışa Aktar</string>
@@ -630,5 +631,36 @@
         <item quantity="one">Cüzdanınızdan ücret almaya devam edebilir. Daha fazla ödeme olmaması için devre dışı bırakın.</item>
         <item quantity="other">Bazıları cüzdanınızdan ücret almaya devam edebilir. Daha fazla ödeme olmaması için devre dışı bırakın.</item>
     </plurals>
+    <string name="no_enough_funds">Yetersiz bakiye</string>
+    <string name="refill">Bakiye yükle</string>
+    <string name="get_token">%1$s al</string>
+    <string name="insufficient_trx_balance">İşlem ücretlerini karşılamak için yeterli TRX yok</string>
+    <string name="insufficient_trx_balance_desc">Bir ücret ödeme yöntemi seçin ve bakiye yükleyin.</string>
+    <string name="tron_not_enough_for_fee_title">Ücretleri karşılamak için yeterli bakiye yok</string>
+    <string name="tron_not_enough_for_fee_desc">Ücretleri karşılamak için Battery, TON veya TRX bakiyenizi artırın.</string>
+    <string name="top_up">Yükle</string>
+    <string name="tron_not_enough_trx_for_fee_title">Ücretler için yeterli TRX yok</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Gerekli ücret ≈ %1$s. Bakiyeniz: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer mevcut</item>
+        <item quantity="few">%1$s transfer mevcut</item>
+        <item quantity="many">%1$s transfer mevcut</item>
+        <item quantity="other">%1$s transfer mevcut</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfer</item>
+        <item quantity="many">%1$s transfer</item>
+        <item quantity="other">%1$s transfer</item>
+    </plurals>
+    <string name="trx_balance">TRX Bakiyesi</string>
+    <string name="trx_balance_desc">Ağ ücretlerini ödemek için bakiyenizi doldurun.</string>
+    <string name="blockchain_fees">Blockchain Ücretleri</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery, blockchain ücretlerini ödemenin en kolay yoludur. TON ve TRX ile de bakiye yükleyebilirsiniz.</string>
+    <string name="required_prefix">Gerekli: %1$s</string>
+    <string name="tron_fees_learn_more">Ücretler piyasa koşullarına göre gerçek zamanlı olarak değişir. <annotation colorAttr="textAccentColor">Daha fazla bilgi</annotation></string>
+    <string name="tetra_subtitle">Tetra L2 ağına bağlan</string>
+    <string name="other_options">Diğer seçenekler</string>
+    <string name="for_developers">Geliştiriciler için</string>
 
 </resources>

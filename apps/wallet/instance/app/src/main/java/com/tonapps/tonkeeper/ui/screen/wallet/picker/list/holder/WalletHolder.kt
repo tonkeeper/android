@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.RippleDrawable
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView

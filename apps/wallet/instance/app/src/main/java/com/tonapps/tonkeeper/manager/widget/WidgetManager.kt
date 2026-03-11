@@ -9,7 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.whileTimeoutOrNull

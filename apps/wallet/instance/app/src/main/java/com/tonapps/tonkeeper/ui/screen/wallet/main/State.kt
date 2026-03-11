@@ -1,14 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.content.Context
-import android.text.SpannableStringBuilder
-import android.util.Log
 import com.tonapps.icu.Coins
-import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.BalanceType
 import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sumOfVerifiedFiat
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.view.BatteryView
@@ -26,9 +24,6 @@ import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.Plurals
 import io.tonapi.models.WalletPlugin
-import uikit.extensions.badgeGreen
-import uikit.extensions.badgeRed
-import uikit.extensions.withGreenBadge
 
 sealed class State {
 
@@ -71,7 +66,7 @@ sealed class State {
             return if (wallet.testnet) {
                 list.first().fiat
             } else {
-                list.map { it.fiat }.sumOf { it }
+                list.sumOfVerifiedFiat()
             }
         }
 
@@ -190,6 +185,7 @@ sealed class State {
                 tronEnabled = tronUsdtEnabled,
                 isSwapDisabled = config.flags.disableSwap,
                 isStakingDisabled = config.flags.disableStaking,
+                isExchangeDisabled = config.flags.disableExchangeMethods
             )
         }
 

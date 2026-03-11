@@ -3,32 +3,20 @@ package com.tonapps.qr.ui
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.View
-import android.view.animation.DecelerateInterpolator
 import androidx.core.graphics.withSave
 import androidx.core.view.doOnLayout
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
-import com.tonapps.qr.QR
-import com.tonapps.qr.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.tonapps.lib.qr.R
 
 class QRView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
 ) : View(context, attrs, defStyle) {
-
-    private companion object {
-        private const val ALPHA = 255
-        private const val FADE_DURATION = 285L
-        private val interpolator = DecelerateInterpolator()
-    }
 
     private val qrDrawable = QRDrawable(context)
 

@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.add
 
 import android.app.Application
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.add.list.Item
 import com.tonapps.wallet.api.API
@@ -22,13 +24,19 @@ class AddWalletViewModel(
             uiItems.add(Item.header(Localization.import_wallet, Localization.import_wallet_subtitle))
         }
         uiItems.add(Item.import)
-        uiItems.add(Item.watch)
-        uiItems.add(Item.testnet)
-        if (!api.config.flags.disableSigner) {
+        if (!api.getConfig(TonNetwork.MAINNET).flags.disableSigner) {
             uiItems.add(Item.signer)
         }
         uiItems.add(Item.keystone)
         uiItems.add(Item.ledger)
+        uiItems.add(Item.otherOptionsTitle)
+        uiItems.add(Item.watch)
+        uiItems.add(Item.forDevelopersTitle)
+        uiItems.add(Item.testnet)
+        if (DevSettings.tetraEnabled) {
+            uiItems.add(Item.tetra)
+        }
+
         uiItems.toList()
     }
 }

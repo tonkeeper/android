@@ -174,7 +174,7 @@ class RemoveExtensionScreen(
             )
             setSpan(
                 ForegroundColorSpan(
-                    requireContext().resolveColor(com.tonapps.uikit.color.R.attr.textTertiaryColor)
+                    requireContext().resolveColor(com.tonapps.ui.uikit.color.R.attr.textTertiaryColor)
                         .withAlpha(0.7f)
                 ), 0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             )

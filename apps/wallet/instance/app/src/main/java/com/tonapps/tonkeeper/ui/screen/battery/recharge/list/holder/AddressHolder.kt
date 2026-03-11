@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder
 
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
@@ -8,7 +7,6 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeperx.R
-import uikit.extensions.hideKeyboard
 import uikit.widget.InputView
 import uikit.widget.RowLayout
 

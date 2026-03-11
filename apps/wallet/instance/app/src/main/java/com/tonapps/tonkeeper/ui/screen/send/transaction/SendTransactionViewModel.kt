@@ -8,9 +8,11 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.core.Amount
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
+import com.tonapps.tonkeeper.extensions.method
 import com.tonapps.tonkeeper.helper.BatteryHelper
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -240,7 +242,7 @@ class SendTransactionViewModel(
         val balance = tokenRepository.getTON(
             settingsRepository.currency,
             wallet.accountId,
-            wallet.testnet
+            wallet.network
         )?.balance?.value
         return balance ?: Coins.ZERO
     }
@@ -279,8 +281,27 @@ class SendTransactionViewModel(
         )
     }
 
+    private val currentFeePaidIn: Events.SendNative.SendNativeFeePaidIn
+        get() = if (isBattery.get()) {
+            Events.SendNative.SendNativeFeePaidIn.Battery
+        } else {
+            Events.SendNative.SendNativeFeePaidIn.Ton
+        }
+
     fun send() = flow {
         val isBattery = isBattery.get()
+
+//        sendNativeFrom?.let { from ->
+//            analytics.events.sendNative.sendConfirm(
+//                from = from,
+//                assetNetwork = "ton",
+//                tokenSymbol = "TON",
+//                amount = 0.0,
+//                feePaidIn = currentFeePaidIn,
+//                appId = request.appUri.host,
+//            )
+//        }
+
         val compressedTokens = getTokens().filter { it.isRequestMinting }
         val transfers = transfers(compressedTokens, false, isBattery)
         val message = messageBody(transfers)
@@ -345,8 +366,31 @@ class SendTransactionViewModel(
                 address = request.targetAddressValue,
                 feePaid = feePaid
             )
+//            sendNativeFrom?.let { from ->
+//                analytics.events.sendNative.sendSuccess(
+//                    from = from,
+//                    assetNetwork = "ton",
+//                    tokenSymbol = "TON",
+//                    amount = 0.0,
+//                    feePaidIn = currentFeePaidIn,
+//                    transactionId = "",
+//                    appId = request.appUri.host,
+//                )
+//            }
             emit(cells.map { it.base64() }.toTypedArray())
         } else {
+//            sendNativeFrom?.let { from ->
+//                analytics.events.sendNative.sendFailed(
+//                    from = from,
+//                    assetNetwork = "ton",
+//                    tokenSymbol = "TON",
+//                    amount = 0.0,
+//                    feePaidIn = currentFeePaidIn,
+//                    errorCode = 0,
+//                    errorMessage = "Failed to send transaction to blockchain: $states",
+//                    appId = request.appUri.host,
+//                )
+//            }
             throw IllegalStateException("Failed to send transaction to blockchain: $states")
         }
     }.flowOn(Dispatchers.IO)
@@ -355,7 +399,7 @@ class SendTransactionViewModel(
         return emulationReadyDate.get() - System.currentTimeMillis()
     }
 
-    // private suspend fun getTonBalance() = tokenRepository.getTonBalance(settingsRepository.currency, wallet.accountId, wallet.testnet)
+    // private suspend fun getTonBalance() = tokenRepository.getTonBalance(settingsRepository.currency, wallet.accountId, wallet.network)
 
     private suspend fun transfers(
         compressedTokens: List<AccountTokenEntity>,
@@ -363,7 +407,7 @@ class SendTransactionViewModel(
         batteryEnabled: Boolean
     ): List<WalletTransfer> {
         val excessesAddress = if (!forEmulation && isBattery.get()) {
-            batteryRepository.getConfig(wallet.testnet).excessesAddress
+            batteryRepository.getConfig(wallet.network).excessesAddress
         } else null
 
         return request.getTransfers(
@@ -377,16 +421,13 @@ class SendTransactionViewModel(
     }
 
     private suspend fun getTokens(): List<AccountTokenEntity> {
-        return tokenRepository.get(currency, wallet.accountId, wallet.testnet, true) ?: emptyList()
+        return tokenRepository.get(currency, wallet.accountId, wallet.network, true) ?: emptyList()
     }
 
     fun setFeeMethod(fee: SendFee) {
-        val preferredMethod = when (fee) {
-            is SendFee.Ton -> PreferredFeeMethod.TON
-            is SendFee.Battery -> PreferredFeeMethod.BATTERY
-            is SendFee.Gasless -> PreferredFeeMethod.GASLESS
+        fee.method?.let {
+            settingsRepository.setPreferredFeeMethod(wallet.id, it)
         }
-        settingsRepository.setPreferredFeeMethod(wallet.id, preferredMethod)
 
         if (fee is SendFee.Battery) {
             _stateFlow.value = batteryDetails!!

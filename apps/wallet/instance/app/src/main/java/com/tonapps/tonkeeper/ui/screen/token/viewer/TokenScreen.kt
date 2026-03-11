@@ -7,6 +7,8 @@ import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -171,7 +173,8 @@ class TokenScreen(wallet: WalletEntity) :
                 targetAddress = viewModel.burnAddress,
                 tokenAddress = token.address,
                 amount = token.balance.value,
-                type = SendScreen.Companion.Type.Default
+                type = SendScreen.Companion.Type.Default,
+                from = Events.SendNative.SendNativeFrom.JettonScreen
             )
         )
         finish()

@@ -20,7 +20,7 @@ class SupportScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFra
 
     private fun getSupportUrl(): String {
         val startParams = "android${Build.VERSION.SDK_INT}app${requireContext().appVersionCode}"
-        val builder = requireContext().api?.config?.directSupportUrl?.toUri()?.buildUpon() ?: return ""
+        val builder = requireContext().api?.getConfig(wallet.network)?.directSupportUrl?.toUri()?.buildUpon() ?: return ""
         builder.appendQueryParameter("start", startParams)
         return builder.toString()
     }

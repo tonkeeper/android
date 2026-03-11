@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.main.list.holder
 
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
@@ -17,7 +18,11 @@ class TronHolder(
 ) : Holder<Item.TronToggle>(parent, R.layout.view_tron_toggle, onClick) {
 
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
+    private val descriptionView = findViewById<AppCompatTextView>(R.id.description)
     private val switchView = findViewById<SwitchView>(R.id.toggle)
+
+    val isBatteryDisabled: Boolean
+        get() = context.serverConfig?.flags?.disableBattery == true
 
     override fun onBind(item: Item.TronToggle) {
         itemView.background = ListCell.Position.SINGLE.drawable(context)
@@ -31,5 +36,11 @@ class TronHolder(
         }
 
         titleView.text = TokenEntity.USDT.symbol.withDefaultBadge(context, Localization.trc20)
+
+        descriptionView.text = if (isBatteryDisabled) {
+            context.getString(Localization.tron_toggle_trc_text)
+        } else {
+            context.getString(Localization.tron_toggle_text)
+        }
     }
 }

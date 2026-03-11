@@ -5,7 +5,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.core.graphics.withSave
 import com.tonapps.uikit.color.accentGreenColor

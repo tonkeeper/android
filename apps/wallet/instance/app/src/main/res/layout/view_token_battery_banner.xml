@@ -20,6 +20,7 @@
             android:textColor="?attr/textPrimaryColor"/>
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/battery_required_text"
@@ -42,9 +43,21 @@
     </uikit.widget.ColumnLayout>
     
     <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/batteryIcon"
         android:layout_width="44dp"
         android:layout_height="44dp"
         android:src="@drawable/ic_round_battery"
+        android:layout_marginLeft="@dimen/offsetMedium"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/trxIcon"
+        android:visibility="gone"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/round_mask"
+        android:scaleType="centerCrop"
+        android:clipToOutline="true"
+        android:src="@drawable/ic_tron"
         android:layout_marginLeft="@dimen/offsetMedium"/>
 
 </uikit.widget.RowLayout>

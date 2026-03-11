@@ -7,7 +7,7 @@ import android.graphics.Rect
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
-import android.util.Log
+import com.tonapps.log.L
 import android.view.Gravity
 import androidx.core.graphics.withSave
 import uikit.base.BaseDrawable

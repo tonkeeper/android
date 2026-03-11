@@ -1,22 +1,17 @@
 package com.tonapps.tonkeeper.helper
 
 import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Browser
-import android.util.Log
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import com.tonapps.extensions.activity
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.showToast
-import com.tonapps.tonkeeper.koin.installId
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textPrimaryColor
@@ -38,7 +33,7 @@ object BrowserHelper {
             } else if (useTG) {
                 openTG(context, url)
             }
-            context.analytics?.trackEventClickDApp(
+            context.analytics?.dappClick(
                 url = url.toString(),
                 name = name,
                 source = source,

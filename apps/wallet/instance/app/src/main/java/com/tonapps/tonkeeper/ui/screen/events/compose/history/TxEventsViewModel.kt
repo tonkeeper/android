@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history
 
 import android.app.Application
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -25,11 +25,13 @@ import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.events.tx.model.TxActionBody
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
+import io.tonapi.models.NftItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -201,13 +203,28 @@ class TxEventsViewModel(
 
     private fun onClick(id: String, part: EventItemClickPart) {
         val tx = TxPagingSource.get(id) ?: return
-        viewModelScope.launch {
-            if (part is EventItemClickPart.Product) {
+        if (part is EventItemClickPart.Product) {
+            viewModelScope.launch(Dispatchers.IO) {
                 val product = tx.actions[part.index].product ?: return@launch
+
                 if (product.type == TxActionBody.Product.Type.Nft) {
-                    openNft(product.id)
+                    try {
+                        val nftItem = collectiblesRepository.getNft(
+                            accountId = wallet.accountId,
+                            network = wallet.network,
+                            address = product.id
+                        ) ?: throw IOException()
+
+                        viewModelScope.launch {
+                            openNft(nftItem)
+                        }
+                    } catch (ignored: Throwable) {
+                        toast(Localization.unknown_error)
+                    }
                 }
-            } else if (part is EventItemClickPart.Encrypted) {
+            }
+        } else if (part is EventItemClickPart.Encrypted) {
+            viewModelScope.launch {
                 decryptComment(
                     wallet = wallet,
                     tx = tx,
@@ -217,23 +234,16 @@ class TxEventsViewModel(
                     passcodeManager = passcodeManager,
                     eventsRepository = eventsRepository
                 )
-            } else if (part is EventItemClickPart.Action) {
+            }
+        } else if (part is EventItemClickPart.Action) {
+            viewModelScope.launch {
                 openDetails(tx, part.index)
             }
         }
     }
 
-    private suspend fun openNft(address: String) {
-        try {
-            val nftItem = collectiblesRepository.getNft(
-                accountId = wallet.accountId,
-                testnet = wallet.testnet,
-                address = address
-            ) ?: throw IOException()
-            openScreen(NftScreen.newInstance(wallet, nftItem))
-        } catch (ignored: Throwable) {
-            toast(Localization.unknown_error)
-        }
+    private suspend fun openNft(nftItem: NftEntity) {
+        openScreen(NftScreen.newInstance(wallet, nftItem))
     }
 
     private suspend fun openDetails(tx: TxEvent, actionIndex: Int) {

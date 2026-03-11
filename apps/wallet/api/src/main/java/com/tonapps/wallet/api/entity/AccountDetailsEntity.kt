@@ -1,11 +1,9 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.blockchain.ton.extensions.isValidTonAddress
-import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import io.tonapi.models.Account
 import io.tonapi.models.AccountStatus
@@ -21,7 +19,7 @@ data class AccountDetailsEntity(
     val balance: Long,
     val new: Boolean = false,
     val initialized: Boolean,
-    val testnet: Boolean,
+    val network: TonNetwork,
 ): Parcelable {
 
     val address: String
@@ -32,60 +30,60 @@ data class AccountDetailsEntity(
 
     constructor(
         contract: BaseWalletContract,
-        testnet: Boolean,
+        network: TonNetwork,
         new: Boolean = false,
         initialized: Boolean,
     ) : this(
         query = "",
-        preview = AccountEntity(contract.address, testnet),
+        preview = AccountEntity(contract.address, network),
         active = true,
         walletVersion = contract.getWalletVersion(),
         balance = 0,
         new = new,
         initialized = initialized,
-        testnet = testnet,
+        network = network,
     )
 
     constructor(
         query: String,
         account: Account,
-        testnet: Boolean,
+        network: TonNetwork,
         new: Boolean = false
     ) : this(
         query = query,
-        preview = AccountEntity(account, testnet),
+        preview = AccountEntity(account, network),
         active = account.status == AccountStatus.active,
-        walletVersion = resolveVersion(testnet, account.interfaces, account.address),
+        walletVersion = resolveVersion(network, account.interfaces, account.address),
         balance = account.balance,
         new = new,
         initialized = account.status == AccountStatus.active || account.status == AccountStatus.frozen,
-        testnet = testnet,
+        network = network,
     )
 
     constructor(
         query: String,
         wallet: Wallet,
-        testnet: Boolean,
+        network: TonNetwork,
         new: Boolean = false
     ) : this(
         query = query,
-        preview = AccountEntity(wallet, testnet),
+        preview = AccountEntity(wallet, network),
         active = wallet.status == AccountStatus.active,
-        walletVersion = resolveVersion(testnet, wallet.interfaces, wallet.address),
+        walletVersion = resolveVersion(network, wallet.interfaces, wallet.address),
         balance = wallet.balance,
         new = new,
         initialized = wallet.status == AccountStatus.active || wallet.status == AccountStatus.frozen,
-        testnet = testnet,
+        network = network,
     )
 
     private companion object {
 
-        private fun resolveVersion(testnet: Boolean, interfaces: List<String>?, address: String): WalletVersion {
+        private fun resolveVersion(network: TonNetwork, interfaces: List<String>?, address: String): WalletVersion {
             val version = resolveVersionByInterface(interfaces)
             if (version == WalletVersion.UNKNOWN) {
                 return resolveVersionByAddress(address.toUserFriendly(
                     wallet = true,
-                    testnet = testnet,
+                    testnet = network.isTestnet,
                 ))
             }
             return version

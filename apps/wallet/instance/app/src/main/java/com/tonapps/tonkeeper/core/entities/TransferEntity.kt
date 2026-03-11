@@ -292,6 +292,21 @@ data class TransferEntity(
         )
     }
 
+    fun sign(
+        privateKey: PrivateKeyEd25519,
+        jettonTransferAmount: Coins
+    ): Cell {
+        return contract.createTransferMessageCell(
+            address = contract.address,
+            privateKey = privateKey,
+            seqNo = seqno,
+            unsignedBody = getUnsignedBody(
+                privateKey = fakePrivateKey,
+                jettonTransferAmount = jettonTransferAmount,
+            ),
+        )
+    }
+
     fun gaslessInternalGift(
         jettonAmount: Coins, batteryAddress: AddrStd
     ): WalletTransfer {

@@ -9,12 +9,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.getParcelableCompat
-import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.koin.api
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
+import com.tonapps.tonkeeper.ui.screen.onramp.main.OnRampScreen
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -23,8 +22,10 @@ import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
+import uikit.navigation.Navigation.Companion.navigation
 
-class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment.BottomSheet {
+class QRScreen(wallet: WalletEntity, private val withBuyButton: Boolean) :
+    ComposeWalletScreen(wallet), BaseFragment.BottomSheet {
 
     override val fragmentName: String = "QRScreen"
 
@@ -45,7 +46,7 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
     }
 
     private fun getQrContent(address: String, token: TokenEntity): String {
-        if (token.isTrc20) {
+        if (token.isTrc20 || token.isTrx) {
             return address
         }
 
@@ -80,7 +81,8 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
     @Composable
     override fun ScreenContent() {
         val hasTronBalance by viewModel.hasTronBalanceFlow.collectAsState(false)
-        val tabsVisible = !hasToken && wallet.hasPrivateKey && !wallet.testnet && (!viewModel.isTronDisabled || hasTronBalance)
+        val tabsVisible =
+            !hasToken && wallet.hasPrivateKey && wallet.network.isMainnet && (!viewModel.isTronDisabled || hasTronBalance)
         val qrContent by remember {
             derivedStateOf {
                 if (viewModel.address.isNotEmpty()) {
@@ -97,6 +99,7 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
             address = viewModel.address,
             qrContent = qrContent,
             showBlockchain = viewModel.tronUsdtEnabled,
+            showBuyButton = withBuyButton && viewModel.token.isTon,
             onFinishClick = { finish() },
             onShareClick = { share() },
             onCopyClick = { copy() },
@@ -113,6 +116,15 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
                         }
                     }
                 }
+            },
+            onBuyClick = {
+                requireContext().navigation?.add(
+                    OnRampScreen.newInstance(
+                        requireContext(),
+                        wallet,
+                        "qr_screen"
+                    )
+                )
             }
         )
     }
@@ -124,9 +136,10 @@ class QRScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFragment
 
         fun newInstance(
             wallet: WalletEntity,
-            token: TokenEntity? = null
+            token: TokenEntity? = null,
+            withBuyButton: Boolean = false
         ): BaseFragment {
-            val screen = QRScreen(wallet)
+            val screen = QRScreen(wallet, withBuyButton)
             screen.putParcelableArg(ARG_TOKEN, token ?: TokenEntity.TON)
             screen.putBooleanArg(ARG_HAS_TOKEN, token != null)
             return screen

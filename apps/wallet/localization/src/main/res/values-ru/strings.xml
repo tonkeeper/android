@@ -574,6 +574,7 @@
     <string name="battery_small_pack">Малый</string>
     <string name="backup_alert_message">Ваш баланс составляет %1$s, и он защищен только фразой восстановления, которую вы еще не записали. Сделайте резервную копию фразы, чтобы избежать потери средств в случае проблем с устройством.</string>
     <string name="battery_disclaimer">Один заряд покрывает среднюю комиссию за транзакцию. Некоторые транзакции могут стоить дороже.</string>
+    <string name="battery_excess">%1$s вернётся</string>
     <string name="restore_purchases">Восстановить покупки</string>
     <string name="battery_refilled">Батарейка заряжена</string>
     <string name="burn">Сжечь</string>
@@ -633,6 +634,7 @@
     <string name="sign_data_binary_message">Вы подписываетесь вслепую. Подписывайте только из проверенных источников.</string>
     <string name="slide_to_sign">Свайп чтобы подписать</string>
     <string name="tron_toggle_text">Используйте USD₮ TRC20 без TRX. Комиссии оплачиваются с помощью батарейки Tonkeeper.</string>
+    <string name="tron_toggle_trc_text">Для переводов USD₮ требуется TRX для оплаты комиссии.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Скопировать ключ</string>
     <string name="export_tron">Экспорт TRC20 кошелька</string>
@@ -702,4 +704,35 @@
         <item quantity="many">Подписки могут продолжать списывать средства с кошелька. Отключите, чтобы избежать дальнейших платежей.</item>
         <item quantity="other">Подписки могут продолжать списывать средства с кошелька. Отключите, чтобы избежать дальнейших платежей.</item>
     </plurals>
+    <string name="no_enough_funds">Недостаточно</string>
+    <string name="refill">Пополнить</string>
+    <string name="get_token">Получить %1$s</string>
+    <string name="insufficient_trx_balance">Недостаточно средств для оплаты комиссии за транзакцию</string>
+    <string name="insufficient_trx_balance_desc">Выберите способ оплаты комиссии и пополните баланс.</string>
+    <string name="tron_not_enough_for_fee_title">Недостаточно средств для оплаты комиссии</string>
+    <string name="tron_not_enough_for_fee_desc">Пополните батарейку, TON или TRX баланс, чтобы оплатить комиссию.</string>
+    <string name="top_up">Пополнить</string>
+    <string name="tron_not_enough_trx_for_fee_title">Недостаточно TRX для оплаты комиссии</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Необходимо для комиссий блокчейна ≈ %1$s\nВаш баланс: %2$s</string>
+    <plurals name="transfers_available">
+        <item quantity="one">Доступен %1$s перевод</item>
+        <item quantity="few">Доступно %1$s перевода</item>
+        <item quantity="many">Доступно %1$s переводов</item>
+        <item quantity="other">Доступно %1$s переводов</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s перевод</item>
+        <item quantity="few">%1$s перевода</item>
+        <item quantity="many">%1$s переводов</item>
+        <item quantity="other">%1$s переводов</item>
+    </plurals>
+    <string name="trx_balance">Баланс TRX</string>
+    <string name="trx_balance_desc">Пополните баланс для оплаты комиссии сети.</string>
+    <string name="blockchain_fees">Комиссии сети</string>
+    <string name="blockchain_fees_desc">Батарейка Tonkeeper — самый простой способ оплаты комиссий сети. Также можно пополнить баланс напрямую TON или TRX.</string>
+    <string name="required_prefix">Требуется: %1$s</string>
+    <string name="tron_fees_learn_more">Размер комиссии динамический и зависит от рынка. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
+    <string name="tetra_subtitle">Подключить сеть Tetra L2</string>
+    <string name="other_options">Другие варианты</string>
+    <string name="for_developers">Для разработчиков</string>
 </resources>

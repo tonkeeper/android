@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.manage
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView

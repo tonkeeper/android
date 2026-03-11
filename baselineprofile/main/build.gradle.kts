@@ -1,31 +1,26 @@
 @file:Suppress("UnstableApiUsage")
-import com.android.build.api.dsl.ManagedVirtualDevice
-import org.gradle.kotlin.dsl.withType
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    alias(libs.plugins.android.test)
-    alias(libs.plugins.android.kotlin)
     alias(libs.plugins.android.baselineprofile)
+    alias(libs.plugins.android.test)
 }
 
 val isCI = project.hasProperty("android.injected.signing.store.file")
 
 android {
-    namespace = Build.namespacePrefix("main.baselineprofile")
-    compileSdk = Build.compileSdkVersion
+    namespace = "com.tonapps.main.baselineprofile"
+    compileSdk = libs.versions.android.sdk.compile.get().toInt()
 
     defaultConfig {
         testInstrumentationRunnerArguments += mapOf("suppressErrors" to "EMULATOR")
-        minSdk = 28
-        targetSdk = Build.compileSdkVersion
+        minSdk = libs.versions.android.sdk.min.get().toInt()
+        targetSdk = libs.versions.android.sdk.target.get().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility = Build.compileJavaVersion
-        targetCompatibility = Build.compileJavaVersion
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     flavorDimensions += listOf("version")
@@ -41,8 +36,8 @@ android {
         }
     }
 
-    testOptions.managedDevices.devices {
-        create<ManagedVirtualDevice>("pixel6Api33") {
+    testOptions.managedDevices {
+        localDevices.create("pixel6Api33") {
             device = "Pixel 6"
             apiLevel = 33
             systemImageSource = "google"
@@ -62,10 +57,10 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidX.test.core)
-    implementation(libs.androidX.test.espresso)
-    implementation(libs.androidX.test.uiautomator)
-    implementation(libs.androidX.benchmark)
+    implementation(libs.androidx.test.core)
+    implementation(libs.androidx.test.espresso)
+    implementation(libs.androidx.test.uiautomator)
+    implementation(libs.androidx.benchmark)
 }
 
 baselineProfile {

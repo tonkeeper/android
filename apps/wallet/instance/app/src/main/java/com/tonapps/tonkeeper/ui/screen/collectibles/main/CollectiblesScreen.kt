@@ -7,7 +7,7 @@ import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.UiListState

@@ -2,7 +2,7 @@ package uikit.navigation
 
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.WindowManager

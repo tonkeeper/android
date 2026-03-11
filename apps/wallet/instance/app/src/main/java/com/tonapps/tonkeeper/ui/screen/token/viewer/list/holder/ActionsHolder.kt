@@ -2,12 +2,17 @@ package com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder
 
 import android.view.View
 import android.view.ViewGroup
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
+import androidx.core.view.isVisible
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.serverFlags
 import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
+import com.tonapps.tonkeeper.ui.screen.tronfees.TronFeesScreen
+import com.tonapps.tonkeeper.ui.screen.tronfees.TronFeesScreenType
 import com.tonapps.tonkeeperx.R
 import uikit.navigation.Navigation
 import uikit.widget.ButtonsLayout
@@ -26,22 +31,29 @@ class ActionsHolder(parent: ViewGroup) : Holder<Item.Actions>(parent, R.layout.v
         buttonsView.maxColumnCount = item.maxColumnCount
         sendView.isEnabled = item.send
         sendView.setOnClickListener {
-            navigation?.add(
-                SendScreen.newInstance(
-                    wallet = item.wallet,
-                    tokenAddress = item.tokenAddress,
-                    type = SendScreen.Companion.Type.Default
+            if (item.tronTransfersDisabled) {
+                navigation?.add(
+                    TronFeesScreen.newInstance(
+                        wallet = item.wallet,
+                        type = TronFeesScreenType.InsufficientBalance
+                    )
                 )
-            )
+            } else {
+                navigation?.add(
+                    SendScreen.newInstance(
+                        wallet = item.wallet,
+                        tokenAddress = item.tokenAddress,
+                        type = SendScreen.Companion.Type.Default,
+                        from = Events.SendNative.SendNativeFrom.JettonScreen
+                    )
+                )
+            }
         }
         receiveView.setOnClickListener {
             navigation?.add(QRScreen.newInstance(item.wallet, item.token))
         }
-        swapView.visibility = if (item.swap) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+
+        swapView.isVisible = item.swap
         swapView.setOnClickListener {
             if (item.tronSwapUrl != null) {
                 BrowserHelper.open(context, item.tronSwapUrl)

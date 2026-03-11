@@ -73,6 +73,6 @@ class SwapPickerViewModel(
     private suspend fun getTokens() = tokenRepository.get(
         currency = settingsRepository.currency,
         accountId = wallet.accountId,
-        testnet = wallet.testnet
+        network = wallet.network
     ) ?: emptyList()
 }

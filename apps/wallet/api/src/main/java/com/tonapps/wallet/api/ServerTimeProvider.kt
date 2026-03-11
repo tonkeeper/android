@@ -2,6 +2,7 @@ package com.tonapps.wallet.api
 
 import android.content.Context
 import android.os.SystemClock
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.prefs
 import androidx.core.content.edit
 
@@ -14,26 +15,26 @@ internal class ServerTimeProvider(context: Context) {
         // 24 hours in milliseconds
         private const val CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000L
 
-        private fun getServerTimePrefKey(testnet: Boolean) = "${SERVER_TIME_KEY}_${if (testnet) "test" else "main"}"
+        private fun getServerTimePrefKey(network: TonNetwork) = "${SERVER_TIME_KEY}_${network.name.lowercase()}"
 
-        private fun getLocalTimePrefKey(testnet: Boolean) = "${LOCAL_TIME_KEY}_${if (testnet) "test" else "main"}"
+        private fun getLocalTimePrefKey(network: TonNetwork) = "${LOCAL_TIME_KEY}_${network.name.lowercase()}"
 
     }
 
     private val prefs = context.prefs("server_time")
 
-    fun setServerTime(testnet: Boolean, serverTimeSeconds: Int) {
+    fun setServerTime(network: TonNetwork, serverTimeSeconds: Int) {
         val localTimeMillis = SystemClock.elapsedRealtime()
 
         prefs.edit {
-            putInt(getServerTimePrefKey(testnet), serverTimeSeconds)
-            putLong(getLocalTimePrefKey(testnet), localTimeMillis)
+            putInt(getServerTimePrefKey(network), serverTimeSeconds)
+            putLong(getLocalTimePrefKey(network), localTimeMillis)
         }
     }
 
-    fun getServerTime(testnet: Boolean): Int? {
-        val savedServerSeconds = prefs.getInt(getServerTimePrefKey(testnet), 0)
-        val savedLocalMillis = prefs.getLong(getLocalTimePrefKey(testnet), 0L)
+    fun getServerTime(network: TonNetwork): Int? {
+        val savedServerSeconds = prefs.getInt(getServerTimePrefKey(network), 0)
+        val savedLocalMillis = prefs.getLong(getLocalTimePrefKey(network), 0L)
         if (0 >= savedServerSeconds || 0 >= savedLocalMillis) {
             return null
         }

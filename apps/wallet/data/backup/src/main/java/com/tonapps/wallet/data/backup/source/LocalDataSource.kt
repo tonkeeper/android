@@ -3,7 +3,7 @@ package com.tonapps.wallet.data.backup.source
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 

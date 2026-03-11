@@ -1,23 +1,18 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+/**
+ * DEPRECATED: This module is deprecated.
+ * Please migrate to specific modules:
+ * - tonapi:core (infrastructure, serializers)
+ * - tonapi:tonkeeper (Tonkeeper Tonapi API)
+ * - tonapi:battery (Battery API)
+ * - tonapi:legacy (all APIs - temporary compatibility layer)
+ */
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = "tonapi"
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
-}
-
 dependencies {
-    implementation(libs.okhttp)
-    implementation(libs.kotlinX.serialization.core)
-    implementation(libs.kotlinX.serialization.json)
+    // Redirect to legacy module for backward compatibility
+    api(projects.tonapi.legacy)
 }

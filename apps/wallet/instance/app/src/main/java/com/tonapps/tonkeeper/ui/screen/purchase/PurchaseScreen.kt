@@ -1,13 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.purchase
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -105,7 +105,7 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
                 method = method,
                 wallet = screenContext.wallet,
                 currency = currency,
-                config = api.config
+                config = api.getConfig(screenContext.wallet.network)
             )
             if (viewModel.isPurchaseOpenConfirm(method)) {
                 confirmDialog.show(method) { showAgain ->

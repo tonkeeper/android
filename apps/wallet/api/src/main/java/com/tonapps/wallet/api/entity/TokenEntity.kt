@@ -5,7 +5,7 @@ import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
-import com.tonapps.wallet.api.R
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.entity.value.Blockchain
 import io.tonapi.models.JettonBalanceLock
 import io.tonapi.models.JettonInfo
@@ -18,6 +18,8 @@ import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.tlb.CellRef
 import org.ton.tlb.asRef
+import java.math.BigDecimal
+import com.tonapps.apps.wallet.api.R
 
 @Parcelize
 data class TokenEntity(
@@ -31,7 +33,9 @@ data class TokenEntity(
     val isRequestMinting: Boolean,
     val isTransferable: Boolean,
     val lock: Lock? = null,
-    val customPayloadApiUri: String?
+    val customPayloadApiUri: String?,
+    val numerator: BigDecimal? = null,
+    val denominator: BigDecimal? = null,
 ): Parcelable {
 
     val isTsTON: Boolean
@@ -93,6 +97,7 @@ data class TokenEntity(
         val USDT_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_usdt_with_bg.toString()).build()
         val USDE_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_udse_ethena_with_bg.toString()).build()
         val TS_USDE_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_tsusde_with_bg.toString()).build()
+        val TRX_ICON_URI = Uri.Builder().scheme("res").path(R.drawable.ic_trx.toString()).build()
 
         const val TRC20_USDT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
         const val TON_USDT = "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
@@ -132,6 +137,19 @@ data class TokenEntity(
             name = "Tether",
             symbol = "USD₮",
             imageUri = USDT_ICON_URI,
+            decimals = 6,
+            verification = Verification.whitelist,
+            isRequestMinting = false,
+            isTransferable = true,
+            customPayloadApiUri = null
+        )
+
+        val TRX = TokenEntity(
+            blockchain = Blockchain.TRON,
+            address = "TRX",
+            name = "Tron TRX",
+            symbol = "TRX",
+            imageUri = TRX_ICON_URI,
             decimals = 6,
             verification = Verification.whitelist,
             isRequestMinting = false,
@@ -187,11 +205,38 @@ data class TokenEntity(
         address == TRC20_USDT
     }
 
+    @IgnoredOnParcel
+    val isTrx: Boolean by lazy {
+        address == TRX.address
+    }
+
+    val tokenType: String by lazy { // TODO remove after deposit merge
+        when {
+            isTrc20 -> "trc20"
+            else -> "ton"
+        }
+    }
+
+    val plainSymbol: String by lazy { // TODO remove after deposit merge
+        return@lazy symbol.replace("₮", "T")
+    }
+
     val verified: Boolean
         get() = verification == Verification.whitelist
 
     val blacklist: Boolean
         get() = verification == TokenEntity.Verification.blacklist
+
+    fun toUIAmount(amount: Coins): Coins {
+        if (numerator == null || denominator == null) {
+            return amount
+        }
+
+        return Coins.of(
+            amount.value * numerator / denominator,
+            decimals
+        )
+    }
 
     constructor(
         jetton: JettonPreview,
@@ -208,7 +253,9 @@ data class TokenEntity(
         isRequestMinting = extensions?.contains(Extension.CustomPayload.value) == true,
         isTransferable = extensions?.contains(Extension.NonTransferable.value) != true,
         lock = lock?.let { Lock(it) },
-        customPayloadApiUri = jetton.customPayloadApiUri
+        customPayloadApiUri = jetton.customPayloadApiUri,
+        numerator = jetton.scaledUi?.numerator?.toBigDecimal(),
+        denominator = jetton.scaledUi?.denominator?.toBigDecimal()
     )
 
     constructor(

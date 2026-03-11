@@ -3,14 +3,11 @@ package uikit.widget
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.animation.doOnEnd
-import androidx.core.animation.doOnStart
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment

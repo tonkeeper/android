@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.core.signer
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import com.tonapps.log.L
 import androidx.activity.result.contract.ActivityResultContract
 import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString

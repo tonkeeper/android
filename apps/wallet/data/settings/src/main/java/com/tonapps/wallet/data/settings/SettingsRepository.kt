@@ -18,6 +18,7 @@ import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
+import com.tonapps.wallet.data.settings.entities.PreferredTronFeeMethod
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
@@ -477,6 +478,12 @@ class SettingsRepository(
 
     fun setPreferredFeeMethod(walletId: String, method: PreferredFeeMethod) =
         walletPrefsFolder.setPreferredFeeMethod(walletId, method)
+
+	fun getPreferredTronFeeMethod(walletId: String) =
+		walletPrefsFolder.getPreferredTronFeeMethod(walletId)
+
+	fun setPreferredTronFeeMethod(walletId: String, method: PreferredTronFeeMethod) =
+		walletPrefsFolder.setPreferredTronFeeMethod(walletId, method)
 
     suspend fun getTokenPrefs(
         walletId: String,

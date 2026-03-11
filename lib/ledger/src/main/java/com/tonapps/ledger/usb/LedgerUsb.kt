@@ -9,7 +9,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbManager
 import android.os.Build
-import android.util.Log
+import com.tonapps.log.L
 import androidx.core.app.PendingIntentCompat
 import com.tonapps.ledger.LedgerException
 import com.tonapps.ledger.ton.TonTransport

@@ -5,4 +5,14 @@ enum class TonNetwork(
 ) {
     MAINNET(-239),
     TESTNET(-3),
+    TETRA(662387);
+
+    val isMainnet: Boolean
+        get() = this == MAINNET
+
+    val isTestnet: Boolean
+        get() = this == TESTNET
+        
+    val isTetra: Boolean
+        get() = this == TETRA
 }

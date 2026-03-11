@@ -8,7 +8,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Browser
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
@@ -23,7 +23,7 @@ import com.tonapps.extensions.getStringValue
 import com.tonapps.extensions.isPositive
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.entities.TransferEntity
 import com.tonapps.tonkeeper.deeplink.DeepLink
@@ -78,6 +78,7 @@ import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.extensions.asCellRef
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.bus.generated.Events
 import com.tonapps.icu.Coins.Companion.isPositive
 import com.tonapps.tonkeeper.extensions.compose
 import com.tonapps.tonkeeper.koin.analytics
@@ -296,13 +297,14 @@ class RootActivity : BaseWalletActivity() {
                 lifecycleScope.launch {
                     openSend(
                         targetAddress = event.address,
+                        source = event.source,
                         tokenAddress = event.jettonAddress,
                         amount = event.amount,
                         text = event.text,
                         wallet = event.wallet,
                         bin = event.bin,
                         initStateBase64 = event.initStateBase64,
-                        validUnit = event.validUnit
+                        validUnit = event.validUnit,
                     )
                 }
             }
@@ -365,7 +367,7 @@ class RootActivity : BaseWalletActivity() {
         validUnit: Long?
     ) {
         val message = if (tokenAddress != null) {
-            val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
+            val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.network) ?: emptyList()
             val token = tokens.find {
                 it.address.equalsAddress(tokenAddress)
             }  ?: throw IllegalStateException("Token not found")
@@ -411,6 +413,7 @@ class RootActivity : BaseWalletActivity() {
 
     private suspend fun openSend(
         wallet: WalletEntity,
+        source: DeepLink.Source,
         targetAddress: String? = null,
         tokenAddress: String?,
         amount: com.tonapps.icu.Coins?,
@@ -418,7 +421,7 @@ class RootActivity : BaseWalletActivity() {
         nftAddress: String? = null,
         bin: Cell? = null,
         initStateBase64: String? = null,
-        validUnit: Long?
+        validUnit: Long?,
     ) {
         if ((bin != null || initStateBase64 != null) && !amount.isPositive()) {
             toast(Localization.invalid_link)
@@ -428,7 +431,7 @@ class RootActivity : BaseWalletActivity() {
         val fragment = supportFragmentManager.findFragment<SendScreen>()
 
         if (targetAddress != null && amount.isPositive() && nftAddress.isNullOrBlank()) {
-            val isScam = viewModel.isScamAddress(targetAddress, wallet.testnet)
+            val isScam = viewModel.isScamAddress(targetAddress, wallet.network)
             if (isScam) {
                 toast(Localization.scam_address_error)
             } else if (bin != null || initStateBase64 != null) {
@@ -454,6 +457,7 @@ class RootActivity : BaseWalletActivity() {
                         .setAmount(amount)
                         .setText(text)
                         .setType(SendScreen.Companion.Type.Direct)
+                        .setFrom(Events.SendNative.SendNativeFrom.DeepLink)
                 )
             }
         } else if (fragment == null) {
@@ -466,18 +470,21 @@ class RootActivity : BaseWalletActivity() {
                     text = text,
                     nftAddress = nftAddress,
                     bin = bin,
-                    type = SendScreen.Companion.Type.Default
+                    type = SendScreen.Companion.Type.Default,
+                    from = Events.SendNative.SendNativeFrom.DeepLink
                 )
             )
         } else {
             runOnUiThread {
+                fragment.initializeBus(source.analytic)
+
                 fragment.initializeArgs(
                     targetAddress = targetAddress,
                     tokenAddress = tokenAddress,
                     amount = amount,
                     text = text,
                     bin = bin,
-                    type = SendScreen.Companion.Type.Default
+                    type = SendScreen.Companion.Type.Default,
                 )
             }
         }

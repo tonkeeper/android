@@ -39,7 +39,7 @@ class BrowserBaseViewModel(
     suspend fun hasCategory(category: String): Boolean = withContext(Dispatchers.IO) {
         val categories = browserRepository.loadCategories(
             country = environment.country,
-            testnet = wallet.testnet,
+            network = wallet.network,
             locale = settingsRepository.getLocale()
         )
         categories.any { it == category }

@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.settings.apps
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen

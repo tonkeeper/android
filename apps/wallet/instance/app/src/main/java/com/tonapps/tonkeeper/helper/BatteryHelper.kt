@@ -22,7 +22,7 @@ object BatteryHelper {
         batteryRepository: BatteryRepository
     ): Int = withContext(Dispatchers.IO) {
         accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.testnet, true)
+            batteryRepository.getCharges(it, wallet.publicKey, wallet.network, true)
         } ?: 0
     }
 
@@ -35,7 +35,7 @@ object BatteryHelper {
         val entity = batteryRepository.getBalance(
             tonProofToken = tonProof,
             publicKey = wallet.publicKey,
-            testnet = wallet.testnet,
+            network = wallet.network,
             ignoreCache = true
         )
         return entity.balance
@@ -51,7 +51,7 @@ object BatteryHelper {
         params: Boolean
     ): Emulated? {
         val chargesBalance = getBatteryCharges(wallet, accountRepository, batteryRepository)
-        val batteryConfig = batteryRepository.getConfig(wallet.testnet)
+        val batteryConfig = batteryRepository.getConfig(wallet.network)
 
         val emulated = emulationUseCase(
             message = message,

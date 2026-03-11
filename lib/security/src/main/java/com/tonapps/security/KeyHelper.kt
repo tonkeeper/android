@@ -3,7 +3,7 @@ package com.tonapps.security
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.util.Log
+import com.tonapps.log.L
 import java.io.OutputStream
 import java.security.KeyStore
 import javax.crypto.KeyGenerator
@@ -20,7 +20,7 @@ object KeyHelper {
     }
 
     fun createIfNotExists(alias: String) {
-        Log.d("KeyHelperLog", "createIfNotExists: $alias")
+        L.d("KeyHelperLog", "createIfNotExists: $alias")
         if (!keyExists(alias)) {
             generateKey(alias)
         }

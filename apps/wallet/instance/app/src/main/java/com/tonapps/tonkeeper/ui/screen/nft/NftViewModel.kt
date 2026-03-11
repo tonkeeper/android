@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.nft
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.currentTimeSeconds
@@ -44,7 +44,7 @@ class NftViewModel(
         if (nft.isDomain && !nft.isTelegramUsername && !wallet.isWatchOnly) {
             collectiblesRepository.getDnsNftExpiring(
                 accountId = wallet.accountId,
-                testnet = wallet.testnet,
+                network = wallet.network,
                 nftAddress = nft.address
             )?.let { emit(it) }
         }
@@ -70,7 +70,7 @@ class NftViewModel(
         }
     }
 
-    private fun getNft() = collectiblesRepository.getNft(wallet.id, wallet.testnet, nft.address)
+    private fun getNft() = collectiblesRepository.getNft(wallet.id, wallet.network, nft.address)
 
     fun reportSpam(spam: Boolean, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {

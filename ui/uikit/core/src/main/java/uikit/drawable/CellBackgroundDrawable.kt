@@ -14,7 +14,7 @@ import android.graphics.Shader
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.RippleDrawable
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.withSave

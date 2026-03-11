@@ -10,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsAction
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsViewModel
 import com.tonapps.wallet.localization.Localization
-import ui.components.TKEmptyPlaceholder
+import ui.components.moon.cell.MoonEmptyCell
 import ui.theme.Dimens
 
 @Composable
@@ -21,7 +21,7 @@ fun TxHistoryEmpty(viewModel: TxEventsViewModel) {
             .padding(horizontal = Dimens.offsetLarge),
         contentAlignment = Alignment.Center
     ) {
-        TKEmptyPlaceholder(
+        MoonEmptyCell(
             title = stringResource(Localization.empty_history_title),
             subtitle = stringResource(Localization.empty_history_subtitle),
             firstButtonText = stringResource(Localization.buy_toncoin),

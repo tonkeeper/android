@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.staking
 
 import android.content.Context
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.data.staking.entities.StakingEntity
@@ -17,24 +18,21 @@ class StakingRepository(context: Context, api: API) {
 
     suspend fun get(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         ignoreCache: Boolean = false,
         initializedAccount: Boolean = true
     ): StakingEntity = withContext(Dispatchers.IO) {
-        val cacheKey = cacheKey(accountId, testnet)
+        val cacheKey = cacheKey(accountId, network)
         val local: StakingEntity? = if (ignoreCache) null else localDataSource.getCache(cacheKey)
         if (local == null) {
-            val remote = remoteDataSource.load(accountId, testnet, initializedAccount)
+            val remote = remoteDataSource.load(accountId, network, initializedAccount)
             localDataSource.setCache(cacheKey, remote)
             return@withContext remote
         }
         return@withContext local
     }
 
-    private fun cacheKey(accountId: String, testnet: Boolean): String {
-        if (!testnet) {
-            return accountId
-        }
-        return "${accountId}_testnet_2"
+    private fun cacheKey(accountId: String, network: TonNetwork): String {
+        return "${accountId}_${network.name.lowercase()}_2"
     }
 }

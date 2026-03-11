@@ -30,6 +30,7 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.QRScannerExtendsEntity
 import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +54,7 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
     private val accountRepository: AccountRepository by inject()
     private val api: API by inject()
     private val qrScannerExtends: List<QRScannerExtendsEntity>
-        get() = api.config.qrScannerExtends.filter { it.version == 1 }
+        get() = api.getConfig(TonNetwork.MAINNET).qrScannerExtends.filter { it.version == 1 }
 
     private val mode: CameraMode by lazy { requireArguments().getParcelableCompat(ARG_MODE)!! }
     private val chains: List<Blockchain> by lazy {
@@ -114,7 +115,7 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
         val deeplink = DeepLink(DeepLink.fixBadUri(uri), true, null)
         val route = deeplink.route
         if (mode == CameraMode.Address && route is DeepLinkRoute.Transfer) {
-            rootViewModel.processTransferDeepLink(route)
+            rootViewModel.processTransferDeepLink(deeplink, route)
             finish()
         } else if (mode == CameraMode.TonConnect && route is DeepLinkRoute.TonConnect) {
             rootViewModel.processTonConnectDeepLink(deeplink, fromPackageName = null)

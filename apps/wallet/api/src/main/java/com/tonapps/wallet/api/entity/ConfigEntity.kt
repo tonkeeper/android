@@ -2,7 +2,7 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.toStringList
 import com.tonapps.icu.Coins
 import kotlinx.parcelize.IgnoredOnParcel
@@ -65,6 +65,7 @@ data class ConfigEntity(
     val privacyPolicyUrl: String,
     val termsOfUseUrl: String,
     val webSwapsUrl: String,
+    val tronFeeFaqUrl: String,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -145,7 +146,8 @@ data class ConfigEntity(
         // tronApiKey = json.optString("tron_api_key"),
         privacyPolicyUrl = json.getString("privacy_policy"),
         termsOfUseUrl = json.getString("terms_of_use"),
-        webSwapsUrl = json.optString("web_swaps_url", Constants.SWAP_PREFIX)
+        webSwapsUrl = json.optString("web_swaps_url", Constants.SWAP_PREFIX),
+        tronFeeFaqUrl = json.getString("faq_tron_fee_url"),
     )
 
     constructor() : this(
@@ -164,7 +166,7 @@ data class ConfigEntity(
         tonkeeperNewsUrl = "https://t.me/tonkeeper_new",
         tonCommunityUrl = "https://t.me/toncoin",
         tonCommunityChatUrl = "https://t.me/toncoin_chat",
-        tonApiV2Key = "",
+        tonApiV2Key = "AF77F5JNEUSNXPQAAAAMDXXG7RBQ3IRP6PC2HTHL4KYRWMZYOUQGDEKYFDKBETZ6FDVZJBI",
         featuredPlayInterval = 3000,
         flags = FlagsEntity(),
         faqUrl = "https://tonkeeper.helpscoutdocs.com/",
@@ -199,7 +201,8 @@ data class ConfigEntity(
         tronSwapTitle = "LetsExchange",
         privacyPolicyUrl = "https://tonkeeper.com/privacy",
         termsOfUseUrl = "https://tonkeeper.com/terms",
-        webSwapsUrl = Constants.SWAP_PREFIX
+        webSwapsUrl = Constants.SWAP_PREFIX,
+        tronFeeFaqUrl = "https://tonkeeper.helpscoutdocs.com/article/137-multichain"
     )
 
     fun formatTransactionExplorer(testnet: Boolean, tron: Boolean, hash: String): String {

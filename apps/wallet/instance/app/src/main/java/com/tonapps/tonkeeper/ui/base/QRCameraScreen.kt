@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn

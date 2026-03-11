@@ -36,7 +36,7 @@ fun AsyncImage(
     size: Int = 0,
     contentScale: ContentScale = ContentScale.Crop,
     colorFilter: ColorFilter? = null,
-    crossfadeDuration: Int = 240
+    crossfadeDuration: Int = 240,
 ) = AsyncImage(
     modifier = modifier,
     url = url,

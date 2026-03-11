@@ -7,6 +7,7 @@ object AppInstall {
 
     enum class Source(val packageName: String, val title: String) {
         GOOGLE_PLAY("com.android.vending", "GooglePlay"),
+        AURORA_STORE("com.aurora.store", "AuroraStore"),
         UNKNOWN("unknown", "APK")
     }
 

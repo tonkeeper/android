@@ -8,7 +8,7 @@ enum class InsufficientBalanceType {
     InsufficientGaslessBalance,
     InsufficientBalanceWithFee,
     InsufficientBatteryChargesForFee,
-    InsufficientBalanceForFee
+    InsufficientBalanceForFee,
 }
 
 fun InsufficientBalanceType.isTON(): Boolean {

@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.main
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.RecyclerView

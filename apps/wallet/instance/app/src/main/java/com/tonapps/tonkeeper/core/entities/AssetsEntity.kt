@@ -1,6 +1,8 @@
 package com.tonapps.tonkeeper.core.entities
 
 import com.tonapps.icu.Coins
+import com.tonapps.icu.Coins.Companion.sumOf
+import com.tonapps.tonkeeper.core.entities.AssetsEntity.Token
 import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.TokenEntity
@@ -15,7 +17,6 @@ sealed class AssetsEntity(
 ) {
 
     companion object {
-
         suspend fun List<AssetsEntity>.sort(
             wallet: WalletEntity,
             settingsRepository: SettingsRepository
@@ -27,7 +28,20 @@ sealed class AssetsEntity(
                     TokenPrefsEntity()
                 }
                 AssetsExtendedEntity(asset, pref, wallet.accountId)
-            }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator).map { it.raw }
+            }
+                .filter { !it.hidden }
+                .sortedWith(AssetsExtendedEntity.comparator)
+                .map { it.raw }
+        }
+
+        fun List<AssetsEntity>.sumOfVerifiedFiat(): Coins {
+            return sumOf {
+                if (it !is Token || it.token.verified) {
+                    it.fiat
+                } else {
+                    Coins.ZERO
+                }
+            }
         }
     }
 

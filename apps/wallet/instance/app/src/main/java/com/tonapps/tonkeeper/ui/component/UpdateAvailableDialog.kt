@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.component
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeperx.R

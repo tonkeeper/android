@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.base
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
@@ -20,7 +19,6 @@ import com.tonapps.uikit.icon.UIKitIcon
 import uikit.R
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
-import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.topScrolled
 import uikit.widget.HeaderView
 import uikit.widget.SimpleRecyclerView

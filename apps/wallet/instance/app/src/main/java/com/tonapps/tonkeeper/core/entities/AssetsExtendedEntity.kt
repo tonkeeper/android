@@ -95,4 +95,7 @@ data class AssetsExtendedEntity(
 
     val isTon: Boolean
         get() = (raw as? AssetsEntity.Token)?.token?.isTon ?: false
+
+    val isTrx: Boolean
+        get() = token.isTrx
 }

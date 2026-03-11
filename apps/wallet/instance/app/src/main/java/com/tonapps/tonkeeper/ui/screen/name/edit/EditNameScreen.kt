@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.name.edit
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.koin.walletViewModel

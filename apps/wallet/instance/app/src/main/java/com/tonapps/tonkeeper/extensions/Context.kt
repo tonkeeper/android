@@ -15,7 +15,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
-import android.util.Log
+import com.tonapps.log.L
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -196,6 +196,7 @@ fun Context.getWalletBadges(
             Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
             Wallet.Type.Ledger -> Localization.ledger
             Wallet.Type.Keystone -> Localization.keystone
+            Wallet.Type.Tetra -> Localization.tetra
             else -> throw IllegalArgumentException("Unknown wallet type: $type")
         }
         builder = builder.badgeDefault(this, resId)

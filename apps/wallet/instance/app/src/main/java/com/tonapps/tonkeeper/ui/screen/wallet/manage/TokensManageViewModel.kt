@@ -36,10 +36,10 @@ class TokensManageViewModel(
     private val api: API,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api, wallet.network)
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
-        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet).mapNotNull { token ->
+        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.network).mapNotNull { token ->
             if (safeMode && !token.verified) {
                 return@mapNotNull null
             }
@@ -48,7 +48,7 @@ class TokensManageViewModel(
                 prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
                 accountId = wallet.accountId,
             )
-        }.filter { !it.isTon }
+        }.filter { !it.isTon && !it.isTrx }
     }
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())

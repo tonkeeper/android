@@ -33,9 +33,9 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         val currencyIcon: Int by lazy {
             if (ethenaType != null) {
-                com.tonapps.wallet.api.R.drawable.ic_udse_ethena_with_bg
+                com.tonapps.apps.wallet.api.R.drawable.ic_udse_ethena_with_bg
             } else {
-                com.tonapps.wallet.api.R.drawable.ic_ton_with_bg
+                com.tonapps.apps.wallet.api.R.drawable.ic_ton_with_bg
             }
         }
 

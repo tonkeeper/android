@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.component
 import android.content.Context
 import android.net.Uri
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.toUriOrNull
 import uikit.widget.webview.bridge.BridgeWebView
 

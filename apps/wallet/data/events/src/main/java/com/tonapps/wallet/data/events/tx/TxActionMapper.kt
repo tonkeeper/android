@@ -1,9 +1,10 @@
 package com.tonapps.wallet.data.events.tx
 
-import android.util.Log
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.value.BlockchainAddress
 import com.tonapps.wallet.api.entity.value.Timestamp
@@ -72,13 +73,14 @@ internal class TxActionMapper(
         val currency = WalletCurrency.USDT_TRON
         val isOutgoing = event.from == address.value
         val builder = TxActionBody.Builder(if (isOutgoing) ActionType.Send else ActionType.Received)
+        val isTestnet = address.network.isTestnet
         builder.setRecipient(TxActionBody.Account(
             address = event.to,
-            testnet = address.testnet
+            testnet = isTestnet
         ))
         builder.setSender(TxActionBody.Account(
             address = event.from,
-            testnet = address.testnet
+            testnet = isTestnet
         ))
         val isScam = event.from != address.value && event.amount < Coins.of(0.1, currency.decimals)
         if (isOutgoing) {
@@ -153,7 +155,7 @@ internal class TxActionMapper(
 
     private fun fetchNft(address: BlockchainAddress, nftAddress: String) = collectiblesRepository.getNft(
         accountId = address.value,
-        testnet = address.testnet,
+        network = address.network,
         address = nftAddress
     )
 
@@ -165,7 +167,7 @@ internal class TxActionMapper(
         imageUrl = product.thumbUri.toString()
     )
 
-    private fun product(nft: NftItem, testnet: Boolean) = product(NftEntity(nft, testnet))
+    private fun product(nft: NftItem, network: TonNetwork) = product(NftEntity(nft, network))
 
     private fun text(comment: String?, encryptedComment: EncryptedComment?): TxActionBody.Text? {
         if (comment != null) {
@@ -217,8 +219,8 @@ internal class TxActionMapper(
     private suspend fun isMaybeSpam(address: BlockchainAddress, action: Action): Boolean {
         val isTransfer = action.type == Action.Type.TonTransfer || action.type == Action.Type.JettonTransfer
         if (isTransfer && !action.isOutTransfer(address.value)) {
-            val total = action.getTonAmountRaw(ratesRepository)
-            return total < api.config.reportAmount
+            val total = action.getTonAmountRaw(address.network, ratesRepository)
+            return total < api.getConfig(address.network).reportAmount
         } else {
             return false
         }
@@ -314,28 +316,28 @@ internal class TxActionMapper(
     private fun removeExtension(address: BlockchainAddress, action: RemoveExtensionAction): TxActionBody {
         val builder = TxActionBody.Builder(ActionType.RemoveExtension)
         builder.setSubtitle(action.extension)
-        builder.setSender(account(action.wallet, address.testnet))
+        builder.setSender(account(action.wallet, address.network.isTestnet))
         return builder.build()
     }
 
     private fun addExtension(address: BlockchainAddress, action: AddExtensionAction): TxActionBody {
         val builder = TxActionBody.Builder(ActionType.AddExtension)
         builder.setSubtitle(action.extension)
-        builder.setSender(account(action.wallet, address.testnet))
+        builder.setSender(account(action.wallet, address.network.isTestnet))
         return builder.build()
     }
 
     private fun setSignatureAllowed(address: BlockchainAddress, action: SetSignatureAllowedAction): TxActionBody {
         val type = if (action.allowed) ActionType.SetSignatureAllowed else ActionType.SetSignatureNotAllowed
         val builder = TxActionBody.Builder(type)
-        builder.setSender(account(action.wallet, address.testnet))
+        builder.setSender(account(action.wallet, address.network.isTestnet))
         return builder.build()
     }
 
     private fun subscribe(address: BlockchainAddress, action: SubscriptionAction): TxActionBody {
         val amount = Coins.ofNano(action.price.value, action.price.decimals)
         val builder = TxActionBody.Builder(ActionType.Subscribe)
-        builder.setRecipient(account(action.beneficiary, address.testnet))
+        builder.setRecipient(account(action.beneficiary, address.network.isTestnet))
         builder.setSubtitle(action.subscription)
         builder.setOutgoingAmount(amount)
         builder.setImageUrl(action.beneficiary.icon)
@@ -344,7 +346,7 @@ internal class TxActionMapper(
 
     private fun unSubscribe(address: BlockchainAddress, action: UnSubscriptionAction): TxActionBody {
         val builder = TxActionBody.Builder(ActionType.UnSubscribe)
-        builder.setRecipient(account(action.beneficiary, address.testnet))
+        builder.setRecipient(account(action.beneficiary, address.network.isTestnet))
         builder.setSubtitle(action.subscription)
         builder.setImageUrl(action.beneficiary.icon)
         return builder.build()
@@ -364,8 +366,8 @@ internal class TxActionMapper(
     private fun nftPurchase(address: BlockchainAddress, action: NftPurchaseAction): TxActionBody {
         val currency = currency(action.amount)
         val amount = Coins.ofNano(action.amount.value, currency.decimals)
-        val recipient = account(action.seller, address.testnet)
-        val product = product(action.nft, address.testnet)
+        val recipient = account(action.seller, address.network.isTestnet)
+        val product = product(action.nft, address.network)
 
         val builder = TxActionBody.Builder(ActionType.NftPurchase)
         builder.setRecipient(recipient)
@@ -381,7 +383,7 @@ internal class TxActionMapper(
 
     private fun withdrawStake(address: BlockchainAddress, action: WithdrawStakeAction): TxActionBody {
         val amount = Coins.of(action.amount)
-        val recipient = account(action.pool, address.testnet)
+        val recipient = account(action.pool, address.network.isTestnet)
         val builder = TxActionBody.Builder(ActionType.WithdrawStake)
         builder.setRecipient(recipient)
         builder.setOutgoingAmount(amount)
@@ -392,9 +394,9 @@ internal class TxActionMapper(
         val currency = currency(action.amount)
         val amount = Coins.ofNano(action.amount.value, currency.decimals)
         val product = action.nft?.let {
-            product(it, address.testnet)
+            product(it, address.network)
         }
-        val recipient = account(action.auction, address.testnet)
+        val recipient = account(action.auction, address.network.isTestnet)
         val builder = TxActionBody.Builder(ActionType.AuctionBid)
         builder.setRecipient(recipient)
         builder.setOutgoingAmount(amount, currency)
@@ -415,7 +417,7 @@ internal class TxActionMapper(
 
     private fun withdrawStakeRequest(address: BlockchainAddress, action: WithdrawStakeRequestAction): TxActionBody {
         val amount = Coins.of(action.amount ?: 0L)
-        val recipient = account(action.pool, address.testnet)
+        val recipient = account(action.pool, address.network.isTestnet)
         val builder = TxActionBody.Builder(ActionType.WithdrawStakeRequest)
         builder.setRecipient(recipient)
         builder.setOutgoingAmount(amount)
@@ -425,7 +427,7 @@ internal class TxActionMapper(
     private fun jettonMint(address: BlockchainAddress, action: JettonMintAction): TxActionBody {
         val amount = Coins.ofNano(action.amount, action.jetton.decimals)
         val currency = currency(action.jetton)
-        val recipient = account(action.recipient, address.testnet)
+        val recipient = account(action.recipient, address.network.isTestnet)
         val builder = TxActionBody.Builder(ActionType.JettonMint)
         builder.setRecipient(recipient)
         builder.setOutgoingAmount(amount, currency)
@@ -471,7 +473,7 @@ internal class TxActionMapper(
         val iconUrl = "android.resource://com.ton_keeper/${StakingPool.getIcon(implementation)}"
         val amount = Coins.of(action.amount)
         val builder = TxActionBody.Builder(ActionType.DepositStake)
-        builder.setRecipient(account(action.pool, address.testnet))
+        builder.setRecipient(account(action.pool, address.network.isTestnet))
         builder.setOutgoingAmount(amount)
         builder.setImageUrl(iconUrl)
         return builder.build()
@@ -482,8 +484,8 @@ internal class TxActionMapper(
     private fun nftItemTransfer(address: BlockchainAddress, action: NftItemTransferAction): TxActionBody {
         val nft = fetchNft(address, action.nft)
         val product = nft?.let(::product)
-        val sender = action.sender?.let { account(it, address.testnet) }
-        val recipient = action.recipient?.let { account(it, address.testnet) }
+        val sender = action.sender?.let { account(it, address.network.isTestnet) }
+        val recipient = action.recipient?.let { account(it, address.network.isTestnet) }
         val isOutgoing = sender?.address?.equalsAddress(address.value) == true
         val builder = TxActionBody.Builder(if (isOutgoing) ActionType.NftSend else ActionType.NftReceived)
         sender?.let(builder::setSender)
@@ -504,7 +506,7 @@ internal class TxActionMapper(
     private fun smartContract(address: BlockchainAddress, action: SmartContractAction): TxActionBody {
         val amount = Coins.of(action.tonAttached)
         val builder = TxActionBody.Builder(ActionType.CallContract)
-        builder.setSender(account(action.executor, address.testnet))
+        builder.setSender(account(action.executor, address.network.isTestnet))
         builder.setSubtitle(action.payload ?: action.operation)
         builder.setOutgoingAmount(amount)
         return builder.build()
@@ -513,8 +515,8 @@ internal class TxActionMapper(
     private fun tonTransfer(address: BlockchainAddress, action: TonTransferAction): TxActionBody {
         val amount = Coins.of(action.amount)
         val currency = WalletCurrency.TON
-        val sender = account(action.sender, address.testnet)
-        val recipient = account(action.recipient, address.testnet)
+        val sender = account(action.sender, address.network.isTestnet)
+        val recipient = account(action.recipient, address.network.isTestnet)
         val isOutgoing = sender.address.equalsAddress(address.value)
         val builder = TxActionBody.Builder(if (isOutgoing) ActionType.Send else ActionType.Received)
         builder.setSender(sender)
@@ -530,10 +532,11 @@ internal class TxActionMapper(
     }
 
     private fun jettonTransfer(address: BlockchainAddress, action: JettonTransferAction): TxActionBody {
-        val amount = Coins.ofNano(action.amount, action.jetton.decimals)
+        val jetton = TokenEntity(action.jetton)
+        val amount = jetton.toUIAmount(Coins.ofNano(action.amount, jetton.decimals))
         val currency = currency(action.jetton)
-        val sender = action.sender?.let { account(it, address.testnet) }
-        val recipient = action.recipient?.let { account(it, address.testnet) }
+        val sender = action.sender?.let { account(it, address.network.isTestnet) }
+        val recipient = action.recipient?.let { account(it, address.network.isTestnet) }
         val isOutgoing = recipient?.let {
             !it.address.equalsAddress(address.value)
         } ?: false
@@ -558,23 +561,25 @@ internal class TxActionMapper(
         val incomingAmount = if (action.tonIn != null) {
             TxActionBody.Value(Coins.of(action.tonIn!!), WalletCurrency.TON)
         } else {
+            val jetton = TokenEntity(action.jettonMasterIn!!)
             val currency = currency(action.jettonMasterIn!!)
-            TxActionBody.Value(Coins.ofNano(action.amountIn, currency.decimals), currency)
+            TxActionBody.Value(jetton.toUIAmount(Coins.ofNano(action.amountIn, jetton.decimals)), currency)
         }
 
         val outgoingAmount = if (action.tonOut != null) {
             TxActionBody.Value(Coins.of(action.tonOut!!), WalletCurrency.TON)
         } else {
+            val jetton = TokenEntity(action.jettonMasterOut!!)
             val currency = currency(action.jettonMasterOut!!)
-            TxActionBody.Value(Coins.ofNano(action.amountOut, currency.decimals), currency)
+            TxActionBody.Value(jetton.toUIAmount(Coins.ofNano(action.amountOut, jetton.decimals)), currency)
         }
 
         val builder = TxActionBody.Builder(ActionType.Swap)
         builder.setSubtitle(action.dex)
         builder.setIncomingAmount(outgoingAmount)
         builder.setOutgoingAmount(incomingAmount)
-        builder.setRecipient(account(action.userWallet, address.testnet))
-        builder.setSender(account(action.router, address.testnet))
+        builder.setRecipient(account(action.userWallet, address.network.isTestnet))
+        builder.setSender(account(action.router, address.network.isTestnet))
         action.jettonMasterOut?.verification?.let { verification ->
             if (verification != JettonVerificationType.whitelist) {
                 builder.addFlag(TxFlag.UnverifiedToken)
@@ -592,7 +597,7 @@ internal class TxActionMapper(
         val amount = action.amount
         val coins = Coins.ofNano(amount.value, amount.decimals)
         val builder = TxActionBody.Builder(ActionType.Purchase)
-        builder.setRecipient(account(action.destination, address.testnet))
+        builder.setRecipient(account(action.destination, address.network.isTestnet))
         builder.setOutgoingAmount(coins, currency(amount))
         if (amount.verification != TrustType.whitelist) {
             builder.addFlag(TxFlag.UnverifiedToken)
@@ -603,7 +608,7 @@ internal class TxActionMapper(
     private fun gasRelay(address: BlockchainAddress, action: GasRelayAction): TxActionBody {
         val coins = Coins.of(action.amount)
         val builder = TxActionBody.Builder(ActionType.GasRelay)
-        builder.setRecipient(account(action.target, address.testnet))
+        builder.setRecipient(account(action.target, address.network.isTestnet))
         builder.setIncomingAmount(coins, WalletCurrency.TON)
         return builder.build()
     }
@@ -615,11 +620,11 @@ internal class TxActionMapper(
 
         val sender = simplePreview.accounts.firstOrNull {
             it.address.equalsAddress(address.value)
-        }?.let { account(it, address.testnet) }
+        }?.let { account(it, address.network.isTestnet) }
 
         val recipient = simplePreview.accounts.firstOrNull {
             !it.address.equalsAddress(address.value)
-        }?.let { account(it, address.testnet) }
+        }?.let { account(it, address.network.isTestnet) }
 
         val builder = TxActionBody.Builder(ActionType.Unknown)
         builder.setTitle(simplePreview.name)

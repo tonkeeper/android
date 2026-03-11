@@ -64,7 +64,7 @@ class RemoveExtensionViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val seqNo = accountRepository.getSeqno(wallet)
-                val validUntil = accountRepository.getValidUntil(wallet.testnet)
+                val validUntil = accountRepository.getValidUntil(wallet.network)
                 val queryId = TransferEntity.newWalletQueryId()
 
                 val address = AddrStd(pluginAddress)
@@ -156,14 +156,14 @@ class RemoveExtensionViewModel(
         val balance = tokenRepository.getTON(
             settingsRepository.currency,
             wallet.accountId,
-            wallet.testnet
+            wallet.network
         )?.balance?.value
         return balance ?: Coins.ZERO
     }
 
     fun send() = flow {
         val seqNo = accountRepository.getSeqno(wallet)
-        val validUntil = accountRepository.getValidUntil(wallet.testnet)
+        val validUntil = accountRepository.getValidUntil(wallet.network)
         val queryId = TransferEntity.newWalletQueryId()
 
         val unsignedBody = wallet.contract.removePlugin(

@@ -674,6 +674,7 @@
     <string name="battery_medium_pack">Medium</string>
     <string name="battery_small_pack">Small</string>
     <string name="battery_disclaimer">One charge covers the average transaction fee. Some transactions may cost more.</string>
+    <string name="battery_excess">%1$s refund</string>
     <string name="restore_purchases">Restore Purchases</string>
     <string name="battery_refilled">Battery refilled</string>
     <string name="nothing_to_restore">Nothing to restore</string>
@@ -685,6 +686,7 @@
     <string name="send_all_balance">Are you sure you want to send all your balance?</string>
     <string name="wrong_promocode">The entered code is not valid</string>
     <string name="tron_toggle_text">Use USD₮ TRC20 without TRX. Fees are covered by Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">USD₮ transfers require TRX for network fees.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Copy Phrase</string>
     <string name="export_tron">Export TRC20 Wallet</string>
@@ -741,4 +743,37 @@
         <item quantity="many">Some of them may continue charging your wallet. Disable to avoid further payments.</item>
         <item quantity="other">Some of them may continue charging your wallet. Disable to avoid further payments.</item>
     </plurals>
+    <string name="no_enough_funds">No enough funds</string>
+    <string name="refill">Refill</string>
+    <string name="get_token">Get %1$s</string>
+    <string name="insufficient_trx_balance">Not enough funds to cover transactions fees</string>
+    <string name="insufficient_trx_balance_desc">Сhoose a fee payment method and top up.</string>
+    <string name="tron_not_enough_for_fee_title">Not enough funds to cover fees</string>
+    <string name="tron_not_enough_for_fee_desc">Top up Battery, TON or TRX balance to cover transaction fees.</string>
+    <string name="top_up">Top up</string>
+    <string name="tron_not_enough_trx_for_fee_title">Not enough TRX to cover fees</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Required for blockhain fees ≈ %1$s. Your balance: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer available</item>
+        <item quantity="few">%1$s transfers available</item>
+        <item quantity="many">%1$s transfers available</item>
+        <item quantity="other">%1$s transfers available</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfers</item>
+        <item quantity="many">%1$s transfers</item>
+        <item quantity="other">%1$s transfers</item>
+    </plurals>
+    <string name="trx_balance">TRX Balance</string>
+    <string name="trx_balance_desc">Top up your balance to pay network fees.</string>
+    <string name="blockchain_fees">Blockchain Fees</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery is the easiest way to pay blockchain fees. You can also top up balance with TON and TRX coins directly.</string>
+    <string name="required_prefix">Required: %1$s</string>
+    <string name="tron_fees_learn_more">Fees change in real time based on market conditions and other factors. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
+    <string name="tetra" translatable="false">TETRA</string>
+    <string name="tetra_title" translatable="false">Tetra L2</string>
+    <string name="tetra_subtitle">Connect Tetra L2 network</string>
+    <string name="other_options">Other options</string>
+    <string name="for_developers">For developers</string>
 </resources>

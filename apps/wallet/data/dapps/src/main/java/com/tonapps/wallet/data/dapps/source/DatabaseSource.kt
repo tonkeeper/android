@@ -6,11 +6,12 @@ import android.content.SharedPreferences
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import androidx.core.content.edit
 import androidx.core.database.sqlite.transaction
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
@@ -39,7 +40,7 @@ internal class DatabaseSource(
 
     private companion object {
         private const val DATABASE_NAME = "dapps"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         private const val KEY_ALIAS = "_com_tonapps_dapps_master_key_"
 
@@ -55,6 +56,7 @@ internal class DatabaseSource(
         private const val CONNECT_TABLE_APP_URL_COLUMN = "app_url"
         private const val CONNECT_TABLE_ACCOUNT_ID_COLUMN = "account_id"
         private const val CONNECT_TABLE_TESTNET_COLUMN = "testnet"
+        private const val CONNECT_TABLE_NETWORK_COLUMN = "network"
         private const val CONNECT_TABLE_CLIENT_ID_COLUMN = "client_id"
         private const val CONNECT_TABLE_TYPE_COLUMN = "type"
         private const val CONNECT_TABLE_TIMESTAMP_COLUMN = "timestamp"
@@ -74,7 +76,7 @@ internal class DatabaseSource(
         private val connectFields = arrayOf(
             CONNECT_TABLE_APP_URL_COLUMN,
             CONNECT_TABLE_ACCOUNT_ID_COLUMN,
-            CONNECT_TABLE_TESTNET_COLUMN,
+            CONNECT_TABLE_NETWORK_COLUMN,
             CONNECT_TABLE_CLIENT_ID_COLUMN,
             CONNECT_TABLE_TYPE_COLUMN,
             CONNECT_TABLE_TIMESTAMP_COLUMN
@@ -108,7 +110,7 @@ internal class DatabaseSource(
         db.execSQL("CREATE TABLE $CONNECT_TABLE_NAME (" +
                 "$CONNECT_TABLE_CLIENT_ID_COLUMN TEXT PRIMARY KEY," +
                 "$CONNECT_TABLE_ACCOUNT_ID_COLUMN TEXT," +
-                "$CONNECT_TABLE_TESTNET_COLUMN INTEGER," +
+                "$CONNECT_TABLE_NETWORK_COLUMN INTEGER," +
                 "$CONNECT_TABLE_TYPE_COLUMN INTEGER," +
                 "$CONNECT_TABLE_APP_URL_COLUMN TEXT," +
                 "$CONNECT_TABLE_TIMESTAMP_COLUMN INTEGER" +
@@ -116,7 +118,7 @@ internal class DatabaseSource(
 
         val connectIndexPrefix = "idx_$CONNECT_TABLE_NAME"
         db.execSQL("CREATE UNIQUE INDEX ${connectIndexPrefix}_client_id ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_CLIENT_ID_COLUMN)")
-        db.execSQL("CREATE INDEX ${connectIndexPrefix}_account_id_testnet ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_ACCOUNT_ID_COLUMN, $CONNECT_TABLE_TESTNET_COLUMN)")
+        db.execSQL("CREATE INDEX ${connectIndexPrefix}_account_id_network ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_ACCOUNT_ID_COLUMN, $CONNECT_TABLE_NETWORK_COLUMN)")
         db.execSQL("CREATE INDEX ${connectIndexPrefix}_app_url ON $CONNECT_TABLE_NAME ($CONNECT_TABLE_TYPE_COLUMN, $CONNECT_TABLE_APP_URL_COLUMN)")
     }
 
@@ -143,6 +145,20 @@ internal class DatabaseSource(
         super.onUpgrade(db, oldVersion, newVersion)
         if (oldVersion < 2) {
             createNotificationsTable(db)
+        }
+        if (oldVersion < 3) {
+            db.beginTransaction()
+            try {
+                db.execSQL("ALTER TABLE $CONNECT_TABLE_NAME ADD COLUMN $CONNECT_TABLE_NETWORK_COLUMN INTEGER DEFAULT ${TonNetwork.MAINNET.value}")
+                db.execSQL(
+                    "UPDATE $CONNECT_TABLE_NAME SET $CONNECT_TABLE_NETWORK_COLUMN = " +
+                    "CASE WHEN $CONNECT_TABLE_TESTNET_COLUMN = 1 THEN ${TonNetwork.TESTNET.value} " +
+                    "ELSE ${TonNetwork.MAINNET.value} END"
+                )
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
         }
     }
 
@@ -220,7 +236,7 @@ internal class DatabaseSource(
 
     suspend fun insertConnection(connection: AppConnectEntity) = withContext(coroutineContext) {
         try {
-            val prefix = prefixAccount(connection.accountId, connection.testnet)
+            val prefix = prefixAccount(connection.accountId, connection.network)
 
             writableDatabase.delete(CONNECT_TABLE_NAME, "$CONNECT_TABLE_CLIENT_ID_COLUMN = ?", arrayOf(connection.clientId))
             encryptedPrefs.edit {
@@ -232,7 +248,7 @@ internal class DatabaseSource(
             val values = ContentValues()
             values.put(CONNECT_TABLE_APP_URL_COLUMN, connection.appUrl.withoutQuery.toString().removeSuffix("/"))
             values.put(CONNECT_TABLE_ACCOUNT_ID_COLUMN, connection.accountId)
-            values.put(CONNECT_TABLE_TESTNET_COLUMN, if (connection.testnet) 1 else 0)
+            values.put(CONNECT_TABLE_NETWORK_COLUMN, connection.network.value)
             values.put(CONNECT_TABLE_CLIENT_ID_COLUMN, connection.clientId)
             values.put(CONNECT_TABLE_TYPE_COLUMN, connection.type.value)
             values.put(CONNECT_TABLE_TIMESTAMP_COLUMN, connection.timestamp)
@@ -254,10 +270,14 @@ internal class DatabaseSource(
     suspend fun deleteConnect(connection: AppConnectEntity): Boolean = withContext(coroutineContext) {
         val count = writableDatabase.delete(CONNECT_TABLE_NAME, "$CONNECT_TABLE_CLIENT_ID_COLUMN = ?", arrayOf(connection.clientId))
         encryptedPrefs.edit {
-            val prefix = prefixAccount(connection.accountId, connection.testnet)
+            val prefix = prefixAccount(connection.accountId, connection.network)
+            val legacyPrefix = legacyPrefixAccount(connection.accountId, connection.network)
             remove(prefixKeyPair(prefix, connection.clientId))
             remove(prefixProofSignature(prefix, connection.appUrl))
             remove(prefixProofPayload(prefix, connection.appUrl))
+            remove(prefixKeyPair(legacyPrefix, connection.clientId))
+            remove(prefixProofSignature(legacyPrefix, connection.appUrl))
+            remove(prefixProofPayload(legacyPrefix, connection.appUrl))
         }
         count > 0
     }
@@ -273,7 +293,7 @@ internal class DatabaseSource(
     private fun readConnections(cursor: Cursor): List<AppConnectEntity> {
         val appUrlIndex = cursor.getColumnIndex(CONNECT_TABLE_APP_URL_COLUMN)
         val accountIdIndex = cursor.getColumnIndex(CONNECT_TABLE_ACCOUNT_ID_COLUMN)
-        val testnetIndex = cursor.getColumnIndex(CONNECT_TABLE_TESTNET_COLUMN)
+        val networkIndex = cursor.getColumnIndex(CONNECT_TABLE_NETWORK_COLUMN)
         val clientIdIndex = cursor.getColumnIndex(CONNECT_TABLE_CLIENT_ID_COLUMN)
         val typeIndex = cursor.getColumnIndex(CONNECT_TABLE_TYPE_COLUMN)
         val timestampIndex = cursor.getColumnIndex(CONNECT_TABLE_TIMESTAMP_COLUMN)
@@ -281,26 +301,58 @@ internal class DatabaseSource(
         val connections = mutableListOf<AppConnectEntity>()
         while (cursor.moveToNext()) {
             val accountId = cursor.getString(accountIdIndex)
-            val testnet = cursor.getInt(testnetIndex) == 1
+            val networkValue = cursor.getInt(networkIndex)
+            val network = TonNetwork.entries.firstOrNull { it.value == networkValue } ?: continue
             val clientId = cursor.getString(clientIdIndex)
             val appUrl = Uri.parse(cursor.getString(appUrlIndex)).withoutQuery
-            val prefix = prefixAccount(accountId, testnet)
-            val connectionEncrypted = getConnectionEncrypted(prefix, clientId, appUrl) ?: continue
+
+            val prefix = prefixAccount(accountId, network)
+            var connectionEncrypted = getConnectionEncrypted(prefix, clientId, appUrl)
+            if (connectionEncrypted == null) {
+                val legacyPrefix = legacyPrefixAccount(accountId, network)
+                connectionEncrypted = getConnectionEncrypted(legacyPrefix, clientId, appUrl)
+                if (connectionEncrypted != null) {
+                    migrateEncryptedData(legacyPrefix, prefix, clientId, appUrl, connectionEncrypted)
+                }
+            }
+            connectionEncrypted ?: continue
 
             connections.add(AppConnectEntity(
                 appUrl = appUrl,
                 accountId = accountId,
-                testnet = testnet,
-                clientId = cursor.getString(clientIdIndex),
+                network = network,
+                clientId = clientId,
                 type = AppConnectEntity.Type.entries.first { it.value == cursor.getInt(typeIndex) },
                 keyPair = connectionEncrypted.keyPair,
                 proofSignature = connectionEncrypted.proofSignature,
                 proofPayload = connectionEncrypted.proofPayload,
                 timestamp = cursor.getLong(timestampIndex),
-                pushEnabled = isPushEnabled(accountId, testnet, appUrl)
+                pushEnabled = isPushEnabled(accountId, network, appUrl)
             ))
         }
         return connections
+    }
+
+    // TODO TK-125
+    private fun migrateEncryptedData(
+        oldPrefix: String,
+        newPrefix: String,
+        clientId: String,
+        appUrl: Uri,
+        encrypted: ConnectionEncryptedEntity
+    ) {
+        encryptedPrefs.edit {
+            remove(prefixKeyPair(oldPrefix, clientId))
+            remove(prefixProofSignature(oldPrefix, appUrl))
+            remove(prefixProofPayload(oldPrefix, appUrl))
+        }
+        encryptedPrefs.putParcelable(prefixKeyPair(newPrefix, clientId), encrypted.keyPair)
+        if (encrypted.proofSignature != null) {
+            encryptedPrefs.putString(prefixProofSignature(newPrefix, appUrl), encrypted.proofSignature)
+        }
+        if (encrypted.proofPayload != null) {
+            encryptedPrefs.putString(prefixProofPayload(newPrefix, appUrl), encrypted.proofPayload)
+        }
     }
 
     private fun getConnectionEncrypted(
@@ -349,11 +401,12 @@ internal class DatabaseSource(
         return "push_${prefix}_${appUrl}"
     }
 
-    private fun prefixAccount(
-        accountId: String,
-        testnet: Boolean
-    ): String {
-        return "account_${accountId}:${if (testnet) "1" else "0"}"
+    private fun prefixAccount(accountId: String, network: TonNetwork): String {
+        return "account_${accountId}:${network.value}"
+    }
+
+    private fun legacyPrefixAccount(accountId: String, network: TonNetwork): String {
+        return "account_${accountId}:${if (network.isTestnet) "1" else "0"}"
     }
 
     internal fun getLastEventId(): Long {
@@ -376,13 +429,17 @@ internal class DatabaseSource(
         }
     }
 
-    internal fun isPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri): Boolean {
-        return prefs.getBoolean(prefixPush(prefixAccount(accountId, testnet), appUrl), false)
+    internal fun isPushEnabled(accountId: String, network: TonNetwork, appUrl: Uri): Boolean {
+        val key = prefixPush(prefixAccount(accountId, network), appUrl)
+        if (prefs.contains(key)) {
+            return prefs.getBoolean(key, false)
+        }
+        return prefs.getBoolean(prefixPush(legacyPrefixAccount(accountId, network), appUrl), false)
     }
 
-    internal fun setPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri, enabled: Boolean) {
+    internal fun setPushEnabled(accountId: String, network: TonNetwork, appUrl: Uri, enabled: Boolean) {
         prefs.edit {
-            putBoolean(prefixPush(prefixAccount(accountId, testnet), appUrl), enabled)
+            putBoolean(prefixPush(prefixAccount(accountId, network), appUrl), enabled)
         }
     }
 

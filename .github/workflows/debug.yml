@@ -1,0 +1,64 @@
+name: Android Debug Build
+
+on:
+  push:
+    branches:
+      - 'dev'
+      - 'release/**'
+  pull_request:
+    types: [ opened, synchronize ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-build:
+    name: Build Debug APK
+    runs-on: macos-latest-xlarge
+
+    steps:
+      - name: Checkout to git repository
+        uses: actions/checkout@v6
+
+      - name: Get VERSION_CODE from commit timestamp
+        run: echo "VERSION_CODE=$(git log -1 --format=%ct)" >> $GITHUB_ENV
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.TONKEEPER_DEBUG_STORE_FILE }}" | base64 -d > ${{ github.workspace }}/internal.keystore
+
+      - name: Build Debug APK
+        run: |
+          ./gradlew :apps:wallet:instance:main:assembleDefaultDebug \
+            --no-daemon \
+            --no-build-cache \
+            --no-configuration-cache \
+            -Pandroid.injected.signing.debug.file=${{ github.workspace }}/internal.keystore \
+            -Pandroid.injected.signing.debug.password=${{ secrets.TONKEEPER_DEBUG_STORE_PASSWORD }} \
+            -Pandroid.injected.signing.debug.key.alias=${{ secrets.TONKEEPER_DEBUG_KEY_ALIAS }} \
+            -Pandroid.injected.signing.debug.key.password=${{ secrets.TONKEEPER_DEBUG_KEY_PASSWORD }}
+
+      - name: Upload Debug APK to artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: tonkeeper-debug-${{ env.VERSION_CODE }}
+          path: apps/wallet/instance/main/build/outputs/apk/default/debug/*.apk

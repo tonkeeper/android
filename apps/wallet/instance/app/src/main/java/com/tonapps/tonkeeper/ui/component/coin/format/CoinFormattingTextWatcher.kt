@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.component.coin.format
 
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.icu.CurrencyFormatter
 import uikit.extensions.deleteLast
 import uikit.extensions.replaceAll

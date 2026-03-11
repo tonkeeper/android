@@ -33,7 +33,7 @@ class QRViewModel(
         TON, TRON
     }
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api, wallet.network)
 
     val installId: String
         get() = settingsRepository.installId
@@ -42,7 +42,7 @@ class QRViewModel(
         get() = settingsRepository.getTronUsdtEnabled(wallet.id)
 
     val isTronDisabled: Boolean
-        get() = api.config.flags.disableTron
+        get() = api.getConfig(wallet.network).flags.disableTron
 
     var token: TokenEntity by mutableStateOf(initialToken)
         private set
@@ -53,7 +53,7 @@ class QRViewModel(
     private lateinit var tronAddress: String
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
-        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet)
+        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.network)
             .mapNotNull { token ->
                 if (safeMode && !token.verified) {
                     return@mapNotNull null
@@ -77,7 +77,7 @@ class QRViewModel(
     init {
         viewModelScope.launch {
             tronAddress = accountRepository.getTronAddress(wallet.id) ?: ""
-            address = if (token.isTrc20) {
+            address = if (token.isTrc20 || token.isTrx) {
                 tronAddress
             } else {
                 wallet.address

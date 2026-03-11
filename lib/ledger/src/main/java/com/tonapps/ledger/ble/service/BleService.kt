@@ -2,15 +2,25 @@ package com.tonapps.ledger.ble.service
 
 import android.annotation.SuppressLint
 import android.app.Service
-import android.bluetooth.*
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import com.tonapps.async.Async
 import com.tonapps.ledger.ble.model.BleError
 import com.tonapps.ledger.ble.service.model.BleServiceEvent
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import timber.log.Timber
+import com.tonapps.log.L
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.plus
 
 @SuppressLint("MissingPermission")
 class BleService : Service() {
@@ -32,13 +42,13 @@ class BleService : Service() {
 
     override fun onUnbind(intent: Intent?): Boolean {
         isBound = false
-        Timber.d("Unbind service")
+        L.d("Unbind service")
         disconnectService()
         return super.onUnbind(intent)
     }
 
     //Bluetooth related
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+    private val scope = Async.ioScope() + Job()
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothDeviceAddress: String? = null
 
@@ -71,7 +81,7 @@ class BleService : Service() {
     fun connect(address: String): Boolean {
         // Previously connected to the given device.
         // Try to reconnect.
-        Timber.d("Connect to device address => $address.")
+        L.d("Connect to device address => $address.")
         if (bluetoothDeviceAddress != null && address == bluetoothDeviceAddress && stateMachine != null) {
             stateMachine?.clear()
         }
@@ -95,7 +105,7 @@ class BleService : Service() {
     var isReady = false
     private fun observeStateMachine() {
         listenningJob = stateMachine?.stateFlow?.onEach {
-            Timber.d("State changed >>>> $it")
+            L.d("State changed >>>> $it")
             when (it) {
                 is BleServiceStateMachine.BleServiceState.Ready -> {
                     if (isReady == false) {
@@ -132,7 +142,7 @@ class BleService : Service() {
 
     @Synchronized
     fun sendApdu(apdu: ByteArray): String {
-        Timber.d("Send APDU")
+        L.d("Send APDU")
         if (bluetoothDeviceAddress == null) {
             disconnectService(BleError.NO_DEVICE_ADDRESS)
         }

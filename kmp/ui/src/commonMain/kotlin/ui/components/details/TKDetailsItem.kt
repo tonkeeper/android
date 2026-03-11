@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import ui.components.TKHorizontalDivider
+import ui.components.moon.MoonDivider
 import ui.theme.Dimens
 
 @Composable
@@ -32,7 +32,7 @@ internal fun TKDetailsItem(
     )
 
     if (divider) {
-        TKHorizontalDivider(
+        MoonDivider(
             modifier = Modifier.padding(start = Dimens.offsetMedium)
         )
     }

@@ -1,12 +1,7 @@
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.LibraryExtension
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.android.build.api.dsl.ApplicationExtension
+import java.util.Properties
 
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.android.kotlin) apply false
-    alias(libs.plugins.android.library) apply false
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.android.baselineprofile) apply false
     alias(libs.plugins.kotlin.serialization) apply false
@@ -22,56 +17,42 @@ plugins {
 
 allprojects {
     pluginManager.withPlugin("android") {
-        configure<AppExtension> {
+        configure<ApplicationExtension> {
+            val localProperties = Properties().apply {
+                rootProject.file("local.properties")
+                    .takeIf { it.exists() }
+                    ?.inputStream()
+                    ?.use { load(it) }
+            }
+
+            fun findProperty(name: String): String? =
+                localProperties[name]?.toString() ?: project.findProperty(name)?.toString()
+
             signingConfigs {
                 create("release") {
-                    if (project.hasProperty("android.injected.signing.store.file")) {
-                        storeFile = file(project.property("android.injected.signing.store.file").toString())
-                        storePassword = project.property("android.injected.signing.store.password").toString()
-                        keyAlias = project.property("android.injected.signing.key.alias").toString()
-                        keyPassword = project.property("android.injected.signing.key.password").toString()
+                    val storeFilePath = findProperty("android.injected.signing.store.file")
+                    if (storeFilePath != null) {
+                        storeFile = file(storeFilePath)
+                        storePassword = findProperty("android.injected.signing.store.password")
+                        keyAlias = findProperty("android.injected.signing.key.alias")
+                        keyPassword = findProperty("android.injected.signing.key.password")
                     }
                 }
 
                 getByName("debug") {
-                    storeFile = file("${project.rootDir.path}/${Signing.Debug.storeFile}")
-                    storePassword = Signing.Debug.storePassword
-                    keyAlias = Signing.Debug.keyAlias
-                    keyPassword = Signing.Debug.keyPassword
+                    val debugFilePath = findProperty("android.injected.signing.debug.file")
+                    if (debugFilePath != null) {
+                        storeFile = file(debugFilePath)
+                        storePassword = findProperty("android.injected.signing.debug.password")
+                        keyAlias = findProperty("android.injected.signing.debug.key.alias")
+                        keyPassword = findProperty("android.injected.signing.debug.key.password")
+                    } else {
+                        storeFile = file("${project.rootDir.path}/debug.keystore")
+                        storePassword = "android"
+                        keyAlias = "androiddebugkey"
+                        keyPassword = "android"
+                    }
                 }
-            }
-        }
-    }
-}
-
-subprojects {
-    plugins.withId("com.android.application") {
-        configure<AppExtension> {
-            compileOptions {
-                sourceCompatibility = Build.compileJavaVersion
-                targetCompatibility = Build.compileJavaVersion
-            }
-        }
-    }
-    plugins.withId("com.android.library") {
-        configure<LibraryExtension> {
-            compileSdk = Build.compileSdkVersion
-
-            defaultConfig {
-                minSdk = Build.minSdkVersion
-            }
-
-            compileOptions {
-                sourceCompatibility = Build.compileJavaVersion
-                targetCompatibility = Build.compileJavaVersion
-            }
-        }
-    }
-
-    plugins.withId("org.jetbrains.kotlin.android") {
-        tasks.withType<KotlinCompile>().configureEach {
-            compilerOptions {
-                jvmTarget.set(JvmTarget.JVM_17)
             }
         }
     }
@@ -79,4 +60,21 @@ subprojects {
 
 tasks.register<Delete>("clean") {
     delete(getLayout().buildDirectory)
+}
+
+// Install git hooks automatically on every Gradle run (worktree-aware)
+val gitHooksDir = providers.exec {
+    commandLine("git", "rev-parse", "--git-dir")
+}.standardOutput.asText.get().trim().let { gitDir ->
+    rootDir.resolve(gitDir).resolve("hooks")
+}
+
+copy {
+    from(rootDir.resolve("tools/hooks/pre-commit"))
+    into(gitHooksDir)
+}
+
+extensions.findByName("buildScan")?.withGroovyBuilder {
+    setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
+    setProperty("termsOfServiceAgree", "yes")
 }

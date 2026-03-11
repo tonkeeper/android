@@ -1,7 +1,7 @@
 package com.tonapps.signer.screen.create.child
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope

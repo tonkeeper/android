@@ -46,6 +46,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.withdraw.StakeWithdrawViewModel
 import com.tonapps.tonkeeper.ui.screen.swap.omniston.OmnistonViewModel
 import com.tonapps.tonkeeper.ui.screen.swap.picker.SwapPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionViewModel
+import com.tonapps.tonkeeper.ui.screen.tronfees.TronFeesViewModel
 import org.koin.core.module.dsl.viewModelOf
 
 val viewModelWalletModule = module {
@@ -94,4 +95,5 @@ val viewModelWalletModule = module {
     viewModelOf(::DNSRenewViewModel)
     viewModelOf(::TxEventsViewModel)
     viewModelOf(::TxDetailsViewModel)
+    viewModelOf(::TronFeesViewModel)
 }

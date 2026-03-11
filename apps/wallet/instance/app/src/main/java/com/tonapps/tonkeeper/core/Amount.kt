@@ -11,6 +11,9 @@ data class Amount(
     val isTon: Boolean
         get() = token.isTon
 
+    val isTrx: Boolean
+        get() = token.isTrx
+
     val symbol: String
         get() = token.symbol
 

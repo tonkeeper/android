@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.extensions
 
 import android.content.Context
 import android.text.SpannableStringBuilder
-import com.tonapps.wallet.api.R
+import com.tonapps.apps.wallet.api.R
 import com.tonapps.wallet.data.core.currency.WalletCurrency
 import uikit.extensions.badgeBlue
 import uikit.extensions.badgeDefault

@@ -88,7 +88,7 @@ class StakeWithdrawViewModel(
     }
 
     val amountFormatFlow = amountFlow.map { amount ->
-        val fiat = ratesRepository.getTONRates(currency).convertTON(amount)
+        val fiat = ratesRepository.getTONRates(wallet.network, currency).convertTON(amount)
         val amountFormat = CurrencyFormatter.format(TokenEntity.TON.symbol, amount)
         val fiatFormat = CurrencyFormatter.formatFiat(currency.code, fiat, replaceSymbol = false)
         Pair(amountFormat, fiatFormat)
@@ -96,8 +96,8 @@ class StakeWithdrawViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: return@launch
-            val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+            val tokens = tokenRepository.get(currency, wallet.accountId, wallet.network) ?: return@launch
+            val staking = stakingRepository.get(wallet.accountId, wallet.network)
             val staked = StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
             val item = staked.find { it.pool.address.equalsAddress(poolAddress) } ?: return@launch
             val details = staking.getDetails(item.pool.implementation) ?: return@launch
@@ -118,7 +118,7 @@ class StakeWithdrawViewModel(
         stakeFlow
     ) { extra, stake ->
         val currency = settingsRepository.currency
-        val rates = ratesRepository.getTONRates(currency)
+        val rates = ratesRepository.getTONRates(wallet.network, currency)
         val fee = StakingPool.getTotalFee(extra.value, stake.pool.implementation)
 
         val amount = CurrencyFormatter.format(TokenEntity.TON.symbol, fee)
@@ -154,7 +154,7 @@ class StakeWithdrawViewModel(
         wallet: WalletEntity,
     ): SendMetadataEntity = withContext(Dispatchers.IO) {
         val seqnoDeferred = async { accountRepository.getSeqno(wallet) }
-        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.testnet) }
+        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.network) }
 
         SendMetadataEntity(
             seqno = seqnoDeferred.await(),

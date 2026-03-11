@@ -41,7 +41,7 @@ data class StakedEntity(
             ratesRepository: RatesRepository,
             api: API,
         ): List<StakedEntity> {
-            val fiatRates = ratesRepository.getTONRates(currency)
+            val fiatRates = ratesRepository.getTONRates(wallet.network, currency)
             val list = mutableListOf<StakedEntity>()
             val activePools = getActivePools(staking, tokens)
             for (pool in activePools) {
@@ -53,7 +53,7 @@ data class StakedEntity(
 
                     val liquidJettonMaster = pool.liquidJettonMaster ?: continue
                     val token = tokens.find { it.address.equalsAddress(liquidJettonMaster) } ?: continue
-                    val rates = ratesRepository.getRates(WalletCurrency.TON, token.address)
+                    val rates = ratesRepository.getRates(wallet.network, WalletCurrency.TON, token.address)
                     val balance = rates.convert(token.address, token.balance.value)
                     val readyWithdraw = rates.convert(token.address, staking.getReadyWithdraw(pool))
                     val pendingDeposit = rates.convert(token.address, staking.getPendingDeposit(pool))

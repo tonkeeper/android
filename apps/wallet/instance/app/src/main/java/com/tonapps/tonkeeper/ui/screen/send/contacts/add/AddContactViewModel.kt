@@ -77,7 +77,7 @@ class AddContactViewModel(
             } else {
                 _accountFlow.value = AddressAccount.Loading
 
-                val account = api.resolveAccount(address, wallet.testnet)
+                val account = api.resolveAccount(address, wallet.network)
                 if (account == null || !account.isWallet || account.status == AccountStatus.nonexist) {
                     _accountFlow.value = AddressAccount.Error
                 } else {
@@ -91,7 +91,7 @@ class AddContactViewModel(
         viewModelScope.launch {
             try {
                 val userInput = _userInputFlow.value
-                contactsRepository.add(userInput.name, userInput.address, wallet.testnet)
+                contactsRepository.add(userInput.name, userInput.address, wallet.network)
             } catch (e: Throwable) {
                 toast(e.bestMessage)
             } finally {

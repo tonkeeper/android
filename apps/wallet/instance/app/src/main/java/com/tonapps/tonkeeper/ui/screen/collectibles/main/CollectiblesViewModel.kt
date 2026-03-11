@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.collectibles.main
 
 import android.app.Application
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.flattenFirst
@@ -49,7 +49,7 @@ class CollectiblesViewModel(
     private val expiringDomainsFlow = flow {
         emit(collectiblesRepository.getDnsSoonExpiring(
             accountId = wallet.accountId,
-            testnet = wallet.testnet
+            network = wallet.network
         ).associateBy { it.addressRaw })
     }
 
@@ -97,9 +97,9 @@ class CollectiblesViewModel(
         hiddenBalances: Boolean,
         isOnline: Boolean,
         expiringDomains: Map<String, DnsExpiringEntity>
-    ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
+    ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.network, isOnline).map { result ->
         hasNfts = result.list.isNotEmpty()
-        val safeMode = settingsRepository.isSafeModeEnabled(api)
+        val safeMode = settingsRepository.isSafeModeEnabled(api, wallet.network)
         val uiItems = mutableListOf<Item>()
         for (nft in result.list) {
             if (safeMode && !nft.verified) {

@@ -91,7 +91,7 @@ class StakingViewModel(
     val selectedPoolFlow = _selectedPoolFlow.asStateFlow().filterNotNull()
 
     val tokenFlow = selectedPoolFlow.map { pool ->
-        val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
+        val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.network) ?: emptyList()
 
         tokens.firstOrNull()
     }.filterNotNull()
@@ -106,7 +106,7 @@ class StakingViewModel(
     }
 
     private val ratesFlow = tokenFlow.map { token ->
-        ratesRepository.getRates(settingsRepository.currency, token.address)
+        ratesRepository.getRates(wallet.network, settingsRepository.currency, token.address)
     }.flowOn(Dispatchers.IO)
 
     val availableUiStateFlow = combine(
@@ -192,8 +192,8 @@ class StakingViewModel(
         updateAmount(0.0)
 
         viewModelScope.launch(Dispatchers.IO) {
-            _poolsFlow.value = stakingRepository.get(wallet.accountId, wallet.testnet).pools.filter {
-                api.config.enabledStaking.contains(it.implementation.title)
+            _poolsFlow.value = stakingRepository.get(wallet.accountId, wallet.network).pools.filter {
+                api.getConfig(wallet.network).enabledStaking.contains(it.implementation.title)
             }
         }
     }
@@ -214,7 +214,7 @@ class StakingViewModel(
         wallet: WalletEntity,
     ): SendMetadataEntity = withContext(Dispatchers.IO) {
         val seqnoDeferred = async { accountRepository.getSeqno(wallet) }
-        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.testnet) }
+        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.network) }
 
         SendMetadataEntity(
             seqno = seqnoDeferred.await(),
@@ -305,7 +305,7 @@ class StakingViewModel(
         selectedPoolFlow,
     ) { extra, pool ->
         val currency = settingsRepository.currency
-        val rates = ratesRepository.getTONRates(currency)
+        val rates = ratesRepository.getTONRates(wallet.network, currency)
         val fee = StakingPool.getTotalFee(extra.value, pool.implementation)
 
         val fiat = rates.convertTON(fee)

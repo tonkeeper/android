@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction

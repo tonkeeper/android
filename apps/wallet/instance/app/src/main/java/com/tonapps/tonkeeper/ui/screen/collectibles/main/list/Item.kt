@@ -33,7 +33,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             get() = entity.collectionName
 
         val testnet: Boolean
-            get() = entity.testnet
+            get() = entity.network.isTestnet
 
         val verifier: Boolean
             get() = entity.verified

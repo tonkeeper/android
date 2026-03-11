@@ -1,18 +1,14 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.app")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = Build.namespacePrefix("signer")
-    compileSdk = Build.compileSdkVersion
-
+    namespace = "com.tonapps.signer"
     defaultConfig {
-        applicationId = Build.namespacePrefix("signer")
+        applicationId = "com.tonapps.signer"
         minSdk = 26
-        targetSdk = Build.compileSdkVersion
         versionCode = 23
         versionName = "0.2.3"
     }
@@ -51,36 +47,36 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidX.core)
-    implementation(libs.androidX.appCompat)
-    implementation(libs.androidX.activity)
-    implementation(libs.androidX.fragment)
-    implementation(libs.androidX.recyclerView)
-    implementation(libs.androidX.viewPager2)
-    implementation(libs.androidX.splashscreen)
+    implementation(libs.androidx.core)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.fragment)
+    implementation(libs.androidx.recyclerView)
+    implementation(libs.androidx.viewPager2)
+    implementation(libs.androidx.splashscreen)
 
     implementation(libs.material)
     implementation(libs.flexbox)
-    implementation(libs.cameraX.base)
-    implementation(libs.cameraX.core)
-    implementation(libs.cameraX.lifecycle)
-    implementation(libs.cameraX.view)
-    implementation(libs.androidX.security)
-    implementation(libs.androidX.constraintlayout)
-    implementation(libs.androidX.lifecycleSavedState)
-    implementation(project(ProjectModules.Lib.blockchain))
-    implementation(project(ProjectModules.Lib.extensions))
+    implementation(libs.camerax.base)
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.androidx.security)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.lifecycleSavedState)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.extensions)
 
-    implementation(libs.kotlinX.coroutines.guava)
+    implementation(libs.kotlinx.coroutines.core)
 
-    implementation(project(ProjectModules.UIKit.core)) {
+    implementation(projects.ui.uikit.core) {
         exclude("com.airbnb.android", "lottie")
         exclude("com.facebook.fresco", "fresco")
     }
 
-    implementation(project(ProjectModules.Lib.qr))
-    implementation(project(ProjectModules.Lib.security))
-    implementation(project(ProjectModules.Lib.icu))
+    implementation(projects.lib.qr)
+    implementation(projects.lib.security)
+    implementation(projects.lib.icu)
     implementation(libs.koin.core)
 }
 

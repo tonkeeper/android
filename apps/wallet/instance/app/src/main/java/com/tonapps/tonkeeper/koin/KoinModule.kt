@@ -1,11 +1,12 @@
 package com.tonapps.tonkeeper.koin
 
+import com.tonapps.async.Async
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
@@ -24,8 +25,8 @@ import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.dev.DevViewModel
-import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
+import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.migration.MigrationViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageViewModel
@@ -39,9 +40,7 @@ import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectViewModel
 import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
 import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.data.settings.SettingsRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -50,7 +49,7 @@ import org.koin.dsl.module
 val koinModel = module {
     factory { Dispatchers.Default }
 
-    single(createdAtStart = true) { CoroutineScope(Dispatchers.IO + SupervisorJob()) }
+    single(createdAtStart = true) { Async.ioScope() }
     singleOf(::Environment)
     singleOf(::RemoteConfig)
 
@@ -66,7 +65,7 @@ val koinModel = module {
     singleOf(::APKManager)
     singleOf(::CacheHelper)
     singleOf(::ReferrerClientHelper)
-    singleOf(::AnalyticsHelper)
+    singleOf(AnalyticsHelper::Default)
 
     factoryOf(::SignUseCase)
     factoryOf(::EmulationUseCase)

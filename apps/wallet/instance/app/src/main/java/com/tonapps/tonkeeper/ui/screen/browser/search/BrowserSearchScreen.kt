@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo

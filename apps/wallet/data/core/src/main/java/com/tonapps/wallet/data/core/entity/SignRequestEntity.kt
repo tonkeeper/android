@@ -2,21 +2,15 @@ package com.tonapps.wallet.data.core.entity
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.optStringCompatJS
-import kotlinx.datetime.Clock
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.block.AddrStd
-import org.ton.block.StateInit
-import org.ton.tlb.CellRef
-import kotlin.time.Duration.Companion.seconds
 
 @Parcelize
 data class SignRequestEntity(
@@ -42,7 +36,7 @@ data class SignRequestEntity(
         get() = messagesVariants?.battery.isNullOrEmpty().not()
 
     val isTestnet: Boolean
-        get() = network == TonNetwork.TESTNET
+        get() = network.isTestnet
 
     val targetAddressValue: String
         get() = messages.first().addressValue

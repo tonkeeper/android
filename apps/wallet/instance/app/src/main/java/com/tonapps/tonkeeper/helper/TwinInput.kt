@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.helper
 
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.rates.RateData

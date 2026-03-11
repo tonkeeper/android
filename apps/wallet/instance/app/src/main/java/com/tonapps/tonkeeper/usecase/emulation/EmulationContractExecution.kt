@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.usecase.emulation
 
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -14,9 +15,9 @@ import java.math.BigDecimal
 import kotlin.math.ceil
 
 class EmulationContractExecution(private val api: API) {
-    private suspend fun getConfig(testnet: Boolean): ContractExecutionConfig =
+    private suspend fun getConfig(network: TonNetwork): ContractExecutionConfig =
         withContext(Dispatchers.IO) {
-            val config = api.blockchain(testnet).getBlockchainConfig()
+            val config = api.blockchain(network).getBlockchainConfig()
             ContractExecutionConfig(config)
         }
 
@@ -105,9 +106,9 @@ class EmulationContractExecution(private val api: API) {
         withContext(
             Dispatchers.IO
         ) {
-            val config = getConfig(wallet.testnet)
+            val config = getConfig(wallet.network)
 
-            val nowTimestamp = api.liteServer(wallet.testnet).getRawTime().time
+            val nowTimestamp = api.liteServer(wallet.network).getRawTime().time
             val isInited =
                 account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
             val timeDelta = nowTimestamp - account.lastActivity
@@ -151,7 +152,7 @@ class EmulationContractExecution(private val api: API) {
         withContext(
             Dispatchers.IO
         ) {
-            val config = getConfig(wallet.testnet)
+            val config = getConfig(wallet.network)
 
             var msgBits = 0
             var msgCells = 0

@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.usecase.emulation
 
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
@@ -43,21 +44,25 @@ data class Emulated(
             return if (withBattery && consequences != null) {
                 val extra = consequences.event.extra
                 val chargesBalance = BatteryHelper.getBatteryCharges(wallet, accountRepository, batteryRepository)
-                val batteryConfig = batteryRepository.getConfig(wallet.testnet)
+                val batteryConfig = batteryRepository.getConfig(wallet.network)
                 val charges = BatteryMapper.calculateChargesAmount(
                     Coins.of(abs(extra)).value,
                     batteryConfig.chargeCost
                 )
                 val excessesAddress = batteryConfig.excessesAddress
+                val rates = ratesRepository.getTONRates(wallet.network, currency)
+                val converted = rates.convertTON(Coins.of(abs(extra)))
                 SendFee.Battery(
                     charges = charges,
                     chargesBalance = chargesBalance,
                     extra = extra,
                     excessesAddress = excessesAddress!!,
+                    fiatAmount = converted,
+                    fiatCurrency = currency,
                 )
             } else {
                 val fee = Fee(extra.value, extra.isRefund)
-                val rates = ratesRepository.getTONRates(currency)
+                val rates = ratesRepository.getTONRates(wallet.network, currency)
                 val converted = rates.convertTON(fee.value)
                 SendFee.Ton(
                     amount = fee,
@@ -102,12 +107,12 @@ data class Emulated(
         val fiat: Coins,
     )
 
-    suspend fun loadTokens(testnet: Boolean, tokenRepository: TokenRepository): List<TokenEntity> {
+    suspend fun loadTokens(network: TonNetwork, tokenRepository: TokenRepository): List<TokenEntity> {
         val jettonsAddress = jettons.map {
             it.jetton.address.toRawAddress()
         }
 
-        return tokenRepository.getTokens(testnet, jettonsAddress)
+        return tokenRepository.getTokens(network, jettonsAddress)
     }
 
 }

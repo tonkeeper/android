@@ -1,19 +1,6 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
     id("kotlin-parcelize")
-}
-
-android {
-    namespace = Build.namespacePrefix("wallet.data.core")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
 }
 
 dependencies {
@@ -27,14 +14,11 @@ dependencies {
     implementation(libs.ton.tonapiTl)
     implementation(libs.ton.contract)
     implementation(libs.koin.core)
-    implementation(libs.androidX.biometric)
-    implementation(project(ProjectModules.Wallet.api))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.blockchain))
-    implementation(project(ProjectModules.Lib.sqlite))
-    implementation(project(ProjectModules.Module.tonApi))
-    implementation(project(ProjectModules.UIKit.flag))
+    implementation(libs.androidx.biometric)
+    implementation(projects.apps.wallet.api)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.sqlite)
+    implementation(projects.tonapi.legacy)
+    implementation(projects.ui.uikit.flag)
 }
-
-
-

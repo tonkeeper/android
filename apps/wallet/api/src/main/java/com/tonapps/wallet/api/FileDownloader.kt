@@ -1,6 +1,6 @@
 package com.tonapps.wallet.api
 
-import android.util.Log
+import com.tonapps.log.L
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import okhttp3.OkHttpClient

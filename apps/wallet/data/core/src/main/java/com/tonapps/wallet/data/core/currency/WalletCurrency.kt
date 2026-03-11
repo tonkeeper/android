@@ -2,14 +2,14 @@ package com.tonapps.wallet.data.core.currency
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import androidx.annotation.DrawableRes
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.uikit.flag.getFlagDrawable
-import com.tonapps.wallet.api.R
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import androidx.core.net.toUri
+import com.tonapps.apps.wallet.api.R
 
 @Parcelize
 data class WalletCurrency(

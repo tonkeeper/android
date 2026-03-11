@@ -35,10 +35,16 @@ class SwapRepository(
 
     val assetsFlow = flow {
         emit(getAssets())
+        emit(getAssets(true))
     }.mapList { it.currency }.stateIn(scope, SharingStarted.Lazily, null).filterNotNull()
 
-    suspend fun getAssets(): List<SwapAssetEntity> = withContext(Dispatchers.IO) {
-        getCache(ASSETS_KEY) ?: loadAssets()
+    suspend fun getAssets(ignoreCache: Boolean = false): List<SwapAssetEntity> = withContext(Dispatchers.IO) {
+        val cached = if (ignoreCache) {
+            null
+        } else {
+            getCache(ASSETS_KEY)
+        }
+        cached ?: loadAssets()
     }
 
     private fun loadAssets(): List<SwapAssetEntity> {

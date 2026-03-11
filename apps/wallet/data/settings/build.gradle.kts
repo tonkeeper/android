@@ -1,14 +1,12 @@
 plugins {
-    id("com.tonapps.wallet.data")
-}
-
-android {
-    namespace = Build.namespacePrefix("wallet.data.settings")
+    id("target.android.library")
 }
 
 dependencies {
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Wallet.Data.rn))
-    implementation(project(ProjectModules.Wallet.localization))
+    implementation(libs.koin.core)
+
+    implementation(projects.lib.extensions)
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.rn)
+    implementation(projects.apps.wallet.localization)
 }

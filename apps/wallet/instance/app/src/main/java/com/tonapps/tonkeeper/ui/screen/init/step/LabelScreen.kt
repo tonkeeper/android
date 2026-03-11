@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.init.step
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
@@ -43,7 +43,7 @@ class LabelScreen: BaseFragment(R.layout.fragment_init_label) {
         }
 
         collectFlow(initViewModel.labelFlow) { label ->
-            Log.d("InitViewModelLog", "setNewLabel: $label")
+            L.d("InitViewModelLog", "setNewLabel: $label")
             with(editorView) {
                 name = label.name
                 emoji = label.emoji

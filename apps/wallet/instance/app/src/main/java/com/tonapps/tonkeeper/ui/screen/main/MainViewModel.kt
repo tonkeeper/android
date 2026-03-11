@@ -16,6 +16,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -37,7 +38,9 @@ class MainViewModel(
 
     val selectedWalletFlow = accountRepository.selectedWalletFlow
 
-    val disbleNftsFlow = api.configFlow.map { it.flags.disableNfts }
+    val disbleNftsFlow = combine(selectedWalletFlow, api.configFlow) { wallet, _ ->
+        api.getConfig(wallet.network).flags.disableNfts
+    }
 
     fun setBottomScrolled(value: Boolean) {
         _childBottomScrolled.tryEmit(value)
@@ -55,13 +58,13 @@ class MainViewModel(
     private fun prefetchTabs(wallet: WalletEntity, itemId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             if (itemId != R.id.activity) {
-                async { eventsRepository.get(wallet.accountId, wallet.testnet) }
+                async { eventsRepository.get(wallet.accountId, wallet.network) }
             }
             if (itemId != R.id.browser) {
                 async { prefetchBrowser(wallet) }
             }
             if (itemId != R.id.collectibles) {
-                async { collectiblesRepository.get(wallet.address, wallet.testnet) }
+                async { collectiblesRepository.get(wallet.address, wallet.network) }
             }
         }
     }
@@ -71,7 +74,7 @@ class MainViewModel(
 
         browserRepository.load(
             country = country,
-            testnet = wallet.testnet,
+            network = wallet.network,
             locale = settingsRepository.getLocale()
         )
     }

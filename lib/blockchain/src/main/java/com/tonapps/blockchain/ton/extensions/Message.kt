@@ -1,6 +1,6 @@
 package com.tonapps.blockchain.ton.extensions
 
-import android.util.Log
+import com.tonapps.log.L
 import org.ton.bitstring.BitString
 import org.ton.block.Either
 import org.ton.block.ExtInMsgInfo

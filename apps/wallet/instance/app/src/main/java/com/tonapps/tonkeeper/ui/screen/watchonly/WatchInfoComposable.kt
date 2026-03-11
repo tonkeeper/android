@@ -18,9 +18,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
-import ui.components.Header
 import ui.components.TextHeader
 import ui.components.button.TKButton
+import ui.components.moon.MoonTopAppBar
 import ui.theme.ButtonColorsPrimary
 import ui.theme.ButtonColorsSecondary
 import ui.theme.ButtonSizeLarge
@@ -37,7 +37,7 @@ fun SupportComposable(
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        Header(
+        MoonTopAppBar(
             title = "",
             actionIconRes = UIKitIcon.ic_close_16,
             onActionClick = { onContinueClick() },

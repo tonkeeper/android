@@ -1,17 +1,11 @@
 package com.tonapps.ledger.ble
 
 import android.content.Context
-import android.util.Log
-import androidx.lifecycle.viewModelScope
-import com.tonapps.ledger.ble.BleManagerFactory
 import com.tonapps.ledger.ble.model.BleDeviceModel
 import com.tonapps.ledger.devices.Devices
 import com.tonapps.ledger.ton.TonTransport
 import com.tonapps.ledger.transport.TransportStatusException
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 

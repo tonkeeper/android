@@ -26,7 +26,7 @@ suspend fun PurchaseRepository.getProvidersByCountry(
     settingsRepository: SettingsRepository,
     country: String
 ): List<PurchaseMethodEntity> = withContext(Dispatchers.IO) {
-    val methods = get(wallet.testnet, country, settingsRepository.getLocale()) ?: return@withContext emptyList()
+    val methods = get(wallet.network, country, settingsRepository.getLocale()) ?: return@withContext emptyList()
     val all = methods.first + methods.second
     all.map { it.items }.flatten().distinctBy { it.title }
 }

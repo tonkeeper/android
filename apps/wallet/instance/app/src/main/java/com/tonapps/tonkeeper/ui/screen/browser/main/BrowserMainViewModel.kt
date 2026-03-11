@@ -43,19 +43,20 @@ class BrowserMainViewModel(
         ConnectedItem(wallet, it)
     }
 
+    val isDappsDisabled: Boolean
+        get() = api.getConfig(wallet.network).flags.disableDApps
+
     private val _uiExploreItemsFlow = MutableStateFlow<List<ExploreItem>>(emptyList())
     val uiExploreItemsFlow = _uiExploreItemsFlow.asStateFlow()
 
     init {
-        val isDappsDisable = context.remoteConfig?.isDappsDisable == true
-
-        if (!isDappsDisable) {
+        if (!isDappsDisabled) {
             viewModelScope.launch(Dispatchers.IO) {
                 val code = environment.country
                 val locale = settingsRepository.getLocale()
                 _uiExploreItemsFlow.value = emptyList()
-                browserRepository.load(code, wallet.testnet, locale)?.let { setData(it) }
-                browserRepository.loadRemote(code, wallet.testnet, locale)?.let { setData(it) }
+                browserRepository.load(code, wallet.network, locale)?.let { setData(it) }
+                browserRepository.loadRemote(code, wallet.network, locale)?.let { setData(it) }
             }
         }
     }
@@ -83,7 +84,7 @@ class BrowserMainViewModel(
     private fun setData(data: BrowserDataEntity) {
         val items = mutableListOf<ExploreItem>()
         if (data.apps.isNotEmpty()) {
-            items.add(ExploreItem.Banners(data.apps, api.config.featuredPlayInterval, wallet, environment.country))
+            items.add(ExploreItem.Banners(data.apps, api.getConfig(wallet.network).featuredPlayInterval, wallet, environment.country))
         }
 
         var adsItem: ExploreItem.Ads? = null

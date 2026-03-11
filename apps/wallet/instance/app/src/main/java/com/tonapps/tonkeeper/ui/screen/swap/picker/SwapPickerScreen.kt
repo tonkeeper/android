@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.swap.picker
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle

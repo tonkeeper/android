@@ -112,7 +112,7 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.widget,
-        iconRes = com.tonapps.uikit.icon.R.drawable.ic_link_square_28,
+        iconRes = com.tonapps.ui.uikit.icon.R.drawable.ic_link_square_28,
         position = position,
         secondaryIcon = false,
         name = "widget"

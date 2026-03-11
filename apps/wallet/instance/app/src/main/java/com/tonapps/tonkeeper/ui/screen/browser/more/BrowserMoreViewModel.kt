@@ -23,7 +23,7 @@ class BrowserMoreViewModel(
 
     private val flow = browserRepository.dataFlow(
         country = settingsRepository.country,
-        testnet = wallet.testnet,
+        network = wallet.network,
         locale = settingsRepository.getLocale()
     ).map { it.categories }.map { categories ->
         categories.first { it.id == id }

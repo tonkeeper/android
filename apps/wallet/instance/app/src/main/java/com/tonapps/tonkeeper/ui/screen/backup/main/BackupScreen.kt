@@ -53,7 +53,9 @@ class BackupScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wal
     }
 
     private fun openRecoveryPhrase(backup: Boolean = false, backupId: Long = 0) {
-        viewModel.getRecoveryPhrase(requireContext()) { words, error ->
+        val ctx = context ?: return
+
+        viewModel.getRecoveryPhrase(ctx) { words, error ->
             if (error != null) {
                 navigation?.toast(error.bestMessage)
             } else {

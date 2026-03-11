@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.transaction
 
 import android.app.Application
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -43,10 +43,10 @@ class TransactionViewModel(
                         comment = comment,
                         recipient = wallet.accountId
                     )
-                    eventsRepository.markAsSpam(wallet.accountId, wallet.testnet, txId)
+                    eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)
                 } catch (ignored: Throwable) {}
             } else {
-                eventsRepository.removeSpam(wallet.accountId, wallet.testnet, txId)
+                eventsRepository.removeSpam(wallet.accountId, wallet.network, txId)
             }
             withContext(Dispatchers.Main) {
                 callback()

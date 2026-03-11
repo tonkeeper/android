@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake
 
 import android.os.Bundle
 import android.view.View
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext

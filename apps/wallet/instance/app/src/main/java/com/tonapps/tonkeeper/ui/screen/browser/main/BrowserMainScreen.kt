@@ -159,11 +159,9 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
             collectFlow(insets, ::onApplyWindowInsets)
         }
 
-        val isDappsDisable = requireContext().remoteConfig?.isDappsDisable == true
+        exploreTabView.isVisible = !viewModel.isDappsDisabled
 
-        exploreTabView.isVisible = !isDappsDisable
-
-        clickTab(if (isDappsDisable) connectedTabView else exploreTabView, animated = false)
+        clickTab(if (viewModel.isDappsDisabled) connectedTabView else exploreTabView, animated = false)
     }
 
     private fun onApplyWindowInsets(insets: WindowInsetsCompat) {

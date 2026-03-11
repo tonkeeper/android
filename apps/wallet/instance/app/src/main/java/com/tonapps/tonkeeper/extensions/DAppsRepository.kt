@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.extensions
 
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.filterList
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.account.entities.WalletEntity
@@ -53,7 +53,7 @@ suspend fun DAppsRepository.getAppFixIcon(
     var app = getApp(url)
     val browserApp = browserRepository.getApp(
         country = settingsRepository.country,
-        testnet = wallet.testnet,
+        network = wallet.network,
         locale = settingsRepository.getLocale(),
         uri = url
     )

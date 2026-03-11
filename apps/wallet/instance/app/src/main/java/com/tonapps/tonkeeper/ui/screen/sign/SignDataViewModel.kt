@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.sign
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
 import com.tonapps.blockchain.ton.TONOpCode

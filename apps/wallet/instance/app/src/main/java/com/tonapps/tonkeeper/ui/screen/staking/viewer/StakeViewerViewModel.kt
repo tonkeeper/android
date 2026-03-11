@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 class StakeViewerViewModel(
     app: Application,
@@ -45,7 +46,7 @@ class StakeViewerViewModel(
 ) : BaseWalletVM(app) {
 
     val usdeDisabled: Boolean
-        get() = api.config.flags.disableUsde
+        get() = api.getConfig(wallet.network).flags.disableUsde
 
     private val ethenaMethodType: EthenaEntity.Method.Type? =
         if (ethenaType.isNotEmpty()) EthenaEntity.Method.Type.fromId(ethenaType) else null
@@ -77,6 +78,7 @@ class StakeViewerViewModel(
         }
 
         val rates = ratesRepository.getRates(
+            wallet.network,
             settingsRepository.currency,
             listOfNotNull(tokenUsde.address, tokenTsUsde.address)
         )
@@ -102,12 +104,14 @@ class StakeViewerViewModel(
                 hiddenBalance = settingsRepository.hiddenBalances,
             )
         )
-        if (!usdeDisabled) {
+
+        if (!usdeDisabled || balance.isPositive) {
             uiItems.add(
                 Item.Actions(
                     wallet = wallet,
                     ethenaMethod = method,
-                    unstakeDisabled = balance.isZero
+                    unstakeDisabled = balance.isZero,
+                    stakeDisabled = usdeDisabled,
                 )
             )
             uiItems.add(Item.Space)
@@ -170,7 +174,7 @@ class StakeViewerViewModel(
         val liquidToken = staked.liquidToken
         val currencyCode = TokenEntity.TON.symbol
         val rates = ratesRepository.getRates(
-            currency, listOfNotNull(
+            wallet.network, currency, listOfNotNull(
                 currencyCode, liquidToken?.token?.address
             )
         )
@@ -192,13 +196,16 @@ class StakeViewerViewModel(
             )
         )
 
-        val stakingDisabled = !api.config.enabledStaking.contains(staked.pool.implementation.title) || api.config.flags.disableStaking
+        val config = api.getConfig(wallet.network)
+        val stakingDisabled = !config.enabledStaking.contains(staked.pool.implementation.title) || config.flags.disableStaking
 
-        if (!stakingDisabled) {
+        if (!stakingDisabled || amount.isPositive) {
             uiItems.add(
                 Item.Actions(
                     wallet = wallet,
                     poolAddress = poolAddress,
+                    unstakeDisabled = amount.isZero,
+                    stakeDisabled = stakingDisabled,
                 )
             )
         }
@@ -268,7 +275,7 @@ class StakeViewerViewModel(
 
     private suspend fun getData(refresh: Boolean = false) {
         val tokens =
-            tokenRepository.get(currency, wallet.accountId, wallet.testnet, refresh = refresh)
+            tokenRepository.get(currency, wallet.accountId, wallet.network, refresh = refresh)
                 ?: return
         _tokensFlow.value = tokens
 
@@ -279,7 +286,7 @@ class StakeViewerViewModel(
         }
         ethenaData?.let { _ethenaDataFlow.value = it }
 
-        val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+        val staking = stakingRepository.get(wallet.accountId, wallet.network)
         val staked =
             StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
         val item = staked.find { it.pool.address.equalsAddress(poolAddress) } ?: return

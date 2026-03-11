@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.token.viewer.list
 
 import android.net.Uri
 import com.tonapps.icu.Coins
-import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.asCurrency
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListItem
@@ -28,6 +27,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_SPACE = 7
         const val TYPE_ETHENA_BALANCE = 8
         const val TYPE_ETHENA_METHOD = 9
+        const val TYPE_TRON_BANNER = 10
     }
 
     data class Balance(
@@ -37,6 +37,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val showNetwork: Boolean,
         val blockchain: Blockchain,
         val hiddenBalance: Boolean,
+        val wallet: WalletEntity,
+        val availableTransfers: Int?,
     ): Item(TYPE_BALANCE) {
         val networkIconRes: Int
             get() = when (blockchain) {
@@ -50,6 +52,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val swapUri: Uri,
         val tronSwapUrl: String?,
         val swapDisabled: Boolean,
+        val tronTransfersDisabled: Boolean,
         val token: TokenEntity,
     ): Item(TYPE_ACTIONS) {
 
@@ -154,4 +157,11 @@ sealed class Item(type: Int): BaseListItem(type) {
                 }
             }
     }
+
+    data class TronBanner(
+        val wallet: WalletEntity,
+        val trxAmountFormat: CharSequence,
+        val trxBalanceFormat: CharSequence,
+        val onlyTrx: Boolean
+    ): Item(TYPE_TRON_BANNER)
 }

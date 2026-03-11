@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.lifecycleScope

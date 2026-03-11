@@ -11,13 +11,12 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import com.google.zxing.qrcode.encoder.ByteMatrix
 import com.google.zxing.qrcode.encoder.Encoder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.tonapps.async.Async
 import kotlin.math.roundToInt
 
 object QR {
 
-    val scope = CoroutineScope(Dispatchers.Main)
+    val scope = Async.mainScope()
 
     class Builder(private val content: String) {
         private var fillColor = Color.BLACK

@@ -10,7 +10,7 @@ import android.graphics.RectF
 import android.graphics.Region
 import android.graphics.text.MeasuredText
 import android.os.Build
-import android.util.Log
+import com.tonapps.log.L
 
 class SimpleCanvas(bitmap: Bitmap): Canvas(bitmap) {
 

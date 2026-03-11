@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,15 +29,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
-import ui.components.Header
 import ui.components.TextHeader
 import ui.components.button.TKButton
+import ui.components.moon.MoonTopAppBar
 import ui.theme.ButtonColorsPrimary
 import ui.theme.ButtonColorsSecondary
 import ui.theme.ButtonSizeLarge
@@ -128,7 +126,7 @@ fun SupportComposable(
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        Header(
+        MoonTopAppBar(
             title = "",
             actionIconRes = UIKitIcon.ic_close_16,
             onActionClick = { onCloseClick() },

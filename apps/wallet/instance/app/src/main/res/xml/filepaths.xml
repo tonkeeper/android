@@ -6,4 +6,10 @@
     <external-path
         name="external"
         path="Download" />
+    <files-path
+        name="file_paths"
+        path="/shared" />
+    <cache-path
+        name="cache_paths"
+        path="/shared" />
 </paths>

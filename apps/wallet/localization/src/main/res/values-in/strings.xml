@@ -550,6 +550,7 @@
     <string name="open_explorer">Buka di penjelajah</string>
     <string name="out_of_available_charges">habis %1$s tersedia</string>
     <string name="tron_toggle_text">Gunakan USD₮ TRC20 tanpa TRX. Biaya ditanggung oleh Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">Transfer USD₮ memerlukan TRX untuk biaya jaringan.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Salin Frasa</string>
     <string name="export_tron">Ekspor Dompet TRC20</string>
@@ -623,6 +624,36 @@
     <plurals name="legacy_subscriptions_alert_message">
         <item quantity="other">Beberapa mungkin terus menagih dompet Anda. Nonaktifkan untuk menghindari pembayaran selanjutnya.</item>
     </plurals>
-
+    <string name="no_enough_funds">Dana tidak cukup</string>
+    <string name="refill">Isi ulang</string>
+    <string name="get_token">Dapatkan %1$s</string>
+    <string name="insufficient_trx_balance">TRX tidak cukup untuk membayar biaya transaksi</string>
+    <string name="insufficient_trx_balance_desc">Pilih metode pembayaran biaya dan isi ulang.</string>
+    <string name="tron_not_enough_for_fee_title">Dana tidak cukup untuk biaya</string>
+    <string name="tron_not_enough_for_fee_desc">Isi ulang Battery, TON, atau saldo TRX untuk membayar biaya.</string>
+    <string name="top_up">Isi ulang</string>
+    <string name="tron_not_enough_trx_for_fee_title">TRX tidak cukup untuk membayar biaya</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Diperlukan untuk biaya ≈ %1$s. Saldo Anda: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer tersedia</item>
+        <item quantity="few">%1$s transfer tersedia</item>
+        <item quantity="many">%1$s transfer tersedia</item>
+        <item quantity="other">%1$s transfer tersedia</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfer</item>
+        <item quantity="many">%1$s transfer</item>
+        <item quantity="other">%1$s transfer</item>
+    </plurals>
+    <string name="trx_balance">Saldo TRX</string>
+    <string name="trx_balance_desc">Isi saldo Anda untuk membayar biaya jaringan.</string>
+    <string name="blockchain_fees">Biaya Blockchain</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery adalah cara termudah untuk membayar biaya blockchain. Anda juga bisa isi ulang dengan TON dan TRX.</string>
+    <string name="required_prefix">Diperlukan: %1$s</string>
+    <string name="tron_fees_learn_more">Biaya berubah secara real-time sesuai kondisi pasar. <annotation colorAttr="textAccentColor">Pelajari lebih lanjut</annotation></string>
+    <string name="tetra_subtitle">Hubungkan jaringan Tetra L2</string>
+    <string name="other_options">Opsi lainnya</string>
+    <string name="for_developers">Untuk pengembang</string>
 
 </resources>

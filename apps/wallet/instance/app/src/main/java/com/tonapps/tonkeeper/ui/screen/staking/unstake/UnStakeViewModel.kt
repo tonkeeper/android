@@ -117,7 +117,7 @@ class UnStakeViewModel(
     ) { amount, stake ->
         val balance = stake.balance
         val balanceFormat = CurrencyFormatter.format(token, balance)
-        val rates = ratesRepository.getRates(currency, token)
+        val rates = ratesRepository.getRates(wallet.network, currency, token)
         val fiat = rates.convert(token, amount)
         val fiatFormat = CurrencyFormatter.format(currency.code, fiat, replaceSymbol = false)
         if (amount == Coins.ZERO) {
@@ -148,7 +148,7 @@ class UnStakeViewModel(
 
     val tokenFlow = poolFlow.map { pool ->
         val tokens =
-            tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
+            tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.network)
                 ?: emptyList()
         
         tokens.firstOrNull()
@@ -175,7 +175,7 @@ class UnStakeViewModel(
             _stakeFlow.value = staked
             _poolInfoFlow.value = stakingRepository.get(
                 wallet.accountId,
-                wallet.testnet
+                wallet.network
             ).pools.find { it.implementation == staked?.pool?.implementation }
         }
     }
@@ -206,7 +206,7 @@ class UnStakeViewModel(
         poolFlow
     ) { extra, pool ->
         val currency = settingsRepository.currency
-        val rates = ratesRepository.getTONRates(currency)
+        val rates = ratesRepository.getTONRates(wallet.network, currency)
         val fee = StakingPool.getTotalFee(extra.value, pool.implementation)
 
         val fiat = rates.convertTON(fee)
@@ -294,7 +294,7 @@ class UnStakeViewModel(
         val tokens = tokenRepository.get(
             currency = settingsRepository.currency,
             accountId = wallet.accountId,
-            testnet = wallet.testnet
+            network = wallet.network
         ) ?: return null
         return tokens.find { it.address.equalsAddress(tokenAddress) }
     }
@@ -311,7 +311,7 @@ class UnStakeViewModel(
             testnet = wallet.testnet
         )
 
-        val rates = ratesRepository.getRates(WalletCurrency.TON, tsTONToken.address)
+        val rates = ratesRepository.getRates(wallet.network, WalletCurrency.TON, tsTONToken.address)
         val tokenRate = rates.getRate(tsTONToken.address)
         val convertedAmount = Coins.of((amount / tokenRate).value, tsTONToken.decimals)
 
@@ -370,7 +370,7 @@ class UnStakeViewModel(
         wallet: WalletEntity,
     ): SendMetadataEntity = withContext(Dispatchers.IO) {
         val seqnoDeferred = async { accountRepository.getSeqno(wallet) }
-        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.testnet) }
+        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.network) }
 
         SendMetadataEntity(
             seqno = seqnoDeferred.await(),
@@ -381,8 +381,8 @@ class UnStakeViewModel(
     private suspend fun loadStake(): StakedEntity? {
         try {
             val tokens =
-                tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: return null
-            val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
+                tokenRepository.get(currency, wallet.accountId, wallet.network) ?: return null
+            val staking = stakingRepository.get(wallet.accountId, wallet.network)
             val staked =
                 StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
             return staked.find { it.pool.address.equalsAddress(poolAddress) }

@@ -2,6 +2,7 @@ package com.tonapps.emoji
 
 import androidx.annotation.DrawableRes
 import java.util.concurrent.ConcurrentHashMap
+import com.tonapps.lib.emoji.R
 
 internal class CustomIcons {
 

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.core.history
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
@@ -14,12 +15,12 @@ import io.tonapi.models.Action
 import io.tonapi.models.JettonSwapAction
 import io.tonapi.models.JettonTransferAction
 
-suspend fun Action.getTonAmountRaw(ratesRepository: RatesRepository): Coins {
+suspend fun Action.getTonAmountRaw(network: TonNetwork, ratesRepository: RatesRepository): Coins {
     val tonAmount = tonTransfer?.let { Coins.of(it.amount) }
     val jettonAmountInTON = jettonTransfer?.let {
         val amountCoins = it.amountCoins
         val jettonAddress = it.jetton.address
-        val rates = ratesRepository.getRates(WalletCurrency.TON, jettonAddress)
+        val rates = ratesRepository.getRates(network, WalletCurrency.TON, jettonAddress)
         rates.convert(jettonAddress, amountCoins)
     }
     return tonAmount ?: jettonAmountInTON ?: Coins.ZERO

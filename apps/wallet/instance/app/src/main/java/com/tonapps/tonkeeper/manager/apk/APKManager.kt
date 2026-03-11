@@ -7,14 +7,11 @@ import android.os.Build
 import android.os.Environment
 import android.os.Parcelable
 import android.provider.Settings
-import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.file
-import com.tonapps.extensions.getParcelable
-import com.tonapps.extensions.putParcelable
 import com.tonapps.tonkeeper.RemoteConfig
 import com.tonapps.tonkeeper.extensions.safeCanRequestPackageInstalls
 import com.tonapps.tonkeeper.worker.ApkDownloadWorker

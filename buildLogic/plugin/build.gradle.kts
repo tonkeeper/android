@@ -1,17 +1,21 @@
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     `kotlin-dsl`
 }
 
 dependencies {
-    implementation("com.android.tools.build:gradle:8.12.3")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0")
+    implementation(libs.kotlin.plugin)
+    implementation(libs.android.plugin)
 }
 
-gradlePlugin {
-    plugins {
-        register("androidLibrary") {
-            id = "com.tonapps.wallet.data"
-            implementationClass = "WalletDataPlugin"
+allprojects {
+    tasks.withType<KotlinCompile> {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            freeCompilerArgs.addAll(listOf("-Xcontext-parameters"))
         }
     }
 }

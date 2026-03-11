@@ -3,7 +3,7 @@ package com.tonapps.wallet.data.core
 import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.file

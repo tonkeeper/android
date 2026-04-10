@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.manager.tonconnect
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import androidx.core.net.toUri
 import com.tonapps.extensions.getMultipleQuery
 import com.tonapps.security.Security

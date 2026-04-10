@@ -13,8 +13,8 @@ import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.SkeletonHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.WalletHolder
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 import java.util.Collections
 

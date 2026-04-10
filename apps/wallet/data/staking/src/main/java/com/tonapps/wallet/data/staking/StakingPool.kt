@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.staking
 
+import com.tonapps.apps.wallet.data.staking.R
 import com.tonapps.icu.Coins
 import io.tonapi.models.PoolImplementationType
 

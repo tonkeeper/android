@@ -65,6 +65,7 @@
     <string name="other">其他</string>
     <string name="minimum_amount">最低 %1$s</string>
     <string name="min_amount">最低金额：%1$s</string>
+    <string name="min_amount_label">最小金额</string>
     <string name="stake_ethena_description">tsUSDe 代币代表通过 Ethena（一种去中心化的质押服务）持有的 USDe。tsUSDe 会自动累积质押奖励，且锁定时间最少。</string>
     <string name="stake_ethena_disclaimer">这是根据过去一周的平均协议奖励和平均质押 USDe 数量估算的年化收益。收益按周复利计算，以年化形式呈现。<annotation colorAttr="textSecondaryColor">过往表现不保证未来结果。</annotation> 质押和奖励由第三方服务商 Ethena 提供，并受其<annotation colorAttr="textAccentColor">条款</annotation>约束。</string>
     <string name="stake_tonstakers_description">当您在 Tonstakers 池中质押 TON 时，您会收到一个名为 tsTON 的代币，它代表您在池中的份额。随着池子积累利润，您的 tsTON 代表的 TON 数量会越来越多。</string>
@@ -414,7 +415,7 @@
     <string name="testers_chat">报告错误（在 Telegram 中聊天）</string>
     <string name="battery">电池</string>
     <string name="battery_refill_title">Tonkeeper 电池</string>
-    <string name="battery_refill_subtitle">通过 Tonkeeper 交换，发送代币和 NFT。</string>
+    <string name="battery_refill_subtitle">兑换和发送 TON 代币，并减少 TRC-20 手续费</string>
     <plurals name="battery_charges">
         <item quantity="other">%1$s 次充电</item>
     </plurals>
@@ -424,7 +425,6 @@
     <string name="battery_supported_transaction">支持的交易</string>
     <string name="transactions">交易</string>
     <string name="battery_settings">电池设置</string>
-    <string name="battery_will_be_paid">将支付：%1$s</string>
     <string name="battery_nft">NFT 转账</string>
     <string name="battery_swap">通过 Tonkeeper 交换</string>
     <string name="battery_jetton">代币转账</string>
@@ -441,6 +441,7 @@
     <string name="battery_other_title">其他</string>
     <string name="battery_other_subtitle">手动输入金额</string>
     <string name="battery_max_input_amount">最大输入金额为 %1$s</string>
+    <string name="battery_excess">%1$s 退款</string>
     <string name="battery_please_wait">电池将在几分钟内充电</string>
     <string name="battery_refund_title">收费记录</string>
     <string name="battery_refund_subtitle">充值和退款</string>
@@ -471,6 +472,7 @@
     <string name="staking_pending_withdraw_liquid">周期结束后，%1$s 被取消质押</string>
     <string name="expired_link">链接已过期</string>
     <string name="payment_method_not_found">付款方式不可用</string>
+    <string name="no_available_provider">没有可用的提供商</string>
     <string name="app_not_found">未找到应用程序</string>
     <string name="insufficient_balance_in_wallet">钱包资金不足</string>
     <string name="insufficient_balance_fees">区块链费用所需：%1$s。\n您的余额：%2$s。</string>
@@ -552,6 +554,7 @@
     <string name="open_explorer">在浏览器中打开</string>
     <string name="out_of_available_charges">已用完 %1$s 可用额度</string>
     <string name="tron_toggle_text">使用 USD₮ TRC20，无需 TRX。手续费由 Tonkeeper Battery 支付。</string>
+    <string name="tron_toggle_trc_text">USD₮ 转账需要 TRX 来支付网络手续费。</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">复制助记词</string>
     <string name="export_tron">导出 TRC20 钱包</string>
@@ -583,8 +586,9 @@
     <string name="currency_not_found">未找到货币</string>
     <string name="onrmap_provider_description">其他提供商可提供不同的货币对。</string>
     <string name="support_title">需要帮助吗？</string>
-    <string name="support_subtitle">在 Telegram 上联系我，我们会尽力提供帮助。</string>
-    <string name="ask_question">提出问题</string>
+    <string name="support_subtitle">通过 Telegram 或电子邮件联系我们，我们会尽力提供帮助。</string>
+    <string name="ask_question">在 Telegram 上提问</string>
+    <string name="email_us">通过电子邮件联系</string>
     <string name="renew_dns_title">域名到期</string>
     <string name="renew_dns_expires">%1$d 天后过期</string>
     <string name="wallet_renew_dns">您有 %1$d 个域名即将过期。请全部续订至 %2$s。</string>
@@ -605,6 +609,7 @@
     <string name="about_ethena">关于 Ethena</string>
     <string name="swap_disclaimer">服务由 %1$s 提供 \n%2$s · %3$s</string>
     <string name="terms_of_use">使用条款</string>
+    <string name="start_agree">继续即表示您同意我们的<annotation colorAttr="textAccentColor">使用条款</annotation></string>
     <string name="privacy_policy">隐私政策</string>
     <string name="invalid_address">钱包地址无效。</string>
     <string name="scam_address_error">不支持向该地址转账。</string>
@@ -623,5 +628,110 @@
     <plurals name="legacy_subscriptions_alert_message">
         <item quantity="other">它可能仍会从您的钱包扣费。请禁用以避免进一步付款。</item>
     </plurals>
+    <string name="no_enough_funds">资金不足</string>
+    <string name="refill">充值</string>
+    <string name="get_token">获取 %1$s</string>
+    <string name="insufficient_trx_balance">TRX 余额不足，无法支付交易手续费</string>
+    <string name="insufficient_trx_balance_desc">请选择手续费支付方式并充值。</string>
+    <string name="tron_not_enough_for_fee_title">余额不足以支付手续费</string>
+    <string name="tron_not_enough_for_fee_desc">请充值 Battery、TON 或 TRX 以支付手续费。</string>
+    <string name="top_up">充值</string>
+    <string name="tron_not_enough_trx_for_fee_title">TRX 不足以支付手续费</string>
+    <string name="tron_not_enough_trx_for_fee_desc">所需手续费 ≈ %1$s。您的余额：%2$s。</string>
+    <plurals name="transfers_available">
+        <item quantity="one">可进行 %1$s 次转账</item>
+        <item quantity="few">可进行 %1$s 次转账</item>
+        <item quantity="many">可进行 %1$s 次转账</item>
+        <item quantity="other">可进行 %1$s 次转账</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s 次转账</item>
+        <item quantity="few">%1$s 次转账</item>
+        <item quantity="many">%1$s 次转账</item>
+        <item quantity="other">%1$s 次转账</item>
+    </plurals>
+    <string name="trx_balance">TRX 余额</string>
+    <string name="trx_balance_desc">请充值余额以支付网络费用。</string>
+    <string name="blockchain_fees">区块链手续费</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery 是支付区块链手续费的最简单方式。您也可以直接充值 TON 或 TRX。</string>
+    <string name="required_prefix">需要：%1$s</string>
+    <string name="tron_fees_learn_more">手续费会根据市场情况实时变化。<annotation colorAttr="textAccentColor">了解更多</annotation></string>
+    <string name="tetra_subtitle">连接 Tetra L2 网络</string>
+    <string name="other_options">其他选项</string>
+    <string name="for_developers">面向开发者</string>
 
+    <string name="more">更多</string>
+    <string name="retry">重试</string>
+    <string name="operation">操作</string>
+    <string name="description">描述</string>
+    <string name="protocol">协议</string>
+    <string name="cant_find_anything">未找到任何内容。</string>
+
+    <string name="deposit_from_another_wallet">从其他 TON/TRON 钱包</string>
+    <string name="deposit_send">发送 %s</string>
+    <string name="deposit_address">%s 地址</string>
+    <string name="deposit_to_another_wallet">转到其他钱包</string>
+    <string name="deposit_with_cash_or_crypto">使用现金或加密货币充值</string>
+    <string name="withdraw_with_cash_or_crypto">使用现金或加密货币提现</string>
+    <string name="deposit_available_cash_out">可从其他加密货币获取</string>
+    <string name="deposit_available_cross_chain">可用 1:1 跨链</string>
+    <string name="deposit_insert_amount">输入金额</string>
+    <string name="deposit_buy_with_cash">用现金购买</string>
+    <string name="deposit_buy_with_crypto">用加密货币购买</string>
+    <string name="deposit_buy_with_stablecoins">用稳定币购买</string>
+    <string name="ramp_sell_with_cash">用现金出售</string>
+    <string name="ramp_sell_with_crypto">用加密货币出售</string>
+    <string name="ramp_sell_with_stablecoins">用稳定币出售</string>
+    <string name="ramp_stablecoins_convertion">"将在 TON 网络上以 1:1 汇率转换为 USDT</string>
+    <string name="ramp_crypto_swap_info">您的加密货币将按当前汇率兑换为 TON。</string>
+    <string name="ramp_stablecoin_buy_info">您的稳定币将以 1:1 的比率作为 %1$s 存入 %2$s 网络。</string>
+    <string name="ramp_stablecoin_sell_info">将 USDT 提取为其他稳定币。每个网络收取固定费用。</string>
+    <string name="ramp_total_amount">总金额</string>
+    <string name="ramp_estimated_time">预计到账时间</string>
+    <string name="ramp_withdrawal_time">提现时间</string>
+    <string name="ramp_withdrawal_fee">提现手续费</string>
+    <string name="deposit_network_warning">请确保选择正确的网络，否则可能会导致资金丢失。</string>
+    <string name="deposit_go_to_main">返回主页</string>
+    <string name="deposit_payment_qr_code">付款二维码</string>
+    <string name="deposit_scan_qr_description">扫描二维码或复制地址以完成付款。</string>
+    <string name="deposit_min_amount_with_currency">最小金额：%1$s %2$s</string>
+    <string name="deposit_max_amount_with_currency">最大金额：%1$s %2$s</string>
+    <string name="deposit_other_providers_hint">其他供应商提供不同的货币对。</string>
+    <string name="deposit_changelly_disclaimer">由 Changelly 提供的第三方服务。使用此服务即表示您同意 %s。</string>
+    <string name="deposit_address_warning_prefix">此\u0020</string>
+    <string name="deposit_address_warning_highlight">地址只能使用一次</string>
+    <string name="deposit_address_warning_suffix">。请检查充值限额和网络，以避免资金丢失。</string>
+
+    <string name="terms_of_service">服务条款</string>
+    <string name="receive_tokens">接收代币</string>
+    <string name="send_tokens">发送代币</string>
+    <string name="withdraw">提现</string>
+    <string name="deposit">充值</string>
+    <string name="choose_network">选择网络</string>
+    <string name="copy_address">复制地址</string>
+    <string name="choose_currency">选择货币</string>
+    <string name="send_currency">发送 %s</string>
+    <string name="receive_currency">接收 %s</string>
+    <string name="min_deposit">最小充值</string>
+    <string name="max_deposit">最大充值</string>
+    <string name="max_amount">最大金额：%s</string>
+    <string name="max_amount_label">最大金额</string>
+    <string name="available">可用：%s</string>
+    <string name="network">网络</string>
+
+    <string name="added_extension">已添加扩展</string>
+    <string name="removed_extension">已移除扩展</string>
+    <string name="signature_allowed">已允许签名</string>
+    <string name="signature_not_allowed">不允许签名</string>
+    <string name="up_to_duration">最多 %1$s %2$s</string>
+    <string name="time_seconds">秒</string>
+    <string name="time_minutes">分钟</string>
+    <string name="deposit_select_network_description">随时通过"提现"部分将 %s 提取到支持的网络。</string>
+    <string name="choose_network_error">选择 %s 网络</string>
+    <string name="choose_asset">选择资产</string>
+    <string name="add_funds">充值</string>
+    <string name="tooltip_new">新</string>
+    <string name="tooltip_send_from_here">从这里发送</string>
+    <string name="trade">交易</string>
+    <string name="search_by_ticker">按代码或名称搜索</string>
 </resources>

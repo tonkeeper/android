@@ -4,7 +4,7 @@ import android.app.Application
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.extensions.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.plugins.PluginsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
@@ -18,7 +18,7 @@ class ExtensionsViewModel(
 
     val uiItemsFlow = pluginsRepository.updatedFlow.map { _ ->
         val plugins =
-            pluginsRepository.getPlugins(wallet.accountId, wallet.testnet, refresh = false)
+            pluginsRepository.getPlugins(wallet.accountId, wallet.network, refresh = false)
         plugins.mapIndexed { index, plugin ->
             Item.Plugin(
                 plugin = plugin,

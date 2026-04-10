@@ -1,8 +1,10 @@
 package com.tonapps.tonkeeper
 
 import android.content.Context
+import androidx.compose.runtime.Composable
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.tonapps.core.helper.EnvironmentHelper
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.isDarkMode
 import com.tonapps.tonkeeper.os.AppInstall
@@ -14,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapNotNull
 import ui.theme.AppColorScheme
-import ui.theme.UIKit
 import ui.theme.appColorSchemeBlue
 import ui.theme.appColorSchemeDark
 import ui.theme.appColorSchemeLight
@@ -23,7 +24,7 @@ import java.util.Locale
 class Environment(
     private val context: Context,
     private val settingsRepository: SettingsRepository,
-) {
+) : EnvironmentHelper.Delegate {
 
     data class CountryData(
         val fromStore: String? = null,
@@ -31,6 +32,8 @@ class Environment(
         val byNetwork: String? = null,
         val byIPAddress: String? = null,
         val byLocale: String? = null,
+        val timeZone: String? = null,
+        val isUsingVpn: Boolean = false,
         val debug: String? = null,
     ) {
 
@@ -48,45 +51,35 @@ class Environment(
     val countryDataFlow = _countryDataFlow.asStateFlow()
     val countryFlow = _countryDataFlow.asStateFlow().mapNotNull { it.value }.distinctUntilChanged()
 
-    val country: String
+    val deviceCountry: String
         get() = _countryDataFlow.value.value ?: Locale.getDefault().country
 
     val storeCountry: String?
         get() = _countryDataFlow.value.storeCountry
 
+    val simCountry: String?
+        get() = _countryDataFlow.value.bySimCard
+
+    val timezone: String?
+        get() = _countryDataFlow.value.timeZone
+
+    val vpnActive: Boolean
+        get() = _countryDataFlow.value.isUsingVpn
+
+
     init {
         setDebugCountry(DevSettings.country)
-        setCountryBySimCard(DeviceCountry.fromSIM(context))
-        setCountryByNetwork(DeviceCountry.fromNetwork(context))
-        setCountryByLocale(DeviceCountry.fromLocale())
+
+        _countryDataFlow.value = _countryDataFlow.value.copy(
+            bySimCard = DeviceCountry.fromSIM(context)?.uppercase(),
+            byNetwork = DeviceCountry.fromNetwork(context)?.uppercase(),
+            byLocale = DeviceCountry.fromLocale()?.uppercase(),
+            timeZone = DeviceCountry.timeZone(),
+            isUsingVpn = DeviceCountry.isUsingVpn(context)
+        )
     }
 
-    fun setDebugCountry(country: String?) {
-        if (BuildConfig.DEBUG) {
-            _countryDataFlow.value = _countryDataFlow.value.copy(debug = country?.uppercase())
-        }
-    }
-
-    fun setCountryFromStore(country: String?) {
-        _countryDataFlow.value = _countryDataFlow.value.copy(fromStore = country?.uppercase())
-    }
-
-    fun setCountryBySimCard(country: String?) {
-        _countryDataFlow.value = _countryDataFlow.value.copy(bySimCard = country?.uppercase())
-    }
-
-    fun setCountryByNetwork(country: String?) {
-        _countryDataFlow.value = _countryDataFlow.value.copy(byNetwork = country?.uppercase())
-    }
-
-    fun setCountryByIPAddress(country: String?) {
-        _countryDataFlow.value = _countryDataFlow.value.copy(byIPAddress = country?.uppercase())
-    }
-
-    fun setCountryByLocale(country: String?) {
-        _countryDataFlow.value = _countryDataFlow.value.copy(byLocale = country?.uppercase())
-    }
-
+    @get:Composable
     val theme: AppColorScheme
         get() {
             return when(settingsRepository.theme.key) {
@@ -100,13 +93,47 @@ class Environment(
     val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
 
     val isFromGooglePlay: Boolean by lazy {
-        installerSource == AppInstall.Source.GOOGLE_PLAY
+        installerSource == AppInstall.Source.GOOGLE_PLAY || installerSource == AppInstall.Source.AURORA_STORE
     }
 
     val isGooglePlayServicesAvailable: Boolean by lazy {
         val googleApiAvailability = GoogleApiAvailability.getInstance()
         val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
         resultCode == ConnectionResult.SUCCESS
+    }
+
+    fun setDebugCountry(country: String?) {
+        if (BuildConfig.DEBUG) {
+            _countryDataFlow.value = _countryDataFlow.value.copy(debug = country?.uppercase())
+        }
+    }
+
+    fun setCountryFromStore(country: String?) {
+        _countryDataFlow.value = _countryDataFlow.value.copy(fromStore = country?.uppercase())
+    }
+
+    fun setCountryByIPAddress(country: String?) {
+        _countryDataFlow.value = _countryDataFlow.value.copy(byIPAddress = country?.uppercase())
+    }
+
+    override fun deviceCountry(): String {
+        return deviceCountry
+    }
+
+    override fun storeCountry(): String? {
+        return storeCountry
+    }
+
+    override fun simCountry(): String? {
+        return simCountry
+    }
+
+    override fun timezone(): String? {
+        return timezone
+    }
+
+    override fun isVpnActive(): Boolean {
+        return vpnActive
     }
 
     private companion object {

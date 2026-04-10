@@ -412,7 +412,7 @@
     <string name="testers_chat">Laporkan bug (obrolan di Telegram)</string>
     <string name="battery">Baterai</string>
     <string name="battery_refill_title">Baterai Tonkeeper</string>
-    <string name="battery_refill_subtitle">Tukar melalui Tonkeeper, kirim token dan NFT.</string>
+    <string name="battery_refill_subtitle">Tukar dan kirim token TON dan bayar lebih sedikit biaya TRC-20</string>
     <plurals name="battery_charges">
         <item quantity="other">%1$s pengisian</item>
     </plurals>
@@ -422,7 +422,6 @@
     <string name="battery_supported_transaction">Transaksi yang didukung</string>
     <string name="transactions">Transaksi</string>
     <string name="battery_settings">Pengaturan Baterai</string>
-    <string name="battery_will_be_paid">Akan dibayar: %1$s</string>
     <string name="battery_nft">Transfer NFT</string>
     <string name="battery_swap">penukaran melalui Tonkeeper</string>
     <string name="battery_jetton">transfer token</string>
@@ -439,6 +438,7 @@
     <string name="battery_other_title">Lainnya</string>
     <string name="battery_other_subtitle">Masukkan jumlah secara manual</string>
     <string name="battery_max_input_amount">Jumlah input maksimum adalah %1$s</string>
+    <string name="battery_excess">%1$s pengembalian</string>
     <string name="battery_please_wait">Baterai akan terisi dalam beberapa menit</string>
     <string name="battery_refund_title">Riwayat Pengisian Daya</string>
     <string name="battery_refund_subtitle">Isi ulang dan pengembalian dana</string>
@@ -469,6 +469,7 @@
     <string name="staking_pending_withdraw_liquid">%1$s tidak dipertaruhkan setelah akhir siklus</string>
     <string name="expired_link">Tautan kedaluwarsa</string>
     <string name="payment_method_not_found">Metode pembayaran tidak tersedia</string>
+    <string name="no_available_provider">Tidak ada penyedia yang tersedia</string>
     <string name="app_not_found">Aplikasi tidak ditemukan</string>
     <string name="insufficient_balance_in_wallet">Dana tidak mencukupi di dompet</string>
     <string name="insufficient_balance_fees">Diperlukan untuk biaya blockchain: %1$s.\nSaldo Anda: %2$s.</string>
@@ -510,7 +511,7 @@
     <string name="tx_marked_as_spam">Transaksi ditandai sebagai Spam</string>
     <string name="exchange_rate">Kurs</string>
     <string name="address_prefix">Alamat:</string>
-    <string name="your_address">Alamat Anda:</string>
+    <string name="your_address">Alamat Anda</string>
     <string name="safe_mode_tokens_footer">Mode aman diaktifkan. Hanya token terverifikasi yang tersedia. <annotation colorAttr="textAccentColor">Pengaturan</annotation></string>
     <string name="all">Semua</string>
     <string name="report_encrypted_comment">Komentar dari transaksi ini akan dikirim dengan laporan dalam bentuk terdekripsi.</string>
@@ -550,6 +551,7 @@
     <string name="open_explorer">Buka di penjelajah</string>
     <string name="out_of_available_charges">habis %1$s tersedia</string>
     <string name="tron_toggle_text">Gunakan USD₮ TRC20 tanpa TRX. Biaya ditanggung oleh Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">Transfer USD₮ memerlukan TRX untuk biaya jaringan.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Salin Frasa</string>
     <string name="export_tron">Ekspor Dompet TRC20</string>
@@ -581,10 +583,12 @@
     <string name="currency_not_found">Mata uang tidak ditemukan</string>
     <string name="onrmap_provider_description">Penyedia lain tersedia untuk pasangan mata uang yang berbeda.</string>
     <string name="min_amount">Jumlah minimum: %1$s</string>
+    <string name="min_amount_label">Jumlah min.</string>
     <string name="stake_ethena_description">Token tsUSDe mewakili USDe yang disimpan melalui Ethena, layanan staking yang terdesentralisasi. tsUSDe secara otomatis mengumpulkan imbalan staking, dengan penguncian minimal.</string>
     <string name="support_title">Butuh bantuan?</string>
-    <string name="support_subtitle">Tanyakan pada kami di Telegram — kami akan berusaha sebaik mungkin untuk membantu.</string>
-    <string name="ask_question">Ajukan Pertanyaan</string>
+    <string name="support_subtitle">Tanyakan kepada kami melalui Telegram atau Email — kami akan berusaha sebaik mungkin untuk membantu.</string>
+    <string name="ask_question">Tanya di Telegram</string>
+    <string name="email_us">Hubungi via email</string>
     <string name="renew_dns_title">Domain yang kedaluwarsa</string>
     <string name="renew_dns_expires">Kedaluwarsa dalam %1$d hari</string>
     <string name="wallet_renew_dns">Anda memiliki %1$d domain yang akan kedaluwarsa. Perpanjang semuanya hingga %2$s.</string>
@@ -605,6 +609,7 @@
     <string name="about_ethena">Tentang Ethena</string>
     <string name="swap_disclaimer">Layanan disediakan oleh %1$s\n%2$s · %3$s</string>
     <string name="terms_of_use">Ketentuan Penggunaan</string>
+    <string name="start_agree">Dengan melanjutkan, Anda menyetujui <annotation colorAttr="textAccentColor">Ketentuan Penggunaan</annotation> kami</string>
     <string name="privacy_policy">Kebijakan Privasi</string>
     <string name="invalid_address">Alamat dompet tidak valid.</string>
     <string name="scam_address_error">Transfer ke alamat ini tidak didukung.</string>
@@ -623,6 +628,110 @@
     <plurals name="legacy_subscriptions_alert_message">
         <item quantity="other">Beberapa mungkin terus menagih dompet Anda. Nonaktifkan untuk menghindari pembayaran selanjutnya.</item>
     </plurals>
+    <string name="no_enough_funds">Dana tidak cukup</string>
+    <string name="refill">Isi ulang</string>
+    <string name="get_token">Dapatkan %1$s</string>
+    <string name="insufficient_trx_balance">TRX tidak cukup untuk membayar biaya transaksi</string>
+    <string name="insufficient_trx_balance_desc">Pilih metode pembayaran biaya dan isi ulang.</string>
+    <string name="tron_not_enough_for_fee_title">Dana tidak cukup untuk biaya</string>
+    <string name="tron_not_enough_for_fee_desc">Isi ulang Battery, TON, atau saldo TRX untuk membayar biaya.</string>
+    <string name="top_up">Isi ulang</string>
+    <string name="tron_not_enough_trx_for_fee_title">TRX tidak cukup untuk membayar biaya</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Diperlukan untuk biaya ≈ %1$s. Saldo Anda: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer tersedia</item>
+        <item quantity="few">%1$s transfer tersedia</item>
+        <item quantity="many">%1$s transfer tersedia</item>
+        <item quantity="other">%1$s transfer tersedia</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfer</item>
+        <item quantity="many">%1$s transfer</item>
+        <item quantity="other">%1$s transfer</item>
+    </plurals>
+    <string name="trx_balance">Saldo TRX</string>
+    <string name="trx_balance_desc">Isi saldo Anda untuk membayar biaya jaringan.</string>
+    <string name="blockchain_fees">Biaya Blockchain</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery adalah cara termudah untuk membayar biaya blockchain. Anda juga bisa isi ulang dengan TON dan TRX.</string>
+    <string name="required_prefix">Diperlukan: %1$s</string>
+    <string name="tron_fees_learn_more">Biaya berubah secara real-time sesuai kondisi pasar. <annotation colorAttr="textAccentColor">Pelajari lebih lanjut</annotation></string>
+    <string name="tetra_subtitle">Hubungkan jaringan Tetra L2</string>
+    <string name="other_options">Opsi lainnya</string>
+    <string name="for_developers">Untuk pengembang</string>
 
+    <string name="more">Lainnya</string>
+    <string name="retry">Coba lagi</string>
+    <string name="operation">Operasi</string>
+    <string name="description">Deskripsi</string>
+    <string name="protocol">Protokol</string>
+    <string name="cant_find_anything">Tidak dapat menemukan apa pun.</string>
 
+    <string name="deposit_from_another_wallet">Dari dompet TON/TRON lain</string>
+    <string name="deposit_send">Kirim %s</string>
+    <string name="deposit_address">Alamat %s</string>
+    <string name="deposit_to_another_wallet">Ke dompet lain</string>
+    <string name="deposit_with_cash_or_crypto">Deposit dengan uang tunai atau kripto</string>
+    <string name="withdraw_with_cash_or_crypto">Tarik dengan uang tunai atau kripto</string>
+    <string name="deposit_available_cash_out">Tersedia dari kripto lain</string>
+    <string name="deposit_available_cross_chain">Tersedia 1:1 lintas rantai</string>
+    <string name="deposit_insert_amount">Masukkan jumlah</string>
+    <string name="deposit_buy_with_cash">Beli dengan uang tunai</string>
+    <string name="deposit_buy_with_crypto">Beli dengan kripto</string>
+    <string name="deposit_buy_with_stablecoins">Beli dengan stablecoin</string>
+    <string name="ramp_sell_with_cash">Jual dengan uang tunai</string>
+    <string name="ramp_sell_with_crypto">Jual dengan kripto</string>
+    <string name="ramp_sell_with_stablecoins">Jual dengan stablecoin</string>
+    <string name="ramp_stablecoins_convertion">"Akan dikonversi ke USDT di TON dengan kurs 1:1</string>
+    <string name="ramp_crypto_swap_info">Kripto Anda akan ditukar ke TON dengan kurs saat ini.</string>
+    <string name="ramp_stablecoin_buy_info">Stablecoin Anda akan dikreditkan sebagai %1$s di %2$s dengan kurs 1:1.</string>
+    <string name="ramp_stablecoin_sell_info">Tarik USDT ke stablecoin lainnya. Biaya tetap berlaku per jaringan.</string>
+    <string name="ramp_total_amount">Jumlah total</string>
+    <string name="ramp_estimated_time">Perkiraan waktu tiba</string>
+    <string name="ramp_withdrawal_time">Waktu penarikan</string>
+    <string name="ramp_withdrawal_fee">Biaya penarikan</string>
+    <string name="deposit_network_warning">Pastikan Anda memilih jaringan yang benar, atau Anda berisiko kehilangan dana.</string>
+    <string name="deposit_go_to_main">Ke Beranda</string>
+    <string name="deposit_payment_qr_code">Kode QR pembayaran</string>
+    <string name="deposit_scan_qr_description">Pindai kode QR atau salin alamat untuk menyelesaikan pembayaran.</string>
+    <string name="deposit_min_amount_with_currency">Jumlah min.: %1$s %2$s</string>
+    <string name="deposit_max_amount_with_currency">Jumlah maks.: %1$s %2$s</string>
+    <string name="deposit_other_providers_hint">Penyedia lain tersedia untuk pasangan mata uang yang berbeda.</string>
+    <string name="deposit_changelly_disclaimer">Layanan pihak ketiga disediakan oleh Changelly. Dengan menggunakan layanan ini, Anda menyetujui %s.</string>
+    <string name="deposit_address_warning_prefix">Alamat ini\u0020</string>
+    <string name="deposit_address_warning_highlight">hanya dapat digunakan satu kali</string>
+    <string name="deposit_address_warning_suffix">. Periksa batas deposit dan jaringan agar dana Anda tidak hilang.</string>
+
+    <string name="terms_of_service">Ketentuan Layanan</string>
+    <string name="receive_tokens">Terima token</string>
+    <string name="send_tokens">Kirim token</string>
+    <string name="withdraw">Tarik</string>
+    <string name="deposit">Deposit</string>
+    <string name="choose_network">Pilih jaringan</string>
+    <string name="copy_address">Salin Alamat</string>
+    <string name="choose_currency">Pilih mata uang</string>
+    <string name="send_currency">Kirim %s</string>
+    <string name="receive_currency">Terima %s</string>
+    <string name="min_deposit">Deposit min.</string>
+    <string name="max_deposit">Deposit maks.</string>
+    <string name="max_amount">Jumlah maks.: %s</string>
+    <string name="max_amount_label">Jumlah maks.</string>
+    <string name="available">Tersedia: %s</string>
+    <string name="network">Jaringan</string>
+
+    <string name="added_extension">Ekstensi Ditambahkan</string>
+    <string name="removed_extension">Ekstensi Dihapus</string>
+    <string name="signature_allowed">Tanda Tangan Diizinkan</string>
+    <string name="signature_not_allowed">Tanda Tangan Tidak Diizinkan</string>
+    <string name="up_to_duration">Hingga %1$s %2$s</string>
+    <string name="time_seconds">dtk</string>
+    <string name="time_minutes">mnt</string>
+    <string name="deposit_select_network_description">Tarik %s ke jaringan yang didukung kapan saja melalui bagian \'Penarikan\'.</string>
+    <string name="choose_network_error">Pilih jaringan %s</string>
+    <string name="choose_asset">Pilih aset</string>
+    <string name="add_funds">Tambah dana</string>
+    <string name="tooltip_new">BARU</string>
+    <string name="tooltip_send_from_here">Kirim dari sini</string>
+    <string name="trade">Perdagangan</string>
+    <string name="search_by_ticker">Cari berdasarkan ticker atau nama</string>
 </resources>

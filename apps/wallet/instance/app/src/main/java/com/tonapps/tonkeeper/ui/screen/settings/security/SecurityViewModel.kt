@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.app.Application
 import android.content.Context
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -35,7 +36,7 @@ class SecurityViewModel(
     val safeModeFlow: Flow<SafeModeState>
         get() = settingsRepository.safeModeStateFlow
 
-    fun isSafeModeEnabled() = settingsRepository.isSafeModeEnabled(api)
+    fun isSafeModeEnabled() = settingsRepository.isSafeModeEnabled(TonNetwork.MAINNET)
 
     fun setSafeModeState(state: SafeModeState) {
         settingsRepository.setSafeModeState(state)

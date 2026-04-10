@@ -28,17 +28,14 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.localization.Localization
-import ui.components.Header
-import ui.components.TextHeader
-import ui.components.button.TKButton
-import ui.theme.ButtonColorsSecondary
+import ui.components.moon.cell.MoonTextContentCell
+import ui.components.moon.MoonAccentButton
+import ui.components.moon.MoonTopAppBar
+import ui.components.moon.ButtonColorsSecondary
 import ui.theme.Dimens
 import ui.theme.Shapes
 import ui.theme.UIKit
@@ -141,7 +138,7 @@ fun DAppShareComposable(
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        Header(
+        MoonTopAppBar(
             title = "",
             actionIconRes = UIKitIcon.ic_close_16,
             onActionClick = { onFinishClick() },
@@ -159,7 +156,7 @@ fun DAppShareComposable(
             DAppIcon(icon = icon)
             Spacer(modifier = Modifier.height(Dimens.offsetMedium))
             Box(modifier = Modifier.padding(horizontal = Dimens.offsetMedium)) {
-                TextHeader(
+                MoonTextContentCell(
                     title = stringResource(id = Localization.dapp_share_title, name),
                     description = stringResource(id = Localization.dapp_share_subtitle, name),
                 )
@@ -167,13 +164,13 @@ fun DAppShareComposable(
             Spacer(modifier = Modifier.height(Dimens.offsetLarge))
             UrlView(url = url, onCopy = onCopy)
             Spacer(modifier = Modifier.height(Dimens.offsetMedium))
-            TKButton(
+            MoonAccentButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onCopy,
                 text = stringResource(id = Localization.copy_link)
             )
             Spacer(modifier = Modifier.height(Dimens.offsetMedium))
-            TKButton(
+            MoonAccentButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onShare,
                 text = stringResource(id = Localization.share),

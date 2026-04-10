@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.log.L
 import androidx.biometric.BiometricPrompt
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.logError
@@ -243,15 +243,6 @@ class PasscodeManager(
         } else {
             navigation?.migrationLoader(false)
             false
-        }
-    }
-
-    fun confirmationFlow(context: Context, title: String) = flow {
-        val valid = confirmation(context, title)
-        if (!valid) {
-            throw Exception("failed to request passcode")
-        } else {
-            emit(Unit)
         }
     }
 }

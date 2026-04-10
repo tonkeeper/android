@@ -40,6 +40,11 @@ data class TronTransaction(private val tx: Transaction) {
             return toJSON()
         }
 
+    val rawDataHex: String
+        get() {
+            return toHex(tx.rawData.toByteArray())
+        }
+
     private fun toHex(array: ByteArray): String {
         return array.joinToString("") { "%02x".format(it) }
     }

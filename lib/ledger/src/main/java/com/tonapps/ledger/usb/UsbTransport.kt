@@ -36,7 +36,7 @@ class UsbTransport(
             responseData = it
             } == null) {
             responseBuffer.clear()
-            if (!readRequest.queueCompat(responseBuffer, HID_PACKET_SIZE)) {
+            if (!readRequest.queue(responseBuffer)) {
                 readRequest.close()
                 throw LedgerException.USBReadException
             }

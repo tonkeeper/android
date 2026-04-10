@@ -1,13 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.settings.apps
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.settings.apps.list.Adapter
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment

@@ -1,0 +1,24 @@
+appId: com.ton_keeper.debug
+---
+- launchApp
+
+- tapOn:
+    text: Collectibles
+- tapOn:
+    id: header_action
+- tapOn:
+    id: action
+    index: 1
+- back
+- assertNotVisible: "'><img src=x onerror=alert(13)>"
+- tapOn:
+    text: Collectibles
+
+- launchApp
+- assertNotVisible: "'><img src=x onerror=alert(13)>"
+
+- tapOn:
+    id: header_action
+- tapOn:
+    id: action
+    index: 3

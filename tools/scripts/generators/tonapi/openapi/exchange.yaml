@@ -1,0 +1,1408 @@
+openapi: 3.0.3
+info:
+  title: Backend API
+  version: 1.0.0
+
+servers: [ ]
+
+tags:
+  - name: swap
+    description: DEX swap operations
+  - name: exchange
+    description: Fiat-to-crypto and crypto-to-crypto exchange operations
+  - name: p2p
+    description: P2P exchange operations
+
+components:
+  parameters:
+    FromAssetQuery:
+      name: fromAsset
+      in: query
+      required: true
+      description: Source asset address (TON or jetton)
+      schema:
+        type: string
+        pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+    ToAssetQuery:
+      name: toAsset
+      in: query
+      required: true
+      description: Target asset address (TON or jetton)
+      schema:
+        type: string
+        pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+    FromAmountQuery:
+      name: fromAmount
+      in: query
+      required: true
+      description: Amount to swap (in minimal units)
+      schema:
+        type: string
+        pattern: ^\d+$
+    ProviderQuery:
+      name: provider
+      in: query
+      required: true
+      description: DEX provider
+      schema:
+        $ref: '#/components/schemas/Provider'
+    CountryQuery:
+      name: country
+      in: query
+      deprecated: true
+      description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code instead."
+      schema:
+        type: string
+        pattern: ^[A-Z]{2}$
+    LangQuery:
+      name: lang
+      in: query
+      description: Language code
+      schema:
+        type: string
+    StoreCountryCodeQuery:
+      name: store_country_code
+      in: query
+      description: App Store country code (ISO 3166-1 alpha-2)
+      schema:
+        type: string
+        pattern: ^[A-Z]{2}$
+    DeviceCountryCodeQuery:
+      name: device_country_code
+      in: query
+      description: Device country code (ISO 3166-1 alpha-2)
+      schema:
+        type: string
+        pattern: ^[A-Z]{2}$
+    BuildQuery:
+      name: build
+      in: query
+      description: App build version
+      schema:
+        type: string
+    PlatformQuery:
+      name: platform
+      in: query
+      description: User device platform
+      schema:
+        $ref: '#/components/schemas/Platform'
+    CurrencyQuery:
+      name: currency
+      in: query
+      description: Fiat currency code (e.g. EUR, USD)
+      schema:
+        type: string
+    DirectionQuery:
+      name: direction
+      in: query
+      description: Trade direction
+      schema:
+        $ref: '#/components/schemas/ExchangeDirection'
+    FiatQuery:
+      name: fiat
+      in: query
+      description: Fiat currency filter (e.g. EUR, USD)
+      schema:
+        type: string
+    CryptoQuery:
+      name: crypto
+      in: query
+      description: Crypto currency filter (e.g. TON, USDT)
+      schema:
+        type: string
+    NetworkQuery:
+      name: network
+      in: query
+      description: Crypto network filter (e.g. native, jetton)
+      schema:
+        type: string
+    SimCountryQuery:
+      name: sim_country
+      in: query
+      description: SIM card country code (ISO 3166-1 alpha-2)
+      schema:
+        type: string
+    TimezoneQuery:
+      name: timezone
+      in: query
+      description: Device timezone (IANA format, e.g. Europe/Berlin)
+      schema:
+        type: string
+    IsVpnActiveQuery:
+      name: is_vpn_active
+      in: query
+      description: Whether VPN is currently active
+      schema:
+        type: boolean
+    FlowQuery:
+      name: flow
+      in: query
+      required: true
+      description: "Flow type: deposit (buy crypto) or withdraw (sell crypto)"
+      schema:
+        $ref: '#/components/schemas/ExchangeFlow'
+
+  schemas:
+    Platform:
+      type: string
+      enum:
+        - android
+        - ios
+        - desktop
+    Provider:
+      type: string
+      enum:
+        - dedust
+        - stonfi
+        - omni
+    DeDustTrade:
+      type: object
+      required:
+        - fromAsset
+        - toAsset
+        - fromAmount
+        - toAmount
+        - poolAddress
+      properties:
+        fromAsset:
+          type: string
+          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        toAsset:
+          type: string
+          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        fromAmount:
+          type: string
+          pattern: ^\d+$
+        toAmount:
+          type: string
+          pattern: ^\d+$
+        poolAddress:
+          type: string
+          pattern: ^(-1|0):[0-9a-fA-F]{64}$
+    StonFiTrade:
+      type: object
+      required:
+        - fromAsset
+        - toAsset
+        - fromAmount
+        - toAmount
+        - routerAddress
+      properties:
+        fromAsset:
+          type: string
+          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        toAsset:
+          type: string
+          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        fromAmount:
+          type: string
+          pattern: ^\d+$
+        toAmount:
+          type: string
+          pattern: ^\d+$
+        routerAddress:
+          type: string
+          pattern: ^(-1|0):[0-9a-fA-F]{64}$
+    Trade:
+      type: object
+      required:
+        - fromAsset
+        - toAsset
+        - fromAmount
+        - toAmount
+        - blockchainFee
+        - path
+      properties:
+        fromAsset:
+          type: string
+          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        toAsset:
+          type: string
+          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        fromAmount:
+          type: string
+          pattern: ^\d+$
+        toAmount:
+          type: string
+          pattern: ^\d+$
+        blockchainFee:
+          type: string
+          pattern: ^\d+$
+        path:
+          type: array
+          items:
+            type: string
+            pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        routerAddress:
+          type: string
+          pattern: ^(-1|0):[0-9a-fA-F]{64}$
+        stonfiRawTrade:
+          $ref: '#/components/schemas/StonFiTrade'
+        dedustRawTrade:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeDustTrade'
+    SwapCalculation:
+      type: object
+      required:
+        - provider
+        - trades
+      properties:
+        provider:
+          $ref: '#/components/schemas/Provider'
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trade'
+    SwapGas:
+      type: object
+      required:
+        - dedust
+        - stonfi
+        - omniston
+      properties:
+        dedust:
+          type: object
+          required:
+            - tonToJetton
+            - jettonToTon
+            - jettonToJetton
+          properties:
+            tonToJetton:
+              type: string
+            jettonToTon:
+              type: string
+            jettonToJetton:
+              type: string
+        stonfi:
+          type: object
+          required:
+            - tonToJetton
+            - jettonToTon
+            - jettonToJetton
+          properties:
+            tonToJetton:
+              type: string
+            jettonToTon:
+              type: string
+            jettonToJetton:
+              type: string
+        omniston:
+          type: object
+          required:
+            - tonToJetton
+            - jettonToTon
+            - jettonToJetton
+          properties:
+            tonToJetton:
+              type: string
+            jettonToTon:
+              type: string
+            jettonToJetton:
+              type: string
+    SwapAsset:
+      type: object
+      required:
+        - symbol
+        - name
+        - decimals
+        - address
+        - image
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        decimals:
+          type: integer
+        address:
+          type: string
+          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+        image:
+          type: string
+    SwapAssets:
+      type: array
+      items:
+        $ref: '#/components/schemas/SwapAsset'
+    SwapEncode:
+      type: object
+      required:
+        - value
+        - to
+        - body
+      properties:
+        value:
+          type: string
+        to:
+          type: string
+        body:
+          type: string
+    TonMessage:
+      type: object
+      required:
+        - targetAddress
+        - sendAmount
+        - payload
+      properties:
+        targetAddress:
+          type: string
+          pattern: ^(-1|0):[0-9a-fA-F]{64}$
+        sendAmount:
+          type: string
+          pattern: ^\d+$
+        payload:
+          type: string
+        jettonWalletStateInit:
+          type: string
+    OmnistonSwapMessages:
+      type: object
+      required:
+        - messages
+        - quoteId
+        - resolverName
+        - askUnits
+        - bidUnits
+        - protocolFeeUnits
+        - tradeStartDeadline
+        - gasBudget
+        - estimatedGasConsumption
+        - slippage
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/TonMessage'
+        quoteId:
+          type: string
+        resolverName:
+          type: string
+        askUnits:
+          type: string
+        bidUnits:
+          type: string
+          description: Amount of bid asset the trader must pay, including all fees
+        protocolFeeUnits:
+          type: string
+          description: Amount of fees charged by the protocol
+        tradeStartDeadline:
+          type: string
+          description: Max timestamp (UTC seconds) for trade start
+        gasBudget:
+          type: string
+          description: Total gas budget required
+        estimatedGasConsumption:
+          type: string
+          description: Estimated gas units to be spent
+        slippage:
+          type: integer
+    ExchangeAssetType:
+      type: string
+      enum:
+        - fiat
+        - crypto
+    ExchangeMethod:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+        address:
+          type: string
+    ExchangeLimits:
+      type: object
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+    ExchangeAsset:
+      type: object
+      required:
+        - slug
+        - type
+        - input_methods
+        - output_methods
+      properties:
+        slug:
+          type: string
+        type:
+          $ref: '#/components/schemas/ExchangeAssetType'
+        input_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeMethod'
+        output_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeMethod'
+        image:
+          type: string
+        decimals:
+          type: integer
+        stablecoin:
+          type: boolean
+    ExchangeSimpleMerchant:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        limits:
+          $ref: '#/components/schemas/ExchangeLimits'
+    ExchangeMerchant:
+      type: object
+      required:
+        - name
+        - slug
+        - input_methods
+        - output_methods
+      properties:
+        name:
+          type: string
+        slug:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        input_methods:
+          type: array
+          items:
+            type: string
+        output_methods:
+          type: array
+          items:
+            type: string
+    ExchangeMerchantInfoButton:
+      type: object
+      required:
+        - title
+        - url
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+    ExchangeMerchantInfo:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - image
+        - fee
+        - buttons
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        fee:
+          type: number
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeMerchantInfoButton'
+    ExchangeCurrencyInfo:
+      type: object
+      required:
+        - symbol
+      properties:
+        symbol:
+          type: string
+        network:
+          type: string
+          description: Blockchain network (e.g. native, jetton, erc-20)
+    ExchangePair:
+      type: object
+      required:
+        - from
+        - to
+        - merchants
+      properties:
+        from:
+          $ref: '#/components/schemas/ExchangeCurrencyInfo'
+        to:
+          $ref: '#/components/schemas/ExchangeCurrencyInfo'
+        merchants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeSimpleMerchant'
+    ExchangeMerchantSlug:
+      type: string
+      enum:
+        - mercuryo
+        - transak
+        - moonpay
+        - avanchange
+        - changelly
+        - wallet
+    ExchangePaymentMethodType:
+      type: string
+      enum:
+        - card
+        - card_mir
+        - apple_pay
+        - google_pay
+        - paypal
+        - sepa
+        - venmo
+        - revolut
+        - pix
+        - volt
+        - p2p
+    ExchangeCurrencies:
+      type: object
+      required:
+        - assets
+        - merchants
+        - allowed_pairs
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeAsset'
+        merchants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeMerchant'
+        allowed_pairs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangePair'
+    ExchangeQuote:
+      type: object
+      required:
+        - merchant
+        - amount
+        - merchant_transaction_id
+      properties:
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        amount:
+          type: number
+        from_amount:
+          type: number
+          description: Source amount the user needs to pay (present when reverse=true)
+        widget_url:
+          type: string
+        min_amount:
+          type: number
+        max_amount:
+          type: number
+        merchant_transaction_id:
+          type: string
+    ExchangeCalculation:
+      type: object
+      required:
+        - items
+        - suggested
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeQuote'
+        suggested:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeQuote'
+    ExchangePaymentMethod:
+      type: object
+      required:
+        - merchant
+        - methods
+      properties:
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        methods:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - image
+            properties:
+              type:
+                $ref: '#/components/schemas/ExchangePaymentMethodType'
+              image:
+                type: string
+    ExchangeDirection:
+      type: string
+      enum:
+        - buy
+        - sell
+        - swap
+    ExchangeAvailablePair:
+      type: object
+      required:
+        - merchant
+        - direction
+        - crypto_currency
+        - crypto_network
+        - fiat_currency
+      properties:
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        direction:
+          $ref: '#/components/schemas/ExchangeDirection'
+        crypto_currency:
+          type: string
+        crypto_network:
+          type: string
+        fiat_currency:
+          type: string
+        limits:
+          $ref: '#/components/schemas/ExchangeLimits'
+        payment_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangePaymentMethodType'
+    ExchangePairs:
+      type: object
+      required:
+        - count
+        - pairs
+      properties:
+        count:
+          type: integer
+        pairs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeAvailablePair'
+    ExchangeFlow:
+      type: string
+      enum:
+        - deposit
+        - withdraw
+    ExchangeLayoutCashMethod:
+      type: object
+      required:
+        - type
+        - name
+        - image
+        - providers
+      properties:
+        type:
+          $ref: '#/components/schemas/ExchangePaymentMethodType'
+        name:
+          type: string
+        image:
+          type: string
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeLayoutProvider'
+    ExchangeLayoutCryptoMethod:
+      type: object
+      required:
+        - symbol
+        - asset_id
+        - network
+        - network_name
+        - network_image
+        - image
+        - decimals
+        - stablecoin
+        - providers
+      properties:
+        symbol:
+          type: string
+          description: Source crypto symbol (e.g. BTC, USDT)
+        asset_id:
+          type: string
+          description: "CAIP-19 asset identifier (e.g. ton:mainnet/slip44:607)"
+        network:
+          type: string
+        network_name:
+          type: string
+        network_image:
+          type: string
+        image:
+          type: string
+        address:
+          type: string
+        decimals:
+          type: integer
+        stablecoin:
+          type: boolean
+        fee:
+          type: number
+          description: Withdrawal fee in USD (for stablecoins)
+        min_amount:
+          type: number
+          description: Minimum withdrawal amount in USD (for stablecoins)
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeLayoutProvider'
+    ExchangeLayoutProvider:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        limits:
+          $ref: '#/components/schemas/ExchangeLimits'
+    ExchangeLayoutAsset:
+      type: object
+      required:
+        - symbol
+        - asset_id
+        - network
+        - network_name
+        - network_image
+        - image
+        - decimals
+        - stablecoin
+        - cash_methods
+        - crypto_methods
+      properties:
+        symbol:
+          type: string
+        asset_id:
+          type: string
+          description: "CAIP-19 asset identifier (e.g. ton:mainnet/slip44:607)"
+        network:
+          type: string
+        network_name:
+          type: string
+        network_image:
+          type: string
+        image:
+          type: string
+        address:
+          type: string
+        decimals:
+          type: integer
+        stablecoin:
+          type: boolean
+        cash_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeLayoutCashMethod'
+        crypto_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeLayoutCryptoMethod'
+    ExchangeLayoutItemType:
+      type: string
+      enum:
+        - p2p
+        - fiat
+        - crypto
+        - stablecoin
+    ExchangeLayoutItem:
+      type: object
+      required:
+        - type
+        - title
+        - description
+        - image
+      properties:
+        type:
+          $ref: '#/components/schemas/ExchangeLayoutItemType'
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeLayoutAsset'
+    ExchangeLayout:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeLayoutItem'
+    ExchangeResult:
+      type: object
+      required:
+        - id
+        - payin_address
+        - amount_expected_from
+        - amount_expected_to
+        - status
+        - min_deposit
+        - max_deposit
+        - rate
+        - estimated_duration
+      properties:
+        id:
+          type: string
+        payin_address:
+          type: string
+        amount_expected_from:
+          type: number
+        amount_expected_to:
+          type: number
+        status:
+          type: string
+        min_deposit:
+          type: number
+        max_deposit:
+          type: number
+        rate:
+          type: number
+        estimated_duration:
+          type: integer
+          description: Estimated exchange duration in seconds
+    P2PSessionResult:
+      type: object
+      required:
+        - deeplink_url
+        - date_expire
+      properties:
+        deeplink_url:
+          type: string
+        date_expire:
+          type: string
+
+  requestBodies:
+    CreateP2PSession:
+      description: P2P deeplink session parameters
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - wallet
+              - network
+              - crypto_currency
+              - fiat_currency
+            properties:
+              wallet:
+                type: string
+                description: Withdrawal wallet address
+              network:
+                type: string
+                description: Blockchain chain identifier
+              crypto_currency:
+                type: string
+                description: Crypto currency code
+              fiat_currency:
+                type: string
+                description: Fiat currency code
+              amount:
+                type: number
+                description: Optional exchange amount
+    EncodeSwap:
+      description: Swap encoding parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              swap:
+                type: object
+                required:
+                  - provider
+                properties:
+                  provider:
+                    $ref: '#/components/schemas/Provider'
+                  dedustTrade:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeDustTrade'
+                  stonfiTrade:
+                    $ref: '#/components/schemas/StonFiTrade'
+              options:
+                type: object
+                required:
+                  - swap
+                  - options
+                properties:
+                  senderAddress:
+                    type: string
+                  slippage:
+                    type: string
+                    pattern: ^(\d+\.)?\d+$
+                  excessAddress:
+                    type: string
+                    pattern: ^(-1|0):[0-9a-fA-F]{64}$
+    ExchangeCalculate:
+      description: Exchange rate calculation parameters
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - from
+              - to
+              - purchase_type
+              - amount
+              - wallet
+            properties:
+              from:
+                type: string
+                description: Source currency code
+              to:
+                type: string
+                description: Target currency code
+              network:
+                type: string
+                deprecated: true
+                description: "Crypto network. Deprecated: use from_network and to_network instead."
+              from_network:
+                type: string
+                description: Source crypto network (required for sell and swap)
+              to_network:
+                type: string
+                description: Target crypto network (required for buy and swap)
+              amount:
+                type: string
+                description: Amount to exchange
+              wallet:
+                type: string
+                description: User wallet address
+              purchase_type:
+                $ref: '#/components/schemas/ExchangeDirection'
+              country:
+                type: string
+                deprecated: true
+                description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead."
+              payment_method:
+                $ref: '#/components/schemas/ExchangePaymentMethodType'
+              reverse:
+                type: boolean
+                description: "When true, amount is interpreted as target crypto amount instead of source amount"
+              flow:
+                $ref: '#/components/schemas/ExchangeFlow'
+    CreateExchange:
+      description: Crypto-to-crypto exchange parameters
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - from
+              - to
+              - wallet
+            properties:
+              from:
+                type: string
+                description: Source currency code
+              to:
+                type: string
+                description: Target currency code
+              from_network:
+                type: string
+                description: Source crypto network
+              to_network:
+                type: string
+                description: Target crypto network
+              wallet:
+                type: string
+                description: User wallet address
+              flow:
+                $ref: '#/components/schemas/ExchangeFlow'
+              country:
+                type: string
+                deprecated: true
+                description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead."
+    OmnistonSwap:
+      description: Omniston swap parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - fromAsset
+              - toAsset
+              - userAddress
+            properties:
+              fromAsset:
+                type: string
+                pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+                description: Source asset address
+              toAsset:
+                type: string
+                pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+                description: Target asset address
+              fromAmount:
+                type: string
+                pattern: ^\d+$
+                description: Amount to swap (bid units)
+              toAmount:
+                type: string
+                pattern: ^\d+$
+                description: Amount to receive (ask units)
+              userAddress:
+                type: string
+                pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+                description: User wallet address
+              slippage:
+                type: integer
+                minimum: 0
+                maximum: 10000
+                description: Slippage tolerance in basis points
+              ttl:
+                type: integer
+                minimum: 0
+                maximum: 60
+                default: 0
+                description: Quote collection TTL in seconds
+              disable_ref_fee:
+                type: boolean
+                description: Disable referral fee
+              destination_address:
+                type: string
+                pattern: ^(ton|(-1|0):[0-9a-fA-F]{64})$
+                description: Destination address (optional)
+
+  responses:
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ error ]
+            properties:
+              error:
+                type: string
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ error ]
+            properties:
+              error:
+                type: string
+
+paths:
+  /v2/swap/calculate:
+    get:
+      operationId: calculateSwap
+      summary: Calculate swap
+      description: Get swap route with amounts and fees
+      tags:
+        - swap
+      parameters:
+        - $ref: '#/components/parameters/FromAssetQuery'
+        - $ref: '#/components/parameters/ToAssetQuery'
+        - $ref: '#/components/parameters/FromAmountQuery'
+        - $ref: '#/components/parameters/ProviderQuery'
+      responses:
+        '200':
+          description: Swap calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapCalculation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/swap/encode:
+    post:
+      operationId: encodeSwap
+      summary: Encode swap transaction
+      description: Get encoded transaction for swap execution
+      tags:
+        - swap
+      requestBody:
+        $ref: '#/components/requestBodies/EncodeSwap'
+      responses:
+        '200':
+          description: Encoded transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapEncode'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/swap/gas:
+    get:
+      operationId: swapGas
+      summary: Get gas estimates
+      description: Get gas estimates for different swap types
+      tags:
+        - swap
+      responses:
+        '200':
+          description: Gas estimates by provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapGas'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/swap/assets:
+    get:
+      operationId: swapAssets
+      summary: Get swap assets
+      description: Get list of available assets for swapping
+      tags:
+        - swap
+      responses:
+        '200':
+          description: List of swap assets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapAssets'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/swap/omniston/build:
+    post:
+      operationId: buildOmnistonSwap
+      summary: Build Omniston swap
+      description: Get unsigned messages for Omniston swap
+      tags:
+        - swap
+      requestBody:
+        $ref: '#/components/requestBodies/OmnistonSwap'
+      responses:
+        '200':
+          description: Unsigned swap messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OmnistonSwapMessages'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/onramp/currencies:
+    get:
+      operationId: getExchangeCurrencies
+      summary: Get currencies
+      description: Get available currencies, merchants and trading pairs
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/CountryQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/DirectionQuery'
+      responses:
+        '200':
+          description: Currencies data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeCurrencies'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/calculate:
+    post:
+      operationId: exchangeCalculate
+      summary: Calculate exchange rates
+      description: Get exchange rates from all available merchants
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+      requestBody:
+        $ref: '#/components/requestBodies/ExchangeCalculate'
+      responses:
+        '200':
+          description: Exchange rates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeCalculation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/payment_methods:
+    get:
+      operationId: getExchangePaymentMethods
+      summary: Get payment methods
+      description: Get available payment methods by currency and country
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/CountryQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/CurrencyQuery'
+      responses:
+        '200':
+          description: Payment methods by merchant
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangePaymentMethod'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/merchants:
+    get:
+      operationId: getExchangeMerchants
+      summary: Get merchants
+      description: Get merchant information for display
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/LangQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+      responses:
+        '200':
+          description: List of merchants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeMerchantInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/exchange:
+    post:
+      operationId: createExchange
+      summary: Create crypto-to-crypto exchange
+      description: Create a crypto-to-crypto exchange
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+      requestBody:
+        $ref: '#/components/requestBodies/CreateExchange'
+      responses:
+        '200':
+          description: Exchange transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/pairs:
+    get:
+      operationId: getExchangePairs
+      summary: Get trading pairs
+      description: Get available trading pairs with filtering
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/DirectionQuery'
+        - $ref: '#/components/parameters/FiatQuery'
+        - $ref: '#/components/parameters/CryptoQuery'
+        - $ref: '#/components/parameters/NetworkQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+      responses:
+        '200':
+          description: Trading pairs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangePairs'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/layout:
+    get:
+      operationId: getExchangeLayout
+      summary: Get deposit/withdraw assets and methods
+      description: Get available crypto assets with cash and crypto methods for deposit or withdraw
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/FlowQuery'
+        - $ref: '#/components/parameters/CurrencyQuery'
+        - $ref: '#/components/parameters/LangQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+      responses:
+        '200':
+          description: Layout data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeLayout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/p2p/session:
+    post:
+      operationId: createP2PSession
+      summary: Create P2P deeplink session
+      description: Create a P2P exchange deeplink session
+      tags:
+        - p2p
+      requestBody:
+        $ref: '#/components/requestBodies/CreateP2PSession'
+      responses:
+        '200':
+          description: Deeplink session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/P2PSessionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        

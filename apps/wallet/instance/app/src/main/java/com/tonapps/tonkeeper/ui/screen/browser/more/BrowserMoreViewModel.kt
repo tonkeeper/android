@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.more.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,7 +23,7 @@ class BrowserMoreViewModel(
 
     private val flow = browserRepository.dataFlow(
         country = settingsRepository.country,
-        testnet = wallet.testnet,
+        network = wallet.network,
         locale = settingsRepository.getLocale()
     ).map { it.categories }.map { categories ->
         categories.first { it.id == id }

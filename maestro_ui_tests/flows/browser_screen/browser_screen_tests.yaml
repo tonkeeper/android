@@ -1,0 +1,49 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- runFlow: "../../steps/import_wallet.yaml"
+- runFlow: "../../service/account/compare_ton_balance.yaml"
+
+- tapOn: Browser
+
+- extendedWaitUntil:
+    visible: "Free USD₮ TRC20 transfer"
+    timeout: 10000 #cant handle this Raketka, should to wait while scrolling himself
+
+- tapOn: "Free USD₮ TRC20 transfer"
+
+- assertVisible:
+    id: close
+- tapOn:
+    id: close
+
+- assertVisible: Testing
+- assertVisible: Mariabit
+
+- scrollUntilVisible:
+    element:
+      text: Utilities
+- tapOn:
+    text: All
+    index: 3
+- assertVisible: Tonviewer
+- assertVisible: TON Domains
+- back
+
+- tapOn: Search or enter address
+- inputText: ston
+
+- assertVisible: STON.fi
+- assertVisible: DuckDuckGo
+- tapOn:
+    id: title
+- assertVisible: Swap crypto tokens on STON.fi
+- swipe:
+    from:
+      text: app.ston
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Data provided by "

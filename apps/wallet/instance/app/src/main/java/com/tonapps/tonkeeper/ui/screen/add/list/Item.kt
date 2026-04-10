@@ -12,6 +12,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     companion object {
         const val TYPE_WALLET = -10
         const val TYPE_HEADER = -11
+        const val TYPE_SECTION_TITLE = -12
 
         const val IMPORT_WALLET_ID = 1
         const val WATCH_WALLET_ID = 2
@@ -20,10 +21,15 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val LEDGER_WALLET_ID = 5
         const val KEYSTONE_WALLET_ID = 6
         const val NEW_WALLET_ID = 7
+        const val TETRA_WALLET_ID = 8
 
         fun header(title: Int, subtitle: Int): Header {
             return Header(title, subtitle)
         }
+
+        val forDevelopersTitle = SectionTitle(titleResId = Localization.for_developers)
+
+        val otherOptionsTitle = SectionTitle(titleResId = Localization.other_options)
 
         val new = Wallet(
             id = NEW_WALLET_ID,
@@ -73,6 +79,13 @@ sealed class Item(type: Int): BaseListItem(type) {
             titleResId = Localization.ledger_title,
             subtitleResId = Localization.ledger_subtitle
         )
+
+        val tetra = Wallet(
+            id = TETRA_WALLET_ID,
+            iconResId = R.drawable.ic_tetra_24,
+            titleResId = Localization.tetra_title,
+            subtitleResId = Localization.tetra_subtitle
+        )
     }
 
     data class Wallet(
@@ -86,5 +99,9 @@ sealed class Item(type: Int): BaseListItem(type) {
         @StringRes val titleResId: Int,
         @StringRes val subtitleResId: Int
     ): Item(TYPE_HEADER)
+
+    data class SectionTitle(
+        @StringRes val titleResId: Int,
+    ): Item(TYPE_SECTION_TITLE)
 
 }

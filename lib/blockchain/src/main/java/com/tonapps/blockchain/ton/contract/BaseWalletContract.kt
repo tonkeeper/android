@@ -1,7 +1,8 @@
 package com.tonapps.blockchain.ton.contract
 
-import android.util.Log
+import com.tonapps.blockchain.ton.SignatureDomain
 import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.normalizeHash
 import com.tonapps.blockchain.ton.extensions.storeMaybeAddress
@@ -20,14 +21,12 @@ import org.ton.block.ExtInMsgInfo
 import org.ton.block.Maybe
 import org.ton.block.Message
 import org.ton.block.MessageRelaxed
-import org.ton.block.MsgAddress
 import org.ton.block.MsgAddressExt
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.buildCell
-import org.ton.contract.SmartContract
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
@@ -40,6 +39,12 @@ abstract class BaseWalletContract(
     val publicKey: PublicKeyEd25519
 ) {
 
+    /**
+     * When non-null, signatures are prefixed with the L2 domain hash before signing
+     * (see [SignatureDomain]). Null means standard mainnet/testnet behaviour.
+     */
+    var signatureGlobalId: Int? = null
+
     companion object {
         const val DEFAULT_WORKCHAIN = 0
         const val DEFAULT_WALLET_ID: Int = 698983191
@@ -47,9 +52,10 @@ abstract class BaseWalletContract(
         fun create(
             publicKey: PublicKeyEd25519,
             v: String,
-            networkGlobalId: Int
+            networkGlobalId: Int,
+            signatureGlobalId: Int? = null
         ): BaseWalletContract {
-            return when (v.lowercase()) {
+            val contract = when (v.lowercase()) {
                 "v3r1" -> WalletV3R1Contract(publicKey = publicKey)
                 "v3r2" -> WalletV3R2Contract(publicKey = publicKey)
                 "v4r1" -> WalletV4R1Contract(publicKey = publicKey)
@@ -58,22 +64,22 @@ abstract class BaseWalletContract(
                     publicKey = publicKey,
                     networkGlobalId = networkGlobalId
                 )
-
                 "v5r1" -> WalletV5R1Contract(
                     publicKey = publicKey,
                     networkGlobalId = networkGlobalId
                 )
-
                 else -> throw IllegalArgumentException("Unsupported contract version: $v")
             }
+            contract.signatureGlobalId = signatureGlobalId
+            return contract
         }
 
         fun resolveVersion(
             publicKey: PublicKeyEd25519,
             accountId: String,
-            testnet: Boolean
+            network: TonNetwork
         ): WalletVersion {
-            return resolveVersion(publicKey, accountId, if (testnet) -3 else -239)
+            return resolveVersion(publicKey, accountId, network.value)
         }
 
         fun resolveVersion(
@@ -117,8 +123,18 @@ abstract class BaseWalletContract(
             return WalletVersion.UNKNOWN
         }
 
-        fun create(publicKey: PublicKeyEd25519, v: String, testnet: Boolean): BaseWalletContract {
-            return create(publicKey, v, if (testnet) -3 else -239)
+        fun create(
+            publicKey: PublicKeyEd25519,
+            v: String,
+            network: TonNetwork,
+            signatureNetwork: TonNetwork? = null
+        ): BaseWalletContract {
+            return create(
+                publicKey = publicKey,
+                v = v,
+                networkGlobalId = network.value,
+                signatureGlobalId = signatureNetwork?.value
+            )
         }
 
         fun createIntMsg(gift: WalletTransfer): MessageRelaxed<Cell> {
@@ -225,8 +241,9 @@ abstract class BaseWalletContract(
         privateKey: PrivateKeyEd25519,
         unsignedBody: Cell,
     ): Cell {
-        val unsignedBodyHash = unsignedBody.hash().toByteArray()
-        val signature = BitString(privateKey.sign(unsignedBodyHash))
+        val hash = unsignedBody.hash().toByteArray()
+        val dataToSign = signatureGlobalId?.let { SignatureDomain.prefixedHash(it, hash) } ?: hash
+        val signature = BitString(privateKey.sign(dataToSign))
         return signedBody(signature, unsignedBody)
     }
 

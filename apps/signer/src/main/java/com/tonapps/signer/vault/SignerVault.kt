@@ -1,7 +1,7 @@
 package com.tonapps.signer.vault
 
 import android.content.Context
-import com.tonapps.signer.extensions.securePrefs
+import com.tonapps.security.Security
 import org.ton.api.pk.PrivateKeyEd25519
 import org.ton.mnemonic.Mnemonic
 import com.tonapps.security.clear
@@ -15,7 +15,7 @@ import javax.crypto.SecretKey
 class SignerVault(
     context: Context,
     name: String,
-): Vault(context.securePrefs(name)) {
+): Vault(Security.pref(context, name, name)) {
 
     constructor(context: Context): this(context, "signer")
 

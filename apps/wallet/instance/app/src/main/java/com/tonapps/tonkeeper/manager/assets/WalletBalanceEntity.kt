@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.manager.assets
 
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
 data class WalletBalanceEntity(
     val accountId: String,

@@ -2,6 +2,7 @@ package com.tonapps.ledger.ble
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
+import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -12,6 +13,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.ParcelUuid
+import com.tonapps.async.Async
 import com.tonapps.ledger.ble.callback.BleManagerConnectionCallback
 import com.tonapps.ledger.ble.callback.BleManagerDisconnectionCallback
 import com.tonapps.ledger.ble.callback.BleManagerSendCallback
@@ -22,19 +24,26 @@ import com.tonapps.ledger.ble.model.BleEvent
 import com.tonapps.ledger.ble.model.BleState
 import com.tonapps.ledger.ble.service.BleService
 import com.tonapps.ledger.ble.service.model.BleServiceEvent
-import kotlinx.coroutines.*
+import com.tonapps.log.L
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import timber.log.Timber
-import java.util.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import java.util.Date
+import java.util.UUID
 
 @SuppressLint("MissingPermission")
 class BleManager internal constructor(
     private val context: Context
 ) {
 
-    private val scope = CoroutineScope(Dispatchers.IO + Job())
+    private val scope = Async.ioScope() + Job()
 
     private var isScanning: Boolean = false
     private val _bleState = MutableSharedFlow<BleState>(
@@ -55,14 +64,13 @@ class BleManager internal constructor(
         context.getSystemService(BluetoothManager::class.java).adapter
     }
 
-    private val bluetoothScanner by lazy {
-        bluetoothAdapter.bluetoothLeScanner
-    }
+    private val bluetoothScanner: BluetoothLeScanner?
+        get() = bluetoothAdapter.bluetoothLeScanner
 
     private var scannedDevices: MutableList<BleDeviceModel> = mutableListOf()
     private val scanCallback: ScanCallback = object : ScanCallback() {
         override fun onBatchScanResults(results: MutableList<ScanResult>?) {
-            Timber.d("Batch result")
+            L.d("Batch result")
             var added = false
             results?.let {
                 results.forEach { res ->
@@ -81,7 +89,7 @@ class BleManager internal constructor(
         }
 
         override fun onScanFailed(errorCode: Int) {
-            Timber.d("Bluetooth scan failed $errorCode")
+            L.d("Bluetooth scan failed $errorCode")
             //TODO HANDLE ERROR IN BLESCANCALLBACK
         }
 
@@ -89,7 +97,7 @@ class BleManager internal constructor(
             when (callbackType) {
                 ScanSettings.CALLBACK_TYPE_ALL_MATCHES,
                 ScanSettings.CALLBACK_TYPE_FIRST_MATCH -> {
-                    Timber.d("Scan result => FIRST_MATCH")
+                    L.d("Scan result => FIRST_MATCH")
                     val device = parseScanResult(result)
                     //New Device Detected
                     if (device != null && scannedDevices.find { it.id == device.id } == null) {
@@ -103,14 +111,14 @@ class BleManager internal constructor(
                 }
                 //Not called
                 ScanSettings.CALLBACK_TYPE_MATCH_LOST -> {
-                    Timber.d("Scan result => Lost")
+                    L.d("Scan result => Lost")
                     if (scannedDevices.removeIf { it.id == result.device.address }) {
                         onScanDevicesCallback?.invoke(scannedDevices)
                     }
                 }
             }
 
-            Timber.d("Scan Devices $scannedDevices")
+            L.d("Scan Devices $scannedDevices")
         }
     }
 
@@ -124,7 +132,7 @@ class BleManager internal constructor(
         val name = device.name
 
         return if (name != null && uuids.isNotEmpty()) {
-            Timber.d("Scan result device => \n id: ${device.address} \n name: $name \n serviceId : ${uuids.first()}")
+            L.d("Scan result device => \n id: ${device.address} \n name: $name \n serviceId : ${uuids.first()}")
             BleDeviceModel(
                 id = device.address,
                 name = name,
@@ -154,7 +162,7 @@ class BleManager internal constructor(
     fun startScanning(
         onScanDevices: (List<BleDeviceModel>) -> Unit
     ): Boolean {
-        Timber.d("Start Scanning")
+        L.d("Start Scanning")
         onScanDevicesCallback = onScanDevices
         return internalStartScanning()
     }
@@ -201,11 +209,11 @@ class BleManager internal constructor(
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
 
         val scanSettings = builder.build()
-        bluetoothScanner.startScan(filters, scanSettings, scanCallback)
+        bluetoothScanner?.startScan(filters, scanSettings, scanCallback) ?: return false
 
         //Expose scanned device list every second
         if (pollingJob == null) {
-            pollingJob = scope.launch() {
+            pollingJob = scope.launch {
                 while (true) {
                     //Check outdated match
                     val currentTimestamp: Long = Date().time
@@ -223,10 +231,10 @@ class BleManager internal constructor(
     }
 
     fun stopScanning() {
-        Timber.d("Stop Scanning")
+        L.d("Stop Scanning")
         pollingJob?.cancel()
         pollingJob = null
-        bluetoothScanner.stopScan(scanCallback)
+        bluetoothScanner?.stopScan(scanCallback)
         isScanning = false
     }
 
@@ -282,7 +290,7 @@ class BleManager internal constructor(
         address: String,
         callback: BleManagerConnectionCallback? = null
     ) {
-        Timber.d("($this) - Try Connecting to device with address $address")
+        L.d("($this) - Try Connecting to device with address $address")
         stopScanning()
         internalDisconnect()
 
@@ -319,7 +327,7 @@ class BleManager internal constructor(
     fun disconnect(
         onDisconnectSuccess: () -> Unit,
     ) {
-        Timber.d("Called disconnect")
+        L.d("Called disconnect")
         disconnectionCallback = object : BleManagerDisconnectionCallback {
             override fun onDisconnectionSuccess() {
                 onDisconnectSuccess()
@@ -338,7 +346,7 @@ class BleManager internal constructor(
 
     @Synchronized
     fun disconnect() {
-        Timber.d("Called disconnect")
+        L.d("Called disconnect")
 
         if (disconnectingJob == null
             || disconnectingJob?.isCancelled == true
@@ -353,7 +361,7 @@ class BleManager internal constructor(
     private var disconnectingDeferred: CompletableDeferred<Boolean>? = null
 
     private suspend fun internalDisconnect() {
-        Timber.d("internal Disconnect")
+        L.d("internal Disconnect")
         if (disconnectingDeferred == null
             || disconnectingDeferred?.isCompleted == true
             || disconnectingDeferred?.isCancelled == true
@@ -401,11 +409,11 @@ class BleManager internal constructor(
 
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
-            Timber.d("Connected to BleService !")
+            L.d("Connected to BleService !")
             bluetoothService = (service as BleService.LocalBinder).service
             bluetoothService?.let { bleService ->
                 if (!bleService.initialize()) {
-                    Timber.e("Unable to initialize Bluetooth")
+                    L.e("Unable to initialize Bluetooth")
                     connectionCallback?.onConnectionError(BleError.INITIALIZING_FAILED)
                     bleService.disconnectService(BleError.INITIALIZING_FAILED)
                 } else {
@@ -437,7 +445,7 @@ class BleManager internal constructor(
                                             callback.onError(event.error)
                                         }
                                 }
-                                else -> Timber.d("Event not handle $event")
+                                else -> L.d("Event not handle $event")
                             }
                         }
                     }
@@ -446,13 +454,13 @@ class BleManager internal constructor(
         }
 
         override fun onServiceDisconnected(componentName: ComponentName) {
-            Timber.d("BleService disconnected unexpectedly")
+            L.d("BleService disconnected unexpectedly")
         }
     }
 
     private var tmpError: BleError? = null
     private fun disconnected(error: BleError? = null) {
-        Timber.d("BleService disconnected")
+        L.d("BleService disconnected")
         if (bluetoothService?.isBound == true) {
             tmpError = error
             context.unbindService(serviceConnection)

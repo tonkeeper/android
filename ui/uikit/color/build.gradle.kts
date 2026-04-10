@@ -1,16 +1,8 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
 }
 
-android {
-    namespace = Build.namespacePrefix("uikit.color")
-    compileSdk = Build.compileSdkVersion
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-    }
-}
 
 dependencies {
-    implementation(libs.androidX.annotation)
+    implementation(libs.androidx.annotation)
 }

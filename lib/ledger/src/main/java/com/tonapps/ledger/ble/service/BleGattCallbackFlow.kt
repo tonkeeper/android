@@ -1,12 +1,16 @@
 package com.tonapps.ledger.ble.service
 
-import android.bluetooth.*
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
+import android.bluetooth.BluetoothProfile
 import com.tonapps.ledger.ble.extension.toHexString
 import com.tonapps.ledger.ble.service.model.GattCallbackEvent
+import com.tonapps.log.L
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
-import timber.log.Timber
 
 class BleGattCallbackFlow : BluetoothGattCallback() {
 
@@ -24,7 +28,7 @@ class BleGattCallbackFlow : BluetoothGattCallback() {
     }
 
     override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-        Timber.d("GATT connection state change. state: $newState, status: $status")
+        L.d("GATT connection state change. state: $newState, status: $status")
         when (newState) {
             BluetoothProfile.STATE_CONNECTED -> {
                 pushEvent(GattCallbackEvent.ConnectionState.Connected)
@@ -39,14 +43,14 @@ class BleGattCallbackFlow : BluetoothGattCallback() {
         gatt: BluetoothGatt,
         status: Int
     ) {
-        Timber.d("------------- onServicesDiscovered status: $status")
+        L.d("------------- onServicesDiscovered status: $status")
         if (status == BluetoothGatt.GATT_SUCCESS) {
             hasDiscoveredService = true
             pushEvent(
                 GattCallbackEvent.ServicesDiscovered(gatt.services)
             )
         } else {
-            Timber.w("onServicesDiscovered received: $status")
+            L.w("onServicesDiscovered received: $status")
             pushEvent(GattCallbackEvent.ConnectionState.Disconnected)
         }
     }
@@ -55,11 +59,11 @@ class BleGattCallbackFlow : BluetoothGattCallback() {
         super.onMtuChanged(gatt, mtu, status)
         //Seems that the callback can be reached without calling gatt.requestMtu(...)
         if (hasDiscoveredService) {
-            Timber.d("------------ onMtuChanged => MTU new size: $mtu")
+            L.d("------------ onMtuChanged => MTU new size: $mtu")
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 pushEvent(GattCallbackEvent.MtuNegociated(mtu - GattInteractor.GATT_HEADER_SIZE))
             } else {
-                Timber.w("onMtuChanged error with status : $status")
+                L.w("onMtuChanged error with status : $status")
                 pushEvent(GattCallbackEvent.ConnectionState.Disconnected)
             }
         }
@@ -71,7 +75,7 @@ class BleGattCallbackFlow : BluetoothGattCallback() {
         status: Int
     ) {
         super.onDescriptorWrite(gatt, descriptor, status)
-        Timber.d("------------- onDescriptorWrite status: $status")
+        L.d("------------- onDescriptorWrite status: $status")
         pushEvent(GattCallbackEvent.WriteDescriptorAck(status == BluetoothGatt.GATT_SUCCESS))
     }
 
@@ -80,7 +84,7 @@ class BleGattCallbackFlow : BluetoothGattCallback() {
         characteristic: BluetoothGattCharacteristic,
         status: Int
     ) {
-        Timber.d("------------- onCharacteristicWrite status: $status")
+        L.d("------------- onCharacteristicWrite status: $status")
         pushEvent(GattCallbackEvent.WriteCharacteristicAck(status == BluetoothGatt.GATT_SUCCESS))
 
     }
@@ -89,7 +93,7 @@ class BleGattCallbackFlow : BluetoothGattCallback() {
         gatt: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic
     ) {
-        Timber.d("------------- onCharacteristicChanged status: ${characteristic.value.toHexString()}")
+        L.d("------------- onCharacteristicChanged status: ${characteristic.value.toHexString()}")
         pushEvent(GattCallbackEvent.CharacteristicChanged(characteristic.value))
     }
 

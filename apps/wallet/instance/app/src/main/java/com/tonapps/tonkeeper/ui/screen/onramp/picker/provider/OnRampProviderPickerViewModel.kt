@@ -7,10 +7,8 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.onramp.main.state.UiState
 import com.tonapps.tonkeeper.ui.screen.onramp.picker.provider.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.purchase.PurchaseRepository
-import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -18,10 +16,7 @@ import kotlinx.coroutines.flow.update
 
 class OnRampProviderPickerViewModel(
     app: Application,
-    private val wallet: WalletEntity,
     private val state: UiState.SelectedProvider,
-    private val settingsRepository: SettingsRepository,
-    private val purchaseRepository: PurchaseRepository,
 ): BaseWalletVM(app) {
 
     private val _stateFlow = MutableStateFlow(state)

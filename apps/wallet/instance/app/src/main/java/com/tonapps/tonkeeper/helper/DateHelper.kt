@@ -1,33 +1,27 @@
 package com.tonapps.tonkeeper.helper
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.wallet.localization.Localization
 import kotlinx.datetime.DateTimePeriod
-import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDateTime
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.toJavaLocalDateTime
-import kotlinx.datetime.toJavaZoneId
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
-import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.util.Date
 import java.util.Locale
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
-import kotlin.time.toJavaInstant
+import kotlin.time.Instant
 
 object DateHelper {
 
@@ -126,6 +120,13 @@ object DateHelper {
     }
 
     @OptIn(ExperimentalTime::class)
+    fun isToday(timestamp: Long): Boolean {
+        val today = Clock.System.todayIn(currentTz)
+        return Instant.fromEpochSeconds(timestamp)
+            .toLocalDateTime(currentTz).date == today
+    }
+
+    @OptIn(ExperimentalTime::class)
     fun isToday(date: Instant): Boolean {
         val today = Clock.System.todayIn(currentTz)
         return date.toLocalDateTime(currentTz).date == today
@@ -151,7 +152,6 @@ object DateHelper {
         return now.year == other.year && now.month.number == other.month.number
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun createModernFormatter(pattern: String, locale: Locale): DateTimeFormatter {
         return DateTimeFormatterBuilder()
             .appendPattern(pattern)
@@ -159,16 +159,10 @@ object DateHelper {
     }
 
     @OptIn(ExperimentalTime::class)
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun formatModernDate(instant: Instant, formatString: String, locale: Locale): String {
         val formatter = createModernFormatter(formatString, locale)
         val zonedDateTime = instant.toLocalDateTime(currentTz).toJavaLocalDateTime()
         return formatter.format(zonedDateTime)
-    }
-
-    private fun formatLegacyDate(date: Date, formatString: String, locale: Locale): String {
-        val formatter = SimpleDateFormat(formatString, locale)
-        return formatter.format(date)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -182,10 +176,8 @@ object DateHelper {
         if (declensionMonth) {
             val sdf = android.icu.text.SimpleDateFormat(formatString, locale)
             return sdf.format(date)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return formatModernDate(instant, formatString, locale)
         } else {
-            return formatLegacyDate(date, formatString, locale)
+            return formatModernDate(instant, formatString, locale)
         }
     }
 

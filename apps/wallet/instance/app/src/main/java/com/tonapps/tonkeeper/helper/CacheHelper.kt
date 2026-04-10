@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.helper
 
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
 
 class CacheHelper(

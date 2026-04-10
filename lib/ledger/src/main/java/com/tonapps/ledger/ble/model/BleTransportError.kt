@@ -1,12 +1,11 @@
 package com.tonapps.ledger.ble.model
 
-import android.util.Log
 /*
 import com.ledger.live.core.TransportError
 
 sealed class BleTransportError constructor(private val description: String): TransportError {
     override fun message() {
-        Log.e("BleTransportError", description)
+        L.e("BleTransportError", description)
     }
 
     class ConnectError(description: String):BleTransportError(description)

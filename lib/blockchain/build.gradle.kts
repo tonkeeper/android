@@ -1,26 +1,15 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
     id("kotlin-parcelize")
-}
-
-android {
-    namespace = Build.namespacePrefix("blockchain")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    sourceSets
+    kotlin("plugin.serialization")
 }
 
 dependencies {
     api(platform(libs.firebase.bom))
     api(libs.firebase.crashlytics)
+    api(libs.androidx.core)
 
     api(libs.ton.tvm)
     api(libs.ton.crypto)
@@ -28,9 +17,14 @@ dependencies {
     api(libs.ton.blockTlb)
     api(libs.ton.tonapiTl)
     api(libs.ton.contract)
-    api(libs.kotlinX.io.core)
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.base64))
+    api(libs.kotlinx.io.core)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.base64)
+    implementation(projects.lib.icu)
+    implementation(projects.lib.security)
+    implementation(projects.ui.uikit.flag)
+    implementation(projects.apps.wallet.localization)
+    implementation(libs.kotlinx.serialization.core)
     implementation(libs.bcprovjdk)
     implementation(libs.web3j) {
         exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")

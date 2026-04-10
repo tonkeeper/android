@@ -1,15 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.main.list
 
-import android.content.Context
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -51,7 +47,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             iconRes = currency.drawableRes,
             code = currency.code,
             title = currency.title,
-            network = currency.chain.name,
+            network = currency.chain.symbol,
             currency = currency,
             selected = selected
         )

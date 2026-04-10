@@ -18,7 +18,7 @@ import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.holder.ContactHolder
 import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow

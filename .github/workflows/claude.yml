@@ -1,0 +1,79 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [ opened, reopened ]
+
+permissions:
+  pull-requests: write
+  contents: read
+  id-token: write
+
+jobs:
+  overview:
+    if: contains(github.event.pull_request.body, '/claude-overview') || contains(github.event.pull_request.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Main changes summary
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          settings: '{"permissions":{"allow":["Bash(gh pr comment:*)","Bash(gh pr diff:*)","Bash(gh pr view:*)"]}}'
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are a senior software engineer reviewing a pull request.
+
+            Provide a concise summary of the main changes.
+            Group changes by area/module when possible.
+            Use bullet points. Be specific but brief.
+            Do NOT mention security concerns.
+
+            If commit messages or the diff contain task numbers (e.g. TK-123, TK-456),
+            list them at the top of your summary under a "Related Tasks" heading.
+
+            After composing your summary, post it as a single PR comment using:
+            gh pr comment <PR_NUMBER> --repo ${{ github.repository }} --body "<your summary>"
+          claude_args: |
+            --max-turns 8
+            --model claude-sonnet-4-5-20250929
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+
+  review:
+    if: contains(github.event.pull_request.body, '/claude-review') || contains(github.event.pull_request.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          settings: '{"permissions":{"allow":["Bash(gh pr comment:*)","Bash(gh pr diff:*)","Bash(gh pr view:*)"]}}'
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are a senior software engineer performing a thorough code review on an Android (Kotlin) project.
+
+            Provide actionable feedback. Focus on:
+            - Bugs and logic errors
+            - Performance issues
+            - Security issues
+            - Code readability and maintainability
+            - Kotlin/Android best practices
+            - Error handling gaps
+            - Potential race conditions or threading issues
+
+            For each issue found, reference the file name and provide a clear explanation.
+            Do NOT comment on things that are correct or well-written — only comment on actual problems.
+            If the code looks good and has no issues, post a single brief PR comment saying so.
+            Do not invent problems. Be constructive and concise.
+
+            Use inline comments for specific issues found in the code.
+          claude_args: |
+            --max-turns 25
+            --model claude-opus-4-6
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"

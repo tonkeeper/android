@@ -18,7 +18,7 @@ import uikit.navigation.Navigation.Companion.navigation
 fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     val clip = ClipData.newPlainText("", text)
-    if (sensitive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    if (sensitive) {
         val extras = PersistableBundle()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             extras.putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
@@ -41,18 +41,6 @@ fun Context.fromClipboard(): String? {
 
 fun Context.authorizationRequiredError() {
     navigation?.toast(getString(R.string.authorization_required))
-}
-
-fun Context.securePrefs(name: String): SharedPreferences {
-    KeyHelper.createIfNotExists(name)
-
-    return EncryptedSharedPreferences.create(
-        name,
-        name,
-        this,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
 }
 
 fun Context.openAppSettings() {

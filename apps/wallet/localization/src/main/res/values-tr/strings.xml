@@ -65,6 +65,7 @@
     <string name="other">Diğer</string>
     <string name="minimum_amount">En az %1$s</string>
     <string name="min_amount">Min. tutar: %1$s</string>
+    <string name="min_amount_label">Min. tutar</string>
     <string name="stake_ethena_description">tsUSDe token\'ı, merkezi olmayan bir staking hizmeti olan Ethena aracılığıyla tutulan USDE\'yi temsil eder. tsUSDe, minimum kilitlemeyle otomatik olarak staking ödülleri biriktirir.</string>
     <string name="stake_ethena_disclaimer">Bu, geçen haftanın ortalama protokol ödüllerine ve stake edilmiş ortalama USDe miktarına dayalı tahmini yıllık getiridir. Getiri, haftalık bileşik faizle yıllık hale getirilir. <annotation colorAttr="textSecondaryColor">Geçmiş performans gelecekteki sonuçları garanti etmez.</annotation> Stake ve ödüller, üçüncü taraf bir hizmet olan Ethena tarafından sağlanır ve <annotation colorAttr="textAccentColor">şartlarına</annotation> tabidir.</string>
     <string name="stake_tonstakers_description">Tonstakers havuzunda TON stake ettiğinizde, havuzdaki payınızı temsil eden tsTON adlı bir token alırsınız. Havuz kar biriktirdikçe, tsTON\'unuz daha büyük miktarda TON\'u temsil eder.</string>
@@ -414,7 +415,7 @@
     <string name="testers_chat">Hata bildir (Telegram\'da sohbet)</string>
     <string name="battery">Batarya</string>
     <string name="battery_refill_title">Tonkeeper Batarya</string>
-    <string name="battery_refill_subtitle">Tonkeeper ile takas yapın, token ve NFT gönderin.</string>
+    <string name="battery_refill_subtitle">TON tokenlarını takas edin ve gönderin, TRC-20 ücretlerinde daha az ödeyin</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s şarj</item>
         <item quantity="other">%1$s şarj</item>
@@ -425,7 +426,6 @@
     <string name="battery_supported_transaction">Desteklenen işlemler</string>
     <string name="transactions">İşlemler</string>
     <string name="battery_settings">Batarya Ayarları</string>
-    <string name="battery_will_be_paid">Ödenecek: %1$s</string>
     <string name="battery_nft">NFT transferleri</string>
     <string name="battery_swap">Tonkeeper ile takas</string>
     <string name="battery_jetton">token transferleri</string>
@@ -443,6 +443,7 @@
     <string name="battery_other_title">Diğer</string>
     <string name="battery_other_subtitle">Tutarı manuel olarak girin</string>
     <string name="battery_max_input_amount">Maksimum giriş miktarı %1$s\'dir</string>
+    <string name="battery_excess">%1$s iade</string>
     <string name="battery_please_wait">Pil birkaç dakika içinde şarj olacak</string>
     <string name="battery_refund_title">Şarj Geçmişi</string>
     <string name="battery_refund_subtitle">Şarjlar ve iadeler</string>
@@ -476,6 +477,7 @@
     <string name="staking_pending_withdraw_liquid">Döngünün sonunda %1$s stake edilmedi</string>
     <string name="expired_link">Süresi dolmuş bağlantı</string>
     <string name="payment_method_not_found">Ödeme yöntemi mevcut değil</string>
+    <string name="no_available_provider">Kullanılabilir sağlayıcı yok</string>
     <string name="app_not_found">Uygulama bulunamadı</string>
     <string name="insufficient_balance_in_wallet">Cüzdanda yetersiz bakiye</string>
     <string name="insufficient_balance_fees">Blockchain ücretleri için gerekli: %1$s.\nBakiyeniz: %2$s.</string>
@@ -517,7 +519,7 @@
     <string name="tx_marked_as_spam">İşlem Spam olarak işaretlendi</string>
     <string name="exchange_rate">Döviz kuru</string>
     <string name="address_prefix">Adres:</string>
-    <string name="your_address">Adresiniz:</string>
+    <string name="your_address">Adresiniz</string>
     <string name="safe_mode_tokens_footer">Güvenli mod etkinleştirildi. Yalnızca doğrulanmış tokenlar kullanılabilir. <annotation colorAttr="textAccentColor">Ayarlar</annotation></string>
     <string name="all">Tüm</string>
     <string name="report_encrypted_comment">Bu işlemden gelen yorum, şifresi çözülmüş bir şekilde raporla birlikte gönderilecektir.</string>
@@ -557,6 +559,7 @@
     <string name="open_explorer">Gezginde aç</string>
     <string name="out_of_available_charges">%1$s mevcut hak tükendi</string>
     <string name="tron_toggle_text">TRX olmadan USD₮ TRC20 kullanın. Ücretler Tonkeeper Battery tarafından karşılanır.</string>
+    <string name="tron_toggle_trc_text">USD₮ transferleri ağ ücretleri için TRX gerektirir.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">İfadeyi Kopyala</string>
     <string name="export_tron">TRC20 Cüzdanını Dışa Aktar</string>
@@ -588,8 +591,9 @@
     <string name="currency_not_found">Para birimi bulunamadı</string>
     <string name="onrmap_provider_description">Farklı döviz çiftleri için diğer sağlayıcılar mevcuttur.</string>
     <string name="support_title">Yardıma mı ihtiyacınız var?</string>
-    <string name="support_subtitle">Telegram’dan bize sorun — size yardımcı olmak için elimizden geleni yapacağız.</string>
-    <string name="ask_question">Soru Sor</string>
+    <string name="support_subtitle">Telegram veya e-posta üzerinden bize yazın — size yardımcı olmak için elimizden geleni yapacağız.</string>
+    <string name="ask_question">Telegram\'da sor</string>
+    <string name="email_us">E-posta ile iletişime geç</string>
     <string name="renew_dns_title">Son kullanma tarihi dolan alan adları</string>
     <string name="renew_dns_expires">%1$d gün içinde sona eriyor</string>
     <string name="wallet_renew_dns">%1$d tane süresi dolacak alan adınız var. %2$s tarihine kadar hepsini yenileyin.</string>
@@ -610,6 +614,7 @@
     <string name="about_ethena">Ethena Hakkında</string>
     <string name="swap_disclaimer">Hizmet %1$s tarafından sağlandı \n%2$s · %3$s</string>
     <string name="terms_of_use">Kullanım Şartları</string>
+    <string name="start_agree">Devam ederek <annotation colorAttr="textAccentColor">Kullanım Şartlarımızı</annotation> kabul etmiş olursunuz</string>
     <string name="privacy_policy">Gizlilik Politikası</string>
     <string name="invalid_address">Geçersiz cüzdan adresi.</string>
     <string name="scam_address_error">Bu adrese transferler desteklenmiyor.</string>
@@ -630,5 +635,110 @@
         <item quantity="one">Cüzdanınızdan ücret almaya devam edebilir. Daha fazla ödeme olmaması için devre dışı bırakın.</item>
         <item quantity="other">Bazıları cüzdanınızdan ücret almaya devam edebilir. Daha fazla ödeme olmaması için devre dışı bırakın.</item>
     </plurals>
+    <string name="no_enough_funds">Yetersiz bakiye</string>
+    <string name="refill">Bakiye yükle</string>
+    <string name="get_token">%1$s al</string>
+    <string name="insufficient_trx_balance">İşlem ücretlerini karşılamak için yeterli TRX yok</string>
+    <string name="insufficient_trx_balance_desc">Bir ücret ödeme yöntemi seçin ve bakiye yükleyin.</string>
+    <string name="tron_not_enough_for_fee_title">Ücretleri karşılamak için yeterli bakiye yok</string>
+    <string name="tron_not_enough_for_fee_desc">Ücretleri karşılamak için Battery, TON veya TRX bakiyenizi artırın.</string>
+    <string name="top_up">Yükle</string>
+    <string name="tron_not_enough_trx_for_fee_title">Ücretler için yeterli TRX yok</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Gerekli ücret ≈ %1$s. Bakiyeniz: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer mevcut</item>
+        <item quantity="few">%1$s transfer mevcut</item>
+        <item quantity="many">%1$s transfer mevcut</item>
+        <item quantity="other">%1$s transfer mevcut</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfer</item>
+        <item quantity="many">%1$s transfer</item>
+        <item quantity="other">%1$s transfer</item>
+    </plurals>
+    <string name="trx_balance">TRX Bakiyesi</string>
+    <string name="trx_balance_desc">Ağ ücretlerini ödemek için bakiyenizi doldurun.</string>
+    <string name="blockchain_fees">Blockchain Ücretleri</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery, blockchain ücretlerini ödemenin en kolay yoludur. TON ve TRX ile de bakiye yükleyebilirsiniz.</string>
+    <string name="required_prefix">Gerekli: %1$s</string>
+    <string name="tron_fees_learn_more">Ücretler piyasa koşullarına göre gerçek zamanlı olarak değişir. <annotation colorAttr="textAccentColor">Daha fazla bilgi</annotation></string>
+    <string name="tetra_subtitle">Tetra L2 ağına bağlan</string>
+    <string name="other_options">Diğer seçenekler</string>
+    <string name="for_developers">Geliştiriciler için</string>
 
+    <string name="more">Daha fazla</string>
+    <string name="retry">Tekrar dene</string>
+    <string name="operation">İşlem</string>
+    <string name="description">Açıklama</string>
+    <string name="protocol">Protokol</string>
+    <string name="cant_find_anything">Hiçbir şey bulunamadı.</string>
+
+    <string name="deposit_from_another_wallet">Başka bir TON/TRON cüzdanından</string>
+    <string name="deposit_send">Gönder %s</string>
+    <string name="deposit_address">%s adresi</string>
+    <string name="deposit_to_another_wallet">Başka bir cüzdana</string>
+    <string name="deposit_with_cash_or_crypto">Nakit veya kripto ile yatırma</string>
+    <string name="withdraw_with_cash_or_crypto">Nakit veya kripto ile çekme</string>
+    <string name="deposit_available_cash_out">Diğer kriptodan kullanılabilir</string>
+    <string name="deposit_available_cross_chain">1:1 zincirler arası kullanılabilir</string>
+    <string name="deposit_insert_amount">Tutarı girin</string>
+    <string name="deposit_buy_with_cash">Nakit ile satın al</string>
+    <string name="deposit_buy_with_crypto">Kripto ile satın al</string>
+    <string name="deposit_buy_with_stablecoins">Stablecoin ile satın al</string>
+    <string name="ramp_sell_with_cash">Nakit karşılığı sat</string>
+    <string name="ramp_sell_with_crypto">Kripto karşılığı sat</string>
+    <string name="ramp_sell_with_stablecoins">Stablecoin karşılığı sat</string>
+    <string name="ramp_stablecoins_convertion">"TON ağında 1:1 oranıyla USDT\'ye dönüştürülecek</string>
+    <string name="ramp_crypto_swap_info">Kriptonuz mevcut döviz kurunda TON\'a dönüştürülecektir.</string>
+    <string name="ramp_stablecoin_buy_info">Stablecoin\'iniz %2$s ağında 1:1 oranında %1$s olarak yatırılacaktır.</string>
+    <string name="ramp_stablecoin_sell_info">USDT\'yi diğer stablecoin\'lere çekin. Her ağ için sabit bir ücret uygulanır.</string>
+    <string name="ramp_total_amount">Toplam tutar</string>
+    <string name="ramp_estimated_time">Tahmini varış süresi</string>
+    <string name="ramp_withdrawal_time">Çekim süresi</string>
+    <string name="ramp_withdrawal_fee">Çekim ücreti</string>
+    <string name="deposit_network_warning">Doğru ağı seçtiğinizden emin olun, aksi takdirde fonlarınızı kaybedebilirsiniz.</string>
+    <string name="deposit_go_to_main">Ana Sayfaya Git</string>
+    <string name="deposit_payment_qr_code">Ödeme QR kodu</string>
+    <string name="deposit_scan_qr_description">Ödemeyi tamamlamak için QR kodunu tarayın veya adresi kopyalayın.</string>
+    <string name="deposit_min_amount_with_currency">Min. tutar: %1$s %2$s</string>
+    <string name="deposit_max_amount_with_currency">Maks. tutar: %1$s %2$s</string>
+    <string name="deposit_other_providers_hint">Farklı döviz çiftleri için diğer sağlayıcılar mevcuttur.</string>
+    <string name="deposit_changelly_disclaimer">Changelly tarafından sağlanan üçüncü taraf hizmeti. Bu hizmeti kullanarak %s kabul etmiş olursunuz.</string>
+    <string name="deposit_address_warning_prefix">Bu\u0020</string>
+    <string name="deposit_address_warning_highlight">adres yalnızca bir kez kullanılabilir</string>
+    <string name="deposit_address_warning_suffix">. Fonlarınızı kaybetmemek için yatırma limitlerini ve ağı kontrol edin.</string>
+
+    <string name="terms_of_service">Hizmet Şartları</string>
+    <string name="receive_tokens">Token al</string>
+    <string name="send_tokens">Token gönder</string>
+    <string name="withdraw">Çek</string>
+    <string name="deposit">Yatır</string>
+    <string name="choose_network">Ağ seçin</string>
+    <string name="copy_address">Adresi Kopyala</string>
+    <string name="choose_currency">Para birimi seçin</string>
+    <string name="send_currency">Gönder %s</string>
+    <string name="receive_currency">Al %s</string>
+    <string name="min_deposit">Min. yatırma</string>
+    <string name="max_deposit">Maks. yatırma</string>
+    <string name="max_amount">Maks. tutar: %s</string>
+    <string name="max_amount_label">Maks. tutar</string>
+    <string name="available">Kullanılabilir: %s</string>
+    <string name="network">Ağ</string>
+
+    <string name="added_extension">Uzantı Eklendi</string>
+    <string name="removed_extension">Uzantı Kaldırıldı</string>
+    <string name="signature_allowed">İmzaya İzin Verildi</string>
+    <string name="signature_not_allowed">İmzaya İzin Verilmedi</string>
+    <string name="up_to_duration">%1$s %2$s kadar</string>
+    <string name="time_seconds">sn</string>
+    <string name="time_minutes">dk</string>
+    <string name="deposit_select_network_description">%s\'yi desteklenen ağlara istediğiniz zaman «Çekim» bölümünden çekebilirsiniz.</string>
+    <string name="choose_network_error">%s ağını seçin</string>
+    <string name="choose_asset">Varlık seçin</string>
+    <string name="add_funds">Para ekle</string>
+    <string name="tooltip_new">YENİ</string>
+    <string name="tooltip_send_from_here">Buradan gönder</string>
+    <string name="trade">Ticaret</string>
+    <string name="search_by_ticker">Sembol veya isme göre ara</string>
 </resources>

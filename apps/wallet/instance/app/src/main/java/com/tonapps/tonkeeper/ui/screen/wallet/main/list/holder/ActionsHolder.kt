@@ -1,19 +1,20 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 
 import android.view.ViewGroup
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.bus.generated.Events
+import com.tonapps.deposit.screens.qr.QrAssetFragment
 import com.tonapps.tonkeeper.koin.serverFlags
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.onramp.main.OnRampScreen
-import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.watchonly.WatchInfoScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import uikit.widget.IconButtonView
 
 class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.view_wallet_actions) {
@@ -26,12 +27,12 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
     private val stakeView = findViewById<IconButtonView>(R.id.stake)
 
     override fun onBind(item: Item.Actions) {
-        val isWatchOnly = item.walletType == Wallet.Type.Watch
-        val isSwapEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !item.isSwapDisabled
-        val isSendEnabled = item.walletType != Wallet.Type.Watch
-        val isScanEnabled = item.walletType != Wallet.Type.Watch
-        val isStakeEnabled = item.walletType != Wallet.Type.Watch && item.walletType != Wallet.Type.Testnet && !item.isStakingDisabled
-        val isBuyOrSellEnabled = item.walletType != Wallet.Type.Testnet
+        val isWatchOnly = item.walletType == WalletType.Watch
+        val isSwapEnabled = item.walletType != WalletType.Watch && item.walletType != WalletType.Testnet && !item.isSwapDisabled
+        val isSendEnabled = item.walletType != WalletType.Watch
+        val isScanEnabled = item.walletType != WalletType.Watch
+        val isStakeEnabled = item.walletType != WalletType.Watch && item.walletType != WalletType.Testnet && !item.isStakingDisabled
+        val isBuyOrSellEnabled = item.walletType != WalletType.Testnet && !item.isExchangeDisabled
 
         scanView.setOnClickListener {
             if (isWatchOnly) {
@@ -50,7 +51,7 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
             navigation?.add(CameraScreen.newInstance(chains = chains))
         }
         receiveView.setOnClickListener {
-            navigation?.add(QRScreen.newInstance(item.wallet))
+            navigation?.add(QrAssetFragment.newInstance())
         }
 
         swapView.setOnClickListener {
@@ -82,7 +83,13 @@ class ActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.vi
                 return@setOnClickListener
             }
 
-            navigation?.add(SendScreen.newInstance(item.wallet, type = SendScreen.Companion.Type.Default))
+            navigation?.add(
+                SendScreen.newInstance(
+                    item.wallet,
+                    type = SendScreen.Companion.Type.Default,
+                    from = Events.SendNative.SendNativeFrom.WalletScreen
+                )
+            )
         }
         stakeView.setOnClickListener {
             if (isWatchOnly) {

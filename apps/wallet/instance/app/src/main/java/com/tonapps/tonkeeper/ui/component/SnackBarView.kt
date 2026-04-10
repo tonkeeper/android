@@ -1,18 +1,15 @@
 package com.tonapps.tonkeeper.ui.component
 
+import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnLayout
-import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeperx.R
-import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
@@ -73,9 +70,17 @@ class SnackBarView @JvmOverloads constructor(
     }
 
     private fun hideDelayed() {
+        var hideDelay = 3000L
+
+        val intent = (context as? Activity)?.intent
+        val isMaestro = intent?.getStringExtra("isMaestro") == "true"
+        if (isMaestro) {
+            hideDelay = 6000L
+        }
+
         postDelayed({
             startHideAnimation()
-        }, 3000)
+        }, hideDelay)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

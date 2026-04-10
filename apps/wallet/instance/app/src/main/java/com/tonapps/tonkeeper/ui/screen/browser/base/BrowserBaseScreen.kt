@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.browser.base
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
@@ -17,7 +17,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
 import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable

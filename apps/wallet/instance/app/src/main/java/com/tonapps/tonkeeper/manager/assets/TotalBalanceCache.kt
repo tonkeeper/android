@@ -6,8 +6,8 @@ import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putParcelable
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 internal class TotalBalanceCache(context: Context) {
 

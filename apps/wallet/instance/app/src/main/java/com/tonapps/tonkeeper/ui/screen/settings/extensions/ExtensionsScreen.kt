@@ -10,7 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.extensions.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.support.SupportScreen
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow

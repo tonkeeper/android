@@ -111,5 +111,4 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
             FirebaseCrashlytics.getInstance().recordException(e)
         }
     }
-
 }

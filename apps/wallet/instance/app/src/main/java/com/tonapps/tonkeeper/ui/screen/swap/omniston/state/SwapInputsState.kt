@@ -1,11 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.swap.omniston.state
 
 import com.tonapps.icu.Coins
-import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.entities.AssetsEntity
+import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.tonkeeper.helper.TwinInput
-import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.BalanceEntity
 
 data class SwapInputsState(
     val input: TwinInput.State = TwinInput.State(),

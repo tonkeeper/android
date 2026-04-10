@@ -7,7 +7,7 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.toByteArray
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.sqlite.withTransaction
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import io.Serializer
 import io.tonapi.models.AccountEvent

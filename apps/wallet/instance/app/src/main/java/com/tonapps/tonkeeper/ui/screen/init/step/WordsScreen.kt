@@ -2,21 +2,17 @@ package com.tonapps.tonkeeper.ui.screen.init.step
 
 import android.os.Bundle
 import android.text.Editable
-import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
-import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.TonMnemonic
-import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.toast
@@ -33,16 +29,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.ton.mnemonic.Mnemonic
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
 import uikit.extensions.clear
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
-import uikit.extensions.getCurrentFocusEditText
+import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.getViews
-import uikit.extensions.hideKeyboard
 import uikit.extensions.scrollDown
 import uikit.extensions.scrollView
 import uikit.extensions.withAlpha
@@ -69,6 +63,8 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private lateinit var words24View: AppCompatTextView
     private lateinit var words12View: AppCompatTextView
     private lateinit var titleView: TextHeaderView
+
+    private var pendingScrollToBottom = false
 
     private val isVisibleSuggestions: Boolean
         get() = suggestionsView.visibility == View.VISIBLE && suggestionsView.alpha > 0f
@@ -117,7 +113,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                 if (isLastIndex(index) && actionId == EditorInfo.IME_ACTION_DONE) {
                     next()
                     true
-                } else if (isLastIndex(index) && actionId == EditorInfo.IME_ACTION_NEXT) {
+                } else if (actionId == EditorInfo.IME_ACTION_NEXT) {
                     nextInput(index)
                     true
                 } else {
@@ -140,6 +136,12 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             scrollView.updatePadding(bottom = offset)
             suggestionsView.translationY = -offset.toFloat()
             suggestionsView.alpha = progress
+            if (pendingScrollToBottom) {
+                if (progress >= 1f) {
+                    pendingScrollToBottom = false
+                }
+                scrollView.post { scrollView.scrollDown(true) }
+            }
         }
         getCountFromClipboard()
     }
@@ -186,7 +188,6 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private fun nextInput(index: Int) {
         val nextView = wordInputs.getOrNull(index + 1) ?: return
         nextView.requestFocus()
-        scrollView.scrollView(nextView, false)
     }
 
     private fun autoSetWord(index: Int) {
@@ -237,6 +238,16 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private fun onFocusChange(index: Int, hasFocus: Boolean) {
         if (hasFocus) {
+            val inputView = wordInputs.getOrNull(index)
+            if (index > (initViewModel.wordsCount - 4)) {
+                scrollToBottom()
+            } else if (inputView != null) {
+                scrollView.scrollView(
+                    view = inputView,
+                    smooth = true,
+                    top = (-76).dp
+                )
+            }
             checkSuggestions(index, wordInputs[index].text.toString())
         } else {
             suggestionsView.visibility = View.GONE
@@ -310,15 +321,6 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
         if (nextFocusInput != null && nextFocusInput.visibility == View.VISIBLE) {
             nextFocusInput.requestFocus()
-            if (index > (initViewModel.wordsCount - 4)) {
-                scrollView.scrollDown(true)
-            } else {
-                scrollView.scrollView(
-                    view = nextFocusInput,
-                    smooth = true,
-                    top = (-128).dp
-                )
-            }
         }
     }
 
@@ -362,6 +364,19 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             hideKeyboard()
             scrollView.scrollDown(true)
             checkWords(500)
+        }
+    }
+
+    private fun isKeyboardVisible(): Boolean {
+        return scrollView.getRootWindowInsetsCompat()
+            ?.isVisible(WindowInsetsCompat.Type.ime()) == true
+    }
+
+    private fun scrollToBottom() {
+        if (isKeyboardVisible()) {
+            scrollView.post { scrollView.scrollDown(true) }
+        } else {
+            pendingScrollToBottom = true
         }
     }
 

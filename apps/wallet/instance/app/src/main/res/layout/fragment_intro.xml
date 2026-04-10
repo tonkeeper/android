@@ -9,37 +9,49 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:scaleType="centerCrop"
-        android:src="@drawable/bg_intro_blue"/>
+        android:src="@drawable/bg_intro_blue" />
 
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="@dimen/offsetLarge">
+        android:paddingHorizontal="@dimen/offsetLarge"
+        android:paddingTop="@dimen/offsetLarge"
+        android:paddingBottom="@dimen/offsetMedium">
 
         <uikit.widget.TextHeaderView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/offsetMedium"
-            android:title="@string/app_name"
-            android:description="@string/intro_description"/>
+            android:description="@string/intro_description"
+            android:title="@string/app_name" />
 
         <Button
-            style="@style/Widget.App.Button"
             android:id="@+id/new_wallet"
+            style="@style/Widget.App.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetLarge"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:text="@string/start_create_new_wallet"/>
+            android:text="@string/start_create_new_wallet"
+            android:textAppearance="@style/TextAppearance.Label1" />
 
         <Button
-            style="@style/Widget.App.Button.Secondary"
             android:id="@+id/import_wallet"
+            style="@style/Widget.App.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetMedium"
-            android:textAppearance="@style/TextAppearance.Label1"
-            android:text="@string/start_import_wallet"/>
+            android:text="@string/start_import_wallet"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/terms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/offsetLarge"
+            android:gravity="center"
+            android:text="@string/start_agree"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/textTertiaryColor" />
 
     </uikit.widget.ColumnLayout>
 

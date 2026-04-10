@@ -6,9 +6,9 @@ import androidx.compose.runtime.Composable
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.ui.TxEventComposable
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
-class TxEventsScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet) {
+class TxEventsScreen(wallet: WalletEntity, private val canGoBack: Boolean) : ComposeWalletScreen(wallet) {
 
     override val viewModel: TxEventsViewModel by walletViewModel()
 
@@ -17,10 +17,9 @@ class TxEventsScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet) {
     }
 
     @Composable
-    override fun ScreenContent() = TxEventComposable(viewModel)
+    override fun ScreenContent() = TxEventComposable(viewModel, canGoBack = canGoBack, onBack = { finish() })
 
     companion object {
-
-        fun newInstance(wallet: WalletEntity) = TxEventsScreen(wallet)
+        fun newInstance(wallet: WalletEntity, canGoBack: Boolean = true) = TxEventsScreen(wallet, canGoBack)
     }
 }

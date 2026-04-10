@@ -3,11 +3,11 @@ package com.tonapps.tonkeeper.ui.component.token
 import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.extensions.hideKeyboard
 import uikit.navigation.Navigation
 

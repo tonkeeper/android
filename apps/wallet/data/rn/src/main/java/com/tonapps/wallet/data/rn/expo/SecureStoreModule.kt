@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import android.security.keystore.KeyPermanentlyInvalidatedException
-import android.util.Log
+import com.tonapps.log.L
 import androidx.fragment.app.FragmentActivity
 import com.tonapps.extensions.asJSON
 import com.tonapps.wallet.data.rn.expo.encryptors.AESEncryptor
@@ -100,7 +100,7 @@ internal class SecureStoreModule(
                 }
             }
         } catch (e: KeyPermanentlyInvalidatedException) {
-            Log.w(TAG, "The requested key has been permanently invalidated. Returning null")
+            L.w(TAG, "The requested key has been permanently invalidated. Returning null")
             return null
         } catch (e: BadPaddingException) {
             throw (DecryptException("Could not decrypt the value with provided keychain $legacyReadFailedWarning", key, options.keychainService, e))
@@ -149,7 +149,7 @@ internal class SecureStoreModule(
             }
         } catch (e: KeyPermanentlyInvalidatedException) {
             if (!keyIsInvalidated) {
-                Log.w(TAG, "Key has been invalidated, retrying with the key deleted")
+                L.w(TAG, "Key has been invalidated, retrying with the key deleted")
                 return setItemImpl(key, value, options, true)
             }
             throw EncryptException("Encryption Failed. The key $key has been permanently invalidated and cannot be reinitialized", key, options.keychainService, e)
@@ -223,7 +223,7 @@ internal class SecureStoreModule(
             // so we shouldn't delete them.
             if (requireAuthentication && keychainService == entryKeychainService) {
                 sharedPreferences.edit().remove(key).apply()
-                Log.w(TAG, "Removing entry: $key due to the encryption key being deleted")
+                L.w(TAG, "Removing entry: $key due to the encryption key being deleted")
             }
         }
     }

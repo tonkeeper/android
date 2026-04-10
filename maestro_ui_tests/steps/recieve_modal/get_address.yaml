@@ -1,0 +1,4 @@
+appId: com.ton_keeper.debug
+---
+- copyTextFrom:
+    id: "wallet_address_text"

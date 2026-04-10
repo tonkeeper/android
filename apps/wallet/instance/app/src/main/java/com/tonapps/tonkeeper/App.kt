@@ -2,101 +2,33 @@ package com.tonapps.tonkeeper
 
 import android.app.Application
 import android.content.res.Configuration
-import android.graphics.Bitmap
-import android.os.Build
-import android.os.StrictMode
-import android.util.Log
-import androidx.camera.camera2.Camera2Config
-import androidx.camera.core.CameraXConfig
-import com.google.firebase.FirebaseApp
-import com.tonapps.extensions.setLocales
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.koin.koinModel
-import com.tonapps.tonkeeper.koin.viewModelWalletModule
-import com.tonapps.tonkeeper.koin.workerModule
-import com.tonapps.tonkeeperx.BuildConfig
-import com.tonapps.wallet.api.apiModule
-import com.tonapps.wallet.data.account.accountModule
-import com.tonapps.wallet.data.rates.ratesModule
-import com.tonapps.wallet.data.token.tokenModule
-import com.tonapps.wallet.data.swap.swapModule
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.startKoin
-import com.tonapps.wallet.data.backup.backupModule
-import com.tonapps.wallet.data.battery.batteryModule
-import com.tonapps.wallet.data.browser.browserModule
-import com.tonapps.wallet.data.collectibles.collectiblesModule
-import com.tonapps.wallet.data.plugins.pluginsModule
-import com.tonapps.wallet.data.contacts.contactsModule
 import com.tonapps.wallet.data.core.Theme
-import com.tonapps.wallet.data.core.dataModule
-import com.tonapps.wallet.data.dapps.dAppsModule
-import com.tonapps.wallet.data.events.eventsModule
-import com.tonapps.wallet.data.passcode.passcodeModule
-import com.tonapps.wallet.data.purchase.purchaseModule
-import com.tonapps.wallet.data.rn.rnLegacyModule
-import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.staking.stakingModule
 import com.tonapps.wallet.localization.Localization
-import org.koin.core.component.KoinComponent
-import org.koin.android.ext.android.inject
-import org.koin.androidx.workmanager.koin.workManagerFactory
-import java.util.concurrent.Executors
+import uikit.R
 
-class App: Application(), CameraXConfig.Provider, KoinComponent {
+open class App : Application() {
 
     companion object {
-
+        @Deprecated("Initialize object explicitly")
         lateinit var instance: App
 
+        @Deprecated("Migration to Compose")
         fun applyConfiguration(newConfig: Configuration) {
             CurrencyFormatter.onConfigurationChanged(newConfig)
         }
     }
 
-    private val settingsRepository: SettingsRepository by inject()
-
-    override fun onCreate() {
-        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder()
-                .penaltyLog()
-                .detectAll()
-                .penaltyListener(Executors.newSingleThreadExecutor()) {
-                    Log.e("TonkeeperStrictModeLog", "StrictMode.VmPolicy: $it", it.cause)
-                }.build())
-        }
-
-        super.onCreate()
-        updateThemes()
-
-        FirebaseApp.initializeApp(this)
-
-        instance = this
-
-        startKoin {
-            androidContext(this@App)
-            modules(koinModel, contactsModule, workerModule, dAppsModule, viewModelWalletModule, purchaseModule, batteryModule, stakingModule, passcodeModule, rnLegacyModule, swapModule, backupModule, dataModule, browserModule, apiModule, accountModule, ratesModule, tokenModule, eventsModule, collectiblesModule, pluginsModule)
-            workManagerFactory()
-        }
-        setLocales(settingsRepository.localeList)
-    }
-
     fun updateThemes() {
         Theme.clear()
-        Theme.add("blue", uikit.R.style.Theme_App_Blue, title = getString(Localization.theme_deep_blue))
-        Theme.add("dark", uikit.R.style.Theme_App_Dark, title = getString(Localization.theme_dark))
-        Theme.add("light", uikit.R.style.Theme_App_Light, true, title = getString(Localization.theme_light))
+        Theme.add("blue", R.style.Theme_App_Blue, title = getString(Localization.theme_deep_blue))
+        Theme.add("dark", R.style.Theme_App_Dark, title = getString(Localization.theme_dark))
+        Theme.add(
+            "light",
+            R.style.Theme_App_Light,
+            true,
+            title = getString(Localization.theme_light)
+        )
         Theme.add("system", 0, title = getString(Localization.system))
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        applyConfiguration(newConfig)
-    }
-
-    override fun getCameraXConfig(): CameraXConfig {
-        return CameraXConfig.Builder
-            .fromConfig(Camera2Config.defaultConfig())
-            .setMinimumLoggingLevel(Log.ERROR).build()
     }
 }

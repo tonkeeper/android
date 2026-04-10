@@ -1,0 +1,32 @@
+appId: com.ton_keeper.debug
+---
+- tapOn: Create new wallet
+- assertVisible: Create passcode
+- repeat:
+    times: 4
+    commands:
+      - tapOn: ${PASSWORD_KEY}
+
+- assertVisible: Re-enter passcode
+- repeat:
+    times: 4
+    commands:
+      - tapOn: ${PASSWORD_KEY}
+
+- tapOn: Later
+
+- assertVisible: Customize your Wallet
+- assertVisible: Tonkeeper Dev
+- assertVisible:
+    id: label_emoji
+- assertVisible:
+    id: color
+    index: 7
+- assertVisible:
+    id: emoji
+    index: 54
+- tapOn: "Continue"
+
+- assertVisible: "$ 0"
+- assertVisible:
+    id: wallet_address

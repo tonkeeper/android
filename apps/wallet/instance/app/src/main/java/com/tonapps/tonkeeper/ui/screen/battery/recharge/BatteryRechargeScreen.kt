@@ -26,8 +26,8 @@ import com.tonapps.tonkeeper.ui.screen.send.main.SendContact
 import com.tonapps.tonkeeper.ui.screen.token.picker.TokenPickerScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
@@ -170,11 +170,11 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
         ) { allowedTokens, selectedToken ->
             navigation?.add(
                 TokenPickerScreen.newInstance(
-                wallet = screenContext.wallet,
-                requestKey = tokenRequestKey,
-                selectedToken = selectedToken.balance.token,
-                allowedTokens = allowedTokens.map { it.address }
-            ))
+                    wallet = screenContext.wallet,
+                    requestKey = tokenRequestKey,
+                    selectedToken = selectedToken.balance.token,
+                    allowedTokens = allowedTokens.map { it.address }
+                ))
         }.launchIn(lifecycleScope)
     }
 

@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.log.L
 import androidx.biometric.BiometricPrompt
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers

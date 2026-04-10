@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.extensions
 import com.tonapps.extensions.uri
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.popup.ActionSheet.Item
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization

@@ -1,5 +1,7 @@
 package com.tonapps.wallet.localization
 
+import com.tonapps.apps.wallet.localization.R
+
 typealias Localization = R.string
 typealias Plurals = R.plurals
 

@@ -1,10 +1,11 @@
 package com.tonapps.wallet.data.rates.source
 
 import android.content.Context
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.wallet.data.core.BlobDataSource
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.rates.entity.RateEntity
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import java.util.concurrent.TimeUnit
@@ -19,21 +20,26 @@ internal class BlobDataSource(context: Context): BlobDataSource<RatesEntity>(
 
     override fun onMarshall(data: RatesEntity) = data.toByteArray()
 
-    fun get(currency: WalletCurrency): RatesEntity {
-        val rates = getCache(currency.code) ?: RatesEntity.empty(currency)
+    private fun cacheKey(network: TonNetwork, currency: WalletCurrency): String {
+        return "${network.value}_${currency.code}"
+    }
+
+    fun get(network: TonNetwork, currency: WalletCurrency): RatesEntity {
+        val key = cacheKey(network, currency)
+        val rates = getCache(key) ?: RatesEntity.empty(currency)
         if (rates.isEmpty) {
-            clearCache(currency.code)
+            clearCache(key)
             return rates
         }
         return rates.copy()
     }
 
-    fun add(currency: WalletCurrency, list: List<RateEntity>) {
+    fun add(network: TonNetwork, currency: WalletCurrency, list: List<RateEntity>) {
         if (list.isEmpty()) {
             return
         }
-        val rates = get(currency).merge(list)
-        setCache(currency.code, rates)
+        val rates = get(network, currency).merge(list)
+        setCache(cacheKey(network, currency), rates)
     }
 
 }

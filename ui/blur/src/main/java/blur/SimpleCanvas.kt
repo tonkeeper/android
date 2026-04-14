@@ -9,8 +9,6 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Region
 import android.graphics.text.MeasuredText
-import android.os.Build
-import android.util.Log
 
 class SimpleCanvas(bitmap: Bitmap): Canvas(bitmap) {
 
@@ -79,7 +77,7 @@ class SimpleCanvas(bitmap: Bitmap): Canvas(bitmap) {
     private companion object {
 
         fun optimizeBitmap(bitmap: Bitmap): Bitmap {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.config == Bitmap.Config.HARDWARE) {
+            return if (bitmap.config == Bitmap.Config.HARDWARE) {
                 bitmap.copy(Bitmap.Config.ARGB_8888, bitmap.isMutable)
             } else {
                 bitmap

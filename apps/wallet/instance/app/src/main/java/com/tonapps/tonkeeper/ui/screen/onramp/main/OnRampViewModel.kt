@@ -1,8 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.onramp.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.blockchain.model.legacy.CurrencyCountries
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events.OnrampsNative.OnrampsNativeType
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.singleValue
 import com.tonapps.icu.Coins
@@ -17,21 +22,15 @@ import com.tonapps.tonkeeper.ui.screen.onramp.main.state.OnRampPaymentMethodStat
 import com.tonapps.tonkeeper.ui.screen.onramp.main.state.UiState
 import com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.OnRampPickerScreen
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.BalanceEntity
 import com.tonapps.wallet.api.entity.OnRampArgsEntity
 import com.tonapps.wallet.api.entity.OnRampMerchantEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.CurrencyCountries
-import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -114,7 +113,7 @@ class OnRampViewModel(
     }
 
     val country: String
-        get() = environment.country
+        get() = environment.deviceCountry
 
     val providersFlow = combine(
         availableProvidersFlow,
@@ -146,7 +145,7 @@ class OnRampViewModel(
     val ratesFlow = twinInput.currenciesStateFlow.map { inputCurrencies ->
         val fiatCurrency = inputCurrencies.fiat ?: settingsRepository.currency
         val tokens = inputCurrencies.cryptoTokens.map { it.tokenQuery }
-        ratesRepository.getRates(fiatCurrency, tokens)
+        ratesRepository.getRates(wallet.network, fiatCurrency, tokens)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null).filterNotNull()
 
     val minAmountFlow = combine(
@@ -181,9 +180,10 @@ class OnRampViewModel(
         }
         val firstLineSuffix = CurrencyFormatter.format(inputCurrencies.receive.symbol, firstRate, replaceSymbol = false)
         val firstLine = "$firstLinePrefix ≈ $firstLineSuffix"
+        val strippedFirstValue = Coins.of(CurrencyFormatter.format(value = firstRate).toString())
 
         val secondLinePrefix = CurrencyFormatter.format(inputCurrencies.receive.symbol, value, replaceSymbol = false)
-        val secondRate = rates.convert(inputCurrencies.receive, value, inputCurrencies.send)
+        val secondRate = Coins.ONE / strippedFirstValue
         if (!secondRate.isPositive) {
             return@combine UiState.RateFormatted(null, null)
         }
@@ -454,7 +454,7 @@ class OnRampViewModel(
     }
 
     private fun currencyByCountry(): WalletCurrency {
-        val code = CurrencyCountries.getCurrencyCode(environment.country)
+        val code = CurrencyCountries.getCurrencyCode(environment.deviceCountry)
         return WalletCurrency.ofOrDefault(code)
     }
 
@@ -583,6 +583,28 @@ class OnRampViewModel(
 
     fun disableConfirmDialog(wallet: WalletEntity, providerId: String) {
         settingsRepository.disablePurchaseOpenConfirm(wallet.id, providerId)
+    }
+
+    fun trackContinueToProvider(providerName: String, providerDomain: String, txId: String?) {
+        val nativeType = when (purchaseType) {
+            "buy" -> OnrampsNativeType.Buy
+            "sell" -> OnrampsNativeType.Sell
+            else -> OnrampsNativeType.Swap
+        }
+        AnalyticsHelper.Default.events.onrampsNative.onrampContinueToProvider(
+            txId = txId,
+            type = nativeType,
+            sellAssetNetwork = fromNetwork ?: from,
+            sellAssetSymbol = from,
+            sellAmount = twinInput.state.send.coins.value.toDouble(),
+            buyAssetNetwork = toNetwork ?: to,
+            buyAssetSymbol = to,
+            buyAmount = twinInput.state.receive.coins.value.toDouble(),
+            countryCode = country,
+            paymentMethod = paymentMethod ?: "unknown",
+            providerName = providerName,
+            providerDomain = providerDomain
+        )
     }
 
     fun setSelectedPaymentMethod(type: String) {

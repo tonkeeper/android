@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
@@ -18,8 +18,8 @@ import com.tonapps.tonkeeper.ui.screen.swap.picker.SwapPickerArgs
 import com.tonapps.tonkeeper.ui.screen.swap.picker.SwapPickerScreen
 import com.tonapps.tonkeeper.ui.screen.swap.picker.SwapPickerViewModel
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment

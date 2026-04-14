@@ -2,7 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
+import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.get
@@ -22,9 +24,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
-import androidx.core.net.toUri
-import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
-import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 
 class BrowserSearchViewModel(
     app: Application,
@@ -60,7 +59,7 @@ class BrowserSearchViewModel(
             return@withContext emptyList()
         }
 
-        val isSafeModeEnabled = settingsRepository.isSafeModeEnabled(api)
+        val isSafeModeEnabled = settingsRepository.isSafeModeEnabled(TonNetwork.MAINNET)
 
         var uri = uri(query)?.let { DeepLinkRoute.normalize(it) }
         if (uri?.scheme == "tonkeeper") {

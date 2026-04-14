@@ -5,7 +5,7 @@ import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.os.AndroidCurrency
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 data class Item(
     val position: ListCell.Position,

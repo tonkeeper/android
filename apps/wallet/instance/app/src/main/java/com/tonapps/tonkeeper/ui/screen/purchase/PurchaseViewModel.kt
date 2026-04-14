@@ -6,7 +6,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.purchase.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -35,7 +35,7 @@ class PurchaseViewModel(
     val tabFlow = _tabFlow.asStateFlow()
 
     val country: String
-        get() = environment.country
+        get() = environment.deviceCountry
 
     val tabName: String
         get() = when (tabFlow.value) {
@@ -46,7 +46,7 @@ class PurchaseViewModel(
     val countryFlow = environment.countryFlow
 
     private val dataFlow = countryFlow.map { country ->
-        purchaseRepository.get(wallet.testnet, country, settingsRepository.getLocale())
+        purchaseRepository.get(wallet.network, country, settingsRepository.getLocale())
     }.filterNotNull().flowOn(Dispatchers.IO)
 
     val uiItemsFlow = combine(dataFlow, tabFlow) { (buy, sell), tab ->

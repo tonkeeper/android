@@ -1,8 +1,7 @@
 package com.tonapps.wallet.data.purchase
 
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
@@ -15,7 +14,7 @@ object OnRampUtils {
         } else if (3 >= currency.address.length) {
             return "native"
         }
-        return when (currency.chain.name.lowercase()) {
+        return when (currency.chain.symbol.lowercase()) {
             "etc", "erc-20" -> "erc-20"
             "ton", "jetton" -> "jetton"
             "tron", "trc-20" -> "trc-20"

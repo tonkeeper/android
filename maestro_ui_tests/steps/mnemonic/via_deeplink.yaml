@@ -1,0 +1,10 @@
+appId: com.ton_keeper.debug
+---
+# Opens the DEBUG app through the debug-import deeplink (see DeepLinkRoute.DebugImportMnemonic).
+# Requires env MNEMONIC: 12 or 24 words separated by spaces.
+# Example: maestro test -e MNEMONIC="word1 word2 ... word24" steps/mnemonic/open_app_via_debug_import_deeplink.yaml
+- runScript:
+    file: ../../scripts/build_debug_import_deeplink.js
+    env:
+      phrase: ${MNEMONIC}
+- openLink: ${output.url}

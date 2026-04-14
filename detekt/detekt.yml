@@ -1,0 +1,252 @@
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  excludes: '.*/tonapi/.*,.*/lib/bus/.*'
+
+comments:
+  CommentOverPrivateProperty:
+    active: true
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+
+complexity:
+  StringLiteralDuplication:
+    active: false # TODO true
+    excludes: [ '**/test/**', '**/androidTest/**' ]
+    threshold: 5
+    ignoreAnnotation: true
+    excludeStringsWithLessThan5Characters: true
+    ignoreStringsRegex: '$^'
+  ComplexInterface:
+    active: false # TODO true
+    threshold: 10
+    includeStaticDeclarations: false
+    includePrivateDeclarations: false
+  CyclomaticComplexMethod:
+    active: false # TODO true
+    ignoreSingleWhenExpression: true
+  LargeClass:
+    threshold: 1000
+    active: true
+    excludes: [ '**/test/**', '**/androidTest/**' ]
+  MethodOverloading:
+    active: false
+  TooManyFunctions:
+    excludes: [ '**/test/**', '**/androidTest/**' ]
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    active: false # TODO true
+  RedundantSuspendModifier:
+    active: true
+  SleepInsteadOfDelay:
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
+
+exceptions:
+  InstanceOfCheckForException:
+    active: false
+  NotImplementedDeclaration:
+    active: true
+    excludes: [ '**/test/**', '**/androidTest/**' ]
+  ObjectExtendsThrowable:
+    active: true
+  RethrowCaughtException:
+    active: true
+  ReturnFromFinally:
+    active: true
+  ThrowingExceptionFromFinally:
+    active: true
+  ThrowingExceptionInMain:
+    active: true
+  ThrowingExceptionsWithoutMessageOrCause:
+    active: true
+  ThrowingNewInstanceOfSameException:
+    active: true
+
+formatting:
+  active: true
+  android: false
+  FinalNewline: # TODO
+    active: false
+  AnnotationSpacing:
+    active: true
+  EnumEntryNameCase:
+    active: false
+  Filename:
+    active: false
+  MaximumLineLength:
+    active: false
+  MultiLineIfElse:
+    active: true
+  NoEmptyFirstLineInMethodBlock:
+    active: true
+  PackageName:
+    active: false
+  SpacingAroundAngleBrackets:
+    active: true
+  SpacingAroundDoubleColon:
+    active: true
+  SpacingAroundUnaryOperator:
+    active: true
+  SpacingBetweenDeclarationsWithAnnotations:
+    active: true
+  SpacingBetweenDeclarationsWithComments:
+    active: true
+
+naming:
+  ClassNaming:
+    active: true
+  FunctionNaming:
+    active: false
+  TopLevelPropertyNaming:
+    constantPattern: '[a-z][_A-Za-z0-9]*|[A-Z][_A-Z0-9]*'
+  InvalidPackageDeclaration:
+    active: false
+  NoNameShadowing:
+    active: true
+  NonBooleanPropertyPrefixedWithIs:
+    active: true
+  VariableMaxLength:
+    active: true
+  VariableMinLength:
+    active: true
+
+performance:
+  SpreadOperator:
+    excludes: [ '**/test/**', '**/androidTest/**' ]
+
+potential-bugs:
+  AvoidReferentialEquality:
+    active: true
+  DontDowncastCollectionTypes:
+    active: true
+  DoubleMutabilityForCollection:
+    active: true
+  ElseCaseInsteadOfExhaustiveWhen:
+    active: true
+  ExitOutsideMain:
+    active: false
+  HasPlatformType:
+    active: true
+  IgnoredReturnValue:
+    active: true
+  ImplicitUnitReturnType:
+    active: true
+  MapGetWithNotNullAssertionOperator:
+    active: true
+  UnconditionalJumpStatementInLoop:
+    active: true
+  UnreachableCatchBlock:
+    active: true
+  UnsafeCast:
+    active: true
+    excludes: [ '**/test/**', '**/androidTest/**' ]
+  UselessPostfixExpression:
+    active: true
+
+style:
+  CanBeNonNullable:
+    active: true
+  CascadingCallWrapping:
+    active: true
+  ClassOrdering:
+    active: true
+  CollapsibleIfStatements:
+    active: true
+  DestructuringDeclarationWithTooManyEntries:
+    maxDestructuringEntries: 6
+    active: true
+  EqualsOnSignatureLine:
+    active: true
+  ExplicitCollectionElementAccessMethod:
+    active: true
+  ExplicitItLambdaParameter:
+    active: true
+  ForbiddenComment:
+    active: false
+  ForbiddenImport:
+    active: false
+  ForbiddenMethodCall:
+    active: false
+  ForbiddenVoid:
+    active: true
+  MagicNumber:
+    excludes: [ '**/test/**', '**/androidTest/**' ]
+    ignorePropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreEnums: true
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '100'
+      - '1000'
+  MandatoryBracesLoops:
+    active: true
+  MaxLineLength:
+    active: false
+  NestedClassesVisibility:
+    active: true
+  ObjectLiteralToLambda:
+    active: true
+  PreferToOverPairSyntax:
+    active: true
+  RedundantExplicitType:
+    active: true
+  RedundantHigherOrderMapUsage:
+    active: true
+  RedundantVisibilityModifierRule:
+    active: true
+  ReturnCount:
+    active: false # TODO true
+    excludeGuardClauses: true
+  SpacingBetweenPackageAndImports:
+    active: true
+  UnderscoresInNumericLiterals:
+    active: false # TODO true
+  UnnecessaryAnnotationUseSiteTarget:
+    active: true
+  UnnecessaryFilter:
+    active: true
+  UnnecessaryLet:
+    active: true
+  UnnecessaryInnerClass:
+    active: true
+    ignoreAnnotated: [ 'Nested' ]
+  UntilInsteadOfRangeTo:
+    active: true
+  UnusedImports:
+    active: true
+  UnusedPrivateMember:
+    active: true
+    allowedNames: '(_|ignored|expected)'
+    ignoreAnnotated: ['Preview', 'Composable']
+  UseAnyOrNoneInsteadOfFind:
+    active: true
+  UseCheckOrError:
+    active: false # TODO true
+  UseEmptyCounterpart:
+    active: true
+  UseIfEmptyOrIfBlank:
+    active: true
+  UseIsNullOrEmpty:
+    active: true
+  UseOrEmpty:
+    active: true
+  UseRequire:
+    active: false # TODO true
+  UseRequireNotNull:
+    active: true
+  VarCouldBeVal:
+    active: true
+    ignoreAnnotated: [ 'Parameter' ]
+  WildcardImport:
+    active: true

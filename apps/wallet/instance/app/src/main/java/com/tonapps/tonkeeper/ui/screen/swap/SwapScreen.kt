@@ -7,8 +7,20 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isGone
 import androidx.core.view.updateLayoutParams
+import com.google.firebase.Firebase
+import com.google.firebase.perf.performance
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
+import com.tonapps.bus.generated.opTerminal
 import com.tonapps.extensions.appVersionName
+import com.tonapps.extensions.currentTimeMillis
+import com.tonapps.extensions.currentTimeSecondsInt
+import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.locale
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -16,8 +28,6 @@ import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.swap.omniston.OmnistonScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -28,12 +38,6 @@ import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.getDimensionPixelSize
 import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.BridgeWebView
-import androidx.core.view.isGone
-import com.google.firebase.Firebase
-import com.google.firebase.perf.performance
-import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.wallet.data.core.currency.WalletCurrency
-import org.ton.contract.wallet.WalletMessage
 
 class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_swap, wallet), BaseFragment.BottomSheet {
 
@@ -90,10 +94,12 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
         webView.clipToPadding = false
         webView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
         webView.loadUrl(getUri().toString())
-        webView.jsBridge = StonfiBridge2(
-            address = args.address,
-            close = ::finish,
-            sendTransaction = ::sing
+        webView.setJsBridge(
+            StonfiBridge2(
+                address = args.address,
+                close = ::finish,
+                sendTransaction = ::sing
+            )
         )
 
         ViewCompat.setOnApplyWindowInsetsListener(webView) { _, insets ->
@@ -131,13 +137,41 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
         request: SignRequestEntity
     ): String {
         analytics?.simpleTrackEvent("swap_click")
+        val operationId = generateUuid()
+        val startedAtMs = currentTimeMillis()
+        AnalyticsHelper.Default.events.redOperations.opAttempt(
+            operationId = operationId,
+            flow = Events.RedOperations.RedOperationsFlow.Swap,
+            operation = Events.RedOperations.RedOperationsOperation.Send,
+            attemptSource = null,
+            startedAtMs = currentTimeSecondsInt(),
+            otherMetadata = null,
+        )
         return try {
             val boc = SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP)
             if (boc.isNotBlank()) {
                 analytics?.simpleTrackEvent("swap_success")
+                val finishedAtMs = currentTimeMillis()
+                AnalyticsHelper.Default.events.redOperations.opTerminal(
+                    operationId = operationId,
+                    flow = Events.RedOperations.RedOperationsFlow.Swap,
+                    operation = Events.RedOperations.RedOperationsOperation.Send,
+                    durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                    finishedAtMs = currentTimeSecondsInt(),
+                    error = null,
+                )
             }
             boc
         } catch (e: Throwable) {
+            val finishedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opTerminal(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.Swap,
+                operation = Events.RedOperations.RedOperationsOperation.Send,
+                durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                finishedAtMs = currentTimeSecondsInt(),
+                error = e,
+            )
             ""
         }
     }
@@ -165,20 +199,22 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
             toToken: WalletCurrency? = null,
             nativeSwap: Boolean,
             uri: Uri,
+            fromTokenRaw: String? = null,
+            toTokenRaw: String? = null,
         ): BaseFragment {
             if (nativeSwap) {
                 return OmnistonScreen.newInstance(
                     wallet = wallet,
-                    fromToken = fromToken,
-                    toToken = toToken ?: bestToToken(fromToken.address)
+                    fromToken = fromTokenRaw ?: fromToken.code,
+                    toToken = toTokenRaw ?: (toToken ?: bestToToken(fromToken.address)).code,
                 )
             }
             val screen = SwapScreen(wallet)
             screen.setArgs(SwapArgs(
                 uri = uri,
                 address = wallet.address,
-                fromToken = fromToken.address,
-                toToken = (toToken ?: bestToToken(fromToken.address)).address
+                fromToken = fromTokenRaw ?: fromToken.address,
+                toToken = toTokenRaw ?: (toToken ?: bestToToken(fromToken.address)).address
             ))
             return screen
         }

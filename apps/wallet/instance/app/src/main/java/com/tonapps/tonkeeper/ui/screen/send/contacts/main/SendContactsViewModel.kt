@@ -1,18 +1,17 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.filterList
-import com.tonapps.tonkeeper.core.entities.WalletExtendedEntity
+import com.tonapps.legacy.enteties.WalletExtendedEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.contacts.ContactsRepository
 import com.tonapps.wallet.data.contacts.entities.ContactEntity
@@ -88,7 +87,7 @@ class SendContactsViewModel(
     }
 
     fun hideContact(address: String) {
-        contactsRepository.hide(address.toRawAddress(), wallet.testnet)
+        contactsRepository.hide(address.toRawAddress(), wallet.network)
     }
 
     fun deleteContact(contact: ContactEntity) {
@@ -99,7 +98,7 @@ class SendContactsViewModel(
 
     private suspend fun getMyWallets(): List<Item.MyWallet> {
         val wallets = accountRepository.getWallets().filter {
-            it.type != Wallet.Type.Watch && it.testnet == wallet.testnet && it.address != wallet.address
+            it.type != WalletType.Watch && it.testnet == wallet.testnet && it.address != wallet.address
         }.map {
             WalletExtendedEntity(it, settingsRepository.getWalletPrefs(it.id))
         }.sortedBy { it.index }.map { it.raw }.toList()
@@ -134,7 +133,7 @@ class SendContactsViewModel(
         tronLatestTransactionsFlow,
     ) { _, events ->
         events.filter {
-            !contactsRepository.isHidden(it.to, wallet.testnet)
+            !contactsRepository.isHidden(it.to, wallet.network)
         }.mapIndexed { index, event ->
             val position = ListCell.getPosition(events.size, index)
             Item.LatestContact(position, event.to, event.timestamp.value)
@@ -145,13 +144,13 @@ class SendContactsViewModel(
         contactsRepository.hiddenFlow,
         eventsRepository.latestRecipientsFlow(
             accountId = wallet.accountId,
-            testnet = wallet.testnet
+            network = wallet.network
         ),
         latestTronContactsFlow
     ) { _, recipients, tronContacts ->
-        val gasProxyAddresses = batteryRepository.getConfig(wallet.testnet).gasProxy
+        val gasProxyAddresses = batteryRepository.getConfig(wallet.network).gasProxy
         val tonContacts = recipients.filter {
-            !contactsRepository.isHidden(it.account.address.toRawAddress(), wallet.testnet)
+            !contactsRepository.isHidden(it.account.address.toRawAddress(), wallet.network)
         }.mapIndexed { index, recipient ->
             val position = ListCell.getPosition(recipients.size, index)
             Item.LatestContact(position, recipient.account, recipient.timestamp, wallet.testnet)

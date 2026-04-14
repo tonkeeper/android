@@ -4,7 +4,7 @@ import com.tonapps.tonkeeper.ui.base.picker.QueryReceiver
 import com.tonapps.tonkeeper.ui.base.picker.currency.CurrencyPickerScreen
 import com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.OnRampPickerScreen
 import com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.OnRampPickerViewModel
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 class OnRampFiatScreen: CurrencyPickerScreen(), QueryReceiver {
 

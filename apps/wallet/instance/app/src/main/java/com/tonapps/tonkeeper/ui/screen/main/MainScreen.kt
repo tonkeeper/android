@@ -1,14 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.main
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.extensions.query
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.koin.serverFlags
@@ -16,25 +18,26 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
-import com.tonapps.tonkeeperx.R
-import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesScreen
-import com.tonapps.tonkeeper.ui.screen.events.main.EventsScreen
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsScreen
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
+import com.tonapps.trading.TradingFragment
 import com.tonapps.tonkeeper.ui.screen.root.RootEvent
+import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletScreen
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
+import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.drawable.BarDrawable
 import uikit.extensions.activity
@@ -44,7 +47,6 @@ import uikit.extensions.roundTop
 import uikit.extensions.scale
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.BottomTabsView
-import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, ScreenContext.None) {
 
@@ -150,10 +152,16 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }.launchIn(lifecycleScope)
 
         collectFlow(rootViewModel.eventFlow.filterIsInstance<RootEvent.Swap>()) {
+            val fromCurrency = WalletCurrency.of(it.from) ?: WalletCurrency.TON
+            val toCurrency = it.to?.let { to -> WalletCurrency.of(to) }
             navigation?.add(SwapScreen.newInstance(
                 wallet = it.wallet,
+                fromToken = fromCurrency,
+                toToken = toCurrency,
                 nativeSwap = context?.serverFlags?.disableNativeSwap != true,
-                uri = it.uri
+                uri = it.uri,
+                fromTokenRaw = it.from,
+                toTokenRaw = it.to
             ))
         }
         collectFlow(viewModel.selectedWalletFlow) { wallet ->
@@ -164,6 +172,10 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         collectFlow(viewModel.disbleNftsFlow) {
             bottomTabsView.toggleItem(R.id.collectibles, !it)
         }
+
+        val isTradingEnabled = WalletFeature.TradingTab.isEnabled
+        bottomTabsView.toggleItem(R.id.activity, !isTradingEnabled)
+        bottomTabsView.toggleItem(R.id.trading, isTradingEnabled)
     }
 
     override fun onBackPressed(): Boolean {
@@ -203,6 +215,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         return when(bottomTabsView.selectedItemId) {
             R.id.wallet -> "wallet"
             R.id.activity -> "activity"
+            R.id.trading -> "trading"
             R.id.collectibles -> "collectibles"
             R.id.browser -> "browser"
             else -> "unknown"
@@ -218,8 +231,8 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     private fun createFragment(itemId: Int, wallet: WalletEntity): Fragment {
         val fragment = when(itemId) {
             R.id.wallet -> WalletScreen.newInstance(wallet)
-            // R.id.activity -> EventsScreen.newInstance(wallet)
-            R.id.activity -> TxEventsScreen.newInstance(wallet)
+            R.id.activity -> TxEventsScreen.newInstance(wallet, canGoBack = false)
+            R.id.trading -> TradingFragment()
             R.id.collectibles -> CollectiblesScreen.newInstance(wallet)
             R.id.browser -> BrowserBaseScreen.newInstance(wallet)
             else -> throw IllegalArgumentException("Unknown itemId: $itemId")
@@ -265,7 +278,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 if (!extra.isNullOrBlank()) {
                     fragment.openCategory(extra)
                 }
-            } else if (fragment is EventsScreen) {
+            } else if (fragment is TxEventsScreen) {
                 analytics?.simpleTrackScreenEvent("history_open", from)
             } else if (fragment is CollectiblesScreen) {
                 analytics?.simpleTrackScreenEvent("collectibles_open", from)
@@ -278,9 +291,9 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
         try {
             transaction.commitNow()
-            Log.d("MainScreenLog", "Set fragment: $fragment")
+            L.d("MainScreenLog", "Set fragment: $fragment")
         } catch (e: Throwable) {
-            Log.e("MainScreenLog", "Failed to set fragment", e)
+            L.e("MainScreenLog", "Failed to set fragment", e)
             FirebaseCrashlytics.getInstance().recordException(e)
             postDelayed(1000) {
                 setFragment(fragment, forceScrollUp, from,extra, attempt + 1)

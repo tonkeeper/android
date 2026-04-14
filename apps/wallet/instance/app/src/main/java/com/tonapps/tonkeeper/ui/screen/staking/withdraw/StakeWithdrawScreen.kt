@@ -8,10 +8,9 @@ import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
-import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
@@ -26,6 +25,7 @@ import uikit.extensions.getDimensionPixelSize
 import uikit.widget.AsyncImageView
 import uikit.widget.HeaderView
 import uikit.widget.ProcessTaskView
+import java.util.concurrent.CancellationException
 
 class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_stake_withdraw, wallet), BaseFragment.BottomSheet {
 
@@ -97,7 +97,7 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
     private fun send() {
         setTaskState(ProcessTaskView.State.LOADING)
         viewModel.send(requireContext()).catch { e ->
-            val state = if (e is SendException.Cancelled) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
+            val state = if (e is CancellationException) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)

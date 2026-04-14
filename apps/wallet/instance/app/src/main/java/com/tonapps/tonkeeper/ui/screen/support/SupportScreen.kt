@@ -4,11 +4,10 @@ import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.core.net.toUri
 import com.tonapps.extensions.appVersionCode
-import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.koin.api
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 
@@ -18,9 +17,13 @@ class SupportScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFra
 
     override val viewModel: BaseWalletVM.EmptyViewViewModel by viewModel()
 
+    private fun getContactUrl(): String {
+        return requireContext().api?.getConfig(wallet.network)?.supportLink.orEmpty()
+    }
+
     private fun getSupportUrl(): String {
         val startParams = "android${Build.VERSION.SDK_INT}app${requireContext().appVersionCode}"
-        val builder = requireContext().api?.config?.directSupportUrl?.toUri()?.buildUpon() ?: return ""
+        val builder = requireContext().api?.getConfig(wallet.network)?.directSupportUrl?.toUri()?.buildUpon() ?: return ""
         builder.appendQueryParameter("start", startParams)
         return builder.toString()
     }
@@ -28,9 +31,12 @@ class SupportScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFra
     @Composable
     override fun ScreenContent() {
         SupportComposable(
-            isLightTheme = requireContext().isLightTheme,
-            onButtonClick = {
+            onTelegramClick = {
                 navigation?.openURL(getSupportUrl())
+                finish()
+            },
+            onEmailClick = {
+                navigation?.openURL(getContactUrl())
                 finish()
             },
             onCloseClick = { finish() },

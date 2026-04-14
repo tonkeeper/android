@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,7 +13,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ui.ComposeIcon
-import ui.components.image.AsyncImage
+import ui.components.moon.MoonAsyncImage
 import ui.theme.Dimens
 import ui.theme.UIKit
 
@@ -42,9 +41,9 @@ fun ActionMenuItem(
         )
 
         icon?.let {
-            AsyncImage(
-                modifier = Modifier.size(16.dp),
-                url = it.url,
+            MoonAsyncImage(
+                size = 16.dp,
+                image = it.url,
                 colorFilter = ColorFilter.tint(UIKit.colorScheme.accent.blue)
             )
         }

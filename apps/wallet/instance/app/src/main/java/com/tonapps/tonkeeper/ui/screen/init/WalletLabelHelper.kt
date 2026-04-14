@@ -6,7 +6,7 @@ import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.emoji.Emoji
 import com.tonapps.tonkeeper.extensions.consistentBucketFor
 import com.tonapps.tonkeeper.extensions.isNullOrEmpty
-import com.tonapps.wallet.data.account.WalletColor
+import com.tonapps.blockchain.model.legacy.WalletColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.PairSerializer

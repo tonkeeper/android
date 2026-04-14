@@ -13,7 +13,7 @@ import com.tonapps.tonkeeper.ui.screen.dns.renew.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.dns.renew.list.Item
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.activityViewModel

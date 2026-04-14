@@ -6,6 +6,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -15,7 +17,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import ui.theme.Dimens
@@ -23,6 +28,30 @@ import ui.theme.UIKit
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.tan
+
+@Composable
+fun Modifier.simmerOn(
+    isShimmering: Boolean,
+    width: Dp? = null,
+    height: Dp? = null,
+): Modifier = composed {
+    if (isShimmering) {
+        val state by rememberShimmerPhase()
+        var modifier = this
+
+        if (width != null) {
+            modifier = width(width)
+        }
+
+        if (height != null) {
+            modifier = height(height)
+        }
+
+        modifier.shimmer(state)
+    } else {
+        this
+    }
+}
 
 @Composable
 fun rememberShimmerPhase(

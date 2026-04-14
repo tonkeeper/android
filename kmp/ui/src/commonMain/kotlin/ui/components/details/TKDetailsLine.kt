@@ -1,7 +1,5 @@
 package ui.components.details
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,14 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -27,10 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import ui.ComposeIcon
-import ui.components.SpoilerParticles
-import ui.components.image.AsyncImage
+import ui.components.moon.MoonAsyncImage
+import ui.components.moon.MoonSpoiler
 import ui.platformNestedScrollInterop
-import ui.theme.Dimens
 import ui.theme.UIKit
 
 @Composable
@@ -62,7 +57,6 @@ fun TKDetailsLineHorizontal(
     iconLeft: ComposeIcon?,
     spoiler: Boolean,
 ) {
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,
@@ -74,11 +68,10 @@ fun TKDetailsLineHorizontal(
             maxLines = 1
         )
         if (spoiler && iconLeft != null) {
-            AsyncImage(
-                modifier = Modifier
-                    .padding(top = 3.dp, start = 5.dp)
-                    .size(16.dp),
-                url = iconLeft.url,
+            MoonAsyncImage(
+                modifier = Modifier.padding(top = 3.dp, start = 5.dp),
+                size = 16.dp,
+                image = iconLeft.url,
                 colorFilter = iconLeft.colorFilter
             )
         }
@@ -91,7 +84,7 @@ fun TKDetailsLineHorizontal(
                     .height(20.dp)
                     .fillMaxWidth(.7f),
             ) {
-                SpoilerParticles(
+                MoonSpoiler(
                     modifier = Modifier
                         .fillMaxSize(),
                     particleCount = 1200,
@@ -101,11 +94,11 @@ fun TKDetailsLineHorizontal(
             }
         } else {
             iconLeft?.let {
-                AsyncImage(
+                MoonAsyncImage(
                     modifier = Modifier
-                        .padding(top = 1.dp, end = 4.dp)
-                        .size(16.dp),
-                    url = it.url,
+                        .padding(top = 1.dp, end = 4.dp),
+                    image = it.url,
+                    size = 16.dp,
                     colorFilter = it.colorFilter
                 )
             }

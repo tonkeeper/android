@@ -9,7 +9,6 @@ import android.text.SpannableStringBuilder
 import android.text.method.ScrollingMovementMethod
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.text.color
@@ -28,7 +27,7 @@ import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.resolveColor
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
@@ -86,7 +85,7 @@ class SignDataScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
         slideTextBuilder.append("\n")
         slideTextBuilder.append(SpannableString(secondLineText).apply {
             setSpan(RelativeSizeSpan(0.8f),0, secondLineText.length,Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            setSpan(ForegroundColorSpan(requireContext().resolveColor(com.tonapps.uikit.color.R.attr.textTertiaryColor).withAlpha(0.7f)),0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(ForegroundColorSpan(requireContext().resolveColor(com.tonapps.ui.uikit.color.R.attr.textTertiaryColor).withAlpha(0.7f)),0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         })
         return slideTextBuilder
     }

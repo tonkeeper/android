@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -26,8 +25,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import ui.components.SpoilerParticles
-import ui.components.base.SimpleText
+import ui.components.moon.MoonSpoiler
 import ui.theme.Dimens
 import ui.theme.Shapes
 import ui.theme.UIKit
@@ -71,7 +69,7 @@ private fun EventActionEncryptedText(
             .background(UIKit.colorScheme.background.contentTint)
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
-        SpoilerParticles(
+        MoonSpoiler(
             modifier = Modifier
                 .fillMaxSize()
                 .height(24.dp),
@@ -201,7 +199,7 @@ private fun EventActionPlainTextMore(
                 .padding(start = 6.dp, end = 2.dp)
                 .align(Alignment.CenterVertically)
         ) {
-            SimpleText(
+            Text(
                 text = buttonTitle,
                 color = moreButtonColor,
                 style = UIKit.typography.body2

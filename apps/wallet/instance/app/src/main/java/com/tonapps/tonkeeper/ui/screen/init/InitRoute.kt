@@ -6,6 +6,9 @@ sealed class InitRoute {
     data object ImportWords: InitRoute()
     data object WatchAccount: InitRoute()
     data object LabelAccount: InitRoute()
+    data object BackupStart: InitRoute()
+    data object BackupPhrase: InitRoute()
+    data object BackupCheck: InitRoute()
     data object SelectAccount: InitRoute()
     data object Push: InitRoute()
 }

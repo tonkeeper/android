@@ -15,7 +15,7 @@ class BatteryBannerHolder(parent: ViewGroup): Holder<Item.BatteryBanner>(parent,
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
 
     override fun onBind(item: Item.BatteryBanner) {
-        val networkName = if (item.token.isTrc20) {
+        val networkName = if (item.token.isUsdtTrc20) {
             getString(Localization.trc20)
         } else {
             getString(Localization.ton)

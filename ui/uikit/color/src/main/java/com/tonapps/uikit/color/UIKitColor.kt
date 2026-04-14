@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
+import com.tonapps.ui.uikit.color.R
 
 typealias UIKitColor = R.attr
 

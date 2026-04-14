@@ -1,0 +1,35 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- tapOn: Import existing wallet
+
+- scrollUntilVisible:
+    element:
+      text: Testnet Account
+- tapOn: Testnet Account
+
+- runFlow:
+    file: "../../steps/mnemonic/24key_words.yaml"
+    env:
+      mnemonica: ${TESTNET_MNEM}
+
+- assertVisible: Create passcode
+- repeat:
+    times: 4
+    commands:
+      - tapOn: ${PASSWORD_KEY}
+
+- assertVisible: Re-enter passcode
+- repeat:
+    times: 4
+    commands:
+      - tapOn: ${PASSWORD_KEY}
+
+- tapOn: Later
+- tapOn: "Continue"
+
+- assertVisible: "$ 0"
+- assertVisible:
+    id: wallet_address

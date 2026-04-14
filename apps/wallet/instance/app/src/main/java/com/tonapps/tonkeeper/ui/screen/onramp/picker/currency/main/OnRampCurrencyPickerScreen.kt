@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.main
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.RecyclerView
@@ -12,8 +12,8 @@ import com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.OnRampPickerViewMo
 import com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.main.list.Item
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize

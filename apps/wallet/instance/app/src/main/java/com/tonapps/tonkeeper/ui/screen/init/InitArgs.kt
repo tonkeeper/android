@@ -9,7 +9,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.putEnum
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.ton.api.pub.PublicKeyEd25519
 import uikit.base.BaseArgs
 
@@ -24,7 +24,7 @@ data class InitArgs(
 ) : BaseArgs() {
 
     enum class Type {
-        New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone,
+        New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone, Tetra
     }
 
     private companion object {

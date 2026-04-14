@@ -7,6 +7,9 @@ import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
@@ -25,8 +28,6 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListPaginationListener
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.core.parameter.parametersOf
@@ -111,7 +112,7 @@ class TokenScreen(wallet: WalletEntity) :
     }
 
     private fun applyToken(token: AccountTokenEntity) {
-        setActionIcon(R.drawable.ic_ellipsis_16) { actionMenu(it, token) }
+        setActionIcon(UIKitIcon.ic_ellipsis_16) { actionMenu(it, token) }
         if (!token.verified) {
             applyUnverifiedToken()
         }
@@ -171,7 +172,8 @@ class TokenScreen(wallet: WalletEntity) :
                 targetAddress = viewModel.burnAddress,
                 tokenAddress = token.address,
                 amount = token.balance.value,
-                type = SendScreen.Companion.Type.Default
+                type = SendScreen.Companion.Type.Default,
+                from = Events.SendNative.SendNativeFrom.JettonScreen
             )
         )
         finish()

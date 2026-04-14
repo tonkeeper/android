@@ -7,19 +7,25 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnNextLayout
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
+import com.tonapps.tonkeeper.extensions.addFeeItem
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.extensions.id
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
+import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeperx.R
@@ -27,8 +33,6 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.localization.Localization
@@ -44,6 +48,8 @@ import uikit.extensions.addForResult
 import uikit.extensions.applyNavBottomMargin
 import uikit.extensions.bottomScrolled
 import uikit.extensions.collectFlow
+import uikit.extensions.dp
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.isMaxScrollReached
 import uikit.extensions.setOnClickListener
 import uikit.extensions.setRightDrawable
@@ -54,21 +60,6 @@ import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 import java.util.concurrent.CancellationException
-import androidx.core.view.isVisible
-import com.tonapps.extensions.uri
-import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.extensions.addFeeItem
-import com.tonapps.tonkeeper.extensions.formattedAmount
-import com.tonapps.tonkeeper.extensions.formattedCharges
-import com.tonapps.tonkeeper.extensions.formattedFiat
-import com.tonapps.tonkeeper.extensions.id
-import com.tonapps.tonkeeper.extensions.symbol
-import com.tonapps.tonkeeper.popup.ActionSheet
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
-import com.tonapps.uikit.color.accentGreenColor
-import com.tonapps.wallet.localization.Plurals
-import uikit.extensions.dp
-import uikit.extensions.getDimensionPixelSize
 
 class SendTransactionScreen(wallet: WalletEntity) :
     WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal,
@@ -83,7 +74,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
     }
 
     override val viewModel: SendTransactionViewModel by walletViewModel {
-        parametersOf(args.request, args.batteryTransactionType, args.forceRelayer)
+        parametersOf(args.request, args.batteryTransactionType, args.forceRelayer, args.sendNativeFrom)
     }
 
     private val feeMethodSelector: ActionSheet by lazy {
@@ -191,7 +182,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
             )
             setSpan(
                 ForegroundColorSpan(
-                    requireContext().resolveColor(com.tonapps.uikit.color.R.attr.textTertiaryColor)
+                    requireContext().resolveColor(com.tonapps.ui.uikit.color.R.attr.textTertiaryColor)
                         .withAlpha(0.7f)
                 ), 0, secondLineText.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             )
@@ -374,10 +365,11 @@ class SendTransactionScreen(wallet: WalletEntity) :
             wallet: WalletEntity,
             request: SignRequestEntity,
             batteryTransactionType: BatteryTransaction = BatteryTransaction.UNKNOWN,
-            forceRelayer: Boolean = false
+            forceRelayer: Boolean = false,
+            sendNativeFrom: Events.SendNative.SendNativeFrom? = null
         ): SendTransactionScreen {
             val screen = SendTransactionScreen(wallet)
-            screen.setArgs(SendTransactionArgs(request, batteryTransactionType, forceRelayer))
+            screen.setArgs(SendTransactionArgs(request, batteryTransactionType, forceRelayer, sendNativeFrom))
             return screen
         }
 
@@ -387,9 +379,10 @@ class SendTransactionScreen(wallet: WalletEntity) :
             request: SignRequestEntity,
             batteryTxType: BatteryTransaction = BatteryTransaction.UNKNOWN,
             forceRelayer: Boolean = false,
+            sendNativeFrom: Events.SendNative.SendNativeFrom? = null,
         ): String {
             val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
-            val fragment = newInstance(wallet, request, batteryTxType, forceRelayer)
+            val fragment = newInstance(wallet, request, batteryTxType, forceRelayer, sendNativeFrom)
             val result = activity.addForResult(fragment)
             if (result.containsKey(ERROR)) {
                 val error = result.getParcelableCompat<BridgeError>(ERROR)!!

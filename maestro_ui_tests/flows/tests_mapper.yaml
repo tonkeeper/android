@@ -1,0 +1,34 @@
+Steps:
+  - steps/import_wallet.yaml: [0022, 0023, 0027, 0033, 0035]
+  - steps/create_new_wallet.yaml: [0013, 0015, 0017]
+  - steps/history/transaction_cell.yaml: [0318, 0317, 0311, 0310]
+  - steps/emptystates.yaml: [0306]
+
+Flows:
+  - testnet/import_testnet.yaml: [0059, 0060, 0061]
+  - battery/battery_recharge.yaml: [0581, 0610, 0613, 0614, 0616]
+  - battery/battery_return_charges.yaml: [0624, 0625]
+  - deeplinks/deeplinks.yaml: [0661]
+  - browser_screen/browser_screen_tests.yaml:
+      [0327, 0328, 0329, 0330, 0331, 0332, 0333, 0334, 0335, 0336, 0340, 0341]
+  - ton_connect/work_via_service.yaml:
+      [0545, 0550, 0551, 0554, 0555, 0559, 0560, 0563, 0561]
+  - transactions/omniston_swap_test.yaml:
+      [0181, 0187, 0189, 0190, 0195, 0191, 0192, 0193, 0211, 0215, 0218, 0219]
+  - transactions/transactions_tests.yaml: [0402, 0409, 0413, 0418]
+  - collectibies/dns/dns_tests.taml:
+      [
+        0337,
+        0339,
+        0341,
+        0342,
+        0343,
+        0344,
+        0345,
+        0346,
+        0347,
+        0348,
+        0352,
+        0353,
+        0354,
+      ]

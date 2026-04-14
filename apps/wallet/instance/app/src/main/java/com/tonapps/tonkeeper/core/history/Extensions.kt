@@ -2,24 +2,26 @@ package com.tonapps.tonkeeper.core.history
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.wallet.api.extensions.toTokenEntity
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.rates.RatesRepository
 import io.tonapi.models.Action
 import io.tonapi.models.JettonSwapAction
 import io.tonapi.models.JettonTransferAction
 
-suspend fun Action.getTonAmountRaw(ratesRepository: RatesRepository): Coins {
+suspend fun Action.getTonAmountRaw(network: TonNetwork, ratesRepository: RatesRepository): Coins {
     val tonAmount = tonTransfer?.let { Coins.of(it.amount) }
     val jettonAmountInTON = jettonTransfer?.let {
         val amountCoins = it.amountCoins
         val jettonAddress = it.jetton.address
-        val rates = ratesRepository.getRates(WalletCurrency.TON, jettonAddress)
+        val rates = ratesRepository.getRates(network, WalletCurrency.TON, jettonAddress)
         rates.convert(jettonAddress, amountCoins)
     }
     return tonAmount ?: jettonAmountInTON ?: Coins.ZERO
@@ -27,7 +29,7 @@ suspend fun Action.getTonAmountRaw(ratesRepository: RatesRepository): Coins {
 
 val JettonSwapAction.tokenIn: TokenEntity
     get() {
-        val jetton = jettonMasterIn?.let { TokenEntity(it) }
+        val jetton = jettonMasterIn?.toTokenEntity()
         return jetton ?: TokenEntity.TON
     }
 
@@ -42,7 +44,7 @@ val JettonSwapAction.amountCoinsIn: Coins
 
 val JettonSwapAction.tokenOut: TokenEntity
     get() {
-        val jetton = jettonMasterOut?.let { TokenEntity(it) }
+        val jetton = jettonMasterOut?.toTokenEntity()
         return jetton ?: TokenEntity.TON
     }
 

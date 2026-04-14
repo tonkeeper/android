@@ -2,37 +2,26 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.app.Application
 import android.content.Context
-import android.os.Handler
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.annotation.UiThread
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.extensions.bestMessage
-import com.tonapps.extensions.isUIThread
+import com.tonapps.async.Async
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.loading
 import com.tonapps.tonkeeper.extensions.showToast
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.observeOn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation
-import uikit.navigation.Navigation.Companion.navigation
 import java.lang.ref.WeakReference
-import java.util.concurrent.Executor
 
 abstract class BaseWalletVM(
     app: Application
@@ -53,8 +42,22 @@ abstract class BaseWalletVM(
     val context: Context
         get() = holder?.uiContext ?: getApplication()
 
-    private val navigation: Navigation?
+    protected val navigation: Navigation?
         get() = Navigation.from(context)
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    protected val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        L.e(throwable, "Coroutine Exception Handler")
+    }
+
+    private val job = SupervisorJob()
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    protected val commonScope = job + exceptionHandler
+
+    // Bg
+    protected val bgDispatcher = Async.Io
+    protected val bgScope = CoroutineScope(commonScope + bgDispatcher)
 
     open fun attachHolder(holder: Holder) {
         holderRef = WeakReference(holder)
@@ -76,6 +79,7 @@ abstract class BaseWalletVM(
     override fun onCleared() {
         super.onCleared()
         detachHolder()
+        job.cancel()
     }
 
     @UiThread

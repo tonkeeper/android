@@ -1,29 +1,67 @@
-name: Publish tagged commit to public repo
+name: Android Publish
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name (e.g. 1.2.3). Required for manual runs.'
+        required: true
+        type: string
 
 jobs:
-  mirror:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  android-build:
+    name: android-build
+    runs-on: macos-latest-xlarge
+
     steps:
-      - name: Checkout private repo at tag
-        uses: actions/checkout@v4
+      - name: Checkout to git repository
+        uses: actions/checkout@v6
+
+      - name: Set VERSION_NAME
+        run: echo "VERSION_NAME=${{ inputs.version_name || github.event.release.tag_name }}" >> $GITHUB_ENV
+
+      - name: Set up ruby env
+        uses: ruby/setup-ruby@v1
         with:
-          fetch-depth: 0
+          ruby-version: 3.2
+          bundler-cache: true
 
-      - name: Push tag to public repo
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      - name: Decode signing certificate into a file
         env:
-          TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
-          TAG:   ${{ github.ref_name }}
+          CERTIFICATE_BASE64: ${{ secrets.ANDROID_DIST_SIGNING_KEY }}
         run: |
-          git config --global user.name  "mirror-bot"
-          git config --global user.email "mirror-bot@example.com"
+          echo $CERTIFICATE_BASE64 | base64 --decode > google-release.keystore
 
-          git remote add public https://$TOKEN@github.com/ORG/PUBLIC_REPO.git
+      - name: Build android beta
+        run: bundle exec fastlane android beta
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.caching=false -Dorg.gradle.configuration-cache=false"
+          KEYSTORE_FILE: ${{ github.workspace }}/google-release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.TONKEEPER_UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.TONKEEPER_UPLOAD_KEY_ALIAS}}
+          KEY_PASSWORD: ${{ secrets.TONKEEPER_UPLOAD_KEY_PASSWORD }}
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
 
-          git push --force --tags public $TAG
+      - name: Upload android aab to artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: Tonkeeper aab ${{ env.VERSION_CODE }}
+          path: |
+            ${{ env.AAB_OUTPUT_PATH }}
+
+      - name: Upload android apk to artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: Tonkeeper apk ${{ env.VERSION_CODE }}
+          path: |
+            ${{ env.APK_OUTPUT_PATH }}

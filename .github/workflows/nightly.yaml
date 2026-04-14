@@ -1,0 +1,67 @@
+name: Android Nightly Build
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * 2-6'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  beta-build:
+    name: Build Beta APK
+    if: github.repository != 'tonkeeper/android'
+    uses: ./.github/workflows/build-apk-reusable.yml
+    with:
+      gradle-task: :apps:wallet:instance:main:assembleDefaultBeta
+      artifact-name-prefix: tonkeeper-nightly-beta
+      apk-path-glob: apps/wallet/instance/main/build/outputs/apk/default/beta/*.apk
+    secrets: inherit
+
+  firebase-distribution:
+    name: Firebase App Distribution
+    if: github.repository != 'tonkeeper/android'
+    needs: beta-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download built APK artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.beta-build.outputs.artifact-name }}
+          path: dist/apk
+
+      - name: Resolve beta APK path
+        id: resolve_apk
+        shell: bash
+        run: |
+          shopt -s nullglob
+          apks=(dist/apk/*.apk)
+
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "No beta APK found in downloaded artifact"
+            exit 1
+          fi
+
+          if [ ${#apks[@]} -gt 1 ]; then
+            echo "Multiple beta APKs found, expected exactly one:"
+            printf ' - %s\n' "${apks[@]}"
+            exit 1
+          fi
+
+          echo "app_file=${apks[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@bd494989dd4bec0343f78adee87fe66e48279ad6 # v1.7.1
+        with:
+          appId: ${{secrets.FIREBASE_BETA_APP_ID}}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
+          file: ${{ steps.resolve_apk.outputs.app_file }}
+          groups: internal
+
+  maestro-tests:
+    name: Maestro Tests
+    if: github.repository != 'tonkeeper/android'
+    uses: ./.github/workflows/maestro-tests.yml
+    secrets: inherit

@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,12 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import ui.MASKED_TEXT_VALUE_PLACEHOLDER
-import ui.components.base.SimpleText
-import ui.components.image.AsyncImage
+import ui.components.moon.MoonAsyncImage
 import ui.theme.Shapes
 import ui.theme.UIKit
 import ui.theme.resources.Res
@@ -40,7 +37,6 @@ internal fun EventActionProduct(
     hiddenBalances: Boolean,
     onClick: () -> Unit
 ) {
-
     val title = if (hiddenBalances) MASKED_TEXT_VALUE_PLACEHOLDER else product.title
     val subtitle = if (hiddenBalances) MASKED_TEXT_VALUE_PLACEHOLDER else product.subtitle
 
@@ -72,14 +68,13 @@ private fun EventActionProductIcon(
     imageUrl: String,
     hiddenBalances: Boolean
 ) {
-    AsyncImage(
+    MoonAsyncImage(
         modifier = Modifier
-            .size(imageSize)
             .then(
                 if (hiddenBalances) Modifier.blur(16.dp) else Modifier
             ),
-        url = imageUrl,
-        size = 172,
+        image = imageUrl,
+        size = 64.dp,
         crossfadeDuration = 0
     )
 }
@@ -95,7 +90,7 @@ private fun EventActionProductTitles(
         modifier = Modifier.padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        SimpleText(
+        Text(
             text = title,
             style = UIKit.typography.body2,
             color = UIKit.colorScheme.text.primary,
@@ -119,7 +114,7 @@ private fun EventActionProductSubtitle(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        SimpleText(
+        Text(
             text = text,
             style = UIKit.typography.body2,
             color = color,

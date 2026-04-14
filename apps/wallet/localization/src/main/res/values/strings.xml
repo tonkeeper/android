@@ -43,11 +43,6 @@
     <string name="theme_light">Light</string>
     <string name="payment_method">Payment Method</string>
     <string name="downloading">Downloading…</string>
-    <string name="more">More</string>
-    <string name="retry">Retry</string>
-    <string name="operation">Operation</string>
-    <string name="description">Description</string>
-    <string name="protocol">Protocol</string>
 
     <string name="send_transaction_detail_nfts">The total value of the tokens you send. NFTs will also be sent.</string>
     <string name="close">Close</string>
@@ -60,6 +55,8 @@
     <string name="download_error">Download error. Tap to retry.</string>
     <string name="downloading_app_update">Downloading app update</string>
     <string name="preparing_for_downloading">Preparing for downloading</string>
+    <string name="app_update_downloaded">Update downloaded. Restart to install.</string>
+    <string name="restart">Restart</string>
     <string name="notification_channel_updates_title">Updates</string>
     <string name="notification_channel_updates_description">Displays app update notifications.</string>
     <string name="download_completed">Download completed</string>
@@ -84,6 +81,7 @@
     <string name="staking_pending_withdraw_liquid">%1$s unstaked after the end of the cycle</string>
     <string name="expired_link">Expired link</string>
     <string name="payment_method_not_found">Payment method not available</string>
+    <string name="no_available_provider">No available providers</string>
     <string name="app_not_found">App not found</string>
     <string name="name">Name</string>
     <string name="purchase">Purchase</string>
@@ -110,7 +108,7 @@
     </plurals>
     <string name="exchange_rate">Exchange rate</string>
     <string name="address_prefix">Address:</string>
-    <string name="your_address">Your address:</string>
+    <string name="your_address">Your address</string>
     <string name="safe_mode_tokens_footer">Safe mode is enabled. Only verified tokens are available. <annotation colorAttr="textAccentColor">Settings</annotation></string>
     <string name="setup_safe_mode">Set up your Lock Screen and Safe Mode</string>
     <string name="safe_mode_tonconnect_title">Connections are available only to verified apps</string>
@@ -193,6 +191,7 @@
     <string name="other">Other</string>
     <string name="minimum_amount">Minimum %1$s</string>
     <string name="min_amount">Min. amount: %1$s</string>
+    <string name="min_amount_label">Min. amount</string>
     <string name="stake_ethena_description">The tsUSDe token represents USDe held through Ethena, a decentralized staking service. tsUSDe automatically accrues staking rewards, with minimal lock up.</string>
     <string name="stake_ethena_disclaimer">This is the estimated annual return based on the past week’s average protocol rewards and the average amount of staked USDe. The return is annualized with weekly compounding. <annotation colorAttr="textSecondaryColor">Past performance does not guarantee future results.</annotation>\n\nStaking services and related rewards are provided by Ethena, an independent third-party service. Subject to their <annotation colorAttr="textAccentColor">terms of service</annotation>.</string>
     <string name="stake_tonstakers_description">When you stake TON in a Tonstakers pool, you receive a token called tsTON that represents your share in the pool. As the pool accumulates profits, your tsTON represents larger amount of TON.</string>
@@ -231,7 +230,7 @@
     <string name="backup_attention_line_2">Tonkeeper Support never asks for a recovery phrase.</string>
     <string name="backup_attention_line_3">Anyone with your recovery phrase can use your wallet.</string>
     <string name="manual_backup_check">Check Backup</string>
-    <string name="backup_check">Backup Check</string>
+    <string name="backup_check">Let’s check</string>
     <string name="backup_check_subtitle">Let\'s see if you\'ve got everything right. Enter words %1$d, %2$d, and %3$d.</string>
 
 
@@ -376,6 +375,75 @@
     <string name="stories_safemode_3_title">Only Verified Tokens</string>
     <string name="stories_safemode_3_subtitle">To prevent unexpected risks.</string>
 
+    <string name="more">More</string>
+    <string name="retry">Retry</string>
+    <string name="operation">Operation</string>
+    <string name="description">Description</string>
+    <string name="protocol">Protocol</string>
+    <string name="cant_find_anything">Can\'t find anything.</string>
+
+    <string name="deposit_from_another_wallet">From another TON/TRON wallet</string>
+    <string name="deposit_send">Send %s</string>
+    <string name="deposit_address">%s address</string>
+    <string name="deposit_to_another_wallet">To another TON/TRON wallet</string>
+    <string name="deposit_with_cash_or_crypto">Deposit with Cash or Crypto</string>
+    <string name="withdraw_with_cash_or_crypto">Withdraw with Cash or Crypto</string>
+    <string name="deposit_available_cash_out">Available from other crypto</string>
+    <string name="deposit_available_cross_chain">Available 1:1 cross-chain</string>
+    <string name="deposit_insert_amount">Enter amount</string>
+    <string name="deposit_buy_with_cash">Buy with Cash</string>
+    <string name="deposit_buy_with_crypto">Convert from Crypto</string>
+    <string name="deposit_buy_with_stablecoins">Convert from Stablecoins</string>
+    <string name="ramp_sell_with_cash">Sell to Cash</string>
+    <string name="ramp_sell_with_crypto">Sell with Crypto</string>
+    <string name="ramp_sell_with_stablecoins">Sell with Stablecoins</string>
+    <string name="ramp_stablecoins_convertion">"Will be converted to USDT on TON at 1:1 rate</string>
+    <string name="ramp_crypto_swap_info">Your crypto will be swapped into TON at the current exchange rate.</string>
+    <string name="ramp_stablecoin_buy_info">Your stablecoin will be credited as %1$s on %2$s at a 1:1 rate.</string>
+    <string name="ramp_stablecoin_sell_info">Withdraw USDT to other stablecoins. A fixed fee applies per network.</string>
+    <string name="ramp_total_amount">Total amount</string>
+    <string name="ramp_estimated_time">Est. arrival time</string>
+    <string name="ramp_withdrawal_time">Withdrawal time</string>
+    <string name="ramp_withdrawal_fee">Withdrawal fee</string>
+    <string name="deposit_network_warning">Ensure you select the right network, or you could risk losing your funds.</string>
+    <string name="deposit_go_to_main">Go to Main</string>
+    <string name="deposit_payment_qr_code">Payment QR code</string>
+    <string name="deposit_scan_qr_description">Scan QR code or copy the address to complete the payment.</string>
+    <string name="deposit_min_amount_with_currency">Min. amount: %1$s %2$s</string>
+    <string name="deposit_max_amount_with_currency">Max. amount: %1$s %2$s</string>
+    <string name="deposit_other_providers_hint">Other providers available for different currency pairs.</string>
+    <string name="deposit_changelly_disclaimer">Third-party service provided by Changelly. By using this service, you agree to %s.</string>
+    <string name="deposit_address_warning_prefix">This\u0020</string>
+    <string name="deposit_address_warning_highlight">address can be used only once</string>
+    <string name="deposit_address_warning_suffix">. Check purchase limits and network to avoid losing your funds.</string>
+    <string name="deposit_select_network_description">Withdraw %s to supported networks anytime via ‘Withdraw section’.</string>
+
+    <string name="choose_network_error">Choose %s network</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="receive_tokens">Receive tokens</string>
+    <string name="send_tokens">Send tokens</string>
+    <string name="withdraw">Withdraw</string>
+    <string name="add_funds">Add Funds</string>
+    <string name="deposit">Deposit</string>
+    <string name="choose_network">Choose network</string>
+    <string name="copy_address">Copy Address</string>
+    <string name="choose_currency">Choose currency</string>
+    <string name="send_currency">Send %s</string>
+    <string name="receive_currency">Receive %s</string>
+    <string name="min_deposit">Min deposit</string>
+    <string name="max_deposit">Max deposit</string>
+    <string name="max_amount">Max. amount: %s</string>
+    <string name="max_amount_label">Max. amount</string>
+    <string name="available">Available: %s</string>
+    <string name="network">Network</string>
+    <string name="up_to_duration">Up to %1$s %2$s</string>
+    <string name="time_seconds">sec</string>
+    <string name="time_minutes">min</string>
+
+    <string name="added_extension">Added Extension</string>
+    <string name="removed_extension">Removed Extension</string>
+    <string name="signature_allowed">Signature Allowed</string>
+    <string name="signature_not_allowed">Signature Not Allowed</string>
 
     <string name="start_title">Tonkeeper</string>
     <string name="no_internet_connection">No internet connection</string>
@@ -604,13 +672,9 @@
     <string name="bluetooth_permissions_alert_message">Please enable Bluetooth permissions in your settings to use this feature</string>
     <string name="bluetooth_permissions_alert_open_settings">Open Settings</string>
 
-    <string name="added_extension">Added Extension</string>
-    <string name="removed_extension">Removed Extension</string>
-    <string name="signature_allowed">Signature Allowed</string>
-    <string name="signature_not_allowed">Signature Not Allowed</string>
     <string name="battery">Battery</string>
     <string name="battery_refill_title">Tonkeeper Battery</string>
-    <string name="battery_refill_subtitle">Swap via Tonkeeper, send tokens and NFTs.</string>
+    <string name="battery_refill_subtitle">Swap and send TON tokens and pay less in TRC-20 fees</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s charge</item>
         <item quantity="few">%1$s charges</item>
@@ -624,7 +688,6 @@
     <string name="battery_supported_transaction">Supported transactions</string>
     <string name="transactions">Transactions</string>
     <string name="battery_settings">Battery Settings</string>
-    <string name="battery_will_be_paid">Will be paid: %1$s</string>
     <string name="battery_nft">NFT transfers</string>
     <string name="battery_swap">swaps via Tonkeeper</string>
     <string name="battery_jetton">token transfers</string>
@@ -674,6 +737,7 @@
     <string name="battery_medium_pack">Medium</string>
     <string name="battery_small_pack">Small</string>
     <string name="battery_disclaimer">One charge covers the average transaction fee. Some transactions may cost more.</string>
+    <string name="battery_excess">%1$s refund</string>
     <string name="restore_purchases">Restore Purchases</string>
     <string name="battery_refilled">Battery refilled</string>
     <string name="nothing_to_restore">Nothing to restore</string>
@@ -685,6 +749,7 @@
     <string name="send_all_balance">Are you sure you want to send all your balance?</string>
     <string name="wrong_promocode">The entered code is not valid</string>
     <string name="tron_toggle_text">Use USD₮ TRC20 without TRX. Fees are covered by Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">USD₮ transfers require TRX for network fees.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Copy Phrase</string>
     <string name="export_tron">Export TRC20 Wallet</string>
@@ -703,8 +768,9 @@
     <string name="copy_link">Copy Link</string>
     <string name="dapp_disclaimer">You are opening an external app not operated by Tonkeeper. Proceed only if you trust the source.</string>
     <string name="support_title">Need help?</string>
-    <string name="support_subtitle">Ask us on Telegram — we’ll do our best to help.</string>
-    <string name="ask_question">Ask a Question</string>
+    <string name="support_subtitle">Ask us via Telegram or Email — we’ll do our best to help.</string>
+    <string name="ask_question">Ask on Telegram</string>
+    <string name="email_us">Contact by email</string>
     <string name="about_usde">About USDe</string>
     <string name="empty_history">No transactions</string>
     <string name="staked_usde">Staked USDe</string>
@@ -717,6 +783,7 @@
     <string name="about_ethena">About Ethena</string>
     <string name="swap_disclaimer">Service provided by %1$s\n%2$s · %3$s</string>
     <string name="terms_of_use">Terms of Use</string>
+    <string name="start_agree">By continuing, you agree to our <annotation colorAttr="textAccentColor">Terms of Use</annotation></string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="invalid_address">Invalid wallet address.</string>
     <string name="scam_address_error">Transfers to this address are not supported.</string>
@@ -741,4 +808,42 @@
         <item quantity="many">Some of them may continue charging your wallet. Disable to avoid further payments.</item>
         <item quantity="other">Some of them may continue charging your wallet. Disable to avoid further payments.</item>
     </plurals>
+    <string name="no_enough_funds">No enough funds</string>
+    <string name="refill">Refill</string>
+    <string name="get_token">Get %1$s</string>
+    <string name="insufficient_trx_balance">Not enough funds to cover transactions fees</string>
+    <string name="insufficient_trx_balance_desc">Сhoose a fee payment method and top up.</string>
+    <string name="tron_not_enough_for_fee_title">Not enough funds to cover fees</string>
+    <string name="tron_not_enough_for_fee_desc">Top up Battery, TON or TRX balance to cover transaction fees.</string>
+    <string name="top_up">Top up</string>
+    <string name="tron_not_enough_trx_for_fee_title">Not enough TRX to cover fees</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Required for blockhain fees ≈ %1$s. Your balance: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer available</item>
+        <item quantity="few">%1$s transfers available</item>
+        <item quantity="many">%1$s transfers available</item>
+        <item quantity="other">%1$s transfers available</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfers</item>
+        <item quantity="many">%1$s transfers</item>
+        <item quantity="other">%1$s transfers</item>
+    </plurals>
+    <string name="trx_balance">TRX Balance</string>
+    <string name="trx_balance_desc">Top up your balance to pay network fees.</string>
+    <string name="blockchain_fees">Blockchain Fees</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery is the easiest way to pay blockchain fees. You can also top up balance with TON and TRX coins directly.</string>
+    <string name="required_prefix">Required: %1$s</string>
+    <string name="tron_fees_learn_more">Fees change in real time based on market conditions and other factors. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
+    <string name="tetra" translatable="false">TETRA</string>
+    <string name="tetra_title" translatable="false">Tetra L2</string>
+    <string name="tetra_subtitle">Connect Tetra L2 network</string>
+    <string name="other_options">Other options</string>
+    <string name="for_developers">For developers</string>
+    <string name="tooltip_new">NEW</string>
+    <string name="tooltip_send_from_here">Send from here</string>
+    <string name="choose_asset">Choose asset</string>
+    <string name="trade">Trade</string>
+    <string name="search_by_ticker">Search by ticker or name</string>
 </resources>

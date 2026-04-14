@@ -1,0 +1,58 @@
+name: Mirror GitHub release tag
+
+on:
+  workflow_dispatch:
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Verify running on a tag
+        run: |
+          if [[ "${{ github.ref }}" != refs/tags/* ]]; then
+            echo "::error::This workflow must be run on a tag, not a branch. Select a tag in 'Use workflow from'."
+            exit 1
+          fi
+
+      - name: Checkout private repo
+        uses: actions/checkout@v6
+
+      - name: Configure deploy key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PUBLIC_REPO_DEPLOY_KEY }}
+
+      - name: Remove HTTPS override from actions/checkout
+        run: |
+          git config --global --unset-all url."https://github.com/".insteadOf || true
+          git config --global --unset-all http.https://github.com/.extraheader || true
+
+      - name: Push squashed commit to public repo
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git config --global user.name  "mirror-bot"
+          git config --global user.email "mirror-bot@example.com"
+
+          git remote add public git@github.com:tonkeeper/android.git
+          git fetch public main || true
+
+          # Get the tree (snapshot) of the current tag
+          TREE=$(git log -1 --format='%T' HEAD)
+
+          # Create a squashed commit on top of public's main history
+          if git rev-parse public/main >/dev/null 2>&1; then
+            COMMIT=$(git commit-tree "$TREE" -p public/main -m "Release $TAG")
+          else
+            # First push — no history yet
+            COMMIT=$(git commit-tree "$TREE" -m "Release $TAG")
+          fi
+
+          # Push the commit to release branch and main
+          git push --force public "$COMMIT":refs/heads/release/"$TAG"
+
+          # Tag the commit and push
+          git tag -f "$TAG" "$COMMIT"
+          git push --force public "refs/tags/$TAG"

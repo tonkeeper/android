@@ -1,6 +1,8 @@
 package com.tonapps.wallet.api.entity.value
 
 import androidx.room.TypeConverter
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 
 object ValueConverters {
 

@@ -7,7 +7,7 @@ import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.contacts.ContactsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.Account
@@ -77,7 +77,7 @@ class AddContactViewModel(
             } else {
                 _accountFlow.value = AddressAccount.Loading
 
-                val account = api.resolveAccount(address, wallet.testnet)
+                val account = api.resolveAccount(address, wallet.network)
                 if (account == null || !account.isWallet || account.status == AccountStatus.nonexist) {
                     _accountFlow.value = AddressAccount.Error
                 } else {
@@ -91,7 +91,7 @@ class AddContactViewModel(
         viewModelScope.launch {
             try {
                 val userInput = _userInputFlow.value
-                contactsRepository.add(userInput.name, userInput.address, wallet.testnet)
+                contactsRepository.add(userInput.name, userInput.address, wallet.network)
             } catch (e: Throwable) {
                 toast(e.bestMessage)
             } finally {

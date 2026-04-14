@@ -1,6 +1,6 @@
 package com.tonapps.ledger.ton
 
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.extensions.storeAddress
 import com.tonapps.blockchain.ton.extensions.storeCoins

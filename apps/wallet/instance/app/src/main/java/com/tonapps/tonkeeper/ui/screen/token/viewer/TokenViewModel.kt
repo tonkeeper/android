@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.token.viewer
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
+import com.tonapps.async.Async
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
@@ -12,22 +14,23 @@ import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
-import com.tonapps.tonkeeper.manager.tx.TransactionManager
+import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
+import com.tonapps.deposit.usecase.emulation.EmulationUseCase
+import com.tonapps.deposit.usecase.emulation.Trc20TransferDefaultFees
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.EthenaEntity
-import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.log.L
 import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.ChartPeriod
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -40,11 +43,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 
 // TODO Refactor this class
@@ -60,9 +65,9 @@ class TokenViewModel(
     private val eventsRepository: EventsRepository,
     private val historyHelper: HistoryHelper,
     private val batteryRepository: BatteryRepository,
-    private val purchaseRepository: PurchaseRepository,
     private val ratesRepository: RatesRepository,
     private val transactionManager: TransactionManager,
+    private val emulationUseCase: EmulationUseCase,
 ) : BaseWalletVM(app) {
 
     val burnAddress: String by lazy {
@@ -79,7 +84,7 @@ class TokenViewModel(
         private set
 
     val usdeDisabled: Boolean
-        get() = api.config.flags.disableUsde
+        get() = api.getConfig(wallet.network).flags.disableUsde
 
     private val _tokensFlow = MutableStateFlow<List<AccountTokenEntity>?>(null)
     val tokensFlow = _tokensFlow.asStateFlow().filterNotNull()
@@ -97,26 +102,51 @@ class TokenViewModel(
     private val _chartFlow = MutableStateFlow<List<ChartEntity>?>(null)
     private val chartFlow = _chartFlow.asStateFlow().filterNotNull()
 
+    private val scope = viewModelScope + Async.ioContext()
+
+    private val trc20TransferDefaultFeesFlow =
+        combine(tokenFlow, settingsRepository.currencyFlow) { token, currency ->
+            if (token.isTrc20) {
+                try {
+                    emulationUseCase.getTrc20TransferDefaultFees(wallet, currency)
+                } catch (e: Exception) {
+                    L.e(e)
+                    null
+                }
+            } else null
+        }.flowOn(Dispatchers.IO)
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             getData()
         }
+
         transactionManager.eventsFlow(wallet).collectFlow {
             getData(true)
         }
 
         combine(
-            tokenFlow, tokensFlow, chartFlow, settingsRepository.walletPrefsChangedFlow
-        ) { token, list, chart, _ ->
-            buildItems(token, list, chart, tokenRepository.getEthena(wallet.accountId))
-        }.launchIn(viewModelScope)
+            tokenFlow,
+            tokensFlow,
+            chartFlow,
+            settingsRepository.walletPrefsChangedFlow,
+            trc20TransferDefaultFeesFlow
+        ) { token, list, chart, _, trc20DefaultFees ->
+            buildItems(
+                token,
+                list,
+                chart,
+                tokenRepository.getEthena(wallet.accountId),
+                trc20DefaultFees
+            )
+        }.launchIn(scope)
     }
 
     private suspend fun getData(refresh: Boolean = false) {
         tronAddress = accountRepository.getTronAddress(wallet.id)
 
         val list = tokenRepository.get(
-            settingsRepository.currency, wallet.accountId, wallet.testnet, refresh = refresh
+            settingsRepository.currency, wallet.accountId, wallet.network, refresh = refresh
         ) ?: return
         val token = list.firstOrNull { it.address == tokenAddress } ?: return
 
@@ -129,7 +159,7 @@ class TokenViewModel(
         }
 
         _tokensFlow.value = list
-        buildItems(token, list, emptyList(), ethena)
+        buildItems(token, list, emptyList(), ethena, null)
         load(token)
     }
 
@@ -181,12 +211,12 @@ class TokenViewModel(
     private suspend fun hasW5(): Boolean {
         if (wallet.version == WalletVersion.V5R1) {
             return true
-        } else if (wallet.type == Wallet.Type.Watch || wallet.type == Wallet.Type.Lockup || wallet.type == Wallet.Type.Ledger) {
+        } else if (wallet.type == WalletType.Watch || wallet.type == WalletType.Lockup || wallet.type == WalletType.Ledger) {
             return true
         }
-        val w5Contact = BaseWalletContract.create(wallet.publicKey, "v5r1", wallet.testnet)
+        val w5Contact = BaseWalletContract.create(wallet.publicKey, "v5r1", wallet.network)
         val accountId = w5Contact.address.toAccountId()
-        return accountRepository.getWalletByAccountId(accountId, wallet.testnet) != null
+        return accountRepository.getWalletByAccountId(accountId, wallet.network) != null
     }
 
     private suspend fun buildItems(
@@ -194,18 +224,19 @@ class TokenViewModel(
         tokens: List<AccountTokenEntity>,
         charts: List<ChartEntity>,
         ethena: EthenaEntity?,
+        trc20DefaultFees: Trc20TransferDefaultFees?,
     ) {
         val currency = settingsRepository.currency.code
         val items = mutableListOf<Item>()
 
-        var headerBalance = token.balance.value
+        var headerBalance = token.balance.uiBalance
 
         val balanceItems = mutableListOf<Item.EthenaBalance>()
 
         val tokenTsUsde = tokens.firstOrNull { it.isTsUSDe }
 
         val rates = ratesRepository.getRates(
-            settingsRepository.currency, listOfNotNull(token.address, tokenTsUsde?.address)
+            wallet.network, settingsRepository.currency, listOfNotNull(token.address, tokenTsUsde?.address)
         )
 
         if (token.isUSDe && !rawUsde) {
@@ -267,6 +298,12 @@ class TokenViewModel(
 
         val headerFiat = rates.convert(token.address, headerBalance)
 
+        val totalAvailableTransfers = if (api.getConfig(wallet.network).flags.disableBattery) {
+            trc20DefaultFees?.trxFee?.availableTransfers
+        } else {
+            trc20DefaultFees?.totalAvailableTransfers
+        }
+
         items.add(
             Item.Balance(
                 balance = CurrencyFormatter.formatFull(
@@ -277,13 +314,16 @@ class TokenViewModel(
                 hiddenBalance = settingsRepository.hiddenBalances,
                 showNetwork = tronUsdtEnabled && (token.isUsdt || token.isTrc20),
                 blockchain = token.token.blockchain,
+                wallet = wallet,
+                availableTransfers = if (token.isTrc20) totalAvailableTransfers else null
             )
         )
         items.add(
             Item.Actions(
-                swapUri = api.config.swapUri,
-                tronSwapUrl = if (token.isTrc20) api.config.tronSwapUrl else null,
-                swapDisabled = api.config.flags.disableSwap || ((token.isUSDe || token.isTsUSDe) && usdeDisabled),
+                swapUri = api.getConfig(wallet.network).swapUri,
+                tronSwapUrl = if (token.isTrc20) api.getConfig(wallet.network).tronSwapUrl else null,
+                swapDisabled = api.getConfig(wallet.network).flags.disableSwap || ((token.isUSDe || token.isTsUSDe) && usdeDisabled),
+                tronTransfersDisabled = token.isTrc20 && trc20DefaultFees != null && totalAvailableTransfers == 0,
                 token = token.balance.token,
                 wallet = wallet,
             )
@@ -319,7 +359,7 @@ class TokenViewModel(
             }
         }
 
-        if (token.isUsdt && !wallet.isW5 && wallet.hasPrivateKey && !api.config.flags.disableGasless && settingsRepository.isUSDTW5(
+        if (token.isUsdt && !wallet.isW5 && wallet.hasPrivateKey && !api.getConfig(wallet.network).flags.disableGasless && settingsRepository.isUSDTW5(
                 wallet.id
             )
         ) {
@@ -330,15 +370,19 @@ class TokenViewModel(
             )
         }
 
-        if (wallet.hasPrivateKey && token.isTrc20 && !api.config.flags.disableBattery) {
-            val batteryCharges = getBatteryCharges()
-            if (batteryCharges < 300) {
-                items.add(
-                    Item.BatteryBanner(
-                        wallet = wallet, token = token.balance.token
+        if (wallet.hasPrivateKey && token.isTrc20 && trc20DefaultFees != null && totalAvailableTransfers == 0) {
+            items.add(
+                Item.TronBanner(
+                    wallet = wallet,
+                    onlyTrx = api.getConfig(wallet.network).flags.disableBattery,
+                    trxAmountFormat = CurrencyFormatter.format(
+                        TokenEntity.TRX.symbol, trc20DefaultFees.trxFee.amount
+                    ),
+                    trxBalanceFormat = CurrencyFormatter.format(
+                        TokenEntity.TRX.symbol, trc20DefaultFees.trxFee.balance
                     )
                 )
-            }
+            )
         }
 
         if (!token.isUsdt && !token.isTrc20 && !token.isUSDe) {
@@ -415,7 +459,7 @@ class TokenViewModel(
         token: AccountTokenEntity, beforeLt: Long? = null
     ) = withContext(Dispatchers.IO) {
         val accountEvents =
-            eventsRepository.loadForToken(token.address, wallet.accountId, wallet.testnet, beforeLt)
+            eventsRepository.loadForToken(token.address, wallet.accountId, wallet.network, beforeLt)
                 ?: return@withContext
         val walletEventItems = mapping(wallet, accountEvents.events)
         if (beforeLt == null) {
@@ -450,7 +494,7 @@ class TokenViewModel(
             tronAddress = tronAddress!!,
             events = tronEvents,
             options = ActionOptions(
-                safeMode = settingsRepository.isSafeModeEnabled(api),
+                safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
                 hiddenBalances = settingsRepository.hiddenBalances,
             )
         )
@@ -477,7 +521,7 @@ class TokenViewModel(
     ): List<HistoryItem> {
         return historyHelper.mapping(
             wallet = wallet, events = events, options = ActionOptions(
-                safeMode = settingsRepository.isSafeModeEnabled(api),
+                safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
                 hiddenBalances = settingsRepository.hiddenBalances,
                 tronEnabled = tronUsdtEnabled,
             )
@@ -562,7 +606,7 @@ class TokenViewModel(
 
     private suspend fun getBatteryCharges(): Int = withContext(Dispatchers.IO) {
         accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.testnet, true)
+            batteryRepository.getCharges(it, wallet.publicKey, wallet.network, true)
         } ?: 0
     }
 }

@@ -12,14 +12,14 @@ fun UsbDeviceConnection.writeByUsbRequest(endpoint: UsbEndpoint, bytes: ByteArra
     try {
         val buffer = ByteBuffer.wrap(bytes.copyOfRange(0, length))
         if (length < UsbRequestCompat.MAX_USB_FS_BUFFER_SIZE) {
-            if (!usbRequest.queueCompat(buffer, length)) {
+            if (!usbRequest.queue(buffer)) {
                 throw LedgerException.USBWriteException
             }
             requestWait()
         } else {
             val chunks = buffer.array().asIterable().chunked(UsbRequestCompat.MAX_USB_FS_BUFFER_SIZE / 2)
             for (chunk in chunks) {
-                if (!usbRequest.queueCompat(ByteBuffer.wrap(chunk.toByteArray()), chunk.size)) {
+                if (!usbRequest.queue(ByteBuffer.wrap(chunk.toByteArray()))) {
                     throw LedgerException.USBWriteException
                 }
                 requestWait()

@@ -1,5 +1,6 @@
 package ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import ui.theme.color.AccentColorScheme
 import ui.theme.color.BackgroundColorScheme
@@ -10,6 +11,7 @@ import ui.theme.color.SeparatorColorScheme
 import ui.theme.color.TabBarColorScheme
 import ui.theme.color.TextColorScheme
 
+@Composable
 fun appColorSchemeLight() = AppColorScheme(
     text = TextColorScheme(
         primary = Color(0xFF000000),

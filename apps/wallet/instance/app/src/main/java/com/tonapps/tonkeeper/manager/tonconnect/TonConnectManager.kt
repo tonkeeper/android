@@ -2,12 +2,13 @@ package com.tonapps.tonkeeper.manager.tonconnect
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import android.view.View
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.connect.TONProof
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.filterList
@@ -35,8 +36,9 @@ import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.readBody
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
@@ -51,12 +53,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -65,8 +64,8 @@ import uikit.extensions.addForResult
 import uikit.navigation.NavigationActivity
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class TonConnectManager(
     private val scope: CoroutineScope,
@@ -79,7 +78,6 @@ class TonConnectManager(
 ) {
 
     private val bridge: Bridge = Bridge(api)
-    private val bridgeConnected = AtomicBoolean(false)
     private var bridgeJob: Job? = null
     private val recentlyConnectedClients = ConcurrentHashMap<String, Long>()
 
@@ -116,48 +114,55 @@ class TonConnectManager(
         .map { it }
         .shareIn(scope, SharingStarted.Eagerly, 0)
 
-    fun connectBridge() {
-        if (bridgeConnected.get()) {
-            return
-        }
-        bridgeJob?.cancel()
-        bridgeConnected.set(true)
+    private val mutex = ReentrantLock()
 
+    fun connectBridge() {
+        mutex.withLock {
+            if (bridgeJob?.isActive == true) {
+                return
+            }
+
+            startBridge()
+        }
+    }
+
+    fun disconnectBridge() {
+        mutex.withLock {
+            bridgeJob?.cancel()
+            bridgeJob = null
+        }
+    }
+
+    private fun reconnectBridge() {
+        mutex.withLock {
+            if (bridgeJob != null) {
+                bridgeJob?.cancel()
+                startBridge()
+            }
+        }
+    }
+
+    private fun startBridge() {
         bridgeJob = scope.launch(Dispatchers.IO) {
             val connections = dAppsRepository.getConnections().chunked(50)
             if (connections.isEmpty()) {
                 return@launch
             }
+
             val flow = connections.map {
                 bridge.eventsFlow(it, dAppsRepository.lastEventId)
             }.flatter()
+
             flow.collect {
-                if (bridgeConnected.get()) {
-                    _eventsFlow.emit(it)
-                }
+                _eventsFlow.emit(it)
             }
         }
     }
 
-    fun disconnectBridge() {
-        if (!bridgeConnected.get()) {
-            return
-        }
-        bridgeJob?.cancel()
-        bridgeConnected.set(false)
-    }
+    fun walletConnectionsFlow(wallet: WalletEntity) = accountConnectionsFlow(wallet.accountId, wallet.network)
 
-    private fun reconnectBridge() {
-        if (bridgeConnected.get()) {
-            disconnectBridge()
-            connectBridge()
-        }
-    }
-
-    fun walletConnectionsFlow(wallet: WalletEntity) = accountConnectionsFlow(wallet.accountId, wallet.testnet)
-
-    fun accountConnectionsFlow(accountId: String, testnet: Boolean = false) = dAppsRepository.connectionsFlow.filterList { connection ->
-        connection.testnet == testnet && connection.accountId.equalsAddress(accountId)
+    fun accountConnectionsFlow(accountId: String, network: TonNetwork = TonNetwork.MAINNET) = dAppsRepository.connectionsFlow.filterList { connection ->
+        connection.network == network && connection.accountId.equalsAddress(accountId)
     }
 
     fun setLastAppRequestId(clientId: String, messageId: Long) {
@@ -176,18 +181,18 @@ class TonConnectManager(
             bridge.sendDisconnectResponseSuccess(connection, messageId)
         }
 
-        accountRepository.getWalletByAccountId(connection.accountId, connection.testnet)?.let {
+        accountRepository.getWalletByAccountId(connection.accountId, connection.network)?.let {
             pushManager.dAppUnsubscribe(it, listOf(connection))
         }
     }
 
     suspend fun getConnection(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         appUrl: Uri,
         type: AppConnectEntity.Type
     ): AppConnectEntity? {
-        val apps = dAppsRepository.getConnections(accountId, testnet)
+        val apps = dAppsRepository.getConnections(accountId, network)
         if (apps.isEmpty()) {
             return null
         }
@@ -204,7 +209,7 @@ class TonConnectManager(
 
     fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type? = null) {
         scope.launch(Dispatchers.IO) {
-            val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.testnet, appUrl, type)
+            val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.network, appUrl, type)
             if (connections.isNotEmpty()) {
                 for (connection in connections) {
                     bridge.sendDisconnect(connection)
@@ -218,7 +223,7 @@ class TonConnectManager(
     }
 
     suspend fun clear(wallet: WalletEntity) = withContext(Dispatchers.IO) {
-        val connections = dAppsRepository.deleteApps(wallet.accountId, wallet.testnet)
+        val connections = dAppsRepository.deleteApps(wallet.accountId, wallet.network)
         for (connection in connections) {
             bridge.sendDisconnect(connection)
         }
@@ -241,7 +246,7 @@ class TonConnectManager(
     }
 
     fun isPushEnabled(wallet: WalletEntity, appUrl: Uri): Boolean {
-        return dAppsRepository.isPushEnabled(wallet.accountId, wallet.testnet, appUrl)
+        return dAppsRepository.isPushEnabled(wallet.accountId, wallet.network, appUrl)
     }
 
     private suspend fun newConnect(
@@ -256,7 +261,7 @@ class TonConnectManager(
         val timestamp = proof?.timestamp ?: (System.currentTimeMillis() / 1000L)
         val connection = AppConnectEntity(
             accountId = wallet.accountId,
-            testnet = wallet.testnet,
+            network = wallet.network,
             clientId = clientId,
             type = type,
             appUrl = appUrl,
@@ -352,7 +357,7 @@ class TonConnectManager(
                 screen.contract.parseResult(bundle)
             }
 
-            val connect = newConnect(
+            newConnect(
                 wallet = response.wallet,
                 keyPair = keyPair,
                 clientId = clientId,
@@ -397,18 +402,25 @@ class TonConnectManager(
     }
 
     suspend fun showLogoutAppBar(wallet: WalletEntity, context: Context, url: Uri) = withContext(Dispatchers.Main.immediate) {
-        val connections = dAppsRepository.getConnections(wallet.accountId, wallet.testnet).flatMap {
+        val connections = dAppsRepository.getConnections(wallet.accountId, wallet.network).flatMap {
             it.value
-        }.filter { it.accountId.equalsAddress(wallet.accountId) && it.testnet == wallet.testnet }
+        }.filter { it.accountId.equalsAddress(wallet.accountId) && it.network == wallet.network }
 
         if (connections.isNotEmpty()) {
             val text = context.getString(Localization.disconnect_dapp_confirm, url.host)
-            SnackBarView.show(context, text) { disconnect(wallet, url, null) }
+            SnackBarView.show(
+                context = context,
+                text = text,
+                buttonText = context.getString(Localization.disconnect),
+                onClickListener = View.OnClickListener {
+                    disconnect(wallet, url, null)
+                }
+            )
         }
     }
 
     suspend fun isScam(context: Context, wallet: WalletEntity, vararg uris: Uri): Boolean {
-        if (settingsRepository.isSafeModeEnabled(api) && safeModeClient.isHasScamUris(*uris)) {
+        if (settingsRepository.isSafeModeEnabled(wallet.network) && safeModeClient.isHasScamUris(*uris)) {
             withContext(Dispatchers.Main) {
                 TonConnectSafeModeDialog(context).show(wallet)
             }
@@ -429,7 +441,7 @@ class TonConnectManager(
         if (response.code != 200) {
             throw ManifestException.NotFound(response.code)
         }
-        val body = response.body.string()
+        val body = response.readBody()
         try {
             val app = AppEntity(body)
             dAppsRepository.insertApp(app)

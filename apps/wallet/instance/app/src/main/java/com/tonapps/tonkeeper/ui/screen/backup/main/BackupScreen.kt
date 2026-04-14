@@ -11,7 +11,7 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseScreen
 import com.tonapps.tonkeeperx.BuildConfig
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
@@ -53,7 +53,9 @@ class BackupScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wal
     }
 
     private fun openRecoveryPhrase(backup: Boolean = false, backupId: Long = 0) {
-        viewModel.getRecoveryPhrase(requireContext()) { words, error ->
+        val ctx = context ?: return
+
+        viewModel.getRecoveryPhrase(ctx) { words, error ->
             if (error != null) {
                 navigation?.toast(error.bestMessage)
             } else {

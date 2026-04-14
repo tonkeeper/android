@@ -1,0 +1,26 @@
+appId: com.ton_keeper.debug
+---
+- tapOn: Import existing wallet
+- tapOn:
+    text: Import wallet
+    index: 1
+
+- runFlow:
+    file: "mnemonic/24key_words.yaml"
+    env:
+      mnemonica: ${WALLET_WITH_MONEY}
+
+- assertVisible: Create passcode
+- repeat:
+    times: 4
+    commands:
+      - tapOn: ${PASSWORD_KEY}
+
+- assertVisible: Re-enter passcode
+- repeat:
+    times: 4
+    commands:
+      - tapOn: ${PASSWORD_KEY}
+
+- tapOn: Later
+- tapOn: "Continue"

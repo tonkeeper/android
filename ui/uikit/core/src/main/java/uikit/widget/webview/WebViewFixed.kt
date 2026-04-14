@@ -7,19 +7,12 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.RectF
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.CancellationSignal
 import android.os.Message
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.webkit.CookieManager
-import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
-import android.webkit.ServiceWorkerController
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebChromeClient.FileChooserParams
@@ -27,25 +20,17 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
-import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
-import androidx.webkit.OutcomeReceiverCompat
-import androidx.webkit.PrefetchException
 import androidx.webkit.Profile
-import androidx.webkit.SpeculativeLoadingConfig
-import androidx.webkit.SpeculativeLoadingParameters
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import uikit.R
-import uikit.navigation.Navigation
 import java.util.LinkedList
-import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 
 open class WebViewFixed @JvmOverloads constructor(
@@ -95,6 +80,8 @@ open class WebViewFixed @JvmOverloads constructor(
 
     private val callbacks = mutableListOf<Callback>()
     private var onNewTabRunnable: Runnable? = null
+    private var onScrollRunnable: Runnable? = null
+    private var onElementFocusRunnable: Runnable? = null
 
     private val jsExecuteQueue = LinkedList<String>()
 
@@ -124,9 +111,7 @@ open class WebViewFixed @JvmOverloads constructor(
             WebViewCompat.setAudioMuted(this@WebViewFixed, true)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
-        }
+        super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
         super.setBackgroundColor(Color.TRANSPARENT)
         if (0 != context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) {
             setWebContentsDebuggingEnabled(true)
@@ -392,9 +377,6 @@ open class WebViewFixed @JvmOverloads constructor(
         super.destroy()
     }
 
-    private var onScrollRunnable: Runnable? = null
-    private var onElementFocusRunnable: Runnable? = null
-
     private fun onScroll(x: Int, y: Int) {
         removeCallbacks(onScrollRunnable)
         onScrollRunnable = Runnable {
@@ -423,6 +405,7 @@ open class WebViewFixed @JvmOverloads constructor(
         if (WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)) {
             WebViewCompat.setProfile(this, name)
         }
+
         getProfile()?.apply {
             cookieManager.setAcceptCookie(true)
             cookieManager.setAcceptThirdPartyCookies(this@WebViewFixed, true)

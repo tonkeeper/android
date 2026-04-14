@@ -4,28 +4,26 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.WindowInsetsCompat
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.core.flags.WalletFeature
 import uikit.drawable.BarDrawable
 import uikit.drawable.DotDrawable
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.getDimensionPixelSize
-import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.setPaddingTop
 import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
@@ -62,11 +60,9 @@ class WalletHeaderView @JvmOverloads constructor(
             val e1 = ev1 ?: return false
             val diffY = e2.y - e1.y
             val diffX = e2.x - e1.x
-            if (abs(diffX) > abs(diffY)) {
-                if (abs(diffX) > threshold && abs(velocityX) > velocityThreshold) {
-                    doWalletSwipe?.invoke(diffX > 0)
-                    return true
-                }
+            if (abs(diffX) > abs(diffY) && abs(diffX) > threshold && abs(velocityX) > velocityThreshold) {
+                doWalletSwipe?.invoke(diffX > 0)
+                return true
             }
 
             return false
@@ -74,7 +70,8 @@ class WalletHeaderView @JvmOverloads constructor(
     }
 
     private val swipeDetector = GestureDetector(context, swipeGestureListener, handler)
-    private val supportView: View
+    private val supportView: AppCompatImageView
+    private val historyView: AppCompatImageView
     private val settingsView: View
     private val walletView: View
     private val emojiView: EmojiView
@@ -93,6 +90,12 @@ class WalletHeaderView @JvmOverloads constructor(
         set(value) {
             field = value
             supportView.setOnClickListener { value?.invoke() }
+        }
+
+    var onHistoryClick: (() -> Unit)? = null
+        set(value) {
+            field = value
+            historyView.setOnClickListener { value?.invoke() }
         }
 
     var onSettingsClick: (() -> Unit)? = null
@@ -117,6 +120,14 @@ class WalletHeaderView @JvmOverloads constructor(
         super.setBackground(drawable)
         inflate(context, R.layout.view_wallet_header, this)
         supportView = findViewById(R.id.support)
+
+        supportView.setImageResource(
+            when {
+                WalletFeature.NewRampFlow.isEnabled -> UIKitIcon.ic_qr_viewfinder_thin_28
+                else -> UIKitIcon.ic_question_message_outline_28
+            }
+        )
+        historyView = findViewById(R.id.history)
         settingsView = findViewById(R.id.settings)
         walletView = findViewById(R.id.wallet)
         walletView.setOnTouchListener { v, event -> swipeDetector.onTouchEvent(event) }
@@ -126,6 +137,10 @@ class WalletHeaderView @JvmOverloads constructor(
 
         settingsDot = findViewById(R.id.settings_dot)
         settingsDot.background = DotDrawable(context)
+    }
+
+    fun setHistoryVisible(visible: Boolean) {
+        historyView.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     fun setDot(dot: Boolean) {

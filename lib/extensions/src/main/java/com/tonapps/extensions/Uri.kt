@@ -3,7 +3,7 @@ package com.tonapps.extensions
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import java.net.URL
 import java.net.URLConnection
 

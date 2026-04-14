@@ -6,18 +6,21 @@ import android.content.res.Configuration
 import android.icu.util.Currency
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.clear
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.putBoolean
 import com.tonapps.extensions.putInt
 import com.tonapps.extensions.putString
+import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
-import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
+import com.tonapps.wallet.data.settings.entities.PreferredTronFeeMethod
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.data.settings.folder.TokenPrefsFolder
 import com.tonapps.wallet.data.settings.folder.WalletPrefsFolder
@@ -42,6 +45,7 @@ class SettingsRepository(
     private val scope: CoroutineScope,
     private val context: Context,
     private val rnLegacy: RNLegacy,
+    private val api: API,
 ) {
 
     private companion object {
@@ -64,6 +68,7 @@ class SettingsRepository(
         private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
         private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
         private const val LEDGER_CONNECT_USB = "ledger_connect_usb"
+        private const val SEND_TOOLTIP_SHOWN_KEY = "send_tooltip_shown"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -258,6 +263,14 @@ class SettingsRepository(
             }
         }
 
+    var sendTooltipShown: Boolean = prefs.getBoolean(SEND_TOOLTIP_SHOWN_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.putBoolean(SEND_TOOLTIP_SHOWN_KEY, value)
+                field = value
+            }
+        }
+
     var showSafeModeSetup: Boolean = prefs.getBoolean(SHOW_SAFE_MODE_SETUP_KEY, false)
         set(value) {
             if (value != field) {
@@ -391,6 +404,15 @@ class SettingsRepository(
         walletPrefsFolder.setBatteryTxEnabled(accountId, types)
     }
 
+    fun isSafeModeEnabled(network: TonNetwork): Boolean {
+        val state = getSafeModeState()
+        if (state == SafeModeState.Default) {
+            return api.getConfig(network).flags.safeModeEnabled
+        }
+
+        return state == SafeModeState.Enabled
+    }
+
     fun batteryEnableTx(
         accountId: String,
         type: BatteryTransaction,
@@ -477,6 +499,12 @@ class SettingsRepository(
 
     fun setPreferredFeeMethod(walletId: String, method: PreferredFeeMethod) =
         walletPrefsFolder.setPreferredFeeMethod(walletId, method)
+
+    fun getPreferredTronFeeMethod(walletId: String) =
+        walletPrefsFolder.getPreferredTronFeeMethod(walletId)
+
+    fun setPreferredTronFeeMethod(walletId: String, method: PreferredTronFeeMethod) =
+        walletPrefsFolder.setPreferredTronFeeMethod(walletId, method)
 
     suspend fun getTokenPrefs(
         walletId: String,
@@ -595,5 +623,4 @@ class SettingsRepository(
             code
         }
     }
-
 }

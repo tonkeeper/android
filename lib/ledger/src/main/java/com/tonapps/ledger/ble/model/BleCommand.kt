@@ -2,7 +2,7 @@ package com.tonapps.ledger.ble.model
 
 import com.tonapps.ledger.ble.extension.fromHexStringToBytes
 import com.tonapps.ledger.ble.extension.toHexString
-import timber.log.Timber
+import com.tonapps.log.L
 
 class BleCommand(
     val id: String,
@@ -28,9 +28,9 @@ class BleCommand(
             var cursor = 0
             val apduHexChunks: MutableList<String> = mutableListOf()
             val hexMtu = mtu * 2 //mtu for hexa string
-            Timber.d("APDU hex length => ${apduHex.length}")
+            L.d("APDU hex length => ${apduHex.length}")
             while (cursor < apduHex.length) {
-                Timber.d("Cursor => $cursor")
+                L.d("Cursor => $cursor")
                 val headerLenghtChars = (if (cursor == 0) FIRST_FRAME_HEADER_LENGTH else OTHER_FRAME_HEADER_LENGTH) * 2 //Bytes to hexstring
                 if (apduHex.length < cursor + (hexMtu - headerLenghtChars) ) { //End of payload
                     apduHexChunks.add(apduHex.substring(cursor))
@@ -43,7 +43,7 @@ class BleCommand(
             }
 
             apduHexChunks.mapIndexed { index, apduChunk ->
-                Timber.d(apduChunk)
+                L.d(apduChunk)
                 FrameCommand(
                     id = id,
                     index = index,

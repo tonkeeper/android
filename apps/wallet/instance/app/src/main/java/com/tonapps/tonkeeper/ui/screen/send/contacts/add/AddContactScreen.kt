@@ -1,14 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.add
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets

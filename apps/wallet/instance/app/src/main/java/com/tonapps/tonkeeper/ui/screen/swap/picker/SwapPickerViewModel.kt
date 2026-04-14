@@ -7,7 +7,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.swap.picker.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.swap.SwapRepository
 import com.tonapps.wallet.data.token.TokenRepository
@@ -73,6 +73,6 @@ class SwapPickerViewModel(
     private suspend fun getTokens() = tokenRepository.get(
         currency = settingsRepository.currency,
         accountId = wallet.accountId,
-        testnet = wallet.testnet
+        network = wallet.network
     ) ?: emptyList()
 }

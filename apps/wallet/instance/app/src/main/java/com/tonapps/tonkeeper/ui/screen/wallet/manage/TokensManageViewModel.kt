@@ -1,32 +1,26 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.manage
 
 import android.app.Application
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.core.entities.AssetsEntity
-import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.legacy.enteties.AssetsEntity
+import com.tonapps.legacy.enteties.AssetsExtendedEntity
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import uikit.extensions.collectFlow
 
 class TokensManageViewModel(
     app: Application,
@@ -36,10 +30,10 @@ class TokensManageViewModel(
     private val api: API,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(wallet.network)
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
-        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet).mapNotNull { token ->
+        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.network).mapNotNull { token ->
             if (safeMode && !token.verified) {
                 return@mapNotNull null
             }
@@ -48,7 +42,7 @@ class TokensManageViewModel(
                 prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
                 accountId = wallet.accountId,
             )
-        }.filter { !it.isTon }
+        }.filter { !it.isTon && !it.isTrx }
     }
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())

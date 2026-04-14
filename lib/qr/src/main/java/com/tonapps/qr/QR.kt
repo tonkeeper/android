@@ -6,18 +6,16 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
-import android.os.Build
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import com.google.zxing.qrcode.encoder.ByteMatrix
 import com.google.zxing.qrcode.encoder.Encoder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.tonapps.async.Async
 import kotlin.math.roundToInt
 
 object QR {
 
-    val scope = CoroutineScope(Dispatchers.Main)
+    val scope = Async.mainScope()
 
     class Builder(private val content: String) {
         private var fillColor = Color.BLACK
@@ -160,11 +158,7 @@ object QR {
                 yOutput += multiple
             }
             canvas.setBitmap(null)
-            val newBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                bitmap.copy(Bitmap.Config.HARDWARE, false)
-            } else {
-                bitmap.copy(Bitmap.Config.RGB_565, false)
-            }
+            val newBitmap = bitmap.copy(Bitmap.Config.HARDWARE, false)
             bitmap.recycle()
             return newBitmap
         }
@@ -181,7 +175,9 @@ object QR {
             }
             return if (x < cornerSquareSize && matrix.height - cornerSquareSize <= y) {
                 false
-            } else 0 <= x && x < matrix.width && 0 <= y && y < matrix.height && matrix[x, y].toInt() == 1
+            } else {
+                0 <= x && x < matrix.width && 0 <= y && y < matrix.height && matrix[x, y].toInt() == 1
+            }
         }
     }
 

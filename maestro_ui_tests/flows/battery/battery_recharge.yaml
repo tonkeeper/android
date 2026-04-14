@@ -1,0 +1,30 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- runFlow: "../../steps/import_wallet.yaml"
+- runFlow: "../../service/account/compare_ton_balance.yaml"
+
+- tapOn:
+    id: wallet_battery
+- scrollUntilVisible:
+    element:
+      text: Recharge with TON
+- tapOn: Recharge with TON
+- tapOn:
+    id: radio
+    index: 2 #take care about balance and disabled radiobutton
+- tapOn: Continue
+- assertVisible: battery.ton
+- swipe:
+    from:
+      id: button
+      index: 1
+    direction: RIGHT
+
+- runFlow: ../../steps/password/enter_password.yaml
+- assertVisible: Done
+- assertVisible: Battery will charge in a few minutes #key: battery_please_wait
+- assertVisible: History
+- runFlow: ../../service/history/find_last_ton_transaction.yaml

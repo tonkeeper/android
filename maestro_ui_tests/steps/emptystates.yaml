@@ -1,0 +1,16 @@
+appId: com.ton_keeper.debug
+---
+- tapOn: History
+- assertVisible: Your activity will be shown here
+- tapOn: Buy Toncoin
+- runFlow: "buy_and_sell/common.yaml"
+
+- tapOn: Receive
+- runFlow: "recieve_modal/ton.yaml"
+- tapOn: Navigation
+
+- tapOn: Collectibles
+- assertVisible: Your collectibles will be shown here
+- tapOn: Receive
+- runFlow: "recieve_modal/ton.yaml"
+- tapOn: Navigation

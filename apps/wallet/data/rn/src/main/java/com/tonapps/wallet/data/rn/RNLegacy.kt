@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.rn
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.log.L
 import androidx.fragment.app.FragmentActivity
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.bestMessage
@@ -22,7 +22,7 @@ import org.json.JSONObject
 
 class RNLegacy(
     context: Context,
-    private val scope: CoroutineScope
+    scope: CoroutineScope
 ) {
 
     companion object {

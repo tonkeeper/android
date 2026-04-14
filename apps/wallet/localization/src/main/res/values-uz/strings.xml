@@ -65,6 +65,7 @@
     <string name="other">Boshqa</string>
     <string name="minimum_amount">Minimal %1$s</string>
     <string name="min_amount">Min. miqdori: %1$s</string>
+    <string name="min_amount_label">Min. miqdor</string>
     <string name="stake_ethena_description">tsUSDe tokeni markazlashtirilmagan staking xizmati Ethena orqali o\'tkaziladigan USDe ni ifodalaydi. tsUSDe minimal blokirovka bilan avtomatik ravishda staking mukofotlarini oladi.</string>
     <string name="stake_ethena_disclaimer">Bu o\'tgan haftadagi o\'rtacha protokol mukofotlari va stavkaga qo\'yilgan o\'rtacha USDe miqdoriga asoslangan taxminiy yillik daromaddir. Daromad haftalik birikma bilan yillik hisoblanadi. <annotation colorAttr="textSecondaryColor">O‘tgan ishlash kelajakdagi natijalarni kafolatlamaydi.</annotation> Staking va mukofotlar uchinchi tomon xizmati Ethena tomonidan taqdim etiladi va ularning <annotation colorAttr="textAccentColor">shartlariga</annotation> bo‘ysunadi.</string>
     <string name="stake_tonstakers_description">Tonstakerlar hovuziga TON qo‘shganingizda, siz hovuzdagi ulushingizni ifodalovchi tsTON deb nomlangan token olasiz. Hovuz daromadni to\'plaganligi sababli, sizning tsTON ko\'proq TON miqdorini bildiradi.</string>
@@ -415,7 +416,7 @@
     <string name="testers_chat">Xato haqida xabar berish (Telegramda suhbat)</string>
     <string name="battery">Batareya</string>
     <string name="battery_refill_title">Tonkeeper Batareya</string>
-    <string name="battery_refill_subtitle">Tonkeeper orqali almashtirish, tokenlar va NFTlarni yuboring.</string>
+    <string name="battery_refill_subtitle">TON tokenlarini almashtiring va yuboring hamda TRC-20 komissiyalarini kamroq to\'lang</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s zaryad</item>
         <item quantity="other">%1$s zaryadlar</item>
@@ -427,7 +428,6 @@
     <string name="battery_supported_transaction">Qo‘llab-quvvatlanadigan tranzaktsiyalar</string>
     <string name="transactions">Bitimlar</string>
     <string name="battery_settings">Batareya Sozlamalari</string>
-    <string name="battery_will_be_paid">To‘lanadi: %1$s</string>
     <string name="battery_nft">NFT o\'tkazmalari</string>
     <string name="battery_swap">Tonkeeper orqali almashtirish</string>
     <string name="battery_jetton">token o\'tkazmalari</string>
@@ -445,6 +445,7 @@
     <string name="battery_other_title">Boshqa</string>
     <string name="battery_other_subtitle">Miqdorni qo\'lda kiriting</string>
     <string name="battery_max_input_amount">Maksimal kiritish miqdori %1$s</string>
+    <string name="battery_excess">%1$s qaytarish</string>
     <string name="battery_please_wait">Batareya bir necha daqiqada quvvatlanadi</string>
     <string name="battery_refund_title">Zaryad tarixi</string>
     <string name="battery_refund_subtitle">To\'lovlar va to\'lovlarni qaytarish</string>
@@ -478,6 +479,7 @@
     <string name="staking_pending_withdraw_liquid">Tsikl tugaganidan keyin %1$s hisobdan chiqarildi</string>
     <string name="expired_link">Muddati tugagan havola</string>
     <string name="payment_method_not_found">Toʻlov usuli mavjud emas</string>
+    <string name="no_available_provider">Mavjud provayder yoʻq</string>
     <string name="app_not_found">Ilova topilmadi</string>
     <string name="insufficient_balance_in_wallet">Hamyonda mablag\' yetarli emas</string>
     <string name="insufficient_battery_charges">Yetarli emas\\nBatareya zaryati</string>
@@ -522,7 +524,7 @@
     <string name="tx_marked_as_spam">Tranzaksiya Spam sifatida belgilandi</string>
     <string name="exchange_rate">Valyuta kursi</string>
     <string name="address_prefix">Manzil:</string>
-    <string name="your_address">Sizning manzilingiz:</string>
+    <string name="your_address">Sizning manzilingiz</string>
     <string name="safe_mode_tokens_footer">Xavfsiz rejim yoqilgan. Faqat tasdiqlangan tokenlar mavjud. <annotation colorAttr="textAccentColor">Sozlamalar</annotation></string>
     <string name="all">Hammasi</string>
     <string name="report_encrypted_comment">Ushbu tranzaksiyaga oid fikr shifrlangan koʻrinishda hisobot bilan yuboriladi.</string>
@@ -557,6 +559,7 @@
     <string name="sign_data_binary_message">Siz ko\'r-ko\'rona imzo chekyapsiz. Faqat ishonchli manbalardan kiring.</string>
     <string name="slide_to_sign">Imzolash uchun suring</string>
     <string name="tron_toggle_text">USD₮ TRC20 ni TRX holda ishlating. Komissiyalar Tonkeeper Battery tomonidan qoplanadi.</string>
+    <string name="tron_toggle_trc_text">USD₮ o‘tkazmalari uchun tarmoq to‘lovlari sifatida TRX talab qilinadi.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Iborani nusxalash</string>
     <string name="export_tron">TRC20 hamyonni eksport qilish</string>
@@ -588,8 +591,9 @@
     <string name="currency_not_found">Valyuta topilmadi</string>
     <string name="onrmap_provider_description">Turli valyuta juftliklari uchun boshqa provayderlar mavjud.</string>
     <string name="support_title">Yordam kerakmi?</string>
-    <string name="support_subtitle">Telegram orqali bizga murojaat qiling — yordam berishga harakat qilamiz.</string>
-    <string name="ask_question">Savol berish</string>
+    <string name="support_subtitle">Telegram yoki email orqali bizga yozing — yordam berishga harakat qilamiz.</string>
+    <string name="ask_question">Telegramda so\'rash</string>
+    <string name="email_us">Email orqali bog\'lanish</string>
     <string name="renew_dns_title">Domenlar muddati tugayapti</string>
     <string name="renew_dns_expires">Muddati %1$d kundan keyin tugaydi</string>
     <string name="wallet_renew_dns">Sizda muddati tugagan %1$d domen bor. Hammasini %2$sgacha yangilang.</string>
@@ -610,6 +614,7 @@
     <string name="about_ethena">Ethena haqida</string>
     <string name="swap_disclaimer">Xizmat %1$s tomonidan taqdim etilgan \n%2$s · %3$s</string>
     <string name="terms_of_use">Foydalanish shartlari</string>
+    <string name="start_agree">Davom etib, siz <annotation colorAttr="textAccentColor">Foydalanish shartlari</annotation>mizga rozilik bildirasiz</string>
     <string name="privacy_policy">Maxfiylik siyosati</string>
     <string name="invalid_address">Hamyon manzili noto‘g‘ri.</string>
     <string name="scam_address_error">Ushbu manzilga o‘tkazmalar qo‘llab-quvvatlanmaydi.</string>
@@ -630,5 +635,110 @@
         <item quantity="one">U hamon hamyoningizdan mablag‘ yechishi mumkin. Kelgusidagi to‘lovlardan qochish uchun o‘chiring.</item>
         <item quantity="other">Ba\'zilari hamon hamyoningizdan mablag‘ yechishi mumkin. Kelgusidagi to‘lovlardan qochish uchun o‘chiring.</item>
     </plurals>
+    <string name="no_enough_funds">Mablag‘ yetarli emas</string>
+    <string name="refill">To‘ldirish</string>
+    <string name="get_token">%1$s olish</string>
+    <string name="insufficient_trx_balance">Komissiyalarni to‘lash uchun TRX yetarli emas</string>
+    <string name="insufficient_trx_balance_desc">Komissiya to‘lash usulini tanlang va balansni to‘ldiring.</string>
+    <string name="tron_not_enough_for_fee_title">Komissiyalar uchun mablag‘ yetarli emas</string>
+    <string name="tron_not_enough_for_fee_desc">Komissiyalarni qoplash uchun Battery, TON yoki TRX balansini to‘ldiring.</string>
+    <string name="top_up">To‘ldirish</string>
+    <string name="tron_not_enough_trx_for_fee_title">Komissiyalar uchun TRX yetarli emas</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Kerak ≈ %1$s. Balansingiz: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transfer mavjud</item>
+        <item quantity="few">%1$s transfer mavjud</item>
+        <item quantity="many">%1$s transfer mavjud</item>
+        <item quantity="other">%1$s transfer mavjud</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transfer</item>
+        <item quantity="few">%1$s transfer</item>
+        <item quantity="many">%1$s transfer</item>
+        <item quantity="other">%1$s transfer</item>
+    </plurals>
+    <string name="trx_balance">TRX balansi</string>
+    <string name="trx_balance_desc">Tarmoq to‘lovlarini to‘lash uchun balansingizni to‘ldiring.</string>
+    <string name="blockchain_fees">Blockchain to‘lovlari</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery — blockchain to‘lovlarini to‘lashning eng oson yo‘li. Siz TON yoki TRX bilan ham to‘ldirishingiz mumkin.</string>
+    <string name="required_prefix">Kerak: %1$s</string>
+    <string name="tron_fees_learn_more">To‘lovlar bozor sharoitiga qarab real vaqt rejimida o‘zgaradi. <annotation colorAttr="textAccentColor">Batafsil</annotation></string>
+    <string name="tetra_subtitle">Tetra L2 tarmog‘ini ulash</string>
+    <string name="other_options">Boshqa variantlar</string>
+    <string name="for_developers">Dasturchilar uchun</string>
 
+    <string name="more">Ko\'proq</string>
+    <string name="retry">Qayta urinish</string>
+    <string name="operation">Operatsiya</string>
+    <string name="description">Tavsif</string>
+    <string name="protocol">Protokol</string>
+    <string name="cant_find_anything">Hech narsa topilmadi.</string>
+
+    <string name="deposit_from_another_wallet">Boshqa TON/TRON hamyondan</string>
+    <string name="deposit_send">%s yuborish</string>
+    <string name="deposit_address">%s manzili</string>
+    <string name="deposit_to_another_wallet">Boshqa hamyonga</string>
+    <string name="deposit_with_cash_or_crypto">Naqd pul yoki kripto bilan to\'ldirish</string>
+    <string name="withdraw_with_cash_or_crypto">Naqd pul yoki kripto bilan yechish</string>
+    <string name="deposit_available_cash_out">Boshqa kriptodan mavjud</string>
+    <string name="deposit_available_cross_chain">1:1 kross-cheyn mavjud</string>
+    <string name="deposit_insert_amount">Miqdorni kiriting</string>
+    <string name="deposit_buy_with_cash">Naqd pulga sotib olish</string>
+    <string name="deposit_buy_with_crypto">Kripto bilan sotib olish</string>
+    <string name="deposit_buy_with_stablecoins">Steyblkoin bilan sotib olish</string>
+    <string name="ramp_sell_with_cash">Naqd pulga sotish</string>
+    <string name="ramp_sell_with_crypto">Kripto uchun sotish</string>
+    <string name="ramp_sell_with_stablecoins">Steyblkoin uchun sotish</string>
+    <string name="ramp_stablecoins_convertion">"TON tarmog\'ida 1:1 kursda USDT ga konvertatsiya qilinadi</string>
+    <string name="ramp_crypto_swap_info">Kriptovalyutangiz joriy kurs bo\'yicha TON ga almashtiriladi.</string>
+    <string name="ramp_stablecoin_buy_info">Stablekoiningiz %2$s tarmog\'ida 1:1 kursda %1$s sifatida hisobga olinadi.</string>
+    <string name="ramp_stablecoin_sell_info">USDT ni boshqa stablekoinlarga yechib oling. Har bir tarmoq uchun belgilangan komissiya olinadi.</string>
+    <string name="ramp_total_amount">Umumiy summa</string>
+    <string name="ramp_estimated_time">Taxminiy yetib kelish vaqti</string>
+    <string name="ramp_withdrawal_time">Yechish vaqti</string>
+    <string name="ramp_withdrawal_fee">Yechib olish komissiyasi</string>
+    <string name="deposit_network_warning">To\'g\'ri tarmoqni tanlaganingizga ishonch hosil qiling, aks holda mablag\'laringizni yo\'qotishingiz mumkin.</string>
+    <string name="deposit_go_to_main">Bosh sahifaga</string>
+    <string name="deposit_payment_qr_code">To\'lov QR kodi</string>
+    <string name="deposit_scan_qr_description">To\'lovni yakunlash uchun QR kodni skanerlang yoki manzilni nusxalang.</string>
+    <string name="deposit_min_amount_with_currency">Min. miqdor: %1$s %2$s</string>
+    <string name="deposit_max_amount_with_currency">Maks. miqdor: %1$s %2$s</string>
+    <string name="deposit_other_providers_hint">Turli valyuta juftliklari uchun boshqa provayderlar mavjud.</string>
+    <string name="deposit_changelly_disclaimer">Changelly tomonidan taqdim etilgan uchinchi tomon xizmati. Ushbu xizmatdan foydalanib, siz %s ga rozilik bildirasiz.</string>
+    <string name="deposit_address_warning_prefix">Bu\u0020</string>
+    <string name="deposit_address_warning_highlight">manzildan faqat bir marta foydalanish mumkin</string>
+    <string name="deposit_address_warning_suffix">. Mablag\'laringizni yo\'qotmaslik uchun depozit limitlari va tarmoqni tekshiring.</string>
+
+    <string name="terms_of_service">Foydalanish shartlari</string>
+    <string name="receive_tokens">Tokenlarni qabul qilish</string>
+    <string name="send_tokens">Tokenlarni yuborish</string>
+    <string name="withdraw">Yechish</string>
+    <string name="deposit">To\'ldirish</string>
+    <string name="choose_network">Tarmoqni tanlang</string>
+    <string name="copy_address">Manzilni nusxalash</string>
+    <string name="choose_currency">Valyutani tanlang</string>
+    <string name="send_currency">%s yuborish</string>
+    <string name="receive_currency">%s qabul qilish</string>
+    <string name="min_deposit">Min. depozit</string>
+    <string name="max_deposit">Maks. depozit</string>
+    <string name="max_amount">Maks. miqdor: %s</string>
+    <string name="max_amount_label">Maks. miqdor</string>
+    <string name="available">Mavjud: %s</string>
+    <string name="network">Tarmoq</string>
+
+    <string name="added_extension">Kengaytma qo\'shildi</string>
+    <string name="removed_extension">Kengaytma olib tashlandi</string>
+    <string name="signature_allowed">Imzoga ruxsat berildi</string>
+    <string name="signature_not_allowed">Imzoga ruxsat berilmadi</string>
+    <string name="up_to_duration">%1$s %2$s gacha</string>
+    <string name="time_seconds">son</string>
+    <string name="time_minutes">daq</string>
+    <string name="deposit_select_network_description">%s ni istalgan vaqtda qo\'llab-quvvatlanadigan tarmoqlarga «Yechib olish» bo\'limi orqali chiqaring.</string>
+    <string name="choose_network_error">%s tarmog\'ini tanlang</string>
+    <string name="trade">Savdo</string>
+    <string name="search_by_ticker">Ticker yoki nom bo\'yicha qidirish</string>
+    <string name="choose_asset">Aktivni tanlang</string>
+    <string name="add_funds">Mablag\' qo\'shish</string>
+    <string name="tooltip_new">YANGI</string>
+    <string name="tooltip_send_from_here">Bu yerdan yuborish</string>
 </resources>

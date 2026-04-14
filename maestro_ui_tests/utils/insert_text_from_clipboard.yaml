@@ -1,0 +1,5 @@
+appId: com.ton_keeper.debug
+---
+- longPressOn:
+    id: ${field_to_insert}
+- tapOn: "Paste"

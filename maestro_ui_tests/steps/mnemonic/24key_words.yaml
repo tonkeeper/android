@@ -1,0 +1,20 @@
+appId: com.ton_keeper.debug
+---
+- assertVisible: Enter recovery phrase
+- runScript:
+    file: ../../scripts/parse_mnemonic.js
+    env:
+      phrase: ${mnemonica}
+
+- evalScript: ${output.i = 1}
+- repeat:
+    while:
+      true: ${output.i <= 24}
+    commands:
+      - evalScript: ${output.wordId = 'word_' + output.i}
+      - tapOn:
+          id: ${output.wordId}
+      - evalScript: ${output.currentWord = output.word[output.i]}
+      - inputText: ${output.currentWord}
+      - pressKey: enter
+      - evalScript: ${output.i++}

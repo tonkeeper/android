@@ -1,9 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.details
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
+import com.tonapps.core.extensions.iconExternalUrl
 import com.tonapps.extensions.withApproximately
 import com.tonapps.extensions.withMinus
 import com.tonapps.extensions.withPlus
@@ -12,7 +13,6 @@ import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.extensions.composeIcon
 import com.tonapps.tonkeeper.extensions.copyWithToast
-import com.tonapps.tonkeeper.extensions.iconExternalUrl
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -23,14 +23,12 @@ import com.tonapps.tonkeeper.ui.screen.transaction.CommentReportDialog
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.EventsRepository
-import com.tonapps.wallet.data.events.tx.model.TxAction
 import com.tonapps.wallet.data.events.tx.model.TxActionBody
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -185,13 +183,17 @@ class TxDetailsViewModel(
     }
 
     private suspend fun updateData() {
-        val rates = ratesRepository.getRates(currency, action.tokens.map { it.address })
+        val rates = ratesRepository.getRates(wallet.network, currency, action.tokens.map { it.address })
         val rateAmount = if (!isUsdt && primaryValue != null) {
             val value = rates.convert(primaryValue.currency.code, primaryValue.value)
             if (value.isPositive) {
                 CurrencyFormatter.formatFiat(currency.symbol, value)
-            } else null
-        } else null
+            } else {
+                null
+            }
+        } else {
+            null
+        }
 
         _uiStateFlow.update { uiState ->
             uiState.copy(
@@ -247,7 +249,9 @@ class TxDetailsViewModel(
                             Plurals.battery_charges, charges, charges
                         )
                     )
-                } else null
+                } else {
+                    null
+                }
             }
             is TxEvent.Extra.Refund -> {
                 val rate = rates?.convertTON(extra.value)
@@ -413,7 +417,8 @@ class TxDetailsViewModel(
     )
 
     fun openTx() {
-        val url = api.config.formatTransactionExplorer(wallet.testnet, tx.blockchain == Blockchain.TRON, txId)
+        val url = api.getConfig(wallet.network)
+            .formatTransactionExplorer(wallet.testnet, tx.blockchain == Blockchain.TRON, txId)
         BrowserHelper.open(context, url)
     }
 
@@ -427,7 +432,7 @@ class TxDetailsViewModel(
             try {
                 val nft = collectiblesRepository.getNft(
                     accountId = wallet.accountId,
-                    testnet = wallet.testnet,
+                    network = wallet.network,
                     address = nftAddress
                 ) ?: throw Throwable()
                 openScreen(NftScreen.newInstance(wallet, nft))
@@ -475,7 +480,7 @@ class TxDetailsViewModel(
 
         viewModelScope.launch {
             settingsRepository.setSpamStateTransaction(wallet.id, txId, SpamTransactionState.NOT_SPAM)
-            eventsRepository.removeSpam(wallet.accountId, wallet.testnet, txId)
+            eventsRepository.removeSpam(wallet.accountId, wallet.network, txId)
             toast(Localization.tx_marked_as_not_spam)
 
             updateUiActionItems()
@@ -500,7 +505,7 @@ class TxDetailsViewModel(
                     comment = comment,
                     recipient = wallet.accountId
                 )
-                eventsRepository.markAsSpam(wallet.accountId, wallet.testnet, txId)
+                eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)
                 loading(false)
                 toast(Localization.tx_marked_as_spam)
             } catch (ignored: Throwable) {

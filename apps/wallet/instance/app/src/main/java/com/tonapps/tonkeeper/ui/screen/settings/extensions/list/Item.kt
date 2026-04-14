@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.settings.extensions.list
 
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import io.tonapi.models.WalletPlugin
 
 sealed class Item(type: Int) : BaseListItem(type) {

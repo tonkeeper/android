@@ -6,7 +6,6 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 
@@ -24,26 +23,7 @@ class SettingsHolder(
             subtitleView.visibility = View.GONE
         } else {
             subtitleView.visibility = View.VISIBLE
-            subtitleView.text = context.getString(
-                Localization.battery_will_be_paid,
-                getSupportedTransactionText(item.supportedTransactions)
-            )
+            subtitleView.text = context.getString(Localization.battery_refill_subtitle)
         }
     }
-
-    private fun getSupportedTransactionText(supportedTransactions: Array<BatteryTransaction>): String {
-        return supportedTransactions.joinToString(", ") {
-            context.getString(supportedTransactionMap[it]!!)
-        }
-    }
-
-    companion object {
-
-        private val supportedTransactionMap = mapOf(
-            BatteryTransaction.NFT to Localization.battery_nft,
-            BatteryTransaction.SWAP to Localization.battery_swap,
-            BatteryTransaction.JETTON to Localization.battery_jetton,
-        )
-    }
-
 }

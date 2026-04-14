@@ -4,35 +4,27 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TONOpCode
-import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeQueryId
 import com.tonapps.extensions.currentTimeSeconds
-import com.tonapps.extensions.filterList
 import com.tonapps.icu.Coins
-import com.tonapps.tonkeeper.core.entities.TransferEntity
+import com.tonapps.blockchain.model.legacy.TransferEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.dns.renew.list.Item
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import org.ton.cell.CellBuilder
-import uikit.extensions.collectFlow
 
 class DNSRenewViewModel(
     app: Application,
@@ -43,11 +35,11 @@ class DNSRenewViewModel(
 ) : BaseWalletVM(app) {
 
     private val dnsExpiringFlow = flow {
-        emit(collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.testnet, 366))
+        emit(collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.network, 366))
     }.stateIn(viewModelScope, SharingStarted.Eagerly, entities)
 
     val uiItemsFlow = dnsExpiringFlow.map {
-        val items = collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.testnet, 366)
+        val items = collectiblesRepository.getDnsExpiring(wallet.accountId, wallet.network, 366)
         val uiItems = items.mapIndexed { index, dnsExpiringEntity ->
             Item(
                 position = ListCell.getPosition(items.size, index),

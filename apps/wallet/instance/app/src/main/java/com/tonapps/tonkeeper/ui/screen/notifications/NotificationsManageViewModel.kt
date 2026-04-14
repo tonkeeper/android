@@ -10,7 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn

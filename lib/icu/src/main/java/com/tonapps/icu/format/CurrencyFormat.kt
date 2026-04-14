@@ -4,7 +4,7 @@ import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
 import android.icu.text.NumberFormat
 import android.util.ArrayMap
-import android.util.Log
+import com.tonapps.log.L
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
@@ -208,7 +208,7 @@ internal class CurrencyFormat(val locale: Locale) {
         val symbol = if (replaceSymbol) symbols[currency] else fixSymbol(currency, cutLongSymbol)
         val builder = StringBuilder()
         if (symbol != null) {
-            if (monetarySymbolFirstPosition && isFiat(currency)) {
+            if (replaceSymbol && monetarySymbolFirstPosition && isFiat(currency)) {
                 builder.append(symbol)
                 builder.append(SMALL_SPACE)
                 builder.append(value)

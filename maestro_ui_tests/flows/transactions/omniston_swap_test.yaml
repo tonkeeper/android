@@ -1,0 +1,45 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- runFlow: "../../steps/import_wallet.yaml"
+- runFlow: "../../service/account/compare_ton_balance.yaml"
+
+- tapOn: Swap
+- tapOn:
+    id: input_value
+- inputText: "0.01"
+- tapOn:
+    id: switch_button
+- copyTextFrom:
+    id: token_title
+    index: 0
+- assertTrue:
+    condition: ${maestro.copiedText == 'USDT TON'}
+    label: After switching token should be swap
+
+- copyTextFrom:
+    id: input_value
+- assertTrue:
+    condition: ${maestro.copiedText != "0.01"}
+    label: Balance not switched or 1:1
+
+- tapOn:
+    id: switch_button
+- tapOn: Continue
+
+- swipe:
+    from:
+      id: button
+    direction: RIGHT
+
+- runFlow: ../../steps/password/enter_password.yaml
+
+- assertVisible: Done
+- assertVisible: History
+
+- runFlow:
+    file: ../../service/history/last_jetton_swap_transaction.yaml
+    env:
+      nanoTonToSwap: "10000000"

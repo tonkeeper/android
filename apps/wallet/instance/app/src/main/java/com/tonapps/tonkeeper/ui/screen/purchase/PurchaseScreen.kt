@@ -1,14 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.purchase
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events.OnrampsNative.OnrampsNativeType
+import com.tonapps.legacy.enteties.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
-import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
 import com.tonapps.tonkeeper.extensions.countryEmoji
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.remoteConfig
@@ -18,8 +18,6 @@ import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeper.ui.screen.purchase.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.purchase.entity.PurchaseCategoryEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.launch
@@ -27,7 +25,6 @@ import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
-import uikit.navigation.NavigationActivity
 
 class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_purchase, wallet), BaseFragment.BottomSheet {
 
@@ -55,7 +52,7 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         collectFlow(viewModel.uiItemsFlow, adapter::submitList)
-        analytics?.onRampOpen(source)
+        analytics?.events?.onrampsNative?.onrampOpen(source)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -98,14 +95,33 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
         }
     }
 
+    private val nativeType: OnrampsNativeType
+        get() = when (viewModel.tabFlow.value) {
+            PurchaseViewModel.Tab.BUY -> OnrampsNativeType.Buy
+            PurchaseViewModel.Tab.SELL -> OnrampsNativeType.Sell
+        }
+
     private fun open(method: PurchaseMethodEntity, category: String) {
         lifecycleScope.launch {
             val currency = api.getCurrencyCodeByCountry(settingsRepository)
+
+            analytics?.events?.onrampsNative?.onrampEnterAmount(
+                txId = null,
+                type = nativeType,
+                sellAssetNetwork = currency,
+                sellAssetSymbol = currency,
+                sellAmount = 0.0,
+                buyAssetNetwork = "ton",
+                buyAssetSymbol = "TON",
+                buyAmount = 0.0,
+                countryCode = viewModel.country
+            )
+
             val methodWrapped = WalletPurchaseMethodEntity(
                 method = method,
                 wallet = screenContext.wallet,
                 currency = currency,
-                config = api.config
+                config = api.getConfig(screenContext.wallet.network)
             )
             if (viewModel.isPurchaseOpenConfirm(method)) {
                 confirmDialog.show(method) { showAgain ->
@@ -126,12 +142,19 @@ class PurchaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
         } else {
             category
         }
-        analytics?.onRampClick(
-            type = viewModel.tabName,
-            placement = fixedCategory,
-            location = viewModel.country,
-            name = method.method.title,
-            url = method.uri.toString()
+        analytics?.events?.onrampsNative?.onrampContinueToProvider(
+            txId = null,
+            type = nativeType,
+            sellAssetNetwork = method.currency,
+            sellAssetSymbol = method.currency,
+            sellAmount = 0.0,
+            buyAssetNetwork = "ton",
+            buyAssetSymbol = "TON",
+            buyAmount = 0.0,
+            countryCode = viewModel.country,
+            paymentMethod = fixedCategory,
+            providerName = method.method.title,
+            providerDomain = method.uri.host ?: "unknown"
         )
         BrowserHelper.openPurchase(requireContext(), method)
     }

@@ -9,7 +9,7 @@ import com.tonapps.tonkeeper.extensions.externalDrawableUrl
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.getFilters
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.events.tx.model.TxAction

@@ -3,28 +3,31 @@ package com.tonapps.tonkeeper.ui.screen.staking.stake
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.TransferEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.toGrams
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeQueryId
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
+import com.tonapps.bus.generated.opTerminal
+import com.tonapps.deposit.usecase.emulation.Emulated
+import com.tonapps.deposit.usecase.emulation.EmulationUseCase
+import com.tonapps.deposit.usecase.sign.SignUseCase
+import com.tonapps.extensions.currentTimeMillis
+import com.tonapps.extensions.currentTimeSecondsInt
+import com.tonapps.extensions.generateUuid
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.Transaction
-import com.tonapps.tonkeeper.core.SendBlockchainException
-import com.tonapps.tonkeeper.core.entities.SendMetadataEntity
-import com.tonapps.tonkeeper.core.entities.TransferEntity
-import com.tonapps.tonkeeper.extensions.toGrams
-import com.tonapps.tonkeeper.manager.tx.TransactionManager
+import com.tonapps.legacy.enteties.SendMetadataEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.usecase.emulation.Emulated
-import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
-import com.tonapps.tonkeeper.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.SendBlockchainState
-import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
@@ -32,6 +35,7 @@ import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -91,7 +95,7 @@ class StakingViewModel(
     val selectedPoolFlow = _selectedPoolFlow.asStateFlow().filterNotNull()
 
     val tokenFlow = selectedPoolFlow.map { pool ->
-        val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet) ?: emptyList()
+        val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.network) ?: emptyList()
 
         tokens.firstOrNull()
     }.filterNotNull()
@@ -106,7 +110,7 @@ class StakingViewModel(
     }
 
     private val ratesFlow = tokenFlow.map { token ->
-        ratesRepository.getRates(settingsRepository.currency, token.address)
+        ratesRepository.getRates(wallet.network, settingsRepository.currency, token.address)
     }.flowOn(Dispatchers.IO)
 
     val availableUiStateFlow = combine(
@@ -192,8 +196,8 @@ class StakingViewModel(
         updateAmount(0.0)
 
         viewModelScope.launch(Dispatchers.IO) {
-            _poolsFlow.value = stakingRepository.get(wallet.accountId, wallet.testnet).pools.filter {
-                api.config.enabledStaking.contains(it.implementation.title)
+            _poolsFlow.value = stakingRepository.get(wallet.accountId, wallet.network).pools.filter {
+                api.getConfig(wallet.network).enabledStaking.contains(it.implementation.title)
             }
         }
     }
@@ -214,7 +218,7 @@ class StakingViewModel(
         wallet: WalletEntity,
     ): SendMetadataEntity = withContext(Dispatchers.IO) {
         val seqnoDeferred = async { accountRepository.getSeqno(wallet) }
-        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.testnet) }
+        val validUntilDeferred = async { accountRepository.getValidUntil(wallet.network) }
 
         SendMetadataEntity(
             seqno = seqnoDeferred.await(),
@@ -293,9 +297,38 @@ class StakingViewModel(
     }.flowOn(Dispatchers.IO)
 
     private fun requestFee() = unsignedBodyFlow().map { message ->
+        val operationId = generateUuid()
+        val startedAtMs = currentTimeMillis()
+        AnalyticsHelper.Default.events.redOperations.opAttempt(
+            operationId = operationId,
+            flow = Events.RedOperations.RedOperationsFlow.Stake,
+            operation = Events.RedOperations.RedOperationsOperation.Emulate,
+            attemptSource = null,
+            startedAtMs = currentTimeSecondsInt(),
+            otherMetadata = null,
+        )
         try {
-            emulationUseCase(message, wallet.testnet, params = true).extra
+            val result = emulationUseCase(message, wallet.testnet, params = true).extra
+            val finishedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opTerminal(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.Stake,
+                operation = Events.RedOperations.RedOperationsOperation.Emulate,
+                durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                finishedAtMs = currentTimeSecondsInt(),
+                error = null,
+            )
+            result
         } catch (e: Throwable) {
+            val finishedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opTerminal(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.Stake,
+                operation = Events.RedOperations.RedOperationsOperation.Emulate,
+                durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                finishedAtMs = currentTimeSecondsInt(),
+                error = e,
+            )
             Emulated.defaultExtra
         }
     }.flowOn(Dispatchers.IO)
@@ -305,7 +338,7 @@ class StakingViewModel(
         selectedPoolFlow,
     ) { extra, pool ->
         val currency = settingsRepository.currency
-        val rates = ratesRepository.getTONRates(currency)
+        val rates = ratesRepository.getTONRates(wallet.network, currency)
         val fee = StakingPool.getTotalFee(extra.value, pool.implementation)
 
         val fiat = rates.convertTON(fee)
@@ -361,22 +394,80 @@ class StakingViewModel(
         context: Context,
         wallet: WalletEntity
     ) = ledgerTransactionFlow().map { (seqno, transaction) ->
-        val message = signUseCase(context, wallet, seqno, transaction)
+        val operationId = generateUuid()
+        val startedAtMs = currentTimeMillis()
+        AnalyticsHelper.Default.events.redOperations.opAttempt(
+            operationId = operationId,
+            flow = Events.RedOperations.RedOperationsFlow.Stake,
+            operation = Events.RedOperations.RedOperationsOperation.Stake,
+            attemptSource = null,
+            startedAtMs = currentTimeSecondsInt(),
+            otherMetadata = null,
+        )
+        try {
+            val message = signUseCase(context, wallet, seqno, transaction)
 
-        val state = transactionManager.send(wallet, message, false, "", 0.0)
-        if (state != SendBlockchainState.SUCCESS) {
-            throw SendBlockchainException.fromState(state)
+            transactionManager.send(wallet, message, false, "", 0.0)
+            val finishedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opTerminal(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.Stake,
+                operation = Events.RedOperations.RedOperationsOperation.Stake,
+                durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                finishedAtMs = currentTimeSecondsInt(),
+                error = null,
+            )
+        } catch (e: Throwable) {
+            val finishedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opTerminal(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.Stake,
+                operation = Events.RedOperations.RedOperationsOperation.Stake,
+                durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                finishedAtMs = currentTimeSecondsInt(),
+                error = e,
+            )
+            throw e
         }
     }
 
     private fun createStakeFlow(
         wallet: WalletEntity
     ) = unsignedBodyFlow().map { message ->
-        val cell = message.createUnsignedBody(false)
-        val boc = signUseCase(context, wallet, cell, message.seqNo)
-        val state = transactionManager.send(wallet, boc, false, "", 0.0)
-        if (state != SendBlockchainState.SUCCESS) {
-            throw SendBlockchainException.fromState(state)
+        val operationId = generateUuid()
+        val startedAtMs = currentTimeMillis()
+        AnalyticsHelper.Default.events.redOperations.opAttempt(
+            operationId = operationId,
+            flow = Events.RedOperations.RedOperationsFlow.Stake,
+            operation = Events.RedOperations.RedOperationsOperation.Stake,
+            attemptSource = null,
+            startedAtMs = currentTimeSecondsInt(),
+            otherMetadata = null,
+        )
+        try {
+            val cell = message.createUnsignedBody(false)
+            val boc = signUseCase(context, wallet, cell, message.seqNo)
+            transactionManager.send(wallet, boc, false, "", 0.0)
+            val finishedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opTerminal(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.Stake,
+                operation = Events.RedOperations.RedOperationsOperation.Stake,
+                durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                finishedAtMs = currentTimeSecondsInt(),
+                error = null,
+            )
+        } catch (e: Throwable) {
+            val finishedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opTerminal(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.Stake,
+                operation = Events.RedOperations.RedOperationsOperation.Stake,
+                durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                finishedAtMs = currentTimeSecondsInt(),
+                error = e,
+            )
+            throw e
         }
     }
 

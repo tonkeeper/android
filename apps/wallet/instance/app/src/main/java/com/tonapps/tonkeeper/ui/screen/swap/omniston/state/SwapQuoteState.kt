@@ -3,15 +3,14 @@ package com.tonapps.tonkeeper.ui.screen.swap.omniston.state
 import android.content.Context
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.InsufficientFundsException
-import com.tonapps.tonkeeper.extensions.formattedAmount
+import com.tonapps.blockchain.model.legacy.errors.InsufficientFundsException
 import com.tonapps.tonkeeper.extensions.formattedCharges
 import com.tonapps.tonkeeper.extensions.method
 import com.tonapps.tonkeeper.ui.screen.onramp.main.view.CurrencyInputView
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
-import com.tonapps.tonkeeper.usecase.emulation.Emulated
-import com.tonapps.wallet.data.account.entities.MessageBodyEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.deposit.screens.send.state.SendFee
+import com.tonapps.deposit.usecase.emulation.Emulated
+import com.tonapps.blockchain.model.legacy.MessageBodyEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
 

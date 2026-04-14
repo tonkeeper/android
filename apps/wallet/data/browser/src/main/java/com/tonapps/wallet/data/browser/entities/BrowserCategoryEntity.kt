@@ -19,7 +19,6 @@ data class BrowserCategoryEntity(
     )
 
     companion object {
-
         fun parse(array: JSONArray): List<BrowserCategoryEntity> {
             return (0 until array.length()).map { BrowserCategoryEntity(array.getJSONObject(it)) }
         }

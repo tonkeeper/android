@@ -1,30 +1,20 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = Build.namespacePrefix("extensions")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
-}
-
 dependencies {
-    implementation(libs.kotlinX.coroutines.android)
-    implementation(libs.kotlinX.serialization.core)
-    implementation(libs.kotlinX.serialization.json)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.koin.core)
-    implementation(libs.androidX.core)
-    implementation(libs.androidX.security)
-    implementation(project(ProjectModules.UIKit.core))
-    implementation(project(ProjectModules.Lib.icu))
-    implementation(project(ProjectModules.Lib.base64))
+    implementation(libs.androidx.core)
+    implementation(libs.androidx.security)
+    implementation(projects.ui.uikit.core)
+    implementation(projects.lib.icu)
+    implementation(projects.lib.base64)
     implementation(libs.google.play.installreferrer)
     implementation(libs.google.play.base)
+    api(projects.lib.log)
 }

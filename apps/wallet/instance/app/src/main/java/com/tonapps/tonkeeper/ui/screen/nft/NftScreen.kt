@@ -11,6 +11,8 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.NestedScrollView
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.short4
@@ -36,7 +38,7 @@ import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
@@ -53,8 +55,8 @@ import uikit.extensions.inflate
 import uikit.extensions.roundTop
 import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
-import uikit.widget.ColumnLayout
 import uikit.widget.AsyncImageView
+import uikit.widget.ColumnLayout
 import uikit.widget.HeaderView
 
 class NftScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_nft, wallet),
@@ -146,7 +148,8 @@ class NftScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_nf
                 SendScreen.newInstance(
                     wallet = wallet,
                     nftAddress = nftEntity.address,
-                    type = SendScreen.Companion.Type.Nft
+                    type = SendScreen.Companion.Type.Nft,
+                    from = Events.SendNative.SendNativeFrom.JettonScreen
                 )
             )
         }
@@ -262,7 +265,8 @@ class NftScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_nf
                 wallet = wallet,
                 targetAddress = viewModel.burnAddress,
                 nftAddress = nftEntity.address,
-                type = SendScreen.Companion.Type.Nft
+                type = SendScreen.Companion.Type.Nft,
+                from = Events.SendNative.SendNativeFrom.JettonScreen,
             )
         )
         finish()

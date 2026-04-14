@@ -6,8 +6,8 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.screen.onramp.main.OnRampUtils
 import com.tonapps.tonkeeper.ui.screen.onramp.main.entities.ProviderEntity
-import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 

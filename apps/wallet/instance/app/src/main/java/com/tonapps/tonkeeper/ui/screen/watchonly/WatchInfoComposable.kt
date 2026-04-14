@@ -18,12 +18,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
-import ui.components.Header
-import ui.components.TextHeader
-import ui.components.button.TKButton
-import ui.theme.ButtonColorsPrimary
-import ui.theme.ButtonColorsSecondary
-import ui.theme.ButtonSizeLarge
+import ui.components.moon.cell.MoonTextContentCell
+import ui.components.moon.MoonAccentButton
+import ui.components.moon.MoonTopAppBar
+import ui.components.moon.ButtonColorsPrimary
+import ui.components.moon.ButtonColorsSecondary
+import ui.components.moon.ButtonSizeLarge
 import ui.theme.Dimens
 import ui.theme.UIKit
 
@@ -37,7 +37,7 @@ fun SupportComposable(
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        Header(
+        MoonTopAppBar(
             title = "",
             actionIconRes = UIKitIcon.ic_close_16,
             onActionClick = { onContinueClick() },
@@ -59,13 +59,13 @@ fun SupportComposable(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Box(modifier = Modifier.padding(horizontal = Dimens.offsetLarge)) {
-                TextHeader(
+                MoonTextContentCell(
                     title = stringResource(id = Localization.watch_only_info_title),
                     description = stringResource(id = Localization.watch_only_info_subtitle),
                 )
             }
             Spacer(modifier = Modifier.height(Dimens.offsetLarge))
-            TKButton(
+            MoonAccentButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onRecoveryClick,
                 text = stringResource(id = Localization.enter_recovery_phrase),
@@ -73,7 +73,7 @@ fun SupportComposable(
                 size = ButtonSizeLarge,
             )
             Spacer(modifier = Modifier.height(Dimens.offsetMedium))
-            TKButton(
+            MoonAccentButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onContinueClick,
                 text = stringResource(id = Localization.continue_watch_account),

@@ -31,11 +31,7 @@ object HapticHelper {
     private fun play(context: Context, vararg pattern: Long) {
         val vibrator = getVibrator(context)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
-        } else {
-            vibrator.vibrate(pattern, -1)
-        }
+        vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
     }
 
     private fun getVibrator(context: Context): Vibrator {

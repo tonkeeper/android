@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.SpannableStringBuilder
 import androidx.core.text.color
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 
 object OnRampUtils {

@@ -78,8 +78,10 @@ object MnemonicHelper {
 
     private fun bip39ToPrivateKey(mnemonic: List<String>): PrivateKeyEd25519 {
         if (!isValidBip39Mnemonic(mnemonic)) {
+            // TODO TK-535 handle everywhere
             throw IllegalArgumentException("Invalid mnemonic words")
         }
+
         val seed = bip39ToSeed(mnemonic)
         val derivedKeys = deriveED25519Path("m/44'/607'/0'", hex(seed))
         return PrivateKeyEd25519(derivedKeys.first)

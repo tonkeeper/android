@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.collectibles.main.list
 
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.Trust
 
@@ -33,7 +33,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             get() = entity.collectionName
 
         val testnet: Boolean
-            get() = entity.testnet
+            get() = entity.network.isTestnet
 
         val verifier: Boolean
             get() = entity.verified

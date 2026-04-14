@@ -48,6 +48,7 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
 
         currencyIconView.setImageResource(item.currencyIcon)
 
+        itemView.clipToOutline = true
         itemView.background = item.position.drawable(context)
         iconView.setLocalRes(item.iconRes)
         nameView.text = item.poolName

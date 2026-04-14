@@ -22,7 +22,7 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.core.history.nameRes
 import com.tonapps.tonkeeper.koin.historyHelper
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor

@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.Environment
@@ -14,10 +15,9 @@ import com.tonapps.tonkeeper.ui.screen.onramp.picker.currency.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.purchase.PurchaseRepository
 import com.tonapps.wallet.data.purchase.entity.OnRampCurrencies
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -49,7 +49,7 @@ class OnRampPickerViewModel(
 
     private val currencyByCountry: WalletCurrency
         get() {
-            val code = AndroidCurrency.resolve(environment.country)?.currencyCode ?: "US"
+            val code = AndroidCurrency.resolve(environment.deviceCountry)?.currencyCode ?: "US"
             return WalletCurrency.ofOrDefault(code)
         }
 
@@ -82,7 +82,7 @@ class OnRampPickerViewModel(
         } else {
             uiItems.add(Item.Currency(TokenEntity.TON, ListCell.Position.FIRST))
             uiItems.add(Item.Currency(TokenEntity.USDT, ListCell.Position.MIDDLE))
-            val tokens = tokenRepository.getTokens(wallet.testnet, jettonAddress).toMutableList()
+            val tokens = tokenRepository.getTokens(wallet.network, jettonAddress).toMutableList()
             tokens.removeIf { it.isTon || it.isUsdt }
             for (token in tokens) {
                 uiItems.add(Item.Currency(token, ListCell.Position.MIDDLE))
@@ -171,7 +171,7 @@ class OnRampPickerViewModel(
     }
 
     private fun fiatMethodIcons(keys: List<String>): List<Uri> {
-        val icons = getCurrencyIcons(keys, environment.country.equals("ru", ignoreCase = true))
+        val icons = getCurrencyIcons(keys, environment.deviceCountry.equals("ru", ignoreCase = true))
         return icons.map { getUriForResourceId(it) }
     }
 
@@ -325,7 +325,7 @@ class OnRampPickerViewModel(
 
     private fun setJetton(address: String) {
         viewModelScope.launch {
-            val token = tokenRepository.getToken(wallet.accountId, wallet.testnet, address) ?: return@launch
+            val token = tokenRepository.getToken(wallet.accountId, wallet.network, address) ?: return@launch
             val currency = WalletCurrency.of(token.address) ?: WalletCurrency(
                 code = token.symbol,
                 title = token.name,

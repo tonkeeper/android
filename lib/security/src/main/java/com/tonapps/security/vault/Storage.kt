@@ -1,17 +1,17 @@
 package com.tonapps.security.vault
 
 import android.annotation.SuppressLint
-import android.content.SharedPreferences
-import com.tonapps.extensions.getByteArray
 import com.tonapps.extensions.putByteArray
+import com.tonapps.security.KeyHelperException
 import com.tonapps.security.Security
+import com.tonapps.security.SecurityStorageBox
 import com.tonapps.security.clear
 import com.tonapps.security.decrypt
 import com.tonapps.security.encrypt
 import javax.crypto.SecretKey
 
 internal class Storage(
-    private val prefs: SharedPreferences
+    private val prefs: SecurityStorageBox
 ) {
 
     private companion object {
@@ -63,23 +63,29 @@ internal class Storage(
 
     @SuppressLint("ApplySharedPref")
     private fun delete(id: Long) {
-        val saved = prefs.edit()
-            .remove(wrapIvKey(id))
-            .remove(wrapBodyKey(id))
-            .commit()
+        val saved = prefs.transaction {
+            remove(wrapIvKey(id))
+            remove(wrapBodyKey(id))
+        }
+
         if (!saved) {
-            throw IllegalStateException("failed to delete")
+            throw KeyHelperException.Delete("Failed to delete IV and Body")
         }
     }
 
     @SuppressLint("ApplySharedPref")
     private fun setIvAndBody(id: Long, iv: ByteArray, body: ByteArray) {
-        val saved = prefs.edit()
-            .putByteArray(wrapIvKey(id), iv)
-            .putByteArray(wrapBodyKey(id), body)
-            .commit()
-        if (!saved) {
-            throw IllegalStateException("failed to save")
+        try {
+            val saved = prefs.transaction {
+                putByteArray(wrapIvKey(id), iv)
+                putByteArray(wrapBodyKey(id), body)
+            }
+
+            if (!saved) {
+                throw KeyHelperException.Save("failed to save IV and Body")
+            }
+        } finally {
+            clear(iv, body)
         }
     }
 }

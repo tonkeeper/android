@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.widget.AppCompatImageView
@@ -36,7 +36,6 @@ import org.ton.crypto.hex
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
-import uikit.extensions.findFragment
 import uikit.extensions.isFragmentExists
 import uikit.extensions.primaryFragment
 import uikit.extensions.round

@@ -1,27 +1,18 @@
 package com.tonapps.tonkeeper.ui.screen.battery
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeScreen
-import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
-import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.battery.BatteryMapper
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
-import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
-import com.tonapps.wallet.data.token.entities.AccountTokenEntity
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class BatteryViewModel(
@@ -50,10 +41,10 @@ class BatteryViewModel(
     private fun openRecharge(jetton: String) {
         viewModelScope.launch {
             val rechargeToken =
-                batteryRepository.getRechargeMethodByJetton(wallet.testnet, jetton)?.jettonMaster
+                batteryRepository.getRechargeMethodByJetton(wallet.network, jetton)?.jettonMaster
                     ?: "TON"
             val tokens =
-                tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.testnet)
+                tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.network)
                     ?: return@launch
             val token =
                 tokens.firstOrNull { it.address.equalsAddress(rechargeToken) } ?: return@launch
@@ -78,7 +69,7 @@ class BatteryViewModel(
                 batteryRepository.getBalance(
                     tonProofToken = tonProofToken,
                     publicKey = wallet.publicKey,
-                    testnet = wallet.testnet,
+                    network = wallet.network,
                     ignoreCache = true
                 )
             }

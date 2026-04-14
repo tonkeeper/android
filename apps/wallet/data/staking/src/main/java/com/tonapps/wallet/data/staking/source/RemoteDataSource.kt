@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.staking.source
 
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.withRetry
 import com.tonapps.wallet.data.staking.StakingPool
@@ -17,12 +18,12 @@ internal class RemoteDataSource(
 ) {
 
     suspend fun load(
-        accountId: String, testnet: Boolean, initializedAccount: Boolean
+        accountId: String, network: TonNetwork, initializedAccount: Boolean
     ): StakingEntity = withContext(Dispatchers.IO) {
-        val poolsDeferred = async { loadPools(accountId, testnet) }
+        val poolsDeferred = async { loadPools(accountId, network) }
         val infoDeferred = async {
             if (initializedAccount) {
-                loadInfo(accountId, testnet)
+                loadInfo(accountId, network)
             } else {
                 emptyList()
             }
@@ -38,19 +39,19 @@ internal class RemoteDataSource(
     }
 
     private fun loadInfo(
-        accountId: String, testnet: Boolean
+        accountId: String, network: TonNetwork
     ): List<StakingInfoEntity> {
         val list = withRetry {
-            api.staking(testnet).getAccountNominatorsPools(accountId).pools
+            api.staking(network).getAccountNominatorsPools(accountId).pools
         } ?: return emptyList()
         return list.map { StakingInfoEntity(it) }
     }
 
     private fun loadPools(
-        accountId: String, testnet: Boolean
+        accountId: String, network: TonNetwork
     ): List<PoolInfoEntity> {
         val response = withRetry {
-            api.staking(testnet).getStakingPools(accountId, includeUnverified = false)
+            api.staking(network).getStakingPools(accountId, includeUnverified = false)
         } ?: return emptyList()
 
         val maxApyImplementation = response.pools.maxByOrNull { it.apy }?.implementation

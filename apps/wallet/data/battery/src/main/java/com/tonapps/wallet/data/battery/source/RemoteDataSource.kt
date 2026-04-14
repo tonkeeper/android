@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.battery.source
 
-import android.util.Log
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.log.L
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
@@ -16,9 +17,9 @@ internal class RemoteDataSource(
 
     suspend fun fetchBalance(
         tonProofToken: String,
-        testnet: Boolean
+        network: TonNetwork
     ): BatteryBalanceEntity? = withContext(Dispatchers.IO) {
-        val response = api.getBatteryBalance(tonProofToken, testnet) ?: return@withContext null
+        val response = api.getBatteryBalance(tonProofToken, network) ?: return@withContext null
 
         BatteryBalanceEntity(
             balance = Coins.of(response.balance.toBigDecimal(), 20),
@@ -27,10 +28,10 @@ internal class RemoteDataSource(
     }
 
     suspend fun fetchConfig(
-        testnet: Boolean
+        network: TonNetwork
     ): BatteryConfigEntity? = withContext(Dispatchers.IO) {
-        val configDeferred = async { api.getBatteryConfig(testnet) }
-        val rechargeMethodsDeferred = async { api.getBatteryRechargeMethods(testnet) }
+        val configDeferred = async { api.getBatteryConfig(network) }
+        val rechargeMethodsDeferred = async { api.getBatteryRechargeMethods(network) }
 
         val config = configDeferred.await() ?: return@withContext null
         val rechargeMethods = rechargeMethodsDeferred.await() ?: return@withContext null
@@ -44,7 +45,8 @@ internal class RemoteDataSource(
                 batteryMeanPriceSwap = config.meanPrices.batteryMeanPriceSwap,
                 batteryMeanPriceJetton = config.meanPrices.batteryMeanPriceJetton,
                 batteryMeanPriceNft = config.meanPrices.batteryMeanPriceNft,
-                batteryMeanPriceTronUsdt = config.meanPrices.batteryMeanPriceTronUsdt
+                batteryMeanPriceTronUsdt = config.meanPrices.batteryMeanPriceTronUsdt ?: 0,
+                tonMeanPriceTronUsdt = config.meanPrices.tonMeanPriceTronUsdt ?: 0f
             ),
             chargeCost = config.chargeCost,
             reservedAmount = config.batteryReservedAmount

@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency
 
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 sealed class OnRampPickerCommand {
     data class OpenCurrencyPicker(

@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.WalletColor
+import com.tonapps.blockchain.model.legacy.WalletColor
 import uikit.widget.ColorView
 
 class ColorAdapter(

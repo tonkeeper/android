@@ -1,5 +1,6 @@
 package com.tonapps.network.ws
 
+import com.tonapps.async.Async
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,7 +31,7 @@ open class WSConnection(
     private var reconnectJob: Job? = null
     private var isManuallyDisconnected = false
 
-    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    val scope = Async.ioScope()
 
     private val _events = MutableSharedFlow<WSEvent>(replay = 0, extraBufferCapacity = 64)
     val events: SharedFlow<WSEvent> = _events.asSharedFlow()

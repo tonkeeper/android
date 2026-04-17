@@ -1,0 +1,9 @@
+flows:
+  - flows/battery/*
+  - flows/browser_screen/*
+  - flows/collectibies/*
+  - flows/deeplinks/*
+  - flows/import_wallet/*
+  - flows/testnet/*
+  - flows/ton_connect/*
+  - flows/transactions/*

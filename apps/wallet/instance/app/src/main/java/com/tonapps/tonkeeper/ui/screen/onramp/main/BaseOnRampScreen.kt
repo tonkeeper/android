@@ -4,13 +4,12 @@ import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.isOverlapping
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -25,8 +24,8 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.OnRamp
+import com.tonapps.wallet.localization.Links
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
@@ -71,6 +70,7 @@ open class BaseOnRampScreen(wallet: WalletEntity): WalletContextScreen(R.layout.
         headerView.doOnActionClick = { finish() }
 
         reviewReceive = view.findViewById(R.id.review_receive)
+        reviewSend = view.findViewById(R.id.review_send)
 
         actionContainerDrawable = FooterDrawable(requireContext())
         actionContainerDrawable.setColor(requireContext().backgroundPageColor)
@@ -137,19 +137,19 @@ open class BaseOnRampScreen(wallet: WalletEntity): WalletContextScreen(R.layout.
         val providerStart = text.indexOf(provider)
         val providerEnd = providerStart + provider.length
         builder.setSpan(ClickableSpanCompat(textSecondaryColor) {
-            BrowserHelper.open(requireContext(), "https://changelly.com/")
+            BrowserHelper.open(requireContext(), Links.Changelly)
         }, providerStart, providerEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
         val termsOfUseStart = text.indexOf(termsOfUse)
         val termsOfUseEnd = termsOfUseStart + termsOfUse.length
         builder.setSpan(ClickableSpanCompat(textSecondaryColor) {
-            BrowserHelper.open(requireContext(), "https://changelly.com/terms-of-use")
+            BrowserHelper.open(requireContext(), Links.ChangellyTerms)
         }, termsOfUseStart, termsOfUseEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
         val privacyPolicyStart = text.indexOf(privacyPolicy)
         val privacyPolicyEnd = privacyPolicyStart + privacyPolicy.length
         builder.setSpan(ClickableSpanCompat(textSecondaryColor) {
-            BrowserHelper.open(requireContext(), "https://changelly.com/privacy-policy")
+            BrowserHelper.open(requireContext(), Links.ChangellyPrivacy)
         }, privacyPolicyStart, privacyPolicyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
         disclaimerView.text = builder
@@ -263,17 +263,17 @@ open class BaseOnRampScreen(wallet: WalletEntity): WalletContextScreen(R.layout.
         }
         if (viewModel.isPurchaseOpenConfirm(provider.id)) {
             confirmDialog.show(provider) { showAgain ->
-                openWebView(provider.widgetUrl, provider.id)
+                openWebView(provider.widgetUrl, provider.id, provider.merchantTxId)
                 if (!showAgain) {
                     viewModel.disableConfirmDialog(screenContext.wallet, provider.id)
                 }
             }
         } else {
-            openWebView(provider.widgetUrl, provider.id)
+            openWebView(provider.widgetUrl, provider.id, provider.merchantTxId)
         }
     }
 
-    private fun openWebView(url: String, selectedProvider: String) {
+    private fun openWebView(url: String, selectedProvider: String, merchantTxId: String?) {
         button.isLoading = true
 
         BrowserHelper.open(requireContext(), url)
@@ -282,6 +282,14 @@ open class BaseOnRampScreen(wallet: WalletEntity): WalletContextScreen(R.layout.
             button.isLoading = false
         }
 
+        val providerDomain = url.toUriOrNull()?.host ?: "unknown"
+
+        viewModel.trackContinueToProvider(
+            providerName = selectedProvider,
+            providerDomain = providerDomain,
+            txId = merchantTxId
+        )
+
         analytics?.onRampOpenWebview(
             type = viewModel.purchaseType,
             sellAsset = viewModel.fromForAnalytics,
@@ -289,7 +297,7 @@ open class BaseOnRampScreen(wallet: WalletEntity): WalletContextScreen(R.layout.
             countryCode = viewModel.country,
             paymentMethod = viewModel.paymentMethod,
             providerName = selectedProvider,
-            providerDomain = url.toUriOrNull()?.host ?: "unknown"
+            providerDomain = providerDomain
         )
     }
 }

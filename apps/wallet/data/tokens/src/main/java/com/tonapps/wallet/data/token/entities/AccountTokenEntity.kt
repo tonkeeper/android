@@ -2,10 +2,10 @@ package com.tonapps.wallet.data.token.entities
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
@@ -60,6 +60,9 @@ data class AccountTokenEntity(
 
     val isTon: Boolean
         get() = address == TokenEntity.TON.address
+
+    val isTrx: Boolean
+        get() = address == TokenEntity.TRX.address
 
     val isLiquid: Boolean
         get() = balance.token.isLiquid

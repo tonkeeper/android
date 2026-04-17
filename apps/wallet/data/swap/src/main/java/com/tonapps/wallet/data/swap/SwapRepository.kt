@@ -7,7 +7,7 @@ import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toListParcel
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.BlobDataSource
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.swap.entity.SwapAssetEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,10 +35,16 @@ class SwapRepository(
 
     val assetsFlow = flow {
         emit(getAssets())
+        emit(getAssets(true))
     }.mapList { it.currency }.stateIn(scope, SharingStarted.Lazily, null).filterNotNull()
 
-    suspend fun getAssets(): List<SwapAssetEntity> = withContext(Dispatchers.IO) {
-        getCache(ASSETS_KEY) ?: loadAssets()
+    suspend fun getAssets(ignoreCache: Boolean = false): List<SwapAssetEntity> = withContext(Dispatchers.IO) {
+        val cached = if (ignoreCache) {
+            null
+        } else {
+            getCache(ASSETS_KEY)
+        }
+        cached ?: loadAssets()
     }
 
     private fun loadAssets(): List<SwapAssetEntity> {

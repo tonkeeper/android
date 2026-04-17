@@ -1,0 +1,24 @@
+name: Android Debug Build
+
+on:
+  push:
+    branches:
+      - 'dev'
+      - 'release/**'
+  pull_request:
+    types: [ opened, synchronize ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-build:
+    name: Build Debug APK
+    uses: ./.github/workflows/build-apk-reusable.yml
+    with:
+      gradle-task: :apps:wallet:instance:main:assembleDefaultDebug
+      artifact-name-prefix: tonkeeper-debug
+      apk-path-glob: apps/wallet/instance/main/build/outputs/apk/default/debug/*.apk
+    secrets: inherit

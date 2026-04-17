@@ -1,0 +1,42 @@
+appId: com.ton_keeper.debug
+---
+- launchApp
+    
+- openLink: 'ton://transfer/UQCae11h9N5znylEPRjmuLYGvIwnxkcCw4zVW4BJjVASi5eL'
+- assertVisible: UQCae11h9N5znylEPRjmuLYGvIwnxkcCw4zVW4BJjVASi5eL
+- back
+
+- openLink: 'ton://transfer/UQCae11h9N5znylEPRjmuLYGvIwnxkcCw4zVW4BJjVASi5eL?text=BibaBoba'
+- assertVisible: UQCae11h9N5znylEPRjmuLYGvIwnxkcCw4zVW4BJjVASi5eL
+- assertVisible: BibaBoba
+- back
+
+- openLink: 'tonkeeper://transfer/UQCae11h9N5znylEPRjmuLYGvIwnxkcCw4zVW4BJjVASi5eL?amount=1'
+- assertVisible: Confirm Action
+- assertVisible: UQCae11h9N5znylEPRjmuLYGvIwnxkcCw4zVW4BJjVASi5eL
+- assertVisible: 0.000000001 TON
+- assertVisible: Confirm
+- launchApp
+
+- openLink: 'tonkeeper://transfer/subbotin.ton?amount=3'
+- assertVisible: Confirm Action
+- assertVisible: subbotin.ton
+- assertVisible: UQDNzlh0XSZdb5_Qrlx5QjyZHVAO74v5oMeVVrtF_5Vt1rIt
+- assertVisible: 0.000000003 TON
+- launchApp
+
+- openLink: 'tonkeeper://buy-ton'
+- assertVisible: Buy & Sell Crypto
+- launchApp
+
+- openLink: 'tonkeeper://staking'
+- assertVisible: Stake
+- assertVisible:
+    id: stake_amount
+- launchApp
+
+- openLink: 'tonkeeper://swap?fromToken=tsTON&toToken=USDT'
+- assertVisible: Stake
+- assertVisible:
+    id: stake_amount
+- launchApp

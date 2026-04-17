@@ -1,0 +1,9 @@
+appId: com.ton_keeper.debug
+---
+- assertVisible: Buy & Sell Crypto
+- assertVisible: "20"
+- tapOn:
+    id: input_currency
+- tapOn: USD₮ TON
+- back
+- back

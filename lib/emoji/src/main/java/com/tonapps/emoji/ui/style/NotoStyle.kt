@@ -8,7 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.core.provider.FontRequest
 import androidx.core.provider.FontsContractCompat
-import com.tonapps.emoji.R
+import com.tonapps.lib.emoji.R
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine

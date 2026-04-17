@@ -1,6 +1,6 @@
 package com.tonapps.wallet.data.events.tx
 
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.api.entity.value.Timestamp
 
 data class TxFetchQuery(

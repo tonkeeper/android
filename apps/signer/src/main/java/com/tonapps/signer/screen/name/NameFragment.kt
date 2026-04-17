@@ -1,7 +1,7 @@
 package com.tonapps.signer.screen.name
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button

@@ -10,7 +10,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.list.BaseListHolder
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable

@@ -3,9 +3,10 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.text.style.ForegroundColorSpan
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -13,16 +14,20 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.tron.isValidTronAddress
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
+import com.tonapps.extensions.isPositive
 import com.tonapps.extensions.shortTron
 import com.tonapps.extensions.uri
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.isPositive
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
-import com.tonapps.tonkeeper.core.Amount
+import com.tonapps.blockchain.model.legacy.Amount
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.getTitle
@@ -38,13 +43,14 @@ import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.SendContactsScreen
-import com.tonapps.tonkeeper.ui.screen.send.main.SendEvent
-import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendAmountState
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendDestination
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendTransaction
+import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
+import com.tonapps.deposit.screens.send.state.SendAmountState
+import com.tonapps.deposit.screens.send.state.SendDestination
+import com.tonapps.deposit.screens.send.state.SendFee
+import com.tonapps.deposit.screens.send.state.SendTransaction
 import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
+import com.tonapps.tonkeeper.ui.screen.tronfees.TronFeesScreen
+import com.tonapps.tonkeeper.ui.screen.tronfees.TronFeesScreenType
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
@@ -54,15 +60,17 @@ import com.tonapps.uikit.color.fieldActiveBorderColor
 import com.tonapps.uikit.color.fieldErrorBorderColor
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textSecondaryColor
+import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.Plurals
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
@@ -145,13 +153,17 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        analytics?.simpleTrackEvent("send_open")
+        initializeBus(args.from)
 
         navigation?.setFragmentResultListener(contractsRequestKey) { bundle ->
             val contact = bundle.getParcelableCompat<SendContact>("contact")
                 ?: return@setFragmentResultListener
             addressInput.text = contact.address
         }
+    }
+
+    fun initializeBus(from: Events.SendNative.SendNativeFrom) {
+        viewModel.initializeBus(from)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -233,7 +245,16 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener {
-            analytics?.simpleTrackEvent("send_click")
+            lifecycleScope.launch {
+                val token = viewModel.uiInputTokenFlow.firstOrNull() ?: return@launch
+                AnalyticsHelper.Default.events.sendNative.sendClick(
+                    from = args.from,
+                    assetNetwork = token.tokenType?.fmt.orEmpty(),
+                    tokenSymbol = token.plainSymbol,
+                    amount = viewModel.currentAmountDouble,
+                )
+            }
+
             next()
         }
 
@@ -270,7 +291,18 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         }
 
         confirmButton.setOnClickListener {
-            analytics?.simpleTrackEvent("send_confirm")
+            lifecycleScope.launch {
+                val token = viewModel.uiInputTokenFlow.firstOrNull() ?: return@launch
+
+                AnalyticsHelper.Default.events.sendNative.sendConfirm(
+                    from = args.from,
+                    assetNetwork = token.tokenType?.fmt.orEmpty(),
+                    tokenSymbol = token.plainSymbol,
+                    amount = viewModel.currentAmountDouble,
+                    feePaidIn = viewModel.currentFeePaidIn,
+                    appId = null,
+                )
+            }
             signAndSend()
         }
         confirmButton.setText(if (wallet.hasPrivateKey) Localization.confirm else Localization.continue_action)
@@ -285,9 +317,11 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 is SendDestination.TokenError -> {
                     applyTokenError(destination)
                 }
+
                 is SendDestination.NotFound -> {
                     applyInvalidAddressError()
                 }
+
                 is SendDestination.Scam -> {
                     applyScamAddressError()
                 }
@@ -339,7 +373,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             args.text,
             args.tokenAddress,
             args.bin,
-            args.type
+            args.type,
         )
     }
 
@@ -387,7 +421,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             swapTitle,
         )
 
-        val isUsdt = error.selectedToken.isTrc20 || error.selectedToken.isUsdt
+        val isUsdt = error.selectedToken.isUsdtTrc20 || error.selectedToken.isUsdt
 
         val swapUrl = context?.serverConfig?.tronSwapUrl
 
@@ -455,17 +489,18 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         text: String?,
         tokenAddress: String?,
         bin: Cell? = null,
-        type: Type
+        type: Type,
     ) {
         viewModel.initializeTokenAndAmount(
             tokenAddress = tokenAddress,
             amount = amount,
-            type = type
+            type = type,
         )
 
         text?.let { commentInput.text = it }
         targetAddress?.let { addressInput.text = it }
         bin?.let { viewModel.userInputBin(it) }
+
 
         if (targetAddress != null) {
             lifecycleScope.launch(Dispatchers.Main) {
@@ -557,13 +592,23 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     }
 
     private fun openInsufficientBalance(event: SendEvent.InsufficientBalance) {
-        showInsufficientFundsDialog(
-            balance = event.balance,
-            required = event.required,
-            withRechargeBattery = event.withRechargeBattery,
-            singleWallet = event.singleWallet,
-            type = event.type
-        )
+        if (event.tronFees) {
+            navigation?.add(
+                TronFeesScreen.newInstance(
+                    wallet = wallet,
+                    type = TronFeesScreenType.InsufficientBalance,
+                    emulation = event.tronFeesEmulation
+                )
+            )
+        } else {
+            showInsufficientFundsDialog(
+                balance = event.balance,
+                required = event.required,
+                withRechargeBattery = event.withRechargeBattery,
+                singleWallet = event.singleWallet,
+                type = event.type
+            )
+        }
         if (args.type == Type.Direct) {
             finish()
         }
@@ -741,9 +786,11 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             confirmButton.isEnabled = false
         } else {
             reviewRecipientFeeView.title =
-                if (event.fee is SendFee.Ton && event.fee.amount.isRefund) getString(Localization.refund) else getString(
-                    Localization.fee
-                )
+                if (event.fee is SendFee.Ton && event.fee.amount.isRefund) {
+                    getString(Localization.refund)
+                } else {
+                    getString(Localization.fee)
+                }
 
             when (event.fee) {
                 is SendFee.TokenFee -> {
@@ -765,12 +812,19 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                             event.fee.charges,
                             CurrencyFormatter.format(value = event.fee.charges.toBigDecimal())
                         )
-                    reviewRecipientFeeView.description = requireContext().getString(
-                        Localization.out_of_available_charges,
-                        CurrencyFormatter.format(
-                            value = event.fee.chargesBalance.toBigDecimal()
+                    val charges = event.fee.excessCharges
+                    reviewRecipientFeeView.description = if (charges.isPositive()) {
+                        "≈ ${getString(Localization.battery_excess, CurrencyFormatter.format(
+                            value = charges.toBigDecimal()
+                        ))}"
+                    } else {
+                        requireContext().getString(
+                            Localization.out_of_available_charges,
+                            CurrencyFormatter.format(
+                                value = event.fee.chargesBalance.toBigDecimal()
+                            )
                         )
-                    )
+                    }
                 }
 
                 else -> {}
@@ -819,9 +873,13 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         } else {
             statusView.setTextColor(requireContext().textSecondaryColor)
             statusView.text =
-                if (state.hiddenBalance) HIDDEN_BALANCE else state.remainingFormat.withCustomSymbol(
-                    requireContext()
-                )
+                if (state.hiddenBalance) {
+                    HIDDEN_BALANCE
+                } else {
+                    state.remainingFormat.withCustomSymbol(
+                        requireContext()
+                    )
+                }
             maxView.visibility = View.VISIBLE
         }
     }
@@ -831,7 +889,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         reviewIconView.setImageURI(token.imageUri, null)
 
         collectFlow(viewModel.tronAvailableFlow.take(1)) { isTronAvailable ->
-            if (isTronAvailable && (token.isUsdt || token.isTrc20)) {
+            if (isTronAvailable && (token.isUsdt || token.isUsdtTrc20)) {
                 val networkTextRes = when (token.blockchain) {
                     Blockchain.TRON -> Localization.trc20
                     else -> Localization.ton
@@ -840,7 +898,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 reviewSubtitleView.text = getString(Localization.jetton_transfer, tokenText)
 
                 val networkIconRes = when (token.blockchain) {
-                    Blockchain.TRON -> R.drawable.ic_tron
+                    Blockchain.TRON -> R.drawable.ic_tron // TODO replace with webp
                     else -> R.drawable.ic_ton
                 }
                 reviewNetworkIconView.setLocalRes(networkIconRes)
@@ -883,10 +941,32 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                         fee.fiatCurrency.code,
                         fee.fiatAmount,
                     )
+                    val subtitle: CharSequence =
+                        if ((fee is SendFee.TronTrx && !fee.enoughBalance) || (fee is SendFee.TronTon && !fee.enoughBalance)) {
+                            SpannableStringBuilder().apply {
+                                append(
+                                    getString(Localization.no_enough_funds),
+                                    ForegroundColorSpan(requireContext().textSecondaryColor),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                                append(
+                                    " · ",
+                                    ForegroundColorSpan(requireContext().textTertiaryColor),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                                append(
+                                    getString(Localization.refill),
+                                    ForegroundColorSpan(requireContext().textAccentColor),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                            }
+                        } else {
+                            "≈ $formattedFiat ($formattedAmount)"
+                        }
                     feeMethodSelector.addItem(
                         id = fee.amount.token.symbol.hashCode().toLong(),
                         title = fee.amount.token.symbol,
-                        subtitle = "≈ $formattedAmount · $formattedFiat",
+                        subtitle = subtitle,
                         imageUri = fee.amount.token.imageUri,
                         icon = if (currentFee == fee) {
                             getDrawable(UIKitIcon.ic_done_16)
@@ -903,10 +983,36 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                         fee.charges,
                         CurrencyFormatter.format(value = fee.charges.toBigDecimal())
                     )
+                    val formattedFiat = CurrencyFormatter.formatFiat(
+                        fee.fiatCurrency.code,
+                        fee.fiatAmount,
+                    )
+                    val subtitle: CharSequence =
+                        if (!fee.enoughCharges) {
+                            SpannableStringBuilder().apply {
+                                append(
+                                    getString(Localization.no_enough_funds),
+                                    ForegroundColorSpan(requireContext().textSecondaryColor),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                                append(
+                                    " · ",
+                                    ForegroundColorSpan(requireContext().textTertiaryColor),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                                append(
+                                    getString(Localization.refill),
+                                    ForegroundColorSpan(requireContext().textAccentColor),
+                                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                            }
+                        } else {
+                            "≈ $formattedFiat ($formattedCharges)"
+                        }
                     feeMethodSelector.addItem(
                         id = "battery".hashCode().toLong(),
                         title = getString(Localization.battery_refill_title),
-                        subtitle = "≈ $formattedCharges",
+                        subtitle = subtitle,
                         imageUri = UIKitIcon.ic_flash_24.uri(),
                         imageTintColor = requireContext().accentGreenColor,
                         icon = if (currentFee == fee) {
@@ -935,6 +1041,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             private var nftAddress: String? = null
             private var type: Type = Type.Default
             private var bin: Cell? = null
+            private var from: Events.SendNative.SendNativeFrom =
+                Events.SendNative.SendNativeFrom.WalletScreen
 
             fun setTargetAddress(targetAddress: String) = apply {
                 this.targetAddress = targetAddress
@@ -964,6 +1072,10 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 this.bin = bin
             }
 
+            fun setFrom(from: Events.SendNative.SendNativeFrom) = apply {
+                this.from = from
+            }
+
             fun build() = newInstance(
                 wallet,
                 targetAddress,
@@ -972,7 +1084,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 text,
                 nftAddress,
                 type,
-                bin
+                bin,
+                from
             )
         }
 
@@ -988,7 +1101,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             text: String? = null,
             nftAddress: String? = null,
             type: Type,
-            bin: Cell? = null
+            bin: Cell? = null,
+            from: Events.SendNative.SendNativeFrom = Events.SendNative.SendNativeFrom.WalletScreen
         ): SendScreen {
             val args = SendArgs(
                 targetAddress = targetAddress,
@@ -996,7 +1110,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 amount = amount,
                 text = text, nftAddress = nftAddress ?: "",
                 type = type,
-                bin = bin
+                bin = bin,
+                from = from
             )
             return SendScreen(wallet).apply {
                 setArgs(args)

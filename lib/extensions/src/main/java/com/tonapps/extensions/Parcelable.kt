@@ -2,7 +2,7 @@ package com.tonapps.extensions
 
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import kotlinx.parcelize.parcelableCreator
 
 fun Parcelable.toByteArray(): ByteArray {

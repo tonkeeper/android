@@ -7,15 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import androidx.core.view.WindowInsetsControllerCompat
-import com.tonapps.tonkeeper.RemoteConfig
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.core.flags.RemoteConfig
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.wallet.api.entity.ConfigEntity
 import uikit.base.BaseFragment
-import uikit.extensions.gestureNavigationEnabled
 import uikit.navigation.Navigation
 
 abstract class BaseWalletScreen<C: ScreenContext>(
@@ -42,7 +41,8 @@ abstract class BaseWalletScreen<C: ScreenContext>(
     val rootActivity: RootActivity?
         get() = activity as? RootActivity
 
-    abstract val viewModel: BaseWalletVM
+    @Deprecated("Use AsyncViewModel")
+    abstract val viewModel: BaseWalletVM?
 
     private val isBottomSheet: Boolean
         get() = this is BottomSheet
@@ -75,7 +75,7 @@ abstract class BaseWalletScreen<C: ScreenContext>(
         if (isBottomSheet && isAppearanceLightStatusBars) {
             rootActivity?.setAppearanceLight(false)
         }
-        viewModel.attachHolder(this)
+        viewModel?.attachHolder(this)
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -84,6 +84,6 @@ abstract class BaseWalletScreen<C: ScreenContext>(
         if (isBottomSheet && isAppearanceLightStatusBars) {
             rootActivity?.setAppearanceLight(true)
         }
-        viewModel.detachHolder()
+        viewModel?.detachHolder()
     }
 }

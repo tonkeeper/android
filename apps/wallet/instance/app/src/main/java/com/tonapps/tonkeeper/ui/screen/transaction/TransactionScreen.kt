@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.transaction
 
-import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.SpannableString
@@ -8,7 +7,10 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.net.toUri
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.logError
 import com.tonapps.extensions.max24
@@ -21,6 +23,7 @@ import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.extensions.withVerificationIcon
+import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.screen.token.unverified.TokenUnverifiedScreen
 import com.tonapps.tonkeeper.view.TransactionDetailView
@@ -30,8 +33,8 @@ import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.SpamTransactionState
 import com.tonapps.wallet.localization.Localization
@@ -41,19 +44,14 @@ import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
-import uikit.dialog.modal.ModalDialog
 import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.getViews
 import uikit.extensions.reject
 import uikit.extensions.setColor
 import uikit.navigation.Navigation.Companion.navigation
-import uikit.widget.ColumnLayout
 import uikit.widget.AsyncImageView
-import androidx.core.view.isVisible
-import androidx.core.net.toUri
-import com.tonapps.wallet.data.events.ActionType
-import com.tonapps.tonkeeper.koin.serverConfig
+import uikit.widget.ColumnLayout
 
 
 class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragment.Modal {

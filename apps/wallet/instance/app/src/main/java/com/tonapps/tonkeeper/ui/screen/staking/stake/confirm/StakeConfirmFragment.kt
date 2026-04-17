@@ -9,7 +9,6 @@ import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
-import com.tonapps.tonkeeper.ui.screen.send.main.SendException
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
@@ -28,6 +27,7 @@ import uikit.extensions.collectFlow
 import uikit.widget.AsyncImageView
 import uikit.widget.HeaderView
 import uikit.widget.ProcessTaskView
+import java.util.concurrent.CancellationException
 
 class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_confirm) {
 
@@ -93,7 +93,7 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
     private fun stake() {
         setTaskState(ProcessTaskView.State.LOADING)
         primaryViewModel.stake(requireContext()).catch { e ->
-            val state = if (e is SendException.Cancelled) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
+            val state = if (e is CancellationException) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
             setTaskState(state)
         }.onEach {
             primaryViewModel.analyticsFlow.take(1).onEach { props ->

@@ -1,0 +1,119 @@
+name: Maestro Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-apk:
+    name: Build Debug APK For Maestro
+    uses: ./.github/workflows/build-apk-reusable.yml
+    with:
+      gradle-task: :apps:wallet:instance:main:assembleDefaultDebug
+      artifact-name-prefix: tonkeeper-nightly-debug
+      apk-path-glob: apps/wallet/instance/main/build/outputs/apk/default/debug/*.apk
+    secrets: inherit
+
+  maestro-tests:
+    name: Maestro Tests
+    needs: build-apk
+    runs-on: linux-x64-16
+    env:
+      MAESTRO_AUTH: ${{ secrets.MAESTRO_AUTH }}
+      MAESTRO_MNEMONIC_PHRASE: ${{ secrets.MAESTRO_MNEMONIC_PHRASE }}
+      MAESTRO_RECIEVE_WALLET: ${{ secrets.MAESTRO_RECIEVE_WALLET }}
+      MAESTRO_WALLET_WITH_MONEY: ${{ secrets.MAESTRO_WALLET_WITH_MONEY }}
+
+    steps:
+      - name: Checkout to git repository
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Download built APK artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.build-apk.outputs.artifact-name }}
+          path: dist/apk
+
+      - name: Resolve debug APK path
+        id: resolve_apk
+        shell: bash
+        run: |
+          shopt -s nullglob
+          apks=(dist/apk/*.apk)
+
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "No debug APK found in downloaded artifact"
+            exit 1
+          fi
+
+          if [ ${#apks[@]} -gt 1 ]; then
+            echo "Multiple debug APKs found, expected exactly one:"
+            printf ' - %s\n' "${apks[@]}"
+            exit 1
+          fi
+
+          echo "app_file=${apks[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Maestro secrets
+        shell: bash
+        run: |
+          for secret_name in \
+            MAESTRO_AUTH \
+            MAESTRO_MNEMONIC_PHRASE \
+            MAESTRO_RECIEVE_WALLET \
+            MAESTRO_WALLET_WITH_MONEY; do
+            if [ -z "${!secret_name}" ]; then
+              echo "::error::Missing secret: ${secret_name}"
+              exit 1
+            fi
+          done
+
+      - name: Install Maestro CLI
+        shell: bash
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Maestro tests on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2.37.0
+        with:
+          api-level: 34
+          arch: x86_64
+          cores: 4
+          ram-size: 2048M
+          heap-size: 512M
+          disk-size: 4096M
+          target: google_apis
+          profile: pixel_3
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          disable-animations: true
+          script: |
+            mkdir -p build/maestro-results
+            adb wait-for-device
+            timeout 120s sh -c 'until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = "1" ]; do sleep 2; done'
+            sleep 5
+            adb shell input keyevent 82 || true
+            adb shell input keyevent 3 || true
+            adb install -r "${{ steps.resolve_apk.outputs.app_file }}"
+            "$HOME/.maestro/bin/maestro" --version
+            "$HOME/.maestro/bin/maestro" --verbose --device "emulator-${EMULATOR_PORT}" test --format junit --output build/maestro-results/report.xml --test-output-dir build/maestro-results/test-output --debug-output build/maestro-results/debug-output -e PASSWORD_KEY=5 -e MNEMONIC_PHRASE="${MAESTRO_MNEMONIC_PHRASE}" -e WALLET_WITH_MONEY="${MAESTRO_WALLET_WITH_MONEY}" -e auth="${MAESTRO_AUTH}" -e RECIEVE_WALLET="${MAESTRO_RECIEVE_WALLET}" ./maestro_ui_tests
+
+      - name: Upload Maestro artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-nightly-results-${{ needs.build-apk.outputs.version-code }}
+          path: build/maestro-results
+          if-no-files-found: warn

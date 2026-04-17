@@ -1,17 +1,25 @@
+@file:Suppress("DEPRECATION")
+
 package com.tonapps.tonkeeper.ui.screen.dev
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.app.ShareCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.locale
+import com.tonapps.extensions.retrieveUri
+import com.tonapps.log.L
 import com.tonapps.security.Security
-import com.tonapps.tonkeeper.App
+import com.tonapps.settings.dev.DevSettingsFragment
+import com.tonapps.settings.dev.ROUTE_FEATURE_FLAGS
+import com.tonapps.settings.dev.ROUTE_TOOLTIPS
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.showToast
@@ -20,19 +28,17 @@ import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.dev.list.launcher.LauncherAdapter
-import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.list.LinearLayoutManager
-import com.tonapps.uikit.list.ListCell
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
-import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemSwitchView
+import uikit.widget.item.ItemTextView
 
 class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, ScreenContext.None), BaseFragment.BottomSheet {
 
@@ -41,8 +47,11 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
     override val viewModel: DevViewModel by viewModel()
 
     private lateinit var iconsView: RecyclerView
+    private lateinit var tetraView: ItemSwitchView
     private lateinit var blurView: ItemSwitchView
     private lateinit var tonConnectLogsView: ItemSwitchView
+    private lateinit var logs: ItemSwitchView
+    private lateinit var shareLogs: ItemTextView
     private lateinit var importMnemonicAgainView: View
     private lateinit var logView: View
     private lateinit var logDataView: AppCompatEditText
@@ -65,6 +74,14 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         iconsView = view.findViewById(R.id.icons)
         iconsView.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL)
         iconsView.adapter = LauncherAdapter()
+
+        tetraView = view.findViewById(R.id.tetra)
+        tetraView.setChecked(DevSettings.tetraEnabled, false)
+        tetraView.doOnCheckedChanged = { isChecked, byUser ->
+            if (byUser) {
+                DevSettings.tetraEnabled = isChecked
+            }
+        }
 
         dnsAllView = view.findViewById(R.id.dns_all)
         dnsAllView.setChecked(DevSettings.dnsAll, false)
@@ -101,6 +118,49 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
                 toastAfterChange()
             }
         }
+
+        logs = view.findViewById(R.id.logs)
+        logs.setChecked(DevSettings.isLogsEnabled, false)
+        logs.doOnCheckedChanged = { isChecked, byUser ->
+            if (byUser) {
+                DevSettings.isLogsEnabled = isChecked
+                L.setTargets(L.defaultTargets(requireContext(), isChecked))
+            }
+        }
+
+        shareLogs = view.findViewById(R.id.share_logs)
+        shareLogs.setOnClickListener {
+            if (!L.hasLogs()) {
+                navigation?.toast("No logs found!")
+                return@setOnClickListener
+            }
+
+            L.capture { file ->
+                val context = requireContext()
+                lifecycleScope.launch {
+                    DevSettings.isLogsEnabled = false
+                    L.setTargets(L.defaultTargets(context, false))
+
+                    ShareCompat.IntentBuilder(context)
+                        .run {
+                            val uri = retrieveUri(context, file ?: return@launch)
+                            setStream(uri)
+
+                            intent.apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, "Share logs")
+
+                                setDataAndType(uri, "*/*")
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+
+                            setChooserTitle("Share logs")
+                            startChooser()
+                        }
+                }
+            }
+        }
+
 
         importMnemonicAgainView = view.findViewById(R.id.import_mnemonic_again)
         importMnemonicAgainView.setOnClickListener { importMnemonicAgain(false) }
@@ -150,7 +210,30 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             copyFirebasePushToken()
         }
 
+        view.findViewById<View>(R.id.copy_install_id).setOnClickListener {
+            requireContext().copyToClipboard(viewModel.installId, true)
+            navigation?.toast("Install ID copied to clipboard")
+        }
+
         logCopy = view.findViewById(R.id.log_copy)
+
+        view.findViewById<View>(R.id.feature_flags).apply {
+             if (!BuildConfig.DEBUG) {
+                 visibility = View.GONE
+             }
+            setOnClickListener {
+                navigation?.add(DevSettingsFragment.newInstance(ROUTE_FEATURE_FLAGS))
+            }
+        }
+
+        view.findViewById<View>(R.id.tooltips).apply {
+            if (!BuildConfig.DEBUG) {
+                visibility = View.GONE
+            }
+            setOnClickListener {
+                navigation?.add(DevSettingsFragment.newInstance(ROUTE_TOOLTIPS))
+            }
+        }
     }
 
     private fun copyFirebasePushToken() {

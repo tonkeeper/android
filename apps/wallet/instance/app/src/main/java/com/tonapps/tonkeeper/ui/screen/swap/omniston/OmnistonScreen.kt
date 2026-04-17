@@ -5,16 +5,15 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.errors.InsufficientFundsException
+import com.tonapps.extensions.getUserMessage
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.AnalyticsHelper
-import com.tonapps.tonkeeper.core.InsufficientFundsException
 import com.tonapps.tonkeeper.extensions.addFeeItem
 import com.tonapps.tonkeeper.extensions.finishDelay
 import com.tonapps.tonkeeper.extensions.hideKeyboard
@@ -31,42 +30,34 @@ import com.tonapps.tonkeeper.ui.screen.onramp.main.view.ReviewInputView
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.swap.omniston.state.OmnistonStep
-import com.tonapps.tonkeeper.ui.screen.swap.omniston.state.SwapInputsState
 import com.tonapps.tonkeeper.ui.screen.swap.omniston.state.SwapQuoteState
 import com.tonapps.tonkeeper.ui.screen.swap.omniston.state.SwapTokenState
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
-import uikit.extensions.clickable
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
 import uikit.extensions.reject
 import uikit.extensions.rotate180Animation
-import uikit.extensions.withBlueBadge
 import uikit.extensions.withClickable
 import uikit.extensions.withInterpunct
 import uikit.span.ClickableSpanCompat
 import uikit.widget.HeaderView
 import uikit.widget.LoadableButton
-import uikit.widget.LoaderView
 import uikit.widget.ModalHeader
 import uikit.widget.ProcessTaskView
 import uikit.widget.SlideActionView
 import uikit.widget.SlideBetweenView
 import uikit.widget.item.ItemLineView
-import kotlin.getValue
+import java.util.concurrent.CancellationException
 
 class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_omniston, wallet), BaseFragment.BottomSheet {
 
@@ -390,8 +381,11 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
         finishDelay()
     }
 
-    private fun singFailure() {
+    private fun singFailure(throwable: Throwable) {
         taskView.visibility = View.VISIBLE
+
+        taskView.setFailedLabel(throwable.getUserMessage(requireContext()) ?: getString(Localization.error))
+
         taskView.state = ProcessTaskView.State.FAILED
         postDelayed(5000) { signDefaultState() }
     }
@@ -405,15 +399,17 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
             providerUrl = viewModel.providerUrl,
             native = true,
         )
-        viewModel.sign { isSuccessful ->
-            if (isSuccessful) {
-                signSuccess()
-            } else {
-                singFailure()
-                slideActionView.reset()
+        viewModel.sign(
+            onSuccess = { signSuccess() },
+            onError = { e ->
+                if (e is CancellationException) {
+                    signDefaultState()
+                } else {
+                    singFailure(e)
+                }
                 viewModel.restoreSwapStream()
             }
-        }
+        )
     }
 
     private fun switch(view: View) {
@@ -445,10 +441,11 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
                 viewModel.next()
             } catch (e: Throwable) {
                 inputErrorState()
-                continueButton.isLoading = false
                 if (e is InsufficientFundsException) {
                     insufficientFundsDialog.show(wallet, e)
                 }
+            } finally {
+                continueButton.isLoading = false
             }
         }
         analytics?.swapClick(
@@ -520,8 +517,8 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
 
         fun newInstance(
             wallet: WalletEntity,
-            fromToken: WalletCurrency = WalletCurrency.TON,
-            toToken: WalletCurrency = WalletCurrency.USDT_TON
+            fromToken: String = "TON",
+            toToken: String? = null,
         ): OmnistonScreen {
             val screen = OmnistonScreen(wallet)
             screen.setArgs(OmnistonArgs(fromToken, toToken))

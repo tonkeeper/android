@@ -12,8 +12,8 @@ import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Adapter
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment

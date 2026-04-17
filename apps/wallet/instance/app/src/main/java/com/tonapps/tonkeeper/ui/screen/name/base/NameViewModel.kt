@@ -6,7 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.emoji.Emoji
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

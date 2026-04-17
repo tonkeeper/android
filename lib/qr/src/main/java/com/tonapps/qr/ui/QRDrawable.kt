@@ -6,10 +6,8 @@ import android.graphics.Color
 import android.graphics.ColorFilter
 import android.graphics.PixelFormat
 import android.graphics.Rect
-import android.graphics.drawable.Animatable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.util.Log
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import com.tonapps.qr.QR
 import kotlinx.coroutines.Dispatchers

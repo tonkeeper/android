@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.base
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
@@ -26,7 +26,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppArgs
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeperx.R
@@ -15,7 +16,6 @@ import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable

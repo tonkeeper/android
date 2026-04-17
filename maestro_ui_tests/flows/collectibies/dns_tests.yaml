@@ -1,0 +1,73 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- runFlow: '../../steps/import_wallet.yaml'
+- runFlow: '../../service/account/compare_ton_balance.yaml'
+
+- tapOn: Collectibles
+- tapOn: biba-and-boba.ton
+
+- assertVisible:
+    text: biba-and-boba.ton
+    index: 2
+- assertVisible:
+    text: TON DNS Domains
+    index: 1
+
+- assertVisible:
+    id: transfer
+- assertVisible: Manage
+- runScript:
+    file: ../../scripts/api/v2/accounts/dns/getExpiring.js
+    env:
+      _dns: 0:90cfeb684f0e26bb0a6d72029508dd37d0d6d33ea995da3fb067ede3a651d43f #for late parse from nfts?limit
+      auth_token: ${auth}
+- evalScript: ${output.buttonRenew = 'Renew until ' + output.dns[0].expired.renewFormatted}
+- evalScript: ${output.latestExpiredUnix = output.dns[0].expired.unix}
+- evalScript: ${console.log(output.latestExpiredUnix)}
+
+- tapOn: ${output.buttonRenew}
+- assertVisible: Domain Renew
+- assertVisible:
+    text: biba-and-boba.ton
+    index: 3
+- swipe:
+    from:
+      id: button
+    direction: RIGHT
+
+- runFlow: ../../steps/password/enter_password.yaml
+- assertVisible: Done
+
+- tapOn:
+    text: biba-and-boba.ton
+    id: title
+
+- runFlow: ../../steps/nfts/dns/link_domain.yaml
+- runScript:
+    file: ../../scripts/api/v2/accounts/dns/findByDNS.js
+    env:
+      _dns: biba-and-boba
+- evalScript: ${output.domainSet = output.pubkey !== undefined}
+- assertTrue:
+    condition: ${output.domainSet}
+    label: Pubkey should return any data after dns set
+
+- runScript:
+    file: ../../scripts/api/v2/accounts/dns/getExpiring.js
+    env:
+      _dns: 0:90cfeb684f0e26bb0a6d72029508dd37d0d6d33ea995da3fb067ede3a651d43f #for late parse from nfts?limit
+      auth_token: ${auth}
+- evalScript: ${output.expiredUnixChanged = output.latestExpiredUnix < output.dns[0].expired.unix}
+- evalScript: ${console.log(output.latestExpiredUnix)}
+- evalScript: ${console.log(output.dns[0].expired.unix)}
+- assertTrue:
+    condition: ${output.expiredUnixChanged}
+    label: Expired unixtime doesnt changed after renew domain.
+
+- tapOn:
+    text: biba-and-boba.ton
+    id: title
+- runFlow: ../../steps/nfts/dns/unlink_domain.yaml

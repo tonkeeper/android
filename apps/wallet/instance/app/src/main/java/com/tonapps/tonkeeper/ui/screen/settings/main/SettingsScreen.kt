@@ -4,11 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
-import com.google.android.gms.tasks.Task
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
-import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
@@ -29,8 +27,9 @@ import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeScreen
 import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesScreen
+import com.tonapps.tonkeeper.ui.screen.support.SupportScreen
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
@@ -85,8 +84,7 @@ class SettingsScreen(
             is Item.Security -> navigation?.add(SecurityScreen.newInstance(screenContext.wallet))
             is Item.Legal -> navigation?.add(LegalScreen.newInstance())
             is Item.News -> navigation?.openURL(item.url)
-            is Item.Support -> navigation?.openURL(item.url)
-            is Item.Contact -> navigation?.openURL(item.url)
+            is Item.Support -> navigation?.add(SupportScreen.newInstance(screenContext.wallet))
             is Item.Tester -> navigation?.openURL(item.url)
             is Item.W5 -> navigation?.add(W5StoriesScreen.newInstance(!screenContext.wallet.isW5))
             is Item.Battery -> navigation?.add(BatteryScreen.newInstance(screenContext.wallet, from = "settings"))

@@ -1,17 +1,8 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    namespace = Build.namespacePrefix("uikit.list")
-    compileSdk = Build.compileSdkVersion
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-    }
+    id("target.android.library")
 }
 
 dependencies {
-    implementation(libs.androidX.recyclerView)
-    implementation(libs.androidX.lifecycle)
+    implementation(libs.androidx.recyclerView)
+    implementation(libs.androidx.lifecycle)
 }

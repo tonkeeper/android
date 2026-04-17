@@ -1,21 +1,10 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    namespace = Build.namespacePrefix("emoji")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
+    id("target.android.library")
 }
 
 dependencies {
-    implementation(libs.androidX.appCompat)
-    implementation(libs.androidX.emoji)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.emoji)
+    implementation(projects.kmp.async)
 }

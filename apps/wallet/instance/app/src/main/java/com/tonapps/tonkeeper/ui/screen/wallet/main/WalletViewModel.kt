@@ -5,31 +5,32 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
-import com.tonapps.tonkeeper.RemoteConfig
+import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.tonkeeper.core.DevSettings
-import com.tonapps.tonkeeper.core.entities.AssetsEntity.Companion.sort
+import com.tonapps.tonkeeper.core.sort
 import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.assets.AssetsManager
-import com.tonapps.tonkeeper.manager.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.NotificationEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.plugins.PluginsRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.tx.TransactionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -97,7 +98,7 @@ class WalletViewModel(
         settingsRepository.hiddenBalancesFlow,
         statusFlow,
     ) { _, hiddenBalance, status ->
-        State.Settings(hiddenBalance, api.config, status)
+        State.Settings(hiddenBalance, api.getConfig(wallet.network), status)
     }.distinctUntilChanged()
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
@@ -135,7 +136,7 @@ class WalletViewModel(
                 setStatus(Status.Default)
                 _lastLtFlow.value = event.lt
                 _domainRenewFlow.value =
-                    collectiblesRepository.getDnsSoonExpiring(wallet.accountId, wallet.testnet)
+                    collectiblesRepository.getDnsSoonExpiring(wallet.accountId, wallet.network)
             }
         }
 
@@ -179,15 +180,15 @@ class WalletViewModel(
             val localAssets = getAssets(walletCurrency, false)
             if (localAssets != null) {
                 val batteryBalance = getBatteryBalance(wallet)
-                val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.testnet)
+                val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network)
                 val state = State.Main(
                     wallet = wallet,
                     assets = localAssets,
                     hasBackup = hasBackup,
                     battery = State.Battery(
                         balance = batteryBalance,
-                        beta = api.config.batteryBeta,
-                        disabled = (api.config.flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey),
+                        beta = api.getConfig(wallet.network).batteryBeta,
+                        disabled = (api.getConfig(wallet.network).flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey),
                         viewed = settingsRepository.batteryViewed,
                     ),
                     lt = currentLt,
@@ -208,7 +209,7 @@ class WalletViewModel(
             if (isRequestUpdate) {
                 val remoteAssets = getAssets(walletCurrency, true)
                 val batteryBalance = getBatteryBalance(wallet, true)
-                val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.testnet, true)
+                val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network, true)
                 if (remoteAssets != null) {
                     val state = State.Main(
                         wallet,
@@ -216,8 +217,8 @@ class WalletViewModel(
                         hasBackup = hasBackup,
                         battery = State.Battery(
                             balance = batteryBalance,
-                            beta = api.config.batteryBeta,
-                            disabled = (api.config.flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey),
+                            beta = api.getConfig(wallet.network).batteryBeta,
+                            disabled = (api.getConfig(wallet.network).flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey),
                             viewed = settingsRepository.batteryViewed,
                         ),
                         lt = currentLt,
@@ -263,7 +264,7 @@ class WalletViewModel(
                     biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
                     hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
                     showTelegramChannel = false,
-                    safeModeBlock = !api.config.flags.safeModeEnabled && hasInitializedWallet && settingsRepository.showSafeModeSetup,
+                    safeModeBlock = !api.getConfig(wallet.network).flags.safeModeEnabled && hasInitializedWallet && settingsRepository.showSafeModeSetup,
                     onboardingStoriesEnabled = wallet.hasPrivateKey && !wallet.testnet && remoteConfig.isOnboardingStoriesEnabled,
                 )
             }
@@ -318,7 +319,7 @@ class WalletViewModel(
         viewModelScope.launch {
             val period = if (DevSettings.dnsAll) 366 else 30
             _domainRenewFlow.value =
-                collectiblesRepository.getDnsSoonExpiring(wallet.accountId, wallet.testnet, period)
+                collectiblesRepository.getDnsSoonExpiring(wallet.accountId, wallet.network, period)
         }
     }
 
@@ -372,7 +373,7 @@ class WalletViewModel(
             val battery = batteryRepository.getBalance(
                 tonProofToken = tonProofToken,
                 publicKey = wallet.publicKey,
-                testnet = wallet.testnet,
+                network = wallet.network,
                 ignoreCache = ignoreCache
             )
             battery.balance
@@ -390,7 +391,7 @@ class WalletViewModel(
                 currency = currency,
                 list = it.sort(wallet, settingsRepository),
                 fromCache = !refresh,
-                rates = ratesRepository.getTONRates(currency)
+                rates = ratesRepository.getTONRates(wallet.network, currency)
             )
         }
     }

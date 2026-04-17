@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.text.SpannableStringBuilder
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -37,8 +36,9 @@ import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
@@ -101,7 +101,7 @@ class BalanceHolder(
         }
 
         val requestBackup =
-            (item.walletType == Wallet.Type.Default || item.walletType == Wallet.Type.Lockup) && !item.hasBackup
+            (item.walletType == WalletType.Default || item.walletType == WalletType.Lockup) && !item.hasBackup
 
         if (requestBackup && item.balanceType == BalanceType.Huge) {
             balanceView.setTextColor(context.accentRedColor)
@@ -170,7 +170,7 @@ class BalanceHolder(
                 walletAddressView.setTextColor(context.textSecondaryColor)
                 walletAddressView.setOnClickListener {
                     val walletType = wallet.type
-                    if (walletType == Wallet.Type.Testnet || walletType == Wallet.Type.Watch) {
+                    if (walletType == WalletType.Testnet || walletType == WalletType.Watch) {
                         context.copyWithToast(wallet.address, getTypeColor(walletType))
                     } else {
                         context.copyWithToast(wallet.address)
@@ -183,14 +183,14 @@ class BalanceHolder(
 
     private fun setWalletAddressWithType(
         address: String,
-        type: Wallet.Type,
+        type: WalletType,
         version: WalletVersion,
         showYourAddress: Boolean,
     ) {
         var builder = SpannableStringBuilder()
 
         if (showYourAddress) {
-            val prefix = if (type == Wallet.Type.Watch) getString(Localization.address_prefix) else getString(Localization.your_address)
+            val prefix = if (type == WalletType.Watch) getString(Localization.address_prefix) else getString(Localization.your_address)
             builder.append(prefix)
             builder.append(" ")
         }
@@ -208,22 +208,23 @@ class BalanceHolder(
         }
 
         builder = when (type) {
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> builder.badgePurple(context, Localization.signer)
-            Wallet.Type.Ledger -> builder.badgeGreen(context, Localization.ledger)
-            Wallet.Type.Testnet -> builder.badgeOrange(context, Localization.testnet)
-            Wallet.Type.Watch -> builder.badgeOrange(context, Localization.watch_only)
-            Wallet.Type.Keystone -> builder.badgePurple(context, Localization.keystone)
-            Wallet.Type.Default -> builder
-            Wallet.Type.Lockup -> builder
+            WalletType.Signer, WalletType.SignerQR -> builder.badgePurple(context, Localization.signer)
+            WalletType.Ledger -> builder.badgeGreen(context, Localization.ledger)
+            WalletType.Testnet -> builder.badgeOrange(context, Localization.testnet)
+            WalletType.Watch -> builder.badgeOrange(context, Localization.watch_only)
+            WalletType.Keystone -> builder.badgePurple(context, Localization.keystone)
+            WalletType.Tetra -> builder.badgeOrange(context, Localization.tetra)
+            WalletType.Default -> builder
+            WalletType.Lockup -> builder
         }
 
         walletAddressView.text = builder
     }
 
-    private fun getTypeColor(type: Wallet.Type): Int {
+    private fun getTypeColor(type: WalletType): Int {
         return when (type) {
-            Wallet.Type.Ledger -> context.accentGreenColor
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> context.accentPurpleColor
+            WalletType.Ledger -> context.accentGreenColor
+            WalletType.Signer, WalletType.SignerQR -> context.accentPurpleColor
             else -> context.accentOrangeColor
         }
     }

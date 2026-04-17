@@ -251,7 +251,7 @@
     <string name="safe_mode_description">В этом режиме доступны только проверенные сервисы, NFT и токены. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
     <string name="safe_mode_tonconnect_title">Подключение доступно только к проверенным приложениям</string>
     <string name="safe_mode_tonconnect_description">Вы можете изменить это в настройках безопасности вашего кошелька.</string>
-    <string name="your_address">Ваш адрес:</string>
+    <string name="your_address">Ваш адрес</string>
     <string name="exchange_rate">Курс</string>
     <string name="address_prefix">Адрес:</string>
     <string name="safe_mode_tokens_footer">Безопасный режим включён. Доступны только проверенные токены. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
@@ -510,7 +510,7 @@
 
     <string name="battery">Батарейка</string>
     <string name="battery_refill_title">Батарейка Tonkeeper</string>
-    <string name="battery_refill_subtitle">Обменивайте через Tonkeeper, отправляйте токены.</string>
+    <string name="battery_refill_subtitle">Легко меняйте и отправляйте TON токены и платите меньше комиссии в TRC-20</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s заряд</item>
         <item quantity="few">%1$s заряда</item>
@@ -524,7 +524,6 @@
     <string name="battery_supported_transaction">Поддерживаемые транзакции</string>
     <string name="transactions">Транзакции</string>
     <string name="battery_settings">Настройки батарейки</string>
-    <string name="battery_will_be_paid">Будут оплачены: %1$s</string>
     <string name="battery_nft">отправка NFT</string>
     <string name="battery_swap">обмен через Tonkeeper</string>
     <string name="battery_jetton">отправка токенов</string>
@@ -574,6 +573,7 @@
     <string name="battery_small_pack">Малый</string>
     <string name="backup_alert_message">Ваш баланс составляет %1$s, и он защищен только фразой восстановления, которую вы еще не записали. Сделайте резервную копию фразы, чтобы избежать потери средств в случае проблем с устройством.</string>
     <string name="battery_disclaimer">Один заряд покрывает среднюю комиссию за транзакцию. Некоторые транзакции могут стоить дороже.</string>
+    <string name="battery_excess">%1$s вернётся</string>
     <string name="restore_purchases">Восстановить покупки</string>
     <string name="battery_refilled">Батарейка заряжена</string>
     <string name="burn">Сжечь</string>
@@ -582,6 +582,7 @@
     <string name="staking_pending_withdraw_liquid">%1$s будет выведено после окончания цикла</string>
     <string name="expired_link">Ссылка просрочена</string>
     <string name="payment_method_not_found">Способ оплаты недоступен</string>
+    <string name="no_available_provider">Нет доступных провайдеров</string>
     <string name="app_not_found">Приложение не найдено</string>
     <string name="insufficient_balance_in_wallet">Недостаточно средств на кошельке</string>
     <string name="insufficient_battery_charges">Недостаточно\nзарядов батарейки</string>
@@ -612,6 +613,8 @@
     <string name="download_error">Ошибка загрузки. Нажмите, чтобы повторить попытку.</string>
     <string name="downloading_app_update">Загрузка обновления</string>
     <string name="preparing_for_downloading">Подготовка к загрузке</string>
+    <string name="app_update_downloaded">Обновление загружено. Перезапустите приложение, чтобы установить его.</string>
+    <string name="restart">Перезапустить</string>
     <string name="notification_channel_updates_title">Обновления</string>
     <string name="notification_channel_updates_description">Отображает уведомления об обновлениях приложения.</string>
     <string name="download_completed">Загрузка завершена</string>
@@ -633,6 +636,7 @@
     <string name="sign_data_binary_message">Вы подписываетесь вслепую. Подписывайте только из проверенных источников.</string>
     <string name="slide_to_sign">Свайп чтобы подписать</string>
     <string name="tron_toggle_text">Используйте USD₮ TRC20 без TRX. Комиссии оплачиваются с помощью батарейки Tonkeeper.</string>
+    <string name="tron_toggle_trc_text">Для переводов USD₮ требуется TRX для оплаты комиссии.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Скопировать ключ</string>
     <string name="export_tron">Экспорт TRC20 кошелька</string>
@@ -660,10 +664,12 @@
     <string name="dapp_safe_modal_title">Ссылка ведет на мошеннический сервис</string>
     <string name="dapp_safe_model_button">Как оставаться в безопасности</string>
     <string name="min_amount">Мин. сумма: %1$s</string>
+    <string name="min_amount_label">Мин. сумма</string>
     <string name="stake_ethena_description">Токен tsUSDe представляет собой USDe, хранящиеся через Ethena, децентрализованный сервис ставок. tsUSDe автоматически накапливает вознаграждения за ставки с минимальной блокировкой.</string>
     <string name="support_title">Нужна помощь?</string>
-    <string name="support_subtitle">Задайте свой вопрос в нашем боте в Telegram — поможем разобраться.</string>
-    <string name="ask_question">Задать вопрос</string>
+    <string name="support_subtitle">Задайте свой вопрос через Telegram или почту — поможем разобраться</string>
+    <string name="ask_question">Спросить в Telegram</string>
+    <string name="email_us">Отправить письмо</string>
     <string name="dns_onsale_error_title">Домен сейчас продается на торговой площадке</string>
     <string name="dns_onsale_error_desc">Для продления домена вам необходимо сначала снять его с продажи.</string>
     <string name="choose_token">Выберите токен</string>
@@ -678,6 +684,7 @@
     <string name="about_ethena">Подробнее об Ethena</string>
     <string name="swap_disclaimer">Сервис предоставлен %1$s\n%2$s · %3$s</string>
     <string name="terms_of_use">Условия</string>
+    <string name="start_agree">Продолжая, вы соглашаетесь с <annotation colorAttr="textAccentColor">Условиями использования</annotation></string>
     <string name="privacy_policy">Политика</string>
     <string name="invalid_address">Неверный адрес кошелька.</string>
     <string name="scam_address_error">Переводы на этот адрес не поддерживаются.</string>
@@ -702,4 +709,110 @@
         <item quantity="many">Подписки могут продолжать списывать средства с кошелька. Отключите, чтобы избежать дальнейших платежей.</item>
         <item quantity="other">Подписки могут продолжать списывать средства с кошелька. Отключите, чтобы избежать дальнейших платежей.</item>
     </plurals>
+    <string name="no_enough_funds">Недостаточно</string>
+    <string name="refill">Пополнить</string>
+    <string name="get_token">Получить %1$s</string>
+    <string name="insufficient_trx_balance">Недостаточно средств для оплаты комиссии за транзакцию</string>
+    <string name="insufficient_trx_balance_desc">Выберите способ оплаты комиссии и пополните баланс.</string>
+    <string name="tron_not_enough_for_fee_title">Недостаточно средств для оплаты комиссии</string>
+    <string name="tron_not_enough_for_fee_desc">Пополните батарейку, TON или TRX баланс, чтобы оплатить комиссию.</string>
+    <string name="top_up">Пополнить</string>
+    <string name="tron_not_enough_trx_for_fee_title">Недостаточно TRX для оплаты комиссии</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Необходимо для комиссий блокчейна ≈ %1$s\nВаш баланс: %2$s</string>
+    <plurals name="transfers_available">
+        <item quantity="one">Доступен %1$s перевод</item>
+        <item quantity="few">Доступно %1$s перевода</item>
+        <item quantity="many">Доступно %1$s переводов</item>
+        <item quantity="other">Доступно %1$s переводов</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s перевод</item>
+        <item quantity="few">%1$s перевода</item>
+        <item quantity="many">%1$s переводов</item>
+        <item quantity="other">%1$s переводов</item>
+    </plurals>
+    <string name="trx_balance">Баланс TRX</string>
+    <string name="trx_balance_desc">Пополните баланс для оплаты комиссии сети.</string>
+    <string name="blockchain_fees">Комиссии сети</string>
+    <string name="blockchain_fees_desc">Батарейка Tonkeeper — самый простой способ оплаты комиссий сети. Также можно пополнить баланс напрямую TON или TRX.</string>
+    <string name="required_prefix">Требуется: %1$s</string>
+    <string name="tron_fees_learn_more">Размер комиссии динамический и зависит от рынка. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
+    <string name="tetra_subtitle">Подключить сеть Tetra L2</string>
+    <string name="other_options">Другие варианты</string>
+    <string name="for_developers">Для разработчиков</string>
+
+    <string name="more">Ещё</string>
+    <string name="retry">Повторить</string>
+    <string name="operation">Операция</string>
+    <string name="description">Описание</string>
+    <string name="protocol">Протокол</string>
+    <string name="cant_find_anything">Ничего не найдено.</string>
+
+    <string name="deposit_from_another_wallet">Из другого TON/TRON кошелька</string>
+    <string name="deposit_send">Отправить %s</string>
+    <string name="deposit_address">Адрес %s</string>
+    <string name="deposit_to_another_wallet">На другой кошелёк</string>
+    <string name="deposit_with_cash_or_crypto">Пополнить наличными или криптой</string>
+    <string name="withdraw_with_cash_or_crypto">Вывести наличными или криптой</string>
+    <string name="deposit_available_cash_out">Доступно из другой крипты</string>
+    <string name="deposit_available_cross_chain">Доступно 1:1 кросс-чейн</string>
+    <string name="deposit_insert_amount">Введите сумму</string>
+    <string name="deposit_buy_with_cash">Купить за наличные</string>
+    <string name="deposit_buy_with_crypto">Купить за крипту</string>
+    <string name="deposit_buy_with_stablecoins">Купить за стейблкоины</string>
+    <string name="ramp_sell_with_cash">Продать за наличные</string>
+    <string name="ramp_sell_with_crypto">Продать за крипту</string>
+    <string name="ramp_sell_with_stablecoins">Продать за стейблкоины</string>
+    <string name="ramp_stablecoins_convertion">"Будет конвертировано в USDT в сети TON по курсу 1:1</string>
+    <string name="ramp_crypto_swap_info">Ваша криптовалюта будет обменена на TON по текущему курсу.</string>
+    <string name="ramp_stablecoin_buy_info">Ваш стейблкоин будет зачислен как %1$s в сети %2$s по курсу 1:1.</string>
+    <string name="ramp_stablecoin_sell_info">Вывод USDT в другие стейблкоины. За каждую сеть взимается фиксированная комиссия.</string>
+    <string name="ramp_total_amount">Общая сумма</string>
+    <string name="ramp_estimated_time">Ориент. время прибытия</string>
+    <string name="ramp_withdrawal_time">Время вывода</string>
+    <string name="ramp_withdrawal_fee">Комиссия за вывод</string>
+    <string name="deposit_network_warning">Убедитесь, что выбрана правильная сеть, иначе вы рискуете потерять средства.</string>
+    <string name="deposit_go_to_main">На главную</string>
+    <string name="deposit_payment_qr_code">QR-код для оплаты</string>
+    <string name="deposit_scan_qr_description">Отсканируйте QR-код или скопируйте адрес для завершения оплаты.</string>
+    <string name="deposit_min_amount_with_currency">Мин. сумма: %1$s %2$s</string>
+    <string name="deposit_max_amount_with_currency">Макс. сумма: %1$s %2$s</string>
+    <string name="deposit_other_providers_hint">Другие провайдеры доступны для различных валютных пар.</string>
+    <string name="deposit_changelly_disclaimer">Сторонний сервис предоставлен Changelly. Используя этот сервис, вы соглашаетесь с %s.</string>
+    <string name="deposit_address_warning_prefix">Этот\u0020</string>
+    <string name="deposit_address_warning_highlight">адрес можно использовать только один раз</string>
+    <string name="deposit_address_warning_suffix">. Проверьте лимиты депозита и сеть, чтобы не потерять средства.</string>
+
+    <string name="terms_of_service">Условия использования</string>
+    <string name="receive_tokens">Получить токены</string>
+    <string name="send_tokens">Отправить токены</string>
+    <string name="withdraw">Вывести</string>
+    <string name="deposit">Пополнить</string>
+    <string name="choose_network">Выберите сеть</string>
+    <string name="copy_address">Копировать адрес</string>
+    <string name="choose_currency">Выберите валюту</string>
+    <string name="send_currency">Отправить %s</string>
+    <string name="receive_currency">Получить %s</string>
+    <string name="min_deposit">Мин. депозит</string>
+    <string name="max_deposit">Макс. депозит</string>
+    <string name="max_amount">Макс. сумма: %s</string>
+    <string name="max_amount_label">Макс. сумма</string>
+    <string name="available">Доступно: %s</string>
+    <string name="network">Сеть</string>
+
+    <string name="added_extension">Расширение добавлено</string>
+    <string name="removed_extension">Расширение удалено</string>
+    <string name="signature_allowed">Подпись разрешена</string>
+    <string name="signature_not_allowed">Подпись не разрешена</string>
+    <string name="up_to_duration">До %1$s %2$s</string>
+    <string name="time_seconds">сек</string>
+    <string name="time_minutes">мин</string>
+    <string name="deposit_select_network_description">Выводите %s в поддерживаемые сети в любое время через раздел «Вывод».</string>
+    <string name="choose_network_error">Выберите сеть %s</string>
+    <string name="choose_asset">Выберите актив</string>
+    <string name="add_funds">Пополнить</string>
+    <string name="tooltip_new">НОВОЕ</string>
+    <string name="tooltip_send_from_here">Отправить отсюда</string>
+    <string name="trade">Трейдинг</string>
+    <string name="search_by_ticker">Поиск по тикеру или названию</string>
 </resources>

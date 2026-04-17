@@ -14,7 +14,6 @@ import com.tonapps.uikit.color.iconTertiaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.Wallet
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 

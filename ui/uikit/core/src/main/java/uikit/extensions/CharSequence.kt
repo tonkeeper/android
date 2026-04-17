@@ -3,7 +3,7 @@ package uikit.extensions
 import android.content.Context
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
-import android.util.Log
+import com.tonapps.log.L
 
 fun CharSequence.processAnnotation(context: Context): SpannableString {
     val spannableString = this as? SpannableString ?: SpannableString(this)

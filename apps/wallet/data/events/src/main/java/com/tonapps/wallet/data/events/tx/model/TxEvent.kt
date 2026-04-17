@@ -1,8 +1,8 @@
 package com.tonapps.wallet.data.events.tx.model
 
 import android.os.Parcelable
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.data.events.ActionType
 import kotlinx.parcelize.IgnoredOnParcel

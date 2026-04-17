@@ -3,9 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.ledger.proof
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.extensions.toByteArray
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.ui.screen.ledger.sign.LedgerSignScreen.Companion.SIGNED_MESSAGE
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionType
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel

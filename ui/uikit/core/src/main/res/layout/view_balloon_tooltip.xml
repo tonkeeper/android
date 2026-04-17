@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="start"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_tooltip_bubble"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tooltip_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_tooltip_badge"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="2dp"
+            android:textAppearance="@style/TextAppearance.Body4CAPS"
+            android:textColor="?attr/accentBlueColor"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tooltip_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textAppearance="@style/TextAppearance.Label2"
+            android:textColor="?attr/textPrimaryColor" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <ImageView
+        android:id="@+id/tooltip_arrow"
+        android:layout_width="16dp"
+        android:layout_height="8dp"
+        android:layout_marginStart="24dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_tooltip_arrow_down" />
+
+</LinearLayout>

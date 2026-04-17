@@ -1,18 +1,18 @@
 package com.tonapps.security.vault
 
 import android.annotation.SuppressLint
-import android.content.SharedPreferences
-import com.tonapps.extensions.getByteArray
 import com.tonapps.extensions.putByteArray
-import com.tonapps.security.spec.SimpleSecretSpec
+import com.tonapps.security.KeyHelperException
 import com.tonapps.security.Security
+import com.tonapps.security.SecurityStorageBox
 import com.tonapps.security.clear
 import com.tonapps.security.safeDestroy
+import com.tonapps.security.spec.SimpleSecretSpec
 import java.security.MessageDigest
 import javax.crypto.SecretKey
 
 internal class PasswordKey(
-    private val prefs: SharedPreferences,
+    private val prefs: SecurityStorageBox,
 ) {
 
     companion object {
@@ -96,11 +96,17 @@ internal class PasswordKey(
 
     @SuppressLint("ApplySharedPref")
     internal fun setSaltAndVerification(salt: ByteArray, verification: ByteArray) {
-        prefs.edit()
-            .putByteArray(SALT_KEY, salt)
-            .putByteArray(VERIFICATION_KEY, verification)
-            .commit()
+        try {
+            val saved = prefs.transaction {
+                putByteArray(SALT_KEY, salt)
+                putByteArray(VERIFICATION_KEY, verification)
+            }
 
-        clear(salt, verification)
+            if (!saved) {
+                throw KeyHelperException.Save("failed to save salt and verification")
+            }
+        } finally {
+            clear(salt, verification)
+        }
     }
 }

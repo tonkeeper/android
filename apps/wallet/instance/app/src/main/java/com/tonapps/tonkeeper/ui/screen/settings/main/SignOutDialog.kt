@@ -8,8 +8,7 @@ import com.tonapps.tonkeeper.extensions.getStringCompat
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation.Companion.navigation

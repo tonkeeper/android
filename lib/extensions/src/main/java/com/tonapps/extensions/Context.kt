@@ -1,22 +1,17 @@
 package com.tonapps.extensions
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.LocaleList
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
+import com.tonapps.log.L
 import uikit.extensions.activity
 import java.io.File
 import java.util.Locale
@@ -59,6 +54,10 @@ fun Context.raw(@RawRes id: Int): ByteArray {
     return resources.openRawResource(id).readBytes()
 }
 
+fun Context.cacheSharedFolder(name: String): File {
+    return cacheDir.folder("shared/$name")
+}
+
 fun Context.rawText(@RawRes id: Int): String {
     return raw(id).toString(Charsets.UTF_8)
 }
@@ -93,5 +92,5 @@ fun Context.logError(e: Throwable) {
     if (e is CancellationException) {
         return
     }
-    Log.e("TonkeeperLog", e.message, e)
+    L.e(e, e.message.orEmpty())
 }

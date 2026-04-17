@@ -1,7 +1,6 @@
 package com.tonapps.signer
 
 import android.app.Application
-import android.content.Intent
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.camera.camera2.Camera2Config
@@ -11,7 +10,7 @@ import com.tonapps.signer.screen.crash.CrashActivity
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
-class App: Application(), CameraXConfig.Provider {
+class App : Application(), CameraXConfig.Provider {
 
     companion object {
         lateinit var instance: App
@@ -25,7 +24,7 @@ class App: Application(), CameraXConfig.Provider {
         }
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        startKoin{
+        startKoin {
             androidContext(this@App)
             modules(koinModel)
         }

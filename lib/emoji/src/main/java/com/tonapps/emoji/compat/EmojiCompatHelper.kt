@@ -1,6 +1,5 @@
 package com.tonapps.emoji.compat
 
-import android.os.Build
 import android.text.TextPaint
 import androidx.core.graphics.PaintCompat
 import androidx.core.os.CancellationSignal
@@ -51,9 +50,6 @@ internal object EmojiCompatHelper {
     }
 
     private fun getClosest(emoji: String): String? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            return emoji.replace(VARIATION_SELECTOR, "").takeIfHasGlyph()
-        }
         return emoji.takeIfHasGlyph() ?: run {
             if (CATEGORY_MOVED_EMOJIS.contains(emoji)) {
                 emoji.replace(VARIATION_SELECTOR, "").takeIfHasGlyph()

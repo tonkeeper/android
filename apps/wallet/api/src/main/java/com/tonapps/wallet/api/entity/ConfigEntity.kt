@@ -2,14 +2,13 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
+import androidx.core.net.toUri
 import com.tonapps.extensions.toStringList
 import com.tonapps.icu.Coins
+import com.tonapps.wallet.api.Constants
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject
-import androidx.core.net.toUri
-import com.tonapps.wallet.api.Constants
 
 @Parcelize
 data class ConfigEntity(
@@ -47,6 +46,8 @@ data class ConfigEntity(
     val stakingInfoUrl: String,
     val tonapiSSEEndpoint: String,
     val tonapiSSETestnetEndpoint: String,
+    val toncenterSSEEndpoint: String,
+    val toncenterSSETestnetEndpoint: String,
     val iapPackages: List<IAPPackageEntity>,
     val burnZeroDomain: String,
     val scamAPIURL: String,
@@ -65,6 +66,7 @@ data class ConfigEntity(
     val privacyPolicyUrl: String,
     val termsOfUseUrl: String,
     val webSwapsUrl: String,
+    val tronFeeFaqUrl: String,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -73,7 +75,7 @@ data class ConfigEntity(
 
     @IgnoredOnParcel
     val domains: List<String> by lazy {
-        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, tonConnectBridgeHost, "https://tonapi.io/")
+        listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, tonConnectBridgeHost, "https://tonapi.io/", "https://toncenterproxy.tonapi.io/")
     }
 
     @IgnoredOnParcel
@@ -120,8 +122,10 @@ data class ConfigEntity(
         batteryRefundEndpoint = json.optString("batteryRefundEndpoint", "https://battery-refund-app.vercel.app"),
         batteryPromoDisable = json.optBoolean("disable_battery_promo_module", true),
         stakingInfoUrl = json.getString("stakingInfoUrl"),
-        tonapiSSEEndpoint = json.optString("tonapi_sse_endpoint", "https://rt.tonapi.io"),
-        tonapiSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint", "https://rt-testnet.tonapi.io"),
+        tonapiSSEEndpoint = json.optString("tonapi_sse_endpoint", "https://rt.tonapi.io").removeSuffix("/"),
+        tonapiSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint", "https://rt-testnet.tonapi.io").removeSuffix("/"),
+        toncenterSSEEndpoint = json.optString("tonapi_sse_endpoint_v2", "https://tonapi.io").removeSuffix("/"),
+        toncenterSSETestnetEndpoint = json.optString("tonapi_sse_testnet_endpoint_v2", "https://testnet.tonapi.io").removeSuffix("/"),
         iapPackages = json.optJSONArray("iap_packages")?.let { array ->
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
         } ?: emptyList(),
@@ -145,7 +149,8 @@ data class ConfigEntity(
         // tronApiKey = json.optString("tron_api_key"),
         privacyPolicyUrl = json.getString("privacy_policy"),
         termsOfUseUrl = json.getString("terms_of_use"),
-        webSwapsUrl = json.optString("web_swaps_url", Constants.SWAP_PREFIX)
+        webSwapsUrl = json.optString("web_swaps_url", Constants.SWAP_API),
+        tronFeeFaqUrl = json.getString("faq_tron_fee_url"),
     )
 
     constructor() : this(
@@ -164,7 +169,7 @@ data class ConfigEntity(
         tonkeeperNewsUrl = "https://t.me/tonkeeper_new",
         tonCommunityUrl = "https://t.me/toncoin",
         tonCommunityChatUrl = "https://t.me/toncoin_chat",
-        tonApiV2Key = "",
+        tonApiV2Key = "AF77F5JNEUSNXPQAAAAMDXXG7RBQ3IRP6PC2HTHL4KYRWMZYOUQGDEKYFDKBETZ6FDVZJBI",
         featuredPlayInterval = 3000,
         flags = FlagsEntity(),
         faqUrl = "https://tonkeeper.helpscoutdocs.com/",
@@ -183,6 +188,8 @@ data class ConfigEntity(
         stakingInfoUrl = "https://ton.org/stake",
         tonapiSSEEndpoint = "https://rt.tonapi.io",
         tonapiSSETestnetEndpoint = "https://rt-testnet.tonapi.io",
+        toncenterSSEEndpoint = "https://tonapi.io/streaming/v2/sse",
+        toncenterSSETestnetEndpoint = "https://testnet.tonapi.io/streaming/v2/sse",
         iapPackages = emptyList(),
         burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
         scamAPIURL = "https://scam.tonkeeper.com",
@@ -199,7 +206,8 @@ data class ConfigEntity(
         tronSwapTitle = "LetsExchange",
         privacyPolicyUrl = "https://tonkeeper.com/privacy",
         termsOfUseUrl = "https://tonkeeper.com/terms",
-        webSwapsUrl = Constants.SWAP_PREFIX
+        webSwapsUrl = Constants.SWAP_API,
+        tronFeeFaqUrl = "https://tonkeeper.helpscoutdocs.com/article/137-multichain"
     )
 
     fun formatTransactionExplorer(testnet: Boolean, tron: Boolean, hash: String): String {

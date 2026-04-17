@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.extensions
 
 import android.annotation.SuppressLint
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.widget.webview.WebViewFixed
 
 @SuppressLint("RequiresFeature")

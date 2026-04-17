@@ -128,7 +128,7 @@ internal fun rememberAppTypography(
                 fontSize = 14.sp,
                 fontFamily = montserrat,
                 fontWeight = FontWeight.Medium,
-                lineHeight = TextStyle.Default.lineHeight,
+                lineHeight = 20.sp,
                 letterSpacing = TextStyle.Default.letterSpacing
             ),
             body3 = TextStyle(
@@ -148,10 +148,10 @@ internal fun rememberAppTypography(
             mono = TextStyle(
                 fontSize = 16.sp,
                 fontFamily = mono,
-                fontWeight = FontWeight.Normal,
-                lineHeight = 20.sp,
+                fontWeight = FontWeight.Medium,
+                lineHeight = 24.sp,
                 letterSpacing = 0.5.sp
-            )
+            ),
         )
     }
 }

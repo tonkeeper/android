@@ -6,7 +6,7 @@ import android.bluetooth.BluetoothGattDescriptor
 import com.tonapps.ledger.ble.extension.fromHexStringToBytes
 import com.tonapps.ledger.ble.model.BleDeviceService
 import kotlinx.coroutines.CoroutineScope
-import timber.log.Timber
+import com.tonapps.log.L
 
 @SuppressLint("MissingPermission")
 class GattInteractor(val gatt: BluetoothGatt) {
@@ -16,12 +16,12 @@ class GattInteractor(val gatt: BluetoothGatt) {
     }
 
     fun discoverService(){
-        Timber.d("Try discover services")
+        L.d("Try discover services")
         gatt.discoverServices()
     }
 
     fun enableNotification(deviceService: BleDeviceService) {
-        Timber.d("Enable Notification")
+        L.d("Enable Notification")
         gatt.setCharacteristicNotification(deviceService.notifyCharacteristic, true)
         deviceService.notifyCharacteristic.descriptors.forEach {
             it.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
@@ -30,12 +30,12 @@ class GattInteractor(val gatt: BluetoothGatt) {
     }
 
     fun negotiateMtu() {
-        Timber.d("Megociate MTU")
+        L.d("Megociate MTU")
         gatt.requestMtu(MAX_MTU_VALUE)
     }
 
     fun askMtu(deviceService: BleDeviceService) {
-        Timber.d("Ask MTU size")
+        L.d("Ask MTU size")
         deviceService.writeCharacteristic.value = BleService.MTU_HANDSHAKE_COMMAND.fromHexStringToBytes()
         gatt.writeCharacteristic(deviceService.writeCharacteristic)
     }

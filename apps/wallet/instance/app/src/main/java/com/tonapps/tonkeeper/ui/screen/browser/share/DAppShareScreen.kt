@@ -4,14 +4,14 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.core.net.toUri
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.tonkeeper.deeplink.DeepLinkBuilder
 import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel

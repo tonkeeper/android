@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.picker.currency
 
 import android.os.Bundle
 import com.tonapps.extensions.getParcelableCompat
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import uikit.base.BaseArgs
 
 class OnRampPickerArgs(

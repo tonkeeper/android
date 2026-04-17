@@ -1,19 +1,21 @@
 package com.tonapps.wallet.api
 
 import android.os.SystemClock
-import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.log.L
 import com.tonapps.network.OkHttpError
+import com.tonapps.network.backoff.ExponentialBackoff
 import io.infrastructure.ClientError
 import io.infrastructure.ClientException
 import io.infrastructure.ServerError
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
+import okhttp3.Response
 import java.net.SocketTimeoutException
 
 fun <R> withRetry(
     times: Int = 5,
-    delay: Long = 500,
+    backoff: ExponentialBackoff = ExponentialBackoff(),
     retryBlock: () -> R
 ): R? {
     var index = -1
@@ -24,27 +26,28 @@ fun <R> withRetry(
         } catch (e: CancellationException) {
             throw e
         } catch (e: SocketTimeoutException) {
-            Log.e("RetryLogNew", "SocketTimeoutException occurred: ${e.message}", e)
-            SystemClock.sleep(delay + 100)
+            L.e("RetryLogNew", "SocketTimeoutException occurred: ${e.message}", e)
             return null
         } catch (e: IOException) {
-            Log.e("RetryLogNew", "IOException occurred: ${e.message}", e)
-            SystemClock.sleep(delay + 100)
+            L.e("RetryLogNew", "IOException occurred: ${e.message}", e)
             return null
         } catch (e: Throwable) {
-            Log.e("RetryLogNew", "Error occurred: ${e.message}", e)
+            L.e("RetryLogNew", "Error occurred: ${e.message}", e)
             val statusCode = e.getHttpStatusCode()
+
             if (statusCode == 429 || statusCode == 401 || statusCode == 502 || statusCode == 520) {
-                SystemClock.sleep(delay + 100)
+                SystemClock.sleep(backoff.getDelayMs(index))
                 continue
             }
+
             if (statusCode >= 500 || statusCode == 404 || statusCode == 400) {
                 return null
             }
+
             FirebaseCrashlytics.getInstance().recordException(e)
         }
-
     } while (index < times)
+
     return null
 }
 
@@ -62,6 +65,10 @@ fun Throwable.getDebugMessage(): String? {
         is OkHttpError -> body
         else -> message
     }
+}
+
+fun Response.readBody(): String {
+    return use { body.string() }
 }
 
 private fun ClientException.getHttpBodyMessage(): String {

@@ -1,19 +1,18 @@
 package com.tonapps.tonkeeper.ui.screen.collectibles.main
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.flattenFirst
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.with
-import com.tonapps.tonkeeper.manager.tx.TransactionManager
+import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.UiListState
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.list.Item
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -49,7 +48,7 @@ class CollectiblesViewModel(
     private val expiringDomainsFlow = flow {
         emit(collectiblesRepository.getDnsSoonExpiring(
             accountId = wallet.accountId,
-            testnet = wallet.testnet
+            network = wallet.network
         ).associateBy { it.addressRaw })
     }
 
@@ -97,9 +96,9 @@ class CollectiblesViewModel(
         hiddenBalances: Boolean,
         isOnline: Boolean,
         expiringDomains: Map<String, DnsExpiringEntity>
-    ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.testnet, isOnline).map { result ->
+    ): Flow<UiListState> = collectiblesRepository.getFlow(wallet.address, wallet.network, isOnline).map { result ->
         hasNfts = result.list.isNotEmpty()
-        val safeMode = settingsRepository.isSafeModeEnabled(api)
+        val safeMode = settingsRepository.isSafeModeEnabled(wallet.network)
         val uiItems = mutableListOf<Item>()
         for (nft in result.list) {
             if (safeMode && !nft.verified) {

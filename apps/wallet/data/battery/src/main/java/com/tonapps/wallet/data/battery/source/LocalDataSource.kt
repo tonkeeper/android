@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.battery.source
 
 import android.content.Context
 import androidx.core.content.edit
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.prefs
 import com.tonapps.security.Security
@@ -23,43 +24,42 @@ internal class LocalDataSource(
 
     private val prefs = context.prefs(NAME)
 
-    fun setConfig(testnet: Boolean, entity: BatteryConfigEntity) {
-        configStore.setCache(configCacheKey(testnet), entity)
+    fun setConfig(network: TonNetwork, entity: BatteryConfigEntity) {
+        configStore.setCache(configCacheKey(network), entity)
     }
 
-    fun getConfig(testnet: Boolean): BatteryConfigEntity? {
-        return configStore.getCache(configCacheKey(testnet))
+    fun getConfig(network: TonNetwork): BatteryConfigEntity? {
+        return configStore.getCache(configCacheKey(network))
     }
 
-    private fun configCacheKey(testnet: Boolean): String {
-        return if (testnet) "testnet" else "mainnet"
+    private fun configCacheKey(network: TonNetwork): String {
+        return network.name.lowercase()
     }
 
-    fun setBalance(publicKey: PublicKeyEd25519, testnet: Boolean, entity: BatteryBalanceEntity) {
-        balance.setCache(balanceCacheKey(publicKey, testnet), entity)
+    fun setBalance(publicKey: PublicKeyEd25519, network: TonNetwork, entity: BatteryBalanceEntity) {
+        balance.setCache(balanceCacheKey(publicKey, network), entity)
     }
 
-    fun getBalance(publicKey: PublicKeyEd25519, testnet: Boolean): BatteryBalanceEntity? {
-        return balance.getCache(balanceCacheKey(publicKey, testnet))
+    fun getBalance(publicKey: PublicKeyEd25519, network: TonNetwork): BatteryBalanceEntity? {
+        return balance.getCache(balanceCacheKey(publicKey, network))
     }
 
-    private fun balanceCacheKey(publicKey: PublicKeyEd25519, testnet: Boolean): String {
-        val prefix = if (testnet) "testnet" else "mainnet"
-        return "$prefix:${publicKey.hex()}"
+    private fun balanceCacheKey(publicKey: PublicKeyEd25519, network: TonNetwork): String {
+        return "${network.name.lowercase()}:${publicKey.hex()}"
     }
 
-    fun getAppliedPromo(testnet: Boolean): String? {
-        return prefs.getString(promoKey(testnet), null)
+    fun getAppliedPromo(network: TonNetwork): String? {
+        return prefs.getString(promoKey(network), null)
     }
 
-    fun setAppliedPromo(testnet: Boolean, promo: String?) {
+    fun setAppliedPromo(network: TonNetwork, promo: String?) {
         prefs.edit {
-            putString(promoKey(testnet), promo)
+            putString(promoKey(network), promo)
         }
     }
 
-    private fun promoKey(testnet: Boolean): String {
-        return "promo_${if (testnet) "testnet" else "mainnet"}"
+    private fun promoKey(network: TonNetwork): String {
+        return "promo_${network.name.lowercase()}"
     }
 }
 

@@ -1,12 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history.state
 
 import android.content.Context
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.tx.model.TxAction
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.localization.Localization
-import ui.components.filter.UiFilter
+import ui.components.moon.MoonItem
 
 enum class TxFilter(
     val id: Int,
@@ -20,7 +19,7 @@ enum class TxFilter(
 
 internal val supportedTxFilters = arrayOf(TxFilter.All, TxFilter.Send, TxFilter.Received, TxFilter.Spam)
 
-fun TxFilter.toUi(context: Context) = UiFilter(
+fun TxFilter.toUi(context: Context) = MoonItem(
     id = id,
     title = context.getString(titleResId)
 )

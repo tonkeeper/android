@@ -1,14 +1,14 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.ur.UR
 import com.tonapps.ur.registry.CryptoKeypath
 import com.tonapps.ur.registry.TonSignRequest
 import com.tonapps.ur.registry.pathcomponent.IndexPathComponent
 import com.tonapps.ur.registry.pathcomponent.PathComponent
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.ton.crypto.hex
 import uikit.base.BaseArgs
 

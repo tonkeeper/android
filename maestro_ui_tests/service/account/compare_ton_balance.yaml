@@ -1,0 +1,22 @@
+appId: com.ton_keeper.debug
+---
+- runScript: ../../scripts/utils/formatter.js
+
+- runFlow:
+    when:
+      true: ${need_first_screen == true}
+    commands:
+      - launchApp
+
+- tapOn: Receive
+- runFlow: ../../steps/recieve_modal/get_address.yaml
+- back
+- runScript:
+    file: ../../scripts/api/v2/accounts/getAddressInfo.js
+    env:
+      addr: ${maestro.copiedText}
+      auth_token: ${auth}
+
+- evalScript: ${output.screenTonValue = output.formatter.formatTon(output.balance)}
+
+- assertVisible: ${output.screenTonValue}

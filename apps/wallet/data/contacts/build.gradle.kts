@@ -1,15 +1,14 @@
 plugins {
-    id("com.tonapps.wallet.data")
+    id("target.android.library")
     id("kotlin-parcelize")
 }
 
-android {
-    namespace = Build.namespacePrefix("wallet.data.contacts")
-}
-
 dependencies {
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.sqlite))
-    implementation(project(ProjectModules.Wallet.Data.rn))
+    implementation(libs.koin.core)
+
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.sqlite)
+    implementation(projects.apps.wallet.data.rn)
 }

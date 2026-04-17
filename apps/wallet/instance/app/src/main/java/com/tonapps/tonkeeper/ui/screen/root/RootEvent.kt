@@ -1,18 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.core.deeplink.DeepLink
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.LedgerConnectData
-import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
-import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
-import com.tonapps.wallet.api.entity.StoryEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
 import org.ton.api.pub.PublicKeyEd25519
-import org.ton.block.StateInit
 import org.ton.cell.Cell
-import org.ton.tlb.CellRef
 
 sealed class RootEvent {
     data class OpenTab(
@@ -49,6 +44,7 @@ sealed class RootEvent {
         val bin: Cell?,
         val initStateBase64: String?,
         val validUnit: Long?,
+        val source: DeepLink.Source,
     ): RootEvent()
 
     data object CloseCurrentTonConnect: RootEvent()
@@ -58,4 +54,6 @@ sealed class RootEvent {
         val url: Uri,
         val source: String
     ): RootEvent()
+
+    data object CheckGooglePlayUpdate: RootEvent()
 }

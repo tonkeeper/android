@@ -412,7 +412,7 @@
     <string name="testers_chat">Reportar error (chat en Telegram)</string>
     <string name="battery">Batería</string>
     <string name="battery_refill_title">Batería de Tonkeeper</string>
-    <string name="battery_refill_subtitle">Intercambia a través de Tonkeeper, envía tokens y NFTs.</string>
+    <string name="battery_refill_subtitle">Intercambia y envía tokens TON y paga menos en comisiones TRC-20</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s carga</item>
         <item quantity="other">%1$s cargas</item>
@@ -423,7 +423,6 @@
     <string name="battery_supported_transaction">Transacciones soportadas</string>
     <string name="transactions">Actas</string>
     <string name="battery_settings">Configuración de la batería</string>
-    <string name="battery_will_be_paid">Se pagará: %1$s</string>
     <string name="battery_nft">Transferencias de NFT</string>
     <string name="battery_swap">intercambios a través de Tonkeeper</string>
     <string name="battery_jetton">transferencias de tokens</string>
@@ -441,6 +440,7 @@
     <string name="battery_other_title">Otro</string>
     <string name="battery_other_subtitle">Introduzca el importe manualmente</string>
     <string name="battery_max_input_amount">La cantidad máxima de entrada es %1$s</string>
+    <string name="battery_excess">%1$s reembolso</string>
     <string name="battery_please_wait">La batería se cargará en unos minutos.</string>
     <string name="battery_refund_title">Historial de carga</string>
     <string name="battery_refund_subtitle">Recargas y reembolsos</string>
@@ -474,6 +474,7 @@
     <string name="staking_pending_withdraw_liquid">%1$s no se han apostado después del final del ciclo</string>
     <string name="expired_link">Enlace caducado</string>
     <string name="payment_method_not_found">Método de pago no disponible</string>
+    <string name="no_available_provider">No hay proveedores disponibles</string>
     <string name="app_not_found">Aplicación no encontrada</string>
     <string name="insufficient_balance_in_wallet">Fondos insuficientes en la billetera</string>
     <string name="insufficient_balance_fees">Requerido para las tarifas de blockchain: %1$s.\nSu saldo: %2$s.</string>
@@ -515,7 +516,7 @@
     <string name="tx_marked_as_spam">Transacción marcada como Spam</string>
     <string name="exchange_rate">Tipo de cambio</string>
     <string name="address_prefix">DIRECCIÓN:</string>
-    <string name="your_address">Su dirección:</string>
+    <string name="your_address">Su dirección</string>
     <string name="safe_mode_tokens_footer">El modo seguro está habilitado. Solo están disponibles los tokens verificados. <annotation colorAttr="textAccentColor">Configuración</annotation></string>
     <string name="all">Todo</string>
     <string name="report_encrypted_comment">El comentario de esta transacción se enviará con el informe en forma descifrada.</string>
@@ -555,6 +556,7 @@
     <string name="open_explorer">Abrir en el explorador</string>
     <string name="out_of_available_charges">agotado de %1$s</string>
     <string name="tron_toggle_text">Usa USD₮ TRC20 sin TRX. Las tarifas son cubiertas por Tonkeeper Battery.</string>
+    <string name="tron_toggle_trc_text">Las transferencias de USD₮ requieren TRX para pagar las comisiones de red.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Copiar frase</string>
     <string name="export_tron">Exportar billetera TRC20</string>
@@ -586,10 +588,12 @@
     <string name="currency_not_found">Moneda no encontrada</string>
     <string name="onrmap_provider_description">Otros proveedores disponibles para diferentes pares de divisas.</string>
     <string name="min_amount">Importe mínimo: %1$s</string>
+    <string name="min_amount_label">Monto mín.</string>
     <string name="stake_ethena_description">El token tsUSDe representa USDe mantenido a través de Ethena, un servicio de staking descentralizado. tsUSDe acumula automáticamente recompensas de staking, con un bloqueo mínimo.</string>
     <string name="support_title">¿Necesitas ayuda?</string>
-    <string name="support_subtitle">Pregúntanos en Telegram — haremos todo lo posible por ayudarte.</string>
-    <string name="ask_question">Hacer una pregunta</string>
+    <string name="support_subtitle">Escríbenos por Telegram o correo electrónico — haremos todo lo posible por ayudarte.</string>
+    <string name="ask_question">Preguntar en Telegram</string>
+    <string name="email_us">Contactar por correo</string>
     <string name="renew_dns_title">Dominios que expiran</string>
     <string name="renew_dns_expires">Caduca en %1$d días</string>
     <string name="wallet_renew_dns">Tienes %1$d dominios a punto de expirar. Renueva todos hasta %2$s.</string>
@@ -610,6 +614,7 @@
     <string name="about_ethena">Acerca de Ethena</string>
     <string name="swap_disclaimer">Servicio proporcionado por %1$s\n%2$s · %3$s</string>
     <string name="terms_of_use">Condiciones de uso</string>
+    <string name="start_agree">Al continuar, aceptas nuestras <annotation colorAttr="textAccentColor">Condiciones de uso</annotation></string>
     <string name="privacy_policy">Política de privacidad</string>
     <string name="invalid_address">Dirección de billetera no válida.</string>
     <string name="scam_address_error">Las transferencias a esta dirección no están permitidas.</string>
@@ -630,5 +635,110 @@
         <item quantity="one">Podría seguir cobrando de tu billetera. Desactiva para evitar futuros pagos.</item>
         <item quantity="other">Algunas podrían seguir cobrando de tu billetera. Desactiva para evitar futuros pagos.</item>
     </plurals>
+    <string name="no_enough_funds">Fondos insuficientes</string>
+    <string name="refill">Recargar</string>
+    <string name="get_token">Obtener %1$s</string>
+    <string name="insufficient_trx_balance">No hay suficiente TRX para cubrir las comisiones</string>
+    <string name="insufficient_trx_balance_desc">Elige un método de pago de comisiones y recarga.</string>
+    <string name="tron_not_enough_for_fee_title">Fondos insuficientes para cubrir las comisiones</string>
+    <string name="tron_not_enough_for_fee_desc">Recarga Battery, TON o TRX para cubrir las comisiones.</string>
+    <string name="top_up">Recargar</string>
+    <string name="tron_not_enough_trx_for_fee_title">No hay suficiente TRX para las comisiones</string>
+    <string name="tron_not_enough_trx_for_fee_desc">Requerido para comisiones ≈ %1$s. Tu saldo: %2$s.</string>
+    <plurals name="transfers_available">
+        <item quantity="one">%1$s transferencia disponible</item>
+        <item quantity="few">%1$s transferencias disponibles</item>
+        <item quantity="many">%1$s transferencias disponibles</item>
+        <item quantity="other">%1$s transferencias disponibles</item>
+    </plurals>
+    <plurals name="transfers">
+        <item quantity="one">%1$s transferencia</item>
+        <item quantity="few">%1$s transferencias</item>
+        <item quantity="many">%1$s transferencias</item>
+        <item quantity="other">%1$s transferencias</item>
+    </plurals>
+    <string name="trx_balance">Saldo de TRX</string>
+    <string name="trx_balance_desc">Recarga tu saldo para pagar las comisiones de la red.</string>
+    <string name="blockchain_fees">Comisiones de Blockchain</string>
+    <string name="blockchain_fees_desc">Tonkeeper Battery es la forma más fácil de pagar comisiones de blockchain. También puedes recargar con TON y TRX.</string>
+    <string name="required_prefix">Requerido: %1$s</string>
+    <string name="tron_fees_learn_more">Las comisiones cambian en tiempo real según el mercado. <annotation colorAttr="textAccentColor">Saber más</annotation></string>
+    <string name="tetra_subtitle">Conectar la red Tetra L2</string>
+    <string name="other_options">Otras opciones</string>
+    <string name="for_developers">Para desarrolladores</string>
 
+    <string name="more">Más</string>
+    <string name="retry">Reintentar</string>
+    <string name="operation">Operación</string>
+    <string name="description">Descripción</string>
+    <string name="protocol">Protocolo</string>
+    <string name="cant_find_anything">No se encontró nada.</string>
+
+    <string name="deposit_from_another_wallet">Desde otra billetera TON/TRON</string>
+    <string name="deposit_send">Enviar %s</string>
+    <string name="deposit_address">Dirección %s</string>
+    <string name="deposit_to_another_wallet">A otra billetera</string>
+    <string name="deposit_with_cash_or_crypto">Depositar con efectivo o cripto</string>
+    <string name="withdraw_with_cash_or_crypto">Retirar con efectivo o cripto</string>
+    <string name="deposit_available_cash_out">Disponible desde otras criptomonedas</string>
+    <string name="deposit_available_cross_chain">Disponible 1:1 entre cadenas</string>
+    <string name="deposit_insert_amount">Ingresa el monto</string>
+    <string name="deposit_buy_with_cash">Comprar con efectivo</string>
+    <string name="deposit_buy_with_crypto">Comprar con cripto</string>
+    <string name="deposit_buy_with_stablecoins">Comprar con stablecoins</string>
+    <string name="ramp_sell_with_cash">Vender por efectivo</string>
+    <string name="ramp_sell_with_crypto">Vender por cripto</string>
+    <string name="ramp_sell_with_stablecoins">Vender por stablecoins</string>
+    <string name="ramp_stablecoins_convertion">"Se convertirá a USDT en TON a una tasa de 1:1</string>
+    <string name="ramp_crypto_swap_info">Tu cripto se intercambiará por TON al tipo de cambio actual.</string>
+    <string name="ramp_stablecoin_buy_info">Tu stablecoin se acreditará como %1$s en %2$s a una tasa de 1:1.</string>
+    <string name="ramp_stablecoin_sell_info">Retira USDT a otras stablecoins. Se aplica una tarifa fija por red.</string>
+    <string name="ramp_total_amount">Importe total</string>
+    <string name="ramp_estimated_time">Tiempo estimado de llegada</string>
+    <string name="ramp_withdrawal_time">Tiempo de retiro</string>
+    <string name="ramp_withdrawal_fee">Comisión de retiro</string>
+    <string name="deposit_network_warning">Asegúrate de seleccionar la red correcta o podrías perder tus fondos.</string>
+    <string name="deposit_go_to_main">Ir al inicio</string>
+    <string name="deposit_payment_qr_code">Código QR de pago</string>
+    <string name="deposit_scan_qr_description">Escanea el código QR o copia la dirección para completar el pago.</string>
+    <string name="deposit_min_amount_with_currency">Monto mín.: %1$s %2$s</string>
+    <string name="deposit_max_amount_with_currency">Monto máx.: %1$s %2$s</string>
+    <string name="deposit_other_providers_hint">Otros proveedores disponibles para diferentes pares de divisas.</string>
+    <string name="deposit_changelly_disclaimer">Servicio de terceros proporcionado por Changelly. Al usar este servicio, aceptas %s.</string>
+    <string name="deposit_address_warning_prefix">Esta\u0020</string>
+    <string name="deposit_address_warning_highlight">dirección solo se puede usar una vez</string>
+    <string name="deposit_address_warning_suffix">. Verifica los límites de depósito y la red para evitar perder tus fondos.</string>
+
+    <string name="terms_of_service">Términos de servicio</string>
+    <string name="receive_tokens">Recibir tokens</string>
+    <string name="send_tokens">Enviar tokens</string>
+    <string name="withdraw">Retirar</string>
+    <string name="deposit">Depositar</string>
+    <string name="choose_network">Elige la red</string>
+    <string name="copy_address">Copiar dirección</string>
+    <string name="choose_currency">Elige la moneda</string>
+    <string name="send_currency">Enviar %s</string>
+    <string name="receive_currency">Recibir %s</string>
+    <string name="min_deposit">Depósito mín.</string>
+    <string name="max_deposit">Depósito máx.</string>
+    <string name="max_amount">Monto máx.: %s</string>
+    <string name="max_amount_label">Monto máx.</string>
+    <string name="available">Disponible: %s</string>
+    <string name="network">Red</string>
+
+    <string name="added_extension">Extensión añadida</string>
+    <string name="removed_extension">Extensión eliminada</string>
+    <string name="signature_allowed">Firma permitida</string>
+    <string name="signature_not_allowed">Firma no permitida</string>
+    <string name="up_to_duration">Hasta %1$s %2$s</string>
+    <string name="time_seconds">seg</string>
+    <string name="time_minutes">min</string>
+    <string name="deposit_select_network_description">Retira %s a redes compatibles en cualquier momento a través de la sección «Retirar».</string>
+    <string name="choose_network_error">Elige la red %s</string>
+    <string name="choose_asset">Elegir activo</string>
+    <string name="add_funds">Añadir fondos</string>
+    <string name="tooltip_new">NUEVO</string>
+    <string name="tooltip_send_from_here">Enviar desde aquí</string>
+    <string name="trade">Trading</string>
+    <string name="search_by_ticker">Buscar por símbolo o nombre</string>
 </resources>

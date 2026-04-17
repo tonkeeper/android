@@ -12,7 +12,7 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import com.tonapps.log.L
 import android.view.HapticFeedbackConstants
 import android.view.PixelCopy
 import android.view.SurfaceView

@@ -1,29 +1,18 @@
 package com.tonapps.tonkeeper.ui.screen.backup.check
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.core.view.updatePadding
 import androidx.core.widget.NestedScrollView
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
-import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.doKeyboardAnimation
-import uikit.extensions.pinToBottomInsets
-import uikit.extensions.scrollDown
 import uikit.extensions.scrollView
 import uikit.widget.HeaderView
 import uikit.widget.TextHeaderView
@@ -93,7 +82,7 @@ class BackupCheckScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         button.setOnClickListener { saveBackup() }
 
         scrollView.doKeyboardAnimation { offset, progress, _ ->
-            scrollView.updatePadding(bottom = offset)
+            scrollView.updatePadding(bottom = offset + button.height)
             button.translationY = -offset.toFloat()
             if (progress >= .9f || .1f >= progress) {
                 getCurrentFocus()?.let { updateScroll(it) }

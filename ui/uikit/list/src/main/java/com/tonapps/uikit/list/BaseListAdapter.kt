@@ -14,10 +14,6 @@ abstract class BaseListAdapter: ListAdapter<BaseListItem, BaseListHolder<out Bas
         submitList(list, null)
     }
 
-    override fun submitList(list: List<BaseListItem>?, commitCallback: Runnable?) {
-        super.submitList(list, commitCallback)
-    }
-
     abstract fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem>
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {

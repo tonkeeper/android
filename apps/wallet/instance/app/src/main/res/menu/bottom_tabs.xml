@@ -1,20 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/wallet"
+    <item
+        android:id="@+id/wallet"
+        android:checkable="true"
         android:checked="true"
-        android:checkable="true"
         android:icon="@drawable/ic_tab_wallet_28"
-        android:title="@string/wallet"/>
-    <item android:id="@+id/activity"
+        android:title="@string/wallet" />
+    <item
+        android:id="@+id/activity"
+        android:checkable="true"
         android:icon="@drawable/ic_clock_28"
-        android:checkable="true"
         android:title="@string/history" />
-    <item android:id="@+id/browser"
+    <item
+        android:id="@+id/trading"
+        android:checkable="true"
+        android:icon="@drawable/ic_trade_28"
+        android:title="@string/trade"
+        android:visible="false" />
+    <item
+        android:id="@+id/browser"
+        android:checkable="true"
         android:icon="@drawable/ic_explore_28"
+        android:title="@string/browser" />
+    <item
+        android:id="@+id/collectibles"
         android:checkable="true"
-        android:title="@string/browser"/>
-    <item android:id="@+id/collectibles"
         android:icon="@drawable/ic_tab_collectibles_28"
-        android:checkable="true"
         android:title="@string/collectibles" />
 </menu>

@@ -3,11 +3,11 @@ package com.tonapps.wallet.data.backup.source
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.sqlite.SQLiteHelper
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 
-internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup", 1) {
+internal class LocalDataSource(context: Context) : SQLiteHelper(context, BACKUP_TABLE_NAME, 1) {
 
     private companion object {
         private const val BACKUP_TABLE_NAME = "backup"
@@ -30,11 +30,6 @@ internal class LocalDataSource(context: Context): SQLiteHelper(context, "backup"
     fun getAllBackups(): List<BackupEntity> {
         val query = "SELECT $BACKUP_COLUMN_ID,$BACKUP_COLUMN_SOURCE,$BACKUP_COLUMN_WALLET_ID,$BACKUP_COLUMN_DATE FROM $BACKUP_TABLE_NAME;"
         return getBackups(query)
-    }
-
-    fun getBackups(walletId: Long): List<BackupEntity> {
-        val query = "SELECT $BACKUP_COLUMN_ID,$BACKUP_COLUMN_SOURCE,$BACKUP_COLUMN_WALLET_ID,$BACKUP_COLUMN_DATE FROM $BACKUP_TABLE_NAME WHERE $BACKUP_COLUMN_WALLET_ID = ?;"
-        return getBackups(query, arrayOf(walletId.toString()))
     }
 
     fun getBackup(backupId: Long): BackupEntity? {

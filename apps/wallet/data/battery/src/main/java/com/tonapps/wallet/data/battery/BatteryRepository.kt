@@ -1,33 +1,20 @@
 package com.tonapps.wallet.data.battery
 
 import android.content.Context
-import android.util.Log
-import androidx.collection.ArrayMap
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.filterList
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
+import com.tonapps.wallet.api.entity.EmulateWithBatteryResult
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
+import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
 import com.tonapps.wallet.data.battery.source.LocalDataSource
 import com.tonapps.wallet.data.battery.source.RemoteDataSource
-import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
@@ -47,15 +34,15 @@ class BatteryRepository(
     init {
         _balanceUpdatedFlow.tryEmit(Unit)
         scope.launch(Dispatchers.IO) {
-            getConfig(false, ignoreCache = true)
+            getConfig(TonNetwork.MAINNET, ignoreCache = true)
         }
     }
 
     suspend fun getRechargeMethodByJetton(
-        testnet: Boolean,
+        network: TonNetwork,
         jetton: String
     ): RechargeMethodEntity? {
-        val rechargeMethods = getConfig(testnet).rechargeMethods.filter { it.supportRecharge }
+        val rechargeMethods = getConfig(network).rechargeMethods.filter { it.supportRecharge }
         if (rechargeMethods.isEmpty()) {
             return null
         }
@@ -68,35 +55,39 @@ class BatteryRepository(
     }
 
     suspend fun getConfig(
-        testnet: Boolean,
+        network: TonNetwork,
         ignoreCache: Boolean = false
     ): BatteryConfigEntity = withContext(Dispatchers.IO) {
         if (ignoreCache) {
-            fetchConfig(testnet)
+            fetchConfig(network)
         } else {
-            localDataSource.getConfig(testnet) ?: fetchConfig(testnet)
+            localDataSource.getConfig(network) ?: fetchConfig(network)
         }
     }
 
-    private suspend fun fetchConfig(testnet: Boolean): BatteryConfigEntity {
-        val config = remoteDataSource.fetchConfig(testnet) ?: return BatteryConfigEntity.Empty
-        localDataSource.setConfig(testnet, config)
+    private suspend fun fetchConfig(network: TonNetwork): BatteryConfigEntity {
+        val config = remoteDataSource.fetchConfig(network) ?: return BatteryConfigEntity.Empty
+        localDataSource.setConfig(network, config)
         return config
     }
 
     suspend fun getBalance(
         tonProofToken: String,
         publicKey: PublicKeyEd25519,
-        testnet: Boolean,
+        network: TonNetwork,
         ignoreCache: Boolean = false,
     ): BatteryBalanceEntity = withContext(Dispatchers.IO) {
+        if (network.isTetra) {
+            return@withContext BatteryBalanceEntity.Empty
+        }
+
         val balance = if (ignoreCache) {
-            fetchBalance(publicKey, tonProofToken, testnet)
+            fetchBalance(publicKey, tonProofToken, network)
         } else {
-            localDataSource.getBalance(publicKey, testnet) ?: fetchBalance(
+            localDataSource.getBalance(publicKey, network) ?: fetchBalance(
                 publicKey,
                 tonProofToken,
-                testnet
+                network
             )
         }
         balance
@@ -105,11 +96,11 @@ class BatteryRepository(
     suspend fun getCharges(
         tonProofToken: String,
         publicKey: PublicKeyEd25519,
-        testnet: Boolean,
+        network: TonNetwork,
         ignoreCache: Boolean = false,
     ): Int = withContext(Dispatchers.IO) {
-        val balance = getBalance(tonProofToken, publicKey, testnet, ignoreCache)
-        val config = getConfig(testnet, ignoreCache)
+        val balance = getBalance(tonProofToken, publicKey, network, ignoreCache)
+        val config = getConfig(network, ignoreCache)
         val charges = BatteryMapper.convertToCharges(balance.balance, config.chargeCost)
         charges
     }
@@ -117,11 +108,15 @@ class BatteryRepository(
     private suspend fun fetchBalance(
         publicKey: PublicKeyEd25519,
         tonProofToken: String,
-        testnet: Boolean
+        network: TonNetwork
     ): BatteryBalanceEntity {
-        val balance = remoteDataSource.fetchBalance(tonProofToken, testnet)
+        if (network.isTetra) {
+            return BatteryBalanceEntity.Empty
+        }
+
+        val balance = remoteDataSource.fetchBalance(tonProofToken, network)
             ?: return BatteryBalanceEntity.Empty
-        localDataSource.setBalance(publicKey, testnet, balance)
+        localDataSource.setBalance(publicKey, network, balance)
         _balanceUpdatedFlow.emit(Unit)
         return balance
     }
@@ -129,47 +124,47 @@ class BatteryRepository(
     fun refreshBalanceDelay(
         publicKey: PublicKeyEd25519,
         tonProofToken: String,
-        testnet: Boolean
+        network: TonNetwork
     ) {
         scope.launch(Dispatchers.IO) {
             delay(10000)
-            fetchBalance(publicKey, tonProofToken, testnet)
+            fetchBalance(publicKey, tonProofToken, network)
         }
     }
 
     suspend fun emulate(
         tonProofToken: String,
         publicKey: PublicKeyEd25519,
-        testnet: Boolean,
+        network: TonNetwork,
         boc: Cell,
         forceRelayer: Boolean = false,
         safeModeEnabled: Boolean,
-    ): Pair<MessageConsequences, Boolean>? = withContext(Dispatchers.IO) {
+    ): EmulateWithBatteryResult? = withContext(Dispatchers.IO) {
 
         val balance = getBalance(
             tonProofToken = tonProofToken,
             publicKey = publicKey,
-            testnet = testnet
+            network = network
         ).balance
 
         if (!forceRelayer && !balance.isPositive) {
             throw IllegalStateException("Zero balance")
         }
 
-        api.emulateWithBattery(tonProofToken, boc, testnet, safeModeEnabled)
+        api.emulateWithBattery(tonProofToken, boc, network, safeModeEnabled)
     }
 
     suspend fun getAppliedPromo(
-        testnet: Boolean,
+        network: TonNetwork,
     ): String? = withContext(Dispatchers.IO) {
-        localDataSource.getAppliedPromo(testnet)
+        localDataSource.getAppliedPromo(network)
     }
 
     suspend fun setAppliedPromo(
-        testnet: Boolean,
+        network: TonNetwork,
         promo: String?,
     ) = withContext(Dispatchers.IO) {
-        localDataSource.setAppliedPromo(testnet, promo)
+        localDataSource.setAppliedPromo(network, promo)
     }
 
 }

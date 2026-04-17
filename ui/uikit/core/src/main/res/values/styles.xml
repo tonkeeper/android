@@ -151,4 +151,8 @@
         <item name="android:gravity">center</item>
         <item name="android:singleLine">true</item>
     </style>
+
+    <style name="CircleImageView" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>

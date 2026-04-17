@@ -6,8 +6,9 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 
 sealed class Item(type: Int, val name: String): BaseListItem(type) {
@@ -34,7 +35,7 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         val color: Int
             get() = wallet.label.color
 
-        val walletType: Wallet.Type
+        val walletType: WalletType
             get() = wallet.type
 
         val walletVersion: WalletVersion
@@ -112,7 +113,7 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         override val position: ListCell.Position
     ): Icon(
         titleRes = Localization.widget,
-        iconRes = com.tonapps.uikit.icon.R.drawable.ic_link_square_28,
+        iconRes = com.tonapps.ui.uikit.icon.R.drawable.ic_link_square_28,
         position = position,
         secondaryIcon = false,
         name = "widget"
@@ -132,7 +133,6 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
 
     data class Support(
         override val position: ListCell.Position,
-        val url: String
     ): Icon(
         titleRes = Localization.support,
         iconRes = UIKitIcon.ic_message_bubble_28,
@@ -173,17 +173,6 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         position = position,
         secondaryIcon = true,
         name = "news"
-    )
-
-    data class Contact(
-        override val position: ListCell.Position,
-        val url: String
-    ): Icon(
-        titleRes = Localization.contact_us,
-        iconRes = R.drawable.ic_envelope_28,
-        position = position,
-        secondaryIcon = true,
-        name = "contact"
     )
 
     data class Legal(

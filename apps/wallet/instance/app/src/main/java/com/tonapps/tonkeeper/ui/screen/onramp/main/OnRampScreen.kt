@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.main
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -11,12 +11,12 @@ import androidx.core.view.allViews
 import com.tonapps.tonkeeper.ui.component.PaymentTypeView
 import com.tonapps.tonkeeper.ui.screen.onramp.main.view.CurrencyInputView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.NestedScrollView
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.helper.TwinInput
 import com.tonapps.tonkeeper.koin.remoteConfig
 import com.tonapps.tonkeeper.ui.screen.onramp.main.state.OnRampPaymentMethodState
@@ -76,7 +76,6 @@ class OnRampScreen(wallet: WalletEntity): BaseOnRampScreen(wallet) {
         priceView = view.findViewById(R.id.price)
         priceReversedView = view.findViewById(R.id.price_reversed)
 
-        reviewSend = view.findViewById(R.id.review_send)
         reviewSend.setOnClickListener {
             viewModel.reset()
             sellInput.focusWithKeyboard()

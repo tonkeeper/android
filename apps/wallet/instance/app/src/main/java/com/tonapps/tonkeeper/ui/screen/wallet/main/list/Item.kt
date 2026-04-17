@@ -4,8 +4,11 @@ import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.icu.Coins
 import com.tonapps.extensions.readArrayCompat
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.readCharSequenceCompat
@@ -18,16 +21,14 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.extensions.writeNullableInt
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.view.BatteryView
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.NotificationEntity
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
@@ -149,7 +150,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val address: String
             get() = wallet.address
 
-        val walletType: Wallet.Type
+        val walletType: WalletType
             get() = wallet.type
 
         val walletVersion: WalletVersion
@@ -196,19 +197,21 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val swapUri: Uri,
         val tronEnabled: Boolean,
         val isSwapDisabled: Boolean,
-        val isStakingDisabled: Boolean
+        val isStakingDisabled: Boolean,
+        val isExchangeDisabled: Boolean
     ): Item(TYPE_ACTIONS) {
 
         val address: String
             get() = wallet.address
 
-        val walletType: Wallet.Type
+        val walletType: WalletType
             get() = wallet.type
 
         constructor(parcel: Parcel) : this(
             parcel.readParcelableCompat()!!,
             parcel.readParcelableCompat()!!,
             parcel.readParcelableCompat()!!,
+            parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat()
@@ -221,6 +224,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeBooleanCompat(tronEnabled)
             dest.writeBooleanCompat(isSwapDisabled)
             dest.writeBooleanCompat(isStakingDisabled)
+            dest.writeBooleanCompat(isExchangeDisabled)
         }
 
         companion object CREATOR : Parcelable.Creator<Actions> {
@@ -259,7 +263,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
 
         @IgnoredOnParcel
         val currencyIcon: Int by lazy {
-            com.tonapps.wallet.api.R.drawable.ic_ton_with_bg
+            UIKitIcon.ic_ton
         }
 
         constructor(parcel: Parcel) : this(
@@ -357,7 +361,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             symbol = token.symbol,
             name = token.name,
             balance = token.balance.value,
-            balanceFormat = CurrencyFormatter.format(value = token.balance.value),
+            balanceFormat = CurrencyFormatter.format(value = token.balance.uiBalance),
             fiat = token.fiat,
             fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat),
             rate = if (token.isUsdt || token.isTrc20) {

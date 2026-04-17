@@ -5,7 +5,7 @@ import com.tonapps.extensions.getParcelable
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.putParcelable
 import com.tonapps.extensions.putString
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 class OnRampSettings(context: Context) {
 

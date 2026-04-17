@@ -15,11 +15,10 @@ import androidx.core.graphics.drawable.toBitmap
 import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.isValid
 import com.tonapps.extensions.max18
-import com.tonapps.tonkeeper.App
 import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.backgroundContentColor
 import com.tonapps.uikit.color.textPrimaryColor
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.extensions.dp
 import uikit.extensions.drawable
 import androidx.core.net.toUri

@@ -11,7 +11,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.stake.details.StakeDetailsFragmen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.pool.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.staking.stake.pool.list.Item
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import uikit.extensions.collectFlow

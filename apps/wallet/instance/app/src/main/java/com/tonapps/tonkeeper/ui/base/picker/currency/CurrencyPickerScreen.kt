@@ -5,7 +5,7 @@ import android.view.View
 import com.tonapps.tonkeeper.os.AndroidCurrency
 import com.tonapps.tonkeeper.ui.base.picker.BasePickerScreen
 import com.tonapps.tonkeeper.ui.base.picker.currency.list.Adapter
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.extensions.collectFlow

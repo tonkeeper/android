@@ -17,6 +17,7 @@
             android:id="@+id/icon"
             android:layout_width="44dp"
             android:layout_height="44dp"
+            android:src="@drawable/ic_ton_with_bg"
             android:background="@drawable/bg_oval"
             android:backgroundTint="?attr/backgroundContentTintColor"
             app:roundAsCircle="true" />

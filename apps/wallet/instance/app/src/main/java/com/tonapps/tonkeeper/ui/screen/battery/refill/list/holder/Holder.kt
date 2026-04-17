@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder
 
-import android.util.Log
+import com.tonapps.log.L
 import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes

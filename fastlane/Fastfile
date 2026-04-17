@@ -33,11 +33,7 @@ platform :android do
         max = internal_version_codes[0] > production_version_codes[0] ? internal_version_codes[0] : production_version_codes[0]
         updated_version_code = max + 2
 
-        increment_version_code(
-            gradle_file_path: "./apps/wallet/instance/main/build.gradle.kts",
-            version_code: updated_version_code
-        )
-
+        ENV["VERSION_CODE"] = updated_version_code.to_s
         sh("echo VERSION_CODE=#{updated_version_code} >> $GITHUB_ENV")
     end
 
@@ -122,12 +118,25 @@ platform :android do
         assemble_release(flavor: "site")
     end
 
-    desc "Build and upload to GooglePlay (UK)"
-    lane :beta_uk do
-        fetch_and_increment_build_number(app_identifier: "com.ton_keeper.uk")
-        build_release(flavor: "uk")
-        upload_release(app_identifier: "com.ton_keeper.uk")
+    desc "Fetch latest version code from GP (no increment) and build site APK"
+    lane :site_apk do
+        app_identifier = "com.ton_keeper"
 
-        assemble_release(flavor: "uk")
+        internal_version_codes = google_play_track_version_codes(
+            package_name: app_identifier,
+            track: "internal",
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
+        )
+
+        production_version_codes = google_play_track_version_codes(
+            package_name: app_identifier,
+            json_key_data: ENV["ANDROID_PUBLISHER_CREDENTIALS"]
+        )
+
+        version_code = production_version_codes[0]
+        ENV["VERSION_CODE"] = version_code.to_s
+        sh("echo VERSION_CODE=#{version_code} >> $GITHUB_ENV")
+
+        assemble_release(flavor: "site")
     end
 end

@@ -5,7 +5,8 @@ import com.tonapps.icu.Coins
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.api.entity.EthenaEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.staking.StakingPool
 
 sealed class Item(type: Int): BaseListItem(type) {
@@ -33,9 +34,9 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         val currencyIcon: Int by lazy {
             if (ethenaType != null) {
-                com.tonapps.wallet.api.R.drawable.ic_udse_ethena_with_bg
+                UIKitIcon.ic_udse
             } else {
-                com.tonapps.wallet.api.R.drawable.ic_ton_with_bg
+                UIKitIcon.ic_ton
             }
         }
 

@@ -2,12 +2,11 @@ package com.tonapps.tonkeeper.ui.screen.tonconnect
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.usecase.sign.SignUseCase
+import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers

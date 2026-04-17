@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.currency.list.Item
 import com.tonapps.tonkeeper.worker.TotalBalancesWorker
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.MutableStateFlow

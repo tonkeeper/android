@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.tonconnect
 
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 
 sealed class TonConnectScreenState {

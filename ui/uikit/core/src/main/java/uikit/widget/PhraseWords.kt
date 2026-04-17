@@ -14,13 +14,15 @@ class PhraseWords @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : LinearLayoutCompat(context, attrs, defStyle) {
 
-    private val isSmallScreen: Boolean by lazy {
-        1320 >= context.resources.displayMetrics.heightPixels
+    private val heightDp: Int by lazy(LazyThreadSafetyMode.NONE) {
+        val dm = context.resources.displayMetrics
+        (dm.heightPixels / dm.density).toInt()
     }
 
-    private val isVerySmallScreen: Boolean by lazy {
-        720 >= context.resources.displayMetrics.heightPixels
+    val isSmallScreen: Boolean by lazy(LazyThreadSafetyMode.NONE) {
+        heightDp <= 640
     }
+
 
     init {
         orientation = HORIZONTAL
@@ -28,21 +30,18 @@ class PhraseWords @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        pivotY = 0f
-        val screenHeight = context.resources.displayMetrics.heightPixels
+        pivotY = measuredHeight / 2f
+        pivotX = measuredWidth / 2f
 
-        val isSmall = 1320 >= context.resources.displayMetrics.heightPixels
-        val isVerySmall = 720 >= context.resources.displayMetrics.heightPixels
-        if (isVerySmall) {
-            // scale = .4f
-            // translationX = (measuredWidth * (1 - scale) / 2)
-        } else if (isSmall) {
-            // scale = .7f
-            // translationX = (measuredWidth * (1 - scale) / 2)
-        } else {
-            // scale = 1f
-            // translationX = 0f
+        val scale = when {
+            isSmallScreen     -> 0.8f
+            else              -> 1f
         }
+
+        scaleX = scale
+        scaleY = scale
+
+        translationX = 0f
     }
 
     fun setWords(words: Array<String>) {
@@ -65,7 +64,7 @@ class PhraseWords @JvmOverloads constructor(
             wordView.setData(index + 1, word)
             if (isSmallScreen) {
                 wordView.setPaddingVertical(2.dp)
-            } else if (!isVerySmallScreen) {
+            } else {
                 wordView.setPaddingVertical(4.dp)
             }
             row.addView(wordView, phraseLayoutParams)

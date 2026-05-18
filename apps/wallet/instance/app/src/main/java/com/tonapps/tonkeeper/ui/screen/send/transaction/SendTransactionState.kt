@@ -1,12 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.send.transaction
 
-import com.tonapps.icu.Coins
-import com.tonapps.tonkeeper.core.Amount
+import com.tonapps.blockchain.model.legacy.Amount
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
+import com.tonapps.deposit.screens.send.state.SendFee
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
 sealed class SendTransactionState {
     data object Loading: SendTransactionState()

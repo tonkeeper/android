@@ -4,21 +4,24 @@ import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.tonapps.tonkeeper.core.AnalyticsHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.component.MainRecyclerView
 import com.tonapps.tonkeeper.ui.component.wallet.WalletHeaderView
+import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
 import com.tonapps.tonkeeper.ui.screen.main.MainScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
-import com.tonapps.tonkeeper.ui.screen.support.SupportScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.WalletAdapter
+import com.tonapps.tonkeeper.ui.screen.watchonly.WatchInfoScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.core.flags.WalletFeature
+import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsScreen
 import kotlinx.coroutines.flow.filterNotNull
 import uikit.drawable.BarDrawable
 import uikit.extensions.collectFlow
+import uikit.navigation.Navigation.Companion.navigation
 
 class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wallet, wallet) {
 
@@ -41,7 +44,16 @@ class WalletScreen(wallet: WalletEntity): MainScreen.Child(R.layout.fragment_wal
         super.onViewCreated(view, savedInstanceState)
         headerView = view.findViewById(R.id.header)
         headerView.onWalletClick = { navigation?.add(PickerScreen.newInstance(from = "wallet")) }
-        headerView.onSupportClick = { navigation?.add(SupportScreen.newInstance(wallet)) }
+        headerView.onScanClick = {
+            if (wallet.isWatchOnly) {
+                navigation?.add(WatchInfoScreen.newInstance(wallet))
+            } else {
+                navigation?.add(CameraScreen.newInstance())
+            }
+        }
+        headerView.onHistoryClick = { navigation?.add(TxEventsScreen.newInstance(wallet)) }
+        headerView.setHistoryVisible(WalletFeature.TradingTab.isEnabled)
+
         headerView.onSettingsClick = { navigation?.add(SettingsScreen.newInstance(wallet, "wallet")) }
         headerView.doWalletSwipe = { right ->
             if (right) {

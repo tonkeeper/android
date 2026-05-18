@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.contacts
 
 import android.content.Context
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.wallet.data.contacts.entities.ContactEntity
 import com.tonapps.wallet.data.contacts.source.DatabaseSource
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,15 +51,16 @@ class ContactsRepository(
         }
     }
 
-    fun isHidden(accountId: String, testnet: Boolean) = database.isHidden(accountId, testnet)
+    fun isHidden(accountId: String, network: TonNetwork) =
+        database.isHidden(accountId, network.isTestnet)
 
-    fun hide(accountId: String, testnet: Boolean) {
-        database.setHidden(accountId, testnet, true)
+    fun hide(accountId: String, network: TonNetwork) {
+        database.setHidden(accountId, network.isTestnet, true)
         _hiddenFlow.tryEmit(Unit)
     }
 
-    suspend fun add(name: String, address: String, testnet: Boolean): ContactEntity = withContext(Dispatchers.IO) {
-        val contact = database.addContact(name, address, testnet)
+    suspend fun add(name: String, address: String, network: TonNetwork): ContactEntity = withContext(Dispatchers.IO) {
+        val contact = database.addContact(name, address, network.isTestnet)
         _contactsFlow.value = _contactsFlow.value.orEmpty().toMutableList().apply {
             add(contact)
         }

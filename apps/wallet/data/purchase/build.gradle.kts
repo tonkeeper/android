@@ -1,18 +1,15 @@
 plugins {
-    id("com.tonapps.wallet.data")
+    id("target.android.library")
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = Build.namespacePrefix("wallet.data.purchase")
-}
-
 dependencies {
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Wallet.api))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Module.tonApi))
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.api)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.extensions)
+    implementation(projects.tonapi.legacy)
 
     api(libs.ton.tvm)
     api(libs.ton.crypto)
@@ -20,4 +17,5 @@ dependencies {
     api(libs.ton.blockTlb)
     api(libs.ton.tonapiTl)
     api(libs.ton.contract)
+    implementation(libs.koin.core)
 }

@@ -1,16 +1,12 @@
 plugins {
-    id("com.tonapps.wallet.data")
+    id("target.android.library")
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = Build.namespacePrefix("wallet.data.account")
-}
-
 dependencies {
-    implementation(libs.kotlinX.serialization.json)
-    implementation(libs.kotlinX.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.koin.core)
     implementation(libs.ton.tvm)
     implementation(libs.ton.crypto)
@@ -18,15 +14,16 @@ dependencies {
     implementation(libs.ton.blockTlb)
     implementation(libs.ton.tonapiTl)
     implementation(libs.ton.contract)
-    implementation(project(ProjectModules.Module.tonApi))
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Wallet.Data.rn))
-    implementation(project(ProjectModules.Wallet.Data.rates))
-    implementation(project(ProjectModules.Wallet.api))
-    implementation(project(ProjectModules.Lib.security))
-    implementation(project(ProjectModules.Lib.network))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.blockchain))
-    implementation(project(ProjectModules.Lib.sqlite))
-    implementation(project(ProjectModules.Lib.ledger))
+    implementation(projects.tonapi.legacy)
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.rn)
+    implementation(projects.apps.wallet.data.rates)
+    implementation(projects.apps.wallet.api)
+    implementation(projects.lib.security)
+    implementation(projects.lib.network)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.sqlite)
+    implementation(projects.lib.ledger)
+    implementation(projects.kmp.async)
 }

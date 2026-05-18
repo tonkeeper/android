@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.base.compose
 
 import com.tonapps.tonkeeper.ui.base.ScreenContext
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
 abstract class ComposeWalletScreen(wallet: WalletEntity): ComposeScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)) {
 

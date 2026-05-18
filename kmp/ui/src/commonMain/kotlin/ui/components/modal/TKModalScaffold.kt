@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ui.theme.Dimens
 
+@Deprecated("Use moon")
 @Composable
 fun TKModalScaffold(
     modifier: Modifier = Modifier,

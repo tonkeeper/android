@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.browser.search
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -15,9 +14,9 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
@@ -25,10 +24,8 @@ import com.tonapps.tonkeeper.ui.screen.browser.safe.DAppSafeScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -38,7 +35,6 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.hideKeyboard
-import uikit.extensions.inflate
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.HeaderView

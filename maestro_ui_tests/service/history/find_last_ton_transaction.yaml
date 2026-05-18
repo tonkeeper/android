@@ -1,0 +1,9 @@
+appId: com.ton_keeper.debug
+---
+- runScript:
+    file: ../../scripts/api/v2/accounts/getLastEvent.js
+    env:
+      addr: ${output.walletAddress}
+      auth_token: ${auth}
+- runScript:
+    file: ../../scripts/utils/check_history_time.js

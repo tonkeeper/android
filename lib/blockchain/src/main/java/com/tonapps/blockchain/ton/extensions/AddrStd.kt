@@ -67,3 +67,11 @@ fun String.equalsAddress(other: String): Boolean {
         false
     }
 }
+
+fun String.equalsRawAddress(other: String): Boolean {
+    return try {
+        toRawAddress().equals(other.toRawAddress(), ignoreCase = true)
+    } catch (e: Throwable) {
+        false
+    }
+}

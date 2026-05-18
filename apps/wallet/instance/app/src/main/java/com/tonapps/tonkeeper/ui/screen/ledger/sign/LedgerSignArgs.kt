@@ -13,7 +13,7 @@ data class LedgerSignArgs(
 ) : BaseArgs() {
 
     private companion object {
-        private const val ARG_TRANSACTION = "transaction"
+        private const val ARG_TRANSACTION = "com/tonapps/blockchain/model/transaction"
         private const val ARG_WALLET_ID = "wallet_id"
         private const val ARG_TRANSACTION_INDEX = "transaction_index"
         private const val ARG_TRANSACTION_COUNT = "transaction_count"

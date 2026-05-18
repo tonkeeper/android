@@ -13,8 +13,8 @@ import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsAction
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.supportedTxFilters
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.toUi
 import kotlinx.collections.immutable.toImmutableList
-import ui.components.filter.FiltersBar
-import ui.components.filter.UiFilter
+import ui.components.moon.MoonChipBar
+import ui.components.moon.MoonItem
 import ui.theme.modifiers.bottomDivider
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,11 +38,11 @@ fun TxFiltersBar(
         }
     }
 
-    val onSelectClick = { filter: UiFilter ->
+    val onSelectClick = { filter: MoonItem ->
         dispatch(TxEventsAction.SelectFilter(filter.id))
     }
 
-    FiltersBar(
+    MoonChipBar(
         modifier = modifier.bottomDivider(enabled = scrolledDown, insetStart = 0.dp),
         filters = filters,
         selectedId = selectedId,

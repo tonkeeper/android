@@ -2,10 +2,11 @@ package com.tonapps.wallet.data.token.entities
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
@@ -15,33 +16,6 @@ data class AccountTokenEntity(
     @IgnoredOnParcel
     private var fiatRate: TokenRateEntity? = null,
 ): Parcelable {
-
-    companion object {
-
-        val EMPTY = AccountTokenEntity(
-            balance = BalanceEntity(
-                token = TokenEntity.TON,
-                value = Coins.ZERO,
-                walletAddress = "",
-                initializedAccount = false,
-                isRequestMinting = false,
-                isTransferable = true,
-            )
-        )
-
-        fun createEmpty(token: TokenEntity, walletAddress: String): AccountTokenEntity {
-            return AccountTokenEntity(
-                balance = BalanceEntity(
-                    token = token,
-                    value = Coins.ZERO,
-                    walletAddress = walletAddress,
-                    initializedAccount = false,
-                    isRequestMinting = false,
-                    isTransferable = true,
-                )
-            )
-        }
-    }
 
     val imageUri: Uri
         get() = balance.token.imageUri
@@ -60,6 +34,9 @@ data class AccountTokenEntity(
 
     val isTon: Boolean
         get() = address == TokenEntity.TON.address
+
+    val isTrx: Boolean
+        get() = address == TokenEntity.TRX.address
 
     val isLiquid: Boolean
         get() = balance.token.isLiquid
@@ -84,6 +61,9 @@ data class AccountTokenEntity(
 
     val fiat: Coins
         get() = fiatRate?.fiat ?: Coins.ZERO
+
+    val fiatCurrency: WalletCurrency
+        get() = fiatRate?.currency ?: WalletCurrency.TON
 
     val rateNow: Coins
         get() = fiatRate?.rate ?: Coins.ZERO
@@ -112,4 +92,30 @@ data class AccountTokenEntity(
     val blockchain: Blockchain
         get() = balance.token.blockchain
 
+    companion object {
+
+        val EMPTY = AccountTokenEntity(
+            balance = BalanceEntity(
+                token = TokenEntity.TON,
+                value = Coins.ZERO,
+                walletAddress = "",
+                initializedAccount = false,
+                isRequestMinting = false,
+                isTransferable = true,
+            )
+        )
+
+        fun createEmpty(token: TokenEntity, walletAddress: String): AccountTokenEntity {
+            return AccountTokenEntity(
+                balance = BalanceEntity(
+                    token = token,
+                    value = Coins.ZERO,
+                    walletAddress = walletAddress,
+                    initializedAccount = false,
+                    isRequestMinting = false,
+                    isTransferable = true,
+                )
+            )
+        }
+    }
 }

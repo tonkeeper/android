@@ -1,23 +1,15 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    namespace = Build.namespacePrefix("network")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
+    id("target.android.library")
 }
 
 dependencies {
-    implementation(libs.kotlinX.coroutines.android)
-    implementation(libs.androidX.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.core)
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
+
+    implementation(projects.lib.log)
+    implementation(projects.kmp.async)
 }

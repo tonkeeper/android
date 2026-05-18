@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.core.net.toUri
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.readBooleanCompat
@@ -16,11 +17,10 @@ import com.tonapps.extensions.writeCharSequenceCompat
 import com.tonapps.extensions.writeEnum
 import com.tonapps.tonkeeper.core.history.ActionOutStatus
 import com.tonapps.tonkeeper.helper.DateHelper
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.events.ActionType

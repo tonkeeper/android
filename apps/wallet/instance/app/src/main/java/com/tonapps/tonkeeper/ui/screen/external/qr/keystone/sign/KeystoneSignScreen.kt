@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.sign
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.lifecycleScope
@@ -11,7 +11,7 @@ import com.tonapps.tonkeeper.ui.screen.external.qr.urFlow
 import com.tonapps.tonkeeperx.R
 import com.tonapps.ur.UREncoder
 import com.tonapps.ur.registry.TonSignature
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

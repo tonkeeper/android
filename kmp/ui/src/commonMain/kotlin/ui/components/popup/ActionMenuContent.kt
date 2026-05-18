@@ -16,17 +16,16 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
-import ui.components.TKHorizontalDivider
-import ui.components.base.UIKitSurface
+import ui.components.moon.MoonDivider
+import ui.components.moon.container.MoonSurface
 import ui.theme.Dimens
+import ui.theme.UIKit
 
 @Composable
-fun ActionMenuContent(
-    modifier: Modifier = Modifier,
+fun ActionMenuAnimatedSurface(
     expandedState: MutableTransitionState<Boolean>,
     transformOriginState: MutableState<TransformOrigin>,
-    items: List<ComposeActionItem>,
-    onItemClick: (ComposeActionItem) -> Unit
+    content: @Composable () -> Unit,
 ) {
     val transition = rememberTransition(expandedState, "ActionMenu")
 
@@ -52,30 +51,64 @@ fun ActionMenuContent(
 
     val isInspecting = LocalInspectionMode.current
 
-    UIKitSurface(
+    MoonSurface(
         modifier = Modifier.graphicsLayer {
             scaleX = if (!isInspecting) scale else if (expandedState.targetState) 1f else 0.8f
             scaleY = if (!isInspecting) scale else if (expandedState.targetState) 1f else 0.8f
             this.alpha = if (!isInspecting) alpha else if (expandedState.targetState) 1f else 0f
             transformOrigin = transformOriginState.value
-        }.widthIn(max = 240.dp)
+        }.widthIn(max = 240.dp),
+        color = UIKit.colorScheme.background.contentTint,
     ) {
-        Column(
-            modifier = modifier
-        ) {
+        content()
+    }
+}
+
+@Composable
+fun ActionMenuContent(
+    modifier: Modifier = Modifier,
+    expandedState: MutableTransitionState<Boolean>,
+    transformOriginState: MutableState<TransformOrigin>,
+    items: List<ComposeActionItem>,
+    onItemClick: (ComposeActionItem) -> Unit
+) {
+    ActionMenuAnimatedSurface(
+        expandedState = expandedState,
+        transformOriginState = transformOriginState,
+    ) {
+        Column(modifier = modifier) {
             items.forEachIndexed { index, item ->
-                ActionMenuItem(
-                    text = item.text,
-                    icon = item.icon,
-                    onClick = { onItemClick(item) }
+                ActionMenuRow(
+                    item = item,
+                    onClick = { onItemClick(item) },
                 )
 
                 if (index < items.lastIndex) {
-                    TKHorizontalDivider(
+                    MoonDivider(
                         modifier = Modifier.padding(start = Dimens.offsetMedium)
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ActionMenuRow(
+    item: ComposeActionItem,
+    onClick: () -> Unit,
+) {
+    if (item.iconPainter != null) {
+        ActionMenuItem(
+            text = item.text,
+            painter = item.iconPainter,
+            onClick = onClick,
+        )
+    } else {
+        ActionMenuItem(
+            text = item.text,
+            icon = item.icon,
+            onClick = onClick,
+        )
     }
 }

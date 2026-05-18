@@ -1,0 +1,58 @@
+name: Android Beta Build
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  beta-build:
+    name: Build Beta APK
+    runs-on: macos-latest-xlarge
+
+    steps:
+      - name: Checkout to git repository
+        uses: actions/checkout@v6
+
+      - name: Get VERSION_CODE from commit timestamp
+        run: echo "VERSION_CODE=$(git log -1 --format=%ct)" >> $GITHUB_ENV
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.ANDROID_DIST_SIGNING_KEY }}" | base64 -d > ${{ github.workspace }}/release.keystore
+
+      - name: Build Beta APK
+        run: |
+          ./gradlew :apps:wallet:instance:main:assembleDefaultRelease \
+            --no-daemon \
+            --no-build-cache \
+            --no-configuration-cache \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.TONKEEPER_UPLOAD_STORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.TONKEEPER_UPLOAD_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.TONKEEPER_UPLOAD_KEY_PASSWORD }}
+
+      - name: Upload Beta APK to artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: tonkeeper-beta-${{ env.VERSION_CODE }}
+          path: apps/wallet/instance/main/build/outputs/apk/default/release/*.apk

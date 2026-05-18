@@ -5,15 +5,12 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
-import android.webkit.WebView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ShareCompat
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -27,15 +24,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
-import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.deeplink.DeepLinkBuilder
-import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.copyToClipboard
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.tonkeeper.extensions.setWallet
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.withUtmSource
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.walletViewModel
+import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
@@ -44,12 +40,18 @@ import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.core.deeplink.DeepLink
+import com.tonapps.core.deeplink.DeepLinkBuilder
+import com.tonapps.core.deeplink.DeepLinkRoute
+import com.tonapps.log.L
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
+import java.io.ByteArrayInputStream
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
@@ -59,6 +61,8 @@ import uikit.widget.webview.WebViewFixed
 class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragment_dapp, wallet) {
 
     override val fragmentName: String = "DAppScreen"
+
+    private val tonConnectBridge: ITonConnectBridge by inject()
 
     private lateinit var headerDrawable: HeaderDrawable
     private lateinit var headerView: View
@@ -92,6 +96,23 @@ class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragm
     private val webViewCallback = object : WebViewFixed.Callback() {
         override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
             return overrideUrlLoading(request)
+        }
+
+        override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
+            val uri = request.url
+            if (uri.scheme == "tg") {
+                webView.post {
+                    if (consumeDeepLinkThrottle()) {
+                        BrowserHelper.openTG(requireContext(), uri)
+                    }
+                }
+                return WebResourceResponse(
+                    "text/plain",
+                    "utf-8",
+                    ByteArrayInputStream(ByteArray(0))
+                )
+            }
+            return null
         }
 
         override fun onPageStarted(url: String, favicon: Bitmap?) {
@@ -146,6 +167,9 @@ class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragm
         }
     }
 
+    private val isForceConnect: Boolean
+        get() = args.forceConnect && webView.url?.toUri()?.host == args.url.host
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE_FILE) {
@@ -171,7 +195,7 @@ class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragm
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        analytics?.trackEventClickDApp(
+        analytics?.dappClick(
             url = args.url.toString(),
             name = args.title,
             source = args.source,
@@ -184,24 +208,32 @@ class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragm
     }
 
     private fun openNewTab(url: String) {
-        val now = System.currentTimeMillis()
-        if ((now - lastDeepLinkTime) > 1000) {
-            lastDeepLinkTime = now
+        if (consumeDeepLinkThrottle()) {
+            val uri = url.toUri()
             if (DeepLinkRoute.isAppLink(url)) {
-                val deeplink = DeepLink(url.toUri(), false, null)
+                val deeplink = DeepLink(uri, false, null)
                 when (deeplink.route) {
                     is DeepLinkRoute.DApp -> webView.loadUrl(url)
                     is DeepLinkRoute.Unknown -> BrowserHelper.open(requireContext(), url)
                     else -> processDeeplink(deeplink, url)
                 }
             } else if (url.startsWith("https://x.com")) {
-                BrowserHelper.openX(requireActivity(), url.toUri())
-            } else if (url.startsWith("https://t.me")) {
-                BrowserHelper.openTG(requireContext(), url.toUri())
+                BrowserHelper.openX(requireActivity(), uri)
+            } else if (url.startsWith("https://t.me") || uri.scheme == "tg") {
+                BrowserHelper.openTG(requireContext(), uri)
             } else {
-                openNewDApp(url.toUri())
+                openNewDApp(uri)
             }
         }
+    }
+
+    private fun consumeDeepLinkThrottle(): Boolean {
+        val now = System.currentTimeMillis()
+        if ((now - lastDeepLinkTime) <= 1000) {
+            return false
+        }
+        lastDeepLinkTime = now
+        return true
     }
 
     private fun openNewDApp(uri: Uri) {
@@ -246,16 +278,21 @@ class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragm
         webView.settings.useWideViewPort = true
         webView.settings.loadWithOverviewMode = true
         webView.addCallback(webViewCallback)
-        webView.jsBridge = DAppBridge(
-            deviceInfo = deviceInfo.toString(),
-            send = { tonconnectSend(it, showLogout = !isForceConnect) },
-            connect = { protocolVersion, request ->
-                tonconnect(protocolVersion, request, forceConnect = isForceConnect)
-            },
-            restoreConnection = { viewModel.restoreConnection(currentUrl) },
-            disconnect = { viewModel.disconnect() },
-            tonapiFetch = ::tonapiFetch,
+
+        val injector = tonConnectBridge.createInjector(
+            bridge = bridge,
+            wallet = wallet,
         )
+
+        if (!injector.inject(webView)) {
+            val error = "TonConnect injection failed (source=${args.source})"
+            L.e(error)
+            FirebaseCrashlytics.getInstance().recordException(
+                IllegalStateException(error)
+            )
+            finish()
+            return
+        }
         webView.loadUrl(args.url.withUtmSource())
 
         refreshView = view.findViewById(R.id.refresh)
@@ -287,8 +324,18 @@ class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragm
         }
     }
 
-    private val isForceConnect: Boolean
-        get() = args.forceConnect && webView.url?.toUri()?.host == args.url.host
+    private val bridge: DAppBridge by lazy {
+        DAppBridge(
+            deviceInfo = deviceInfo.toString(),
+            send = { tonconnectSend(it, showLogout = !isForceConnect) },
+            connect = { protocolVersion, request ->
+                tonconnect(protocolVersion, request, forceConnect = isForceConnect)
+            },
+            restoreConnection = { viewModel.restoreConnection(currentUrl) },
+            disconnect = { viewModel.disconnect() },
+            tonapiFetch = ::tonapiFetch,
+        )
+    }
 
     private fun setDefaultState() {
         menuView.setOnClickListener { openDefaultMenu(it) }

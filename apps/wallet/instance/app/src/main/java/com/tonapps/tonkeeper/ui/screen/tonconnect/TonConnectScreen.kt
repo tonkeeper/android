@@ -9,24 +9,30 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.connect.TONProof
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
+import com.tonapps.bus.generated.opTerminal
 import com.tonapps.emoji.ui.EmojiView
+import com.tonapps.extensions.currentTimeMillis
+import com.tonapps.extensions.currentTimeSecondsInt
+import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
-import com.tonapps.tonkeeper.ui.component.TonConnectCryptoView
 import com.tonapps.tonkeeper.extensions.debugToast
 import com.tonapps.tonkeeper.extensions.getWalletBadges
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.component.TonConnectCryptoView
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerMode
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textTertiaryColor
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
@@ -37,8 +43,8 @@ import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setColor
 import uikit.extensions.setOnClickListener
-import uikit.widget.CheckBoxView
 import uikit.widget.AsyncImageView
+import uikit.widget.CheckBoxView
 import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
 import java.util.concurrent.CancellationException
@@ -141,14 +147,51 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             setResponse(wallet)
         } else {
             setLoadingState()
+            val operationId = generateUuid()
+            val startedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opAttempt(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
+                attemptSource = null,
+                startedAtMs = currentTimeSecondsInt(),
+                otherMetadata = null,
+            )
             lifecycleScope.launch {
                 try {
                     val proof = viewModel.requestProof(wallet, args.app, proofPayload)
+                    val finishedAtMs = currentTimeMillis()
+                    AnalyticsHelper.Default.events.redOperations.opTerminal(
+                        operationId = operationId,
+                        flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                        operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
+                        durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                        finishedAtMs = currentTimeSecondsInt(),
+                        error = null,
+                    )
                     setResponse(wallet, proof)
                 } catch (e: CancellationException) {
+                    val finishedAtMs = currentTimeMillis()
+                    AnalyticsHelper.Default.events.redOperations.opTerminal(
+                        operationId = operationId,
+                        flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                        operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
+                        durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                        finishedAtMs = currentTimeSecondsInt(),
+                        error = e,
+                    )
                     context?.debugToast(e)
                     setDefaultState()
                 } catch (e: Throwable) {
+                    val finishedAtMs = currentTimeMillis()
+                    AnalyticsHelper.Default.events.redOperations.opTerminal(
+                        operationId = operationId,
+                        flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                        operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
+                        durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                        finishedAtMs = currentTimeSecondsInt(),
+                        error = e,
+                    )
                     context?.debugToast(e)
                     setFailedState()
                 }

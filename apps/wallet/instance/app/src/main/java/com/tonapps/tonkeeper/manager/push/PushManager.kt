@@ -1,12 +1,12 @@
 package com.tonapps.tonkeeper.manager.push
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.log.L
 import androidx.core.app.NotificationManagerCompat
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -82,12 +82,12 @@ class PushManager(
                 throw IllegalStateException("Failed to subscribe")
             }
             for (wallet in wallets) {
-                val apps = dAppsRepository.getConnections(wallet.accountId, wallet.testnet)
+                val apps = dAppsRepository.getConnections(wallet.accountId, wallet.network)
                 for ((app, connections) in apps) {
                     dAppPush(
                         wallet = wallet,
                         connections = connections,
-                        commercial = dAppsRepository.isPushEnabled(wallet.accountId, wallet.testnet, app.url),
+                        commercial = dAppsRepository.isPushEnabled(wallet.accountId, wallet.network, app.url),
                         silent = true
                     )
                 }
@@ -119,7 +119,7 @@ class PushManager(
             for (wallet in wallets) {
                 settingsRepository.setPushWallet(wallet.id, false)
                 if (!delete) {
-                    val apps = dAppsRepository.getConnections(wallet.accountId, wallet.testnet)
+                    val apps = dAppsRepository.getConnections(wallet.accountId, wallet.network)
                     for ((_, connections) in apps) {
                         dAppPush(
                             wallet = wallet,

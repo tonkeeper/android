@@ -1,15 +1,13 @@
 package com.tonapps.signer.core.source
 
 import android.content.Context
-import android.util.Log
 import com.tonapps.signer.core.entities.KeyEntity
 import org.json.JSONArray
 import org.json.JSONObject
 
 internal class BackupSource(
-    private val context: Context,
+    context: Context,
 ) {
-
     private val backupFile = context.getFileStreamPath("backup.json")
 
     init {

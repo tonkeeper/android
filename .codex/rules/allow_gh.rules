@@ -1,0 +1,11 @@
+# Allow all GitHub CLI commands to run outside the sandbox.
+prefix_rule(
+    pattern = ["gh"],
+    decision = "allow",
+    justification = "Allow all readonly gh commands without prompts.",
+    match = [
+        "gh auth status",
+        "gh pr view 1",
+        "gh api repos/owner/repo/pulls/1",
+    ],
+)

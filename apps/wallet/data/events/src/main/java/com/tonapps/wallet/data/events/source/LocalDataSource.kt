@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.security.Security
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.api.tron.entity.TronEventEntity
 import com.tonapps.wallet.data.core.BlobDataSource
 import com.tonapps.wallet.data.events.entities.LatestRecipientEntity
@@ -30,7 +30,6 @@ internal class LocalDataSource(
         private const val KEY_ALIAS = "_com_tonapps_events_master_key_"
     }
 
-    private val txEvents = BlobDataSource.simple<TxEvents>(context, "tx_events")
     private val databaseSource: DatabaseSource = DatabaseSource(scope, context)
     private val eventsCache = BlobDataSource.simpleJSON<AccountEvents>(context, "events")
     private val tronEventsCache = BlobDataSource.simpleJSON<List<TronEventEntity>>(context, "tron_events")
@@ -39,24 +38,7 @@ internal class LocalDataSource(
     private val _decryptedCommentFlow = MutableStateFlow(emptyMap<String, String>())
     val decryptedCommentFlow = _decryptedCommentFlow.stateIn(scope, SharingStarted.WhileSubscribed(), emptyMap())
 
-    private val encryptedPrefs: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, NAME) }
-
-    fun getTxEvents(account: BlockchainAddress): List<TxEvent> {
-        val events = txEvents.getCache(account.key)?.events
-        return events ?: listOf()
-    }
-
-    fun clearTxEvents(account: BlockchainAddress) {
-        txEvents.clearCache(account.key)
-    }
-
-    fun setTxEvents(account: BlockchainAddress, events: List<TxEvent>) {
-        if (events.isEmpty()) {
-            clearTxEvents(account)
-        } else {
-            txEvents.setCache(account.key, TxEvents(events))
-        }
-    }
+    private val encryptedPrefs by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, NAME) }
 
     private fun keyDecryptedComment(txId: String): String {
         return "tx_$txId"
@@ -75,22 +57,21 @@ internal class LocalDataSource(
     }
 
     fun getDecryptedComment(txId: String): String? {
-        return encryptedPrefs.getString(keyDecryptedComment(txId), null)
+        return encryptedPrefs.get(keyDecryptedComment(txId))
     }
 
     fun saveDecryptedComment(txId: String, comment: String) {
-        encryptedPrefs.edit {
+        val isSuccess = encryptedPrefs.transaction {
             putString(keyDecryptedComment(txId), comment)
+        }
+
+        if (isSuccess) {
             _decryptedCommentFlow.value += (txId to comment)
         }
     }
 
     fun getEvents(key: String): AccountEvents? {
         return eventsCache.getCache(key)
-    }
-
-    fun getTronEvents(key: String): List<TronEventEntity>? {
-        return tronEventsCache.getCache(key)
     }
 
     fun setTronEvents(key: String, events: List<TronEventEntity>) {

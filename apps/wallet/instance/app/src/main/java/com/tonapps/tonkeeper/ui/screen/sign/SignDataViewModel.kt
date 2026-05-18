@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.sign
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
 import com.tonapps.blockchain.ton.TONOpCode
@@ -15,8 +14,8 @@ import com.tonapps.blockchain.ton.extensions.storeStringRefTail
 import com.tonapps.extensions.toByteArray
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.usecase.sign.SignUseCase
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.deposit.usecase.sign.SignUseCase
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import io.github.andreypfau.kotlinx.crypto.crc32.crc32
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

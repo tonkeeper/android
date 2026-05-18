@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.events.EventsRepository
@@ -16,7 +16,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class MainViewModel(
@@ -37,7 +37,9 @@ class MainViewModel(
 
     val selectedWalletFlow = accountRepository.selectedWalletFlow
 
-    val disbleNftsFlow = api.configFlow.map { it.flags.disableNfts }
+    val disbleNftsFlow = combine(selectedWalletFlow, api.configFlow) { wallet, _ ->
+        api.getConfig(wallet.network).flags.disableNfts
+    }
 
     fun setBottomScrolled(value: Boolean) {
         _childBottomScrolled.tryEmit(value)
@@ -55,23 +57,23 @@ class MainViewModel(
     private fun prefetchTabs(wallet: WalletEntity, itemId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             if (itemId != R.id.activity) {
-                async { eventsRepository.get(wallet.accountId, wallet.testnet) }
+                async { eventsRepository.get(wallet.accountId, wallet.network) }
             }
             if (itemId != R.id.browser) {
                 async { prefetchBrowser(wallet) }
             }
             if (itemId != R.id.collectibles) {
-                async { collectiblesRepository.get(wallet.address, wallet.testnet) }
+                async { collectiblesRepository.get(wallet.address, wallet.network) }
             }
         }
     }
 
     private suspend fun prefetchBrowser(wallet: WalletEntity) {
-        val country = environment.country
+        val country = environment.deviceCountry
 
         browserRepository.load(
             country = country,
-            testnet = wallet.testnet,
+            network = wallet.network,
             locale = settingsRepository.getLocale()
         )
     }

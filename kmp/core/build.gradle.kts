@@ -1,63 +1,22 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    id("com.android.kotlin.multiplatform.library")
 }
-
-version = "1.0"
 
 kotlin {
-    androidTarget()
-
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-
-    macosX64 {
-        binaries {
-            executable {
-                entryPoint = "main"
-            }
-        }
+    androidLibrary {
+        namespace = "com.tonapps.compose.core"
+        compileSdk = libs.versions.android.sdk.compile.get().toInt()
     }
-    macosArm64 {
-        binaries {
-            executable {
-                entryPoint = "main"
-            }
-        }
-    }
+
+    applyDefaultHierarchyTemplate()
 
     sourceSets {
-        commonMain {
-            dependencies {
-
-            }
+        commonMain.dependencies {
+            implementation(libs.compose.multiplatform.runtime)
+            implementation(libs.kotlinx.serialization.core)
         }
-
-        androidMain {
-            dependencies {
-
-            }
-        }
-
-        iosMain {
-            dependencies {
-
-            }
-        }
-    }
-}
-
-
-android {
-    compileSdk = Build.compileSdkVersion
-    namespace = "com.tonkeeper.core"
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-    }
-    compileOptions {
-        sourceCompatibility = Build.compileJavaVersion
-        targetCompatibility = Build.compileJavaVersion
     }
 }

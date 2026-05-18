@@ -1,19 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
     id("kotlin-parcelize")
-}
-
-android {
-    namespace = Build.namespacePrefix("ledger")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
 }
 
 dependencies {
@@ -23,8 +12,10 @@ dependencies {
     api(libs.ton.blockTlb)
     api(libs.ton.tonapiTl)
     api(libs.ton.contract)
-    implementation(libs.androidX.core)
-    implementation(libs.kotlinX.coroutines.android)
-    implementation(libs.timber)
-    implementation(project(ProjectModules.Lib.blockchain))
+    implementation(libs.androidx.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.icu)
+    implementation(projects.lib.log)
+    implementation(projects.kmp.async)
 }

@@ -19,7 +19,6 @@ abstract class BlobDataSource<D>(
 ) {
 
     companion object {
-
         inline fun <reified T: Parcelable> simple(
             context: Context,
             path: String,
@@ -84,15 +83,18 @@ abstract class BlobDataSource<D>(
     }
 
     private fun diskFile(key: String): File {
-        return context.cacheFolder(path).file("${key}.dat")
+        return context.cacheFolder(path)
+            .file("${key}.dat")
     }
 
     private fun readDiskCache(key: String): ByteArray? {
         val file = diskFile(key)
+
         val lastModified = file.lastModified()
         if (file.length() == 0L || 0L >= lastModified) {
             return null
         }
+
         val diff = System.currentTimeMillis() - lastModified
         if (diff > timeout) {
             file.delete()

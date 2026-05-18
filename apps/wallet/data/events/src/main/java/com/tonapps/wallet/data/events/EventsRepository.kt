@@ -1,10 +1,10 @@
 package com.tonapps.wallet.data.events
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.api.tron.entity.TronEventEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
@@ -18,6 +18,7 @@ import com.tonapps.wallet.data.events.tx.db.TxDatabase
 import com.tonapps.wallet.data.rates.RatesRepository
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
+import com.tonapps.wallet.data.events.tx.model.TxEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -59,10 +60,6 @@ class EventsRepository(
         localDataSource.saveDecryptedComment(txId, comment)
     }
 
-    fun clearTxEvents(account: BlockchainAddress) {
-        localDataSource.clearTxEvents(account)
-    }
-
     suspend fun fetch(query: TxFetchQuery): TxPage {
         val events = remoteDataSource.events(query)
         return TxPage(
@@ -72,6 +69,37 @@ class EventsRepository(
             afterTimestamp = query.afterTimestamp,
             limit = query.limit
         )
+    }
+
+    suspend fun fetchLocal(accountId: String, query: TxFetchQuery): TxPage? = withContext(Dispatchers.IO) {
+        val key = cacheEventsKey(accountId, query.tonAddress.network)
+        val accountEvents = localDataSource.getEvents(key) ?: return@withContext null
+        val events = txActionMapper.events(query.tonAddress, accountEvents.events)
+        TxPage(
+            source = TxPage.Source.LOCAL,
+            events = events,
+            beforeTimestamp = query.beforeTimestamp,
+            afterTimestamp = query.afterTimestamp,
+            limit = query.limit
+        )
+    }
+
+    fun addLocalEvent(accountId: String, network: TonNetwork, event: AccountEvent) {
+        val key = cacheEventsKey(accountId, network)
+        val existing = localDataSource.getEvents(key)
+        val updatedEvents = if (existing != null) {
+            val filtered = existing.events.filter { it.eventId != event.eventId }
+            AccountEvents(
+                events = listOf(event) + filtered,
+                nextFrom = existing.nextFrom,
+            )
+        } else {
+            AccountEvents(
+                events = listOf(event),
+                nextFrom = 0,
+            )
+        }
+        localDataSource.setEvents(key, updatedEvents)
     }
 
     suspend fun tronLatestSentTransactions(
@@ -86,34 +114,49 @@ class EventsRepository(
         return sentTransactions.take(6)
     }
 
-    fun latestRecipientsFlow(accountId: String, testnet: Boolean) = flow {
-        localDataSource.getLatestRecipients(cacheLatestRecipientsKey(accountId, testnet))?.let {
+    fun latestRecipientsFlow(accountId: String, network: TonNetwork) = flow {
+        localDataSource.getLatestRecipients(cacheLatestRecipientsKey(accountId, network))?.let {
             emit(it)
         }
 
-        val remote = loadLatestRecipients(accountId, testnet)
+        val remote = loadLatestRecipients(accountId, network)
         emit(remote)
     }.flowOn(Dispatchers.IO)
 
-    private fun loadLatestRecipients(accountId: String, testnet: Boolean): List<LatestRecipientEntity> {
-        val list = remoteDataSource.getLatestRecipients(accountId, testnet)
-        localDataSource.setLatestRecipients(cacheLatestRecipientsKey(accountId, testnet), list)
+    private fun loadLatestRecipients(accountId: String, network: TonNetwork): List<LatestRecipientEntity> {
+        val list = remoteDataSource.getLatestRecipients(accountId, network)
+        localDataSource.setLatestRecipients(cacheLatestRecipientsKey(accountId, network), list)
         return list
     }
 
-    suspend fun getSingle(eventId: String, testnet: Boolean) = remoteDataSource.getSingle(eventId, testnet)
+    suspend fun getSingle(eventId: String, network: TonNetwork) = remoteDataSource.getSingle(eventId, network)
+
+    suspend fun mapAccountEventsToTxEvents(
+        address: BlockchainAddress,
+        events: List<AccountEvent>,
+    ): List<TxEvent> = withContext(Dispatchers.IO) {
+        txActionMapper.events(address, events)
+    }
+
+    suspend fun mapTronEventsToTxEvents(
+        address: BlockchainAddress,
+        events: List<TronEventEntity>,
+    ): List<TxEvent> = withContext(Dispatchers.IO) {
+        txActionMapper.tronEvents(address, events)
+    }
 
     suspend fun loadForToken(
         tokenAddress: String,
         accountId: String,
-        testnet: Boolean,
-        beforeLt: Long? = null
+        network: TonNetwork,
+        beforeLt: Long? = null,
+        limit: Int = 10
     ): AccountEvents? = withContext(Dispatchers.IO) {
         if (tokenAddress == TokenEntity.TON.address) {
-            getRemote(accountId, testnet, beforeLt)
+            getRemote(accountId, network, beforeLt, limit)
         } else {
             try {
-                api.getTokenEvents(tokenAddress, accountId, testnet, beforeLt)
+                api.getTokenEvents(tokenAddress, accountId, network, beforeLt, limit)
             } catch (e: Throwable) {
                 null
             }
@@ -141,26 +184,26 @@ class EventsRepository(
 
     suspend fun get(
         accountId: String,
-        testnet: Boolean
-    ) = getLocal(accountId, testnet) ?: getRemote(accountId, testnet)
+        network: TonNetwork
+    ) = getLocal(accountId, network) ?: getRemote(accountId, network)
 
     suspend fun getRemote(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         beforeLt: Long? = null,
         limit: Int = 10
     ): AccountEvents? = withContext(Dispatchers.IO) {
         try {
             val accountEvents = if (beforeLt != null) {
-                remoteDataSource.get(accountId, testnet, beforeLt, limit)
+                remoteDataSource.get(accountId, network, beforeLt, limit)
             } else {
-                val events = remoteDataSource.get(accountId, testnet, null, limit)?.also {
-                    localDataSource.setEvents(cacheEventsKey(accountId, testnet), it)
+                val events = remoteDataSource.get(accountId, network, null, limit)?.also {
+                    localDataSource.setEvents(cacheEventsKey(accountId, network), it)
                 }
                 events
             } ?: return@withContext null
 
-            localDataSource.addSpam(accountId, testnet, accountEvents.events.filter {
+            localDataSource.addSpam(accountId, network.isTestnet, accountEvents.events.filter {
                 it.isScam
             })
 
@@ -170,17 +213,17 @@ class EventsRepository(
         }
     }
 
-    suspend fun getLocalSpam(accountId: String, testnet: Boolean) = withContext(Dispatchers.IO) {
-        localDataSource.getSpam(accountId, testnet)
+    suspend fun getLocalSpam(accountId: String, network: TonNetwork) = withContext(Dispatchers.IO) {
+        localDataSource.getSpam(accountId, network.isTestnet)
     }
 
     suspend fun markAsSpam(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         eventId: String,
     ) = withContext(Dispatchers.IO) {
-        val events = getSingle(eventId, testnet) ?: return@withContext
-        localDataSource.addSpam(accountId, testnet, events)
+        val events = getSingle(eventId, network) ?: return@withContext
+        localDataSource.addSpam(accountId, network.isTestnet, events)
         _hiddenTxIdsFlow.update {
             it.plus(eventId)
         }
@@ -188,10 +231,10 @@ class EventsRepository(
 
     suspend fun removeSpam(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         eventId: String,
     ) = withContext(Dispatchers.IO) {
-        localDataSource.removeSpam(accountId, testnet, eventId)
+        localDataSource.removeSpam(accountId, network.isTestnet, eventId)
         _hiddenTxIdsFlow.update {
             it.minus(eventId)
         }
@@ -199,7 +242,7 @@ class EventsRepository(
 
     suspend fun getRemoteSpam(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         startBeforeLt: Long? = null
     ) = withContext(Dispatchers.IO) {
         val list = mutableListOf<AccountEvent>()
@@ -207,7 +250,7 @@ class EventsRepository(
         for (i in 0 until 10) {
             val events = remoteDataSource.get(
                 accountId = accountId,
-                testnet = testnet,
+                network = network,
                 beforeLt = beforeLt,
                 limit = 50
             )?.events ?: emptyList()
@@ -220,29 +263,23 @@ class EventsRepository(
             beforeLt = events.lastOrNull()?.lt ?: break
         }
         val spamList = list.filter { it.isScam }
-        localDataSource.addSpam(accountId, testnet, spamList)
+        localDataSource.addSpam(accountId, network.isTestnet, spamList)
         spamList
     }
 
     suspend fun getLocal(
         accountId: String,
-        testnet: Boolean
+        network: TonNetwork
     ): AccountEvents? = withContext(Dispatchers.IO) {
-        localDataSource.getEvents(cacheEventsKey(accountId, testnet))
+        localDataSource.getEvents(cacheEventsKey(accountId, network))
     }
 
-    private fun cacheEventsKey(accountId: String, testnet: Boolean): String {
-        if (!testnet) {
-            return accountId
-        }
-        return "${accountId}_testnet"
+    private fun cacheEventsKey(accountId: String, network: TonNetwork): String {
+        return "${accountId}_${network.name.lowercase()}"
     }
 
-    private fun cacheLatestRecipientsKey(accountId: String, testnet: Boolean): String {
-        if (!testnet) {
-            return accountId
-        }
-        return "${accountId}_testnet"
+    private fun cacheLatestRecipientsKey(accountId: String, network: TonNetwork): String {
+        return "${accountId}_${network.name.lowercase()}"
     }
 
 }

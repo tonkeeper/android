@@ -4,7 +4,6 @@ import android.annotation.TargetApi
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import android.util.Log
 import com.tonapps.wallet.data.rn.expo.AuthenticationHelper
 import com.tonapps.wallet.data.rn.expo.DecryptException
 import com.tonapps.wallet.data.rn.expo.SecureStoreModule

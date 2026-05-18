@@ -10,8 +10,8 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.setPadding
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import uikit.extensions.dp
 import uikit.widget.AsyncImageView
 import uikit.widget.RowLayout
@@ -35,7 +35,7 @@ open class CurrencyPickerView @JvmOverloads constructor(
             id = token.address,
             icon = token.imageUri,
             title = token.symbol,
-            subtitle = if (token.isTrc20) {
+            subtitle = if (token.isUsdtTrc20) {
                 "TRC20"
             } else if (token.isUsdt) {
                 "TON"
@@ -47,7 +47,7 @@ open class CurrencyPickerView @JvmOverloads constructor(
         )
 
         constructor(currency: WalletCurrency): this(
-            id = currency.chain.name,
+            id = currency.chain.symbol,
             icon = currency.iconUri ?: Uri.EMPTY,
             title = currency.code,
             subtitle = currency.chainName,

@@ -3,7 +3,7 @@ package com.tonapps.security
 object Sodium {
 
     init {
-        System.loadLibrary("libsodium")
+        System.loadLibrary("sodium_jni")
         init()
     }
 

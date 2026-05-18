@@ -1,0 +1,9 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- runFlow: "../../steps/create_new_wallet.yaml"
+
+- launchApp
+- runFlow: "../../steps/emptystates.yaml"

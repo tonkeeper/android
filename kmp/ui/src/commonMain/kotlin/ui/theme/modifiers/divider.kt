@@ -20,6 +20,7 @@ fun Modifier.bottomDivider(
     if (!enabled) {
         return this
     }
+
     return this.drawWithCache {
         val t = thickness.toPx()
         val startX = insetStart.toPx()

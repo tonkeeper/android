@@ -5,7 +5,8 @@ import android.content.Context
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager

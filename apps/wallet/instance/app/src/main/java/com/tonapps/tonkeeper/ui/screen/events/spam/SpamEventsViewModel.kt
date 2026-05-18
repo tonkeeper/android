@@ -9,7 +9,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.api.tron.entity.TronEventEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
@@ -177,12 +177,12 @@ class SpamEventsViewModel(
 
     private suspend fun getLocalSpam() = eventsRepository.getLocalSpam(
         accountId = wallet.accountId,
-        testnet = wallet.testnet
+        network = wallet.network
     )
 
     private suspend fun getRemoteSpam(startBeforeLt: Long? = null) = eventsRepository.getRemoteSpam(
         accountId = wallet.accountId,
-        testnet = wallet.testnet,
+        network = wallet.network,
         startBeforeLt = startBeforeLt
     )
 

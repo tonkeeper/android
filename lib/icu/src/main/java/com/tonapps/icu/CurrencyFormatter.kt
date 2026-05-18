@@ -2,9 +2,7 @@ package com.tonapps.icu
 
 import android.content.Context
 import android.content.res.Configuration
-import android.os.Build
 import android.text.SpannableString
-import android.util.Log
 import com.tonapps.icu.format.CurrencyFormat
 import com.tonapps.icu.format.TONSymbolSpan
 import java.math.BigDecimal
@@ -30,6 +28,14 @@ object CurrencyFormatter {
         Locale("si"),
     )
 
+    private var format = CurrencyFormat(getFixedLocale(Locale.getDefault(Locale.Category.FORMAT)))
+
+    val monetaryDecimalSeparator: String
+        get() = format.monetaryDecimalSeparator
+
+    val locale: Locale
+        get() = format.locale
+
     fun getScale(value: BigDecimal): Int {
         return CurrencyFormat.getScale(value)
     }
@@ -45,14 +51,6 @@ object CurrencyFormatter {
             Locale.US
         }
     }
-
-    private var format = CurrencyFormat(getFixedLocale(Locale.getDefault(Locale.Category.FORMAT)))
-
-    val monetaryDecimalSeparator: String
-        get() = format.monetaryDecimalSeparator
-
-    val locale: Locale
-        get() = format.locale
 
     fun onConfigurationChanged(newConfig: Configuration) {
         val newLocale = newConfig.locales[0]
@@ -83,8 +81,17 @@ object CurrencyFormatter {
         replaceSymbol: Boolean = true,
         stripTrailingZeros: Boolean = true,
         cutLongSymbol: Boolean = false,
+        compact: Boolean = false,
     ): CharSequence {
-       return format.format(currency, value, roundingMode, replaceSymbol, stripTrailingZeros, cutLongSymbol)
+        return format.format(
+            currency,
+            value,
+            roundingMode,
+            replaceSymbol,
+            stripTrailingZeros,
+            cutLongSymbol,
+            compact,
+        )
     }
 
     fun formatFull(
@@ -102,8 +109,15 @@ object CurrencyFormatter {
         replaceSymbol: Boolean = true,
         stripTrailingZeros: Boolean = true,
         cutLongSymbol: Boolean = false,
+        scale: Int? = null,
+        compact: Boolean = false,
     ): CharSequence {
-        return format(currency, value.value, roundingMode, replaceSymbol, stripTrailingZeros, cutLongSymbol)
+        val amount = when (scale) {
+            null -> value.value
+            else -> value.value.setScale(scale, RoundingMode.CEILING)
+        }
+
+        return format(currency, amount, roundingMode, replaceSymbol, stripTrailingZeros, cutLongSymbol, compact)
     }
 
     fun formatFiat(
@@ -112,8 +126,9 @@ object CurrencyFormatter {
         roundingMode: RoundingMode = RoundingMode.HALF_EVEN,
         replaceSymbol: Boolean = true,
         stripTrailingZeros: Boolean = false,
+        compact: Boolean = false,
     ): CharSequence {
-        return format(currency, value, roundingMode, replaceSymbol, stripTrailingZeros, false)
+        return format(currency, value, roundingMode, replaceSymbol, stripTrailingZeros, false, compact)
     }
 
     fun formatFiat(
@@ -121,7 +136,8 @@ object CurrencyFormatter {
         value: Coins,
         roundingMode: RoundingMode = RoundingMode.HALF_EVEN,
         replaceSymbol: Boolean = true,
-    ) = formatFiat(currency, value.value, roundingMode, replaceSymbol)
+        compact: Boolean = false,
+    ) = formatFiat(currency, value.value, roundingMode, replaceSymbol, compact = compact)
 
     fun CharSequence.withCustomSymbol(context: Context): CharSequence {
         if (true) { // Not now... maybe in future

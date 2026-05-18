@@ -1,25 +1,17 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    namespace = Build.namespacePrefix("qr")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
+    id("target.android.library")
 }
 
 dependencies {
-    implementation(libs.androidX.core)
-    implementation(libs.kotlinX.coroutines.android)
+    implementation(libs.androidx.core)
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.zxing)
 
     api(libs.barcode.scanning)
-    implementation(libs.cameraX.base)
+    implementation(libs.camerax.base)
+
+    implementation(projects.lib.log)
+    implementation(projects.kmp.async)
 }

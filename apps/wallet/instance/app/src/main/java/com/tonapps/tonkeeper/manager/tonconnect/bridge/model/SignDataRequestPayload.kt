@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.manager.tonconnect.bridge.model
 
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
@@ -25,9 +25,7 @@ abstract class SignDataRequestPayload(val type: String): Parcelable {
             return try {
                 parse(JSONObject(value))
             } catch (e: Throwable) {
-                if (DevSettings.tonConnectLogs) {
-                    Log.d("TonConnect", "Failed to parse SignDataRequestPayload: $value", e)
-                }
+                L.e("TonConnect", "Failed to parse SignDataRequestPayload: $value", e)
                 null
             }
         }

@@ -1,5 +1,8 @@
 package com.tonkeeper.core
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Blockchain(
     val type: Int,
     val nativeTicker: String,

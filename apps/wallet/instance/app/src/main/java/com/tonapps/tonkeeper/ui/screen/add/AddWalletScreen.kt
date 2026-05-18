@@ -40,6 +40,7 @@ class AddWalletScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.No
             Item.SIGNER_WALLET_ID -> openScreen(SignerAddScreen.newInstance())
             Item.LEDGER_WALLET_ID -> openScreen(PairLedgerScreen.newInstance())
             Item.KEYSTONE_WALLET_ID -> openScreen(KeystoneAddScreen.newInstance())
+            Item.TETRA_WALLET_ID -> openScreen(InitScreen.newInstance(InitArgs.Type.Tetra))
         }
     }
 

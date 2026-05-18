@@ -38,7 +38,7 @@
 
     </uikit.widget.ColumnLayout>
 
-    <com.tonapps.tonkeeper.ui.component.chart.ChartView
+    <uikit.chart.ChartView
         android:id="@+id/chart"
         android:layout_width="match_parent"
         android:layout_height="176dp"
@@ -48,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="84dp">
 
-        <com.tonapps.tonkeeper.view.ChartPeriodView
+        <uikit.chart.ChartPeriodView
             android:id="@+id/period"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

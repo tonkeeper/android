@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.dapps
 
 import android.net.Uri
 import androidx.collection.ArrayMap
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.rn.data.RNTCConnection
 import com.tonapps.wallet.data.rn.data.RNTCKeyPair
@@ -22,7 +23,8 @@ internal object LegacyHelper {
         val mainnetConnectionsMap = ArrayMap<String, List<AppConnectEntity>>()
         val testnetConnectionsMap = ArrayMap<String, List<AppConnectEntity>>()
         for (connection in connections) {
-            val list = (if (connection.testnet) {
+            val isTestnet = connection.network == TonNetwork.TESTNET
+            val list = (if (isTestnet) {
                 testnetConnectionsMap[connection.accountId]
             } else {
                 mainnetConnectionsMap[connection.accountId]
@@ -30,7 +32,7 @@ internal object LegacyHelper {
 
             list.add(connection)
 
-            if (connection.testnet) {
+            if (isTestnet) {
                 testnetConnectionsMap[connection.accountId] = list
             } else {
                 mainnetConnectionsMap[connection.accountId] = list

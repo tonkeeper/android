@@ -7,10 +7,13 @@ import androidx.core.net.toUri
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.core.history.list.HistoryItemDecoration
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.helper.ExternalLinkHelper
+import com.tonapps.core.helper.ExternalLinkHelper
 import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
@@ -25,8 +28,6 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.ListPaginationListener
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.core.parameter.parametersOf
@@ -77,7 +78,11 @@ class TokenScreen(wallet: WalletEntity) :
         if (args.address == TokenEntity.TRON_USDT.address) {
             headerView.setSubtitle(Localization.trc20)
         }
-        setAdapter(ConcatAdapter(tokenAdapter, historyAdapter))
+        if (args.eventsOnly) {
+            setAdapter(historyAdapter)
+        } else {
+            setAdapter(ConcatAdapter(tokenAdapter, historyAdapter))
+        }
         addItemDecoration(HistoryItemDecoration())
         addItemDecoration(object : RecyclerView.ItemDecoration() {
 
@@ -92,7 +97,7 @@ class TokenScreen(wallet: WalletEntity) :
                     parent.doOnLayout { getItemOffsets(outRect, view, parent, state) }
                     return
                 }
-                if (position == 0) {
+                if (position == 0 && !args.eventsOnly) {
                     return
                 }
                 val holder = parent.findViewHolderForAdapterPosition(position) ?: return
@@ -106,12 +111,14 @@ class TokenScreen(wallet: WalletEntity) :
         addScrollListener(paginationListener)
 
         collectFlow(viewModel.tokenFlow, ::applyToken)
-        collectFlow(viewModel.uiItemsFlow, tokenAdapter::submitList)
+        if (!args.eventsOnly) {
+            collectFlow(viewModel.uiItemsFlow, tokenAdapter::submitList)
+        }
         collectFlow(viewModel.uiHistoryFlow, historyAdapter::submitList)
     }
 
     private fun applyToken(token: AccountTokenEntity) {
-        setActionIcon(R.drawable.ic_ellipsis_16) { actionMenu(it, token) }
+        setActionIcon(UIKitIcon.ic_ellipsis_16) { actionMenu(it, token) }
         if (!token.verified) {
             applyUnverifiedToken()
         }
@@ -171,7 +178,8 @@ class TokenScreen(wallet: WalletEntity) :
                 targetAddress = viewModel.burnAddress,
                 tokenAddress = token.address,
                 amount = token.balance.value,
-                type = SendScreen.Companion.Type.Default
+                type = SendScreen.Companion.Type.Default,
+                from = Events.SendNative.SendNativeFrom.JettonScreen
             )
         )
         finish()
@@ -189,9 +197,10 @@ class TokenScreen(wallet: WalletEntity) :
             name: String,
             symbol: String,
             rawUsde: Boolean = false,
+            eventsOnly: Boolean = false,
         ): TokenScreen {
             val fragment = TokenScreen(wallet)
-            fragment.setArgs(TokenArgs(address, name, symbol, rawUsde))
+            fragment.setArgs(TokenArgs(address, name, symbol, rawUsde, eventsOnly))
             return fragment
         }
     }

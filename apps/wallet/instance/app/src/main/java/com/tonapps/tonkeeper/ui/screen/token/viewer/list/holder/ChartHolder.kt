@@ -13,12 +13,12 @@ import com.tonapps.tonkeeper.extensions.getDiffColor
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.koin.koin
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
-import com.tonapps.tonkeeper.view.ChartPeriodView
-import com.tonapps.tonkeeper.ui.component.chart.ChartView
+import uikit.chart.ChartPeriodView
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.data.rates.RatesRepository
-import com.tonapps.wallet.data.settings.ChartPeriod
+import uikit.chart.ChartPoint
+import uikit.chart.ChartView
+import uikit.chart.ChartPeriod
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.withAlpha
 
@@ -38,10 +38,10 @@ class ChartHolder(
     private val dateView = findViewById<AppCompatTextView>(R.id.date)
 
     init {
-        chartView.onEntitySelected = ::setPrice
+        chartView.onPointSelected = ::setPrice
     }
 
-    private fun setPrice(chart: ChartEntity?) {
+    private fun setPrice(chart: ChartPoint?) {
         val currentItem = item ?: return
         if (chart == null) {
             dateView.setText(Localization.price)

@@ -3,11 +3,9 @@ package com.tonapps.ledger.ble.service
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattService
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import androidx.annotation.VisibleForTesting
+import com.tonapps.async.Async
 import com.tonapps.ledger.ble.BleManager
 import com.tonapps.ledger.ble.extension.toHexString
 import com.tonapps.ledger.ble.extension.toUUID
@@ -17,10 +15,21 @@ import com.tonapps.ledger.ble.service.BleService.Companion.MTU_HANDSHAKE_COMMAND
 import com.tonapps.ledger.ble.service.model.BleAnswer
 import com.tonapps.ledger.ble.service.model.BlePairingEvent
 import com.tonapps.ledger.ble.service.model.GattCallbackEvent
-import kotlinx.coroutines.*
+import com.tonapps.log.L
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
-import timber.log.Timber
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.runBlocking
 
 @SuppressLint("MissingPermission")
 class BleServiceStateMachine(
@@ -35,7 +44,7 @@ class BleServiceStateMachine(
     internal var negotiatedMtu = -1
     private val bleReceiver = BleReceiver()
 
-    private val scope = CoroutineScope(Dispatchers.IO + Job())
+    private val scope = Async.ioScope() + Job()
     internal lateinit var timeoutJob: Job
     internal lateinit var pairingCallbackFlow: BlePairingCallbackFlow
 
@@ -51,7 +60,7 @@ class BleServiceStateMachine(
 
     init {
         gattCallbackFlow.gattFlow
-            .onEach { Timber.d("Event Received $it") }
+            .onEach { L.d("Event Received $it") }
             .onEach { handleGattCallbackEvent(it) }
             .flowOn(Dispatchers.IO)
             .launchIn(scope)
@@ -124,8 +133,8 @@ class BleServiceStateMachine(
                     BleServiceState.WaitingServices -> {
                         val deviceService = parseServices(event.services)
                         if (deviceService != null) {
-                            Timber.d("Devices Services parsed for given UUID ${deviceService?.uuid}")
-                            Timber.d("Current State $currentState")
+                            L.d("Devices Services parsed for given UUID ${deviceService?.uuid}")
+                            L.d("Current State $currentState")
 
                             this@BleServiceStateMachine.deviceService = deviceService
                             pushState(BleServiceState.NegotiatingMtu)
@@ -165,7 +174,7 @@ class BleServiceStateMachine(
             is GattCallbackEvent.WriteCharacteristicAck -> {
                 when (currentState) {
                     BleServiceState.CheckingMtu -> {
-                        Timber.d("Mtu request Sent")
+                        L.d("Mtu request Sent")
                     }
                     is BleServiceState.Ready -> {
                         //NOTHING TO do but not an error
@@ -187,10 +196,10 @@ class BleServiceStateMachine(
                     BleServiceState.CheckingMtu -> {
                         mtuSize = event.value.toHexString().substring(MTU_HANDSHAKE_COMMAND.length)
                             .toInt(16)
-                        Timber.d("Mtu Value received : $mtuSize")
-                        Timber.d("Negotiated Mtu Value received : $negotiatedMtu")
+                        L.d("Mtu Value received : $mtuSize")
+                        L.d("Negotiated Mtu Value received : $negotiatedMtu")
                         if (mtuSize != negotiatedMtu) {
-                            Timber.e(ERROR_MTU_NEGOTIATED_AND_CHECKED_DIVERGENT)
+                            L.e(ERROR_MTU_NEGOTIATED_AND_CHECKED_DIVERGENT)
                         }
 
                         pushState(BleServiceState.Ready(deviceService, negotiatedMtu, null))
@@ -204,7 +213,7 @@ class BleServiceStateMachine(
                             bleSender.clearCommand()
                             pushState(BleServiceState.Ready(deviceService, mtuSize, answer))
                         } else {
-                            Timber.d("Still waiting for a part of the answer")
+                            L.d("Still waiting for a part of the answer")
                         }
                     }
                     else -> {
@@ -242,7 +251,7 @@ class BleServiceStateMachine(
         currentState = state
         //ensure state is pushed
         runBlocking {
-            Timber.d("push state => $state")
+            L.d("push state => $state")
             _stateMachineFlow.emit(state)
         }
 
@@ -261,7 +270,7 @@ class BleServiceStateMachine(
                 || service.uuid == BleManager.NANO_FTS_SERVICE_UUID.toUUID()
                 || service.uuid == BleManager.EUROPA_SERVICE_UUID.toUUID()
             ) {
-                Timber.d("Service UUID ${service.uuid}")
+                L.d("Service UUID ${service.uuid}")
 
                 val bleServiceBuilder: BleDeviceService.Builder =
                     BleDeviceService.Builder(service.uuid)

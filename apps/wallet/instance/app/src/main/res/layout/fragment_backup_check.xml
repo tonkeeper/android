@@ -11,7 +11,7 @@
             android:id="@+id/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:icon="@drawable/ic_chevron_left_16"/>
+            android:icon="@drawable/ic_chevron_left_16" />
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/scroll"
@@ -27,40 +27,36 @@
                     android:id="@+id/text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/offsetMedium"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
-                    android:title="@string/backup_check"/>
+                    android:layout_marginTop="@dimen/offsetMedium"
+                    android:title="@string/backup_check" />
 
                 <uikit.widget.ColumnLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:layout_marginHorizontal="@dimen/offsetLarge"
                     android:layout_marginVertical="@dimen/offsetMedium"
-                    android:layout_marginHorizontal="@dimen/offsetLarge">
+                    android:layout_weight="1">
 
                     <uikit.widget.WordInput
                         android:id="@+id/word_input_1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/offsetMedium"/>
+                        android:layout_marginBottom="@dimen/offsetMedium" />
 
                     <uikit.widget.WordInput
                         android:id="@+id/word_input_2"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/offsetMedium"/>
+                        android:layout_marginBottom="@dimen/offsetMedium" />
 
                     <uikit.widget.WordInput
                         android:id="@+id/word_input_3"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/offsetMedium"/>
+                        android:layout_marginBottom="@dimen/offsetMedium" />
 
                 </uikit.widget.ColumnLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"/>
 
             </uikit.widget.ColumnLayout>
 
@@ -70,8 +66,8 @@
 
 
     <Button
-        style="@style/Widget.App.Button"
         android:id="@+id/done"
+        style="@style/Widget.App.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -79,6 +75,6 @@
         android:layout_marginTop="@dimen/offsetLarge"
         android:layout_marginBottom="@dimen/offsetMedium"
         android:text="@string/done"
-        android:textAppearance="@style/TextAppearance.Label1"/>
+        android:textAppearance="@style/TextAppearance.Label1" />
 
 </FrameLayout>

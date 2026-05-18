@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.rn.data
 
 import android.util.ArrayMap
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.color
 import org.json.JSONArray
 import org.json.JSONObject

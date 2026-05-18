@@ -4,7 +4,7 @@ import android.content.Context
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toListParcel
-import com.tonapps.wallet.api.entity.BalanceEntity
+import com.tonapps.blockchain.model.legacy.BalanceEntity
 import com.tonapps.wallet.data.core.BlobDataSource
 
 internal class LocalDataSource(context: Context): BlobDataSource<List<BalanceEntity>>(

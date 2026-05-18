@@ -1,5 +1,7 @@
 package com.tonapps.uikit.flag
 
+import com.tonapps.ui.uikit.flag.R
+
 private val resMap = mapOf(
     "do" to R.drawable.resource_do,
     "ac" to R.drawable.ac,

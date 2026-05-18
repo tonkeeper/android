@@ -2,7 +2,15 @@ package com.tonapps.wallet.data.account
 
 import android.app.KeyguardManager
 import android.content.Context
+import com.tonapps.async.Async
 import com.tonapps.blockchain.MnemonicHelper
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
+import com.tonapps.blockchain.model.legacy.MessageBodyEntity
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
@@ -13,10 +21,6 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.tron.KeychainTrxAccountsProvider
 import com.tonapps.ledger.ton.LedgerAccount
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
-import com.tonapps.wallet.data.account.entities.MessageBodyEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.account.source.DatabaseSource
 import com.tonapps.wallet.data.account.source.StorageSource
 import com.tonapps.wallet.data.account.source.VaultSource
@@ -25,9 +29,7 @@ import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNKeystone
 import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -51,12 +53,6 @@ class AccountRepository(
     private val rnLegacy: RNLegacy,
 ) {
 
-    companion object {
-        fun newWalletId(): String {
-            return UUID.randomUUID().toString()
-        }
-    }
-
     sealed class SelectedState {
         data object Initialization : SelectedState()
         data object Empty : SelectedState()
@@ -67,7 +63,7 @@ class AccountRepository(
         context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
     }
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val scope = Async.ioScope()
     private val database = DatabaseSource(context, scope)
     private val storageSource: StorageSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { StorageSource(context) }
     private val vaultSource: VaultSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { VaultSource(context) }
@@ -79,9 +75,12 @@ class AccountRepository(
         SharingStarted.Eagerly,
         SelectedState.Initialization
     )
-    val selectedWalletFlow = selectedStateFlow.filterNotNull().filterIsInstance<SelectedState.Wallet>().map {
-        it.wallet
-    }.shareIn(scope, SharingStarted.Eagerly, 1).distinctUntilChanged()
+    val selectedWalletFlow = selectedStateFlow
+        .filterNotNull()
+        .filterIsInstance<SelectedState.Wallet>()
+        .map { it.wallet }
+        .shareIn(scope, SharingStarted.Eagerly, 1)
+        .distinctUntilChanged()
 
     private val selectedId: String?
         get() = (selectedStateFlow.value as? SelectedState.Wallet)?.wallet?.id
@@ -98,6 +97,18 @@ class AccountRepository(
             val selectedId = storageSource.getSelectedId()
             setSelectedWallet(selectedId)
         }
+    }
+
+    suspend fun requiredSelectedWallet(): WalletEntity {
+        val selected = selectedStateFlow.value
+        if (selected is SelectedState.Wallet) {
+            return selected.wallet
+        }
+
+        val selectedId = storageSource.getSelectedId()
+        val selectedWallet = selectedId?.let { database.getAccount(it) }
+
+        return requireNotNull(selectedWallet)
     }
 
     suspend fun setInitialized(id: String, initialized: Boolean) {
@@ -141,13 +152,13 @@ class AccountRepository(
 
     private suspend fun addWalletToRN(wallet: WalletEntity) {
         val type = when (wallet.type) {
-            Wallet.Type.Default -> RNWallet.Type.Regular
-            Wallet.Type.Watch -> RNWallet.Type.WatchOnly
-            Wallet.Type.Lockup -> RNWallet.Type.Lockup
-            Wallet.Type.SignerQR -> RNWallet.Type.Signer
-            Wallet.Type.Signer -> RNWallet.Type.SignerDeeplink
-            Wallet.Type.Ledger -> RNWallet.Type.Ledger
-            Wallet.Type.Keystone -> RNWallet.Type.Keystone
+            WalletType.Default -> RNWallet.Type.Regular
+            WalletType.Watch -> RNWallet.Type.WatchOnly
+            WalletType.Lockup -> RNWallet.Type.Lockup
+            WalletType.SignerQR -> RNWallet.Type.Signer
+            WalletType.Signer -> RNWallet.Type.SignerDeeplink
+            WalletType.Ledger -> RNWallet.Type.Ledger
+            WalletType.Keystone -> RNWallet.Type.Keystone
             else -> RNWallet.Type.Regular
         }
 
@@ -229,7 +240,7 @@ class AccountRepository(
     private suspend fun saveTonProof(wallet: WalletEntity, token: String) = withContext(Dispatchers.IO) {
         storageSource.setTonProofToken(wallet.publicKey, token)
 
-        val wallets = getWalletByPublicKey(wallet.publicKey, wallet.testnet)
+        val wallets = getWalletByPublicKey(wallet.publicKey, wallet.network)
         for (w in wallets) {
             rnLegacy.setTonProof(w.id, token)
         }
@@ -279,7 +290,7 @@ class AccountRepository(
         val address = getTronAddress(id) ?: return null
         return BlockchainAddress(
             value = address,
-            testnet = false,
+            network = TonNetwork.MAINNET,
             blockchain = Blockchain.TRON
         )
     }
@@ -300,7 +311,7 @@ class AccountRepository(
             val entity = WalletEntity(
                 id = newWalletId(),
                 publicKey = account.publicKey,
-                type = Wallet.Type.Ledger,
+                type = WalletType.Ledger,
                 version = WalletVersion.V4R2,
                 label = label.create(index),
                 ledger = WalletEntity.Ledger(
@@ -323,7 +334,7 @@ class AccountRepository(
         qr: Boolean,
         initialized: List<Boolean>
     ): List<WalletEntity> {
-        val type = if (qr) Wallet.Type.SignerQR else Wallet.Type.Signer
+        val type = if (qr) WalletType.SignerQR else WalletType.Signer
         return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type, initialized = initialized)
     }
 
@@ -336,7 +347,7 @@ class AccountRepository(
         val entity = WalletEntity(
             id = newWalletId(),
             publicKey = publicKey,
-            type = Wallet.Type.Keystone,
+            type = WalletType.Keystone,
             version = WalletVersion.V4R2,
             label = label.create(0),
             keystone = keystone,
@@ -353,11 +364,10 @@ class AccountRepository(
         label: Wallet.NewLabel,
         mnemonic: List<String>,
         versions: List<WalletVersion>,
-        testnet: Boolean,
-        initialized: List<Boolean>
+        type: WalletType,
+        initialized: List<Boolean>,
     ): List<WalletEntity> {
         val publicKey = vaultSource.addMnemonic(mnemonic)
-        val type = if (testnet) Wallet.Type.Testnet else Wallet.Type.Default
         return addWallet(ids, label, publicKey, versions, type, initialized = initialized)
     }
 
@@ -366,7 +376,7 @@ class AccountRepository(
         label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
         versions: List<WalletVersion>,
-        type: Wallet.Type,
+        type: WalletType,
         initialized: List<Boolean>
     ): List<WalletEntity> {
         val list = mutableListOf<WalletEntity>()
@@ -391,7 +401,7 @@ class AccountRepository(
         publicKey: PublicKeyEd25519,
         version: WalletVersion,
     ): WalletEntity {
-        return addWallet(newWalletId(), label, publicKey, Wallet.Type.Watch, version, initialized = false)
+        return addWallet(newWalletId(), label, publicKey, WalletType.Watch, version, initialized = false)
     }
 
     suspend fun addNewWallet(
@@ -400,14 +410,14 @@ class AccountRepository(
         mnemonic: List<String>
     ): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
-        return addWallet(id, label, publicKey, Wallet.Type.Default, WalletVersion.V5R1, new = true, initialized = false)
+        return addWallet(id, label, publicKey, WalletType.Default, WalletVersion.V5R1, new = true, initialized = false)
     }
 
     private suspend fun addWallet(
         id: String,
         label: Wallet.NewLabel,
         publicKey: PublicKeyEd25519,
-        type: Wallet.Type,
+        type: WalletType,
         version: WalletVersion,
         new: Boolean = false,
         initialized: Boolean
@@ -439,7 +449,7 @@ class AccountRepository(
         val payload = api.tonconnectPayload() ?: return null
         return try {
             val publicKey = wallet.publicKey
-            val contract = BaseWalletContract.create(publicKey, WalletVersion.V4R2.title, wallet.testnet)
+            val contract = BaseWalletContract.create(publicKey, WalletVersion.V4R2.title, wallet.network)
             val secretKey = vaultSource.getPrivateKey(publicKey) ?: throw Exception("private key not found")
             val address = contract.address
             val proof = WalletProof.signTonkeeper(
@@ -485,20 +495,20 @@ class AccountRepository(
         setSelectedWallet(null)
     }
 
-    suspend fun getWalletsByAccountId(accountId: String, testnet: Boolean): List<WalletEntity> {
+    suspend fun getWalletsByAccountId(accountId: String, network: TonNetwork): List<WalletEntity> {
         return database.getAccounts().filter {
-            it.accountId.equalsAddress(accountId) && it.testnet == testnet
+            it.accountId.equalsAddress(accountId) && it.network == network
         }
     }
 
-    suspend fun getWalletByPublicKey(publicKey: PublicKeyEd25519, testnet: Boolean): List<WalletEntity> {
+    suspend fun getWalletByPublicKey(publicKey: PublicKeyEd25519, network: TonNetwork): List<WalletEntity> {
         return database.getAccounts().filter {
-            it.publicKey == publicKey && it.testnet == testnet
+            it.publicKey == publicKey && it.network == network
         }
     }
 
-    suspend fun getWalletByAccountId(accountId: String, testnet: Boolean = false): WalletEntity? {
-        val wallets = getWalletsByAccountId(accountId, testnet)
+    suspend fun getWalletByAccountId(accountId: String, network: TonNetwork = TonNetwork.MAINNET): WalletEntity? {
+        val wallets = getWalletsByAccountId(accountId, network)
         if (wallets.isEmpty()) {
             return null
         }
@@ -516,20 +526,26 @@ class AccountRepository(
         return database.getAccount(id)
     }
 
+    suspend fun forceSelectedWallet(): WalletEntity {
+        return (_selectedStateFlow.value as? SelectedState.Wallet)?.wallet
+            ?: database.getAccount(selectedId!!)!!
+    }
+
     suspend fun getSelectedWallet(): WalletEntity? {
-        return (_selectedStateFlow.value as? SelectedState.Wallet)?.wallet ?: database.getAccount(selectedId ?: return null)
+        return (_selectedStateFlow.value as? SelectedState.Wallet)?.wallet
+            ?: database.getAccount(selectedId ?: return null)
     }
 
     suspend fun getSeqno(
         wallet: WalletEntity
     ): Int = withContext(Dispatchers.IO) {
-        api.getAccountSeqno(wallet.accountId, wallet.testnet)
+        api.getAccountSeqno(wallet.accountId, wallet.network)
     }
 
     suspend fun getValidUntil(
-        testnet: Boolean
+        network: TonNetwork
     ): Long = withContext(Dispatchers.IO) {
-        val seconds = api.getServerTime(testnet)
+        val seconds = api.getServerTime(network)
         seconds + (5 * 30L) // 5 minutes
     }
 
@@ -551,8 +567,14 @@ class AccountRepository(
         return messageBody(
             wallet = wallet,
             seqNo = seqNo,
-            validUntil = if (validUntil > 0) validUntil else getValidUntil(wallet.testnet),
+            validUntil = if (validUntil > 0) validUntil else getValidUntil(wallet.network),
             transfers = transfers
         )
+    }
+
+    companion object {
+        fun newWalletId(): String {
+            return UUID.randomUUID().toString()
+        }
     }
 }

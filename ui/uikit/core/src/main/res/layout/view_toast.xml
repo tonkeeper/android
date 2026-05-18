@@ -5,17 +5,18 @@
         android:id="@+id/toast_loader"
         android:layout_width="16dp"
         android:layout_height="16dp"
-        android:layout_marginRight="10dp"
         android:layout_gravity="center"
+        android:layout_marginRight="10dp"
         android:color="@color/constantWhite"
         android:trackTint="#52ffffff"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/toast_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:textAppearance="@style/TextAppearance.Label2"
-        android:textColor="?attr/textPrimaryColor"/>
+        android:textColor="?attr/textPrimaryColor" />
 
 </merge>

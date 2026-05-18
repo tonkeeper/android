@@ -1,0 +1,9 @@
+appId: com.ton_keeper.debug
+---
+- assertVisible: Enter recovery phrase
+- setClipboard: ${mnemonica}
+- runFlow: 
+    file: ../../utils/insert_text_from_clipboard.yaml
+    env:
+      field_to_insert: word_1
+- pressKey: enter

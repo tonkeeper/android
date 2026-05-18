@@ -17,12 +17,12 @@ import com.tonapps.extensions.logError
 import com.tonapps.extensions.max24
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.core.history.HistoryHelper
-import com.tonapps.tonkeeper.core.history.iconRes
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.core.history.nameRes
+import com.tonapps.wallet.features.events.iconRes
+import com.tonapps.wallet.features.events.nameRes
 import com.tonapps.tonkeeper.koin.historyHelper
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor

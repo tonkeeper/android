@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
-import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.bus.generated.Events
 import com.tonapps.extensions.getEnum
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.putEnum
@@ -18,7 +18,8 @@ data class SendArgs(
     val text: String?,
     val nftAddress: String,
     val type: SendScreen.Companion.Type,
-    val bin: Cell? = null
+    val bin: Cell? = null,
+    val from: Events.SendNative.SendNativeFrom = Events.SendNative.SendNativeFrom.WalletScreen
 ): BaseArgs() {
 
     private companion object {
@@ -29,6 +30,7 @@ data class SendArgs(
         private const val ARG_NFT_ADDRESS = "nft_address"
         private const val ARG_TYPE = "type"
         private const val ARG_BIN = "bin"
+        private const val ARG_FROM = "from"
 
         private fun normalizeAmount(amount: Coins?): Coins? {
             if (amount?.isPositive == true) {
@@ -48,7 +50,8 @@ data class SendArgs(
         text = bundle.getString(ARG_TEXT),
         nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: "",
         type = bundle.getEnum(ARG_TYPE, SendScreen.Companion.Type.Default),
-        bin = bundle.getString(ARG_BIN)?.cellFromBase64()
+        bin = bundle.getString(ARG_BIN)?.cellFromBase64(),
+        from = bundle.getEnum(ARG_FROM, Events.SendNative.SendNativeFrom.WalletScreen)
     )
 
     override fun toBundle(): Bundle {
@@ -62,6 +65,7 @@ data class SendArgs(
         bin?.let {
             bundle.putString(ARG_BIN, it.base64())
         }
+        bundle.putEnum(ARG_FROM, from)
         return bundle
     }
 }

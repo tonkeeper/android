@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.base
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.navigation.Navigation.Companion.navigation
 
 class WalletFragmentFactory: FragmentFactory() {

@@ -1,10 +1,10 @@
 package com.tonapps.security.vault
 
 import android.annotation.SuppressLint
-import android.content.SharedPreferences
-import com.tonapps.extensions.getByteArray
 import com.tonapps.extensions.putByteArray
+import com.tonapps.security.KeyHelperException
 import com.tonapps.security.Security
+import com.tonapps.security.SecurityStorageBox
 import com.tonapps.security.clear
 import com.tonapps.security.decrypt
 import com.tonapps.security.encrypt
@@ -13,7 +13,7 @@ import com.tonapps.security.spec.SimpleSecretSpec
 import javax.crypto.SecretKey
 
 internal class MasterKey(
-    private val prefs: SharedPreferences
+    private val prefs: SecurityStorageBox
 ) {
 
     private companion object {
@@ -90,11 +90,16 @@ internal class MasterKey(
 
     @SuppressLint("ApplySharedPref")
     private fun put(iv: ByteArray, encrypted: ByteArray) {
-        prefs.edit()
-            .putByteArray(IV_KEY, iv)
-            .putByteArray(BODY_KEY, encrypted)
-            .commit()
-
-        clear(iv, encrypted)
+        try {
+            val saved = prefs.transaction {
+                putByteArray(IV_KEY, iv)
+                putByteArray(BODY_KEY, encrypted)
+            }
+            if (!saved) {
+                throw KeyHelperException.Save("Failed to save master IV and Body")
+            }
+        } finally {
+            clear(iv, encrypted)
+        }
     }
 }

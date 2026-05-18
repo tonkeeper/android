@@ -1,34 +1,27 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    id("target.android.compose")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "uikit"
-    compileSdk = Build.compileSdkVersion
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
 }
 
 dependencies {
-    api(project(ProjectModules.UIKit.color))
-    api(project(ProjectModules.UIKit.icon))
-    api(project(ProjectModules.UIKit.list))
-    api(project(ProjectModules.Module.blur))
-    api(project(ProjectModules.Module.shimmer))
+    api(projects.ui.uikit.color)
+    api(projects.ui.uikit.icon)
+    api(projects.ui.uikit.list)
+    api(projects.ui.blur)
+    api(projects.ui.shimmer)
+    implementation(projects.lib.log)
 
-    implementation(project(ProjectModules.KMP.ui))
-
-    implementation(libs.kotlinX.coroutines.android)
-    implementation(libs.androidX.core)
-    implementation(libs.androidX.webkit)
-    implementation(libs.androidX.activity)
-    implementation(libs.androidX.fragment)
-    implementation(libs.androidX.appCompat)
-    implementation(libs.androidX.splashscreen)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.core)
+    implementation(libs.androidx.webkit)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.fragment)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.splashscreen)
     implementation(libs.flexbox)
     implementation(libs.material)
 

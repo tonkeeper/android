@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.client.safemode
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.client.safemode.BadDomainsEntity.Companion.isNullOrEmpty

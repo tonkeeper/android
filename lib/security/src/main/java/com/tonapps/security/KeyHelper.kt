@@ -1,10 +1,8 @@
 package com.tonapps.security
 
-import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.util.Log
-import java.io.OutputStream
+import com.tonapps.log.L
 import java.security.KeyStore
 import javax.crypto.KeyGenerator
 
@@ -20,44 +18,25 @@ object KeyHelper {
     }
 
     fun createIfNotExists(alias: String) {
-        Log.d("KeyHelperLog", "createIfNotExists: $alias")
-        if (!keyExists(alias)) {
+        L.d("KeyHelperLog", "createIfNotExists: $alias")
+        if (!keyStore.containsAlias(alias)) {
             generateKey(alias)
         }
     }
 
     private fun generateKey(alias: String) {
-        /*
-        // StrongBox is required authentication
-        try {
-            generateKeyWithStrongBoxBacked(alias)
-        } catch (e: Throwable) {
-            generateKey(getParameterKey(alias))
-        }
-        */
-        generateKey(getParameterKey(alias))
-    }
-
-    private fun generateKeyWithStrongBoxBacked(alias: String) {
-        val parameter = getParameterKeyStrongBox(alias)
-        generateKey(parameter)
-    }
-
-    private fun generateKey(parameter: KeyGenParameterSpec) {
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
-        generator.init(parameter)
+        generator.init(defaultParameterBuilder(alias))
         try {
             generator.generateKey()
         } catch (e: Throwable) {
             // device locked
+            L.e("KeyHelperLog", "generateKey: $e")
+            throw e
         }
     }
 
-    private fun keyExists(alias: String): Boolean {
-        return keyStore.containsAlias(alias)
-    }
-
-    private fun defaultParameterBuilder(alias: String): KeyGenParameterSpec.Builder {
+    private fun defaultParameterBuilder(alias: String): KeyGenParameterSpec {
         val builder = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
         builder.setBlockModes(KeyProperties.BLOCK_MODE_GCM)
         builder.setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
@@ -65,25 +44,7 @@ object KeyHelper {
         builder.setKeySize(KEY_SIZE)
         builder.setUserAuthenticationRequired(false)
         builder.setRandomizedEncryptionRequired(true)
-        /*
-        // Bad working for samsung
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            builder.setUnlockedDeviceRequired(true)
-        }
-         */
-        return builder
-    }
 
-    private fun getParameterKey(alias: String): KeyGenParameterSpec {
-        return defaultParameterBuilder(alias).build()
-    }
-
-    private fun getParameterKeyStrongBox(alias: String): KeyGenParameterSpec {
-        val builder = defaultParameterBuilder(alias)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            builder.setIsStrongBoxBacked(true)
-        }
         return builder.build()
     }
-
 }

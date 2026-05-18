@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.rates
 
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode

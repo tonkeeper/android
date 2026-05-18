@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.biometric.BiometricManager
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 fun List<WalletCurrency>.query(value: String) = firstOrNull {
     it.address.equalsAddress(value)

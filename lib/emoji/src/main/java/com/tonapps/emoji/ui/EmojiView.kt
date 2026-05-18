@@ -5,7 +5,7 @@ import android.graphics.Color
 import android.util.AttributeSet
 import android.view.View
 import com.tonapps.emoji.Emoji
-import com.tonapps.emoji.R
+import com.tonapps.lib.emoji.R
 import com.tonapps.emoji.ui.drawable.EmojiDrawable
 
 class EmojiView @JvmOverloads constructor(

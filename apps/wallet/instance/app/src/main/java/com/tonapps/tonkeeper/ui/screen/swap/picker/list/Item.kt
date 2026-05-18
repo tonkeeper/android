@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.swap.picker.list
 import android.net.Uri
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 sealed class Item(type: Int): BaseListItem(type) {
 

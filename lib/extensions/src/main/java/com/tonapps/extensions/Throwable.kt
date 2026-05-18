@@ -16,7 +16,7 @@ fun Throwable.getUserMessage(context: Context): String? {
 
 open class ErrorForUserException(
     @StringRes val stringRes: Int = 0,
-    val text: String? = null,
+    open val text: String? = null,
     override val cause: Throwable? = null,
 ) : Exception(cause) {
 

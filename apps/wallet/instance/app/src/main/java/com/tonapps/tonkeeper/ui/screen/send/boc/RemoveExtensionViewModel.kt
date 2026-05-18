@@ -4,24 +4,23 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.icu.Coins
-import com.tonapps.tonkeeper.core.Amount
-import com.tonapps.tonkeeper.core.entities.TransferEntity
+import com.tonapps.blockchain.model.legacy.Amount
+import com.tonapps.blockchain.model.legacy.TransferEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
-import com.tonapps.tonkeeper.manager.tx.TransactionManager
+import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.screen.send.main.helper.InsufficientBalanceType
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionState
-import com.tonapps.tonkeeper.usecase.emulation.Emulated
-import com.tonapps.tonkeeper.usecase.emulation.Emulated.Companion.buildFee
-import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
-import com.tonapps.tonkeeper.usecase.emulation.InsufficientBalanceError
-import com.tonapps.tonkeeper.usecase.sign.SignUseCase
+import com.tonapps.deposit.usecase.emulation.Emulated
+import com.tonapps.deposit.usecase.emulation.Emulated.Companion.buildFee
+import com.tonapps.deposit.usecase.emulation.EmulationUseCase
+import com.tonapps.deposit.usecase.emulation.InsufficientBalanceError
+import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.SendBlockchainState
 import com.tonapps.wallet.api.getDebugMessage
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -64,7 +63,7 @@ class RemoveExtensionViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val seqNo = accountRepository.getSeqno(wallet)
-                val validUntil = accountRepository.getValidUntil(wallet.testnet)
+                val validUntil = accountRepository.getValidUntil(wallet.network)
                 val queryId = TransferEntity.newWalletQueryId()
 
                 val address = AddrStd(pluginAddress)
@@ -95,11 +94,12 @@ class RemoveExtensionViewModel(
 
                 emulationReadyDate.set(System.currentTimeMillis())
 
-                if (emulated.failed && emulated.error is InsufficientBalanceError) {
+                val error = emulated.error
+                if (emulated.failed && error is InsufficientBalanceError) {
                     _stateFlow.value = SendTransactionState.InsufficientBalance(
                         wallet = wallet,
-                        balance = Amount(emulated.error.accountBalance),
-                        required = Amount(emulated.error.totalAmount),
+                        balance = Amount(error.accountBalance),
+                        required = Amount(error.totalAmount),
                         withRechargeBattery = false,
                         singleWallet = isSingleWallet(),
                         type = InsufficientBalanceType.InsufficientTONBalance
@@ -156,14 +156,14 @@ class RemoveExtensionViewModel(
         val balance = tokenRepository.getTON(
             settingsRepository.currency,
             wallet.accountId,
-            wallet.testnet
+            wallet.network
         )?.balance?.value
         return balance ?: Coins.ZERO
     }
 
     fun send() = flow {
         val seqNo = accountRepository.getSeqno(wallet)
-        val validUntil = accountRepository.getValidUntil(wallet.testnet)
+        val validUntil = accountRepository.getValidUntil(wallet.network)
         val queryId = TransferEntity.newWalletQueryId()
 
         val unsignedBody = wallet.contract.removePlugin(
@@ -184,19 +184,14 @@ class RemoveExtensionViewModel(
 
         val confirmationTimeSeconds = getConfirmationTimeMillis() / 1000.0
 
-        val status = transactionManager.send(
+        transactionManager.send(
             wallet = wallet,
             boc = cell,
             withBattery = false,
             source = "local",
             confirmationTime = confirmationTimeSeconds
         )
-
-        if (status == SendBlockchainState.SUCCESS) {
-            emit(cell.base64())
-        } else {
-            throw IllegalStateException("Failed to send transaction to blockchain: $status")
-        }
+        emit(cell.base64())
     }.flowOn(Dispatchers.IO)
 
     private fun getConfirmationTimeMillis(): Long {

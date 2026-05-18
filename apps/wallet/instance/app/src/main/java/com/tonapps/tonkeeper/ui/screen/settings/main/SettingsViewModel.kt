@@ -1,36 +1,34 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main
 
 import android.app.Application
-import android.os.Build
-import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
-import com.tonapps.extensions.appVersionCode
 import com.tonapps.tonkeeper.Environment
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.FirebaseHelper
-import com.tonapps.tonkeeper.core.entities.AssetsEntity
-import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.legacy.enteties.AssetsEntity
+import com.tonapps.legacy.enteties.AssetsExtendedEntity
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.manager.push.PushManager
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.SearchEngine
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -57,7 +55,7 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val backupRepository: BackupRepository,
-    private val tonConnectManager: TonConnectManager,
+    private val tonConnectBridge: ITonConnectBridge,
     private val passcodeManager: PasscodeManager,
     private val rnLegacy: RNLegacy,
     private val environment: Environment,
@@ -67,7 +65,7 @@ class SettingsViewModel(
     private val analytics: AnalyticsHelper
 ) : BaseWalletVM(application) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(wallet.network)
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
     val uiItemsFlow = _uiItemsFlow.asStateFlow().filter { it.isNotEmpty() }
@@ -84,16 +82,23 @@ class SettingsViewModel(
     }
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
-        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.testnet).mapNotNull { token ->
-            if (safeMode && !token.verified) {
-                return@mapNotNull null
+        tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.network)
+            .mapNotNull { token ->
+                if (safeMode && !token.verified) {
+                    return@mapNotNull null
+                }
+                AssetsExtendedEntity(
+                    raw = AssetsEntity.Token(token),
+                    prefs = settingsRepository.getTokenPrefs(
+                        wallet.id,
+                        token.address,
+                        token.blacklist
+                    ),
+                    accountId = wallet.accountId,
+                )
             }
-            AssetsExtendedEntity(
-                raw = AssetsEntity.Token(token),
-                prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
-                accountId = wallet.accountId,
-            )
-        }.filter { !it.isTon }.sortedBy { it.index }
+            .filter { !it.isTon }
+            .sortedBy { it.index }
     }
 
     init {
@@ -118,7 +123,7 @@ class SettingsViewModel(
     fun signOut(callback: () -> Unit) {
         analytics.simpleTrackEvent("delete_wallet")
         viewModelScope.launch(Dispatchers.IO) {
-            tonConnectManager.clear(wallet)
+            tonConnectBridge.clear(wallet)
             PushToggleWorker.run(context, wallet, PushManager.State.Delete)
             delay(2000)
             withContext(Dispatchers.Main) {
@@ -151,7 +156,7 @@ class SettingsViewModel(
                     names = listOf(newLabel.name),
                     emoji = newLabel.emoji,
                     color = newLabel.color,
-                ), mnemonic, versions, wallet.testnet, listOf(false)
+                ), mnemonic, versions, wallet.type, listOf(false)
             )
             backupRepository.addBackup(walletId)
             accountRepository.setSelectedWallet(walletId)
@@ -181,7 +186,7 @@ class SettingsViewModel(
             FirebaseHelper.trc20Enabled(!isHidden)
 
             if (!isHidden) {
-                settingsRepository.setTokenPinned(wallet.id, TokenEntity.TRC20_USDT , true)
+                settingsRepository.setTokenPinned(wallet.id, TokenEntity.TRC20_USDT, true)
                 settingsRepository.setTokensSort(wallet.id, sortAddresses)
             }
         }
@@ -190,24 +195,24 @@ class SettingsViewModel(
     private suspend fun hasW5(): Boolean {
         if (wallet.version == WalletVersion.V5R1) {
             return true
-        } else if (wallet.type == Wallet.Type.Watch || wallet.type == Wallet.Type.Lockup || wallet.type == Wallet.Type.Ledger) {
+        } else if (wallet.type == WalletType.Watch || wallet.type == WalletType.Lockup || wallet.type == WalletType.Ledger) {
             return true
         }
-        val w5Contact = BaseWalletContract.create(wallet.publicKey, "v5r1", wallet.testnet)
+        val w5Contact = BaseWalletContract.create(wallet.publicKey, "v5r1", wallet.network)
         val accountId = w5Contact.address.toAccountId()
-        return accountRepository.getWalletByAccountId(accountId, wallet.testnet) != null
+        return accountRepository.getWalletByAccountId(accountId, wallet.network) != null
     }
 
     private suspend fun hasV4R2(): Boolean {
         if (wallet.version != WalletVersion.V5R1 && wallet.version != WalletVersion.V5BETA) {
             return true
         }
-        if (wallet.type == Wallet.Type.Watch || wallet.type == Wallet.Type.Lockup || wallet.type == Wallet.Type.Ledger) {
+        if (wallet.type == WalletType.Watch || wallet.type == WalletType.Lockup || wallet.type == WalletType.Ledger) {
             return true
         }
-        val v4R2Contact = BaseWalletContract.create(wallet.publicKey, "v4r2", wallet.testnet)
+        val v4R2Contact = BaseWalletContract.create(wallet.publicKey, "v4r2", wallet.network)
         val accountId = v4R2Contact.address.toAccountId()
-        return accountRepository.getWalletByAccountId(accountId, wallet.testnet) != null
+        return accountRepository.getWalletByAccountId(accountId, wallet.network) != null
     }
 
     private suspend fun buildUiItems(
@@ -217,6 +222,7 @@ class SettingsViewModel(
         searchEngine: SearchEngine,
         hasBackup: Boolean
     ) {
+        val config = api.getConfig(wallet.network)
         val hasW5 = hasW5()
         val hasV4R2 = hasV4R2()
         val uiItems = mutableListOf<Item>()
@@ -232,7 +238,7 @@ class SettingsViewModel(
 
         uiItems.add(Item.Space)
 
-        if (wallet.hasPrivateKey && !wallet.testnet && !api.config.flags.disableTron) {
+        if (wallet.hasPrivateKey && wallet.network.isMainnet && !config.flags.disableTron) {
             val tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(displayWallet.id)
             uiItems.add(Item.TronToggle(enabled = tronUsdtEnabled))
             uiItems.add(Item.Space)
@@ -276,7 +282,7 @@ class SettingsViewModel(
         }.capitalized, ListCell.Position.MIDDLE))
 
         val batteryCharges = getBatteryCharges()
-        if (wallet.hasPrivateKey && (!api.config.flags.disableBattery || batteryCharges > 0)) {
+        if (wallet.hasPrivateKey && (!config.flags.disableBattery || batteryCharges > 0)) {
             uiItems.add(Item.Battery(ListCell.Position.MIDDLE))
         }
         if (WidgetManager.isRequestPinAppWidgetSupported) {
@@ -285,17 +291,16 @@ class SettingsViewModel(
         uiItems.add(Item.Theme(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
-        uiItems.add(Item.FAQ(ListCell.Position.FIRST, api.config.faqUrl))
-        uiItems.add(Item.Support(ListCell.Position.MIDDLE, getSupportUrl()))
-        uiItems.add(Item.News(ListCell.Position.MIDDLE, api.config.tonkeeperNewsUrl))
-        uiItems.add(Item.Contact(ListCell.Position.MIDDLE, api.config.supportLink))
+        uiItems.add(Item.FAQ(ListCell.Position.FIRST, config.faqUrl))
+        uiItems.add(Item.Support(ListCell.Position.MIDDLE))
+        uiItems.add(Item.News(ListCell.Position.MIDDLE, config.tonkeeperNewsUrl))
         if (environment.isGooglePlayServicesAvailable) {
             uiItems.add(Item.Rate(ListCell.Position.MIDDLE))
         }
         uiItems.add(Item.Legal(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
-        if (wallet.type == Wallet.Type.Watch) {
+        if (wallet.type == WalletType.Watch) {
             uiItems.add(Item.DeleteWatchAccount(ListCell.Position.SINGLE))
         } else {
             uiItems.add(Item.Logout(ListCell.Position.SINGLE, wallet.label, !wallet.hasPrivateKey))
@@ -306,21 +311,14 @@ class SettingsViewModel(
         _uiItemsFlow.value = uiItems
     }
 
-    private fun getSupportUrl(): String {
-        val startParams = "android${Build.VERSION.SDK_INT}app${context.appVersionCode}"
-        val builder = api.config.directSupportUrl.toUri().buildUpon()
-        builder.appendQueryParameter("start", startParams)
-        return builder.toString()
-    }
-
     private suspend fun getBatteryCharges(): Int = withContext(Dispatchers.IO) {
         accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.testnet, true)
+            batteryRepository.getCharges(it, wallet.publicKey, wallet.network, true)
         } ?: 0
     }
 
     private suspend fun hasInstalledExtensions(): Boolean = withContext(Dispatchers.IO) {
-        val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.testnet)
+        val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network)
         plugins.isNotEmpty()
     }
 }

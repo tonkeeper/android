@@ -3,8 +3,8 @@ package com.tonapps.tonkeeper.ui.base
 import android.content.Context
 import android.os.Bundle
 import android.widget.FrameLayout
-import com.tonapps.tonkeeperx.R
 import com.tonapps.extensions.activity
+import com.tonapps.tonkeeperx.R
 import uikit.navigation.NavigationActivity
 
 abstract class BaseWalletActivity: NavigationActivity(), BaseWalletVM.Holder {
@@ -25,7 +25,6 @@ abstract class BaseWalletActivity: NavigationActivity(), BaseWalletVM.Holder {
     }
 
     companion object {
-
         fun findBaseView(context: Context): FrameLayout? {
             val activity = (context.activity as? BaseWalletActivity) ?: return null
             return activity.findViewById(R.id.base)

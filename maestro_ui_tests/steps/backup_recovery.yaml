@@ -1,0 +1,30 @@
+appId: com.ton_keeper.debug
+---
+- tapOn:
+    id: settings
+- assertVisible:
+    id: icon
+    index: 0
+- tapOn:
+    text: Backup
+- assertVisible: Backup
+- assertVisible: Manual
+- assertVisible: Back up your wallet manually by writing down the recovery phrase.
+- tapOn: Back Up Manually
+- assertVisible:
+    id: title
+- assertVisible: Please read the following carefully before viewing your recovery phrase.
+- tapOn: Cancel
+- assertNotVisible: Please read the following carefully before viewing your recovery phrase.
+- tapOn: Back Up Manually
+- tapOn: Continue
+- tapOn: ${PASSWORD_KEY}
+- tapOn: ${PASSWORD_KEY}
+- tapOn: ${PASSWORD_KEY}
+- tapOn: ${PASSWORD_KEY}
+
+# нужны индексы для копирования id из мнемоник.
+
+- clearState:
+    appId: com.ton_keeper.debug
+    label: Reset TonKeeper

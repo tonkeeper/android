@@ -8,6 +8,7 @@ actual fun painterResource(id: Int): Painter {
     throw IllegalArgumentException("supported only for android")
 }
 
+@Composable
 actual fun fixAndroidResUrl(url: String): String {
     return url
 }

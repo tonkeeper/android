@@ -4,46 +4,32 @@ import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
 import android.content.pm.ServiceInfo
-import android.net.Uri
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.Operation
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.extensions.file
-import com.tonapps.extensions.filterList
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.helper.NotificationsHelper
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.FileDownloader
 import com.tonapps.wallet.api.FileDownloader.DownloadStatus
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.util.UUID
-import kotlin.coroutines.resume
-import kotlin.uuid.Uuid
-import androidx.core.net.toUri
 
 class ApkDownloadWorker(
     private val context: Context,
@@ -69,7 +55,7 @@ class ApkDownloadWorker(
         setForeground(getForegroundInfo())
         setProgressAsync(workDataOf(ARG_PROGRESS to 0))
 
-        Log.d("SendViewLog", "download url: $downloadUrl")
+        L.d("SendViewLog", "download url: $downloadUrl")
 
         var lastUpdateTime = 0L
         fileDownloader.download(downloadUrl, targetFile).onEach { status ->
@@ -81,7 +67,7 @@ class ApkDownloadWorker(
                     lastUpdateTime = currentTime
                 }
             } else if (status is DownloadStatus.Success) {
-                Log.d("SendViewLog", "download success")
+                L.d("SendViewLog", "download success")
                 notificationManager.cancel(NOTIFICATION_ID)
                 setProgress(100)
                 showInstallNotification(targetFile)
@@ -177,7 +163,7 @@ class ApkDownloadWorker(
             downloadUrl: String,
             targetFile: String
         ): UUID {
-            Log.d("SendViewLog", "start download worker")
+            L.d("SendViewLog", "start download worker")
             val id = UUID.randomUUID()
             context.workManager.cancelAllWorkByTag(NAME)
             val inputData = Data.Builder()

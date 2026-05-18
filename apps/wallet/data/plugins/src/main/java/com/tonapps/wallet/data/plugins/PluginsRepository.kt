@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.plugins
 
 import android.content.Context
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.BlobDataSource
 import io.Serializer
@@ -30,10 +31,10 @@ class PluginsRepository(
 
     suspend fun getPlugins(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         refresh: Boolean = false,
     ): List<WalletPlugin> = withContext(Dispatchers.IO) {
-        val key = cacheKey(accountId, testnet)
+        val key = cacheKey(accountId, network)
         if (!refresh) {
             val cached = getCache(key)
             if (cached != null) {
@@ -41,7 +42,7 @@ class PluginsRepository(
             }
         }
         try {
-            val wallet = api.wallet(testnet).getWalletInfo(accountId)
+            val wallet = api.wallet(network).getWalletInfo(accountId)
             val plugins = wallet.plugins
             setCache(key, plugins)
             _updatedFlow.emit(Unit)
@@ -55,8 +56,8 @@ class PluginsRepository(
         }
     }
 
-    private fun cacheKey(accountId: String, testnet: Boolean): String {
-        return if (testnet) "${accountId}_testnet" else accountId
+    private fun cacheKey(accountId: String, network: TonNetwork): String {
+        return "${accountId}_${network.name.lowercase()}"
     }
 
     override fun onMarshall(data: List<WalletPlugin>) = Serializer.toJSON(data).toByteArray()

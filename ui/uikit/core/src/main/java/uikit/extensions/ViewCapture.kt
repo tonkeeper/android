@@ -3,14 +3,12 @@ package uikit.extensions
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Rect
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.PixelCopy
 import android.view.SurfaceView
 import android.view.View
 import android.view.Window
-import androidx.annotation.RequiresApi
 
 internal fun View.generateBitmapFromDraw(
     destBitmap: Bitmap,
@@ -24,7 +22,6 @@ internal fun View.generateBitmapFromDraw(
     callback(destBitmap)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 private fun SurfaceView.generateBitmapFromSurfaceViewPixelCopy(
     destBitmap: Bitmap,
     callback: (Bitmap) -> Unit
@@ -37,7 +34,6 @@ private fun SurfaceView.generateBitmapFromSurfaceViewPixelCopy(
     PixelCopy.request(this, null, destBitmap, onCopyFinished, handler)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 internal fun Window.generateBitmapFromPixelCopy(
     boundsInWindow: Rect? = null,
     destBitmap: Bitmap,
@@ -51,7 +47,6 @@ internal fun Window.generateBitmapFromPixelCopy(
     PixelCopy.request(this, boundsInWindow, destBitmap, onCopyFinished, Handler(Looper.getMainLooper()))
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 private fun View.generateBitmapFromPixelCopy(
     window: Window,
     destBitmap: Bitmap,
@@ -68,7 +63,6 @@ private fun View.generateBitmapFromPixelCopy(
 fun View.generateBitmap(callback: (Bitmap) -> Unit) {
     val destBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     when {
-        Build.VERSION.SDK_INT < 26 -> generateBitmapFromDraw(destBitmap, callback)
         this is SurfaceView -> generateBitmapFromSurfaceViewPixelCopy(destBitmap, callback)
         else -> {
             val window = context.activity?.window

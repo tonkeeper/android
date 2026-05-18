@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.billing
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClient.ProductType
 import com.android.billingclient.api.BillingFlowParams
@@ -19,22 +18,21 @@ import com.android.billingclient.api.consumePurchase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.filterList
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.Environment
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -48,7 +46,13 @@ class BillingManager(
 
     private var billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
-        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().enablePrepaidPlans().build())
+        .enablePendingPurchases(
+            PendingPurchasesParams
+                .newBuilder()
+                .enableOneTimeProducts()
+                .enablePrepaidPlans()
+                .build()
+        )
         .build()
 
     private val _productsFlow = MutableStateFlow<List<ProductDetails>?>(null)
@@ -80,6 +84,7 @@ class BillingManager(
             try {
                 getProducts(productIds, productType)
             } catch (e: Throwable) {
+                L.e(e)
                 null
             }
         } ?: emptyList()
@@ -108,6 +113,7 @@ class BillingManager(
         if (productIds.isEmpty()) {
             return@ready emptyList()
         }
+
         try {
             val productList = productIds.map { productId ->
                 QueryProductDetailsParams.Product.newBuilder()
@@ -130,10 +136,10 @@ class BillingManager(
 
     private fun log(msg: String, e: Throwable? = null) {
         if (e == null) {
-            Log.d("BillingManager", msg)
+            L.d("BillingManager", msg)
         } else {
-            Log.e("BillingManager", e.message ?: msg)
-            Log.e("BillingManager", msg, e)
+            L.e("BillingManager", e.message ?: msg)
+            L.e("BillingManager", msg, e)
             FirebaseCrashlytics.getInstance().recordException(e)
         }
     }
@@ -194,9 +200,11 @@ class BillingManager(
     }
 
     @OptIn(FlowPreview::class)
-    fun productFlow(productId: String) = productsFlow.take(1).filterList { product ->
-        product.productId == productId
-    }.mapNotNull { it.firstOrNull() }.timeout(5.seconds)
+    fun productFlow(productId: String) = productsFlow
+        .take(1)
+        .filterList { product -> product.productId == productId }
+        .mapNotNull { it.firstOrNull() }
+        .timeout(5.seconds)
 
     suspend fun restorePurchases(): List<Purchase> = billingClient.ready {
         getPendingPurchases(it)

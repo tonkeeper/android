@@ -5,7 +5,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 

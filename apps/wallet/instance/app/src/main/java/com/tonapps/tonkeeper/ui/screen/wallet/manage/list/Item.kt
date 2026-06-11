@@ -2,14 +2,14 @@ package com.tonapps.tonkeeper.ui.screen.wallet.manage.list
 
 import android.net.Uri
 import androidx.annotation.StringRes
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
+import com.tonapps.legacy.enteties.AssetsExtendedEntity
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
 sealed class Item(type: Int): BaseListItem(type) {
 

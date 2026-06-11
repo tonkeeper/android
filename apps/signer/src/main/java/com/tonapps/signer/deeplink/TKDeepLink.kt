@@ -3,7 +3,7 @@ package com.tonapps.signer.deeplink
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.security.hex

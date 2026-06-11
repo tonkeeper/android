@@ -2,23 +2,22 @@ package com.tonapps.tonkeeper.ui.screen.backup.main
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tonapps.extensions.filterList
 import com.tonapps.icu.Coins
 import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.legacy.enteties.AssetsEntity
+import com.tonapps.legacy.enteties.StakedEntity
 import com.tonapps.tonkeeper.core.BalanceType
-import com.tonapps.tonkeeper.core.entities.AssetsEntity
-import com.tonapps.tonkeeper.core.entities.StakedEntity
+import com.tonapps.tonkeeper.core.sumOfVerifiedFiat
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
@@ -27,12 +26,8 @@ import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -112,7 +107,7 @@ class BackupViewModel(
     private suspend fun getBalanceType(
         balanceFiat: Coins,
     ): Int {
-        val rates = ratesRepository.getTONRates(settingsRepository.currency)
+        val rates = ratesRepository.getTONRates(wallet.network, settingsRepository.currency)
         val balanceTON = rates.convertFromFiat(TokenEntity.TON.address, balanceFiat)
         return BalanceType.getBalanceType(balanceTON)
     }
@@ -124,7 +119,7 @@ class BackupViewModel(
         return if (wallet.testnet) {
             assets.first().fiat
         } else {
-            assets.map { it.fiat }.sumOf { it }
+            assets.sumOfVerifiedFiat()
         }
     }
 
@@ -132,9 +127,9 @@ class BackupViewModel(
         wallet: WalletEntity,
     ): List<AssetsEntity> {
         val currency = settingsRepository.currency
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet) ?: emptyList()
-        val staking = stakingRepository.get(wallet.accountId, wallet.testnet)
-        val staked = StakedEntity.create(wallet, staking, tokens, currency, ratesRepository, api)
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.network) ?: emptyList()
+        val staking = stakingRepository.get(wallet.accountId, wallet.network)
+        val staked = StakedEntity.create(wallet, staking, tokens, currency, ratesRepository)
         val liquid = staked.find { it.isTonstakers }?.liquidToken
         val filteredTokens = if (liquid == null) tokens else tokens.filter { !liquid.token.address.contains(it.address)  }
         return (filteredTokens.map { AssetsEntity.Token(it) } + staked.map {

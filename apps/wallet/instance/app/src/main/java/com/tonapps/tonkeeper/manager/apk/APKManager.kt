@@ -3,19 +3,15 @@ package com.tonapps.tonkeeper.manager.apk
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Environment
 import android.os.Parcelable
 import android.provider.Settings
-import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.file
-import com.tonapps.extensions.getParcelable
-import com.tonapps.extensions.putParcelable
-import com.tonapps.tonkeeper.RemoteConfig
+import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.tonkeeper.extensions.safeCanRequestPackageInstalls
 import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.tonkeeperx.BuildConfig
@@ -43,11 +39,6 @@ class APKManager(
     private val remoteConfig: RemoteConfig,
     private val settingsRepository: SettingsRepository,
 ) {
-
-    companion object {
-        private const val UPDATE_REMINDER_TIMESTAMP_KEY = "apk_update_reminder_timestamp"
-        private const val UPDATE_REMINDER_COUNT_KEY = "apk_update_reminder_count"
-    }
 
     @Parcelize
     data class HideReminder(
@@ -156,7 +147,7 @@ class APKManager(
             return false
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !context.safeCanRequestPackageInstalls()) {
+        if (!context.safeCanRequestPackageInstalls()) {
             openSettings()
         } else {
             val uri = FileProvider.getUriForFile(context, context.packageName + ".provider", file)
@@ -177,4 +168,9 @@ class APKManager(
     }
 
     private fun isValidFile(file: File) = file.path.startsWith(folder.path)
+
+    companion object {
+        private const val UPDATE_REMINDER_TIMESTAMP_KEY = "apk_update_reminder_timestamp"
+        private const val UPDATE_REMINDER_COUNT_KEY = "apk_update_reminder_count"
+    }
 }

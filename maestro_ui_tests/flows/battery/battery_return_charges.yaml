@@ -1,0 +1,18 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- runFlow: "../../steps/import_wallet.yaml"
+- runFlow: "../../service/account/compare_ton_balance.yaml"
+
+- tapOn:
+    id: wallet_battery
+- scrollUntilVisible:
+    element:
+      text: Charge History
+- tapOn: Charge History
+- tapOn: Details
+- tapOn: Return charges
+- tapOn:
+    id: close

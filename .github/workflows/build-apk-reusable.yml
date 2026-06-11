@@ -1,0 +1,90 @@
+name: Build APK Reusable
+
+on:
+  workflow_call:
+    inputs:
+      gradle-task:
+        description: Gradle task used to build the APK
+        required: true
+        type: string
+      artifact-name-prefix:
+        description: Prefix for uploaded artifact name
+        required: true
+        type: string
+      apk-path-glob:
+        description: Glob path to built APK files
+        required: true
+        type: string
+    outputs:
+      artifact-name:
+        description: Uploaded artifact name
+        value: ${{ jobs.build-apk.outputs.artifact-name }}
+      version-code:
+        description: Build version code derived from commit timestamp
+        value: ${{ jobs.build-apk.outputs.version-code }}
+
+jobs:
+  build-apk:
+    name: Build APK
+    runs-on: macos-latest-xlarge
+    outputs:
+      artifact-name: ${{ steps.artifact_name.outputs.artifact_name }}
+      version-code: ${{ steps.version_code.outputs.version_code }}
+
+    steps:
+      - name: Checkout to git repository
+        uses: actions/checkout@v6
+
+      - name: Get VERSION_CODE from commit timestamp
+        id: version_code
+        shell: bash
+        run: |
+          VERSION_CODE="$(git log -1 --format=%ct)"
+          echo "VERSION_CODE=${VERSION_CODE}" >> "$GITHUB_ENV"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Decode keystore
+        shell: bash
+        run: echo "${{ secrets.TONKEEPER_DEBUG_STORE_FILE }}" | base64 --decode > "${{ github.workspace }}/internal.keystore"
+
+      - name: Build APK
+        shell: bash
+        run: |
+          ./gradlew ${{ inputs.gradle-task }} \
+            --no-daemon \
+            --no-build-cache \
+            --no-configuration-cache \
+            -Pandroid.injected.signing.debug.file="${{ github.workspace }}/internal.keystore" \
+            -Pandroid.injected.signing.debug.password="${{ secrets.TONKEEPER_DEBUG_STORE_PASSWORD }}" \
+            -Pandroid.injected.signing.debug.key.alias="${{ secrets.TONKEEPER_DEBUG_KEY_ALIAS }}" \
+            -Pandroid.injected.signing.debug.key.password="${{ secrets.TONKEEPER_DEBUG_KEY_PASSWORD }}"
+
+      - name: Compose artifact name
+        id: artifact_name
+        shell: bash
+        run: echo "artifact_name=${{ inputs.artifact-name-prefix }}-${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload built APK to artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.artifact_name.outputs.artifact_name }}
+          path: ${{ inputs.apk-path-glob }}
+          if-no-files-found: error

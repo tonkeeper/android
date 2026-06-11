@@ -5,7 +5,7 @@ import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
 class EditNameViewModel(
     app: Application,

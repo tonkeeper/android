@@ -1,8 +1,9 @@
 package com.tonapps.wallet.data.events
 
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
@@ -12,12 +13,12 @@ import io.tonapi.models.JettonTransferAction
 val JettonTransferAction.amountCoins: Coins
     get() = Coins.ofNano(amount, jetton.decimals)
 
-suspend fun Action.getTonAmountRaw(ratesRepository: RatesRepository): Coins {
+suspend fun Action.getTonAmountRaw(network: TonNetwork, ratesRepository: RatesRepository): Coins {
     val tonAmount = tonTransfer?.let { Coins.of(it.amount) }
     val jettonAmountInTON = jettonTransfer?.let {
         val amountCoins = it.amountCoins
         val jettonAddress = it.jetton.address
-        val rates = ratesRepository.getRates(WalletCurrency.TON, jettonAddress)
+        val rates = ratesRepository.getRates(TonNetwork.MAINNET, WalletCurrency.TON, jettonAddress)
         rates.convert(jettonAddress, amountCoins)
     }
     return tonAmount ?: jettonAmountInTON ?: Coins.ZERO

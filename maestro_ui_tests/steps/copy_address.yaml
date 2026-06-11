@@ -1,0 +1,17 @@
+appId: com.ton_keeper.debug
+---
+- wa
+- tapOn:
+    id: wallet_address
+- tapOn:
+    id: send
+- runFlow:
+    file: ../utils/insert_text_from_clipboard.yaml
+    env:
+      field_to_insert: "input_field"
+- copyTextFrom:
+    id: "input_field"
+- back
+- tapOn:
+    id: receive
+- assertVisible: ${maestro.copiedText}

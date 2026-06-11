@@ -1,15 +1,14 @@
+@file:SuppressLint("UnsafeOptInUsageError")
 package com.tonapps.wallet.data.purchase.entity
 
+import android.annotation.SuppressLint
 import android.os.Parcelable
-import android.util.Log
-import com.tonapps.wallet.data.core.currency.WalletCurrency
-import com.tonapps.wallet.data.purchase.OnRampUtils
-import kotlinx.coroutines.flow.map
+import com.tonapps.extensions.lazyUnsafe
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.ranges.contains
 
 @Parcelize
 sealed class OnRamp: Parcelable {
@@ -23,7 +22,22 @@ sealed class OnRamp: Parcelable {
     data class Method(
         val image: String,
         val type: String
-    ): OnRamp()
+    ): OnRamp() {
+
+        @IgnoredOnParcel
+        val title: String by lazyUnsafe {
+            when (type) {
+                "card" -> "Credit Card"
+                "revolut" -> "Revolut"
+                "google_pay" -> "Google Pay"
+                "paypal" -> "PayPal"
+                else -> type.replace("_", " ")
+                    .replaceFirstChar { it.uppercaseChar() }
+            }
+        }
+
+
+    }
 
     @Serializable
     @Parcelize
@@ -70,10 +84,6 @@ sealed class OnRamp: Parcelable {
         val max: Double? by lazy {
             merchants.mapNotNull { it.limits?.max }.maxOrNull()
         }
-
-        fun containsMerchant(merchant: String): Boolean {
-            return merchants.any { it.slug.equals(merchant, true) }
-        }
     }
 
     @Serializable
@@ -115,7 +125,9 @@ sealed class OnRamp: Parcelable {
 
         @IgnoredOnParcel
         val availableFiatSlugs: List<String> by lazy {
-            assets.filter { it.type.equals("fiat", ignoreCase = true) }.map { it.slug }.distinct()
+            assets.filter { it.type.equals("fiat", ignoreCase = true) }
+                .map { it.slug }
+                .distinct()
         }
 
         @IgnoredOnParcel
@@ -125,32 +137,41 @@ sealed class OnRamp: Parcelable {
 
         @IgnoredOnParcel
         val externalCurrency: List<WalletCurrency> by lazy {
-            val crypto = assets.filter {
-                it.type.equals("crypto", ignoreCase = true)
-            }.filter { it.image?.ifBlank { null } != null }
+            val crypto = assets
+                .filter {
+                    it.type.equals("crypto", ignoreCase = true) && !it.image.isNullOrBlank()
+                }
 
             val list = mutableListOf<WalletCurrency>()
 
             for (item in crypto) {
-                val method = (item.inputMethods.firstOrNull() ?: item.outputMethods.firstOrNull()) ?: continue
+                val method = item.inputMethods.firstOrNull()
+                    ?: item.outputMethods.firstOrNull()
+                    ?: continue
+
                 if (method.type == "native") {
                     val currency = WalletCurrency.of(item.slug) ?: continue
+
                     if (currency.isTONChain) {
                         continue
                     }
+
                     list.add(currency)
                 } else {
                     val chainAddress = method.address ?: continue
                     val chain = WalletCurrency.createChain(method.type, chainAddress)
+
                     if (chain is WalletCurrency.Chain.TON) {
                         continue
                     }
+
                     val currency = WalletCurrency(
                         code = item.slug,
                         title = item.slug,
                         chain = chain,
                         iconUrl = item.image
                     )
+
                     list.add(currency)
                 }
             }
@@ -163,19 +184,6 @@ sealed class OnRamp: Parcelable {
             list.add(1, WalletCurrency.USDT_TRON)
 
             WalletCurrency.sort(list)
-        }
-
-        fun resolveNetwork(input: Boolean, currency: WalletCurrency): String? {
-            if (currency.fiat) {
-                return null
-            }
-            val assets = assets.filter { asset ->
-                asset.slug.equals(currency.code, true)
-            }
-            val methods = assets.flatMap {
-                if (input) it.inputMethods else it.outputMethods
-            }
-            return OnRampUtils.normalizeType(currency) ?: methods.firstOrNull()?.type
         }
 
         fun findValidPairs(from: String, to: String): Pairs {

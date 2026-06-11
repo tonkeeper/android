@@ -2,7 +2,7 @@ package com.tonapps.wallet.data.collectibles.entities
 
 import android.os.Parcelable
 import android.util.Base64
-import android.util.Log
+import com.tonapps.log.L
 import io.JsonAny
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize

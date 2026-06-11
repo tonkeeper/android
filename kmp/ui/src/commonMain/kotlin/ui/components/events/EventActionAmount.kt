@@ -2,11 +2,11 @@ package ui.components.events
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import ui.MASKED_TEXT_VALUE_PLACEHOLDER
-import ui.components.base.SimpleText
 import ui.theme.UIKit
 
 @Composable
@@ -39,14 +39,14 @@ internal fun EventActionAmount(
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         if (isEmpty) {
-            SimpleText(
+            Text(
                 text = "-",
                 style = UIKit.typography.label1,
                 color = textColor,
             )
         } else {
             if (showIncomingAmount != null) {
-                SimpleText(
+                Text(
                     text = showIncomingAmount,
                     style = UIKit.typography.label1,
                     color = textIncomingColor,
@@ -54,7 +54,7 @@ internal fun EventActionAmount(
             }
 
             if (showOutgoingAmount != null) {
-                SimpleText(
+                Text(
                     text = showOutgoingAmount,
                     style = UIKit.typography.label1,
                     color = textColor,
@@ -62,14 +62,14 @@ internal fun EventActionAmount(
             }
         }
 
-        SimpleText(
+        Text(
             text = date,
             style = UIKit.typography.body2,
             color = UIKit.colorScheme.text.secondary,
         )
 
         if (rightDescription != null) {
-            SimpleText(
+            Text(
                 text = rightDescription,
                 style = UIKit.typography.body3,
                 color = UIKit.colorScheme.accent.orange,

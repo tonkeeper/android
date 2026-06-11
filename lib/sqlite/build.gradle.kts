@@ -1,16 +1,8 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
 }
 
-android {
-    namespace = Build.namespacePrefix("sqlite")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-    }
+dependencies {
+    implementation(projects.lib.log)
 }

@@ -6,7 +6,7 @@ import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -38,8 +38,8 @@ class BrowserBaseViewModel(
 
     suspend fun hasCategory(category: String): Boolean = withContext(Dispatchers.IO) {
         val categories = browserRepository.loadCategories(
-            country = environment.country,
-            testnet = wallet.testnet,
+            country = environment.deviceCountry,
+            network = wallet.network,
             locale = settingsRepository.getLocale()
         )
         categories.any { it == category }

@@ -2,6 +2,7 @@ package ui.components.popup
 
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -22,6 +23,55 @@ fun ActionMenu(
     properties: PopupProperties = PopupProperties(),
     offset: DpOffset = DpOffset(0.dp, 12.dp),
 ) {
+    ActionMenuPopupFrame(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        properties = properties,
+        offset = offset,
+    ) { expandedState, transformOriginState ->
+        ActionMenuContent(
+            modifier = modifier,
+            expandedState = expandedState,
+            transformOriginState = transformOriginState,
+            items = items,
+            onItemClick = onItemClick,
+        )
+    }
+}
+
+@Composable
+fun ActionMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    properties: PopupProperties = PopupProperties(),
+    offset: DpOffset = DpOffset(0.dp, 12.dp),
+    content: @Composable () -> Unit,
+) {
+    ActionMenuPopupFrame(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        properties = properties,
+        offset = offset,
+    ) { expandedState, transformOriginState ->
+        ActionMenuAnimatedSurface(
+            expandedState = expandedState,
+            transformOriginState = transformOriginState,
+            content = content,
+        )
+    }
+}
+
+@Composable
+private fun ActionMenuPopupFrame(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    properties: PopupProperties,
+    offset: DpOffset,
+    content: @Composable (
+        expandedState: MutableTransitionState<Boolean>,
+        transformOriginState: MutableState<TransformOrigin>,
+    ) -> Unit,
+) {
     val expandedState = remember { MutableTransitionState(false) }
     expandedState.targetState = expanded
     if (expandedState.currentState || expandedState.targetState) {
@@ -40,13 +90,7 @@ fun ActionMenu(
             popupPositionProvider = popupPositionProvider,
             properties = properties,
         ) {
-            ActionMenuContent(
-                modifier = modifier,
-                expandedState = expandedState,
-                transformOriginState = transformOriginState,
-                items = items,
-                onItemClick = onItemClick
-            )
+            content(expandedState, transformOriginState)
         }
     }
 }

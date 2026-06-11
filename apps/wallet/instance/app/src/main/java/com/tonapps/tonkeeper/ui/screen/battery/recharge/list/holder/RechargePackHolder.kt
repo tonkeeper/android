@@ -59,7 +59,7 @@ class RechargePackHolder(
 
     private fun createDetails(transactions: Map<BatteryTransaction, Int>): String {
         val builder = StringBuilder()
-        transactions.forEach { (transaction, count) ->
+        transactions.entries.forEachIndexed { index, (transaction, count) ->
             val titleRes = when (transaction) {
                 BatteryTransaction.NFT -> Plurals.battery_nft
                 BatteryTransaction.SWAP -> Plurals.battery_swap
@@ -67,10 +67,10 @@ class RechargePackHolder(
                 else -> throw IllegalArgumentException("Unsupported transaction type: $transaction")
             }
             builder.append(context.resources.getQuantityString(titleRes, count, count))
-            if (transaction == BatteryTransaction.SWAP) {
-                builder.append(",")
-            } else if (transaction == BatteryTransaction.NFT) {
+            if (index == transactions.size - 2) {
                 builder.append(" " + context.getString(Localization.or))
+            } else if (index < transactions.size - 2) {
+                builder.append(",")
             }
             builder.append("\n")
         }

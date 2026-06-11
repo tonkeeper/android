@@ -2,10 +2,10 @@ package com.tonapps.tonkeeper.ui.screen.events.compose.history.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxUiMapper
+import com.tonapps.wallet.features.events.TxEventUiMapper
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.events.tx.TxFetchQuery
 import com.tonapps.wallet.data.events.tx.TxPage
@@ -16,20 +16,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ui.components.events.UiEvent
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class TxPagingSource(
     private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val settingsRepository: SettingsRepository,
-    private val uiMapper: TxUiMapper,
+    private val txEventUiMapper: TxEventUiMapper,
 ): PagingSource<Timestamp, UiEvent.Item>() {
-
-    companion object {
-        private val cache = ConcurrentHashMap<String, TxEvent>()
-
-        fun get(id: String) = cache[id]
-    }
 
     private val tronParamsProvider = TxTronParamsProvider(
         wallet = wallet,
@@ -54,7 +49,7 @@ internal class TxPagingSource(
             } else {
                 val uiItems = data.events.map {
                     cache[it.id] = it
-                    uiMapper.event(it)
+                    txEventUiMapper.toUiItem(it, wallet)
                 }
 
                 LoadResult.Page(
@@ -92,18 +87,8 @@ internal class TxPagingSource(
         return processEvents(eventsRepository.fetch(query))
     }
 
-    private suspend fun prevLoad(afterTimestamp: Timestamp, limit: Int): TxPage {
-        val query = query(
-            afterTimestamp = afterTimestamp,
-            limit = limit
-        )
-        return processEvents(eventsRepository.fetch(query))
-    }
-
     private suspend fun initialLoad(limit: Int): TxPage {
-        val query = query(
-            limit = limit
-        )
+        val query = query(limit = limit)
         return processEvents(eventsRepository.fetch(query))
     }
 
@@ -125,4 +110,10 @@ internal class TxPagingSource(
     }
 
     override fun getRefreshKey(state: PagingState<Timestamp, UiEvent.Item>) = null
+
+    companion object {
+        private val cache = ConcurrentHashMap<String, TxEvent>()
+
+        fun get(id: String) = cache[id]
+    }
 }

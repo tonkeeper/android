@@ -4,21 +4,18 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RectF
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import blur.node.api31.BlurNode
-import blur.node.api31.ContentNode
 import blur.node.api26.BlurNodeLegacy
 import blur.node.api26.ContentNodeLegacy
+import blur.node.api31.BlurNode
+import blur.node.api31.ContentNode
 
 class BlurCompat(context: Context) {
 
     private val impl = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Impl31(context)
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Impl26(context)
     } else {
-        Impl(context)
+        Impl26(context)
     }
 
     val hasBlur: Boolean
@@ -57,23 +54,18 @@ class BlurCompat(context: Context) {
         }
 
         open fun onDraw(canvas: Canvas, callback: (output: Canvas) -> Unit) {
-
         }
 
         open fun setBounds(rect: RectF) {
-
         }
 
         open fun attached() {
-
         }
 
         open fun detached() {
-
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private class Impl26(
         context: Context
     ): Impl(context) {

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# Git pre-commit hook that runs detekt on staged Kotlin files.
+# This hook is worktree-aware and will find the project root correctly.
+#
+# Installation:
+#   Run: ./gradlew installGitHook
+#
+
+set -e
+
+# Find the project root using git
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
+# Path to the executor script
+EXECUTOR_SCRIPT="$PROJECT_ROOT/tools/scripts/pre-commit-exec"
+
+# Make the executor executable if it's not already
+if [ ! -x "$EXECUTOR_SCRIPT" ]; then
+    chmod +x "$EXECUTOR_SCRIPT"
+fi
+
+# Execute the main pre-commit logic, passing all arguments
+exec "$EXECUTOR_SCRIPT" "$@"

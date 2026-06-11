@@ -4,8 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 

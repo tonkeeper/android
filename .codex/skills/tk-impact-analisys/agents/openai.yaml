@@ -1,0 +1,4 @@
+interface:
+  display_name: "TK Impact Analisys"
+  short_description: "QA impact analysis for release branch diffs"
+  default_prompt: "Use $tk-impact-analisys to analyze Android, iOS, or Web release impact by comparing develop with a release branch and mapping the diff to regress.csv coverage."

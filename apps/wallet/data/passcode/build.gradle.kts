@@ -1,21 +1,16 @@
 plugins {
-    id("com.tonapps.wallet.data")
-}
-
-android {
-    namespace = Build.namespacePrefix("wallet.data.passcode")
+    id("target.android.library")
 }
 
 dependencies {
+    implementation(libs.androidx.biometric)
+    implementation(libs.koin.core)
 
-    implementation(libs.androidX.biometric)
-
-    implementation(project(ProjectModules.UIKit.core))
-
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Wallet.Data.account))
-    implementation(project(ProjectModules.Wallet.Data.settings))
-    implementation(project(ProjectModules.Wallet.Data.rn))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.security))
+    implementation(projects.ui.uikit.core)
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.account)
+    implementation(projects.apps.wallet.data.settings)
+    implementation(projects.apps.wallet.data.rn)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.security)
 }

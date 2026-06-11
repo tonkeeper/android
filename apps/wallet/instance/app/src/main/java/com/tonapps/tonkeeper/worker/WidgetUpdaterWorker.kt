@@ -15,6 +15,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.circle
 import com.tonapps.extensions.isLocal
@@ -28,10 +29,10 @@ import com.tonapps.tonkeeper.manager.widget.WidgetEntity
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.manager.widget.WidgetParams
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RateEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -88,11 +89,11 @@ class WidgetUpdaterWorker(
 
     private suspend fun updateRates(widgets: List<WidgetEntity>) = withContext(Dispatchers.IO) {
         val tokens = widgets.map { it.params }.filterIsInstance<WidgetParams.Rate>().map { it.jettonAddress.toRawAddress() }
-        ratesRepository.load(currency, tokens.distinct().toMutableList())
+        ratesRepository.load(TonNetwork.MAINNET, currency, tokens.distinct().toMutableList())
     }
 
     private suspend fun getRates(tokenAddress: String): RateEntity? {
-        return ratesRepository.getRates(currency, tokenAddress).rate(tokenAddress)
+        return ratesRepository.getRates(TonNetwork.MAINNET, currency, tokenAddress).rate(tokenAddress)
     }
 
     private suspend fun updateRateWidget(widget: WidgetEntity) {
@@ -177,7 +178,7 @@ class WidgetUpdaterWorker(
         if (wallet == null) {
             return tokenRepository.getToken(tokenAddress)
         }
-        return tokenRepository.getToken(wallet.accountId, wallet.testnet, tokenAddress)
+        return tokenRepository.getToken(wallet.accountId, wallet.network, tokenAddress)
     }
 
     private suspend fun getWallet(id: String): WalletEntity? {

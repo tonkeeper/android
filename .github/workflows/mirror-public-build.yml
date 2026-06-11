@@ -1,0 +1,82 @@
+name: Mirror APK release build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Release APK
+    runs-on: macos-latest-xlarge
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Parse tag into VERSION_NAME and VERSION_CODE
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Tag format: v{version_name}_{version_code}
+          VERSION_NAME="${TAG#v}"
+          VERSION_NAME="${VERSION_NAME%_*}"
+          VERSION_CODE="${TAG##*_}"
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "Parsed tag '$TAG' -> VERSION_NAME=$VERSION_NAME, VERSION_CODE=$VERSION_CODE"
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v5
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.TONKEEPER_UPLOAD_STORE_FILE }}" | base64 -d > ${{ github.workspace }}/release.keystore
+
+      - name: Build Site APK
+        run: |
+          ./gradlew :apps:wallet:instance:main:assembleSiteRelease \
+            --no-daemon \
+            --no-build-cache \
+            --no-configuration-cache \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.TONKEEPER_UPLOAD_STORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.TONKEEPER_UPLOAD_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.TONKEEPER_UPLOAD_KEY_PASSWORD }}
+
+      - name: Prepare APK for release
+        run: |
+          mkdir -p release
+          APK=$(find apps/wallet/instance/main/build/outputs/apk/site/release -name "*.apk" | head -1)
+          cp "$APK" release/Tonkeeper.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Tonkeeper-apk-${{ github.ref_name }}
+          path: release/Tonkeeper.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ env.VERSION_NAME }}
+          generate_release_notes: true
+          files: release/Tonkeeper.apk

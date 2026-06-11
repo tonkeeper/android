@@ -6,7 +6,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.text.Editable
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View

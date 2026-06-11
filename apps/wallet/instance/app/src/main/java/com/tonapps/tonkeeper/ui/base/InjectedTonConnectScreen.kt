@@ -6,17 +6,24 @@ import android.webkit.WebResourceRequest
 import androidx.annotation.LayoutRes
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events
+import com.tonapps.core.deeplink.DeepLink
+import com.tonapps.core.deeplink.DeepLinkRoute
+import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
+import com.tonapps.extensions.currentTimeMillis
+import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.filterList
-import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
+import com.tonapps.extensions.generateUuid
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
@@ -29,13 +36,11 @@ import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.sign.SignDataScreen
 import com.tonapps.tonkeeper.ui.screen.watchonly.WatchInfoScreen
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import org.json.JSONArray
 import org.json.JSONObject
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -44,7 +49,7 @@ import java.util.concurrent.CancellationException
 
 abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: WalletEntity): WalletContextScreen(layoutId, wallet) {
 
-    private val tonConnectManager: TonConnectManager by inject()
+    private val tonConnectBridge: ITonConnectBridge by inject()
     private val api: API by inject()
     private val rootViewModel: RootViewModel by activityViewModel()
 
@@ -111,7 +116,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     suspend fun tonapiFetch(
         url: String,
         options: String
-    ) = api.tonapiFetch(url, options)
+    ) = api.tonapiFetch(url, options, wallet.network)
 
     suspend fun tonconnect(
         version: Int,
@@ -122,11 +127,11 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             return JsonBuilder.connectEventError(BridgeError.badRequest("Version $version is not supported"))
         }
         val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
-        if (tonConnectManager.isScam(requireContext(), wallet, request.manifestUrl.toUri(), webView.url!!.toUri(), startUri)) {
+        if (tonConnectBridge.isScam(requireContext(), wallet, request.manifestUrl.toUri(), webView.url!!.toUri(), startUri)) {
             return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
         }
 
-        return tonConnectManager.launchConnectFlow(
+        return tonConnectBridge.launchConnectFlow(
             activity = activity,
             tonConnect = TonConnect.fromJsInject(request, webView.url?.toUri()),
             wallet = wallet,
@@ -141,50 +146,111 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             val proof = SignDataScreen.run(requireContext(), wallet, uri, payload)
             return JsonBuilder.responseSignData(message.id, proof, wallet.address, payload)
         } catch (e: CancellationException) {
-            context?.let { tonConnectManager.showLogoutAppBar(wallet, it, uri) }
+            context?.let { tonConnectBridge.showLogoutAppBar(wallet, it, uri) }
             return JsonBuilder.responseError(message.id, BridgeError.userDeclinedTransaction())
         } catch (e: Throwable) {
             return JsonBuilder.responseError(message.id, BridgeError.unknown(e.bestMessage))
         }
     }
 
-    suspend fun tonconnectSend(array: JSONArray, showLogout: Boolean = true): JSONObject {
+    suspend fun tonconnectSend(tx: JSONObject, showLogout: Boolean = true): JSONObject {
         var id = 0L
         try {
-            val messages = BridgeEvent.Message.parse(array)
-            if (messages.size == 1) {
-                val message = messages.first()
-                id = message.id
-                if (wallet.isWatchOnly) {
-                    navigation?.add(WatchInfoScreen.newInstance(wallet))
-                    return JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
+            val message = BridgeEvent.Message(tx)
+            id = message.id
+            if (wallet.isWatchOnly) {
+                navigation?.add(WatchInfoScreen.newInstance(wallet))
+                return JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
+            }
+            if (message.method == BridgeMethod.SIGN_DATA) {
+                return tonconnectSignData(message)
+            } else if (message.method != BridgeMethod.SEND_TRANSACTION) {
+                return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
+            }
+            val signRequests = message.params.map { SignRequestEntity(it, uri) }
+            if (signRequests.size != 1) {
+                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${signRequests.size}"))
+            }
+            val signRequest = signRequests.first()
+            val operationId = generateUuid()
+            val startedAtMs = currentTimeMillis()
+            AnalyticsHelper.Default.events.redOperations.opAttempt(
+                operationId = operationId,
+                flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
+                attemptSource = null,
+                startedAtMs = currentTimeSecondsInt(),
+                otherMetadata = WalletRedMetadata.walletKit(),
+            )
+            return try {
+                val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
+                val finishedAtMs = currentTimeMillis()
+                AnalyticsHelper.Default.events.redOperations.opTerminal(
+                    operationId = operationId,
+                    flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                    operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
+                    outcome = Events.RedOperations.RedOperationsOutcome.Success,
+                    durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                    finishedAtMs = currentTimeSecondsInt(),
+                    errorCode = null,
+                    errorMessage = null,
+                    errorType = null,
+                    stage = null,
+                    otherMetadata = WalletRedMetadata.walletKit(),
+                )
+                JsonBuilder.responseSendTransaction(id, boc)
+            } catch (e: CancellationException) {
+                val finishedAtMs = currentTimeMillis()
+                AnalyticsHelper.Default.events.redOperations.opTerminal(
+                    operationId = operationId,
+                    flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                    operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
+                    outcome = Events.RedOperations.RedOperationsOutcome.Cancel,
+                    durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                    finishedAtMs = currentTimeSecondsInt(),
+                    errorCode = null,
+                    errorMessage = null,
+                    errorType = null,
+                    stage = null,
+                    otherMetadata = WalletRedMetadata.walletKit(),
+                )
+                if (showLogout) {
+                    context?.let { tonConnectBridge.showLogoutAppBar(wallet, it, uri) }
                 }
-                if (message.method == BridgeMethod.SIGN_DATA) {
-                    return tonconnectSignData(message)
-                } else if (message.method != BridgeMethod.SEND_TRANSACTION) {
-                    return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
-                }
-                val signRequests = message.params.map { SignRequestEntity(it, uri) }
-                if (signRequests.size != 1) {
-                    return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${signRequests.size}"))
-                }
-                val signRequest = signRequests.first()
-                return try {
-                    val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
-                    JsonBuilder.responseSendTransaction(id, boc)
-                } catch (e: CancellationException) {
-                    if (showLogout) {
-                        context?.let { tonConnectManager.showLogoutAppBar(wallet, it, uri) }
-                    }
-                    JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
-                } catch (e: BridgeException) {
-                    JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))
-                } catch (e: Throwable) {
-                    FirebaseCrashlytics.getInstance().recordException(e)
-                    JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
-                }
-            } else {
-                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess messages. Required: 1, Provided: ${messages.size}"))
+                JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
+            } catch (e: BridgeException) {
+                val finishedAtMs = currentTimeMillis()
+                AnalyticsHelper.Default.events.redOperations.opTerminal(
+                    operationId = operationId,
+                    flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                    operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
+                    outcome = Events.RedOperations.RedOperationsOutcome.Fail,
+                    durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                    finishedAtMs = currentTimeSecondsInt(),
+                    errorCode = null,
+                    errorMessage = e.bestMessage,
+                    errorType = e.javaClass.simpleName,
+                    stage = null,
+                    otherMetadata = WalletRedMetadata.walletKit(),
+                )
+                JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))
+            } catch (e: Throwable) {
+                val finishedAtMs = currentTimeMillis()
+                AnalyticsHelper.Default.events.redOperations.opTerminal(
+                    operationId = operationId,
+                    flow = Events.RedOperations.RedOperationsFlow.TonConnect,
+                    operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
+                    outcome = Events.RedOperations.RedOperationsOutcome.Fail,
+                    durationMs = (finishedAtMs - startedAtMs).toDouble(),
+                    finishedAtMs = currentTimeSecondsInt(),
+                    errorCode = null,
+                    errorMessage = e.bestMessage,
+                    errorType = e.javaClass.simpleName,
+                    stage = null,
+                    otherMetadata = WalletRedMetadata.walletKit(),
+                )
+                FirebaseCrashlytics.getInstance().recordException(e)
+                JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
             }
         } catch (e: Throwable) {
             navigation?.toast(e.bestMessage)
@@ -196,19 +262,19 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     abstract class ViewModel(
         app: Application,
         private val wallet: WalletEntity,
-        private val tonConnectManager: TonConnectManager
+        private val tonConnectBridge: ITonConnectBridge
     ): BaseWalletVM(app) {
 
         abstract val url: Uri
 
-        val connectionFlow = tonConnectManager.walletConnectionsFlow(wallet).filterList { connection ->
+        val connectionFlow = tonConnectBridge.walletConnectionsFlow(wallet).filterList { connection ->
             connection.type == AppConnectEntity.Type.Internal && connection.appUrl.host == url.host
         }.map {
             it.firstOrNull()
         }
 
         fun disconnect() {
-            tonConnectManager.disconnect(wallet, url, AppConnectEntity.Type.Internal)
+            tonConnectBridge.disconnect(wallet, url, AppConnectEntity.Type.Internal)
         }
 
         suspend fun restoreConnection(currentUri: Uri?): JSONObject {
@@ -222,12 +288,12 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
 
         private suspend fun loadConnection(attempt: Int = 0, currentUri: Uri?): AppConnectEntity? {
             if (attempt > 3) {
-                val firstApp = tonConnectManager.getConnection(wallet.accountId, wallet.testnet, url, AppConnectEntity.Type.Internal)
+                val firstApp = tonConnectBridge.getConnection(wallet.accountId, wallet.network, url, AppConnectEntity.Type.Internal)
                 if (firstApp != null) {
                     return firstApp
                 }
                 if (currentUri != null) {
-                    return tonConnectManager.getConnection(wallet.accountId, wallet.testnet, currentUri, AppConnectEntity.Type.Internal)
+                    return tonConnectBridge.getConnection(wallet.accountId, wallet.network, currentUri, AppConnectEntity.Type.Internal)
                 }
                 return null
             }

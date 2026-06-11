@@ -1,7 +1,6 @@
 package com.tonapps.network.interceptor
 
 import android.net.Uri
-import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -55,7 +54,6 @@ class AuthorizationInterceptor(
             .method(original.method, original.body)
             .build()
 
-        Log.d("AuthorizationLog", "AuthorizationInterceptor: ${request.headers}")
         return chain.proceed(request)
     }
 }

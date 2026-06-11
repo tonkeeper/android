@@ -2,11 +2,11 @@ package com.tonapps.tonkeeper.extensions
 
 import android.content.Context
 import android.text.SpannableString
-import android.util.Log
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.emoji.Emoji
 import com.tonapps.uikit.color.textPrimaryColor
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.sp

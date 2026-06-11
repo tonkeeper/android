@@ -5,10 +5,8 @@ import android.view.Gravity
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
-import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
-import uikit.extensions.dp
 import uikit.extensions.drawable
 
 class LatestHolder(
@@ -23,7 +21,7 @@ class LatestHolder(
 
     init {
         emojiView.setEmoji("\uD83D\uDD57", Color.TRANSPARENT)
-        iconView.setImageResource(R.drawable.ic_ellipsis_16)
+        iconView.setImageResource(UIKitIcon.ic_ellipsis_16)
     }
 
     override fun onBind(item: Item.LatestContact) {

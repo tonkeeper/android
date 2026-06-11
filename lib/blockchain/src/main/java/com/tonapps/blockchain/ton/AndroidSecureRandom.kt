@@ -1,7 +1,6 @@
 package com.tonapps.blockchain.ton
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.SystemClock
 import java.nio.ByteBuffer
 import java.security.SecureRandom
@@ -10,11 +9,7 @@ import kotlin.random.Random
 
 object AndroidSecureRandom : Random() {
 
-    private val secureRandom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        SecureRandom.getInstanceStrong()
-    } else {
-        SecureRandom()
-    }
+    private val secureRandom = SecureRandom.getInstanceStrong()
 
     @SuppressLint("SecureRandom")
     fun seed(data: ByteArray) {

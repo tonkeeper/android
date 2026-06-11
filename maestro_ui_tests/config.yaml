@@ -1,0 +1,7 @@
+platform:
+  android:
+    disableAnimations: true
+
+flows:
+  - flows/browser_screen/*
+  - flows/testnet/*

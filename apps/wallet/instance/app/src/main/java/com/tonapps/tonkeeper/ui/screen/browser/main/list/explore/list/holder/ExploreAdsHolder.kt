@@ -1,9 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder
 
-import android.util.Log
+import com.tonapps.log.L
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.net.toUri
+import com.tonapps.core.deeplink.DeepLinkRoute
+import com.tonapps.extensions.toUriOrNull
+import com.tonapps.tonkeeper.helper.BrowserHelper.openDApp
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreItem
 import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeperx.R
@@ -27,8 +31,16 @@ class ExploreAdsHolder(parent: ViewGroup): ExploreHolder<ExploreItem.Ads>(parent
         actionButton.text = item.button.title
 
         actionButton.setOnClickListener {
-            Log.d("ExploreAdsHolderLog", "url: ${item.uri}")
-            activity?.processDeepLink(item.uri, true, context.packageName)
+            L.d("ExploreAdsHolderLog", "url: ${item.uri}")
+            val result = item.button.payload.toUriOrNull()
+                ?.let { DeepLinkRoute.resolve(it) }
+
+            if (result is DeepLinkRoute.DApp) {
+                item.app.copy(url = result.url.toUri())
+                    .openDApp(context, item.wallet, "ads", item.country)
+            } else {
+                activity?.processDeepLink(item.uri, true, context.packageName)
+            }
         }
     }
 

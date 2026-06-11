@@ -1,20 +1,17 @@
 plugins {
-    id("com.tonapps.wallet.data")
+    id("target.android.library")
     id("kotlin-parcelize")
 }
 
-android {
-    namespace = Build.namespacePrefix("wallet.data.staking")
-}
-
 dependencies {
-    implementation(project(ProjectModules.Lib.blockchain))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.icu))
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.icu)
+    implementation(libs.koin.core)
 
-    implementation(project(ProjectModules.Module.tonApi))
+    implementation(projects.tonapi.legacy)
 
-    implementation(project(ProjectModules.Wallet.api))
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Wallet.Data.tokens))
+    implementation(projects.apps.wallet.api)
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.tokens)
 }

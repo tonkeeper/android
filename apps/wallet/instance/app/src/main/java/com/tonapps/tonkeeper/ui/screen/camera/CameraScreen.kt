@@ -11,13 +11,16 @@ import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.mlkit.vision.common.InputImage
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.tron.isValidTronAddress
+import com.tonapps.core.deeplink.DeepLink
+import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
-import com.tonapps.tonkeeper.deeplink.DeepLink
-import com.tonapps.tonkeeper.deeplink.DeepLinkRoute
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
@@ -27,9 +30,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.constantWhiteColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.api.entity.QRScannerExtendsEntity
-import com.tonapps.wallet.api.entity.TokenEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +54,7 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
     private val accountRepository: AccountRepository by inject()
     private val api: API by inject()
     private val qrScannerExtends: List<QRScannerExtendsEntity>
-        get() = api.config.qrScannerExtends.filter { it.version == 1 }
+        get() = api.getConfig(TonNetwork.MAINNET).qrScannerExtends.filter { it.version == 1 }
 
     private val mode: CameraMode by lazy { requireArguments().getParcelableCompat(ARG_MODE)!! }
     private val chains: List<Blockchain> by lazy {
@@ -114,7 +115,7 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
         val deeplink = DeepLink(DeepLink.fixBadUri(uri), true, null)
         val route = deeplink.route
         if (mode == CameraMode.Address && route is DeepLinkRoute.Transfer) {
-            rootViewModel.processTransferDeepLink(route)
+            rootViewModel.processTransferDeepLink(deeplink, route)
             finish()
         } else if (mode == CameraMode.TonConnect && route is DeepLinkRoute.TonConnect) {
             rootViewModel.processTonConnectDeepLink(deeplink, fromPackageName = null)

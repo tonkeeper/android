@@ -1,12 +1,11 @@
 package com.tonapps.tonkeeper.helper
 
 import com.tonapps.icu.Coins
-import com.tonapps.tonkeeper.usecase.emulation.Emulated
-import com.tonapps.tonkeeper.usecase.emulation.EmulationUseCase
-import com.tonapps.wallet.api.API
+import com.tonapps.deposit.usecase.emulation.Emulated
+import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.MessageBodyEntity
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.MessageBodyEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.settings.BatteryTransaction
@@ -22,7 +21,7 @@ object BatteryHelper {
         batteryRepository: BatteryRepository
     ): Int = withContext(Dispatchers.IO) {
         accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.testnet, true)
+            batteryRepository.getCharges(it, wallet.publicKey, wallet.network, true)
         } ?: 0
     }
 
@@ -35,7 +34,7 @@ object BatteryHelper {
         val entity = batteryRepository.getBalance(
             tonProofToken = tonProof,
             publicKey = wallet.publicKey,
-            testnet = wallet.testnet,
+            network = wallet.network,
             ignoreCache = true
         )
         return entity.balance
@@ -51,7 +50,7 @@ object BatteryHelper {
         params: Boolean
     ): Emulated? {
         val chargesBalance = getBatteryCharges(wallet, accountRepository, batteryRepository)
-        val batteryConfig = batteryRepository.getConfig(wallet.testnet)
+        val batteryConfig = batteryRepository.getConfig(wallet.network)
 
         val emulated = emulationUseCase(
             message = message,

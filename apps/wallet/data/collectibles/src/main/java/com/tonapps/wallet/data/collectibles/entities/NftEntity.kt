@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.collectibles.entities
 import android.net.Uri
 import android.os.Parcelable
 import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.wallet.api.entity.AccountEntity
@@ -18,7 +19,7 @@ data class NftEntity(
     val collection: NftCollectionEntity?,
     val metadata: NftMetadataEntity,
     val previews: List<NftPreviewEntity>,
-    val testnet: Boolean,
+    val network: TonNetwork,
     val verified: Boolean,
     val inSale: Boolean,
     val dns: String?,
@@ -29,10 +30,10 @@ data class NftEntity(
         get() = collection?.address ?: address
 
     val id: String
-        get() = if (testnet) "testnet:$address" else address
+        get() = if (network.isTestnet) "testnet:$address" else address
 
     val userFriendlyAddress: String
-        get() = address.toUserFriendly(wallet = false, testnet = testnet)
+        get() = address.toUserFriendly(wallet = false, testnet = network.isTestnet)
 
     val name: String
         get() = metadata.name ?: ""
@@ -93,6 +94,19 @@ data class NftEntity(
             return address.equalsAddress("0:80d78a35f955a14b679faa887ff4cd5bfc0f43b4a4eea2a7e6927f3701b273c2")
         }
 
+    constructor(item: NftItem, network: TonNetwork) : this(
+        address = item.address,
+        owner = item.owner?.let { AccountEntity(it, network) },
+        collection = item.collection?.let { NftCollectionEntity(it) },
+        metadata = NftMetadataEntity(item.metadata),
+        previews = item.previews?.map { NftPreviewEntity(it) } ?: emptyList(),
+        network = network,
+        verified = item.approvedBy.isNotEmpty(),
+        inSale = item.sale != null,
+        dns = item.dns,
+        trust = Trust(item.trust.value),
+    )
+
     private fun getImage(minSize: Int, maxSize: Int): NftPreviewEntity? {
         return previews.find {
             if (minSize > it.width || minSize > it.height) {
@@ -108,17 +122,4 @@ data class NftEntity(
     private fun getImageUri(minSize: Int, maxSize: Int): Uri? {
         return getImage(minSize, maxSize)?.url?.let { Uri.parse(it) }
     }
-
-    constructor(item: NftItem, testnet: Boolean) : this(
-        address = item.address,
-        owner = item.owner?.let { AccountEntity(it, testnet) },
-        collection = item.collection?.let { NftCollectionEntity(it) },
-        metadata = NftMetadataEntity(item.metadata),
-        previews = item.previews?.map { NftPreviewEntity(it) } ?: emptyList(),
-        testnet = testnet,
-        verified = item.approvedBy.isNotEmpty(),
-        inSale = item.sale != null,
-        dns = item.dns,
-        trust = Trust(item.trust.value),
-    )
 }

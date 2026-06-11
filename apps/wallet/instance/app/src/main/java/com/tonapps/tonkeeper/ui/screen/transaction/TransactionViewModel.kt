@@ -1,12 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.transaction
 
 import android.app.Application
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.SpamTransactionState
@@ -43,10 +43,10 @@ class TransactionViewModel(
                         comment = comment,
                         recipient = wallet.accountId
                     )
-                    eventsRepository.markAsSpam(wallet.accountId, wallet.testnet, txId)
+                    eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)
                 } catch (ignored: Throwable) {}
             } else {
-                eventsRepository.removeSpam(wallet.accountId, wallet.testnet, txId)
+                eventsRepository.removeSpam(wallet.accountId, wallet.network, txId)
             }
             withContext(Dispatchers.Main) {
                 callback()

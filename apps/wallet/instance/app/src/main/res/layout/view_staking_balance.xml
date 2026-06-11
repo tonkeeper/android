@@ -35,11 +35,13 @@
         android:layout_height="68dp"
         android:layout_gravity="center">
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/currency_icon"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:src="@drawable/ic_ton_with_bg"/>
+            android:src="@drawable/ic_ton_with_bg"
+            android:background="@drawable/bg_oval"
+            app:shapeAppearanceOverlay="@style/CircleImageView" />
         
         <uikit.widget.AsyncImageView
             app:roundAsCircle="true"

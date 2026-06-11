@@ -1,0 +1,13 @@
+appId: com.ton_keeper.debug
+---
+- tapOn: Manage
+- tapOn: Connect wallet
+- tapOn: Link domain
+- tapOn: Link
+- swipe:
+    from:
+      id: button
+    direction: RIGHT
+- runFlow: ../../password/enter_password.yaml
+- tapOn:
+    id: header_action

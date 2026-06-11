@@ -2,7 +2,7 @@ package com.tonapps.wallet.data.dapps
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import com.tonapps.blockchain.ton.TonNetwork
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -22,16 +22,13 @@ import com.tonapps.wallet.data.rn.data.RNTC
 import com.tonapps.wallet.data.rn.data.RNTCApp
 import com.tonapps.wallet.data.rn.data.RNTCApps
 import com.tonapps.wallet.data.rn.data.RNTCConnection
-import com.tonapps.wallet.data.rn.data.RNTCKeyPair
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -39,7 +36,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 
 class DAppsRepository(
     context: Context,
@@ -159,10 +155,10 @@ class DAppsRepository(
 
     suspend fun getConnections(
         accountId: String,
-        testnet: Boolean
+        network: TonNetwork
     ): ArrayMap<AppEntity, List<AppConnectEntity>> {
         val connections = (_connectionsFlow.value ?: emptyList()).filter {
-            it.accountId == accountId && it.testnet == testnet
+            it.accountId == accountId && it.network == network
         }
         val map = connections.groupBy { it.appUrl.withoutQuery }
         val apps = getApps(map.keys.toList())
@@ -185,16 +181,16 @@ class DAppsRepository(
         database.setLastAppRequestId(clientId, requestId)
     }
 
-    fun isPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri): Boolean {
-        return database.isPushEnabled(accountId, testnet, appUrl.withoutQuery)
+    fun isPushEnabled(accountId: String, network: TonNetwork, appUrl: Uri): Boolean {
+        return database.isPushEnabled(accountId, network, appUrl.withoutQuery)
     }
 
-    fun setPushEnabled(accountId: String, testnet: Boolean, appUrl: Uri, enabled: Boolean): List<AppConnectEntity> {
+    fun setPushEnabled(accountId: String, network: TonNetwork, appUrl: Uri, enabled: Boolean): List<AppConnectEntity> {
         val otherConnections = mutableListOf<AppConnectEntity>()
         val accountConnections = mutableListOf<AppConnectEntity>()
 
         for (connection in (_connectionsFlow.value ?: return emptyList())) {
-            if (connection.accountId == accountId && connection.testnet == testnet && connection.appUrl.withoutQuery == appUrl.withoutQuery) {
+            if (connection.accountId == accountId && connection.network == network && connection.appUrl.withoutQuery == appUrl.withoutQuery) {
                 accountConnections.add(connection.copy(pushEnabled = enabled))
             } else {
                 otherConnections.add(connection.copy())
@@ -205,7 +201,7 @@ class DAppsRepository(
             return emptyList()
         }
 
-        database.setPushEnabled(accountId, testnet, appUrl, enabled)
+        database.setPushEnabled(accountId, network, appUrl, enabled)
         _connectionsFlow.value = otherConnections + accountConnections
         return accountConnections
     }
@@ -237,19 +233,19 @@ class DAppsRepository(
 
     suspend fun deleteApp(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         appUrl: Uri,
         type: AppConnectEntity.Type? = null
     ): List<AppConnectEntity> {
         if (type == null) {
             val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.testnet == testnet && it.appUrl.withoutQuery == appUrl.withoutQuery
+                it.accountId == accountId && it.network == network && it.appUrl.withoutQuery == appUrl.withoutQuery
             }
 
             return deleteConnections(predicate)
         } else {
             val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.testnet == testnet && it.appUrl.withoutQuery == appUrl.withoutQuery && it.type == type
+                it.accountId == accountId && it.network == network && it.appUrl.withoutQuery == appUrl.withoutQuery && it.type == type
             }
 
             return deleteConnections(predicate)
@@ -258,10 +254,10 @@ class DAppsRepository(
 
     suspend fun deleteApps(
         accountId: String,
-        testnet: Boolean
+        network: TonNetwork
     ): List<AppConnectEntity> {
         val predicate: (AppConnectEntity) -> Boolean = {
-            it.accountId == accountId && it.testnet == testnet
+            it.accountId == accountId && it.network == network
         }
         return deleteConnections(predicate)
     }
@@ -317,17 +313,17 @@ class DAppsRepository(
         try {
             val tcApps = rnLegacy.getTCApps()
             for (app in tcApps.mainnet) {
-                migrationFromLegacy(app, false)
+                migrationFromLegacy(app, TonNetwork.MAINNET)
             }
             for (apps in tcApps.testnet) {
-                migrationFromLegacy(apps, true)
+                migrationFromLegacy(apps, TonNetwork.TESTNET)
             }
         } catch (e: Throwable) {
             recordException(e)
         }
     }
 
-    suspend fun migrationFromLegacy(connections: RNTCApps, testnet: Boolean) {
+    suspend fun migrationFromLegacy(connections: RNTCApps, network: TonNetwork) {
         val accountId = connections.address.toRawAddress()
         for (legacyApp in connections.apps) {
             val newApp = AppEntity(
@@ -340,7 +336,7 @@ class DAppsRepository(
             for (legacyConnections in legacyApp.connections) {
                 val newConnection = AppConnectEntity(
                     accountId = accountId,
-                    testnet = testnet,
+                    network = network,
                     clientId = legacyConnections.clientId,
                     type = if (legacyConnections.type == "remote") AppConnectEntity.Type.External else AppConnectEntity.Type.Internal,
                     appUrl = newApp.url,
@@ -361,18 +357,16 @@ class DAppsRepository(
 
         val (mainnetConnections, testnetConnections) = LegacyHelper.sortByNetworkAndAccount(connections)
 
-        addToLegacyCreateApps(testnetConnections, true, appsMap)
-
         val data = RNTC(
-            mainnet = addToLegacyCreateApps(mainnetConnections, false, appsMap),
-            testnet = addToLegacyCreateApps(testnetConnections, true, appsMap)
+            mainnet = addToLegacyCreateApps(mainnetConnections, TonNetwork.MAINNET, appsMap),
+            testnet = addToLegacyCreateApps(testnetConnections, TonNetwork.TESTNET, appsMap)
         )
         rnLegacy.setTCApps(data)
     }
 
     private fun addToLegacyCreateApps(
         connectionsMap: ArrayMap<String, List<AppConnectEntity>>,
-        testnet: Boolean,
+        network: TonNetwork,
         appsMap: Map<Uri, AppEntity>
     ): List<RNTCApps> {
         val legacyApps = mutableListOf<RNTCApps>()
@@ -383,7 +377,11 @@ class DAppsRepository(
 
             for ((appUrl, appUrlConnections) in connectionsByAppUrls) {
                 val app = appsMap[appUrl] ?: continue
-                val notificationsEnabled = isPushEnabled(accountId, testnet, appUrl)
+                val notificationsEnabled = isPushEnabled(
+                    accountId = accountId,
+                    network = network,
+                    appUrl = appUrl
+                )
                 val legacyConnections = mutableListOf<RNTCConnection>()
                 for (appUrlConnection in appUrlConnections) {
                     legacyConnections.add(LegacyHelper.createConnection(appUrlConnection))
@@ -402,7 +400,7 @@ class DAppsRepository(
             }
 
             legacyApps.add(RNTCApps(
-                address = accountId.toUserFriendly(wallet = true, bounceable = true, testnet = testnet),
+                address = accountId.toUserFriendly(wallet = true, bounceable = true, testnet = network.isTestnet),
                 apps = legacyAccountApps
             ))
         }
@@ -438,6 +436,12 @@ class DAppsRepository(
 
     companion object {
 
+        private val manifestPaths = arrayOf(
+            "tonconnect-manifest.json",
+            "manifest.json",
+            "tcm.json"
+        )
+
         fun fixAppTitle(value: String): String {
             var name = value.trim()
             if (name.contains(":")) {
@@ -454,12 +458,6 @@ class DAppsRepository(
             }
             return name
         }
-
-        private val manifestPaths = arrayOf(
-            "tonconnect-manifest.json",
-            "manifest.json",
-            "tcm.json"
-        )
     }
 
 }

@@ -5,12 +5,12 @@ import android.net.Uri
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.locale
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.firstOrNull
@@ -20,9 +20,9 @@ import org.json.JSONObject
 class CardViewModel(
     app: Application,
     private val wallet: WalletEntity,
-    private val tonConnectManager: TonConnectManager,
+    private val tonConnectBridge: ITonConnectBridge,
     private val settingsRepository: SettingsRepository,
-): InjectedTonConnectScreen.ViewModel(app, wallet, tonConnectManager) {
+): InjectedTonConnectScreen.ViewModel(app, wallet, tonConnectBridge) {
 
     override val url: Uri by lazy {
         val builder = Uri.parse("https://next.holders.io").buildUpon()

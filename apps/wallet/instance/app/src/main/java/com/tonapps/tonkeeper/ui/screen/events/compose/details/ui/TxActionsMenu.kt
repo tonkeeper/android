@@ -8,7 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tonapps.tonkeeper.ui.screen.events.compose.details.TxDetailsViewModel
-import ui.components.ActionButtonIcon
+import com.tonapps.uikit.icon.UIKitIcon
+import ui.components.moon.MoonActionIcon
 import ui.components.popup.ActionMenu
 import ui.painterResource
 
@@ -20,8 +21,8 @@ fun TxActionsMenu(
     var expanded by remember { mutableStateOf(false) }
 
     Box {
-        ActionButtonIcon(
-            painter = painterResource(com.tonapps.tonkeeperx.R.drawable.ic_ellipsis_16),
+        MoonActionIcon(
+            painter = painterResource(UIKitIcon.ic_ellipsis_16),
             onClick = {
                 expanded = !expanded
             },

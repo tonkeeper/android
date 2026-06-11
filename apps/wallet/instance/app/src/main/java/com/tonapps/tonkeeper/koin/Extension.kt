@@ -6,14 +6,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.RemoteConfig
-import com.tonapps.tonkeeper.core.AnalyticsHelper
+import com.tonapps.core.flags.RemoteConfig
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.FlagsEntity
@@ -85,10 +86,10 @@ val Context.remoteConfig: RemoteConfig?
     get() = koin?.get<RemoteConfig>()
 
 val Context.serverConfig: ConfigEntity?
-    get() = api?.config
+    get() = api?.getConfig(TonNetwork.MAINNET)
 
 val Context.serverFlags: FlagsEntity?
-    get() = api?.config?.flags
+    get() = api?.getConfig(TonNetwork.MAINNET)?.flags
 
 val Context.settingsRepository: SettingsRepository?
     get() = koin?.get<SettingsRepository>()

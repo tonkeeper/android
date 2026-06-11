@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history.state
 
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 
 data class TxTronParams(
     val address: BlockchainAddress? = null,

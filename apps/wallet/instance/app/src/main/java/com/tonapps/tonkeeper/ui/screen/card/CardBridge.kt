@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.card
 
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
+import com.tonapps.wallet.api.readBody
 import okhttp3.Headers
 import okhttp3.Response
 import org.json.JSONArray
@@ -12,7 +13,7 @@ class CardBridge(
     val deviceInfo: String,
     val isWalletBrowser: Boolean = true,
     val protocolVersion: Int = 2,
-    val send: suspend (array: JSONArray) -> JSONObject,
+    val send: suspend (array: JSONObject) -> JSONObject,
     val connect: suspend (protocolVersion: Int, request: ConnectRequest) -> JSONObject,
     val restoreConnection: suspend () -> JSONObject,
     val disconnect: suspend () -> Unit,
@@ -30,7 +31,7 @@ class CardBridge(
     override suspend fun invokeFunction(name: String, args: JSONArray): Any? {
         return when (name) {
             "connect" -> connect(protocolVersion, ConnectRequest.parse(args.getJSONObject(1))).toString()
-            "send" -> send(args).toString()
+            "send" -> send(args.getJSONObject(0)).toString()
             "restoreConnection" -> restoreConnection().toString()
             "disconnect" -> disconnect()
             "tonapi.fetch" -> {
@@ -42,7 +43,7 @@ class CardBridge(
     }
 
     private fun webAPIResponse(response: Response): JSONObject {
-        val body = response.body?.string() ?: ""
+        val body = response.readBody()
         val json = JSONObject()
         json.put("body", body)
         json.put("ok", response.isSuccessful)

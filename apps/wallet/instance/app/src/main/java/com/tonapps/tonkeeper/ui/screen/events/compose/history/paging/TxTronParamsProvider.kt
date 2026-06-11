@@ -1,9 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history.paging
 
-import android.util.Log
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.TxTronParams
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi

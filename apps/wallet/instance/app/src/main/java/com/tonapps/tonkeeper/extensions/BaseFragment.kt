@@ -4,7 +4,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.hideKeyboard
 
 fun BaseFragment.hideKeyboard() {
-    requireActivity().hideKeyboard()
+    activity?.hideKeyboard()
 }
 
 fun BaseFragment.finishDelay(delay: Long = 3000) {

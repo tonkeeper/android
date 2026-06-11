@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.base
 
 import androidx.annotation.LayoutRes
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
 abstract class WalletContextScreen(
     @LayoutRes layoutId: Int,

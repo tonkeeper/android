@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send.contacts.edit
 
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import android.widget.Button
 import com.tonapps.extensions.getParcelableCompat
@@ -11,7 +11,7 @@ import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.contacts.ContactDialogHelper
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.contacts.entities.ContactEntity
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment

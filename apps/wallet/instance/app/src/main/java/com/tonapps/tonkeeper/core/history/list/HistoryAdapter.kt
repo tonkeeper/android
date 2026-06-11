@@ -10,7 +10,7 @@ import com.tonapps.tonkeeper.core.history.list.holder.HistoryFailedHolder
 import com.tonapps.tonkeeper.core.history.list.holder.HistoryHeaderHolder
 import com.tonapps.tonkeeper.core.history.list.holder.HistoryLoaderHolder
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem

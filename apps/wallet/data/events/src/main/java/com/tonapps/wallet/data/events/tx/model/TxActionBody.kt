@@ -5,7 +5,7 @@ import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.short4
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.ActionTypeOut
 import kotlinx.parcelize.IgnoredOnParcel

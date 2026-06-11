@@ -1,0 +1,30 @@
+# Allow running skill scripts without prompts.
+prefix_rule(
+    pattern = ["python3", ".codex/skills/pr/scripts/get_pr_data.py"],
+    decision = "allow",
+    justification = "Allow PR skill script without prompts.",
+    match = [
+        "python3 .codex/skills/pr/scripts/get_pr_data.py ensure-setup",
+        "python3 .codex/skills/pr/scripts/get_pr_data.py get-pr 354",
+    ],
+)
+
+prefix_rule(
+    pattern = ["python3", ".codex/skills/linear/scripts/get_linear_task.py"],
+    decision = "allow",
+    justification = "Allow Linear skill script without prompts.",
+    match = [
+        "python3 .codex/skills/linear/scripts/get_linear_task.py get-task IOS-562",
+        "python3 .codex/skills/linear/scripts/get_linear_task.py get-task IOS-366",
+    ],
+)
+
+prefix_rule(
+    pattern = ["python3", ".codex/skills/tondocs/scripts/tondocs.py"],
+    decision = "allow",
+    justification = "Allow TON docs skill script without prompts.",
+    match = [
+        "python3 .codex/skills/tondocs/scripts/tondocs.py sync",
+        "python3 .codex/skills/tondocs/scripts/tondocs.py search jetton",
+    ],
+)

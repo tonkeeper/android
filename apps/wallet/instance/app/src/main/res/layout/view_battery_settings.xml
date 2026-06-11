@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/offsetExtraExtraSmall"
-            android:text="@string/battery_will_be_paid"
+            android:text="@string/battery_refill_subtitle"
             android:textAppearance="@style/TextAppearance.Body2"
             android:textColor="?attr/textSecondaryColor" />
 

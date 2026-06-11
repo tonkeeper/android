@@ -2,7 +2,7 @@ package com.tonapps.icu.format
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import com.tonapps.icu.R
+import com.tonapps.lib.icu.R
 
 internal class TONSymbolSpan(context: Context): CustomSymbolSpan(context, R.drawable.ic_ton_symbol, R.drawable.ic_ton_bold_symbol) {
 

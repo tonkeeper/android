@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+#
+# Pre-commit executor that downloads and runs detekt on staged Kotlin files.
+# This script is called by the pre-commit hook and contains the main logic.
+# Supports git worktree by storing detekt JARs in a shared cache location.
+#
+
+set -euo pipefail
+
+# Configuration
+DETEKT_VERSION="1.23.8"
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+# Use git-common-dir for worktree support - stores JARs in shared location
+GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"
+TOOLS_BUILD_DIR="$GIT_COMMON_DIR/detekt-cache"
+DETEKT_CLI_JAR="$TOOLS_BUILD_DIR/detekt-cli-${DETEKT_VERSION}-all.jar"
+DETEKT_FORMATTING_JAR="$TOOLS_BUILD_DIR/detekt-formatting-${DETEKT_VERSION}.jar"
+
+# Download URLs
+DETEKT_CLI_URL="https://github.com/detekt/detekt/releases/download/v${DETEKT_VERSION}/detekt-cli-${DETEKT_VERSION}-all.jar"
+DETEKT_FORMATTING_URL="https://github.com/detekt/detekt/releases/download/v${DETEKT_VERSION}/detekt-formatting-${DETEKT_VERSION}.jar"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to download a file if it doesn't exist
+download_if_missing() {
+    local url="$1"
+    local destination="$2"
+    local description="$3"
+
+    if [ ! -f "$destination" ]; then
+        echo -e "${YELLOW}Downloading $description...${NC}"
+        curl -sSL -o "$destination" "$url"
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Failed to download $description from $url${NC}" >&2
+            return 1
+        fi
+        echo -e "${GREEN}Downloaded $description${NC}"
+    fi
+}
+
+# Check if Java is available
+if ! command -v java &> /dev/null; then
+    echo -e "${RED}Error: java command not found. Please install Java to run detekt.${NC}" >&2
+    exit 1
+fi
+
+# Ensure detekt cache directory exists (shared across worktrees)
+mkdir -p "$TOOLS_BUILD_DIR"
+
+# Download detekt JARs if they don't exist
+echo "Checking detekt installation..."
+download_if_missing "$DETEKT_CLI_URL" "$DETEKT_CLI_JAR" "detekt-cli-${DETEKT_VERSION}-all.jar"
+download_if_missing "$DETEKT_FORMATTING_URL" "$DETEKT_FORMATTING_JAR" "detekt-formatting-${DETEKT_VERSION}.jar"
+
+# Get list of staged Kotlin files (excluding deleted files)
+# --diff-filter=d excludes deleted files
+# --name-only shows only file names
+# Filter for .kt and .kts extensions (exclusions are handled in detekt.yml)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(kt|kts)$' || true)
+
+# If no Kotlin files are staged, exit successfully
+if [ -z "$STAGED_FILES" ]; then
+    echo -e "${GREEN}No Kotlin files staged for commit. Skipping detekt.${NC}"
+    exit 0
+fi
+
+# Count staged files
+FILE_COUNT=$(echo "$STAGED_FILES" | wc -l | tr -d ' ')
+echo -e "${YELLOW}Processing $FILE_COUNT staged Kotlin file(s)...${NC}"
+
+# Convert newline-separated files to comma-separated for detekt --input
+# Prepend project root to relative paths - detekt needs absolute paths
+DETEKT_INPUT_ABSOLUTE=$(echo "$STAGED_FILES" | while read -r file; do
+    echo "$PROJECT_ROOT/$file"
+done | tr '\n' ',' | sed 's/,$//')
+
+# Run detekt with auto-correct
+echo -e "${YELLOW}Running detekt with auto-correct...${NC}"
+java -jar "$DETEKT_CLI_JAR" \
+    --input "$DETEKT_INPUT_ABSOLUTE" \
+    --plugins "$DETEKT_FORMATTING_JAR" \
+    --config "$PROJECT_ROOT/detekt/detekt.yml" \
+    --report "xml:$PROJECT_ROOT/build/reports/detekt-report.xml" \
+    --auto-correct
+
+DETEKT_EXIT_CODE=$?
+
+# Re-stage auto-corrected files
+echo "$STAGED_FILES" | while read -r file; do
+    git add "$PROJECT_ROOT/$file"
+done
+
+if [ $DETEKT_EXIT_CODE -eq 0 ]; then
+    echo -e "${GREEN}✓ Detekt check passed!${NC}"
+    exit 0
+else
+    echo -e "${RED}✗ Detekt found issues in staged files.${NC}"
+    echo -e "${YELLOW}Fix the issues above or use 'git commit --no-verify' to bypass this check.${NC}"
+    exit $DETEKT_EXIT_CODE
+fi

@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.whileTimeoutOrNull
@@ -63,7 +62,7 @@ object WidgetManager {
     }
 
     val isRequestPinAppWidgetSupported: Boolean
-        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && appWidgetManager.isRequestPinAppWidgetSupported
+        get() = appWidgetManager.isRequestPinAppWidgetSupported
 
     fun installBalance(activity: Activity, walletId: String, jettonAddress: String? = null) {
         val params = WidgetParams.Balance(walletId, jettonAddress)

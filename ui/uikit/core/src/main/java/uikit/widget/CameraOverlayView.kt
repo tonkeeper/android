@@ -57,7 +57,8 @@ class CameraOverlayView @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val size = measuredWidth.coerceAtMost(measuredHeight) - (horizontalMargin * 2)
+        val maxSize = 350f.dp.toInt()
+        val size = (measuredWidth.coerceAtMost(measuredHeight) - (horizontalMargin * 2)).coerceAtMost(maxSize.toFloat())
         val left = (measuredWidth - size) / 2f
         val top = (measuredHeight - size) / 2f
         centerRect.set(left, top, left + size, top + size)

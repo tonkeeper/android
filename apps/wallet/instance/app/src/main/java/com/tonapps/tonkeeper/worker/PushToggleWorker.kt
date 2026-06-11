@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.worker
 
 import android.content.Context
-import android.util.Log
+import com.tonapps.log.L
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.Operation
@@ -10,7 +10,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

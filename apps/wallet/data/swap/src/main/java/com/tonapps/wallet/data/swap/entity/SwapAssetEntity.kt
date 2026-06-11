@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.swap.entity
 
 import android.os.Parcelable
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONObject

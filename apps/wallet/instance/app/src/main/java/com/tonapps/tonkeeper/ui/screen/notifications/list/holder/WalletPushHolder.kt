@@ -4,7 +4,7 @@ import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.extensions.drawable
 import uikit.widget.SwitchView
 

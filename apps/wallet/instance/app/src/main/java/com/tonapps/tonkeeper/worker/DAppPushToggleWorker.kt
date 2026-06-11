@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.worker
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.Operation
@@ -12,7 +12,7 @@ import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,9 +30,9 @@ class DAppPushToggleWorker(
             val wallet = getWallet() ?: throw IllegalArgumentException("Wallet not found")
             val appUrl = getAppUrl() ?: throw IllegalArgumentException("App URL not found")
             val enabled = inputData.getBoolean(ARG_ENABLE, false)
-            val connections = dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, enabled)
+            val connections = dAppsRepository.setPushEnabled(wallet.accountId, wallet.network, appUrl, enabled)
             if (!pushManager.dAppPush(wallet, connections, enabled)) {
-                dAppsRepository.setPushEnabled(wallet.accountId, wallet.testnet, appUrl, !enabled)
+                dAppsRepository.setPushEnabled(wallet.accountId, wallet.network, appUrl, !enabled)
                 throw IllegalStateException("Failed to toggle push")
             }
             Result.success()

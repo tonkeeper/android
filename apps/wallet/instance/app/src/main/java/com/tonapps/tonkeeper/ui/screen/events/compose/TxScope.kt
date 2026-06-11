@@ -1,10 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose
 
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.dialog.encrypted.EncryptedCommentScreen
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.events.CommentEncryption
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.CommentEncryption
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -27,7 +28,7 @@ object TxScope {
         try {
             val action = tx.actions[actionIndex]
             val encryptedText = action.encryptedText ?: return true
-            val account = action.account ?: throw Exception("No account")
+            val sender = action.sender ?: throw Exception("No sender account")
             if (settingsRepository.showEncryptedCommentModal) {
                 val noShowAgain = withContext(Dispatchers.Main) {
                     EncryptedCommentScreen.show(context)
@@ -43,11 +44,12 @@ object TxScope {
                 wallet.publicKey,
                 privateKey,
                 encryptedText.cipher,
-                account.address
+                sender.address
             )
             eventsRepository.saveDecryptedComment(tx.hash, decrypted)
             return false
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
+            L.e(e)
             return false
         }
     }

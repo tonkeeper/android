@@ -5,7 +5,7 @@ import com.tonapps.wallet.api.entity.IAPPackageId
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 

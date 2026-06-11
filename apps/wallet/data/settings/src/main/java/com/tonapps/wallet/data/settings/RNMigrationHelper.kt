@@ -4,7 +4,7 @@ import android.content.Context
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNWallets
 import com.tonapps.wallet.localization.Language

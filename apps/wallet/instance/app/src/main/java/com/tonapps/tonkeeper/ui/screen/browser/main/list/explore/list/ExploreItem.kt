@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list
 import android.net.Uri
 import androidx.core.net.toUri
 import com.tonapps.uikit.list.BaseListItem
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 
 sealed class ExploreItem(type: Int): BaseListItem(type) {
@@ -23,7 +23,8 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
 
     data class Ads(
         val app: BrowserAppEntity,
-        val wallet: WalletEntity
+        val wallet: WalletEntity,
+        val country: String,
     ): ExploreItem(TYPE_ADS) {
 
         val button: BrowserAppEntity.Button

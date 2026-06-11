@@ -100,6 +100,14 @@ class BottomTabsView @JvmOverloads constructor(
         }
     }
 
+    fun findTabView(itemId: Int): View? {
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            if (child.tag == itemId) return child
+        }
+        return null
+    }
+
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
         val navigationInsets = compatInsets.getInsets(WindowInsetsCompat.Type.navigationBars())

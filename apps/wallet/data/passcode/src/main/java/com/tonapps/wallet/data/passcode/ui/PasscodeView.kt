@@ -3,7 +3,7 @@ package com.tonapps.wallet.data.passcode.ui
 import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.wallet.data.passcode.R
+import com.tonapps.apps.wallet.data.passcode.R
 import uikit.widget.ColumnLayout
 import uikit.widget.NumPadView
 import uikit.widget.PinInputView

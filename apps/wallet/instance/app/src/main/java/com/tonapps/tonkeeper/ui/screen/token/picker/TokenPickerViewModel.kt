@@ -1,20 +1,16 @@
 package com.tonapps.tonkeeper.ui.screen.token.picker
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.core.entities.AssetsEntity
-import com.tonapps.tonkeeper.core.entities.AssetsExtendedEntity
-import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
+import com.tonapps.legacy.enteties.AssetsEntity
+import com.tonapps.legacy.enteties.AssetsExtendedEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -22,18 +18,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import uikit.extensions.context
 
 class TokenPickerViewModel(
     app: Application,
-    wallet: WalletEntity,
+    private val wallet: WalletEntity,
     selectedToken: TokenEntity,
     allowedTokens: List<String>,
     private val settingsRepository: SettingsRepository,
@@ -41,7 +34,7 @@ class TokenPickerViewModel(
     private val api: API,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(api)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(wallet.network)
 
     private val _selectedTokenFlow = MutableStateFlow(selectedToken)
 
@@ -53,8 +46,8 @@ class TokenPickerViewModel(
     private val queryFlow = _queryFlow.asSharedFlow()
 
     private val tokensFlow = settingsRepository.currencyFlow.map { currency ->
-        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.testnet)?.filter {
-            it.balance.isTransferable
+        val tokens = tokenRepository.get(currency, wallet.accountId, wallet.network)?.filter {
+            it.balance.isTransferable && !it.isTrx
         } ?: emptyList()
 
         val list = if (allowedTokens.isNotEmpty()) {
@@ -100,7 +93,7 @@ class TokenPickerViewModel(
                 position = ListCell.getPosition(sortedTokens.size, index),
                 raw = token,
                 selected = token.address == selectedToken.address,
-                balance = CurrencyFormatter.format(token.symbol, token.balance.value),
+                balance = CurrencyFormatter.format(token.symbol, token.balance.uiBalance),
                 hiddenBalance = settingsRepository.hiddenBalances,
                 showNetwork = tronUsdtEnabled && (token.isUsdt || token.isTrc20)
             )

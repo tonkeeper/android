@@ -1,10 +1,11 @@
 package com.tonapps.wallet.data.token.source
 
+import com.tonapps.blockchain.ton.TonNetwork
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -12,25 +13,25 @@ internal class RemoteDataSource(
     private val api: API
 ) {
 
-    fun getJetton(accountId: String, testnet: Boolean) = api.getJetton(accountId, testnet)
+    fun getJetton(accountId: String, network: TonNetwork) = api.getJetton(accountId, network)
 
     suspend fun loadTON(
         currency: WalletCurrency,
         accountId: String,
-        testnet: Boolean
+        network: TonNetwork
     ): BalanceEntity? = withContext(Dispatchers.IO) {
-        api.getTonBalance(accountId, testnet, currency.code)
+        api.getTonBalance(accountId, network, currency.code)
     }
 
     suspend fun loadJettons(
         currency: WalletCurrency,
         accountId: String,
-        testnet: Boolean
+        network: TonNetwork
     ): List<BalanceEntity>? = withContext(Dispatchers.IO) {
         try {
             api.getJettonsBalances(
                 accountId = accountId,
-                testnet = testnet,
+                network = network,
                 currency = currency.code,
                 extensions = listOf(
                     TokenEntity.Extension.CustomPayload.value,
@@ -47,6 +48,12 @@ internal class RemoteDataSource(
         tronAddress: String,
     ): BalanceEntity = withContext(Dispatchers.IO) {
         api.tron.getTronUsdtBalance(tronAddress)
+    }
+
+    suspend fun loadTronTrx(
+        tronAddress: String,
+    ): BalanceEntity = withContext(Dispatchers.IO) {
+        api.tron.getTrxBalance(tronAddress)
     }
 
 }

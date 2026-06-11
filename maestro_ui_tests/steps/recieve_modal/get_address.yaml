@@ -1,0 +1,10 @@
+appId: com.ton_keeper.debug
+---
+- extendedWaitUntil:
+    visible:
+      id: wallet_address_text
+    timeout: 30000
+- tapOn:
+    id: wallet_address_text
+- copyTextFrom:
+    id: wallet_address_text

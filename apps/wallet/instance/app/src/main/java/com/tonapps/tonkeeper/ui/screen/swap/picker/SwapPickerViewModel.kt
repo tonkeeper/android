@@ -2,12 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.swap.picker
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.equalsRawAddress
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.swap.picker.list.Item
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.swap.SwapRepository
 import com.tonapps.wallet.data.token.TokenRepository
@@ -26,7 +26,7 @@ class SwapPickerViewModel(
     private val swapRepository: SwapRepository,
     private val tokenRepository: TokenRepository,
     private val settingsRepository: SettingsRepository
-): BaseWalletVM(app) {
+) : BaseWalletVM(app) {
 
     private val _searchQueryFlow = MutableStateFlow("")
     val searchQueryFlow = _searchQueryFlow.asSharedFlow().map { it.trim() }
@@ -35,15 +35,26 @@ class SwapPickerViewModel(
         swapRepository.assetsFlow,
         searchQueryFlow
     ) { currencies, query ->
-        currencies.filter { it.containsQuery(query) }
+        var list = currencies.filter { it.containsQuery(query) }
+        args.currencies?.let { allowed ->
+            val allowedAddresses = allowed.map { it.address }.toSet()
+            list = list.filter { c ->
+                allowedAddresses.any { allowedAddr ->
+                    allowedAddr.equalsRawAddress(c.address)
+                }
+            }
+        }
+        list
     }.map { currencies ->
         val items = mutableListOf<Item>()
         val userCurrency = settingsRepository.currency
         if (args.send) {
             val supportedAddresses = currencies.map { it.address }
-            val tokens = getTokens().filter { supportedAddresses.contains(it.address) }
+            val tokens = getTokens().filter { token ->
+                supportedAddresses.any { it.equalsRawAddress(token.address) }
+            }
             for ((index, token) in tokens.withIndex()) {
-                val currency = currencies.find { it.address.equalsAddress(token.address) }!!
+                val currency = currencies.find { it.address.equalsRawAddress(token.address) }!!
                 val item = Item.Token(
                     position = ListCell.getPosition(currencies.size, index),
                     currency = currency,
@@ -73,6 +84,6 @@ class SwapPickerViewModel(
     private suspend fun getTokens() = tokenRepository.get(
         currency = settingsRepository.currency,
         accountId = wallet.accountId,
-        testnet = wallet.testnet
+        network = wallet.network
     ) ?: emptyList()
 }

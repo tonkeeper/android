@@ -14,17 +14,6 @@ data class SignRequestEntity(
     val returnResult: ReturnResultEntity
 ) {
 
-    companion object {
-
-        fun safe(uri: Uri, returnResult: ReturnResultEntity): SignRequestEntity? {
-            return try {
-                SignRequestEntity(uri, returnResult)
-            } catch (e: Throwable) {
-                null
-            }
-        }
-    }
-
     private val tonNetwork: String = uri.getMultipleQuery("tn", "network") ?: "mainnet"
 
     val body: Cell = uri.getQueryParameter(Key.BODY)?.cellFromHex() ?: throw IllegalArgumentException("body is required")
@@ -39,5 +28,14 @@ data class SignRequestEntity(
     val v: String = uri.getQueryParameter(Key.V) ?: "v4r2"
     val seqno: Int = uri.getQueryParameter(Key.SEQNO)?.toIntOrNull() ?: 1
 
+    companion object {
 
+        fun safe(uri: Uri, returnResult: ReturnResultEntity): SignRequestEntity? {
+            return try {
+                SignRequestEntity(uri, returnResult)
+            } catch (e: Throwable) {
+                null
+            }
+        }
+    }
 }

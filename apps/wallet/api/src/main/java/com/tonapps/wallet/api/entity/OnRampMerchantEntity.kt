@@ -7,6 +7,7 @@ data class OnRampMerchantEntity(
     val amount: Double,
     val widgetUrl: String,
     val minAmount: Double,
+    val merchantTxId: String? = null,
 ) {
 
     data class Data(
@@ -25,6 +26,7 @@ data class OnRampMerchantEntity(
         merchant = json.getString("merchant"),
         amount = json.getDouble("amount"),
         widgetUrl = json.getString("widget_url"),
-        minAmount = json.optDouble("min_amount", 0.0)
+        minAmount = json.optDouble("min_amount", 0.0),
+        merchantTxId = json.optString("merchant_transaction_id"),
     )
 }

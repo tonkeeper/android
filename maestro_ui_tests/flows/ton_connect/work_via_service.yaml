@@ -1,0 +1,50 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+    arguments:
+      isMaestro: "true"
+- runFlow: "../../steps/import_wallet.yaml"
+- runFlow: "../../service/account/compare_ton_balance.yaml"
+
+- tapOn: Browser
+- scrollUntilVisible:
+    element:
+      text: STON.fi
+- tapOn: STON.fi
+
+- tapOn: Connect wallet
+- assertVisible: Connect to app.ston.fi
+
+- tapOn:
+    text: Connect wallet
+    index: 1
+
+- tapOn: "0.00"
+- inputText: "0.01"
+- tapOn:
+    text: Swap
+    index: 1
+- tapOn: Confirm swap
+
+- assertVisible: Confirm Action
+- assertVisible:
+    text: Swap
+    index: 1
+- assertVisible: Sent
+- assertVisible: Network fee
+- swipe:
+    from:
+      id: button
+    direction: RIGHT
+
+- runFlow: ../../steps/password/enter_password.yaml
+- tapOn:
+    id: close
+
+- tapOn: Connected
+- longPressOn: STON.fi
+- tapOn:
+    id: button
+
+- assertVisible: Connected apps will be shown here

@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.component
 
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.util.AttributeSet
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -31,9 +30,7 @@ class LottieView @JvmOverloads constructor(
             setEnableSmoothTransition(false)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, true)
-        }
+        setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, true)
 
         isVerticalScrollBarEnabled = false
         isHorizontalScrollBarEnabled = false

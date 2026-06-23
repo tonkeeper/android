@@ -5,8 +5,10 @@ import com.tonapps.ledger.ble.model.BleCommand
 import com.tonapps.ledger.ble.model.BleDeviceService
 import com.tonapps.ledger.ble.model.FrameCommand
 import com.tonapps.ledger.ble.service.model.BlePendingRequest
-import timber.log.Timber
-import java.util.*
+import com.tonapps.log.L
+import java.util.ArrayDeque
+import java.util.Date
+import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @SuppressLint("MissingPermission")
@@ -29,21 +31,21 @@ class BleSender(
         if (!isInitialized) {
             throw IllegalStateException("Should not try to dequeu before initialize BleSender")
         }
-        Timber.d("Try to dequeu pending request")
-        Timber.d("pending request => ${pendingApdu.size}")
+        L.d("Try to dequeu pending request")
+        L.d("pending request => ${pendingApdu.size}")
         if (pendingApdu.isNotEmpty() && pendingCommand == null) {
-            Timber.d("Dequeu is possible")
+            L.d("Dequeu is possible")
             val pendingRequest = pendingApdu.remove()
             val command = BleCommand(pendingRequest.id, pendingRequest.apdu, mtuSize)
             sendCommands(command)
         } else {
-            Timber.d("Dequeu is NOT possible")
+            L.d("Dequeu is NOT possible")
         }
     }
 
     private val commandQueue: ArrayDeque<FrameCommand> = ArrayDeque()
     private fun sendCommands(command: BleCommand) {
-        Timber.d("Need to send ${command.commands.size} frame")
+        L.d("Need to send ${command.commands.size} frame")
         commandQueue.addAll(command.commands)
         val command = commandQueue.removeFirst()
         sendCommand(command)

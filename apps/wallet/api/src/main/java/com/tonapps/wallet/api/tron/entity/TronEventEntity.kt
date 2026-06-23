@@ -1,7 +1,7 @@
 package com.tonapps.wallet.api.tron.entity
 
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.wallet.api.entity.value.Timestamp
 import io.batteryapi.models.TronTransactionsListTransactionsInner
 import org.json.JSONObject

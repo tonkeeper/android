@@ -14,14 +14,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import ui.components.moon.MoonAsyncImage
 import ui.theme.UIKit
 
+@Deprecated("Use moon")
 @Composable
 fun TokenImage(
     modifier: Modifier = Modifier,
     icon: String,
     subicon: String? = null,
-    size: Int = 0,
+    size: Dp = 96.dp,
     borderColor: Color = UIKit.colorScheme.background.page
 ) {
     BoxWithConstraints(
@@ -29,11 +31,11 @@ fun TokenImage(
     ) {
         val offset = maxWidth / 24
 
-        AsyncImage(
+        MoonAsyncImage(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(CircleShape),
-            url = icon,
+            image = icon,
             size = size
         )
 
@@ -55,7 +57,7 @@ fun TokenImage(
 fun TokenImageBorder(
     modifier: Modifier = Modifier,
     icon: String,
-    size: Int = 0,
+    size: Dp = 0.dp,
     borderSize: Dp = 3.dp,
     borderColor: Color = UIKit.colorScheme.background.page
 ) {
@@ -65,9 +67,9 @@ fun TokenImageBorder(
             .padding(borderSize)
             .clip(CircleShape)
     ) {
-        AsyncImage(
+        MoonAsyncImage(
             modifier = Modifier.fillMaxSize(),
-            url = icon,
+            image = icon,
             size = size
         )
     }

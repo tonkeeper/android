@@ -1,0 +1,26 @@
+# Allow Makefile commands to run without prompts.
+prefix_rule(
+    pattern = ["make"],
+    decision = "allow",
+    justification = "Allow repository Makefile commands without prompts.",
+    match = [
+        "make compile",
+        "make test",
+        "make test_all",
+        "make test_list",
+        "make test_core_swift",
+        "make test_tron_swift_package",
+        "make test_tkcore_package",
+        "make test_tklocalize_package",
+        "make test_tkchart_package",
+        "make test_core_components",
+        "make test_keeper_core",
+        "make test_wallet_core",
+        "make test_tron_swift",
+        "make test_tkcryptokit",
+        "make test_tkcore",
+        "make test_tklocalize",
+        "make test_tkchart",
+        "make test_package PACKAGE=./LocalPackages/core-swift SCHEME=WalletCore TEST_ONLY=WalletCoreTests",
+    ],
+)

@@ -1,43 +1,41 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.android.build.gradle.internal.dsl.NdkOptions
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
     id("kotlin-parcelize")
 }
 
+// TODO add script and doc
 android {
-    namespace = Build.namespacePrefix("security")
-    compileSdk = Build.compileSdkVersion
-    ndkVersion = Build.ndkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
-
-        ndk {
-            debugSymbolLevel = NdkOptions.DebugSymbolLevel.SYMBOL_TABLE.toString()
-        }
-    }
-
-    buildFeatures {
-        prefab = true
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-        }
-    }
+//    ndkVersion = libs.versions.android.ndk.get()
+//
+//    defaultConfig {
+//        ndk {
+//            debugSymbolLevel = NdkOptions.DebugSymbolLevel.SYMBOL_TABLE.toString()
+//        }
+//    }
+//
+//    externalNativeBuild {
+//        cmake {
+//            path = file("src/main/cpp/CMakeLists.txt")
+//
+//        }
+//    }
+//
+//    buildFeatures {
+//        prefab = true
+//    }
 }
 
 dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
 
-    implementation(libs.kotlinX.coroutines.android)
-    implementation(libs.androidX.security)
-    implementation(project(ProjectModules.Lib.extensions))
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.security)
+    implementation(projects.lib.extensions)
     compileOnly(fileTree("libs") {
         include("*.aar")
     })

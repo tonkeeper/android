@@ -1,0 +1,16 @@
+appId: com.ton_keeper.debug
+---
+- tapOn: Manage
+- tapOn: Edit
+- longPressOn:
+    text: ${output.walletAddress}
+- tapOn: Select All
+- eraseText: 1
+- tapOn: Save
+- swipe:
+    from:
+      id: button
+    direction: RIGHT
+- runFlow: ../../password/enter_password.yaml
+- tapOn:
+    id: header_action

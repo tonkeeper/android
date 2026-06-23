@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeperx.R
@@ -15,7 +17,6 @@ import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.api.entity.value.Blockchain
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
@@ -50,12 +51,13 @@ class TokenHolder(
     override fun onBind(item: Item.Token) {
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
+        val symbol = CurrencyFormatter.displaySymbol(item.symbol)
         titleView.text = if (item.isUSDT) {
-            item.symbol.withDefaultBadge(context, Localization.ton)
+            symbol.withDefaultBadge(context, Localization.ton)
         } else if (item.isTRC20) {
-            item.symbol.withDefaultBadge(context, Localization.trc20)
+            symbol.withDefaultBadge(context, Localization.trc20)
         } else {
-            item.symbol
+            symbol
         }
         if (item.verified) {
             balanceView.setTextColor(context.textSecondaryColor)
@@ -94,7 +96,7 @@ class TokenHolder(
 
     private fun setNetworkIcon(blockchain: Blockchain) {
         val icon = when (blockchain) {
-            Blockchain.TON -> R.drawable.ic_ton
+            Blockchain.TON -> UIKitIcon.ic_ton
             Blockchain.TRON -> R.drawable.ic_tron
         }
 

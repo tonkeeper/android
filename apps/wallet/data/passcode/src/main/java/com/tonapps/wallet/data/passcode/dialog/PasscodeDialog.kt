@@ -6,7 +6,8 @@ import android.view.View
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.wallet.data.passcode.PasscodeHelper
-import com.tonapps.wallet.data.passcode.R
+import com.tonapps.apps.wallet.data.passcode.R
+import com.tonapps.lib.log.BuildConfig
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -65,7 +66,7 @@ class PasscodeDialog(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setSecure(true)
+        setSecure(!BuildConfig.DEBUG)
         setAppearanceLight(helper.isLightTheme)
     }
 

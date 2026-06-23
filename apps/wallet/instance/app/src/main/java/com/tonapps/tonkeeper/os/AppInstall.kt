@@ -7,6 +7,7 @@ object AppInstall {
 
     enum class Source(val packageName: String, val title: String) {
         GOOGLE_PLAY("com.android.vending", "GooglePlay"),
+        AURORA_STORE("com.aurora.store", "AuroraStore"),
         UNKNOWN("unknown", "APK")
     }
 
@@ -18,7 +19,7 @@ object AppInstall {
         }
     }
 
-    private fun getInstallerPackageName(context: Context): String? {
+    fun getInstallerPackageName(context: Context): String? {
         try {
             val packageManager = context.packageManager
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

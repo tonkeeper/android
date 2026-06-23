@@ -4,10 +4,10 @@ import android.app.Application
 import android.net.Uri
 import com.tonapps.tonkeeper.extensions.getAppFixIcon
 import com.tonapps.tonkeeper.extensions.isDarkMode
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppEntity
@@ -18,12 +18,12 @@ import kotlinx.coroutines.withContext
 class DAppViewModel(
     app: Application,
     private val wallet: WalletEntity,
-    private val tonConnectManager: TonConnectManager,
+    private val tonConnectBridge: ITonConnectBridge,
     override val url: Uri,
     private val dAppsRepository: DAppsRepository,
     private val settingsRepository: SettingsRepository,
     private val browserRepository: BrowserRepository
-): InjectedTonConnectScreen.ViewModel(app, wallet, tonConnectManager) {
+): InjectedTonConnectScreen.ViewModel(app, wallet, tonConnectBridge) {
 
     val isDarkTheme: Boolean
         get() = settingsRepository.theme.resId == uikit.R.style.Theme_App_Dark || context.isDarkMode

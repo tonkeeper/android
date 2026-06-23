@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.rates
 
 import com.tonapps.icu.Coins
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 
 data class RateData(
     val from: WalletCurrency,

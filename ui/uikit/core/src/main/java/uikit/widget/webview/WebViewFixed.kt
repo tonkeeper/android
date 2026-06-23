@@ -7,19 +7,12 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.RectF
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.CancellationSignal
 import android.os.Message
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.webkit.CookieManager
-import android.webkit.GeolocationPermissions
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
-import android.webkit.ServiceWorkerController
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebChromeClient.FileChooserParams
@@ -27,25 +20,18 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
-import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
-import androidx.webkit.OutcomeReceiverCompat
-import androidx.webkit.PrefetchException
 import androidx.webkit.Profile
-import androidx.webkit.SpeculativeLoadingConfig
-import androidx.webkit.SpeculativeLoadingParameters
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import uikit.R
-import uikit.navigation.Navigation
 import java.util.LinkedList
-import java.util.concurrent.Executor
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.resume
 
 open class WebViewFixed @JvmOverloads constructor(
@@ -75,6 +61,10 @@ open class WebViewFixed @JvmOverloads constructor(
         open fun openFilePicker(fileChooserParams: FileChooserParams) {}
         open fun onPermissionRequest(request: PermissionRequest) {}
 
+        open fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
+            return null
+        }
+
         open fun onReceivedHttpError(request: WebResourceRequest?, errorResponse: WebResourceResponse?) { }
         open fun onReceivedError(request: WebResourceRequest?, error: WebResourceError?) { }
     }
@@ -93,8 +83,10 @@ open class WebViewFixed @JvmOverloads constructor(
         context.resources.openRawResource(R.raw.webview_ext).readBytes().decodeToString()
     }
 
-    private val callbacks = mutableListOf<Callback>()
+    private val callbacks = CopyOnWriteArrayList<Callback>()
     private var onNewTabRunnable: Runnable? = null
+    private var onScrollRunnable: Runnable? = null
+    private var onElementFocusRunnable: Runnable? = null
 
     private val jsExecuteQueue = LinkedList<String>()
 
@@ -124,9 +116,7 @@ open class WebViewFixed @JvmOverloads constructor(
             WebViewCompat.setAudioMuted(this@WebViewFixed, true)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
-        }
+        super.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)
         super.setBackgroundColor(Color.TRANSPARENT)
         if (0 != context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) {
             setWebContentsDebuggingEnabled(true)
@@ -155,10 +145,11 @@ open class WebViewFixed @JvmOverloads constructor(
 
                 val anchor = url.toUri().fragment
                 if (!anchor.isNullOrEmpty()) {
+                    val safeAnchor = JSONObject.quote(anchor)
                     evaluateJavascript(
                         """
                         (function() {
-                            var el = document.getElementById('$anchor');
+                            var el = document.getElementById($safeAnchor);
                             if (el) {
                                 el.scrollIntoView({behavior: 'smooth'});
                             }
@@ -188,6 +179,16 @@ open class WebViewFixed @JvmOverloads constructor(
             override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
                 super.onReceivedHttpError(view, request, errorResponse)
                 callbacks.forEach { it.onReceivedHttpError(request, errorResponse) }
+            }
+
+            override fun shouldInterceptRequest(
+                view: WebView?,
+                request: WebResourceRequest
+            ): WebResourceResponse? {
+                for (callback in callbacks) {
+                    callback.shouldInterceptRequest(request)?.let { return it }
+                }
+                return super.shouldInterceptRequest(view, request)
             }
         }
 
@@ -299,9 +300,20 @@ open class WebViewFixed @JvmOverloads constructor(
     private fun openNewWindow(resultMsg: Message): Boolean {
         val name = getProfile()?.name ?: return false
         val dialog = NewWindowDialog(context, name)
+        this.callbacks.forEach { callback ->
+            dialog.webView.addCallback(object : Callback() {
+                override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
+                    return callback.shouldOverrideUrlLoading(request)
+                }
+
+                override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
+                    return callback.shouldInterceptRequest(request)
+                }
+            })
+        }
         dialog.show()
 
-        val transport = resultMsg.obj as? WebView.WebViewTransport ?: return false
+        val transport = resultMsg.obj as? WebViewTransport ?: return false
         transport.webView = dialog.webView
         resultMsg.sendToTarget()
         return true
@@ -392,9 +404,6 @@ open class WebViewFixed @JvmOverloads constructor(
         super.destroy()
     }
 
-    private var onScrollRunnable: Runnable? = null
-    private var onElementFocusRunnable: Runnable? = null
-
     private fun onScroll(x: Int, y: Int) {
         removeCallbacks(onScrollRunnable)
         onScrollRunnable = Runnable {
@@ -423,6 +432,7 @@ open class WebViewFixed @JvmOverloads constructor(
         if (WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)) {
             WebViewCompat.setProfile(this, name)
         }
+
         getProfile()?.apply {
             cookieManager.setAcceptCookie(true)
             cookieManager.setAcceptThirdPartyCookies(this@WebViewFixed, true)
@@ -462,6 +472,5 @@ open class WebViewFixed @JvmOverloads constructor(
         }
     }
 }
-
 
 

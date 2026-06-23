@@ -8,7 +8,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.currency.list.Item
 import com.tonapps.tonkeeper.worker.TotalBalancesWorker
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +38,7 @@ class CurrencyViewModel(
     }
 
     private fun buildUiItems(selectedCurrency: WalletCurrency): List<Item> {
-        val currencies = WalletCurrency.ALL + listOf(WalletCurrency.TON_KEY, WalletCurrency.BTC_KEY)
+        val currencies = WalletCurrency.ALL + listOf(WalletCurrency.GRAM_KEY, WalletCurrency.BTC_KEY)
         val items = mutableListOf<Item>()
         for ((index, currency) in currencies.withIndex()) {
             val titleRes = getNameResIdForCurrency(currency)
@@ -93,7 +93,7 @@ class CurrencyViewModel(
             "gel" -> Localization.currency_gel_name
             "bdt" -> Localization.currency_bdt_name
 
-            "ton" -> Localization.toncoin
+            "gram", "ton" -> Localization.toncoin
             "btc" -> Localization.bitcoin
             else -> 0
         }

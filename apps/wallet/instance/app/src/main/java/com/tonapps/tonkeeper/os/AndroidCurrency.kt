@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.os
 
 import android.icu.util.Currency
-import com.tonapps.uikit.flag.R
+import com.tonapps.ui.uikit.flag.R
 import com.tonapps.uikit.flag.getFlagDrawable
 import java.util.Locale
 

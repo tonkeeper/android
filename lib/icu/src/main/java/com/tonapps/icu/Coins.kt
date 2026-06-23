@@ -2,7 +2,7 @@ package com.tonapps.icu
 
 import android.os.Parcel
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
@@ -15,7 +15,6 @@ data class Coins(
 ): Parcelable, Comparable<Coins> {
 
     companion object {
-
         fun Coins?.isPositive() = this != null && this.isPositive
 
         val mathContext = MathContext(32, RoundingMode.HALF_EVEN)
@@ -267,6 +266,10 @@ data class Coins(
 
     fun toFloat(): Float {
         return value.toFloat()
+    }
+
+    fun isSame(other: Coins?): Boolean {
+        return value.compareTo(other?.value) == 0
     }
 
     fun toDouble(decimals: Int): Double {

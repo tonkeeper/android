@@ -6,6 +6,13 @@
 
 -keep class io.tonapi.** { *; }
 
+-keep class io.ton.walletkit.** { *; }
+
+# Tink KeysDownloader - optional Google HTTP client and Joda Time deps not used at runtime
+-dontwarn com.google.api.client.http.**
+-dontwarn com.google.api.client.http.javanet.**
+-dontwarn org.joda.time.**
+
 -keep class io.batteryapi.** { *; }
 
 -keep class com.google.j2objc.annotations.** { *; }
@@ -43,6 +50,8 @@
 -keep class org.koin.** { *; }
 -keep class com.tonapps.tonkeeper.App { *; }
 
+-keep class androidx.lifecycle.SavedStateHandle { *; }
+
 -keepnames class com.tonapps.tonkeeper.ui.screen.** { *; }
 
 -dontwarn com.fasterxml.jackson.databind.ext.Java7SupportImpl
@@ -56,3 +65,24 @@
 -keep class com.facebook.imageutils.** { *; }
 -dontwarn com.facebook.imageutils.**
 
+# Cronet - ignore missing classes
+-dontwarn org.chromium.**
+-keep class org.chromium.** { *; }
+
+# Tink KeysDownloader - optional Google HTTP client and Joda Time deps not used at runtime
+-dontwarn com.google.api.client.http.**
+-dontwarn com.google.api.client.http.javanet.**
+-dontwarn org.joda.time.**
+
+# Strip all Android logging for security and performance
+-assumenosideeffects class android.util.Log {
+    public static boolean isLoggable(java.lang.String, int);
+    public static int v(...);
+    public static int i(...);
+    public static int w(...);
+    public static int d(...);
+    public static int e(...);
+}
+
+# WalletKit
+-keep class io.ton.walletkit.** { *; }

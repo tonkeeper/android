@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.onramp.main.view
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -16,9 +16,9 @@ import com.tonapps.tonkeeper.ui.component.token.CurrencyPickerView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.flag.getFlagDrawable
-import com.tonapps.wallet.api.entity.BalanceEntity
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.getDimensionPixelSize
@@ -66,6 +66,8 @@ class CurrencyInputView @JvmOverloads constructor(
     var doOnFocusChange: ((hasFocus: Boolean) -> Unit)? = null
 
     var doOnCurrencyClick: (() -> Unit)? = null
+
+    var doOnMaxClick: (() -> Unit)? = null
 
     var doOnEditorAction: ((actionId: Int) -> Boolean)? = null
         set(value) {
@@ -173,9 +175,9 @@ class CurrencyInputView @JvmOverloads constructor(
 
     fun setInsufficientBalance() {
         tokenBalanceView.visibility = View.VISIBLE
-        tokenBalanceMaxView.visibility = View.GONE
-        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.uikit.color.R.attr.accentRedColor))
+        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.ui.uikit.color.R.attr.accentRedColor))
         tokenBalanceView.setText(Localization.insufficient_balance)
+        showMaxButton()
     }
 
     fun setTokenBalance(
@@ -187,7 +189,8 @@ class CurrencyInputView @JvmOverloads constructor(
             tokenBalanceView.visibility = View.GONE
             tokenBalanceMaxView.visibility = View.GONE
         } else if (remainingFormat != null) {
-            tokenBalanceView.text = context.getString(Localization.remaining_balance, remainingFormat)
+            val format = CurrencyFormatter.format(if (symbol) tokenBalance.token.symbol else "", tokenBalance.value)
+            tokenBalanceView.text = context.getString(Localization.balance_prefix, format)
             showTokenBalance(tokenBalance.value)
         } else {
             val format = CurrencyFormatter.format(if (symbol) tokenBalance.token.symbol else "", tokenBalance.value)
@@ -197,11 +200,20 @@ class CurrencyInputView @JvmOverloads constructor(
     }
 
     private fun showTokenBalance(value: Coins) {
-        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.uikit.color.R.attr.textSecondaryColor))
+        tokenBalanceView.setTextColor(context.resolveColor(com.tonapps.ui.uikit.color.R.attr.textSecondaryColor))
         tokenBalanceView.visibility = View.VISIBLE
+        showMaxButton(value)
+    }
+
+    private fun showMaxButton(fallbackValue: Coins? = null) {
         tokenBalanceMaxView.visibility = View.VISIBLE
         tokenBalanceMaxView.setOnClickListener {
-            setValue(value.value, true)
+            val handler = doOnMaxClick
+            if (handler != null) {
+                handler.invoke()
+            } else if (fallbackValue != null) {
+                setValue(fallbackValue.value, true)
+            }
         }
     }
 

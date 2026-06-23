@@ -8,15 +8,6 @@ import com.tonapps.uikit.icon.UIKitIcon
 import uikit.extensions.drawable
 import uikit.span.ImageSpanCompat
 
-fun String.substringSafe(startIndex: Int, endIndex: Int): String {
-    return if (startIndex > length) {
-        ""
-    } else if (endIndex > length) {
-        substring(startIndex)
-    } else {
-        substring(startIndex, endIndex)
-    }
-}
 
 val String.capitalized: String
     get() {

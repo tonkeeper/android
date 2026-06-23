@@ -2,7 +2,7 @@ package uikit.widget
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
+import com.tonapps.log.L
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -76,12 +76,12 @@ open class SimpleRecyclerView @JvmOverloads constructor(
     /*override fun onMeasure(widthSpec: Int, heightSpec: Int) {
         super.onMeasure(widthSpec, heightSpec)
         if (maxHeight in 1..<measuredHeight) {
-            Log.d("WalletsAdapterLog", "maxHeight=onMeasure(widthSpec=$widthSpec, heightSpec=$heightSpec)")
+            L.d("WalletsAdapterLog", "maxHeight=onMeasure(widthSpec=$widthSpec, heightSpec=$heightSpec)")
             val width = measuredWidth
             val height = maxHeight
             setMeasuredDimension(width, height)
         } else if (minHeight in 1..<measuredHeight) {
-            Log.d("WalletsAdapterLog", "minHeight=onMeasure(widthSpec=$widthSpec, heightSpec=$heightSpec)")
+            L.d("WalletsAdapterLog", "minHeight=onMeasure(widthSpec=$widthSpec, heightSpec=$heightSpec)")
             val width = measuredWidth
             val height = minHeight
             setMeasuredDimension(width, height)

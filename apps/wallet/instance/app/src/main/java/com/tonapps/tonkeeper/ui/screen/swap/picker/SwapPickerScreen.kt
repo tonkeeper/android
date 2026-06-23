@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.swap.picker
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
+import com.tonapps.log.L
 import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
@@ -13,8 +13,8 @@ import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.swap.picker.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.swap.picker.list.Item
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -100,9 +100,10 @@ class SwapPickerScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragm
             wallet: WalletEntity,
             selectedCurrency: WalletCurrency,
             ignoreCurrency: WalletCurrency,
-            send: Boolean
+            send: Boolean,
+            currencies: List<WalletCurrency>? = null,
         ): SwapPickerScreen {
-            val args = SwapPickerArgs(selectedCurrency, ignoreCurrency, send)
+            val args = SwapPickerArgs(selectedCurrency, ignoreCurrency, send, currencies)
             val screen = SwapPickerScreen(wallet)
             screen.setArgs(args)
             return screen
@@ -113,10 +114,11 @@ class SwapPickerScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragm
             wallet: WalletEntity,
             selectedCurrency: WalletCurrency,
             ignoreCurrency: WalletCurrency,
-            send: Boolean
+            send: Boolean,
+            currencies: List<WalletCurrency>? = null,
         ): WalletCurrency {
             val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
-            val screen = newInstance(wallet, selectedCurrency, ignoreCurrency, send)
+            val screen = newInstance(wallet, selectedCurrency, ignoreCurrency, send, currencies)
             val result = activity.addForResult(screen)
             return result.getParcelableCompat<WalletCurrency>(ARG_CURRENCY) ?: throw CancellationException()
         }

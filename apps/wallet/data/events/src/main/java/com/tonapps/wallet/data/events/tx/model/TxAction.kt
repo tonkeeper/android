@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.events.tx.model
 
 import android.os.Parcelable
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.events.ActionType
 import kotlinx.parcelize.Parcelize
 

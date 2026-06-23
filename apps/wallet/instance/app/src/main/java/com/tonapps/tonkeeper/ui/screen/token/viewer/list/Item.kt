@@ -1,20 +1,19 @@
 package com.tonapps.tonkeeper.ui.screen.token.viewer.list
 
 import android.net.Uri
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.icu.Coins
-import com.tonapps.tonkeeper.core.entities.WalletPurchaseMethodEntity
-import com.tonapps.tonkeeper.extensions.asCurrency
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.api.entity.value.Blockchain
-import com.tonapps.wallet.api.entity.ChartEntity
+import uikit.chart.ChartPoint
 import com.tonapps.wallet.api.entity.EthenaEntity
-import com.tonapps.wallet.api.entity.TokenEntity
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
-import com.tonapps.wallet.data.settings.ChartPeriod
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.uikit.icon.UIKitIcon
+import uikit.chart.ChartPeriod
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -28,6 +27,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_SPACE = 7
         const val TYPE_ETHENA_BALANCE = 8
         const val TYPE_ETHENA_METHOD = 9
+        const val TYPE_TRON_BANNER = 10
     }
 
     data class Balance(
@@ -37,11 +37,13 @@ sealed class Item(type: Int): BaseListItem(type) {
         val showNetwork: Boolean,
         val blockchain: Blockchain,
         val hiddenBalance: Boolean,
+        val wallet: WalletEntity,
+        val availableTransfers: Int?,
     ): Item(TYPE_BALANCE) {
         val networkIconRes: Int
             get() = when (blockchain) {
                 Blockchain.TRON -> R.drawable.ic_tron
-                else -> R.drawable.ic_ton
+                else -> UIKitIcon.ic_ton
             }
     }
 
@@ -50,6 +52,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val swapUri: Uri,
         val tronSwapUrl: String?,
         val swapDisabled: Boolean,
+        val tronTransfersDisabled: Boolean,
         val token: TokenEntity,
     ): Item(TYPE_ACTIONS) {
 
@@ -59,7 +62,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val tokenAddress: String
             get() = token.address
 
-        val walletType: Wallet.Type
+        val walletType: WalletType
             get() = wallet.type
 
         val currency: WalletCurrency
@@ -69,7 +72,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             get() = !wallet.isWatchOnly && token.isTransferable
 
         val swap: Boolean
-            get() = if (token.isTrc20) {
+            get() = if (token.isUsdtTrc20) {
                 !swapDisabled && wallet.hasPrivateKey && tronSwapUrl != null
             } else {
                 !swapDisabled && token.verified && !wallet.isWatchOnly
@@ -84,7 +87,7 @@ sealed class Item(type: Int): BaseListItem(type) {
     }
 
     data class Chart(
-        val data: List<ChartEntity>,
+        val data: List<ChartPoint>,
         val square: Boolean,
         val period: ChartPeriod,
         val fiatPrice: CharSequence,
@@ -154,4 +157,11 @@ sealed class Item(type: Int): BaseListItem(type) {
                 }
             }
     }
+
+    data class TronBanner(
+        val wallet: WalletEntity,
+        val trxAmountFormat: CharSequence,
+        val trxBalanceFormat: CharSequence,
+        val onlyTrx: Boolean
+    ): Item(TYPE_TRON_BANNER)
 }

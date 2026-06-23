@@ -25,7 +25,7 @@ fun TxDetailsIcon(
             icon = icon.url,
             subicon = icon.subicon,
             modifier = Modifier.size(96.dp),
-            size = 256
+            size = 96.dp
         )
     }
 }
@@ -44,7 +44,7 @@ fun TxDetailsIcons(
             TokenImageBorder(
                 modifier = Modifier.size(72.dp),
                 icon = icon.url,
-                size = 128
+                size = 72.dp
             )
         }
     }

@@ -30,4 +30,17 @@ object FirebaseHelper {
             param("emoji", emoji)
         }
     }
+
+    fun manifestFetchFailed(kind: String, url: String?) {
+        Firebase.analytics.logEvent("manifest_fetch_failed") {
+            param("kind", kind)
+            if (url != null) param("url", url)
+        }
+    }
+
+    fun manifestFetchRetry(url: String?) {
+        Firebase.analytics.logEvent("manifest_fetch_retry") {
+            if (url != null) param("url", url)
+        }
+    }
 }

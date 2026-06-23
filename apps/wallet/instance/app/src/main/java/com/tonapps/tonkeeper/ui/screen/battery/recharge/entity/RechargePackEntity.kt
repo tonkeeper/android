@@ -5,7 +5,7 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
-import com.tonapps.wallet.data.core.currency.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import java.math.BigDecimal
@@ -86,9 +86,9 @@ data class RechargePackEntity(
 
         fun getTonAmount(meansFee: BigDecimal, type: RechargePackType): BigDecimal {
             return when (type) {
-                RechargePackType.LARGE -> meansFee.multiply(BigDecimal.valueOf(400))
-                RechargePackType.MEDIUM -> meansFee.multiply(BigDecimal.valueOf(250))
-                RechargePackType.SMALL -> meansFee.multiply(BigDecimal.valueOf(150))
+                RechargePackType.LARGE -> meansFee.multiply(BigDecimal.valueOf(2000))
+                RechargePackType.MEDIUM -> meansFee.multiply(BigDecimal.valueOf(1250))
+                RechargePackType.SMALL -> meansFee.multiply(BigDecimal.valueOf(750))
             }
         }
 

@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -9,10 +8,14 @@ import androidx.paging.cachedIn
 import androidx.paging.filter
 import androidx.paging.insertSeparators
 import androidx.paging.map
+import com.tonapps.deposit.DepositFragment
+import com.tonapps.deposit.DepositRoutes
+import com.tonapps.deposit.screens.method.RampAsset
+import com.tonapps.deposit.screens.qr.QrAssetFragment
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.helper.DateHelper
-import com.tonapps.tonkeeper.manager.tx.TransactionManager
-import com.tonapps.wallet.data.events.tx.model.TxEvent
+import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.compose.TxScope.decryptComment
 import com.tonapps.tonkeeper.ui.screen.events.compose.details.TxDetailsScreen
@@ -20,32 +23,29 @@ import com.tonapps.tonkeeper.ui.screen.events.compose.history.paging.TxPagingSou
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.TxFilter
 import com.tonapps.tonkeeper.ui.screen.events.spam.SpamEventsScreen
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
-import com.tonapps.tonkeeper.ui.screen.onramp.main.OnRampScreen
-import com.tonapps.tonkeeper.ui.screen.qr.QRScreen
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.features.events.TxEventUiMapper
 import com.tonapps.wallet.data.events.tx.model.TxActionBody
+import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okio.IOException
 import ui.components.events.EventItemClickPart
 import ui.components.events.UiEvent
-import uikit.extensions.collectFlow
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -59,17 +59,12 @@ class TxEventsViewModel(
     private val collectiblesRepository: CollectiblesRepository,
     private val passcodeManager: PasscodeManager,
     private val transactionManager: TransactionManager,
+    private val txEventUiMapper: TxEventUiMapper,
 ) : BaseWalletVM(app) {
-
-    private companion object {
-        private val monthYearFormatter = SimpleDateFormat("MMMM_yyyy", Locale.US)
-        private val dayMonthFormatter = SimpleDateFormat("d_MMMM", Locale.US)
-    }
 
     private val _uiCommandFlow = MutableEffectFlow<TxComposableCommand>()
     val uiCommandFlow = _uiCommandFlow.asSharedFlow()
 
-    private val uiMapper = TxUiMapper(context, wallet, eventsRepository, settingsRepository)
     private val locale = settingsRepository.getLocale()
 
     private val _selectedFilterIdFlow = MutableStateFlow(TxFilter.All.id)
@@ -111,7 +106,7 @@ class TxEventsViewModel(
             if (decrypted.isNullOrEmpty()) {
                 item
             } else {
-                uiMapper.changeText(item, decrypted)
+                txEventUiMapper.changeText(item, decrypted)
             }
         }.insertSeparators { before: UiEvent.Item?, after: UiEvent.Item? ->
             if (after == null) {
@@ -129,7 +124,7 @@ class TxEventsViewModel(
     }.distinctUntilChanged().cachedIn(viewModelScope)
 
     init {
-        transactionManager.eventsFlow(wallet).collectFlow {
+        transactionManager.eventsFlow(wallet).collectFlow { event ->
             requestRefresh()
             selectFilterById()
         }
@@ -201,13 +196,28 @@ class TxEventsViewModel(
 
     private fun onClick(id: String, part: EventItemClickPart) {
         val tx = TxPagingSource.get(id) ?: return
-        viewModelScope.launch {
-            if (part is EventItemClickPart.Product) {
+        if (part is EventItemClickPart.Product) {
+            viewModelScope.launch(Dispatchers.IO) {
                 val product = tx.actions[part.index].product ?: return@launch
+
                 if (product.type == TxActionBody.Product.Type.Nft) {
-                    openNft(product.id)
+                    try {
+                        val nftItem = collectiblesRepository.getNft(
+                            accountId = wallet.accountId,
+                            network = wallet.network,
+                            address = product.id
+                        ) ?: throw IOException()
+
+                        viewModelScope.launch {
+                            openNft(nftItem)
+                        }
+                    } catch (ignored: Throwable) {
+                        toast(Localization.unknown_error)
+                    }
                 }
-            } else if (part is EventItemClickPart.Encrypted) {
+            }
+        } else if (part is EventItemClickPart.Encrypted) {
+            viewModelScope.launch {
                 decryptComment(
                     wallet = wallet,
                     tx = tx,
@@ -217,23 +227,16 @@ class TxEventsViewModel(
                     passcodeManager = passcodeManager,
                     eventsRepository = eventsRepository
                 )
-            } else if (part is EventItemClickPart.Action) {
+            }
+        } else if (part is EventItemClickPart.Action) {
+            viewModelScope.launch {
                 openDetails(tx, part.index)
             }
         }
     }
 
-    private suspend fun openNft(address: String) {
-        try {
-            val nftItem = collectiblesRepository.getNft(
-                accountId = wallet.accountId,
-                testnet = wallet.testnet,
-                address = address
-            ) ?: throw IOException()
-            openScreen(NftScreen.newInstance(wallet, nftItem))
-        } catch (ignored: Throwable) {
-            toast(Localization.unknown_error)
-        }
+    private suspend fun openNft(nftItem: NftEntity) {
+        openScreen(NftScreen.newInstance(wallet, nftItem))
     }
 
     private suspend fun openDetails(tx: TxEvent, actionIndex: Int) {
@@ -242,13 +245,13 @@ class TxEventsViewModel(
 
     fun openBuyTon() {
         viewModelScope.launch {
-            openScreen(OnRampScreen.newInstance(context, wallet, "history"))
+            openScreen(DepositFragment.create(DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON))))
         }
     }
 
     fun openReceive() {
         viewModelScope.launch {
-            openScreen(QRScreen.newInstance(wallet))
+            openScreen(QrAssetFragment.newInstance())
         }
     }
 
@@ -257,7 +260,12 @@ class TxEventsViewModel(
         accountRepository = accountRepository,
         eventsRepository = eventsRepository,
         settingsRepository = settingsRepository,
-        uiMapper = uiMapper
+        txEventUiMapper = txEventUiMapper
     )
+
+    private companion object {
+        private val monthYearFormatter = SimpleDateFormat("MMMM_yyyy", Locale.US)
+        private val dayMonthFormatter = SimpleDateFormat("d_MMMM", Locale.US)
+    }
 
 }

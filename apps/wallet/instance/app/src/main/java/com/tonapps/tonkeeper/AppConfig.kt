@@ -18,4 +18,4 @@ val Context.isLowDevice: Boolean
     }
 
 val Context.isBlurDisabled: Boolean
-    get() = !DevSettings.blurEnabled || (isLowDevice && 20 >= batteryLevel)
+            get() = !DevSettings.blurEnabled || (isLowDevice && 20 >= batteryLevel)

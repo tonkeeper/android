@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.settings.list
 
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.localization.Localization
 

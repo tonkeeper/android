@@ -2,8 +2,9 @@ package com.tonapps.tonkeeper.extensions
 
 import android.content.Context
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.ui.screen.send.main.state.SendFee
+import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
+import com.tonapps.wallet.data.settings.entities.PreferredTronFeeMethod
 import com.tonapps.wallet.localization.Plurals
 
 val SendFee.id: String
@@ -30,9 +31,18 @@ fun SendFee.Battery.formattedCharges(context: Context): CharSequence {
     )
 }
 
-val SendFee.method: PreferredFeeMethod
+val SendFee.method: PreferredFeeMethod?
     get() = when (this) {
         is SendFee.Gasless -> PreferredFeeMethod.GASLESS
         is SendFee.Battery -> PreferredFeeMethod.BATTERY
         is SendFee.Ton -> PreferredFeeMethod.TON
+        else -> null
+    }
+
+val SendFee.tronMethod: PreferredTronFeeMethod?
+    get() = when (this) {
+        is SendFee.Battery -> PreferredTronFeeMethod.BATTERY
+        is SendFee.TronTrx -> PreferredTronFeeMethod.TRX
+        is SendFee.TronTon -> PreferredTronFeeMethod.TON
+        else -> null
     }

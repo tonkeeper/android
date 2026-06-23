@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.buildRateString
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
@@ -47,7 +48,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             titleView.text = getString(Localization.fake)
             iconView.clear(null)
         } else {
-            titleView.text = item.symbol
+            titleView.text = CurrencyFormatter.displaySymbol(item.symbol)
             iconView.setImageURI(item.iconUri, this)
         }
 

@@ -1,6 +1,5 @@
 package com.tonapps.wallet.data.purchase.entity
 
-import android.util.Log
 import com.tonapps.wallet.data.purchase.entity.OnRamp.Asset
 
 data class OnRampCurrencies(
@@ -10,19 +9,6 @@ data class OnRampCurrencies(
 ) {
 
     companion object {
-
-        private val supportedChain = listOf(
-            "TON"
-        )
-
-        private val supportedTONAssets = listOf(
-            "TON", "USDT", "CATI", "MAJOR", "HMSTR", "PEPE"
-        )
-
-        private val supportedCrypto = listOf(
-            "TON", "USDT"
-        )
-
         private fun create(assets: List<Asset>, type: String): OnRampCurrencies {
             val fiatAssets = assets.filter { it.type == type }
             val inputs = fiatAssets.map { it.inputMethods }.flatten().map { it.type }.distinct()

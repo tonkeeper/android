@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.name.base
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -20,8 +19,9 @@ import com.tonapps.tonkeeper.ui.screen.name.adapter.ColorAdapter
 import com.tonapps.tonkeeper.ui.screen.name.adapter.EmojiAdapter
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.list.LinearLayoutManager
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.WalletColor
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.WalletColor
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf

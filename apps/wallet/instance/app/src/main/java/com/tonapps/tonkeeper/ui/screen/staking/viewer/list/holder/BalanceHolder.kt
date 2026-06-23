@@ -22,6 +22,7 @@ class BalanceHolder(
         balanceView.text = if (item.hiddenBalance) HIDDEN_BALANCE else item.balanceFormat.withCustomSymbol(context)
         fiatView.text = if (item.hiddenBalance) HIDDEN_BALANCE else item.fiatFormat.withCustomSymbol(context)
         item.iconRes?.let { iconView.setLocalRes(it) }
+        currencyIconView.clipToOutline = true
         currencyIconView.setImageResource(item.currencyIcon)
     }
 

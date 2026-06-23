@@ -5,7 +5,7 @@ import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -146,7 +146,7 @@ internal object JsonBuilder {
         val json = JSONObject()
         json.put("name", "ton_addr")
         json.put("address", wallet.accountId)
-        json.put("network", (if (wallet.testnet) -3 else -239).toString())
+        json.put("network", wallet.network.value.toString())
         json.put("publicKey", wallet.publicKey.hex())
         json.put("walletStateInit", stateInit)
         return json

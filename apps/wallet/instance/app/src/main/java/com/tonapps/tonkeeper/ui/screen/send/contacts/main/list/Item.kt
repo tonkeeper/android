@@ -4,7 +4,7 @@ import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.short8
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.contacts.entities.ContactEntity
 import io.tonapi.models.AccountAddress
 

@@ -9,7 +9,7 @@ import com.tonapps.tonkeeper.ui.screen.notifications.list.holder.WalletPushHolde
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 
 class Adapter(
     private val onWalletCallback: (WalletEntity, Boolean) -> Unit,

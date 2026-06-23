@@ -1,38 +1,41 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    id("target.android.library")
     id("com.google.devtools.ksp")
     id("kotlin-parcelize")
     kotlin("plugin.serialization")
 }
 
 android {
-    namespace = Build.namespacePrefix("wallet.api")
-    compileSdk = Build.compileSdkVersion
-
-    defaultConfig {
-        minSdk = Build.minSdkVersion
-        consumerProguardFiles("consumer-rules.pro")
+    buildFeatures {
+        buildConfig = true
     }
 }
 
 dependencies {
-    implementation(libs.kotlinX.serialization.core)
-    implementation(libs.kotlinX.serialization.json)
-    implementation(libs.kotlinX.coroutines.guava)
+//    configurations.all {
+//        exclude(mapOf("group" to "org.chromium.net", "module" to "cronet-shared"))
+//    }
+//    implementation(libs.cronet.okhttp)
+//    implementation(libs.google.play.cronet)
+
+    implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.koin.core)
-    implementation(project(ProjectModules.Module.tonApi))
-    implementation(project(ProjectModules.Lib.network))
-    implementation(project(ProjectModules.Lib.blockchain))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.icu))
-    implementation(libs.google.play.cronet)
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
+    implementation(libs.koin.core)
 
-    implementation(libs.androidX.room.runtime)
-    implementation(libs.androidX.room.ktx)
-    ksp(libs.androidX.room.compiler)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    implementation(projects.tonapi.legacy)
+    implementation(projects.lib.network)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.icu)
+    implementation(projects.lib.log)
+    implementation(projects.lib.features)
+    implementation(projects.apps.wallet.data.features)
 }

@@ -1,30 +1,26 @@
 plugins {
-    id("com.tonapps.wallet.data")
+    id("target.android.library")
     id("kotlin-parcelize")
     id("com.google.devtools.ksp")
     kotlin("plugin.serialization")
 }
 
-android {
-    namespace = Build.namespacePrefix("wallet.data.events")
-}
-
 dependencies {
-    implementation(project(ProjectModules.Module.tonApi))
-    implementation(project(ProjectModules.Wallet.Data.core))
-    implementation(project(ProjectModules.Wallet.Data.rates))
-    implementation(project(ProjectModules.Wallet.Data.collectibles))
-    implementation(project(ProjectModules.Wallet.Data.staking))
-    implementation(project(ProjectModules.Wallet.api))
-    implementation(project(ProjectModules.Lib.blockchain))
-    implementation(project(ProjectModules.Lib.extensions))
-    implementation(project(ProjectModules.Lib.icu))
-    implementation(project(ProjectModules.Lib.security))
-    implementation(project(ProjectModules.Lib.sqlite))
+    implementation(projects.tonapi.legacy)
+    implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.rates)
+    implementation(projects.apps.wallet.data.collectibles)
+    implementation(projects.apps.wallet.data.staking)
+    implementation(projects.apps.wallet.api)
+    implementation(projects.lib.blockchain)
+    implementation(projects.lib.extensions)
+    implementation(projects.lib.icu)
+    implementation(projects.lib.security)
+    implementation(projects.lib.sqlite)
 
-    implementation(libs.compose.paging)
+    implementation(libs.koin.core)
 
-    implementation(libs.androidX.room.runtime)
-    implementation(libs.androidX.room.ktx)
-    ksp(libs.androidX.room.compiler)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 }

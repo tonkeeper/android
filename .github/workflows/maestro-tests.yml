@@ -1,0 +1,183 @@
+name: Maestro Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-apk:
+    name: Build Debug APK For Maestro
+    uses: ./.github/workflows/build-apk-reusable.yml
+    with:
+      gradle-task: :apps:wallet:instance:main:assembleDefaultDebug
+      artifact-name-prefix: tonkeeper-nightly-debug
+      apk-path-glob: apps/wallet/instance/main/build/outputs/apk/default/debug/*.apk
+    secrets: inherit
+
+  discover-flow-groups:
+    name: Resolve Maestro flow shards from config
+    runs-on: ubuntu-latest
+    outputs:
+      flow_groups: ${{ steps.set.outputs.flow_groups }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: set
+        run: |
+          set -euo pipefail
+          cfg="maestro_ui_tests/config.yaml"
+          if [[ ! -f "$cfg" ]]; then
+            echo "::error::maestro_ui_tests/config.yaml not found"
+            exit 1
+          fi
+          # Lines like: - flows/browser_screen/*  or  - "flows/testnet/*"
+          mapfile -t groups < <(
+            sed -n 's/^[[:space:]]*-[[:space:]]*["'\'']*flows\/\([^/"*[:space:]]*\)\/.*/\1/p' "$cfg" | sort -u
+          )
+          if [[ ${#groups[@]} -eq 0 ]]; then
+            echo "::error::No flow shard folders under 'flows:' in maestro_ui_tests/config.yaml (expected '  - flows/<folder>/*')"
+            exit 1
+          fi
+          for g in "${groups[@]}"; do
+            if [[ ! -d "maestro_ui_tests/flows/${g}" ]]; then
+              echo "::error::Flow folder from config missing on disk: maestro_ui_tests/flows/${g}"
+              exit 1
+            fi
+          done
+          json="$(printf '%s\n' "${groups[@]}" | jq -R . | jq -s -c .)"
+          echo "flow_groups=$json" >> "$GITHUB_OUTPUT"
+
+  maestro-tests:
+    name: Maestro — ${{ matrix.flow_group }}
+    needs: [build-apk, discover-flow-groups]
+    runs-on: linux-x64-16
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        flow_group: ${{ fromJson(needs.discover-flow-groups.outputs.flow_groups) }}
+    env:
+      MAESTRO_AUTH: ${{ secrets.MAESTRO_AUTH }}
+      MAESTRO_MNEMONIC_PHRASE: ${{ secrets.MAESTRO_MNEMONIC_PHRASE }}
+      MAESTRO_TESTNET_MNEM: ${{ secrets.MAESTRO_TESTNET_MNEM }}
+      MAESTRO_RECIEVE_WALLET: ${{ secrets.MAESTRO_RECIEVE_WALLET }}
+      MAESTRO_WALLET_WITH_MONEY: ${{ secrets.MAESTRO_WALLET_WITH_MONEY }}
+      MAESTRO_WALLET_WITH_MONEY_ADDR: ${{ secrets.MAESTRO_WALLET_WITH_MONEY_ADDR }}
+
+    steps:
+      - name: Checkout to git repository
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Download built APK artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.build-apk.outputs.artifact-name }}
+          path: dist/apk
+
+      - name: Resolve debug APK path
+        id: resolve_apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          # upload-artifact preserves path segments; APK is under dist/apk/apps/... not dist/apk/*.apk
+          mapfile -t apks < <(find dist/apk -type f -name '*.apk' 2>/dev/null | sort)
+
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "No debug APK found under dist/apk (recursive):"
+            find dist/apk -type f 2>/dev/null || true
+            exit 1
+          fi
+
+          if [ ${#apks[@]} -gt 1 ]; then
+            echo "Multiple debug APKs found, expected exactly one:"
+            printf ' - %s\n' "${apks[@]}"
+            exit 1
+          fi
+
+          echo "app_file=${apks[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Maestro secrets
+        shell: bash
+        run: |
+          for secret_name in \
+            MAESTRO_AUTH \
+            MAESTRO_MNEMONIC_PHRASE \
+            MAESTRO_RECIEVE_WALLET \
+            MAESTRO_WALLET_WITH_MONEY; do
+            if [ -z "${!secret_name}" ]; then
+              echo "::error::Missing secret: ${secret_name}"
+              exit 1
+            fi
+          done
+
+      - name: Install Maestro CLI
+        shell: bash
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Maestro (${{ matrix.flow_group }}) — emulator (1/2)
+        id: maestro_shard_attempt1
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2.37.0
+        with:
+          api-level: 34
+          arch: x86_64
+          cores: 4
+          ram-size: 8192M
+          heap-size: 1024M
+          disk-size: 8192M
+          target: google_apis
+          profile: pixel_3
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          disable-animations: true
+          script: APK_PATH="${{ steps.resolve_apk.outputs.app_file }}" MAESTRO_FLOW_GROUP="${{ matrix.flow_group }}" bash "$GITHUB_WORKSPACE/tools/ci/run-maestro-on-emulator.sh"
+
+      - name: Run Maestro (${{ matrix.flow_group }}) — emulator (2/2, retry)
+        id: maestro_shard_attempt2
+        if: steps.maestro_shard_attempt1.outcome == 'failure'
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2.37.0
+        with:
+          api-level: 34
+          arch: x86_64
+          cores: 4
+          ram-size: 8192M
+          heap-size: 1024M
+          disk-size: 8192M
+          target: google_apis
+          profile: pixel_3
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          disable-animations: true
+          script: APK_PATH="${{ steps.resolve_apk.outputs.app_file }}" MAESTRO_FLOW_GROUP="${{ matrix.flow_group }}" bash "$GITHUB_WORKSPACE/tools/ci/run-maestro-on-emulator.sh"
+
+      - name: Maestro shard outcome (fail if both attempts failed)
+        if: always()
+        run: |
+          a1="${{ steps.maestro_shard_attempt1.outcome }}"
+          a2="${{ steps.maestro_shard_attempt2.outcome }}"
+          if [ "$a1" = "success" ]; then exit 0; fi
+          if [ "$a1" = "failure" ] && [ "$a2" = "success" ]; then exit 0; fi
+          echo "::error::Maestro shard ${{ matrix.flow_group }} failed (1st: ${a1}, 2nd: ${a2})"
+          exit 1
+
+      - name: Upload Maestro artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-${{ matrix.flow_group }}-${{ needs.build-apk.outputs.version-code }}
+          path: build/maestro-results
+          if-no-files-found: warn
+          retention-days: 7

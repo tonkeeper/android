@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
@@ -97,7 +98,7 @@ class StakeAmountFragment :
         }, poolDescriptionView::setText)
 
         collectFlow(primaryViewModel.tokenFlow) { token ->
-            amountView.suffix = token.symbol
+            amountView.suffix = CurrencyFormatter.displaySymbol(token.symbol)
         }
 
         collectFlow(primaryViewModel.analyticsFlow) { props ->
@@ -140,10 +141,14 @@ class StakeAmountFragment :
             availableView.setTextColor(requireContext().accentRedColor)
             button.isEnabled = false
         } else if (state.remainingFormat == state.balanceFormat) {
-            availableView.text = if (state.hiddenBalance) HIDDEN_BALANCE else getString(
-                Localization.available_balance,
-                state.balanceFormat
-            ).withCustomSymbol(requireContext())
+            availableView.text = if (state.hiddenBalance) {
+                HIDDEN_BALANCE
+            } else {
+                getString(
+                    Localization.available_balance,
+                    state.balanceFormat
+                ).withCustomSymbol(requireContext())
+            }
             availableView.setTextColor(requireContext().textSecondaryColor)
             button.isEnabled = false
         } else if (state.requestMinStake) {

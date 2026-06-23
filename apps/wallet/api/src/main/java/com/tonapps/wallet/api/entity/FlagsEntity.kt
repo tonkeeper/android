@@ -18,7 +18,8 @@ data class FlagsEntity(
     val disableUsde: Boolean,
     val disableNativeSwap: Boolean,
     val disableOnboardingStory: Boolean,
-    val disableNfts: Boolean
+    val disableNfts: Boolean,
+    val disableWalletKit: Boolean
 ) : Parcelable {
 
     constructor(json: JSONObject) : this(
@@ -34,7 +35,8 @@ data class FlagsEntity(
         disableUsde = json.optBoolean("disable_usde", false),
         disableNativeSwap = json.optBoolean("disable_native_swap", false),
         disableOnboardingStory = json.optBoolean("disable_onboarding_story", false),
-        disableNfts = json.optBoolean("disable_nfts", false)
+        disableNfts = json.optBoolean("disable_nfts", false),
+        disableWalletKit = json.optBoolean("disable_wallet_kit", true)
     )
 
     constructor() : this(
@@ -50,6 +52,7 @@ data class FlagsEntity(
         disableUsde = false,
         disableNativeSwap = false,
         disableOnboardingStory = false,
-        disableNfts = false
+        disableNfts = false,
+        disableWalletKit = true,
     )
 }

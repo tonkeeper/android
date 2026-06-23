@@ -1,7 +1,7 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray

@@ -6,11 +6,11 @@ on:
 jobs:
   android-build:
     name: android-build
-    runs-on: macos-latest
+    runs-on: macos-latest-xlarge
 
     steps:
       - name: Checkout to git repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up ruby env
         uses: ruby/setup-ruby@v1
@@ -19,7 +19,7 @@ jobs:
           bundler-cache: true
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: 20.0.2+9
@@ -40,14 +40,14 @@ jobs:
           ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.ANDROID_PUBLISHER_CREDENTIALS }}
 
       - name: Upload android aab to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Tonkeeper UK aab ${{ env.VERSION_CODE }}
           path: |
             ${{ env.AAB_OUTPUT_PATH }}
 
       - name: Upload android apk to artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Tonkeeper UK apk ${{ env.VERSION_CODE }}
           path: |

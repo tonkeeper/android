@@ -1,28 +1,137 @@
 package com.tonapps.security
 
-import android.app.KeyguardManager
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import android.security.keystore.UserNotAuthenticatedException
-import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
-import kotlinx.coroutines.withTimeout
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.extensions.getByteArray
+import com.tonapps.log.L
 import java.security.MessageDigest
 import java.security.SecureRandom
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.crypto.KeyGenerator
 import javax.crypto.Mac
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
-import kotlin.time.Duration.Companion.seconds
+import kotlin.concurrent.read
+import kotlin.concurrent.write
+
+sealed class KeyHelperException(message: String? = null, e: Throwable? = null) : Throwable(message, e) {
+    class GetMnemonic: KeyHelperException("Can't get mnemonic", null)
+    class AddMnemonic: KeyHelperException("Can't add mnemonic", null)
+    class GetPkFromMnemonic : KeyHelperException("Can't get private key from mnemonic", null)
+
+    class Delete(message: String? = null, e: Throwable? = null) : KeyHelperException(message, e)
+    class Save(message: String? = null, e: Throwable? = null) : KeyHelperException(message, e)
+    class Create(message: String? = null, e: Throwable? = null) : KeyHelperException(message, e)
+}
+
+class SecurityStorageBox(
+    private val prefs: SharedPreferences
+) {
+    companion object {
+
+        private val locker = ReentrantReadWriteLock() // TODO make for different names
+
+        fun create(context: Context, keyAlias: String, name: String) : SecurityStorageBox {
+            locker.write {
+
+                try {
+                    KeyHelper.createIfNotExists(keyAlias)
+
+                    val prefs = EncryptedSharedPreferences.create(
+                        name,
+                        keyAlias,
+                        context,
+                        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                    )
+
+                    return SecurityStorageBox(prefs)
+                } catch (e: Throwable) {
+                    FirebaseCrashlytics.getInstance()
+                        .recordException(KeyHelperException.Create("Can't create new KeyStore", e))
+
+                    throw e
+                }
+            }
+        }
+    }
+
+
+    fun put(key: String, value: String?) {
+        locker.write {
+            prefs.editor {
+                putString(key, value)
+            }
+        }
+    }
+
+    fun transaction(action: SharedPreferences.Editor.() -> Unit): Boolean {
+        locker.write {
+            return prefs.editor {
+                action()
+            }
+        }
+    }
+
+    fun contains(key: String): Boolean {
+        return locker.read {
+            prefs.contains(key)
+        }
+    }
+
+    fun all(): Map<String, *> {
+        return locker.read {
+            prefs.all
+        }
+    }
+
+    fun get(key: String): String? {
+        return locker.read {
+            prefs.getString(key, null)
+        }
+    }
+
+    @Deprecated("Don't use it anymore")
+    fun putIfNotExist(key: String, value: String): Boolean {
+        return locker.write {
+            if (!prefs.contains(key)) {
+                prefs.editor { putString(key, value) }
+            } else {
+                true
+            }
+        }
+    }
+
+    fun getByteArray(key: String): ByteArray? {
+        return locker.read {
+            prefs.getByteArray(key)
+        }
+    }
+
+    fun clear(): Boolean {
+        return locker.write {
+            prefs.editor {
+                clear()
+            }
+        }
+    }
+
+    @SuppressLint("ApplySharedPref", "UseKtx")
+    private inline fun SharedPreferences.editor(
+        action: SharedPreferences.Editor.() -> Unit
+    ): Boolean {
+        val editor = edit()
+        action(editor)
+        return editor.commit()
+    }
+}
 
 object Security {
 
@@ -42,33 +151,8 @@ object Security {
         return sha256(input.toByteArray())
     }
 
-    @Synchronized
-    fun pref(context: Context, keyAlias: String, name: String): SharedPreferences {
-        try {
-            KeyHelper.createIfNotExists(keyAlias)
-
-            return EncryptedSharedPreferences.create(
-                name,
-                keyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-        } catch (e: UserNotAuthenticatedException) {
-            openUserAuthentication(context)
-            throw e
-        } catch (e: Throwable) {
-            throw e
-        }
-    }
-
-    private fun openUserAuthentication(context: Context) {
-        try {
-            val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-            val intent = keyguardManager.createConfirmDeviceCredentialIntent("Tonkeeper", "Auth") ?: return
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-        } catch (ignored: Throwable) { }
+    fun pref(context: Context, keyAlias: String, name: String): SecurityStorageBox {
+        return SecurityStorageBox.create(context, keyAlias, name)
     }
 
     fun generatePrivateKey(keySize: Int): SecretKey {
@@ -78,7 +162,12 @@ object Security {
             generator.init(keySize * 8, random)
             generator.generateKey()
         } catch (e: Throwable) {
-            SecretKeySpec(randomBytes(keySize), "AES")
+            L.e(e, "Error during private key generation")
+
+            throw KeyHelperException.Create("Failed to generate AES SK").also {
+                FirebaseCrashlytics.getInstance()
+                    .recordException(it)
+            }
         }
     }
 
@@ -103,11 +192,7 @@ object Security {
     }
 
     fun secureRandom(): SecureRandom {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            SecureRandom.getInstanceStrong()
-        } else {
-            SecureRandom()
-        }
+        return SecureRandom.getInstanceStrong()
     }
 
     fun isAdbEnabled(context: Context): Boolean {

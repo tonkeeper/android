@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.token.picker
 
 import android.os.Bundle
 import com.tonapps.extensions.getParcelableCompat
-import com.tonapps.wallet.api.entity.TokenEntity
+import com.tonapps.blockchain.model.legacy.TokenEntity
 import uikit.base.BaseArgs
 
 data class TokenPickerArgs(

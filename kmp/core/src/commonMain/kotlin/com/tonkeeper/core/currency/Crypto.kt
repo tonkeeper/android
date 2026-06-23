@@ -2,6 +2,7 @@ package com.tonkeeper.core.currency
 
 import com.tonkeeper.core.Blockchain
 
+@Suppress("ClassOrdering")
 data class Crypto(
     override val name: String,
     override val decimals: Int = 9,
@@ -15,7 +16,7 @@ data class Crypto(
         get() = blockchain.nativeTicker
 
     companion object {
-        val TON = Crypto("Toncoin", 9, Blockchain.Companion.TON)
+        val TON = Crypto("Gram (ex Toncoin)", 9, Blockchain.Companion.TON)
         val BTC = Crypto("Bitcoin", 8, "₿", Blockchain.Companion.BTC)
         val ETH = Crypto("Ethereum", 18, "Ξ", Blockchain.Companion.ETH)
         val LTC = Crypto("Litecoin", 8, "Ł", Blockchain.Companion.LTC)

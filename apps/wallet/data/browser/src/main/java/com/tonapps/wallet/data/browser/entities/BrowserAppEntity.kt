@@ -3,7 +3,7 @@ package com.tonapps.wallet.data.browser.entities
 import android.graphics.Color
 import android.net.Uri
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import androidx.core.net.toUri
 import com.tonapps.extensions.toUriOrNull
 import kotlinx.parcelize.IgnoredOnParcel

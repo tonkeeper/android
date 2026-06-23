@@ -4,16 +4,18 @@ import android.app.Application
 import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.core.requestVault
 import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.DevSettings
-import com.tonapps.tonkeeper.extensions.requestVault
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.rn.RNLegacy
+import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -24,7 +26,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.mnemonic.Mnemonic
 import uikit.extensions.activity
-import java.util.Locale
 
 class DevViewModel(
     app: Application,
@@ -33,7 +34,11 @@ class DevViewModel(
     private val dAppsRepository: DAppsRepository,
     private val environment: Environment,
     private val api: API,
+    private val settingsRepository: SettingsRepository
 ): BaseWalletVM(app) {
+
+    val installId: String
+        get() = settingsRepository.installId
 
     val debugCountryFlow = environment.countryDataFlow.map {
         val lines = mutableListOf<String>()
@@ -69,7 +74,7 @@ class DevViewModel(
         DevSettings.country = country?.uppercase()
         environment.setDebugCountry(DevSettings.country)
         viewModelScope.launch {
-            api.refreshConfig(false)
+            api.refreshConfig()
         }
     }
 
@@ -129,7 +134,7 @@ class DevViewModel(
 
                 if (tcApps.mainnet.isNotEmpty()) {
                     for (apps in tcApps.mainnet) {
-                        dAppsRepository.migrationFromLegacy(apps, false)
+                        dAppsRepository.migrationFromLegacy(apps, TonNetwork.MAINNET)
                         lines.add("Mainnet app imported: ${apps.address}")
                     }
                 }
@@ -138,7 +143,7 @@ class DevViewModel(
                 lines.add("Testnet apps found: ${tcApps.testnet.size}")
                 if (tcApps.testnet.isNotEmpty()) {
                     for (apps in tcApps.testnet) {
-                        dAppsRepository.migrationFromLegacy(apps, true)
+                        dAppsRepository.migrationFromLegacy(apps, TonNetwork.TESTNET)
                         lines.add("Testnet app imported: ${apps.address}")
                     }
                 }

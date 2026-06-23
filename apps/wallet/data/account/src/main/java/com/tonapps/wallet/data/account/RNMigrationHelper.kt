@@ -1,10 +1,11 @@
 package com.tonapps.wallet.data.account
 
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.contract.walletVersion
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.data.rn.data.RNDecryptedData
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallet.Companion.int
@@ -46,23 +47,23 @@ internal class RNMigrationHelper(
                 emoji = emoji,
                 color = legacyWallet.color.int,
             )
-            val type: Wallet.Type
+            val type: WalletType
             if (legacyWallet.network == RNWallet.Network.Testnet) {
-                type = Wallet.Type.Testnet
+                type = WalletType.Testnet
             } else if (legacyWallet.type == RNWallet.Type.Regular) {
-                type = Wallet.Type.Default
+                type = WalletType.Default
             } else if (legacyWallet.type == RNWallet.Type.WatchOnly) {
-                type = Wallet.Type.Watch
+                type = WalletType.Watch
             } else if (legacyWallet.type == RNWallet.Type.Lockup) {
-                type = Wallet.Type.Lockup
+                type = WalletType.Lockup
             } else if (legacyWallet.type == RNWallet.Type.SignerDeeplink) {
-                type = Wallet.Type.Signer
+                type = WalletType.Signer
             } else if (legacyWallet.type == RNWallet.Type.Signer) {
-                type = Wallet.Type.SignerQR
+                type = WalletType.SignerQR
             } else if (legacyWallet.type == RNWallet.Type.Ledger) {
-                type = Wallet.Type.Ledger
+                type = WalletType.Ledger
             } else if (legacyWallet.type == RNWallet.Type.Keystone) {
-                type = Wallet.Type.Keystone
+                type = WalletType.Keystone
             } else {
                 continue
             }

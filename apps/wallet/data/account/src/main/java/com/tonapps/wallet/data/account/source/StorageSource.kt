@@ -1,11 +1,9 @@
 package com.tonapps.wallet.data.account.source
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.prefs
-import com.tonapps.extensions.putStringIfNotExists
 import com.tonapps.extensions.string
 import com.tonapps.security.Security
 import org.ton.api.pub.PublicKeyEd25519
@@ -20,16 +18,16 @@ internal class StorageSource(context: Context) {
     }
 
     private val prefs = context.prefs(NAME)
-    private val encryptedPrefs: SharedPreferences by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, NAME) }
+    private val encryptedPrefs by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Security.pref(context, KEY_ALIAS, NAME) }
 
     fun getTonProofToken(publicKey: PublicKeyEd25519): String? {
         val key = tonProofTokenKey(publicKey)
-        return encryptedPrefs.string(key) ?: prefs.string(key)
+        return encryptedPrefs.get(key) ?: prefs.string(key)
     }
 
     fun setTonProofToken(publicKey: PublicKeyEd25519, token: String) {
         val key = tonProofTokenKey(publicKey)
-        encryptedPrefs.putStringIfNotExists(key, token)
+        encryptedPrefs.putIfNotExist(key, token)
     }
 
     fun getSelectedId(): String? {

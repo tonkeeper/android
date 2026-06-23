@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeperx.R
@@ -23,12 +24,12 @@ class AmountHolder(
         get() = amountView
 
     override fun onBind(item: Item.Amount) {
-        amountView.doOnValueChange = { it, _ ->
-            if (it != item.value) {
-                onValueChange(it)
+        amountView.doOnValueChange = { value, _ ->
+            if (value != item.value) {
+                onValueChange(value)
             }
         }
-        amountView.suffix = item.symbol
+        amountView.suffix = CurrencyFormatter.displaySymbol(item.symbol)
 
         if (amountView.decimals != item.decimals) {
             amountView.setDecimals(item.decimals)

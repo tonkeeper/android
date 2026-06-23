@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.account.entities
 
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.json.JSONObject
 
 sealed class WalletEvent(

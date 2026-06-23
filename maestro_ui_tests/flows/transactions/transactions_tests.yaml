@@ -1,0 +1,31 @@
+appId: com.ton_keeper.debug
+---
+- launchApp:
+    clearState: true
+
+- runFlow:
+    file: "../../steps/import_wallet.yaml"
+    env:
+      fast_track: "true"
+- runFlow: "../../service/account/compare_ton_balance.yaml"
+
+- tapOn: TON
+- tapOn: Send
+- tapOn:
+    id: input_field
+- inputText: "${RECIEVE_WALLET}"
+- tapOn:
+    id: amount
+- inputText: "0.001"
+- tapOn: Continue
+
+- assertVisible: "${RECIEVE_WALLET}"
+- assertVisible: "0.001 TON"
+- tapOn: Confirm
+
+- repeat:
+    times: 4
+    commands:
+      - tapOn: ${PASSWORD_KEY}
+
+- runFlow: "../../steps/history/transaction_cell.yaml"

@@ -9,6 +9,9 @@ import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
+import com.tonapps.tonkeeper.ui.screen.init.step.BackupCheckInitScreen
+import com.tonapps.tonkeeper.ui.screen.init.step.BackupPhraseScreen
+import com.tonapps.tonkeeper.ui.screen.init.step.BackupStartScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PushScreen
@@ -17,7 +20,7 @@ import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.api.pub.PublicKeyEd25519
@@ -49,7 +52,7 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
     }
 
     private fun onChildFragment(fragment: Fragment) {
-        if (fragment is PushScreen) {
+        if (fragment is PushScreen || fragment is BackupStartScreen) {
             headerView.background = null
             headerView.actionView.visibility = View.GONE
         } else {
@@ -102,6 +105,13 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             InitRoute.LabelAccount -> LabelScreen.newInstance()
             InitRoute.SelectAccount -> SelectScreen.newInstance()
             InitRoute.Push -> PushScreen.newInstance()
+            InitRoute.BackupStart -> BackupStartScreen.newInstance()
+            InitRoute.BackupPhrase -> BackupPhraseScreen.newInstance()
+            InitRoute.BackupCheck -> BackupCheckInitScreen.newInstance()
+        }
+
+        if (childFragmentManager.fragments.lastOrNull() is BackupCheckInitScreen) {
+            childFragmentManager.popBackStackImmediate()
         }
 
         val transaction = childFragmentManager.beginTransaction()

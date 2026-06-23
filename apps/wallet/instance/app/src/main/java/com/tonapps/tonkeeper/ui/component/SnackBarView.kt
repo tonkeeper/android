@@ -1,18 +1,15 @@
 package com.tonapps.tonkeeper.ui.component
 
+import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnLayout
-import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import com.tonapps.tonkeeper.ui.base.BaseWalletActivity
 import com.tonapps.tonkeeperx.R
-import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
@@ -53,44 +50,67 @@ class SnackBarView @JvmOverloads constructor(
         }
     }
 
-    fun show() {
-        translationY = -size.toFloat()
+    private fun processForTests(durationMs: Long): Long {
+        val intent = (context as? Activity)?.intent
+        val isMaestro = intent?.getStringExtra("isMaestro") == "true"
+        return durationMs + if (isMaestro) 3000L else 0L
+    }
+
+    fun show(durationMs: Long) {
         doOnLayout {
-            startShowAnimation()
+            translationY = hiddenTranslationY()
+            startShowAnimation(processForTests(durationMs))
         }
     }
 
-    private fun startShowAnimation() {
+    private fun startShowAnimation(durationMs: Long) {
         animate().translationY((statusBarHeight + offsetMedium).toFloat()).setDuration(300).withEndAction {
-            hideDelayed()
+            hideDelayed(durationMs)
         }
     }
 
     private fun startHideAnimation() {
-        animate().translationY(-size.toFloat()).setDuration(220).withEndAction {
+        animate().translationY(hiddenTranslationY()).setDuration(220).withEndAction {
             hide()
         }
     }
 
-    private fun hideDelayed() {
+    private fun hideDelayed(delayMs: Long) {
+        if (delayMs <= 0) {
+            return
+        }
         postDelayed({
             startHideAnimation()
-        }, 3000)
+        }, delayMs)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY))
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        setMeasuredDimension(measuredWidth, maxOf(measuredHeight, size))
+    }
+
+    private fun hiddenTranslationY(): Float {
+        return -maxOf(size, measuredHeight, height).toFloat()
     }
 
     companion object {
 
-        fun show(context: Context, text: String, onClickListener: OnClickListener) {
+        private const val DEFAULT_SHOWING_DURATION_MS = 3000L
+
+        fun show(
+            context: Context,
+            text: String,
+            buttonText: CharSequence,
+            durationMs: Long = DEFAULT_SHOWING_DURATION_MS,
+            onClickListener: OnClickListener,
+        ) {
             val baseView = BaseWalletActivity.findBaseView(context) ?: return
 
             val view = SnackBarView(context)
             view.setText(text)
+            view.button.text = buttonText
             view.setButtonOnClickListener(onClickListener)
-            view.show()
+            view.show(durationMs)
 
             baseView.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT).apply {
                 leftMargin = view.offsetMedium

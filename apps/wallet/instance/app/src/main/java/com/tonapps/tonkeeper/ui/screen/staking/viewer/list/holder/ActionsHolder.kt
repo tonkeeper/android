@@ -57,6 +57,4 @@ class ActionsHolder(
             }
         }
     }
-
-
 }

@@ -3,25 +3,20 @@ package com.tonapps.emoji
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.drawable.Drawable
-import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.collection.LruCache
+import com.tonapps.async.Async
 import com.tonapps.emoji.compat.EmojiCompatHelper
 import com.tonapps.emoji.ui.drawable.PictogramDrawable
-import com.tonapps.emoji.ui.style.NotoStyle
 import com.tonapps.emoji.ui.style.DefaultStyle
-import kotlinx.coroutines.CoroutineScope
+import com.tonapps.lib.emoji.R
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 
 object Emoji {
 
-    val scope = CoroutineScope(Dispatchers.Main)
+    val scope = Async.mainScope()
 
     const val WALLET_ICON = "custom_wallet"
 

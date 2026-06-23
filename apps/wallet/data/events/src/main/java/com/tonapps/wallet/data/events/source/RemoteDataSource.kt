@@ -1,8 +1,9 @@
 package com.tonapps.wallet.data.events.source
 
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.value.BlockchainAddress
+import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.data.events.tx.TxActionMapper
 import com.tonapps.wallet.data.events.entities.LatestRecipientEntity
@@ -22,7 +23,13 @@ internal class RemoteDataSource(
     suspend fun events(query: TxFetchQuery): List<TxEvent> = coroutineScope {
         val fetchLimit = query.limit
         val tonDeferred = async {
-            tonEvents(query.tonAddress, query.beforeTimestamp, query.afterTimestamp, fetchLimit)
+            tonEvents(
+                address = query.tonAddress,
+                network = query.tonAddress.network,
+                beforeTimestamp = query.beforeTimestamp,
+                afterTimestamp = query.afterTimestamp,
+                limit = fetchLimit
+            )
         }
 
         val tronDeferred = async {
@@ -38,13 +45,14 @@ internal class RemoteDataSource(
 
     suspend fun tonEvents(
         address: BlockchainAddress,
+        network: TonNetwork,
         beforeTimestamp: Timestamp?,
         afterTimestamp: Timestamp?,
         limit: Int,
     ): List<TxEvent> {
         val events = api.fetchTonEvents(
             accountId =  address.value,
-            testnet = address.testnet,
+            network = network,
             beforeTimestamp = beforeTimestamp,
             afterTimestamp = afterTimestamp,
             limit = limit
@@ -52,7 +60,7 @@ internal class RemoteDataSource(
         return mapper.events(address, events)
     }
 
-    fun tronEvents(
+    suspend fun tronEvents(
         address: BlockchainAddress,
         tonProofToken: String,
         beforeTimestamp: Timestamp?,
@@ -71,17 +79,17 @@ internal class RemoteDataSource(
 
     fun get(
         accountId: String,
-        testnet: Boolean,
+        network: TonNetwork,
         beforeLt: Long? = null,
         limit: Int = 12
-    ): AccountEvents? = api.getEvents(accountId, testnet, beforeLt, limit)
+    ): AccountEvents? = api.getEvents(accountId, network, beforeLt, limit)
 
-    suspend fun getSingle(eventId: String, testnet: Boolean) = api.getSingleEvent(eventId, testnet)
+    suspend fun getSingle(eventId: String, network: TonNetwork) = api.getSingleEvent(eventId, network)
 
-    fun getLatestRecipients(accountId: String, testnet: Boolean): List<LatestRecipientEntity> {
+    fun getLatestRecipients(accountId: String, network: TonNetwork): List<LatestRecipientEntity> {
         val events = api.getEvents(
             accountId = accountId,
-            testnet = testnet,
+            network = network,
             limit = 100
         )?.events ?: return emptyList()
 

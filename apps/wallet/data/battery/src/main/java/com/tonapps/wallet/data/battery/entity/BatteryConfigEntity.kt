@@ -23,7 +23,8 @@ data class BatteryConfigEntity(
         val batteryMeanPriceSwap: Int,
         val batteryMeanPriceJetton: Int,
         val batteryMeanPriceNft: Int,
-        val batteryMeanPriceTronUsdt: Int? = null,
+        val batteryMeanPriceTronUsdt: Int,
+        val tonMeanPriceTronUsdt: Float
     ) : Parcelable
 
     @IgnoredOnParcel
@@ -37,7 +38,7 @@ data class BatteryConfigEntity(
             fundReceiver = null,
             rechargeMethods = emptyList(),
             gasProxy = emptyList(),
-            meanPrices = MeanPrices(0, 0, 0, null),
+            meanPrices = MeanPrices(0, 0, 0, 0, 0f),
             chargeCost = "0",
             reservedAmount = "0",
         )

@@ -7,7 +7,7 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
@@ -100,14 +100,14 @@ class BatterySettingsViewModel(
         return batteryRepository.getBalance(
             tonProofToken = tonProofToken,
             publicKey = wallet.publicKey,
-            testnet = wallet.testnet
+            network = wallet.network
         )
     }
 
     private suspend fun getBatteryConfig(
         wallet: WalletEntity
     ): BatteryConfigEntity {
-        return batteryRepository.getConfig(wallet.testnet)
+        return batteryRepository.getConfig(wallet.network)
     }
 
     private fun getTransactionMeanPrice(

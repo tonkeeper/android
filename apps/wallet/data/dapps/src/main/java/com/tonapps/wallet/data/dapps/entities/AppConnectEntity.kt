@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.dapps.entities
 import android.net.Uri
 import android.os.Parcelable
 import android.util.Base64
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.extensions.asJSON
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.Sodium
@@ -14,7 +15,7 @@ import org.json.JSONObject
 @Parcelize
 data class AppConnectEntity(
     val accountId: String,
-    val testnet: Boolean,
+    val network: TonNetwork,
     val clientId: String,
     val type: Type,
     val appUrl: Uri,

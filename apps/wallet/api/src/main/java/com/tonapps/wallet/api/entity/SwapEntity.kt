@@ -23,7 +23,8 @@ object SwapEntity {
         val tradeStartDeadline: String,
         val gasBudget: String,
         val estimatedGasConsumption: String,
-        val slippage: Int
+        val slippage: Int,
+        val valueDifferenceBps: Int? = null,
     ) {
 
         val isEmpty: Boolean
@@ -40,7 +41,8 @@ object SwapEntity {
         tradeStartDeadline = "",
         gasBudget = "",
         estimatedGasConsumption = "",
-        slippage = 100
+        slippage = 100,
+        valueDifferenceBps = null,
     )
 
     fun parse(data: String) = try {

@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.text.TextPaint
-import android.util.Log
+import com.tonapps.log.L
 import android.view.Gravity
 import androidx.core.content.res.ResourcesCompat
 import com.tonapps.uikit.color.textSecondaryColor

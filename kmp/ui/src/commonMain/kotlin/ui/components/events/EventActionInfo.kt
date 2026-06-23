@@ -4,11 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import ui.components.TKBadge
-import ui.components.base.SimpleText
+import ui.components.moon.MoonLabel
 import ui.theme.UIKit
 
 @Composable
@@ -16,15 +17,13 @@ internal fun EventActionInfo(
     action: UiEvent.Item.Action,
     modifier: Modifier = Modifier
 ) {
-
     Column(
         modifier = modifier
             .padding(start = 16.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-
         if (action.badge == null) {
-            SimpleText(
+            Text(
                 text = action.title.take(18),
                 style = UIKit.typography.label1,
                 color = UIKit.colorScheme.text.primary,
@@ -33,27 +32,29 @@ internal fun EventActionInfo(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                SimpleText(
+                Text(
                     text = action.title.take(18),
                     style = UIKit.typography.label1,
                     color = UIKit.colorScheme.text.primary,
                 )
 
-                TKBadge(
+                MoonLabel(
                     text = action.badge
                 )
             }
         }
 
-        SimpleText(
+        Text(
             text = action.subtitle,
             style = UIKit.typography.body2,
             color = if (action.spam) UIKit.colorScheme.text.tertiary else UIKit.colorScheme.text.secondary,
-            modifier = Modifier.padding(top = 2.dp)
+            modifier = Modifier.padding(top = 2.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
 
         action.warningText?.let {
-            SimpleText(
+            Text(
                 text = it.take(18),
                 style = UIKit.typography.body2,
                 color = UIKit.colorScheme.accent.orange,

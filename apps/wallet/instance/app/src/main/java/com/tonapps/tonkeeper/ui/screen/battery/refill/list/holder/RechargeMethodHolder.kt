@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeScreen
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
 import com.tonapps.tonkeeperx.R
@@ -22,6 +23,6 @@ class RechargeMethodHolder(
         itemView.setOnClickListener { navigation?.add(BatteryRechargeScreen.newInstance(item.wallet, item.token)) }
         asyncImageView.setImageURI(item.imageUri, this)
         asyncImageView.visibility = View.VISIBLE
-        titleView.text = context.getString(Localization.battery_refill_crypto, item.symbol)
+        titleView.text = context.getString(Localization.battery_refill_crypto, CurrencyFormatter.displaySymbol(item.symbol))
     }
 }

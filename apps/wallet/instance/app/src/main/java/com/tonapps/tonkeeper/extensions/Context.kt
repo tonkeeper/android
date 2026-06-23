@@ -15,14 +15,11 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
-import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.runtime.Composable
 import androidx.core.content.ContextCompat
 import androidx.work.WorkManager
-import coil3.compose.LocalPlatformContext
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.koin.settingsRepository
@@ -32,8 +29,8 @@ import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.uikit.icon.UIKitIcon
-import com.tonapps.wallet.data.account.Wallet
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.localization.Localization
 import ui.ComposeIcon
 import uikit.navigation.Navigation
@@ -78,11 +75,7 @@ fun Context.safeExternalOpenUri(uri: Uri) {
 
 fun Context.safeCanRequestPackageInstalls(): Boolean {
     return try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            packageManager.canRequestPackageInstalls()
-        } else {
-            true
-        }
+        packageManager.canRequestPackageInstalls()
     } catch (e: Throwable) {
         false
     }
@@ -119,7 +112,7 @@ fun Context.copyToClipboard(uri: Uri) {
 fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     val clip = ClipData.newPlainText("", text)
-    if (sensitive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    if (sensitive) {
         val extras = PersistableBundle()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             extras.putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
@@ -175,7 +168,7 @@ fun Context.getStringCompat(@StringRes resId: Int, vararg formatArgs: CharSequen
 }
 
 fun Context.getWalletBadges(
-    type: Wallet.Type,
+    type: WalletType,
     version: WalletVersion
 ): CharSequence {
     var builder = SpannableStringBuilder()
@@ -189,13 +182,14 @@ fun Context.getWalletBadges(
         builder = builder.badgeGreen(this, resId)
     }
 
-    if (type != Wallet.Type.Default) {
+    if (type != WalletType.Default) {
         val resId = when (type) {
-            Wallet.Type.Watch -> Localization.watch_only
-            Wallet.Type.Testnet -> Localization.testnet
-            Wallet.Type.Signer, Wallet.Type.SignerQR -> Localization.signer
-            Wallet.Type.Ledger -> Localization.ledger
-            Wallet.Type.Keystone -> Localization.keystone
+            WalletType.Watch -> Localization.watch_only
+            WalletType.Testnet -> Localization.testnet
+            WalletType.Signer, WalletType.SignerQR -> Localization.signer
+            WalletType.Ledger -> Localization.ledger
+            WalletType.Keystone -> Localization.keystone
+            WalletType.Tetra -> Localization.tetra
             else -> throw IllegalArgumentException("Unknown wallet type: $type")
         }
         builder = builder.badgeDefault(this, resId)

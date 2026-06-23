@@ -21,12 +21,20 @@ object BatteryMapper {
         return balance.value.divide(meanFeesBigDecimal, 0, RoundingMode.UP).toInt()
     }
 
+    fun convertFromCharges(
+        charges: Int,
+        meanFees: String
+    ): Coins {
+        val meanFeesBigDecimal = BigDecimal(meanFees)
+        val amountBigDecimal = meanFeesBigDecimal.multiply(BigDecimal(charges))
+        return Coins(amountBigDecimal)
+    }
+
     fun calculateChargesAmount(
         transactionCostBigDecimal: BigDecimal,
         meanFees: String
     ): Int {
         val meanFeesBigDecimal = BigDecimal(meanFees)
-
         return transactionCostBigDecimal.divide(meanFeesBigDecimal, 0, RoundingMode.HALF_UP)
             .toInt()
     }
@@ -49,12 +57,15 @@ object BatteryMapper {
         reservedAmount: BigDecimal,
         meanFees: BigDecimal
     ): Int {
+        if (meanFees <= BigDecimal.ZERO || tonPriceInUsd <= Coins.ZERO) {
+            return 0
+        }
+
         return userProceed.toBigDecimal()
             .divide(tonPriceInUsd.value, 20, RoundingMode.HALF_UP)
             .minus(reservedAmount)
             .divide(meanFees, 20, RoundingMode.HALF_UP)
             .setScale(0, RoundingMode.FLOOR)
             .toInt()
-
     }
 }

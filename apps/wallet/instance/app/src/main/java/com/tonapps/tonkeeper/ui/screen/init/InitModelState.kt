@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.init
 
-import android.graphics.Color
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.lifecycle.SavedStateHandle
@@ -11,8 +10,9 @@ import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.flow.filterNotNull
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -41,19 +41,6 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
             override fun createFromParcel(parcel: Parcel) = PublicKey(parcel)
             override fun newArray(size: Int): Array<PublicKey?> = arrayOfNulls(size)
         }
-    }
-
-    companion object {
-        private const val PASSCODE_KEY = "passcode"
-        private const val LABEL_KEY = "label"
-        private const val WATCH_ACCOUNT_KEY = "watch_account"
-        private const val MNEMONIC_KEY = "mnemonic"
-        private const val ACCOUNTS = "accounts"
-        private const val PUBLIC_KEY = "public_key"
-        private const val LEDGER_CONNECT_DATA = "ledger_connect_data"
-        private const val ENABLE_PUSH_KEY = "enable_push"
-        private const val KEYSTONE_KEY = "keystone"
-        private const val WORDS_COUNT_KEY = "words_count"
     }
 
     val labelFlow = savedStateHandle.getStateFlow<Wallet.Label?>(LABEL_KEY, null).filterNotNull()
@@ -103,4 +90,21 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         get() = savedStateHandle[KEYSTONE_KEY]
         set(value) = savedStateHandle.set(KEYSTONE_KEY, value)
 
+    var backupDone: Boolean
+        get() = savedStateHandle[BACKUP_DONE_KEY] ?: false
+        set(value) = savedStateHandle.set(BACKUP_DONE_KEY, value)
+
+    companion object {
+        private const val PASSCODE_KEY = "passcode"
+        private const val LABEL_KEY = "label"
+        private const val WATCH_ACCOUNT_KEY = "watch_account"
+        private const val MNEMONIC_KEY = "mnemonic"
+        private const val ACCOUNTS = "accounts"
+        private const val PUBLIC_KEY = "public_key"
+        private const val LEDGER_CONNECT_DATA = "ledger_connect_data"
+        private const val ENABLE_PUSH_KEY = "enable_push"
+        private const val KEYSTONE_KEY = "keystone"
+        private const val WORDS_COUNT_KEY = "words_count"
+        private const val BACKUP_DONE_KEY = "backup_done"
+    }
 }

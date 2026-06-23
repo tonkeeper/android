@@ -5,7 +5,7 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
 import com.tonapps.tonkeeper.ui.screen.events.compose.details.ui.TxDetailsComposable
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment

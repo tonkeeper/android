@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.send.transaction
 
 import android.os.Bundle
+import com.tonapps.bus.generated.Events
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.settings.BatteryTransaction
@@ -9,19 +10,17 @@ import uikit.base.BaseArgs
 data class SendTransactionArgs(
     val request: SignRequestEntity,
     val batteryTransactionType: BatteryTransaction,
-    val forceRelayer: Boolean
+    val forceRelayer: Boolean,
+    val sendNativeFrom: Events.SendNative.SendNativeFrom? = null
 ): BaseArgs() {
-
-    companion object {
-        private const val ARG_REQUEST = "request"
-        private const val ARG_BATTERY_TRANSACTION_TYPE = "battery_transaction_type"
-        private const val ARG_FORCE_RELAYER = "force_relayer"
-    }
 
     constructor(bundle: Bundle) : this(
         request = bundle.getParcelableCompat(ARG_REQUEST)!!,
         batteryTransactionType = BatteryTransaction.of(bundle.getInt(ARG_BATTERY_TRANSACTION_TYPE, -1)),
-        forceRelayer = bundle.getBoolean(ARG_FORCE_RELAYER)
+        forceRelayer = bundle.getBoolean(ARG_FORCE_RELAYER),
+        sendNativeFrom = bundle.getString(ARG_SEND_NATIVE_FROM)?.let { key ->
+            Events.SendNative.SendNativeFrom.entries.find { it.key == key }
+        }
     )
 
     override fun toBundle(): Bundle {
@@ -29,6 +28,14 @@ data class SendTransactionArgs(
         bundle.putParcelable(ARG_REQUEST, request)
         bundle.putInt(ARG_BATTERY_TRANSACTION_TYPE, batteryTransactionType.code)
         bundle.putBoolean(ARG_FORCE_RELAYER, forceRelayer)
+        sendNativeFrom?.let { bundle.putString(ARG_SEND_NATIVE_FROM, it.key) }
         return bundle
+    }
+
+    companion object {
+        private const val ARG_REQUEST = "request"
+        private const val ARG_BATTERY_TRANSACTION_TYPE = "battery_transaction_type"
+        private const val ARG_FORCE_RELAYER = "force_relayer"
+        private const val ARG_SEND_NATIVE_FROM = "send_native_from"
     }
 }

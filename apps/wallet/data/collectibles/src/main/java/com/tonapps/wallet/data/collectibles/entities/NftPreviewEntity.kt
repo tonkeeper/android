@@ -1,7 +1,7 @@
 package com.tonapps.wallet.data.collectibles.entities
 
 import android.os.Parcelable
-import android.util.Log
+import com.tonapps.log.L
 import io.tonapi.models.ImagePreview
 import kotlinx.parcelize.Parcelize
 

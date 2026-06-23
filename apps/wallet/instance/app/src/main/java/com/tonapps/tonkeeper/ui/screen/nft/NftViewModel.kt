@@ -2,7 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.nft
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
+import com.tonapps.log.L
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.currentTimeSeconds
@@ -11,7 +11,7 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.dns.renew.DNSRenewViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
@@ -44,7 +44,7 @@ class NftViewModel(
         if (nft.isDomain && !nft.isTelegramUsername && !wallet.isWatchOnly) {
             collectiblesRepository.getDnsNftExpiring(
                 accountId = wallet.accountId,
-                testnet = wallet.testnet,
+                network = wallet.network,
                 nftAddress = nft.address
             )?.let { emit(it) }
         }
@@ -70,7 +70,7 @@ class NftViewModel(
         }
     }
 
-    private fun getNft() = collectiblesRepository.getNft(wallet.id, wallet.testnet, nft.address)
+    private fun getNft() = collectiblesRepository.getNft(wallet.id, wallet.network, nft.address)
 
     fun reportSpam(spam: Boolean, callback: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {

@@ -2,6 +2,7 @@ package com.tonapps.wallet.api.entity
 
 import android.net.Uri
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
@@ -32,8 +33,8 @@ data class AccountEntity(
             return name
         }
 
-    constructor(address: AddrStd, testnet: Boolean) : this(
-        address = address.toWalletAddress(testnet),
+    constructor(address: AddrStd, network: TonNetwork) : this(
+        address = address.toWalletAddress(network.isTestnet),
         accountId = address.toAccountId(),
         name = null,
         iconUri = null,
@@ -41,8 +42,8 @@ data class AccountEntity(
         isScam = false,
     )
 
-    constructor(model: AccountAddress, testnet: Boolean): this(
-        address = model.address.toUserFriendly(model.isWallet, testnet),
+    constructor(model: AccountAddress, network: TonNetwork): this(
+        address = model.address.toUserFriendly(model.isWallet, network.isTestnet),
         accountId = model.address.toRawAddress(),
         name = model.name,
         iconUri = model.icon?.toUri(),
@@ -50,8 +51,8 @@ data class AccountEntity(
         isScam = model.isScam
     )
 
-    constructor(account: Account, testnet: Boolean) : this(
-        address = account.address.toUserFriendly(account.isWallet, testnet),
+    constructor(account: Account, network: TonNetwork) : this(
+        address = account.address.toUserFriendly(account.isWallet, network.isTestnet),
         accountId = account.address.toRawAddress(),
         name = account.name,
         iconUri = account.icon?.toUri(),
@@ -59,8 +60,8 @@ data class AccountEntity(
         isScam = account.isScam ?: false
     )
 
-    constructor(wallet: Wallet, testnet: Boolean) : this(
-        address = wallet.address.toUserFriendly(wallet.isWallet, testnet),
+    constructor(wallet: Wallet, network: TonNetwork) : this(
+        address = wallet.address.toUserFriendly(wallet.isWallet, network.isTestnet),
         accountId = wallet.address.toRawAddress(),
         name = wallet.name,
         iconUri = wallet.icon?.toUri(),

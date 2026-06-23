@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp
 
-import android.util.Log
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
 import okhttp3.Headers
 import okhttp3.Response
@@ -13,7 +12,7 @@ class DAppBridge(
     val deviceInfo: String,
     val isWalletBrowser: Boolean = true,
     val protocolVersion: Int = 2,
-    val send: suspend (array: JSONArray) -> JSONObject,
+    val send: suspend (array: JSONObject) -> JSONObject,
     val connect: suspend (protocolVersion: Int, request: ConnectRequest) -> JSONObject,
     val restoreConnection: suspend () -> JSONObject,
     val disconnect: suspend () -> Unit,
@@ -31,7 +30,7 @@ class DAppBridge(
     override suspend fun invokeFunction(name: String, args: JSONArray): Any? {
         return when (name) {
             "connect" -> connect(protocolVersion, ConnectRequest.parse(args.getJSONObject(1))).toString()
-            "send" -> send(args).toString()
+            "send" -> send(args.getJSONObject(0)).toString()
             "restoreConnection" -> restoreConnection().toString()
             "disconnect" -> disconnect()
             "tonapi.fetch" -> {

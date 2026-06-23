@@ -5,18 +5,18 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import androidx.core.database.getStringOrNull
+import androidx.core.database.sqlite.transaction
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.extensions.closeSafe
 import com.tonapps.extensions.isNullOrEmpty
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.sqlite.withTransaction
-import com.tonapps.wallet.data.account.Wallet
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.api.pub.PublicKeyEd25519
 
@@ -209,13 +209,13 @@ internal class DatabaseSource(
                 label = label,
                 initialized = cursor.getInt(initializedIndex) == 1
             )
-            if (wallet.type == Wallet.Type.Ledger) {
+            if (wallet.type == WalletType.Ledger) {
                 val ledger = WalletEntity.Ledger(
                     deviceId = cursor.getString(ledgerDeviceIdIndex),
                     accountIndex = cursor.getInt(ledgerAccountIndexIndex)
                 )
                 wallet = wallet.copy(ledger = ledger)
-            } else if (wallet.type == Wallet.Type.Keystone) {
+            } else if (wallet.type == WalletType.Keystone) {
                 val keystone = WalletEntity.Keystone(
                     xfp = cursor.getStringOrNull(keystoneXfpIndex) ?: "",
                     path = cursor.getStringOrNull(keystonePathIndex) ?: ""

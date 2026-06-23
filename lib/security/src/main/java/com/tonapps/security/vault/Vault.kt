@@ -1,6 +1,6 @@
 package com.tonapps.security.vault
 
-import android.content.SharedPreferences
+import com.tonapps.security.SecurityStorageBox
 import com.tonapps.security.clear
 import com.tonapps.security.safeDestroy
 import com.tonapps.security.tryCallGC
@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 import javax.crypto.SecretKey
 
 open class Vault(
-    private val prefs: SharedPreferences
+    private val prefs: SecurityStorageBox
 ) {
 
     private val coroutineContext = Dispatchers.IO + SupervisorJob()
@@ -19,7 +19,9 @@ open class Vault(
     private val storage = Storage(prefs)
 
     suspend fun deleteAll() = withContext(coroutineContext) {
-        prefs.edit().clear().apply()
+        if (!prefs.clear()) {
+            throw IllegalStateException("failed to clear")
+        }
     }
 
     suspend fun hasPassword(): Boolean = withContext(coroutineContext) {

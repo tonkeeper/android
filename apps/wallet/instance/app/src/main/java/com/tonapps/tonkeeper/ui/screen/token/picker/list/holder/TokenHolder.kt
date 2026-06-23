@@ -3,10 +3,12 @@ package com.tonapps.tonkeeper.ui.screen.token.picker.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.blockchain.contract.Blockchain
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.ui.screen.token.picker.list.Item
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.entity.value.Blockchain
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
@@ -32,12 +34,13 @@ class TokenHolder(
         networkIconView.visibility = if (item.showNetwork) View.VISIBLE else View.GONE
         setNetworkIcon(item.blockchain)
 
+        val symbol = CurrencyFormatter.displaySymbol(item.symbol)
         titleView.text = if (item.showNetwork && item.isTrc20) {
-            item.symbol.withDefaultBadge(context, Localization.trc20)
+            symbol.withDefaultBadge(context, Localization.trc20)
         } else if (item.showNetwork && item.isUsdt) {
-            item.symbol.withDefaultBadge(context, Localization.ton)
+            symbol.withDefaultBadge(context, Localization.ton)
         } else {
-            item.symbol
+            symbol
         }
         balanceView.text = if (item.hiddenBalance) HIDDEN_BALANCE else item.balance.withCustomSymbol(context)
         checkView.visibility = if (item.selected) View.VISIBLE else View.GONE
@@ -45,7 +48,7 @@ class TokenHolder(
 
     private fun setNetworkIcon(blockchain: Blockchain) {
         val icon = when (blockchain) {
-            Blockchain.TON -> R.drawable.ic_ton
+            Blockchain.TON -> UIKitIcon.ic_ton
             Blockchain.TRON -> R.drawable.ic_tron
         }
 

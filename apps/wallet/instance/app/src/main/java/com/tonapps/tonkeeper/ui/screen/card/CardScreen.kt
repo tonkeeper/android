@@ -28,7 +28,7 @@ import com.tonapps.tonkeeper.ui.component.TonConnectWebView
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.entities.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -61,13 +61,15 @@ class CardScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
         webView.settings.useWideViewPort = true
         webView.settings.loadWithOverviewMode = true
         webView.addCallback(webViewCallback)
-        webView.jsBridge = CardBridge(
-            deviceInfo = deviceInfo.toString(),
-            send = ::tonconnectSend,
-            connect = ::tonconnect,
-            restoreConnection = { viewModel.restoreConnection(webView.url?.toUriOrNull()) },
-            disconnect = { viewModel.disconnect() },
-            tonapiFetch = ::tonapiFetch,
+        webView.setJsBridge(
+            CardBridge(
+                deviceInfo = deviceInfo.toString(),
+                send = ::tonconnectSend,
+                connect = ::tonconnect,
+                restoreConnection = { viewModel.restoreConnection(webView.url?.toUriOrNull()) },
+                disconnect = { viewModel.disconnect() },
+                tonapiFetch = ::tonapiFetch,
+            )
         )
         webView.loadUrl(viewModel.url.toString())
 

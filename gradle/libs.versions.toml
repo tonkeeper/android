@@ -80,7 +80,7 @@ firebase-performance-plugin = "2.0.2"
 # Networking
 okhttp = "5.3.2"
 okio = "3.17.0"
-coil = "3.4.0"
+coil = "3.5.0"
 
 # TON
 ton = "0.3.1"

@@ -14,7 +14,7 @@ jobs:
     if: contains(github.event.pull_request.body, '/claude-overview') || contains(github.event.pull_request.body, '@claude')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Main changes summary
         uses: anthropics/claude-code-action@v1
@@ -46,7 +46,7 @@ jobs:
     if: contains(github.event.pull_request.body, '/claude-review') || contains(github.event.pull_request.body, '@claude')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: anthropics/claude-code-action@v1
         with:

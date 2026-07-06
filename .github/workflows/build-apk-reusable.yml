@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout to git repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Get VERSION_CODE from commit timestamp
         id: version_code

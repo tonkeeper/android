@@ -92,14 +92,15 @@ class PurchaseRepository(
         }.getOrNull()
     }
 
-    fun get(
+    suspend fun get(
         network: TonNetwork,
         country: String,
         locale: Locale,
-    ): Pair<List<PurchaseCategoryEntity>, List<PurchaseCategoryEntity>>? {
-        val data = get(network, locale) ?: return null
+        walletId: String?,
+    ): Pair<List<PurchaseCategoryEntity>, List<PurchaseCategoryEntity>>? = withContext(Dispatchers.IO) {
+        val data = getData(network, locale, walletId) ?: return@withContext null
         val methods = data.getCountry(country).methods
-        return filterMethods(data.buy, methods) to filterMethods(data.sell, methods)
+        filterMethods(data.buy, methods) to filterMethods(data.sell, methods)
     }
 
     private fun filterMethods(
@@ -129,29 +130,39 @@ class PurchaseRepository(
         return list
     }
 
-    fun getMethod(id: String, network: TonNetwork, locale: Locale): PurchaseMethodEntity? {
-        val data = get(network, locale) ?: return null
+    suspend fun getMethod(
+        id: String,
+        network: TonNetwork,
+        locale: Locale,
+        walletId: String?,
+    ): PurchaseMethodEntity? = withContext(Dispatchers.IO) {
+        val data = getData(network, locale, walletId) ?: return@withContext null
         val methods = (data.buy + data.sell).map { it.items }.flatten()
-        return methods.find { it.id == id }
+        methods.find { it.id == id }
     }
 
-    private fun get(network: TonNetwork, locale: Locale): PurchaseDataEntity? {
-        val key = cacheKey(network, locale)
+    private fun getData(
+        network: TonNetwork,
+        locale: Locale,
+        walletId: String?,
+    ): PurchaseDataEntity? {
+        val key = cacheKey(network, locale, walletId)
         var data = getCache(key)
         if (data == null) {
-            data = load(network, locale) ?: return null
+            data = load(network, locale, walletId) ?: return null
             setCache(key, data)
         }
         return data
     }
 
-    private fun load(network: TonNetwork, locale: Locale): PurchaseDataEntity? {
-        val json = api.getFiatMethods(network, locale) ?: return null
+    private fun load(network: TonNetwork, locale: Locale, walletId: String?): PurchaseDataEntity? {
+        val json = api.getFiatMethods(network, locale, walletId) ?: return null
         return PurchaseDataEntity(json)
     }
 
-    private fun cacheKey(network: TonNetwork, locale: Locale): String {
-        return "${network.name.lowercase()}-${locale.language}"
+    private fun cacheKey(network: TonNetwork, locale: Locale, walletId: String?): String {
+        val key = "${network.name.lowercase()}-${locale.language}"
+        return walletId?.let { "$key-$it" } ?: key
     }
 
     override fun onMarshall(data: PurchaseDataEntity) = data.toByteArray()

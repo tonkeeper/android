@@ -16,6 +16,8 @@ import com.tonapps.blockchain.ton.extensions.storeQueryId
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
+import com.tonapps.core.helper.TON_COIN_ASSET_ID
+import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.deposit.usecase.emulation.Emulated
 import com.tonapps.deposit.usecase.emulation.EmulationUseCase
@@ -235,7 +237,7 @@ class StakeWithdrawViewModel(
             }
         }
 
-        this.coins = Coins.of(0.2).toGrams()
+        this.coins = Coins.of(0.2).toGrams() // TODO fees: hardcoded value
         this.destination = AddrStd.parse(pool.address)
         this.messageData = MessageData.raw(body, stateInitRef)
     }
@@ -246,7 +248,7 @@ class StakeWithdrawViewModel(
             storeBytes("w".toByteArray())
         }
 
-        this.coins = Coins.ONE.toGrams()
+        this.coins = Coins.ONE.toGrams() // TODO fees: hardcoded value
         this.destination = AddrStd.parse(pool.address)
         this.messageData = MessageData.raw(body, stateInitRef)
     }
@@ -256,6 +258,26 @@ class StakeWithdrawViewModel(
     } else {
         createUnStakeFlow(wallet)
     }).flowOn(Dispatchers.IO)
+
+    private fun trackWithdrawSent() {
+        val stake = _poolFlow.value?.first ?: return
+        val amount = if (stake.pool.implementation == StakingPool.Implementation.Whales) {
+            stake.readyWithdraw
+        } else {
+            stake.balance
+        }
+        TransactionSentAnalytics.transactionSent(
+            wallet = wallet,
+            category = Events.TransactionSent.TransactionSentCategory.Staking,
+            categoryDetail = Events.TransactionSent.TransactionSentCategoryDetail.Claim,
+            asset = TON_COIN_ASSET_ID,
+            amount = amount.value.toDouble(),
+            feeAsset = Events.TransactionSent.TransactionSentFeeAsset.Coin,
+            initiatedBy = Events.TransactionSent.TransactionSentInitiatedBy.User,
+            stakingProvider = stake.pool.address,
+            isLiquid = stake.pool.implementation == StakingPool.Implementation.LiquidTF,
+        )
+    }
 
     private fun createLedgerStakeFlow(
         context: Context,
@@ -277,6 +299,7 @@ class StakeWithdrawViewModel(
             taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
 
             transactionManager.send(wallet, message, false, "", 0.0)
+            trackWithdrawSent()
             val finishedAtMs = currentTimeMillis()
             AnalyticsHelper.Default.events.redOperations.opTerminal(
                 operationId = operationId,
@@ -323,6 +346,7 @@ class StakeWithdrawViewModel(
             taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
 
             transactionManager.send(wallet, boc, false, "", 0.0)
+            trackWithdrawSent()
             val finishedAtMs = currentTimeMillis()
             AnalyticsHelper.Default.events.redOperations.opTerminal(
                 operationId = operationId,

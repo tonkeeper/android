@@ -3,7 +3,7 @@ package com.tonapps.signer.core.entities
 import com.tonapps.security.hex
 import com.tonapps.signer.Key
 import org.json.JSONObject
-import org.ton.api.pub.PublicKeyEd25519
+import com.tonapps.blockchain.ton.extensions.PublicKeyEd25519
 
 data class KeyEntity(
     val id: Long,

@@ -10,6 +10,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import com.tonapps.core.components.sanitizeAmountInput
 import com.tonapps.deposit.screens.provider.ProviderItem
 import com.tonapps.icu.Coins
 
@@ -41,7 +42,7 @@ class ProviderAmountState internal constructor(
         get() = hasAmount && error == null
 
     fun onValueChange(newValue: TextFieldValue) {
-        val sanitized = sanitizeAmount(newValue.text)
+        val sanitized = newValue.text.sanitizeAmountInput()
         val selection = if (sanitized.length != newValue.text.length) {
             TextRange(sanitized.length)
         } else {
@@ -67,42 +68,23 @@ class ProviderAmountState internal constructor(
             restore = { saved -> ProviderAmountState().also { it.onTextChange(saved) } },
         )
 
-        private fun sanitizeAmount(input: String): String {
-            val filtered = input.filter { it.isDigit() || it == '.' || it == ',' }
-            if (filtered.isEmpty()) return ""
-
-            val sb = StringBuilder()
-            var hasSeparator = false
-            for (c in filtered) {
-                if (c == '.' || c == ',') {
-                    if (!hasSeparator) {
-                        hasSeparator = true
-                        sb.append(c)
-                    }
-                } else {
-                    sb.append(c)
-                }
-            }
-
-            // prepend 0 if starts with separator: ".123" -> "0.123"
-            if (sb.isNotEmpty() && (sb[0] == '.' || sb[0] == ',')) {
-                sb.insert(0, '0')
-            }
-
-            return sb.toString()
-        }
-
         private fun parseAmount(text: String): Coins {
             return try {
                 val coins = Coins.of(text)
-                if (coins.isPositive) coins else Coins.ZERO
+                if (coins.isPositive) {
+                    coins
+                } else {
+                    Coins.ZERO
+                }
             } catch (_: Throwable) {
                 Coins.ZERO
             }
         }
 
         private fun validate(coins: Coins, provider: ProviderItem?): AmountError? {
-            if (!coins.isPositive || provider == null) return null
+            if (!coins.isPositive || provider == null) {
+                return null
+            }
             return when {
                 provider.minAmount.isPositive && coins < provider.minAmount -> AmountError.BelowMin(provider.minAmount)
                 provider.maxAmount != null && coins > provider.maxAmount -> AmountError.AboveMax(provider.maxAmount)

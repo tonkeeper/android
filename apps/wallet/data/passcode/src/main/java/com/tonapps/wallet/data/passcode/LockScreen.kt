@@ -1,8 +1,6 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import com.tonapps.log.L
-import androidx.biometric.BiometricPrompt
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,14 +17,20 @@ class LockScreen(
         data object None: State()
         data object Input: State()
         data object Biometric: State()
-        data object Error: State()
+
+        // Not a data object: StateFlow dedupes equal values, and a second failed attempt must
+        // re-emit to reach the UI again.
+        class Error : State()
     }
 
     private val _stateFlow = MutableStateFlow<State?>(null)
     val stateFlow = _stateFlow.asStateFlow().filterNotNull()
 
-    fun init() {
-        if (!settingsRepository.lockScreen) {
+    private val _hiddenFlow = MutableStateFlow(false)
+    val hiddenFlow = _hiddenFlow.asStateFlow()
+
+    suspend fun init() {
+        if (!passcodeManager.hasPinCode()) {
             hide()
         } else if (settingsRepository.biometric) {
             _stateFlow.value = State.Biometric
@@ -39,13 +43,16 @@ class LockScreen(
         _stateFlow.value = State.None
     }
 
+    fun hidden() {
+        _hiddenFlow.value = true
+    }
+
     private fun error() {
-        _stateFlow.value = State.Error
+        _stateFlow.value = State.Error()
     }
 
     suspend fun check(context: Context, code: String) = withContext(Dispatchers.IO) {
-        val valid = passcodeManager.isValid(context, code)
-        if (valid) {
+        if (passcodeManager.isValid(context, code)) {
             hide()
         } else {
             error()
@@ -57,7 +64,6 @@ class LockScreen(
     }
 
     fun reset() {
-
     }
 
 }

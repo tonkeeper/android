@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.bus.generated.Events
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
@@ -248,8 +249,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 val token = viewModel.uiInputTokenFlow.firstOrNull() ?: return@launch
                 AnalyticsHelper.Default.events.sendNative.sendClick(
                     from = args.from,
-                    assetNetwork = token.tokenType?.fmt.orEmpty(),
-                    tokenSymbol = token.plainSymbol,
+                    asset = token.analyticsAssetId(),
                     amount = viewModel.currentAmountDouble,
                 )
             }
@@ -295,10 +295,9 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
                 AnalyticsHelper.Default.events.sendNative.sendConfirm(
                     from = args.from,
-                    assetNetwork = token.tokenType?.fmt.orEmpty(),
-                    tokenSymbol = token.plainSymbol,
+                    asset = token.analyticsAssetId(),
                     amount = viewModel.currentAmountDouble,
-                    feePaidIn = viewModel.currentFeePaidIn,
+                    feeAsset = viewModel.currentFeeAsset,
                     appId = null,
                 )
             }

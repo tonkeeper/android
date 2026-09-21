@@ -3,7 +3,6 @@ package com.tonapps.trading
 import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.rememberNavBackStack
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenFrom
 import com.tonapps.wallet.data.events.tx.model.TxEvent
@@ -16,6 +15,7 @@ import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ui.moon.MoonNav
+import ui.moon.rememberNestedNavBackStack
 
 @Serializable
 sealed interface AssetsRoutes : NavKey {
@@ -40,23 +40,18 @@ fun AssetsRouter(
     initial: AssetsRoutes = AssetsRoutes.Assets(),
     onOpenToken: (token: TokenEntity, eventsOnly: Boolean) -> Unit,
     onOpenUrl: (String) -> Unit,
-    onOpenSwap: (fromToken: String, toToken: String) -> Unit,
-    onOpenSend: (tokenAddress: String) -> Unit,
-    onOpenReceive: (token: TokenEntity?) -> Unit,
+    onOpenSwap: (fromAssetId: String?, toAssetId: String?, fromToken: String, toToken: String) -> Unit,
+    onOpenSend: (assetId: String, tokenAddress: String) -> Unit,
+    onOpenReceive: (assetId: String, token: TokenEntity) -> Unit,
     onOpenTxDetails: (tx: TxEvent, actionIndex: Int) -> Unit,
     onOpenStaking: () -> Unit,
     onOpenUnverifiedInfo: () -> Unit,
+    onSellToCard: (assetId: String) -> Unit,
+    onBuyWithCard: (assetId: String) -> Unit,
+    onOpenAssetHistory: (assetId: String) -> Unit,
     onClose: () -> Unit,
 ) {
-    val backStack = rememberNavBackStack(initial)
-
-    val onBack: () -> Unit = {
-        if (backStack.size > 1) {
-            backStack.removeLastOrNull()
-        } else {
-            onClose()
-        }
-    }
+    val backStack = rememberNestedNavBackStack(initial, onClose)
 
     MoonNav(backStack = backStack) { key ->
         when (key) {
@@ -74,7 +69,7 @@ fun AssetsRouter(
                             from = AssetScreenFrom.TradeScreen,
                         ))
                     },
-                    onBack = onBack,
+                    onBack = { backStack.safeRemoveLastOrNull(key) },
                 )
             }
 
@@ -94,7 +89,10 @@ fun AssetsRouter(
                     onOpenTxDetails = onOpenTxDetails,
                     onOpenStaking = onOpenStaking,
                     onOpenUnverifiedInfo = onOpenUnverifiedInfo,
-                    onBack = onBack,
+                    onSellToCard = onSellToCard,
+                    onBuyWithCard = onBuyWithCard,
+                    onSeeAllActivities = { onOpenAssetHistory(key.assetId) },
+                    onBack = { backStack.safeRemoveLastOrNull(key) },
                 )
             }
 

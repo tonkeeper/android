@@ -10,11 +10,10 @@ import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.events.tx.TxFetchQuery
 import com.tonapps.wallet.data.events.tx.TxPage
 import com.tonapps.wallet.data.events.tx.model.TxEvent
-import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -22,14 +21,12 @@ internal class TxPagingSource(
     private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
-    private val settingsRepository: SettingsRepository,
     private val txEventUiMapper: TxEventUiMapper,
 ): PagingSource<Timestamp, UiEvent.Item>() {
 
     private val tronParamsProvider = TxTronParamsProvider(
         wallet = wallet,
-        accountRepository = accountRepository,
-        settingsRepository = settingsRepository
+        accountRepository = accountRepository
     )
 
     private val processedEventIds = mutableSetOf<String>()
@@ -72,7 +69,7 @@ internal class TxPagingSource(
         return TxFetchQuery(
             tonAddress = wallet.blockchainAddress,
             tronAddress = tronParams?.address,
-            tonProofToken = tronParams?.tonProofToken,
+            walletId = tronParams?.walletId,
             beforeTimestamp = beforeTimestamp,
             afterTimestamp = afterTimestamp,
             limit = limit

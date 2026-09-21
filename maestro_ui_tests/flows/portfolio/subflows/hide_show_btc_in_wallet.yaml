@@ -1,0 +1,132 @@
+# Hide/show BTC from Wallet → Manage. The details ellipsis has no testTag,
+# so Android uses the Manage list (eye toggle) instead of the iOS overflow menu.
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+#
+# TK-3691: home shows only 7 asset rows, the rest sit behind "More assets"
+# (WalletScreen.PreviewAssetsLimit) and the expansion resets after Manage.
+# BTC on the Cloud wallet is past that limit, so every home lookup goes
+# through steps/wallet/expand_home_assets.yaml + scrollUntilVisible.
+#
+# Scrolling back UP to the Crypto header is not reliable in Cloud
+# (scrollUntilVisible "^Manage$" UP timed out — the text also exists in other
+# tabs kept in the hierarchy), so every phase that needs the header starts
+# from a relaunch: launch_app_ensure brings home back to the top and refetches
+# the asset list, which also covers the async refetch after Save Changes.
+name: "Multichain — hide and show BTC"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+# Precondition: BTC is in the list (possibly below the fold / behind More assets).
+# 30 s: ~5 s per scroll round trip on an emulator.
+- runFlow: "../../../steps/wallet/expand_home_assets.yaml"
+- scrollUntilVisible:
+    element:
+      text: "^BTC$"
+    direction: DOWN
+    timeout: 30000
+
+# Hide.
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- tapOn:
+    text: Manage
+    rightOf: Crypto
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: "Search by ticker or name"
+    timeout: 30000
+- tapOn: Search by ticker or name
+- inputText: BTC
+# Enter drops the IME, which otherwise covers the bottom-anchored Save Changes.
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    text: "^All$"
+- waitForAnimationToEnd:
+    timeout: 1000
+- extendedWaitUntil:
+    visible: "^BTC$"
+    timeout: 30000
+# The search field itself now reads "BTC" and home still has BTC under the
+# sheet, so anchor on the filter chips row: the first "^BTC$" below "All" is
+# the result row. Do not anchor on neighbouring rows (WBTC, BTCR…) — the
+# result set depends on the wallet's asset list.
+- tapOn:
+    text: "^BTC$"
+    below: "^All$"
+- waitForAnimationToEnd:
+    timeout: 2000
+- extendedWaitUntil:
+    visible: Save Changes
+    timeout: 30000
+- tapOn: Save Changes
+- extendedWaitUntil:
+    notVisible: Save Changes
+    timeout: 30000
+
+# Hidden: fresh home, the row is gone from the expanded list. LazyColumn only
+# exposes composed rows, so check the first screen and one scroll further down.
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow: "../../../steps/wallet/expand_home_assets.yaml"
+- extendedWaitUntil:
+    notVisible:
+      text: "^BTC$"
+    timeout: 30000
+- scroll
+- waitForAnimationToEnd:
+    timeout: 1000
+- assertNotVisible:
+    text: "^BTC$"
+
+# Show again.
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- tapOn:
+    text: Manage
+    rightOf: Crypto
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: "Search by ticker or name"
+    timeout: 30000
+- tapOn: Search by ticker or name
+- inputText: BTC
+# Enter drops the IME, which otherwise covers the bottom-anchored Save Changes.
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    text: "^All$"
+- waitForAnimationToEnd:
+    timeout: 1000
+- extendedWaitUntil:
+    visible: "^BTC$"
+    timeout: 30000
+- tapOn:
+    text: "^BTC$"
+    below: "^All$"
+- waitForAnimationToEnd:
+    timeout: 2000
+- extendedWaitUntil:
+    visible: Save Changes
+    timeout: 30000
+- tapOn: Save Changes
+- extendedWaitUntil:
+    notVisible: Save Changes
+    timeout: 30000
+
+# Shown: fresh home, expand, scroll to the row, open it. centerElement keeps
+# the row away from the bottom tab bar, otherwise the tap can land on Trade.
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow: "../../../steps/wallet/expand_home_assets.yaml"
+- scrollUntilVisible:
+    element:
+      text: "^BTC$"
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- tapOn:
+    text: "^BTC$"
+- waitForAnimationToEnd:
+    timeout: 5000

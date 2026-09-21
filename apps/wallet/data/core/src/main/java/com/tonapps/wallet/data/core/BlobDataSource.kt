@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Parcelable
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.cacheFolder
-import com.tonapps.extensions.file
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import io.Serializer
@@ -83,8 +82,7 @@ abstract class BlobDataSource<D>(
     }
 
     private fun diskFile(key: String): File {
-        return context.cacheFolder(path)
-            .file("${key}.dat")
+        return File(context.cacheFolder(path), "${key}.dat")
     }
 
     private fun readDiskCache(key: String): ByteArray? {

@@ -20,7 +20,7 @@ import io.tradingapi.models.AssetsFilter
 import io.tradingapi.models.AssetsOrder
 import io.tradingapi.models.AssetsSort
 import io.tradingapi.models.AssetsTab
-import io.tradingapi.models.ErrorResponse
+import io.tradingapi.models.GetShelvesConfig400Response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -126,6 +126,83 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getAssetChartsV2(assetId: String, userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, startDate: Long? = null, endDate: Long? = null, pointsCount: Int? = 200): List<List<String>> {
+        val localVarResponse = getAssetChartsV2WithHttpInfo(assetId = assetId, userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, startDate = startDate, endDate = endDate, pointsCount = pointsCount)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as List<List<String>>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getAssetChartsV2WithHttpInfo(assetId: String, userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, startDate: Long?, endDate: Long?, pointsCount: Int?): ApiResponse<List<List<String>>?> {
+        val localVariableConfig = getAssetChartsV2RequestConfig(assetId = assetId, userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, startDate = startDate, endDate = endDate, pointsCount = pointsCount)
+
+        return request<Unit, List<List<String>>>(
+            localVariableConfig
+        )
+    }
+
+    fun getAssetChartsV2RequestConfig(assetId: String, userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, startDate: Long?, endDate: Long?, pointsCount: Int?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                if (currency != null) {
+                    put("currency", listOf(currency.toString()))
+                }
+                if (storeCountryCode != null) {
+                    put("store_country_code", listOf(storeCountryCode.toString()))
+                }
+                if (simCountry != null) {
+                    put("sim_country", listOf(simCountry.toString()))
+                }
+                if (deviceCountryCode != null) {
+                    put("device_country_code", listOf(deviceCountryCode.toString()))
+                }
+                if (timezone != null) {
+                    put("timezone", listOf(timezone.toString()))
+                }
+                if (isVpnActive != null) {
+                    put("is_vpn_active", listOf(isVpnActive.toString()))
+                }
+                if (startDate != null) {
+                    put("start_date", listOf(startDate.toString()))
+                }
+                if (endDate != null) {
+                    put("end_date", listOf(endDate.toString()))
+                }
+                if (pointsCount != null) {
+                    put("points_count", listOf(pointsCount.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        userAgent?.apply { localVariableHeaders["User-Agent"] = this.toString() }
+        xLang?.apply { localVariableHeaders["X-Lang"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v2/trading/assets/{assetId}/charts".replace("{"+"assetId"+"}", encodeURIComponent(assetId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
     fun getAssetDetails(assetId: String, userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null): AssetDetailsResponse {
         val localVarResponse = getAssetDetailsWithHttpInfo(assetId = assetId, userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive)
 
@@ -194,8 +271,76 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAssetsCatalog(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, tab: AssetsTab? = null, q: String? = null, chain: String? = null, sort: AssetsSort? = AssetsSort.volume_24h, order: AssetsOrder? = AssetsOrder.desc, filter: AssetsFilter? = null, sourceShelf: String? = null, cursor: String? = null, pageSize: Int? = 50): AssetsCatalogResponse {
-        val localVarResponse = getAssetsCatalogWithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, cursor = cursor, pageSize = pageSize)
+    fun getAssetDetailsV2(assetId: String, userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null): AssetDetailsResponse {
+        val localVarResponse = getAssetDetailsV2WithHttpInfo(assetId = assetId, userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as AssetDetailsResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getAssetDetailsV2WithHttpInfo(assetId: String, userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?): ApiResponse<AssetDetailsResponse?> {
+        val localVariableConfig = getAssetDetailsV2RequestConfig(assetId = assetId, userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive)
+
+        return request<Unit, AssetDetailsResponse>(
+            localVariableConfig
+        )
+    }
+
+    fun getAssetDetailsV2RequestConfig(assetId: String, userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                if (currency != null) {
+                    put("currency", listOf(currency.toString()))
+                }
+                if (storeCountryCode != null) {
+                    put("store_country_code", listOf(storeCountryCode.toString()))
+                }
+                if (simCountry != null) {
+                    put("sim_country", listOf(simCountry.toString()))
+                }
+                if (deviceCountryCode != null) {
+                    put("device_country_code", listOf(deviceCountryCode.toString()))
+                }
+                if (timezone != null) {
+                    put("timezone", listOf(timezone.toString()))
+                }
+                if (isVpnActive != null) {
+                    put("is_vpn_active", listOf(isVpnActive.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        userAgent?.apply { localVariableHeaders["User-Agent"] = this.toString() }
+        xLang?.apply { localVariableHeaders["X-Lang"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v2/trading/assets/{assetId}/details".replace("{"+"assetId"+"}", encodeURIComponent(assetId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getAssetsCatalog(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, tab: AssetsTab? = null, q: String? = null, showPerps: Boolean? = false, chain: String? = null, sort: AssetsSort? = AssetsSort.market_cap, order: AssetsOrder? = AssetsOrder.desc, filter: AssetsFilter? = null, sourceShelf: String? = null, cursor: String? = null, pageSize: Int? = 50): AssetsCatalogResponse {
+        val localVarResponse = getAssetsCatalogWithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, cursor = cursor, pageSize = pageSize)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as AssetsCatalogResponse
@@ -214,15 +359,15 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getAssetsCatalogWithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, cursor: String?, pageSize: Int?): ApiResponse<AssetsCatalogResponse?> {
-        val localVariableConfig = getAssetsCatalogRequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, cursor = cursor, pageSize = pageSize)
+    fun getAssetsCatalogWithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, cursor: String?, pageSize: Int?): ApiResponse<AssetsCatalogResponse?> {
+        val localVariableConfig = getAssetsCatalogRequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, cursor = cursor, pageSize = pageSize)
 
         return request<Unit, AssetsCatalogResponse>(
             localVariableConfig
         )
     }
 
-    fun getAssetsCatalogRequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, cursor: String?, pageSize: Int?): RequestConfig<Unit> {
+    fun getAssetsCatalogRequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, cursor: String?, pageSize: Int?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -249,6 +394,9 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
                 }
                 if (q != null) {
                     put("q", listOf(q.toString()))
+                }
+                if (showPerps != null) {
+                    put("show_perps", listOf(showPerps.toString()))
                 }
                 if (chain != null) {
                     put("chain", listOf(chain.toString()))
@@ -280,6 +428,107 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/api/v1/trading/assets",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getAssetsCatalogV2(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, tab: AssetsTab? = null, q: String? = null, showPerps: Boolean? = false, chain: String? = null, sort: AssetsSort? = AssetsSort.market_cap, order: AssetsOrder? = AssetsOrder.desc, filter: AssetsFilter? = null, sourceShelf: String? = null, ids: List<String>? = null, cursor: String? = null, pageSize: Int? = 50): AssetsCatalogResponse {
+        val localVarResponse = getAssetsCatalogV2WithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, ids = ids, cursor = cursor, pageSize = pageSize)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as AssetsCatalogResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getAssetsCatalogV2WithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, ids: List<String>?, cursor: String?, pageSize: Int?): ApiResponse<AssetsCatalogResponse?> {
+        val localVariableConfig = getAssetsCatalogV2RequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, ids = ids, cursor = cursor, pageSize = pageSize)
+
+        return request<Unit, AssetsCatalogResponse>(
+            localVariableConfig
+        )
+    }
+
+    fun getAssetsCatalogV2RequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, ids: List<String>?, cursor: String?, pageSize: Int?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                if (currency != null) {
+                    put("currency", listOf(currency.toString()))
+                }
+                if (storeCountryCode != null) {
+                    put("store_country_code", listOf(storeCountryCode.toString()))
+                }
+                if (simCountry != null) {
+                    put("sim_country", listOf(simCountry.toString()))
+                }
+                if (deviceCountryCode != null) {
+                    put("device_country_code", listOf(deviceCountryCode.toString()))
+                }
+                if (timezone != null) {
+                    put("timezone", listOf(timezone.toString()))
+                }
+                if (isVpnActive != null) {
+                    put("is_vpn_active", listOf(isVpnActive.toString()))
+                }
+                if (tab != null) {
+                    put("tab", listOf(tab.toString()))
+                }
+                if (q != null) {
+                    put("q", listOf(q.toString()))
+                }
+                if (showPerps != null) {
+                    put("show_perps", listOf(showPerps.toString()))
+                }
+                if (chain != null) {
+                    put("chain", listOf(chain.toString()))
+                }
+                if (sort != null) {
+                    put("sort", listOf(sort.toString()))
+                }
+                if (order != null) {
+                    put("order", listOf(order.toString()))
+                }
+                if (filter != null) {
+                    put("filter", listOf(filter.toString()))
+                }
+                if (sourceShelf != null) {
+                    put("source_shelf", listOf(sourceShelf.toString()))
+                }
+                if (ids != null) {
+                    put("ids", toMultiValue(ids.toList(), "multi"))
+                }
+                if (cursor != null) {
+                    put("cursor", listOf(cursor.toString()))
+                }
+                if (pageSize != null) {
+                    put("page_size", listOf(pageSize.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        userAgent?.apply { localVariableHeaders["User-Agent"] = this.toString() }
+        xLang?.apply { localVariableHeaders["X-Lang"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v2/trading/assets",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

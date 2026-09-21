@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history.state
 
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 
 data class TxNewestItemsState(
     val loading: Boolean = false,

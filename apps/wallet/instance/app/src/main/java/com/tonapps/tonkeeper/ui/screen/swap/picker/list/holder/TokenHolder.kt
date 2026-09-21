@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.swap.picker.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.tonkeeper.ui.component.CountryFlagView
 import com.tonapps.tonkeeper.ui.screen.swap.picker.list.Item
 import com.tonapps.tonkeeperx.R
@@ -42,12 +41,12 @@ class TokenHolder(
         } else {
             symbolView.text = symbol
         }
-        nameView.text = if (item.fiatFormatted == null && item.currency.code == WalletCurrency.GRAM_KEY) {
-            context.getString(Localization.toncoin)
+        nameView.text = item.name
+        checkView.visibility = if (item.selected) {
+            View.VISIBLE
         } else {
-            item.name
+            View.GONE
         }
-        checkView.visibility = if (item.selected) View.VISIBLE else View.GONE
     }
 
 }

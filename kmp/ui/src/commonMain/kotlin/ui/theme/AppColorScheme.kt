@@ -28,6 +28,7 @@ data class AppColorScheme(
     val buttonTertiary: ButtonColorScheme,
     val buttonGreen: ButtonColorScheme,
     val buttonOrange: ButtonColorScheme,
+    val buttonRed: ButtonColorScheme,
     val field: FieldColorScheme,
     val accent: AccentColorScheme,
     val tabBar: TabBarColorScheme,

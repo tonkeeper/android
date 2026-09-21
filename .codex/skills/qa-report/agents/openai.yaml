@@ -1,0 +1,4 @@
+interface:
+  display_name: "QA Report"
+  short_description: "Acceptance QA report for Tonkeeper Android tasks"
+  default_prompt: "Use $qa-report to generate an acceptance testing report for the current branch against dev, using the Linear ticket context if available."

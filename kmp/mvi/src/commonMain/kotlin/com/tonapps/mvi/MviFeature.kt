@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.concurrent.Volatile
 
+@Deprecated("Superseded by the property-graph approach: extend com.tonapps.mvi.graph.GraphViewModel instead.")
 @Stable
 abstract class MviFeature<A : MviAction, S : MviState, VS : MviViewState>(
     initState: S,

@@ -7,6 +7,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.events.ActionType
+import com.tonapps.wallet.data.events.ActionTypeFeeOnly
 import com.tonapps.wallet.data.events.ActionTypeOut
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -16,6 +17,7 @@ data class TxActionBody(
     val type: ActionType,
     val title: String,
     val subtitle: String,
+    val description: String?,
     val imageUrl: String?,
     val value: String?,
     val amount: Amount,
@@ -40,6 +42,9 @@ data class TxActionBody(
 
     val isOut: Boolean
         get() = ActionTypeOut.contains(type)
+
+    val isFeeOnly: Boolean
+        get() = ActionTypeFeeOnly.contains(type)
 
     val currencies: List<WalletCurrency>
         get() = amount.currencies
@@ -100,6 +105,7 @@ data class TxActionBody(
                 currency = currency.symbol,
                 value = value,
                 cutLongSymbol = true,
+                compact = true,
             )
         }
 
@@ -133,6 +139,7 @@ data class TxActionBody(
 
         private var title: String = ""
         private var subtitle: String = ""
+        private var description: String? = null
         private var imageUrl: String? = null
         private var amount: Amount = Amount()
         private var product: Product? = null
@@ -145,6 +152,8 @@ data class TxActionBody(
         fun setTitle(title: String) = apply { this.title = title }
 
         fun setSubtitle(subtitle: String) = apply { this.subtitle = subtitle }
+
+        fun setDescription(description: String?) = apply { this.description = description }
 
         fun setSender(sender: Account) = apply { this.sender = sender }
 
@@ -192,6 +201,7 @@ data class TxActionBody(
             type = type,
             title = title,
             subtitle = subtitle,
+            description = description,
             imageUrl = imageUrl,
             amount = amount,
             product = product,

@@ -23,7 +23,7 @@
         android:src="@drawable/ic_exclamationmark_circle_84"
         android:tint="?attr/iconSecondaryColor" />
 
-    <com.tonapps.tonkeeper.view.BatteryView
+    <uikit.widget.BatteryView
         android:id="@+id/battery_view"
         style="@style/Battery.VeryBig"
         android:layout_gravity="center"

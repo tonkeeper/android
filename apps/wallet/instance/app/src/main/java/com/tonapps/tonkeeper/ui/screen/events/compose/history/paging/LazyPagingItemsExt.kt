@@ -4,7 +4,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.TxFilter
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.state.TxScreenState
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 
 fun LazyPagingItems<UiEvent>.screenState(selectedFilterId: Int): TxScreenState {
     val refreshState = loadState.refresh

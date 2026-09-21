@@ -2,34 +2,37 @@ package com.tonapps.tonkeeper.manager.walletkit
 
 import android.content.Context
 import android.net.Uri
+import android.view.View
 import androidx.core.net.toUri
-import com.tonapps.log.L
 import com.tonapps.base64.decodeBase64
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.connect.TONProof
+import com.tonapps.core.deeplink.DeepLinkRoute
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.extensions.hasQuery
 import com.tonapps.extensions.isEmptyQuery
-import com.tonapps.extensions.withoutQuery
-import com.tonapps.core.flags.WalletFeature
+import com.tonapps.log.L
+import com.tonapps.security.Security
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectWebViewInjector
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager.Companion.normalizeUri
+import com.tonapps.tonkeeper.manager.tonconnect.cleanupDisconnectedOrigin
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.manager.tonconnect.exceptions.ManifestException
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppBridge
+import com.tonapps.tonkeeper.ui.component.SnackBarView
+import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.core.deeplink.DeepLinkRoute
-import com.tonapps.security.Security
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.localization.Localization
 import io.ton.walletkit.ITONWalletKit
 import io.ton.walletkit.api.MAINNET
@@ -40,8 +43,8 @@ import io.ton.walletkit.api.generated.TONConnectionApprovalProofDomain
 import io.ton.walletkit.api.generated.TONConnectionApprovalResponse
 import io.ton.walletkit.api.generated.TONManifestFetchResult
 import io.ton.walletkit.api.generated.TONNetwork
-import io.ton.walletkit.config.TONWalletKitConfiguration
 import io.ton.walletkit.config.SignDataType
+import io.ton.walletkit.config.TONWalletKitConfiguration
 import io.ton.walletkit.event.TONWalletKitEvent
 import io.ton.walletkit.listener.TONBridgeEventsHandler
 import io.ton.walletkit.model.TONBase64
@@ -50,6 +53,9 @@ import io.ton.walletkit.storage.TONWalletKitStorageType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,14 +66,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 
 class WalletKitTonConnect(
     private val context: Context,
     private val scope: CoroutineScope,
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
     private val dAppsRepository: DAppsRepository,
     private val pushManager: PushManager,
+    private val chainKitProvider: ChainKitProvider,
     private val manager: TonConnectManager,
 ) : ITonConnectBridge by manager {
 
@@ -83,13 +91,15 @@ class WalletKitTonConnect(
     private val syncMutex = Mutex()
     private var walletObserverJob: Job? = null
 
-    fun getWalletKitInstance(): ITONWalletKit? = walletKit
-
     suspend fun initialize() {
-        if (walletKit != null) return
+        if (walletKit != null) {
+            return
+        }
 
         initMutex.withLock {
-            if (walletKit != null) return
+            if (walletKit != null) {
+                return
+            }
 
             val sessionManager = TonkeeperSessionManager(accountRepository, dAppsRepository)
             val config = TONWalletKitConfiguration(
@@ -165,16 +175,10 @@ class WalletKitTonConnect(
 
     private fun observeWalletChanges() {
         walletObserverJob?.cancel()
-        walletObserverJob = accountRepository.selectedStateFlow
-            .onEach { state ->
-                when (state) {
-                    is AccountRepository.SelectedState.Wallet,
-                    is AccountRepository.SelectedState.Empty -> {
-                        val kit = walletKit ?: return@onEach
-                        syncWalletList(kit)
-                    }
-                    is AccountRepository.SelectedState.Initialization -> {}
-                }
+        walletObserverJob = accountRepository.selectedTonWalletFlow
+            .onEach {
+                val kit = walletKit ?: return@onEach
+                syncWalletList(kit)
             }
             .launchIn(scope)
     }
@@ -191,7 +195,7 @@ class WalletKitTonConnect(
                     }
                     is TONWalletKitEvent.SendTransactionRequest -> {
                         val request = event.request
-                        val wallet = accountRepository.getWallets().find { it.id == request.event.walletId }
+                        val wallet = request.event.walletId?.let { accountRepository.getTonWalletById(it) }
                         if (wallet == null) {
                             L.w("Wallet not found for id: ${request.event.walletId}")
                             request.reject("Wallet not found", UNKNOWN_APP_ERROR)
@@ -201,7 +205,7 @@ class WalletKitTonConnect(
                     }
                     is TONWalletKitEvent.SignDataRequest -> {
                         val request = event.request
-                        val wallet = accountRepository.getWallets().find { it.id == request.event.walletId }
+                        val wallet = request.event.walletId?.let { accountRepository.getTonWalletById(it) }
                         if (wallet == null) {
                             L.w("Wallet not found for id: ${request.event.walletId}")
                             request.reject("Wallet not found", UNKNOWN_APP_ERROR)
@@ -250,33 +254,76 @@ class WalletKitTonConnect(
 
     override fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type?) {
         scope.launch(Dispatchers.IO) {
-            val connections = dAppsRepository.getConnections().filter { connection ->
-                connection.accountId == wallet.accountId &&
-                connection.network == wallet.network &&
-                connection.appUrl.withoutQuery == appUrl.withoutQuery &&
-                (type == null || connection.type == type)
-            }
-            if (connections.isEmpty()) return@launch
+            val connections = dAppsRepository.getMatchingConnections(
+                accountId = wallet.accountId,
+                network = wallet.network,
+                appUrl = appUrl,
+                type = type,
+            )
 
             val kit = walletKit
-            if (kit != null) {
-                for (connection in connections) {
-                    try {
-                        kit.disconnectSession(connection.clientId)
-                    } catch (e: Exception) {
-                        L.w(e, "Failed to disconnect session ${connection.clientId}")
-                    }
+            // Internal sessions live in the natively injected browser WebView, unknown to the kit.
+            val bridgeConnections = connections.filter { it.type == AppConnectEntity.Type.External }
+            if (kit != null && bridgeConnections.isNotEmpty()) {
+                // Notifying the kit is best-effort: a session that fails, times out or cancels
+                // itself must not cancel this scope and take the row delete below with it.
+                coroutineScope {
+                    bridgeConnections.map { connection ->
+                        async {
+                            try {
+                                withTimeout(DISCONNECT_SESSION_TIMEOUT_MS) {
+                                    kit.disconnectSession(connection.clientId)
+                                }
+                            } catch (e: Exception) {
+                                L.w(e, "Failed to disconnect session ${connection.clientId}")
+                            }
+                        }
+                    }.awaitAll()
                 }
             }
-            dAppsRepository.deleteApp(wallet.accountId, wallet.network, appUrl, type)
-            pushManager.dAppUnsubscribe(wallet, connections)
+
+            val removedRows = dAppsRepository.deleteApp(wallet.accountId, wallet.network, appUrl, type)
+
+            if (connections.isEmpty() && removedRows.isEmpty()) {
+                DevSettings.tonConnectLog("disconnect matched no connections for $appUrl", error = true)
+            }
+
+            dAppsRepository.cleanupDisconnectedOrigin(wallet, appUrl)
+
+            if (connections.isNotEmpty()) {
+                pushManager.dAppUnsubscribe(wallet, connections)
+            }
+        }
+    }
+
+    override suspend fun showLogoutAppBar(
+        wallet: WalletEntity,
+        context: Context,
+        url: Uri,
+        type: AppConnectEntity.Type?
+    ) = withContext(Dispatchers.Main.immediate) {
+        val host = url.host ?: run {
+            DevSettings.tonConnectLog("skip disconnect prompt for a host-less url: $url", error = false)
+            return@withContext
+        }
+
+        if (dAppsRepository.hasConnections(wallet.accountId, wallet.network, url, type)) {
+            val text = context.getString(Localization.disconnect_dapp_confirm, host)
+            SnackBarView.show(
+                context = context,
+                text = text,
+                buttonText = context.getString(Localization.disconnect),
+                onClickListener = View.OnClickListener {
+                    disconnect(wallet, url, type)
+                }
+            )
         }
     }
 
     private suspend fun syncWalletList(kit: ITONWalletKit) {
         syncMutex.withLock {
             try {
-                val wallets = accountRepository.getWallets().associateBy { it.id }
+                val wallets = accountRepository.getTonWallets().associateBy { it.id }
                 val loadedIds = kit.getWallets().map { it.id }.toSet()
 
                 for (id in loadedIds) {
@@ -290,9 +337,33 @@ class WalletKitTonConnect(
                 }
 
                 for (wallet in wallets.values) {
-                    if (wallet.id in loadedIds) continue
+                    if (wallet.id in loadedIds) {
+                        continue
+                    }
+
                     try {
-                        kit.addWallet(TonkeeperWalletAdapter(wallet))
+                        val adapter = if (wallet.type == WalletType.Multichain) {
+                            val account = accountRepository.getMultichainTonAccount(wallet.id)
+                            if (account == null) {
+                                L.w("Skip MC wallet ${wallet.id}: no TON account")
+                                continue
+                            }
+
+                            L.d("[WalletKitSync] MC wallet ${wallet.id} legacy.addr=${wallet.address} mc.addr=${account.displayAddress} pubKey=${account.publicKey}")
+                            MultichainWalletAdapter(wallet, account, chainKitProvider)
+                        } else {
+                            TonkeeperWalletAdapter(wallet)
+                        }
+                        if (wallet.type == WalletType.Multichain && wallet.id in loadedIds) {
+                            try {
+                                L.d("[WalletKitSync] removing stale MC wallet ${wallet.id} before re-add")
+                                kit.removeWallet(wallet.id)
+                            } catch (e: Exception) {
+                                L.w(e, "Failed to drop stale MC wallet ${wallet.id} before re-add")
+                            }
+                        }
+                        kit.addWallet(adapter)
+                        L.d("[WalletKitSync] added wallet ${wallet.id} (type=${wallet.type}) to kit")
                     } catch (e: Exception) {
                         L.e(e, "Failed to load wallet ${wallet.address}")
                     }
@@ -314,7 +385,9 @@ class WalletKitTonConnect(
 
         try {
             val route = DeepLinkRoute.resolve(uri)
-            if (route !is DeepLinkRoute.TonConnect) return null
+            if (route !is DeepLinkRoute.TonConnect) {
+                return null
+            }
 
             val normalizedUri = normalizeUri(uri)
 
@@ -394,8 +467,6 @@ class WalletKitTonConnect(
                 .first { it.clientId == from }
 
             connection = connection.copy(
-                    proofSignature = proof?.signature,
-                    proofPayload = proof?.payload,
                     timestamp = proof?.timestamp ?: connection.timestamp,
                     pushEnabled = pushEnabled
                 )
@@ -437,9 +508,6 @@ class WalletKitTonConnect(
         )
     }
 
-    override fun createInjector(bridge: DAppBridge, wallet: WalletEntity?): ITonConnectWebViewInjector =
-        WalletKitWebViewInjector(walletKitBridge = this, wallet)
-
     companion object {
         private const val UNKNOWN_APP_ERROR = 100
 
@@ -450,6 +518,7 @@ class WalletKitTonConnect(
         private const val MANIFEST_ABOUT_URL = "https://tonkeeper.com"
         private const val MANIFEST_UNIVERSAL_LINK = "https://app.tonkeeper.com/ton-connect"
         private const val BRIDGE_URL = "https://bridge.tonapi.io/bridge"
+        private const val DISCONNECT_SESSION_TIMEOUT_MS = 5_000L
 
         fun isEnabled(api: API): Boolean {
             return WalletFeature.WalletKitEnabled.isEnabled || !api.getConfig(TonNetwork.MAINNET).flags.disableWalletKit

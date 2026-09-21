@@ -1,0 +1,17 @@
+name: "Transactions — send GRAM"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow:
+    file: "../../../steps/send/send_to_typed_recipient.yaml"
+    env:
+      SEARCH_QUERY: "GRAM"
+      TOKEN_SYMBOL: "GRAM"
+      AMOUNT: "0.001"
+      RECIPIENT: ${RECIEVE_WALLET}
+
+- runFlow: "../../../steps/transactions/assert_receive_wallet_visible.yaml"
+- assertVisible: ${"0.001" + "[ \u2009]" + "GRAM"}
+- runFlow: "../../../steps/confirm/swipe_slide_to_confirm.yaml"
+
+- runFlow: "../../../steps/wallet/unlock_passcode_if_needed.yaml"

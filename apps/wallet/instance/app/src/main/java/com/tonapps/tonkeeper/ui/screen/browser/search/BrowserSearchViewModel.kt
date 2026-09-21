@@ -3,17 +3,19 @@ package com.tonapps.tonkeeper.ui.screen.browser.search
 import android.app.Application
 import android.net.Uri
 import androidx.core.net.toUri
-import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.network.get
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.browser.BrowserRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -29,8 +31,10 @@ class BrowserSearchViewModel(
     app: Application,
     private val settingsRepository: SettingsRepository,
     private val browserRepository: BrowserRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
     private val api: API,
     private val safeModeClient: SafeModeClient,
+    private val environment: Environment,
 ): BaseWalletVM(app) {
 
     private val _queryFlow = MutableEffectFlow<String>()
@@ -48,6 +52,20 @@ class BrowserSearchViewModel(
         _queryFlow.tryEmit(value)
     }
 
+    fun trackSearchOpen() {
+        DappBrowserAnalytics.searchOpen(environment.deviceCountry)
+    }
+
+    fun trackSearchClick(url: Uri) {
+        DappBrowserAnalytics.searchClick(url, environment.deviceCountry)
+    }
+
+    fun searchTarget(query: String): Uri {
+        return parseIfUrl(query)?.let {
+            DeepLinkRoute.normalize(it)
+        } ?: createSearchUrl(query)
+    }
+
     suspend fun isScamUri(uri: Uri?): Boolean {
         return uri?.let {
             safeModeClient.isHasScamUris(it)
@@ -59,7 +77,9 @@ class BrowserSearchViewModel(
             return@withContext emptyList()
         }
 
-        val isSafeModeEnabled = settingsRepository.isSafeModeEnabled(TonNetwork.MAINNET)
+        val selectedWallet = unifiedAccountRepository.getSelectedWallet()
+        val isSafeModeEnabled = selectedWallet == null ||
+            settingsRepository.isSafeModeEnabled(selectedWallet.id, selectedWallet.network)
 
         var uri = uri(query)?.let { DeepLinkRoute.normalize(it) }
         if (uri?.scheme == "tonkeeper") {
@@ -78,7 +98,8 @@ class BrowserSearchViewModel(
         val apps = browserRepository.search(
             country = settingsRepository.country,
             query = query,
-            locale = settingsRepository.getLocale()
+            locale = settingsRepository.getLocale(),
+            walletId = unifiedAccountRepository.getSelectedWallet()?.multichainWalletId,
         )
 
         val appsCount = if (uri == null) {
@@ -88,7 +109,7 @@ class BrowserSearchViewModel(
         }
 
         val items = mutableListOf<Item>()
-        if (isScamUri(uri)) {
+        val result = if (isScamUri(uri)) {
             items
         } else {
             for (index in 0 until appsCount) {
@@ -104,6 +125,7 @@ class BrowserSearchViewModel(
 
             items + searchBy(query)
         }
+        result
     }
 
     private fun uri(query: String): Uri? {

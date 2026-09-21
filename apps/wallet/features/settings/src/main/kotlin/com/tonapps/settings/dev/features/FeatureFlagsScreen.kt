@@ -27,7 +27,6 @@ fun FeatureFlagsScreen(
                 for (i in keys) {
                     var isEnabled by remember { mutableStateOf(FeatureManager.isEnabled(i)) }
                     val isOverridden = remember(isEnabled) { FeatureManager.isOverridden(i) }
-                    val value = FeatureManager.getValue(i, "<empty>")
                     val setFeature = { newValue: Boolean ->
                         isEnabled = newValue
                         FeatureManager.setFeatureEnabled(i, isEnabled)
@@ -36,7 +35,7 @@ fun FeatureFlagsScreen(
 
                     TextCell(
                         title = i.featureKey,
-                        subtitle = value,
+                        subtitle = isEnabled.toString(),
                         description = {
                             if (isOverridden) {
                                 MoonSmallItemTitle(

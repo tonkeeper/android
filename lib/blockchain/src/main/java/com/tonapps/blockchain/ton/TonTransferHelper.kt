@@ -5,11 +5,10 @@ import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeMaybeRef
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeQueryId
-import com.tonapps.blockchain.ton.extensions.storeStringTail
+import org.ton.bigint.BigInt
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
-import org.ton.cell.CellBuilder.Companion.beginCell
 import org.ton.cell.buildCell
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
@@ -36,7 +35,7 @@ object TonTransferHelper {
         toAddress: MsgAddressInt,
         responseAddress: MsgAddressInt,
         queryId: BigInteger = BigInteger.ZERO,
-        forwardAmount: Coins = Coins.ofNano(BigInteger("1")),
+        forwardAmount: Coins = Coins.ofNano(BigInt ("1")),
         forwardPayload: Any? = null,
         customPayload: Cell? = null
     ): Cell {
@@ -65,16 +64,28 @@ object TonTransferHelper {
 
         return buildCell {
             storeOpCode(TONOpCode.NFT_TRANSFER)
-            storeUInt(queryId, 64)
+            storeUInt(queryId.toBigInt(), 64)
             storeTlb(MsgAddressInt, newOwnerAddress)
             storeTlb(MsgAddressInt, excessesAddress)
             storeBit(false)
             storeTlb(Coins, Coins.ofNano(forwardAmount))
             storeBit(payload != null)
             payload?.let {
-                storeRef(AnyTlbConstructor, CellRef(it))
+                storeRef(AnyTlbConstructor, CellRef(cell = it, codec = AnyTlbConstructor))
             }
         }
     }
 
+}
+
+fun String.toBigInt(): BigInt {
+    return toBigInteger().toBigInt()
+}
+
+fun BigInteger.toBigInt(): BigInt {
+    return BigInt(toByteArray())
+}
+
+fun BigInt.toBigInteger(): BigInteger {
+    return BigInteger(toByteArray())
 }

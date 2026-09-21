@@ -21,7 +21,7 @@ fun Project.applyProjectCommon() {
     tasks.withType<KotlinCompile> {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
-            freeCompilerArgs.add("-Xcontext-parameters")
+            freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexplicit-backing-fields")
             optIn.addAll(
                 "kotlin.RequiresOptIn",
                 "kotlinx.serialization.ExperimentalSerializationApi",

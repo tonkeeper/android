@@ -3,12 +3,16 @@ package com.tonapps.blockchain.model.legacy
 import com.tonapps.security.AesCbcState
 import com.tonapps.security.Security
 import io.ktor.util.hex
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.api.pub.PublicKeyEd25519
+import kotlinx.io.bytestring.ByteString
+import okio.ByteString.Companion.toByteString
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.block.AddrStd
+import org.ton.block.invoke
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.crypto.Ed25519
+import org.ton.kotlin.crypto.DecryptorEd25519
+import org.ton.kotlin.crypto.EncryptorEd25519
 import kotlin.experimental.xor
 import kotlin.math.ceil
 
@@ -96,9 +100,9 @@ object CommentEncryption {
 
     private fun storeDeepRef(bytes: ByteArray): Cell {
         return if (bytes.size <= CELL_BYTE_LENGTH) {
-            CellBuilder.Companion.beginCell().storeBytes(bytes.sliceArray(0 until bytes.size)).endCell()
+            CellBuilder.beginCell().storeBytes(bytes.sliceArray(0 until bytes.size)).endCell()
         } else {
-            CellBuilder.Companion.beginCell().storeBytes(bytes.sliceArray(0 until CELL_BYTE_LENGTH))
+            CellBuilder.beginCell().storeBytes(bytes.sliceArray(0 until CELL_BYTE_LENGTH))
                 .storeRef(storeDeepRef(bytes.sliceArray(CELL_BYTE_LENGTH until bytes.size)))
                 .endCell()
         }
@@ -111,7 +115,8 @@ object CommentEncryption {
         privateKey: ByteArray,
         salt: ByteArray
     ): ByteArray {
-        val sharedSecret = Ed25519.sharedKey(privateKey, theirPublicKey)
+        val sharedSecret = PrivateKeyEd25519(privateKey)
+            .computeSharedSecret(PublicKeyEd25519(ByteString(theirPublicKey))) // TODO TONSDK
 
         val encrypted = encryptDataImpl(data, sharedSecret, salt)
         val prefixedEncrypted = ByteArray(myPublicKey.size + encrypted.size)
@@ -168,7 +173,9 @@ object CommentEncryption {
         for (i in publicKey.indices) {
             theirPublicKey[i] = data[i] xor publicKey[i]
         }
-        val sharedSecret = Ed25519.sharedKey(privateKey, theirPublicKey)
+
+        val sharedSecret = PrivateKeyEd25519(privateKey)
+            .computeSharedSecret(PublicKeyEd25519(ByteString(theirPublicKey))) // TODO TONSDK
         return decryptDataImpl(data.sliceArray(publicKey.size until data.size), sharedSecret, salt)
     }
 

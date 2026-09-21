@@ -1,0 +1,19 @@
+# Multichain Send: ETH on Arbitrum to self (address from Receive).
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — send Arbitrum ETH to self"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow:
+    file: "../../../steps/recieve_modal/copy_network_address.yaml"
+    env:
+      NETWORK_NAME: "Arbitrum"
+      PREV_NETWORK: "BSC"
+      ADDRESS_TITLE: "Your Arbitrum address"
+- runFlow:
+    file: "../../../steps/send/send_to_clipboard_recipient.yaml"
+    env:
+      SEARCH_QUERY: "ETH"
+      TOKEN_SYMBOL: "ETH"
+      CHAIN_NAME: "Arbitrum"
+      AMOUNT: "0.0001"

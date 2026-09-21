@@ -6,7 +6,7 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.wallet.api.entity.IAPPackageId
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
-import com.tonapps.tonkeeper.view.BatteryView
+import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.settings.BatteryTransaction

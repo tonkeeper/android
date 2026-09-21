@@ -2,6 +2,27 @@ platform:
   android:
     disableAnimations: true
 
+disableRetries: true
+
+excludeTags:
+  - exclude
+
+# Java glob: `*` is one path segment and does not recurse. Nested
+# `<shard>/subflows/*.yaml` are runFlow targets only — Cloud entries are
+# the shard wrappers at this level (transactions.yaml, send.yaml,
+# swap_common.yaml, tonconnect.yaml, …).
+# Do not change these to `**` (that would wipe/restart between every case).
+# Negation is belt-and-suspenders if a glob is ever widened.
 flows:
-  - flows/browser_screen/*
-  - flows/testnet/*
+  - flows/browser/*
+  - flows/transactions/*
+  - flows/tonconnect/*
+  - flows/deeplinks/*
+  - flows/portfolio/*
+  - flows/send/*
+  - flows/staking/*
+  - flows/swap_common/*
+  - flows/trade/*
+  - "!flows/**/subflows/**"
+
+testOutputDir: ../build/maestro-output

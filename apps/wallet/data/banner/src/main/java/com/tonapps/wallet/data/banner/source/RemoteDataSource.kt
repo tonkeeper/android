@@ -11,9 +11,9 @@ internal class RemoteDataSource(
     private val api: API
 ) {
 
-    suspend fun load(network: TonNetwork): BannerDataEntity? = withContext(Dispatchers.IO) {
+    suspend fun load(network: TonNetwork, walletId: String?, isNew: Boolean): BannerDataEntity? = withContext(Dispatchers.IO) {
         try {
-            BannerDataEntity(api.getBanners(network))
+            BannerDataEntity(api.getBanners(network, walletId, isNew))
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             null

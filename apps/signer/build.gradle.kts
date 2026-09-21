@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.viewPager2)
     implementation(libs.androidx.splashscreen)
 
+    implementation(libs.koin.core)
     implementation(libs.material)
     implementation(libs.flexbox)
     implementation(libs.camerax.base)
@@ -77,6 +78,5 @@ dependencies {
     implementation(projects.lib.qr)
     implementation(projects.lib.security)
     implementation(projects.lib.icu)
-    implementation(libs.koin.core)
 }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.tonkeeper.extensions.getStringCompat
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
@@ -45,7 +46,7 @@ class SignOutDialog(
     }
 
     private fun openBackup() {
-        navigation?.add(BackupScreen.newInstance(wallet))
+        navigation?.add(BackupScreen.newInstance(WalletFlowSource.Settings))
         dismiss()
     }
 

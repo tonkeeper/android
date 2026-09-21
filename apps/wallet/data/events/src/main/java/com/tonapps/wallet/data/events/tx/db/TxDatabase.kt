@@ -5,7 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.tonapps.wallet.api.entity.value.ValueConverters
+import kotlinx.coroutines.Dispatchers
 
 @Database(entities = [TxRecordEntity::class], version = 1)
 @TypeConverters(TxConverters::class, ValueConverters::class)
@@ -18,7 +20,10 @@ internal abstract class TxDatabase: RoomDatabase() {
                 context,
                 TxDatabase::class.java,
                 "tx_database"
-            ).build()
+            )
+                .setDriver(BundledSQLiteDriver())
+                .setQueryCoroutineContext(Dispatchers.IO)
+                .build()
         }
     }
 

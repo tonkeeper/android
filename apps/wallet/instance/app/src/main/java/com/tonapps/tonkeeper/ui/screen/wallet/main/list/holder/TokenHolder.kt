@@ -9,7 +9,6 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenFrom
-import com.tonapps.core.flags.WalletFeature
 import com.tonapps.extensions.isLocal
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.buildRateString
@@ -49,21 +48,20 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
             titleView.setTextWithBadge(getString(Localization.fake), null)
             iconView.clear(null)
         } else {
-            val symbol = if (item.isTON) {
-                getString(Localization.gram_symbol_home)
-            } else {
-                item.symbol
-            }
             val badge = when {
                 item.showNetwork && item.isUSDT -> defaultBadge(Localization.ton)
                 item.showNetwork && item.isTRC20 -> defaultBadge(Localization.trc20)
                 item.isTON && item.apyFormatted != null -> apyBadge(item.apyFormatted)
                 else -> null
             }
-            titleView.setTextWithBadge(symbol, badge)
+            titleView.setTextWithBadge(item.symbol, badge)
             setTokenIcon(item.iconUri)
 
-            networkIconView.visibility = if (item.showNetwork) View.VISIBLE else View.GONE
+            networkIconView.visibility = if (item.showNetwork) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
             setNetworkIcon(item.blockchain)
         }
 
@@ -157,9 +155,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
     }
 
     private fun shouldOpenAssetDetails(item: Item.Token): Boolean {
-        return WalletFeature.TradingTab.isEnabled &&
-            item.wallet.network.isMainnet &&
-            !item.isUSDe
+        return item.wallet.network.isMainnet && !item.isUSDe
     }
 
 }

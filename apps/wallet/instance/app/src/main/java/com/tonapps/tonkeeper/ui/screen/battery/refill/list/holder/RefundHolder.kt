@@ -6,6 +6,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
+import com.tonapps.tonkeeper.ui.screen.battery.web.BatteryWebScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
@@ -25,13 +26,21 @@ class RefundHolder(
         itemView.background = ListCell.Position.SINGLE.drawable(context)
         itemView.setOnClickListener {
             context.activity?.onBackPressed()
-            navigation?.add(DAppScreen.newInstance(
-                wallet = item.wallet,
-                title = "Battery",
-                url = item.refundUrl.toUri(),
-                iconUrl = "",
-                source = "battery_refund"
-            ))
+            val screen = if (item.wallet.isMultichain) {
+                BatteryWebScreen.newInstance(
+                    wallet = item.wallet,
+                    url = item.refundUrl.toUri(),
+                )
+            } else {
+                DAppScreen.newInstance(
+                    wallet = item.wallet,
+                    title = "Battery",
+                    url = item.refundUrl.toUri(),
+                    iconUrl = "",
+                    source = "battery_refund",
+                )
+            }
+            navigation?.add(screen)
         }
 
         refundImageView.visibility = View.VISIBLE

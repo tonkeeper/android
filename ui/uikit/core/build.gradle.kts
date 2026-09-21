@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.androidx.splashscreen)
     implementation(libs.flexbox)
     implementation(libs.material)
+    implementation(libs.androidx.customview)
     implementation(libs.lottie)
 
     implementation(libs.coil.compose)

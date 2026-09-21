@@ -1,0 +1,38 @@
+name: "Multichain — swap token picker search"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow: "../../../steps/swap/open_swap.yaml"
+
+- tapOn:
+    text: USDT
+    below: MAX
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Choose asset
+    timeout: 30000
+- tapOn: Search by ticker or name
+- inputText: "usdt"
+- extendedWaitUntil:
+    visible: USDT
+    timeout: 30000
+- assertVisible: ETHEREUM
+
+- tapOn:
+    text: USDT
+    below: All
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    notVisible: Choose asset
+    timeout: 15000
+- extendedWaitUntil:
+    visible: Swap
+    timeout: 15000
+- assertVisible:
+    text: USDT
+    below: Receive
+- assertVisible: Continue

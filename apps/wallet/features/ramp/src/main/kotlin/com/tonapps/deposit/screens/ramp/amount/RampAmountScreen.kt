@@ -71,7 +71,7 @@ import ui.components.moon.MoonLabel
 import ui.components.moon.MoonLabelDefault
 import ui.components.moon.MoonSmallItemTitle
 import ui.components.moon.cell.MoonBundleCell
-import ui.components.moon.cell.MoonButtonCell
+import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.TextCell
 import ui.components.moon.container.MoonScaffold
@@ -282,6 +282,10 @@ private fun DataContent(
                 }
             }
 
+            if (state.balance == null) {
+                Spacer(Modifier.height(24.dp))
+            }
+
             if (state.isCalculating) {
                 val shimmer by rememberShimmerPhase()
                 ProviderCell(
@@ -308,7 +312,7 @@ private fun DataContent(
         }
 
         val insufficientBalance = state.balance?.let { amountState.coins.isPositive && amountState.coins > it.uiBalance } ?: false
-        MoonButtonCell(
+        MoonBottomButtonCell(
             text = stringResource(Localization.continue_action),
             enabled = state.canContinue
                     && amountState.isValid
@@ -465,9 +469,7 @@ private fun AmountInputCell(
 
 @Composable
 private fun EmptyProviderCell() {
-    MoonBundleCell(
-        contentPadding = remember { PaddingValues(16.dp) }
-    ) {
+    MoonBundleCell {
         TextCell(
             title = stringResource(Localization.no_available_provider),
             titleColor = UIKit.colorScheme.text.secondary,
@@ -491,9 +493,7 @@ private fun ProviderCell(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
 ) {
-    MoonBundleCell(
-        contentPadding = remember { PaddingValues(16.dp) }
-    ) {
+    MoonBundleCell {
         TextCell(
             modifier = modifier,
             title = provider.title,

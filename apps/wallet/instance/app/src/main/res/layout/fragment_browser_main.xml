@@ -49,6 +49,7 @@
             android:id="@+id/explore_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:clipChildren="false"
             android:clipToPadding="false"/>
 
         <FrameLayout
@@ -57,15 +58,28 @@
             android:layout_height="match_parent"
             android:visibility="gone">
 
-            <uikit.widget.TextHeaderView
+            <uikit.widget.ColumnLayout
                 android:id="@+id/connected_placeholder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:visibility="gone"
-                android:title="@string/connected_placeholder_title"
-                android:description="@string/connected_placeholder_subtitle"/>
+                android:gravity="center_horizontal"
+                android:visibility="gone">
+
+                <com.airbnb.lottie.LottieAnimationView
+                    android:id="@+id/connected_placeholder_lottie"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp" />
+
+                <uikit.widget.TextHeaderView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/offsetMedium"
+                    android:title="@string/connected_placeholder_title"
+                    android:description="@string/connected_placeholder_subtitle" />
+
+            </uikit.widget.ColumnLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/connected_list"

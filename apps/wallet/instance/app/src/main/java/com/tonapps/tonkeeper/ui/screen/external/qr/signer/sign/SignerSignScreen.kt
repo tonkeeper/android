@@ -16,7 +16,7 @@ import com.tonapps.tonkeeper.core.signer.SignerApp
 import com.tonapps.tonkeeper.ui.screen.external.qr.QRSignScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.cell.Cell
 import uikit.base.BaseDrawable

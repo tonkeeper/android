@@ -1,6 +1,9 @@
 package com.tonapps.deposit.screens.method
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -13,6 +16,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -40,7 +44,7 @@ import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonSmallItemTitle
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundleTitleCell
-import ui.components.moon.cell.MoonInfoCell
+import ui.components.moon.cell.MoonWarningCell
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.container.MoonCutRow
 import ui.components.moon.container.MoonScaffold
@@ -48,6 +52,7 @@ import ui.components.moon.container.OverlapDirection
 import ui.components.moon.screen.MoonEmptyScreen
 import ui.painterResource
 import ui.theme.UIKit
+import ui.theme.modifiers.modifyIf
 import ui.utils.toRichSpanStyle
 import uikit.navigation.Navigation.Companion.navigation
 
@@ -190,6 +195,14 @@ private fun PaymentMethodContent(
             )
 
             is PaymentMethodState.Data -> {
+                if (state.isEmpty) {
+                    MoonEmptyScreen(
+                        text = stringResource(Localization.cant_find_anything),
+                        buttonText = stringResource(Localization.retry),
+                        onButtonClick = onRetry,
+                    )
+                    return@MoonScaffold
+                }
                 Column(
                     Modifier
                         .verticalScroll(rememberScrollState())
@@ -205,17 +218,24 @@ private fun PaymentMethodContent(
                                 RampType.RampOn -> stringResource(Localization.deposit_buy_with_cash)
                                 RampType.RampOff -> stringResource(Localization.ramp_sell_with_cash)
                             },
-                            onClick = if (showCurrencySwitch) {
-                                { onSelectCurrency(state.selectedCurrency?.code) }
-                            } else {
-                                null
-                            }
                         ) {
                             if (currencyCode != null) {
-                                MoonItemImage(currencyUri?.toString(), size = 16.dp)
-                                MoonSmallItemTitle(text = currencyCode)
-                                if (showCurrencySwitch) {
-                                    MoonItemIcon(painter = painterResource(UIKitIcon.ic_switch_16))
+                                Row(
+                                    modifier = Modifier.modifyIf {
+                                        if (showCurrencySwitch) {
+                                            clickable(onClick = { onSelectCurrency(state.selectedCurrency.code) })
+                                        } else {
+                                            null
+                                        }
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    MoonItemImage(currencyUri?.toString(), size = 16.dp)
+                                    MoonSmallItemTitle(text = currencyCode)
+                                    if (showCurrencySwitch) {
+                                        MoonItemIcon(painter = painterResource(UIKitIcon.ic_switch_16))
+                                    }
                                 }
                             }
                         }
@@ -250,7 +270,7 @@ private fun PaymentMethodContent(
                         val cryptoAssets = state.cryptoAssets
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        MoonInfoCell(
+                        MoonWarningCell(
                             text = stringResource(Localization.ramp_crypto_swap_info)
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -270,7 +290,7 @@ private fun PaymentMethodContent(
 
                     if (state.showStablecoinSection) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        MoonInfoCell(
+                        MoonWarningCell(
                             text = when (rampType) {
                                 RampType.RampOn -> stringResource(
                                     Localization.ramp_stablecoin_buy_info,

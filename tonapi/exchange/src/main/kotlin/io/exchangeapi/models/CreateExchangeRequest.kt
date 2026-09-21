@@ -36,14 +36,14 @@ data class CreateExchangeRequest(
     @SerialName(value = "to_network")
     val toNetwork: String? = null,
 
-    /* Destination Tag / Memo for chains that require it on the destination address (XRP, XLM, EOS, BNB-Beacon, HBAR, etc.). */
+    /* Destination Tag / Memo for chains that require it on the destination address (XRP, XLM, EOS, BNB-Beacon, HBAR, etc.) */
     @SerialName(value = "extra_id")
     val extraId: String? = null,
 
     @Contextual @SerialName(value = "flow")
     val flow: ExchangeFlow? = null,
 
-    /* User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead. */
+    /* User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead */
     @SerialName(value = "country")
     @Deprecated(message = "This property is deprecated.")
     val country: String? = null

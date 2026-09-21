@@ -5,6 +5,7 @@ import android.net.Uri
 import android.webkit.WebResourceRequest
 import androidx.annotation.LayoutRes
 import androidx.core.net.toUri
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.bus.core.AnalyticsHelper
@@ -22,8 +23,8 @@ import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
 import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
@@ -41,6 +42,8 @@ import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -56,6 +59,9 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     abstract var webView: TonConnectWebView
 
     abstract val startUri: Uri
+
+    protected open val isDAppBrowser: Boolean
+        get() = false
 
     private val uri: Uri
         get() = webView.url?.toUri() ?: startUri
@@ -109,7 +115,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         when (deeplink.route) {
             is DeepLinkRoute.TonConnect -> rootViewModel.processTonConnectDeepLink(deeplink, null)
             is DeepLinkRoute.Unknown -> navigation?.openURL(url)
-            else -> rootViewModel.processDeepLink(uri = url.toUri(), fromQR = false, refSource = deeplink.referrer, internal = false, fromPackageName = null)
+            else -> rootViewModel.processDeepLink(uri = url.toUri(), fromQR = false, refSource = deeplink.referrer, internal = false, fromPackageName = null, fromBrowser = isDAppBrowser)
         }
     }
 
@@ -158,6 +164,9 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         try {
             val message = BridgeEvent.Message(tx)
             id = message.id
+            if (tonConnectBridge.getConnection(wallet.accountId, wallet.network, uri, AppConnectEntity.Type.Internal) == null) {
+                return JsonBuilder.responseError(id, BridgeError.unknownApp())
+            }
             if (wallet.isWatchOnly) {
                 navigation?.add(WatchInfoScreen.newInstance(wallet))
                 return JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
@@ -167,11 +176,11 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             } else if (message.method != BridgeMethod.SEND_TRANSACTION) {
                 return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
             }
-            val signRequests = message.params.map { SignRequestEntity(it, uri) }
-            if (signRequests.size != 1) {
-                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${signRequests.size}"))
+            if (message.params.size != 1) {
+                return JsonBuilder.responseError(id, BridgeError.badRequest("Request contains excess transactions. Required: 1, Provided: ${message.params.size}"))
             }
-            val signRequest = signRequests.first()
+            val signRequest = SignRequestEntity.parse(message.params.first(), uri)
+                ?: return JsonBuilder.responseError(id, BridgeError.badRequest("Failed to parse message params"))
             val operationId = generateUuid()
             val startedAtMs = currentTimeMillis()
             AnalyticsHelper.Default.events.redOperations.opAttempt(
@@ -183,7 +192,10 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                 otherMetadata = WalletRedMetadata.walletKit(),
             )
             return try {
-                val boc = SendTransactionScreen.run(requireContext(), wallet, signRequest)
+                val boc = SendTransactionScreen.run(
+                    requireContext(), wallet, signRequest,
+                    sendNativeFrom = Events.SendNative.SendNativeFrom.TonconnectLocal
+                )
                 val finishedAtMs = currentTimeMillis()
                 AnalyticsHelper.Default.events.redOperations.opTerminal(
                     operationId = operationId,
@@ -274,7 +286,18 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         }
 
         fun disconnect() {
-            tonConnectBridge.disconnect(wallet, url, AppConnectEntity.Type.Internal)
+            viewModelScope.launch {
+                // The repository matches by host + path segments, so the resolved appUrl only
+                // short-circuits that lookup.
+                val connection = withTimeoutOrNull(CONNECTION_LOOKUP_TIMEOUT_MS) {
+                    connectionFlow.firstOrNull()
+                }
+                tonConnectBridge.disconnect(
+                    wallet,
+                    connection?.appUrl ?: url,
+                    AppConnectEntity.Type.Internal
+                )
+            }
         }
 
         suspend fun restoreConnection(currentUri: Uri?): JSONObject {
@@ -303,6 +326,10 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             }
             delay(140)
             return loadConnection(attempt + 1, currentUri)
+        }
+
+        private companion object {
+            private const val CONNECTION_LOOKUP_TIMEOUT_MS = 500L
         }
     }
 

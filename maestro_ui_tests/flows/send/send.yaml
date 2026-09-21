@@ -1,0 +1,57 @@
+# Thin sequencer: all send-to-self cases. Nested subflows/ are not matched
+# by config.yaml `send/*`. Each subflow launches (stopApp + unlock).
+# optional runFlow continues after a case failure; evalScript runs only if
+# that case succeeded. Final assertTrue fails the Cloud row if any case
+# failed and names them.
+name: "Multichain — send"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.send_arb_ok = false; output.send_bnb_ok = false; output.send_btc_ok = false; output.send_eth_ok = false; output.send_base_ok = false; output.send_gram_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Multichain — send Arbitrum ETH to self"
+    commands:
+      - runFlow: subflows/send_arb_eth_to_self.yaml
+      - evalScript: ${output.send_arb_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — send BNB to self"
+    commands:
+      - runFlow: subflows/send_bnb_to_self.yaml
+      - evalScript: ${output.send_bnb_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — send BTC to self"
+    commands:
+      - runFlow: subflows/send_btc_to_self.yaml
+      - evalScript: ${output.send_btc_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — send ETH to self"
+    commands:
+      - runFlow: subflows/send_eth_to_self.yaml
+      - evalScript: ${output.send_eth_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — send Base ETH to self"
+    commands:
+      - runFlow: subflows/send_base_eth_to_self.yaml
+      - evalScript: ${output.send_base_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — send GRAM to self"
+    commands:
+      - runFlow: subflows/send_gram_to_self.yaml
+      - evalScript: ${output.send_gram_ok = true}
+
+- evalScript: ${var f = []; if (output.send_arb_ok !== true) f.push('ARB ETH'); if (output.send_bnb_ok !== true) f.push('BNB'); if (output.send_btc_ok !== true) f.push('BTC'); if (output.send_eth_ok !== true) f.push('ETH'); if (output.send_base_ok !== true) f.push('Base ETH'); if (output.send_gram_ok !== true) f.push('GRAM'); output.send_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.send_failed === ''}
+    label: "${output.send_failed ? 'send shard: failed ' + output.send_failed : 'send shard: all cases passed'}"

@@ -22,6 +22,10 @@ data class AssetDetailsResponse(
     val sections: AssetSections,
     @SerialName(value = "data_freshness_sec")
     val dataFreshnessSec: Int,
+    @SerialName(value = "info_source")
+    val infoSource: AssetInfoSource,
+    @SerialName(value = "capabilities")
+    val capabilities: AssetCapabilities? = null,
     @SerialName(value = "warnings")
     val warnings: List<Warning>? = null
 ) {

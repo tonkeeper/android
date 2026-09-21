@@ -24,13 +24,18 @@ data class NftCollection(
     val rawCollectionContent: String,
     @SerialName(value = "approved_by")
     val approvedBy: List<NftCollection.ApprovedBy>,
+
+    @Contextual @SerialName(value = "trust")
+    val trust: TrustType,
     @SerialName(value = "owner")
     val owner: AccountAddress? = null,
 
     @Contextual @SerialName(value = "metadata")
     val metadata: Map<String, io.JsonAny>? = null,
     @SerialName(value = "previews")
-    val previews: List<ImagePreview>? = null
+    val previews: List<ImagePreview>? = null,
+    @SerialName(value = "metadata_status")
+    val metadataStatus: NftCollectionMetadataStatus? = null
 ) {
     /**
      * Values: getgems,tonkeeper

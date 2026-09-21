@@ -1,17 +1,25 @@
 package com.tonapps.wallet.data.battery
 
 import com.tonapps.icu.Coins
+import com.tonapps.wallet.data.battery.entity.BatteryPurchaseEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 object BatteryMapper {
 
+    private const val IAP_REFUNDS_LIMIT = 2
+
     fun convertToCharges(
         balance: Coins,
         meanFees: String
+    ): Int = maxOf(0, convertToSignedCharges(balance, meanFees))
+
+    fun convertToSignedCharges(
+        balance: Coins,
+        meanFees: String
     ): Int {
-        if (!balance.isPositive) {
+        if (balance.isZero) {
             return 0
         }
         val meanFeesBigDecimal = BigDecimal(meanFees)
@@ -19,6 +27,10 @@ object BatteryMapper {
             return 0
         }
         return balance.value.divide(meanFeesBigDecimal, 0, RoundingMode.UP).toInt()
+    }
+
+    fun isIapDisabledByRefunds(purchases: List<BatteryPurchaseEntity>): Boolean {
+        return purchases.count { it.isStorePurchase && it.isRefunded } >= IAP_REFUNDS_LIMIT
     }
 
     fun convertFromCharges(
@@ -48,7 +60,9 @@ object BatteryMapper {
         val meanFeesBigDecimal = BigDecimal(meanFees)
         val rateBigDecimal = BigDecimal(method.rate)
         return rateBigDecimal.divide(meanFeesBigDecimal, 20, RoundingMode.HALF_UP)
-            .multiply(amount.value).setScale(0, RoundingMode.FLOOR).toInt()
+            .multiply(amount.value)
+            .setScale(0, RoundingMode.FLOOR)
+            .toInt()
     }
 
     fun calculateIapCharges(

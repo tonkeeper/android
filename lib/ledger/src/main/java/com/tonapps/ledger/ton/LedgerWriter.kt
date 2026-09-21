@@ -1,5 +1,6 @@
 package com.tonapps.ledger.ton
 
+import com.tonapps.blockchain.ton.toBigInt
 import org.ton.block.AddrStd
 import org.ton.block.MsgAddress
 import org.ton.block.MsgAddressInt
@@ -23,11 +24,11 @@ object LedgerWriter {
     }
 
     fun putUint48(value: BigInteger): ByteArray {
-        return CellBuilder.createCell { storeUInt(value, 48) }.beginParse().bits.toByteArray()
+        return CellBuilder.createCell { storeUInt(value.toBigInt(), 48) }.beginParse().bits.toByteArray()
     }
 
     fun putUint64(value: BigInteger): ByteArray {
-        return CellBuilder.createCell { storeUInt(value, 64) }.beginParse().bits.toByteArray()
+        return CellBuilder.createCell { storeUInt(value.toBigInt(), 64) }.beginParse().bits.toByteArray()
     }
 
     fun putVarUInt(value: Long): ByteArray {

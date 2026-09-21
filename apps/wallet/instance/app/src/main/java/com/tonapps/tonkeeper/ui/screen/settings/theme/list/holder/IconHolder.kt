@@ -6,25 +6,19 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import android.graphics.drawable.AdaptiveIconDrawable
-import com.tonapps.log.L
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.graphics.withSave
-import androidx.core.view.doOnLayout
 import com.tonapps.tonkeeper.core.LauncherIcon
 import com.tonapps.tonkeeper.ui.screen.settings.theme.list.Item
 import com.tonapps.tonkeeperx.R
-import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.separatorCommonColor
 import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.launch
 import uikit.extensions.activity
 import uikit.extensions.dp
 import uikit.extensions.drawable
-import uikit.extensions.getDimensionPixelSize
 
 class IconHolder(parent: ViewGroup): Holder<Item.Icon>(parent, R.layout.view_theme_icon) {
 
@@ -60,12 +54,11 @@ class IconHolder(parent: ViewGroup): Holder<Item.Icon>(parent, R.layout.view_the
         val bitmap = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.clipPath(path)
-        backgroundDrawable.draw(canvas)
 
         canvas.withSave {
             val scale = 1.5f
             scale(scale, scale, iconSize / 2f, iconSize / 2f)
-            foregroundDrawable.setBounds(0, 0, iconSize, iconSize)
+            backgroundDrawable.draw(this)
             foregroundDrawable.draw(this)
         }
 

@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.tonapps.log.L
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
@@ -20,6 +19,10 @@ object NotificationsHelper {
     fun getPendingIntent(context: Context, uri: Uri): PendingIntent {
         val intent = Intent(context, RootActivity::class.java)
         intent.data = uri
+        return getPendingIntent(context, intent)
+    }
+
+    fun getPendingIntent(context: Context, intent: Intent): PendingIntent {
         return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 

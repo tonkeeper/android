@@ -14,8 +14,9 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
-import io.tradingapi.models.ErrorResponse
+import io.tradingapi.models.GetShelvesConfig400Response
 import io.tradingapi.models.ShelvesConfigResponse
+import io.tradingapi.models.ShelvesConfigResponseV2
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -103,6 +104,74 @@ class ShelvesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/api/v1/trading/shelves/config",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getShelvesConfigV2(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null): ShelvesConfigResponseV2 {
+        val localVarResponse = getShelvesConfigV2WithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as ShelvesConfigResponseV2
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getShelvesConfigV2WithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?): ApiResponse<ShelvesConfigResponseV2?> {
+        val localVariableConfig = getShelvesConfigV2RequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive)
+
+        return request<Unit, ShelvesConfigResponseV2>(
+            localVariableConfig
+        )
+    }
+
+    fun getShelvesConfigV2RequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                if (currency != null) {
+                    put("currency", listOf(currency.toString()))
+                }
+                if (storeCountryCode != null) {
+                    put("store_country_code", listOf(storeCountryCode.toString()))
+                }
+                if (simCountry != null) {
+                    put("sim_country", listOf(simCountry.toString()))
+                }
+                if (deviceCountryCode != null) {
+                    put("device_country_code", listOf(deviceCountryCode.toString()))
+                }
+                if (timezone != null) {
+                    put("timezone", listOf(timezone.toString()))
+                }
+                if (isVpnActive != null) {
+                    put("is_vpn_active", listOf(isVpnActive.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        userAgent?.apply { localVariableHeaders["User-Agent"] = this.toString() }
+        xLang?.apply { localVariableHeaders["X-Lang"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v2/trading/shelves/config",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

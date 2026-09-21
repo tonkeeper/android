@@ -15,6 +15,9 @@ import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
+import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
+import com.tonapps.core.flags.WalletFeature
+import com.tonapps.wallet.SecureProofProvider
 import com.tonapps.extensions.map
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
@@ -28,13 +31,24 @@ import com.tonapps.network.postJSON
 import com.tonapps.network.requestBuilder
 import com.tonapps.network.sse
 import com.tonapps.network.ssePost
+import com.tonapps.wallet.api.Constants.HERMES_WS
+import com.tonapps.wallet.api.Constants.MULTICHAIN_API
+import com.tonapps.wallet.api.Constants.PERPS_API
+import com.tonapps.wallet.api.Constants.REALTIME_WS
 import com.tonapps.wallet.api.Constants.SWAP_API
 import com.tonapps.wallet.api.Constants.TRADING_API
 import com.tonapps.wallet.api.configs.CountryConfig
 import com.tonapps.wallet.api.core.ExchangeAPI
+import com.tonapps.wallet.api.core.HermesAPI
+import com.tonapps.wallet.api.core.KandelabrAPI
+import com.tonapps.wallet.api.core.MultichainAPI
+import com.tonapps.wallet.api.core.PerpsAPI
 import com.tonapps.wallet.api.core.TradingAPI
+import com.tonapps.wallet.api.realtime.CentrifugeAPI
+import com.tonapps.wallet.api.realtime.RealtimeTokenSource
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.wallet.api.entity.AccountEventEntity
+import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.EmulateWithBatteryResult
@@ -45,18 +59,25 @@ import com.tonapps.wallet.api.entity.OnRampMerchantEntity
 import com.tonapps.wallet.api.entity.toncenter.ToncenterSSERequest
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.api.extensions.toTokenEntity
+import com.tonapps.wallet.api.internal.BootConfigOverrides
 import com.tonapps.wallet.api.internal.ConfigRepository
 import com.tonapps.wallet.api.internal.InternalApi
 import com.tonapps.wallet.api.internal.SwapApi
 import com.tonapps.wallet.api.tron.TronApi
 import io.Serializer
 import io.batteryapi.apis.DefaultApi
+import io.batteryapi.models.AndroidBatteryPurchaseRequest
+import io.batteryapi.models.AndroidBatteryPurchaseStatus
 import io.batteryapi.models.Balance
 import io.batteryapi.models.Config
 import io.batteryapi.models.EstimateGaslessCostRequest
+import io.batteryapi.models.Purchases
 import io.batteryapi.models.RechargeMethods
+import io.batteryapi.models.SendMessageRequest
+import io.batteryapi.models.Status
 import io.infrastructure.ClientError
 import io.infrastructure.ClientException
+import io.ktor.util.hex
 import io.infrastructure.ServerError
 import io.infrastructure.ServerException
 import io.tonapi.models.Account
@@ -66,6 +87,7 @@ import io.tonapi.models.AccountEvents
 import io.tonapi.models.AccountStatus
 import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.EmulateMessageToWalletRequestParamsInner
+import io.tonapi.models.GetBlockchainRawAccountsRequest
 import io.tonapi.models.GetWalletsByPublicKeyBulkRequest
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
@@ -84,6 +106,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import kotlinx.io.bytestring.ByteString
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -91,27 +114,49 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
-import org.ton.api.pub.PublicKeyEd25519
 import org.ton.block.StateInit
 import org.ton.cell.Cell
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.tlb.asRef
 import java.math.BigDecimal
 import java.util.Locale
+
+private const val BATTERY_PROOF_TON_CHAIN = "ton"
+private const val MULTICHAIN_FEATURE_FLAG = "multichain"
 
 @Suppress("LargeClass")
 class API(
     private val context: Context,
     private val scope: CoroutineScope,
     private val delegate: LoggingInterceptor.Delegate,
+    private val proofProvider: SecureProofProvider,
+    buildProvider: BuildProvider,
 ) : CoreAPI(context, delegate) {
 
-    private val internalApi = InternalApi(context, defaultHttpClient, appVersionName)
+    fun interface BuildProvider {
+        fun buildOverride(): String?
+    }
+
+    private val internalApi = InternalApi(
+        context,
+        defaultHttpClient,
+        buildProvider.buildOverride() ?: appVersionName,
+    )
     private val swapApi = SwapApi(defaultHttpClient)
     private val configRepository = ConfigRepository(context, scope, internalApi)
 
+    init {
+        internalApi.setFeaturesProvider {
+            if (isMultichainAvailable()) {
+                listOf(MULTICHAIN_FEATURE_FLAG)
+            } else {
+                emptyList()
+            }
+        }
+    }
+
     val configFlow: Flow<ConfigEntity>
-        get() = configRepository.stream
+        get() = configRepository.stream.map { BootConfigOverrides.applyTo(it) }
 
     private val mainnetConfig: ConfigEntity
         get() = getConfig(TonNetwork.MAINNET)
@@ -139,6 +184,31 @@ class API(
         TradingAPI(TRADING_API, tonAPIHttpClient)
     }
 
+    val multichain: MultichainAPI by lazy {
+        MultichainAPI(MULTICHAIN_API, tonAPIHttpClient)
+    }
+
+    val perps: PerpsAPI by lazy {
+        PerpsAPI(PERPS_API, tonAPIHttpClient)
+    }
+
+    // The kandelabr spec's paths already carry the /kandelabr/public-api/v1 prefix.
+    val kandelabr: KandelabrAPI by lazy {
+        KandelabrAPI(MULTICHAIN_API, tonAPIHttpClient)
+    }
+
+    val hermes: HermesAPI by lazy {
+        HermesAPI(HERMES_WS, tonAPIHttpClient) { deviceAuthProvider?.accessToken() }
+    }
+
+    val realtimeTokens: RealtimeTokenSource by lazy {
+        RealtimeTokenSource(multichain)
+    }
+
+    val centrifuge: CentrifugeAPI by lazy {
+        CentrifugeAPI(REALTIME_WS, userAgent, scope, realtimeTokens::connectionToken)
+    }
+
     //TODO TK-371
     private val _providerState: StateFlow<Provider> = configRepository.stream
         .map { buildProvider() }
@@ -154,7 +224,7 @@ class API(
         get() = _batteryProviderState.value
 
     val tron: TronApi by lazy {
-        TronApi(mainnetConfig, defaultHttpClient, batteryProvider.default.get(TonNetwork.MAINNET))
+        TronApi(mainnetConfig, tronHttpClient, batteryProvider.default.get(TonNetwork.MAINNET))
     }
 
     private fun buildProvider() = Provider(
@@ -172,6 +242,11 @@ class API(
     )
 
     fun getConfig(network: TonNetwork) = configRepository.getConfig(network)
+
+    fun isMultichainAvailable(): Boolean {
+        return WalletFeature.Multichain.isEnabled &&
+            (getConfig(TonNetwork.MAINNET).flags.multichainEnabled || WalletFeature.Multichain.isOverridden)
+    }
 
     fun setCountryConfig(config: CountryConfig) = internalApi.setConfig(config)
 
@@ -244,6 +319,8 @@ class API(
 
     fun liteServer(network: TonNetwork) = provider.liteServer.get(network)
 
+    fun migration(network: TonNetwork) = provider.migration.get(network)
+
     fun staking(network: TonNetwork) = provider.staking.get(network)
 
     fun events(network: TonNetwork) = provider.events.get(network)
@@ -287,20 +364,72 @@ class API(
         )
     }
 
-    suspend fun getEthena(accountId: String): EthenaEntity? = withContext(Dispatchers.IO) {
-        withRetry { internalApi.getEthena(accountId) }
+    suspend fun getEthena(accountId: String, walletId: String?): EthenaEntity? = withContext(Dispatchers.IO) {
+        withRetry { internalApi.getEthena(accountId, walletId) }
     }
 
     fun getBatteryBalance(
-        tonProofToken: String,
+        auth: Authorization,
         network: TonNetwork,
         units: DefaultApi.UnitsGetBalance = DefaultApi.UnitsGetBalance.ton
     ): Balance? {
-        return withRetry { battery(network).getBalance(tonProofToken, units, region = getConfig(network).region) }
+        if (auth.isEmpty) {
+            return null
+        }
+        return withRetry {
+            battery(network).getBalance(
+                tonConnectAuth = auth.tonProof,
+                xWalletId = auth.walletId,
+                units = units,
+                region = getConfig(network).region,
+            )
+        }
     }
 
-    fun getAlertNotifications() = withRetry {
-        internalApi.getNotifications()
+    fun getBatteryPurchases(
+        auth: Authorization,
+        network: TonNetwork,
+    ): Purchases? {
+        if (auth.isEmpty) {
+            return null
+        }
+        return withRetry {
+            battery(network).getPurchases(
+                tonConnectAuth = auth.tonProof,
+                xWalletId = auth.walletId,
+            )
+        }
+    }
+
+    fun getBatteryStatus(
+        auth: Authorization,
+        network: TonNetwork,
+    ): Status? {
+        if (auth.isEmpty) {
+            return null
+        }
+        return withRetry {
+            battery(network).getStatus(
+                tonConnectAuth = auth.tonProof,
+                xWalletId = auth.walletId,
+            )
+        }
+    }
+
+    fun batteryPurchase(
+        auth: Authorization,
+        network: TonNetwork,
+        request: AndroidBatteryPurchaseRequest
+    ): AndroidBatteryPurchaseStatus {
+        return battery(network).androidBatteryPurchase(
+            androidBatteryPurchaseRequest = request,
+            tonConnectAuth = auth.tonProof,
+            xWalletId = auth.walletId,
+        )
+    }
+
+    fun getAlertNotifications(walletId: String?) = withRetry {
+        internalApi.getNotifications(walletId)
     } ?: emptyList()
 
     private fun isOkStatus(network: TonNetwork): Boolean {
@@ -457,11 +586,11 @@ class API(
 
     suspend fun fetchTronTransactions(
         tronAddress: String,
-        tonProofToken: String,
+        auth: Authorization,
         beforeTimestamp: Timestamp? = null,
         afterTimestamp: Timestamp? = null,
         limit: Int
-    ) = tron.getTronHistory(tronAddress, tonProofToken, limit, beforeTimestamp, afterTimestamp)
+    ) = tron.getTronHistory(tronAddress, auth, limit, beforeTimestamp, afterTimestamp)
 
     suspend fun getTransactionByHash(
         accountId: String,
@@ -690,6 +819,20 @@ class API(
         return withRetry { nft(network).getNftItemByAddress(address) }
     }
 
+    fun getNftsByAddresses(
+        addresses: List<String>,
+        network: TonNetwork,
+    ): List<NftItem>? {
+        if (addresses.isEmpty()) {
+            return emptyList()
+        }
+        return withRetry {
+            nft(network).getNftItemsByAddresses(
+                GetBlockchainRawAccountsRequest(accountIds = addresses),
+            ).nftItems
+        }
+    }
+
     fun getNftItems(
         address: String,
         network: TonNetwork,
@@ -711,7 +854,7 @@ class API(
         val hex = withRetry {
             accounts(network).getAccountPublicKey(accountId)
         }?.publicKey ?: return null
-        return PublicKeyEd25519(hex(hex))
+        return PublicKeyEd25519(ByteString(hex(hex)))
     }
 
     fun safeGetPublicKey(
@@ -780,7 +923,7 @@ class API(
     }
 
     fun estimateGaslessCost(
-        tonProofToken: String,
+        auth: Authorization,
         jettonMaster: String,
         cell: Cell,
         network: TonNetwork,
@@ -788,35 +931,33 @@ class API(
         val request = EstimateGaslessCostRequest(cell.base64(), false)
 
         return withRetry {
-            battery(network).estimateGaslessCost(jettonMaster, request, tonProofToken).commission
+            battery(network).estimateGaslessCost(
+                jettonMaster = jettonMaster,
+                estimateGaslessCostRequest = request,
+                tonConnectAuth = auth.tonProof,
+                xWalletId = auth.walletId,
+            ).commission
         }
     }
 
     fun emulateWithBattery(
-        tonProofToken: String,
+        auth: Authorization,
         cell: Cell,
         network: TonNetwork,
         safeModeEnabled: Boolean,
-    ) = emulateWithBattery(tonProofToken, cell.base64(), network, safeModeEnabled)
+    ) = emulateWithBattery(auth, cell.base64(), network, safeModeEnabled)
 
     fun emulateWithBattery(
-        tonProofToken: String,
+        auth: Authorization,
         boc: String,
         network: TonNetwork,
         safeModeEnabled: Boolean,
     ): EmulateWithBatteryResult? {
-        val host = when (network) {
-            TonNetwork.TESTNET -> mainnetConfig.batteryTestnetHost
-            TonNetwork.MAINNET -> mainnetConfig.batteryHost
-            TonNetwork.TETRA -> mainnetConfig.batteryHost
-        }
-        val url = "$host/wallet/emulate"
+        val url = "${batteryHost(network)}/wallet/emulate"
         val data = "{\"boc\":\"$boc\",\"safe_mode\":$safeModeEnabled}"
 
         val response = withRetry {
-            tonAPIHttpClient.postJSON(url, data, ArrayMap<String, String>().apply {
-                set("X-TonConnect-Auth", tonProofToken)
-            })
+            tonAPIHttpClient.postJSON(url, data, auth.batteryHeaders())
         } ?: return null
 
         val supportedByBattery = response.headers["supported-by-battery"] == "true"
@@ -871,21 +1012,37 @@ class API(
 
     suspend fun sendToBlockchainWithBattery(
         boc: String,
-        tonProofToken: String,
+        auth: Authorization,
+        keyPair: WalletKeyPair?,
         network: TonNetwork,
         source: String,
         confirmationTime: Double,
+        headers: Map<String, String> = emptyMap(),
     ) = withContext(Dispatchers.IO) {
         if (!isOkStatus(network)) {
             throw SendBlockchainException.SendBlockchainStatusException
         }
 
-        val request = io.batteryapi.models.EmulateMessageToWalletRequest(
-            boc = boc,
-        )
+        val walletId = auth.walletId
+        val proof = if (walletId == null || keyPair == null) {
+            null
+        } else {
+            proofProvider.batteryProof(
+                keyPair = keyPair,
+                walletId = walletId,
+                chain = BATTERY_PROOF_TON_CHAIN,
+                boc = boc,
+            ).signature
+        }
 
         try {
-            battery(network).sendMessage(tonProofToken, request)
+            withExtraHeaders(headers) {
+                battery(network).sendMessage(
+                    sendMessageRequest = SendMessageRequest(boc = boc, proof = proof),
+                    tonConnectAuth = auth.tonProof,
+                    xWalletId = auth.walletId,
+                )
+            }
         } catch (e: Throwable) {
             throwSendBlockchainError(e)
         }
@@ -896,6 +1053,7 @@ class API(
         network: TonNetwork,
         source: String,
         confirmationTime: Double,
+        headers: Map<String, String> = emptyMap(),
     ) = withContext(Dispatchers.IO) {
         if (!isOkStatus(network)) {
             throw SendBlockchainException.SendBlockchainStatusException
@@ -911,8 +1069,11 @@ class API(
             boc = boc,
             meta = meta
         )
+
         try {
-            blockchain(network).sendBlockchainMessage(request)
+            withExtraHeaders(headers) {
+                blockchain(network).sendBlockchainMessage(request)
+            }
         } catch (e: Throwable) {
             throwSendBlockchainError(e)
         }
@@ -1014,7 +1175,14 @@ class API(
         } ?: false
     }
 
-    fun getStories(id: String) = internalApi.getStories(id)
+    fun getStories(id: String, walletId: String?, isNew: Boolean) = internalApi.getStories(id, walletId, isNew)
+
+    fun getStories(
+        ids: List<String>,
+        walletId: String?,
+        network: TonNetwork,
+        isNew: Boolean,
+    ) = internalApi.getStories(ids, walletId, network, isNew)
 
     fun pushTonconnectSubscribe(
         token: String,
@@ -1089,20 +1257,20 @@ class API(
         }
     }
 
-    fun getBrowserApps(network: TonNetwork, locale: Locale): JSONObject {
-        return internalApi.getBrowserApps(network, locale)
+    fun getBrowserApps(network: TonNetwork, locale: Locale, walletId: String?): JSONObject {
+        return internalApi.getBrowserApps(network, locale, walletId)
     }
 
-    fun getBanners(network: TonNetwork): List<BannerEntity> {
-        return internalApi.getBanners(network)
+    fun getBanners(network: TonNetwork, walletId: String?, isNew: Boolean): List<BannerEntity> {
+        return internalApi.getBanners(network, walletId, isNew)
     }
 
-    fun getCurrencies(network: TonNetwork, locale: Locale): JSONArray {
-        return internalApi.getCurrencies(network, locale)
+    fun getCurrencies(network: TonNetwork, locale: Locale, walletId: String?): JSONArray {
+        return internalApi.getCurrencies(network, locale, walletId)
     }
 
-    fun getFiatMethods(network: TonNetwork, locale: Locale): JSONObject? {
-        return withRetry { internalApi.getFiatMethods(network, locale) }
+    fun getFiatMethods(network: TonNetwork, locale: Locale, walletId: String?): JSONObject? {
+        return withRetry { internalApi.getFiatMethods(network, locale, walletId) }
     }
 
     fun getTransactionEvents(accountId: String, network: TonNetwork, eventId: String): AccountEvent? {
@@ -1187,6 +1355,28 @@ class API(
             throw Exception("Failed creating proof: ${response.code}")
         }
         response.body?.string() ?: throw Exception("Empty response")
+    }
+
+    private fun batteryHost(network: TonNetwork): String {
+        return when (network) {
+            TonNetwork.TESTNET -> mainnetConfig.batteryTestnetHost
+            TonNetwork.MAINNET -> mainnetConfig.batteryHost
+            TonNetwork.TETRA -> mainnetConfig.batteryHost
+        }
+    }
+
+    // TODO: remove batteryHeaders() once emulateWithBattery uses Battery OpenAPI
+    // (batteryEmulation().emulateMessageToWalletWithHttpInfo) for response headers.
+    private fun Authorization.batteryHeaders() = ArrayMap<String, String>().apply {
+        tonProof?.let { set("X-TonConnect-Auth", it) }
+        walletId?.let { set("X-Wallet-ID", it) }
+        val token = deviceToken
+        if (!token.isNullOrBlank()) {
+            set("Authorization", "Bearer $token")
+            walletId?.let { id ->
+                walletAuthToken(id, token)?.let { set("X-Wallet-Authorization", it) }
+            }
+        }
     }
 
     private fun throwSendBlockchainError(e: Throwable): Nothing {

@@ -2,6 +2,7 @@ package com.tonapps.ledger.ton
 
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.loadRemainingBits
+import com.tonapps.blockchain.ton.toBigInteger
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
 import org.ton.block.AddrStd
@@ -300,7 +301,7 @@ sealed class TonPayloadFormat : Parcelable {
                         val appId = if (s.remainingBits > 0) s.loadUInt(64) else null
                         s.endParse()
 
-                        return TonstakersDeposit(queryId, appId)
+                        return TonstakersDeposit(queryId, appId?.toBigInteger())
                     }
 
                     0x69fb306c -> {
@@ -314,7 +315,7 @@ sealed class TonPayloadFormat : Parcelable {
                         return VoteForProposal(
                             queryId,
                             votingAddress,
-                            expirationDate,
+                            expirationDate.toBigInteger(),
                             vote,
                             needConfirmation
                         )

@@ -1,0 +1,29 @@
+# Thin sequencer: receive smoke then hide/show BTC. Nested subflows/ are
+# not matched by config.yaml `portfolio/*`. Each subflow launches
+# (stopApp + unlock). optional runFlow continues after a case failure;
+# evalScript runs only if that case succeeded. Final assertTrue fails the
+# Cloud row if any case failed and names them.
+name: "Multichain — portfolio"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.portfolio_receive_ok = false; output.portfolio_hide_btc_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Multichain — receive networks smoke"
+    commands:
+      - runFlow: subflows/recieve_smoke.yaml
+      - evalScript: ${output.portfolio_receive_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — hide and show BTC"
+    commands:
+      - runFlow: subflows/hide_show_btc_in_wallet.yaml
+      - evalScript: ${output.portfolio_hide_btc_ok = true}
+
+- evalScript: ${var f = []; if (output.portfolio_receive_ok !== true) f.push('receive'); if (output.portfolio_hide_btc_ok !== true) f.push('hide/show BTC'); output.portfolio_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.portfolio_failed === ''}
+    label: "${output.portfolio_failed ? 'portfolio shard: failed ' + output.portfolio_failed : 'portfolio shard: all cases passed'}"

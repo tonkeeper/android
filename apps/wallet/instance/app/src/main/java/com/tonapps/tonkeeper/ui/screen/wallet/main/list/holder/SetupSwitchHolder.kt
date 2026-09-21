@@ -6,13 +6,10 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.tonkeeper.extensions.hasPushPermission
 import com.tonapps.tonkeeper.extensions.showToast
-import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.passcodeManager
-import com.tonapps.tonkeeper.koin.pushManager
 import com.tonapps.tonkeeper.koin.rnLegacy
 import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -27,7 +24,6 @@ import kotlinx.coroutines.launch
 import uikit.extensions.activity
 import uikit.extensions.drawable
 import uikit.extensions.withAlpha
-import uikit.navigation.Navigation
 import uikit.widget.SwitchView
 
 class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.layout.view_wallet_setup_switch) {
@@ -74,6 +70,7 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val activity = context.activity ?: return
             switchView.setChecked(newChecked = false, byUser = false)
+            settingsRepository?.pushPermissionRequested = true
             ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
     }
@@ -82,7 +79,7 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
         lifecycleScope?.launch {
             try {
                 if (value) {
-                    val code = passcodeManager?.requestValidPasscode(context) ?: throw IllegalStateException()
+                    val code = passcodeManager?.requestValidPasscode(context) ?: throw IllegalStateException("Passcode is not available")
                     rnLegacy?.setupBiometry(code)
                 } else {
                     rnLegacy?.removeBiometry()

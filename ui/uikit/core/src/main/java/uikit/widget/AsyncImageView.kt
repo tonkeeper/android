@@ -2,9 +2,12 @@ package uikit.widget
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Outline
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
+import android.view.View
+import android.view.ViewOutlineProvider
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -89,6 +92,9 @@ class AsyncImageView @JvmOverloads constructor(
         val isEmpty: Boolean
             get() = topLeft == 0f && topRight == 0f && bottomLeft == 0f && bottomRight == 0f
 
+        val isUniform: Boolean
+            get() = topLeft == topRight && topLeft == bottomLeft && topLeft == bottomRight
+
         constructor(radius: Float) : this(
             topLeft = radius,
             topRight = radius,
@@ -133,6 +139,22 @@ class AsyncImageView @JvmOverloads constructor(
             }
             roundedCornerRadius = RoundedCornerRadius(it.getDimensionPixelSize(R.styleable.AsyncImageView_roundedCornerRadius, 0).toFloat())
         }
+        applyOutlineClip()
+    }
+
+    private fun applyOutlineClip() {
+        val clip = !roundedCornerRadius.isEmpty && roundedCornerRadius.isUniform &&
+            !roundAsCircle && border.isEmpty
+        if (clip) {
+            outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    outline.setRoundRect(0, 0, view.width, view.height, roundedCornerRadius.topLeft)
+                }
+            }
+        } else {
+            outlineProvider = ViewOutlineProvider.BACKGROUND
+        }
+        clipToOutline = clip
     }
 
     private fun resourceUri(resId: Int): Uri = "${prefixResourceUri}${resId}".toUri()
@@ -142,6 +164,7 @@ class AsyncImageView @JvmOverloads constructor(
         if (radius > 0) {
             roundAsCircle = false
         }
+        applyOutlineClip()
     }
 
     fun setRoundLeft(radius: Float) {
@@ -149,6 +172,7 @@ class AsyncImageView @JvmOverloads constructor(
         if (radius > 0) {
             roundAsCircle = false
         }
+        applyOutlineClip()
     }
 
     fun setRound(radius: Float) {
@@ -156,11 +180,13 @@ class AsyncImageView @JvmOverloads constructor(
         if (radius > 0) {
             roundAsCircle = false
         }
+        applyOutlineClip()
     }
 
     fun setCircular() {
         roundAsCircle = true
         roundedCornerRadius = RoundedCornerRadius()
+        applyOutlineClip()
     }
 
     fun setScaleTypeCenterInside() {
@@ -216,7 +242,7 @@ class AsyncImageView @JvmOverloads constructor(
         if (roundAsCircle) {
             transformations.add(CircleCropTransformation())
         }
-        if (!roundedCornerRadius.isEmpty) {
+        if (!roundedCornerRadius.isEmpty && !clipToOutline) {
             transformations.add(RoundedCornersTransformation(
                 topLeft = roundedCornerRadius.topLeft,
                 topRight = roundedCornerRadius.topRight,

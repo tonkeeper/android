@@ -7,25 +7,26 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 import ui.theme.resources.Res
-import ui.theme.resources.montserrat_bold
-import ui.theme.resources.montserrat_light
-import ui.theme.resources.montserrat_medium
-import ui.theme.resources.montserrat_regular
-import ui.theme.resources.montserrat_semi_bold
 import ui.theme.resources.roboto_mono
+import ui.theme.resources.tt_firs_neue_demi_bold
+import ui.theme.resources.tt_firs_neue_medium
+import ui.theme.resources.tt_firs_neue_normal
+
+private const val NUM_AND_HEADING_FONT_FEATURE_SETTINGS = "'ss09' on, 'ss17' on, 'ss18' on"
+private const val TEXT_FONT_FEATURE_SETTINGS = "'ss07' on, $NUM_AND_HEADING_FONT_FEATURE_SETTINGS"
 
 @Composable
-private fun rememberMontserratFontFamily(): FontFamily {
-    val light = Font(Res.font.montserrat_light, weight = FontWeight.Light)
-    val normal = Font(Res.font.montserrat_regular, weight = FontWeight.Normal)
-    val medium =  Font(Res.font.montserrat_medium, weight = FontWeight.Medium)
-    val semibold = Font(Res.font.montserrat_semi_bold, weight = FontWeight.SemiBold)
-    val bold = Font(Res.font.montserrat_bold, weight = FontWeight.Bold)
-    return remember(light, normal, medium, semibold, bold) {
-        FontFamily(light, normal, medium, semibold, bold)
+private fun rememberTTFirsNeueFontFamily(): FontFamily {
+    val normal = Font(Res.font.tt_firs_neue_normal, weight = FontWeight.Normal)
+    val medium =  Font(Res.font.tt_firs_neue_medium, weight = FontWeight.Medium)
+    val semibold = Font(Res.font.tt_firs_neue_demi_bold, weight = FontWeight.SemiBold)
+    val bold = Font(Res.font.tt_firs_neue_demi_bold, weight = FontWeight.Bold)
+    return remember(normal, medium, semibold, bold) {
+        FontFamily(normal, medium, semibold, bold)
     }
 }
 
@@ -58,92 +59,105 @@ internal val LocalTypography = staticCompositionLocalOf<UIKitTypography> {
 
 @Composable
 internal fun rememberAppTypography(
-    montserrat: FontFamily = rememberMontserratFontFamily(),
+    ttFirsNeue: FontFamily = rememberTTFirsNeueFontFamily(),
     mono: FontFamily = rememberRobotoMonoFamily(),
 ): UIKitTypography {
-    return remember(montserrat, mono) {
+    return remember(ttFirsNeue, mono) {
         UIKitTypography(
             num1 = TextStyle(
                 fontSize = 32.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.SemiBold,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Medium,
+                fontFeatureSettings = NUM_AND_HEADING_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
                 letterSpacing = TextStyle.Default.letterSpacing
             ),
             num2 = TextStyle(
                 fontSize = 28.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.SemiBold,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Medium,
+                fontFeatureSettings = NUM_AND_HEADING_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
                 letterSpacing = TextStyle.Default.letterSpacing
             ),
             h1 = TextStyle(
                 fontSize = 32.sp,
-                fontFamily = montserrat,
+                fontFamily = ttFirsNeue,
                 fontWeight = FontWeight.Bold,
+                fontFeatureSettings = NUM_AND_HEADING_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
                 letterSpacing = TextStyle.Default.letterSpacing
             ),
             h2 = TextStyle(
                 fontSize = 24.sp,
                 lineHeight = 32.sp,
-                fontFamily = montserrat,
+                fontFamily = ttFirsNeue,
                 fontWeight = FontWeight.Bold,
+                fontFeatureSettings = NUM_AND_HEADING_FONT_FEATURE_SETTINGS,
             ),
             h3 = TextStyle(
                 fontSize = 20.sp,
-                fontFamily = montserrat,
+                fontFamily = ttFirsNeue,
                 fontWeight = FontWeight.Bold,
+                fontFeatureSettings = NUM_AND_HEADING_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
                 letterSpacing = TextStyle.Default.letterSpacing
             ),
             label1 = TextStyle(
                 fontSize = 16.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.SemiBold,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Medium,
+                fontFeatureSettings = TEXT_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
-                letterSpacing = TextStyle.Default.letterSpacing
+                letterSpacing = 0.005.em
             ),
             label2 = TextStyle(
                 fontSize = 14.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.SemiBold,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Medium,
+                fontFeatureSettings = TEXT_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
-                letterSpacing = TextStyle.Default.letterSpacing
+                letterSpacing = 0.005.em
             ),
             label3 = TextStyle(
                 fontSize = 12.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.SemiBold,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Medium,
+                fontFeatureSettings = TEXT_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
-                letterSpacing = TextStyle.Default.letterSpacing
+                letterSpacing = 0.01.em
             ),
             body1 = TextStyle(
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.Medium
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Normal,
+                fontFeatureSettings = TEXT_FONT_FEATURE_SETTINGS,
+                letterSpacing = 0.005.em
             ),
             body2 = TextStyle(
                 fontSize = 14.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.Medium,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Normal,
+                fontFeatureSettings = TEXT_FONT_FEATURE_SETTINGS,
                 lineHeight = 20.sp,
-                letterSpacing = TextStyle.Default.letterSpacing
+                letterSpacing = 0.005.em
             ),
             body3 = TextStyle(
                 fontSize = 12.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.Medium,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Normal,
+                fontFeatureSettings = TEXT_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
-                letterSpacing = TextStyle.Default.letterSpacing
+                letterSpacing = 0.01.em
             ),
             body4CAPS = TextStyle(
                 fontSize = 10.sp,
-                fontFamily = montserrat,
-                fontWeight = FontWeight.SemiBold,
+                fontFamily = ttFirsNeue,
+                fontWeight = FontWeight.Medium,
+                fontFeatureSettings = TEXT_FONT_FEATURE_SETTINGS,
                 lineHeight = TextStyle.Default.lineHeight,
-                letterSpacing = TextStyle.Default.letterSpacing
+                letterSpacing = 0.01.em
             ),
             mono = TextStyle(
                 fontSize = 16.sp,

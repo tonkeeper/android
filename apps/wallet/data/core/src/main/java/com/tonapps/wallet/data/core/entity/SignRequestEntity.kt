@@ -13,7 +13,8 @@ import org.json.JSONObject
 import org.ton.block.AddrStd
 
 @Parcelize
-data class SignRequestEntity(
+@ConsistentCopyVisibility
+data class SignRequestEntity private constructor(
     val appUri: Uri,
     private val fromValue: String?,
     private val sourceValue: String?,
@@ -41,22 +42,6 @@ data class SignRequestEntity(
     val targetAddressValue: String
         get() = messages.first().addressValue
 
-    constructor(json: JSONObject, appUri: Uri) : this(
-        appUri = appUri,
-        fromValue = json.optStringCompatJS("from"),
-        sourceValue = json.optStringCompatJS("source"),
-        validUntil = parseValidUnit(json),
-        messages = RawMessageEntity.parseArray(json.getJSONArray("messages"), false),
-        network = parseNetwork(json.opt("network")),
-        messagesVariants = json.optJSONObject("messagesVariants")?.let {
-            MessagesVariantsEntity(it)
-        }
-    )
-
-    constructor(value: String, appUri: Uri) : this(JSONObject(value), appUri)
-
-    constructor(value: Any, appUri: Uri) : this(value.toString(), appUri)
-
     fun getTransferMessages(isEnabledBattery: Boolean): List<RawMessageEntity> {
         if (isEnabledBattery) {
             return messagesVariants?.battery ?: messages
@@ -82,7 +67,13 @@ data class SignRequestEntity(
 
         fun setNetwork(network: TonNetwork) = apply { this.network = network }
 
-        fun setTestnet(testnet: Boolean) = setNetwork(if (testnet) TonNetwork.TESTNET else TonNetwork.MAINNET)
+        fun setTestnet(testnet: Boolean) = setNetwork(
+            if (testnet) {
+                TonNetwork.TESTNET
+            } else {
+                TonNetwork.MAINNET
+            }
+        )
 
         fun addMessage(message: RawMessageEntity) = apply { messages.add(message) }
 
@@ -104,10 +95,30 @@ data class SignRequestEntity(
 
     companion object {
 
+        fun parse(value: String, appUri: Uri): SignRequestEntity? = parse(JSONObject(value), appUri)
+
+        fun parse(json: JSONObject, appUri: Uri): SignRequestEntity? {
+            val messages = RawMessageEntity.parseArray(json.getJSONArray("messages"), false)
+            if (messages.isEmpty()) {
+                return null
+            }
+            return SignRequestEntity(
+                appUri = appUri,
+                fromValue = json.optStringCompatJS("from"),
+                sourceValue = json.optStringCompatJS("source"),
+                validUntil = parseValidUnit(json),
+                messages = messages,
+                network = parseNetwork(json.opt("network")),
+                messagesVariants = json.optJSONObject("messagesVariants")?.let {
+                    MessagesVariantsEntity(it)
+                }
+            )
+        }
+
         fun parse(array: JSONArray, appUri: Uri): List<SignRequestEntity> {
             val requests = mutableListOf<SignRequestEntity>()
             for (i in 0 until array.length()) {
-                requests.add(SignRequestEntity(array.get(i), appUri))
+                parse(array.get(i).toString(), appUri)?.let(requests::add)
             }
             return requests.toList()
         }

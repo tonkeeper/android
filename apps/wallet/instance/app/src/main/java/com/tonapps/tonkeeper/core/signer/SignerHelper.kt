@@ -11,7 +11,7 @@ import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.toIpcFriendly
 import com.tonapps.tonkeeper.core.signer.SignerHiddenActivity.Companion.ARG_SIGN
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.cell.Cell
 import kotlin.coroutines.resume

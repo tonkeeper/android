@@ -1,0 +1,270 @@
+openapi: 3.0.3
+info:
+  title: kandelabr
+  description: kandelabr public API for candles
+  version: 1.0.1171
+servers:
+  - url: http://localhost:10000
+tags:
+  - name: candles
+    description: Candle data operations
+paths:
+  /kandelabr/public-api/v1/candles:
+    post:
+      tags:
+        - candles
+      summary: Get candles
+      description: |
+        Get candles for specified market and resolution.
+
+        **Modes:**
+        - **Time range:** provide `start_ts` and `end_ts` to get candles in [start_ts, end_ts).
+        - **Last N candles:** provide `limit` (number of candles). They are counted backwards from `end_ts`;
+          if `end_ts` is omitted, `end_ts` is treated as current time (now).
+
+        **Validation (400 if violated):**
+        - Either `limit` or both `start_ts` and `end_ts` must be provided.
+        - If `limit` is set, it must be a positive number.
+        - If both `start_ts` and `end_ts` are set, `start_ts` must be less than or equal to `end_ts`.
+
+        **Limits:** Number of candles (from time range or `limit`) must not exceed 3000. Exceeding returns 400.
+      operationId: getCandles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCandlesRequest'
+        required: true
+      responses:
+        "200":
+          description: Candles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCandlesResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kandelabr/public-api/v1/candles/batch:
+    post:
+      tags:
+        - candles
+      summary: Get candles (batch)
+      description: |
+        Get candles for multiple requests in one call. Request and response are arrays (same order).
+
+        **Limits:**
+        - Number of requests in `requests` array must not exceed 20.
+        - Sum of estimated candles across all requests must not exceed 3000.
+        Exceeding either limit returns 400.
+      operationId: getCandlesBatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCandlesBatchRequest'
+        required: true
+      responses:
+        "200":
+          description: Candles retrieved successfully (one response per request item, same order)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCandlesBatchResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kandelabr/public-api/v1/latest-rates:
+    post:
+      tags:
+        - candles
+      summary: Get latest rates
+      description: |
+        Get latest close price (rate) per ticker (minute resolution).
+
+        **Limits:** Number of tickers in `tickers` array must not exceed 20. Exceeding returns 400.
+      operationId: getLatestRates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLatestRatesRequest'
+        required: true
+      responses:
+        "200":
+          description: Latest rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLatestRatesResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    GetCandlesRequest:
+      type: object
+      required:
+        - resolution
+        - ticker
+      properties:
+        ticker:
+          type: string
+          description: |
+            Ticker symbol. Two forms are accepted:
+              - `ASSET/CURRENCY` (e.g. `BTC/USD`) — instrument defaults to PERP.
+              - `ASSET/CURRENCY/INSTRUMENT` (e.g. `BTC/USDT/SPOT`) — full form.
+        resolution:
+          type: string
+          description: Candle resolution
+          example: 1m
+          enum:
+            - 1m
+            - 5m
+            - 15m
+            - 30m
+            - 1h
+            - 4h
+            - 1d
+            - 1w
+            - 1mo
+        start_ts:
+          type: integer
+          format: int64
+          description: Start timestamp in milliseconds. Required when not using limit.
+          example: 1705000000000
+        end_ts:
+          type: integer
+          format: int64
+          description: End timestamp in milliseconds (exclusive). When using limit, candles are counted backwards from this time; if omitted, current time is used.
+          example: 1705003600000
+        limit:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Number of candles to return (positive). When set, candles are counted backwards from end_ts (or now if end_ts omitted).
+          example: 100
+    GetCandlesBatchRequest:
+      type: object
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          maxItems: 20
+          description: Array of getCandles requests
+          items:
+            $ref: '#/components/schemas/GetCandlesRequest'
+    GetCandlesBatchResponse:
+      type: object
+      required:
+        - responses
+      properties:
+        responses:
+          type: array
+          description: Array of getCandles responses (same order as requests)
+          items:
+            $ref: '#/components/schemas/GetCandlesResponse'
+    GetCandlesResponse:
+      type: object
+      required:
+        - candles
+        - resolution
+        - start_ts
+        - ticker
+      properties:
+        ticker:
+          type: string
+          description: Ticker symbol
+        resolution:
+          type: string
+          description: Candle resolution
+          example: 1m
+        start_ts:
+          type: integer
+          format: int64
+          description: Start timestamp in milliseconds
+          example: 1705000000000
+        candles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Candle'
+    Candle:
+      type: object
+      properties:
+        o:
+          type: string
+          description: Open price
+          example: "3500.12"
+        h:
+          type: string
+          description: High price
+          example: "3525.99"
+        l:
+          type: string
+          description: Low price
+          example: "3490.5"
+        c:
+          type: string
+          description: Close price
+          example: "3510.75"
+        v:
+          type: string
+          description: Volume
+          example: "145.32"
+        empty:
+          type: boolean
+          description: Whether the candle is empty (no trades in the period)
+    GetLatestRatesRequest:
+      type: object
+      properties:
+        tickers:
+          type: array
+          maxItems: 20
+          description: Ticker symbols in full format (e.g. BTC/USD/PERP). If omitted, returns empty list.
+          items:
+            type: string
+    GetLatestRatesResponse:
+      type: object
+      required:
+        - rates
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/LatestRate'
+    LatestRate:
+      type: object
+      required:
+        - rate
+        - ticker
+      properties:
+        ticker:
+          type: string
+          description: Ticker symbol
+        rate:
+          type: string
+          description: Latest close price
+          example: "3500.12"
+    Error:
+      type: object
+      required:
+        - message
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - NOT_FOUND
+            - INVALID_REQUEST
+        message:
+          type: string

@@ -16,6 +16,7 @@ import uikit.R
 import uikit.base.BaseActivity
 import uikit.base.BaseFragment
 import uikit.extensions.primaryFragment
+import uikit.extensions.roundTop
 import uikit.extensions.scale
 import uikit.widget.ToastView
 import java.util.concurrent.atomic.AtomicInteger
@@ -230,6 +231,30 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         }
     }
 
+    override fun popToRoot() {
+        if (isStateSaved()) {
+            return
+        }
+
+        fun resetHost() {
+            hostFragmentView.scale = 1f
+            hostFragmentView.alpha = 1f
+            hostFragmentView.roundTop(0)
+        }
+
+        val primary = supportFragmentManager.primaryNavigationFragment
+        val overlays = supportFragmentManager.fragments.filter { it !== primary }
+        if (overlays.isEmpty()) {
+            resetHost()
+            return
+        }
+
+        supportFragmentManager.commitNow {
+            overlays.forEach(::remove)
+            runOnCommit { resetHost() }
+        }
+    }
+
 
     private fun isStateSaved(): Boolean {
         return supportFragmentManager.isStateSaved || isFinishing || isDestroyed
@@ -254,8 +279,9 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     override fun toast(
         message: String,
         loading: Boolean,
-        color: Int
+        color: Int,
+        duration: Long
     ) {
-        toastView.show(message, loading, color)
+        toastView.show(message, loading, color, duration)
     }
 }

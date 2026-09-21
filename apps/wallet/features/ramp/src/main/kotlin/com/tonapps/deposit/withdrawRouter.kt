@@ -9,13 +9,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.rememberNavBackStack
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
-import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowSellAsset
+import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowWithdrawOption
+import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.core.navigation.LocalResultStore
 import com.tonapps.core.navigation.rememberResultStore
 import com.tonapps.deposit.data.AssetFilter
@@ -54,17 +54,10 @@ import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ui.moon.MoonNav
+import ui.moon.rememberNestedNavBackStack
 
 private const val KEY_TOKEN_SELECTION_RESULT = "withdraw_token_selection_result"
 private const val KEY_SCANNER_RESULT = "withdraw_scanner_result"
-
-internal fun WalletCurrency.toSellAsset(): WithdrawFlowSellAsset {
-    return when (address) {
-        WalletCurrency.USDT_TON.address -> WithdrawFlowSellAsset.TonJettonUSDT
-        WalletCurrency.USDT_TRON.address -> WithdrawFlowSellAsset.TronTrc20USDT
-        else -> WithdrawFlowSellAsset.TonNativeTON
-    }
-}
 
 @Serializable
 sealed interface WithdrawRoutes : NavKey {
@@ -131,17 +124,10 @@ fun WithdrawRouter(
     onGetTrx: () -> Unit = {},
     onRechargeBattery: () -> Unit = {},
 ) {
-    val backStack = rememberNavBackStack(initial)
+    val backStack = rememberNestedNavBackStack(initial, onBack)
     val resultStore = rememberResultStore()
     var sendParams by remember { mutableStateOf<SendParams?>(null) } // TODO remove
-    val popBackStack = {
-        if (backStack.size > 1) {
-            backStack.removeLastOrNull()
-        } else {
-            onBack()
-        }
-    }
-    
+
     CompositionLocalProvider(LocalResultStore provides resultStore) {
         MoonNav(
             backStack = backStack,
@@ -155,7 +141,10 @@ fun WithdrawRouter(
                         onClose = onBack,
                         onQr = { },
                         onSend = {
-                            AnalyticsHelper.Default.events.withdrawFlow.withdrawClickSendTokens(from = WithdrawFlowFrom.WalletScreen)
+                            AnalyticsHelper.Default.events.withdrawFlow.withdrawOptionClick(
+                                from = WithdrawFlowFrom.WalletScreen,
+                                withdrawOption = WithdrawFlowWithdrawOption.SendTokens,
+                            )
                             backStack.add(WithdrawRoutes.SendAmount(null))
                         },
                         onBuyCash = { preferredCurrency ->
@@ -184,7 +173,7 @@ fun WithdrawRouter(
                         feature = feature,
                         scannerResult = resultStore.removeResult<String>(KEY_SCANNER_RESULT),
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onAddressBook = onAddressBook,
                         onNavigateToConfirm = { params ->
                             sendParams = params
@@ -202,7 +191,7 @@ fun WithdrawRouter(
 
                 is WithdrawRoutes.SendConfirm -> NavEntry(key) {
                     val params = sendParams ?: run {
-                        popBackStack()
+                        backStack.safeRemoveLastOrNull(key)
                         return@NavEntry
                     }
 
@@ -212,7 +201,7 @@ fun WithdrawRouter(
                         feature = feature,
                         onClose = onBack,
                         onSendSuccess = onSendSuccess,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onBuyTon = onBuyTon,
                         onGetTrx = onGetTrx,
                         onRechargeBattery = onRechargeBattery,
@@ -232,13 +221,14 @@ fun WithdrawRouter(
                         feature = viewModel,
                         title = "Asset to withdraw",
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onSelected = { currency ->
                             when (key.filter) {
                                 AssetFilter.StablecoinRoot -> {
-                                    AnalyticsHelper.Default.events.withdrawFlow.withdrawClickSell(
+                                    AnalyticsHelper.Default.events.withdrawFlow.withdrawClickFiatAsset(
                                         from = WithdrawFlowFrom.WalletScreen,
-                                        sellAsset = currency.toSellAsset()
+                                        withdrawOption = WithdrawFlowWithdrawOption.SellToCard,
+                                        sellAsset = currency.analyticsAssetId(),
                                     )
 
                                     backStack.add(WithdrawRoutes.WithdrawMethod(
@@ -255,9 +245,10 @@ fun WithdrawRouter(
                                     ))
                                 }
                                 else -> {
-                                    AnalyticsHelper.Default.events.withdrawFlow.withdrawClickSell(
+                                    AnalyticsHelper.Default.events.withdrawFlow.withdrawClickFiatAsset(
                                         from = WithdrawFlowFrom.WalletScreen,
-                                        sellAsset = currency.toSellAsset()
+                                        withdrawOption = WithdrawFlowWithdrawOption.SellToCard,
+                                        sellAsset = currency.analyticsAssetId(),
                                     )
 
                                     backStack.add(WithdrawRoutes.WithdrawMethod(
@@ -282,7 +273,7 @@ fun WithdrawRouter(
                         fallbackAsset = key.asset,
                         currencySelectionResult = currencyResult,
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onPaymentMethodClick = { asset, paymentMethodType, currency ->
                             backStack.add(
                                 WithdrawRoutes.Amount(
@@ -360,7 +351,7 @@ fun WithdrawRouter(
                             ))
                         },
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                     )
                 }
 
@@ -372,7 +363,7 @@ fun WithdrawRouter(
                         onConfirm = { currency ->
                             resultStore.setResult(KEY_CURRENCY_SELECTION_RESULT, currency)
                         },
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onClose = onBack,
                     )
                 }
@@ -385,7 +376,7 @@ fun WithdrawRouter(
                         onTokenSelected = { token ->
                             resultStore.setResult(KEY_TOKEN_SELECTION_RESULT, token.token)
                         },
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onClose = onBack,
                     )
                 }
@@ -394,9 +385,9 @@ fun WithdrawRouter(
                     ScannerScreen(
                         onResult = { value ->
                             resultStore.setResult(KEY_SCANNER_RESULT, value)
-                            backStack.removeLastOrNull()
+                            backStack.safeRemoveLastOrNull(key)
                         },
-                        onClose = { backStack.removeLastOrNull() },
+                        onClose = { backStack.safeRemoveLastOrNull(key) },
                     )
                 }
 
@@ -413,7 +404,7 @@ fun WithdrawRouter(
                     DepositAmountScreen(
                         feature = viewModel,
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onContinue = openProvider,
                     )
                 }

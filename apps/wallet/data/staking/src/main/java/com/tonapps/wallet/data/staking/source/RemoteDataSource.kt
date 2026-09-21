@@ -13,6 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 
+private val PoolInfoEntity.isOwnPool: Boolean
+    get() = name.contains("Tonkeeper") || name.contains("Keeper")
+
 internal class RemoteDataSource(
     private val api: API
 ) {
@@ -82,15 +85,15 @@ internal class RemoteDataSource(
         }
 
         list.sortWith { a, b ->
-            if (a.name.contains("Tonkeeper") && !b.name.contains("Tonkeeper")) {
+            if (a.isOwnPool && !b.isOwnPool) {
                 return@sortWith -1
             }
 
-            if (b.name.contains("Tonkeeper") && !a.name.contains("Tonkeeper")) {
+            if (b.isOwnPool && !a.isOwnPool) {
                 return@sortWith 1
             }
 
-            if (a.name.contains("Tonkeeper") && b.name.contains("Tonkeeper")) {
+            if (a.isOwnPool && b.isOwnPool) {
                 return@sortWith if (a.name.contains("#1")) -1 else 1
             }
 

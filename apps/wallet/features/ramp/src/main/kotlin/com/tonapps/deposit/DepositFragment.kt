@@ -26,6 +26,7 @@ class DepositFragment : ComposableFragment(), BaseFragment.BottomSheet {
         setContent {
             DepositRouter(
                 initial = startRoute,
+                walletId = arguments?.getString(ARG_WALLET_ID),
                 onBack = { finish() },
                 openProvider = {
                     finish()
@@ -37,14 +38,19 @@ class DepositFragment : ComposableFragment(), BaseFragment.BottomSheet {
 
     companion object {
         private const val ARG_INITIAL = "arg_initial"
+        private const val ARG_WALLET_ID = "arg_wallet_id"
 
         fun create(
             initial: DepositRoutes? = null,
+            walletId: String? = null,
         ): DepositFragment {
             return DepositFragment().apply {
                 arguments = Bundle().apply {
                     initial?.let {
                         putString(ARG_INITIAL, Json.encodeToString(initial))
+                    }
+                    walletId?.let {
+                        putString(ARG_WALLET_ID, it)
                     }
                 }
             }

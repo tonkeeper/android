@@ -21,11 +21,16 @@ data class SmartContractAction(
     @SerialName(value = "contract")
     val `contract`: AccountAddress,
 
-    /* amount in nanotons */
-    @SerialName(value = "ton_attached")
-    val tonAttached: Long,
+    /* amount in nanograms */
+    @SerialName(value = "gram_attached")
+    val gramAttached: Long,
     @SerialName(value = "operation")
     val operation: String,
+
+    /* amount in nanograms */
+    @SerialName(value = "ton_attached")
+    @Deprecated(message = "This property is deprecated.")
+    val tonAttached: Long? = null,
     @SerialName(value = "payload")
     val payload: String? = null,
     @SerialName(value = "refund")

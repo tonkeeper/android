@@ -44,7 +44,7 @@ class TokenPickerFeature(
                 val wallet = accountRepository.forceSelectedWallet()
                 val currency = settingsRepository.currency
                 val tokens = tokenRepository.get(currency, wallet.accountId, wallet.network)
-                    ?.filter { it.balance.isTransferable && !it.isTrx }
+                    ?.filter { it.balance.isTransferable }
                     ?: emptyList()
 
                 setState { TokenPickerState.Data(tokens) }

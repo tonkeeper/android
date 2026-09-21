@@ -3,9 +3,12 @@ package com.tonapps.tonkeeper.core
 import android.annotation.SuppressLint
 import android.content.Context
 import com.tonapps.log.L
+import com.tonapps.core.flags.FeatureManager
+import com.tonapps.core.flags.WalletFeatureKey
 import com.tonapps.extensions.putBoolean
 import com.tonapps.extensions.putLong
 import com.tonapps.extensions.putString
+import com.tonapps.extensions.remove
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeperx.BuildConfig
 
@@ -44,6 +47,14 @@ object DevSettings {
             if (field != value) {
                 field = value
                 prefs.putString("country", value)
+            }
+        }
+
+    var buildOverride: String? = prefs.getString("build_override", null)
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.putString("build_override", value)
             }
         }
 
@@ -87,13 +98,22 @@ object DevSettings {
             }
         }
 
-    var isLogsEnabled: Boolean = prefs.getBoolean("is_logs_enabled", false)
-        set(value) {
-            if (field != value) {
-                field = value
-                prefs.putBoolean("is_logs_enabled", value)
-            }
+    var isLogsEnabled: Boolean
+        get() = if (prefs.contains("is_logs_enabled")) {
+            prefs.getBoolean("is_logs_enabled", false)
+        } else {
+            FeatureManager.isEnabled(WalletFeatureKey.LOG_DEFAULT_ON)
         }
+        set(value) {
+            prefs.putBoolean("is_logs_enabled", value)
+        }
+
+    val isLogcatEnabled: Boolean
+        get() = prefs.getBoolean("is_logs_enabled", false)
+
+    fun resetLogsEnabled() {
+        prefs.remove("is_logs_enabled")
+    }
 
     var webViewDataDir: String? = prefs.getString("webview_data_dir", null)
         set(value) {

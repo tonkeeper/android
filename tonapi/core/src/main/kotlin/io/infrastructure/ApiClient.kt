@@ -1,36 +1,24 @@
 package io.infrastructure
 
 import io.Serializer
+import okhttp3.Call
+import okhttp3.FormBody
+import okhttp3.Headers
+import okhttp3.Headers.Companion.toHeaders
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.FormBody
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.ResponseBody
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.Request
-import okhttp3.Headers
-import okhttp3.Headers.Builder
-import okhttp3.Headers.Companion.toHeaders
-import okhttp3.MultipartBody
-import okhttp3.Call
-import okhttp3.Callback
 import okhttp3.Response
-import java.io.BufferedWriter
 import java.io.File
-import java.io.FileWriter
 import java.io.IOException
 import java.net.URLConnection
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.OffsetTime
 import java.util.Locale
 import java.util.regex.Pattern
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 
 val EMPTY_REQUEST: RequestBody = ByteArray(0).toRequestBody()
 
@@ -299,6 +287,16 @@ open class ApiClient(val baseUrl: String, val client: Call.Factory = defaultClie
                 headersBuilder.add(header.key, header.value)
             }
             this.headers(headersBuilder.build())
+        }.apply {
+            if (requestConfig.requiresAuthentication) {
+                tag(ApiTags.DeviceAuth::class.java, ApiTags.DeviceAuth)
+            }
+
+            if (requestConfig.requiresWalletAuthentication) {
+                requestConfig.walletId?.let { walletId ->
+                    tag(ApiTags.WalletAuth::class.java, ApiTags.WalletAuth(walletId))
+                }
+            }
         }.build()
 
         val response = client.newCall(request).execute()

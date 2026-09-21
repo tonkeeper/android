@@ -41,7 +41,7 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
 
     override fun onBind(item: Item.Nft) {
         itemView.setOnClickListener {
-            Navigation.from(context)?.add(NftScreen.newInstance(item.wallet, item.entity))
+            Navigation.from(context)?.add(NftScreen.newInstance(item.entity))
         }
         fireBadgeView.visibility = if (item.expiringDomainSoon) View.VISIBLE else View.GONE
         loadImage(item.imageURI, item.hiddenBalance)

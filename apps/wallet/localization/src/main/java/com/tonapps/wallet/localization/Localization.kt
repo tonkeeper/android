@@ -3,6 +3,7 @@ package com.tonapps.wallet.localization
 import com.tonapps.apps.wallet.localization.R
 
 typealias Localization = R.string
+typealias RStr = R.string
 typealias Plurals = R.plurals
 
 val SupportedLanguages = listOf(
@@ -15,5 +16,7 @@ val SupportedLanguages = listOf(
     Language("es-ES"),
     Language("tr-TR"),
     Language("zh-CN"),
-    Language("bg-BG")
+    Language("bg-BG"),
+    Language("iw"),
+    Language("fa-IR")
 )

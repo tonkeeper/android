@@ -1,0 +1,102 @@
+# Cold start to a funded multichain wallet home.
+# Forces every gate: Firebase android_is_multichain_enabled and
+# android_is_import_multichain_wallet (featureFlags) AND keys/all
+# flags.multichain_enabled (bootFlags). The import key matters since TK-3647:
+# the debug build no longer forces it, and the fetched remote value is false,
+# so without it import_wallet would create a legacy TON wallet (TK-3691).
+#
+# Per-case recovery for shard subflows: stopApp + extras + pin. Never
+# clearState — a mid-shard relaunch must keep the already-imported wallet.
+# Import runs only if the app is empty (import_wallet, no pin).
+#
+# Launcher label is "Keeper Dev" since the TK-3495 rebrand ("Tonkeeper Dev"
+# before it); the regex accepts both so older builds still recover.
+# Do not tap the bare label while the app is open: "Keeper" is also the
+# start-screen title (id: title), not the launcher icon.
+#
+# Maestro launchApp can leave the start screen up even when a wallet exists.
+# Wait for the pin first; only if it never appears, go Home, open the icon,
+# then either unlock or import (empty app).
+appId: com.ton_keeper.debug
+---
+- stopApp
+# Local Maestro can fail launchApp (multiple LAUNCHER aliases). Cloud still
+# starts the activity. optional + Home / launcher icon recovers locally.
+- launchApp:
+    optional: true
+    permissions:
+      notifications: allow
+    arguments:
+      featureFlags: '{"android_is_multichain_enabled": true, "android_is_import_multichain_wallet": true}'
+      bootFlags: '{"multichain_enabled": true}'
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- extendedWaitUntil:
+    visible:
+      id: pin_title
+    timeout: 10000
+    optional: true
+
+# No pin yet — likely the launcher or a stuck start screen. Re-open from Home.
+# Do not import here: a funded wallet can still flash Import Existing Wallet.
+- runFlow:
+    when:
+      notVisible:
+        id: pin_title
+    commands:
+      - pressKey: Home
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - tapOn:
+          text: "^(Tonkeeper|Keeper) Dev$"
+      - waitForAnimationToEnd:
+          timeout: 4000
+
+- extendedWaitUntil:
+    visible:
+      id: "pin_title$|import_wallet$"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible:
+        id: pin_title
+    file: ../password/enter_password.yaml
+
+- runFlow:
+    when:
+      visible:
+        id: import_wallet
+      notVisible:
+        id: pin_title
+    file: import_wallet.yaml
+
+- tapOn:
+    id: stories_close
+    optional: true
+
+- extendedWaitUntil:
+    notVisible:
+      id: pin_title
+    timeout: 15000
+
+# Last selected tab can be Trade/Browser. Header wallet switcher is also
+# text "Wallet" — pin the bottom tab only.
+- tapOn:
+    id: title
+    text: Wallet
+    childOf:
+      id: bottom_tabs
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 1500
+
+- extendedWaitUntil:
+    visible: Send
+    timeout: 45000
+- extendedWaitUntil:
+    notVisible:
+      id: pin_title
+    timeout: 5000

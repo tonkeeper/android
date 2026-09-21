@@ -135,12 +135,21 @@ class RatesRepository(
         currency: WalletCurrency,
         tokens: List<String>
     ): RatesEntity = withContext(Dispatchers.IO) {
+        getRatesBlocking(network, currency, tokens)
+    }
+
+    // For callers that need the whole fetch on one interruptible thread (e.g. behind a timeout);
+    // everyone else should use the suspend getRates.
+    fun getRatesBlocking(
+        network: TonNetwork,
+        currency: WalletCurrency,
+        tokens: List<String>,
+    ): RatesEntity {
         val rates = getCachedRates(network, currency, tokens)
         if (rates.hasTokens(tokens)) {
-            rates
-        } else {
-            load(network, currency, tokens.toMutableList())
-            getCachedRates(network, currency, tokens)
+            return rates
         }
+        load(network, currency, tokens.toMutableList())
+        return getCachedRates(network, currency, tokens)
     }
 }

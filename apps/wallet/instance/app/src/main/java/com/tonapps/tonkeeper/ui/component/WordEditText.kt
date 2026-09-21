@@ -22,7 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.ton.mnemonic.Mnemonic
+import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import uikit.base.BaseDrawable
 import uikit.drawable.InputDrawable
 import uikit.extensions.dp
@@ -92,7 +92,8 @@ class WordEditText @JvmOverloads constructor(
         private var y: Float = 0f
         private val text = "${index}:"
         private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            typeface = ResourcesCompat.getFont(context, uikit.R.font.montserrat_medium)
+            typeface = ResourcesCompat.getFont(context, uikit.R.font.tt_firs_neue_normal)
+            fontFeatureSettings = "'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"
             color = context.textSecondaryColor
             textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16f, context.resources.displayMetrics)
             textAlign = Paint.Align.CENTER
@@ -130,7 +131,7 @@ class WordEditText @JvmOverloads constructor(
         private suspend fun isValidWord(
             word: String
         ): Boolean = withContext(Dispatchers.IO) {
-            Mnemonic.mnemonicWords().contains(word)
+            Mnemonic.bip39English().contains(word)
         }
     }
 }

@@ -6,9 +6,3 @@ enum class Blockchain(
     TON("TON"),
     TRON("TRON");
 }
-
-val Blockchain.mainCoin: CoinType
-    get() = when (this) {
-        Blockchain.TON -> CoinType.Ton
-        Blockchain.TRON -> CoinType.Tron
-    }

@@ -3,9 +3,11 @@ package com.tonapps.deposit.screens.buy.crypto
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.screens.method.RampAsset
-import com.tonapps.deposit.toBuyAsset
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.log.L
@@ -47,9 +49,14 @@ class BuyWithCryptoViewState(
     val global: MviProperty<BuyWithCryptoState>
 ) : MviViewState
 
-class BuyWithCryptoFeature(
+data class BuyWithCryptoData(
     val from: WalletCurrency,
     val to: RampAsset,
+    val walletId: String? = null,
+)
+
+class BuyWithCryptoFeature(
+    private val data: BuyWithCryptoData,
     private val onRampRepository: ExchangeRepository,
     private val accountRepository: AccountRepository,
 ) : MviFeature<BuyWithCryptoAction, BuyWithCryptoState, BuyWithCryptoViewState>(
@@ -57,10 +64,23 @@ class BuyWithCryptoFeature(
     initAction = BuyWithCryptoAction.Init
 ) {
 
+    private val from: WalletCurrency
+        get() = data.from
+
+    private val to: RampAsset
+        get() = data.to
+
     init {
-        AnalyticsHelper.Default.events.depositFlow.depositViewC2c(
-            buyAsset = to.toCurrency.toBuyAsset(),
-            sellAsset = from.code
+        val addFundsOption = if (to.isTon) {
+            DepositFlowAddFundsOption.BuyTonWithCrypto
+        } else {
+            DepositFlowAddFundsOption.BuyWithStablecoins
+        }
+        AnalyticsHelper.Default.events.depositFlow.depositViewSendAsset(
+            from = DepositFlowFrom.WalletScreen,
+            addFundsOption = addFundsOption,
+            sellAsset = from.analyticsAssetId(),
+            buyAsset = to.toCurrency.analyticsAssetId(),
         )
     }
 
@@ -78,7 +98,8 @@ class BuyWithCryptoFeature(
 
     private suspend fun loadData() {
         try {
-            val wallet = accountRepository.getSelectedWallet()!!
+            val wallet = data.walletId?.let { accountRepository.getWalletById(it) }
+                ?: accountRepository.getSelectedWallet()!!
             val walletAddress = resolveWalletAddress(wallet)
 
             val networkDisplayName = from.title

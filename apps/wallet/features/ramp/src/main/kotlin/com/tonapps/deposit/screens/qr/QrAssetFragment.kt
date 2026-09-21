@@ -38,7 +38,12 @@ class QrAssetFragment private constructor(): ComposableFragment(), BaseFragment.
                 getParcelable(ARG_TOKEN)
             }
             val withBuy = getBoolean(ARG_WITH_BUY)
-            return QrAssetData(token, withBuy)
+            val walletId = getString(ARG_WALLET_ID)
+            return QrAssetData(
+                token = token,
+                withBuyButton = withBuy,
+                walletId = walletId,
+            )
         }
     }
 
@@ -46,14 +51,17 @@ class QrAssetFragment private constructor(): ComposableFragment(), BaseFragment.
         // TODO to assetId
         private const val ARG_TOKEN = "token"
         private const val ARG_WITH_BUY = "with_buy"
+        private const val ARG_WALLET_ID = "wallet_id"
 
         fun newInstance(
             token: TokenEntity? = null,
-            withBuyButton: Boolean = false
+            withBuyButton: Boolean = false,
+            walletId: String? = null,
         ): BaseFragment {
             val screen = QrAssetFragment()
             token?.let { screen.putParcelableArg(ARG_TOKEN, it) }
             screen.putBooleanArg(ARG_WITH_BUY, withBuyButton)
+            walletId?.let { screen.putStringArg(ARG_WALLET_ID, it) }
             return screen
         }
     }

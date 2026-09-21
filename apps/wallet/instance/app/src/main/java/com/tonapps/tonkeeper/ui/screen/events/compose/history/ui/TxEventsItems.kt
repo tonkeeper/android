@@ -23,7 +23,7 @@ import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsAction
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import ui.components.moon.MoonRefresh
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.MoonRetryCell

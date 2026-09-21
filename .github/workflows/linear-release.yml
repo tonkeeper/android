@@ -1,0 +1,96 @@
+name: Linear Release
+
+# Scheduled pipeline for the Android app (calendar versions YY.MM.N).
+#   dev push            -> sync: accumulate merged issues into the ongoing release
+#   release/<ver> cut   -> sync that version + enter "Started" (branch creation only)
+#   release/<ver> push  -> sync only (hotfixes must not rewind stage)
+#   workflow_dispatch   -> advance to "Regression" or complete (released)
+# Stages "Started" and "Regression" must exist with these exact names in the
+# Linear pipeline settings.
+
+on:
+  push:
+    branches:
+      - dev
+      - release/**
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Stage move to apply to the release
+        type: choice
+        required: true
+        options:
+          - "update: Regression"
+          - "complete: released"
+      version:
+        description: Release version (e.g. 26.07.2). Leave blank to target the current release.
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  # dev: keep the ongoing (next) release in sync with what's merged, so the
+  # team can see what's queued before a release branch is cut.
+  sync-develop:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: linear/linear-release-action@v0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: sync
+
+  # release/<ver> cut: name the release from the branch and move it to code freeze.
+  freeze-release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Derive version from branch
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#release/}" >> "$GITHUB_OUTPUT"
+      - name: Sync release version
+        uses: linear/linear-release-action@v0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: sync
+          version: ${{ steps.ver.outputs.version }}
+          name: Release ${{ steps.ver.outputs.version }}
+      - name: Enter Started
+        if: github.event.created
+        uses: linear/linear-release-action@v0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: update
+          version: ${{ steps.ver.outputs.version }}
+          stage: Started
+
+  # manual stage advance / completion
+  advance-stage:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Move to "Regression"
+        if: "inputs.action == 'update: Regression'"
+        uses: linear/linear-release-action@v0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: update
+          version: ${{ inputs.version }}
+          stage: Regression
+      - name: Complete release (released)
+        if: "inputs.action == 'complete: released'"
+        uses: linear/linear-release-action@v0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: complete
+          version: ${{ inputs.version }}

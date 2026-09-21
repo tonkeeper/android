@@ -22,7 +22,7 @@ if [ -z "$OPENAPI_DIR" ]; then
     TEMP_DIR="$(mktemp -d)"
     echo "Cloning analytics-schemas..."
     git clone --depth 1 git@github.com:tonkeeper/analytics-schemas.git "$TEMP_DIR/analytics-schemas"
-    OPENAPI_DIR="$TEMP_DIR/analytics-schemas/openapi"
+    OPENAPI_DIR="$TEMP_DIR/analytics-schemas/openapi-client"
 fi
 
 if [ ! -d "$OPENAPI_DIR" ]; then

@@ -1,17 +1,17 @@
 package com.tonapps.deposit.screens.ramp.amount
 
 import com.tonapps.blockchain.model.legacy.BalanceEntity
-import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowBuyAsset
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.data.assetsOfType
+import com.tonapps.deposit.multicoin.analytics.RampAnalytics
 import com.tonapps.deposit.screens.method.RampAsset
 import com.tonapps.deposit.screens.provider.ProviderItem
 import com.tonapps.deposit.screens.provider.ProviderQuote
 import com.tonapps.deposit.screens.provider.ProviderRate
 import com.tonapps.deposit.screens.provider.ProviderWithQuote
-import com.tonapps.deposit.toBuyAsset
-import com.tonapps.deposit.toSellAsset
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.log.L
@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import java.math.BigDecimal
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val ExchangeDirection?.isBuy get() = this == ExchangeDirection.buy
 private val ExchangeDirection?.isSell get() = this == ExchangeDirection.sell
@@ -108,6 +109,11 @@ class DepositAmountFeature(
 
     private val amountSubject = MviSubject<String>()
 
+    private val analytics = RampAnalytics.of(data.rampType, DepositFlowFrom.WalletScreen)
+    private val analyticsCryptoAsset = data.cryptoAsset.toCurrency.analyticsAssetId()
+    private val analyticsFiatCode = data.fiatAsset.toCurrency.code
+    private val viewTracked = AtomicBoolean(false)
+
     init {
         amountSubject.events
             .debounce(300)
@@ -128,9 +134,10 @@ class DepositAmountFeature(
             // is DepositAmountAction.ToggleInputCurrency -> toggleInputCurrency()
             is DepositAmountAction.SelectProvider -> selectProvider(action.providerId)
             is DepositAmountAction.CheckProvider -> {
-                val wallet = accountRepository.getSelectedWallet() ?: return
+                val wallet = resolveWallet() ?: return
                 val shouldValidated = settingsRepository.isPurchaseOpenConfirm(wallet.id, action.provider.info.id)
                 if (shouldValidated) {
+                    trackViewRampAlert(action.provider)
                     relay.emit(DepositAmountEvent.ShowConfirmation)
                 } else {
                     onContinue(action.provider)
@@ -138,7 +145,7 @@ class DepositAmountFeature(
             }
 
             is DepositAmountAction.AllowProvider -> {
-                val wallet = accountRepository.getSelectedWallet() ?: return
+                val wallet = resolveWallet() ?: return
                 if (action.isDontShowAgain) {
                     settingsRepository.disablePurchaseOpenConfirm(wallet.id, action.provider.info.id)
                 }
@@ -149,50 +156,55 @@ class DepositAmountFeature(
     }
 
     private fun onContinue(provider: ProviderWithQuote) {
-        runCatching {
-            provider.quote?.let { quote ->
-                val sellAmount = quote.amount.value.toDouble()
-
-                if (data.purchaseType.isSell) {
-                    AnalyticsHelper.Default.events.withdrawFlow.withdrawClickOnrampContinue(
-                        sellAsset = data.assetFrom.toCurrency.toSellAsset(),
-                        providerName = provider.info.title,
-                        sellAmount = sellAmount
-                    )
-                } else {
-                    AnalyticsHelper.Default.events.depositFlow.depositClickOnrampContinue(
-                        buyAsset = data.assetTo.toCurrency.toBuyAsset(),
-                        providerName = provider.info.title,
-                        buyAmount = quote.receiveAmount?.toDoubleOrNull() ?: 0.0
-                    )
-                }
-            }
-        }
-
         val quote = provider.quote ?: return
         val url = quote.widgetUrl
         val txId = quote.merchantTransactionId ?: ""
 
         runCatching {
-            if (data.purchaseType.isSell) {
-                AnalyticsHelper.Default.events.withdrawFlow.withdrawViewOnrampFlow(
-                    sellAsset = data.assetFrom.toCurrency.toSellAsset(),
-                    providerName = provider.info.title,
-                    sellAmount = quote.amount.value.toDouble(),
-                    buyAsset = WithdrawFlowBuyAsset.Fiat,
-                    txId = txId
-                )
-            } else {
-                AnalyticsHelper.Default.events.depositFlow.depositViewOnrampFlow(
-                    buyAsset = data.assetTo.toCurrency.toBuyAsset(),
-                    providerName = provider.info.title,
-                    buyAmount = quote.receiveAmount?.toDoubleOrNull() ?: 0.0,
-                    txId = txId
-                )
-            }
+            val amount = quote.amount.value.toDouble()
+            analytics.clickRampInsertAmountContinue(
+                cryptoAsset = analyticsCryptoAsset,
+                fiatCode = analyticsFiatCode,
+                paymentMethod = data.paymentMethodType,
+                providerName = provider.info.title,
+                amount = amount,
+            )
+            analytics.continueToRampProvider(
+                cryptoAsset = analyticsCryptoAsset,
+                fiatCode = analyticsFiatCode,
+                paymentMethod = data.paymentMethodType,
+                providerName = provider.info.title,
+                amount = amount,
+                txId = txId,
+            )
         }
 
         relay.emit(DepositAmountEvent.Continue(url))
+    }
+
+    private fun trackViewRampAlert(provider: ProviderWithQuote) {
+        val quote = provider.quote ?: return
+        runCatching {
+            analytics.viewRampAlert(
+                cryptoAsset = analyticsCryptoAsset,
+                fiatCode = analyticsFiatCode,
+                paymentMethod = data.paymentMethodType,
+                providerName = provider.info.title,
+                amount = quote.amount.value.toDouble(),
+            )
+        }
+    }
+
+    private fun trackViewRampInsertAmount(provider: ProviderWithQuote?) {
+        if (provider == null || !viewTracked.compareAndSet(false, true)) {
+            return
+        }
+        analytics.viewRampInsertAmount(
+            cryptoAsset = analyticsCryptoAsset,
+            fiatCode = analyticsFiatCode,
+            paymentMethod = data.paymentMethodType,
+            providerName = provider.info.title,
+        )
     }
 
     fun onAmountInput(amount: String) {
@@ -203,7 +215,7 @@ class DepositAmountFeature(
         val cryptoCode = data.cryptoCode
         val fiatCode = data.fiatCode
         try {
-            val wallet = accountRepository.forceSelectedWallet()
+            val wallet = resolveWallet() ?: accountRepository.forceSelectedWallet()
 
             val minValue = try {
                 onRampRepository.getLayoutCurrency(data.rampType, data.fiatAsset.toCurrency)
@@ -290,8 +302,7 @@ class DepositAmountFeature(
             null
         }
 
-        val wallet = accountRepository.getSelectedWallet()
-            ?: return
+        val wallet = resolveWallet() ?: return
 
         val address = if (data.purchaseType.isSell) {
             when (data.assetFrom.toCurrency.isTronChain) {
@@ -313,18 +324,6 @@ class DepositAmountFeature(
                 )
             }
             return
-        }
-
-        if (data.purchaseType.isSell) {
-            AnalyticsHelper.Default.events.withdrawFlow.withdrawViewOnrampInsertAmount(
-                sellAsset = data.assetFrom.toCurrency.toSellAsset(),
-                providerName = data.paymentMethodType
-            )
-        } else {
-            AnalyticsHelper.Default.events.depositFlow.depositViewOnrampInsertAmount(
-                buyAsset = data.assetTo.toCurrency.toBuyAsset(),
-                providerName = data.paymentMethodType
-            )
         }
 
         setState<DepositAmountState.Data> {
@@ -452,6 +451,10 @@ class DepositAmountFeature(
                     selectedErrorProvider = errorProvider,
                 )
             }
+
+            obtainSpecificState<DepositAmountState.Data>()?.let { updated ->
+                trackViewRampInsertAmount(updated.selectedProvider ?: updated.providers.firstOrNull())
+            }
         } catch (e: Throwable) {
             L.e(e)
             setState<DepositAmountState.Data> {
@@ -461,6 +464,11 @@ class DepositAmountFeature(
                 )
             }
         }
+    }
+
+    private suspend fun resolveWallet(): WalletEntity? {
+        return data.walletId?.let { accountRepository.getWalletById(it) }
+            ?: accountRepository.getSelectedWallet()
     }
 
     private fun formatRate(ratePerUnit: Coins): String {

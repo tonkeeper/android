@@ -49,7 +49,8 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:textColor="?attr/textPrimaryColor"
-            android:fontFamily="@font/montserrat_semi_bold"
+            android:fontFamily="@font/tt_firs_neue_medium"
+            android:fontFeatureSettings="'ss09' on, 'ss17' on, 'ss18' on"
             android:textSize="28sp"
             android:visibility="gone"/>
 
@@ -71,7 +72,8 @@
                 android:textColor="?attr/textPrimaryColor"
                 android:textColorHint="?attr/textSecondaryColor"
                 android:textSize="28sp"
-                android:fontFamily="@font/montserrat_semi_bold"
+                android:fontFamily="@font/tt_firs_neue_medium"
+                android:fontFeatureSettings="'ss09' on, 'ss17' on, 'ss18' on"
                 android:hint="0"/>
 
             <view class="uikit.widget.SlideActionView$GradientTextView"
@@ -83,7 +85,8 @@
                 android:textColor="?attr/textPrimaryColor"
                 android:textColorHint="?attr/textSecondaryColor"
                 android:textSize="28sp"
-                android:fontFamily="@font/montserrat_semi_bold"/>
+                android:fontFamily="@font/tt_firs_neue_medium"
+                android:fontFeatureSettings="'ss09' on, 'ss17' on, 'ss18' on"/>
 
         </FrameLayout>
 

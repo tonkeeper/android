@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.RowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:gravity="center_vertical"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <uikit.widget.RowLayout
+        android:id="@+id/icons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="12dp">
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon1"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            app:roundingBorderColor="?attr/backgroundContentColor"
+            app:roundingBorderWidth="2dp"
+            app:roundAsCircle="true"/>
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon2"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginLeft="-8dp"
+            app:roundingBorderColor="?attr/backgroundContentColor"
+            app:roundingBorderWidth="2dp"
+            app:roundAsCircle="true"/>
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon3"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginLeft="-8dp"
+            app:roundingBorderColor="?attr/backgroundContentColor"
+            app:roundingBorderWidth="2dp"
+            app:roundAsCircle="true"/>
+
+    </uikit.widget.RowLayout>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:text="@string/more_assets"
+        android:textAppearance="@style/TextAppearance.Label1"
+        android:textColor="?attr/textPrimaryColor"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="center"
+        android:layout_marginStart="4dp"
+        android:tint="?attr/iconTertiaryColor"
+        android:src="@drawable/ic_chevron_down_16"/>
+
+</uikit.widget.RowLayout>

@@ -11,6 +11,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.security.hex
 import com.tonapps.signer.BuildConfig
 import com.tonapps.signer.Key
 import com.tonapps.signer.R
@@ -31,8 +32,7 @@ import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.accentRedColor
 import kotlinx.coroutines.Job
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.ton.api.pub.PublicKeyEd25519
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import uikit.dialog.alert.AlertDialog
 import uikit.extensions.collectFlow
 import uikit.extensions.dp

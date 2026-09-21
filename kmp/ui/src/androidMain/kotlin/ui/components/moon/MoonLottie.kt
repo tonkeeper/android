@@ -31,6 +31,7 @@ actual fun MoonLottie(
     iterations: Int,
     contentDescription: String?,
     color: Color?,
+    progress: (() -> Float)?,
 ) {
     if ('/' in fileName || '\\' in fileName) {
         Spacer(modifier)
@@ -56,18 +57,33 @@ actual fun MoonLottie(
             } else {
                 null
             }
-            LottieAnimation(
-                composition = composition,
-                iterations = iterations,
-                dynamicProperties = dynamicProperties,
-                modifier = modifier.then(
-                    if (contentDescription != null) {
-                        Modifier.semantics { this.contentDescription = contentDescription }
-                    } else {
-                        Modifier
-                    },
-                ),
-            )
+            if (progress != null) {
+                LottieAnimation(
+                    composition = composition,
+                    progress = progress,
+                    dynamicProperties = dynamicProperties,
+                    modifier = modifier.then(
+                        if (contentDescription != null) {
+                            Modifier.semantics { this.contentDescription = contentDescription }
+                        } else {
+                            Modifier
+                        },
+                    ),
+                )
+            } else {
+                LottieAnimation(
+                    composition = composition,
+                    iterations = iterations,
+                    dynamicProperties = dynamicProperties,
+                    modifier = modifier.then(
+                        if (contentDescription != null) {
+                            Modifier.semantics { this.contentDescription = contentDescription }
+                        } else {
+                            Modifier
+                        },
+                    ),
+                )
+            }
         }
     }
 }

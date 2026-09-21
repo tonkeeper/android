@@ -92,7 +92,7 @@ class PasscodeDialog(
     }
 
     private suspend fun isValid(code: String) = withContext(Dispatchers.IO) {
-        helper.isValid(context, code)
+        helper.isValid(code)
     }
 
     private fun setResult(code: String?) {

@@ -1,0 +1,28 @@
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — Tonstakers stake screen"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+- extendedWaitUntil:
+    visible: "^Stake$"
+    timeout: 60000
+- tapOn:
+    text: "^Stake$"
+
+- extendedWaitUntil:
+    visible:
+      id: stake_amount
+    timeout: 60000
+- assertVisible:
+    id: available
+
+- tapOn:
+    id: pool_item
+- extendedWaitUntil:
+    visible: Tonstakers
+    timeout: 60000
+- assertVisible: Tonstakers

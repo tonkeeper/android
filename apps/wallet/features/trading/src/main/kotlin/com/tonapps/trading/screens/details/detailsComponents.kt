@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,10 +26,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,10 +43,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -56,16 +62,16 @@ import com.tonapps.wallet.localization.Localization
 import ui.components.moon.ButtonColorsPrimary
 import ui.components.moon.ButtonSizeLarge
 import ui.components.moon.MoonAccentButton
-import ui.components.moon.MoonActionIcon
 import ui.components.moon.MoonBottomBar
+import ui.components.moon.MoonFavoriteIconLottie
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonTextShimmer
 import ui.components.moon.container.BadgeDirection
 import ui.components.moon.container.MoonCutBadgedBox
-import ui.components.popup.ActionMenu
-import ui.components.popup.ComposeActionItem
 import ui.painterResource
+import ui.preview.ThemedPreview
+import ui.theme.Dimens
 import ui.theme.Shapes
 import ui.theme.UIKit
 import uikit.chart.ChartPeriod
@@ -76,42 +82,12 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-
-@Composable
-internal fun SectionTitle(
-    modifier: Modifier = Modifier,
-    text: String,
-    onSeeAllClick: (() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = text,
-            style = UIKit.typography.label1,
-            color = UIKit.colorScheme.text.primary
-        )
-        if (onSeeAllClick != null) {
-            Text(
-                text = stringResource(Localization.see_all),
-                modifier = Modifier.clickable { onSeeAllClick() },
-                style = UIKit.typography.body2,
-                color = UIKit.colorScheme.text.accent,
-            )
-        }
-    }
-}
-
 @Composable
 internal fun ChartSection(
     imageUrl: String,
     chainImageUrl: String?,
     currencyCode: String,
-    chartData: List<ChartPoint>,
+    chartData: List<ChartPoint>?,
     chartPeriod: ChartPeriod,
     onPeriodChange: (ChartPeriod) -> Unit,
     onOpenStaking: () -> Unit,
@@ -128,17 +104,19 @@ internal fun ChartSection(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            if (chainImageUrl != null) {
-                MoonCutBadgedBox(
-                    badge = {
-                        MoonItemImage(image = chainImageUrl, size = 20.dp)
-                    },
-                    direction = BadgeDirection.EndBottom,
-                ) {
-                    MoonItemImage(image = imageUrl, size = 56.dp)
-                }
-            } else {
-                MoonItemImage(image = imageUrl, size = 56.dp)
+            MoonCutBadgedBox(
+                badge = if (chainImageUrl != null) {
+                    { MoonItemImage(image = chainImageUrl, size = 20.dp) }
+                } else {
+                    null
+                },
+                direction = BadgeDirection.EndBottom,
+            ) {
+                MoonItemImage(
+                    image = imageUrl,
+                    placeholder = painterResource(UIKitIcon.ic_illustration),
+                    size = 56.dp,
+                )
             }
 
             if (maxStakingApyFormatted != null) {
@@ -148,6 +126,7 @@ internal fun ChartSection(
                 )
             }
         }
+
         ChartHeader(
             selectedPoint = selectedPoint,
             chartData = chartData,
@@ -203,7 +182,7 @@ private fun AssetChart(
     modifier: Modifier = Modifier,
     currencyCode: String,
     chartPeriod: ChartPeriod,
-    data: List<ChartPoint>,
+    data: List<ChartPoint>?,
     isSquare: Boolean = false,
     onPointSelected: ((ChartPoint?) -> Unit)? = null,
 ) {
@@ -223,10 +202,12 @@ private fun AssetChart(
             }
         }
     }
+    val emptyText = stringResource(Localization.no_price_data_available)
     AndroidView(
         modifier = modifier,
         factory = { context -> ChartView(context) },
         update = { view ->
+            view.emptyText = emptyText
             view.setData(data, isSquare)
             view.onPointSelected = onPointSelected
             view.formatAxisPrice = formatAxisPrice
@@ -409,13 +390,13 @@ private fun ChartPeriod.showsYearInChartCaption(): Boolean =
 @Composable
 private fun ChartHeader(
     selectedPoint: ChartPoint?,
-    chartData: List<ChartPoint>,
+    chartData: List<ChartPoint>?,
     chartPeriod: ChartPeriod,
     currencyCode: String,
 ) {
     val context = LocalContext.current
     val locale = context.locale
-    val points = chartData.filter { !it.isEmpty }
+    val points = chartData?.filter { !it.isEmpty } ?: emptyList()
     val lastPoint = points.lastOrNull()
     val activePrice = when {
         selectedPoint != null && !selectedPoint.isEmpty -> selectedPoint.price
@@ -463,7 +444,7 @@ private fun ChartHeader(
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        if (activePrice == null) {
+        if (chartData == null) {
             MoonTextShimmer(
                 text = "$0,000.00",
                 style = UIKit.typography.h2,
@@ -481,7 +462,9 @@ private fun ChartHeader(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (isScrubbing) {
+                if (chartData.isEmpty()) {
+                    Text(text = "", style = UIKit.typography.body2)
+                } else if (isScrubbing) {
                     ChartDiffRow(
                         percentText = percentText,
                         deltaPriceText = deltaPriceText,
@@ -512,9 +495,6 @@ private fun chartAxisGuideTimeFormatter(locale: Locale, period: ChartPeriod): Da
     }
 }
 
-private const val AssetDetailsMoreMenuSend = "send"
-private const val AssetDetailsMoreMenuReceive = "receive"
-
 private fun chartPeriodCaptionRes(period: ChartPeriod): Int = when (period) {
     ChartPeriod.hour -> Localization.chart_period_last_hour
     ChartPeriod.day -> Localization.chart_period_last_day
@@ -530,29 +510,7 @@ internal fun AssetDetailsBottomBar(
     hasBalance: Boolean,
     onBuyClick: () -> Unit = {},
     onSellClick: () -> Unit = {},
-    onSendClick: () -> Unit = {},
-    onReceiveClick: () -> Unit = {},
 ) {
-    var moreMenuExpanded by remember { mutableStateOf(false) }
-    val moreMenuItems = buildList {
-        if (hasBalance) {
-            add(
-                ComposeActionItem(
-                    id = AssetDetailsMoreMenuSend,
-                    text = stringResource(Localization.send),
-                    iconPainter = painterResource(UIKitIcon.ic_tray_arrow_up_16),
-                ),
-            )
-        }
-        add(
-            ComposeActionItem(
-                id = AssetDetailsMoreMenuReceive,
-                text = stringResource(Localization.receive),
-                iconPainter = painterResource(UIKitIcon.ic_qr_code_16),
-            ),
-        )
-    }
-
     MoonBottomBar(modifier = modifier) {
         MoonAccentButton(
             modifier = Modifier.weight(1f),
@@ -570,30 +528,156 @@ internal fun AssetDetailsBottomBar(
                 onClick = onSellClick,
             )
         }
-        Box {
-            MoonActionIcon(
-                painter = painterResource(UIKitIcon.ic_ellipsis_16),
-                onClick = { moreMenuExpanded = !moreMenuExpanded },
-                backgroundColor = UIKit.colorScheme.buttonTertiary.primaryBackground,
-                tintColor = UIKit.colorScheme.buttonTertiary.primaryForeground,
-                size = ButtonSizeLarge.height,
-                contentDescription = stringResource(Localization.more),
-            )
-            ActionMenu(
-                offset = DpOffset(x = 0.dp, y = -ButtonSizeLarge.height),
-                width = 196.dp,
-                expanded = moreMenuExpanded,
-                onDismissRequest = { moreMenuExpanded = false },
-                items = moreMenuItems,
-                onItemClick = { item ->
-                    moreMenuExpanded = false
-                    when (item.id) {
-                        AssetDetailsMoreMenuSend -> onSendClick()
-                        AssetDetailsMoreMenuReceive -> onReceiveClick()
-                        else -> Unit
-                    }
-                },
+    }
+}
+
+@Composable
+internal fun AssetActionButtonsRow(
+    modifier: Modifier = Modifier,
+    showSend: Boolean,
+    showCashBuy: Boolean,
+    showCashSell: Boolean,
+    onSendClick: () -> Unit = {},
+    onReceiveClick: () -> Unit = {},
+    onCashBuyClick: () -> Unit = {},
+    onCashSellClick: () -> Unit = {},
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (showSend) {
+            AssetActionButton(
+                modifier = Modifier.weight(1f),
+                painter = painterResource(UIKitIcon.ic_tray_arrow_up_16),
+                title = stringResource(Localization.send),
+                onClick = onSendClick,
             )
         }
+        AssetActionButton(
+            modifier = Modifier.weight(1f),
+            painter = painterResource(UIKitIcon.ic_qr_code_16),
+            title = stringResource(Localization.receive),
+            onClick = onReceiveClick,
+        )
+        if (showCashBuy) {
+            AssetActionButton(
+                modifier = Modifier.weight(1f),
+                painter = painterResource(UIKitIcon.ic_dollar_outline_plus_16),
+                title = stringResource(Localization.cash_buy),
+                onClick = onCashBuyClick,
+            )
+        }
+        if (showCashSell) {
+            AssetActionButton(
+                modifier = Modifier.weight(1f),
+                painter = painterResource(UIKitIcon.ic_dollar_outline_minus_16),
+                title = stringResource(Localization.cash_sell),
+                onClick = onCashSellClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AssetActionButton(
+    modifier: Modifier = Modifier,
+    painter: Painter,
+    title: String,
+    onClick: () -> Unit,
+) {
+    val colors = UIKit.colorScheme.buttonSecondary
+    Column(
+        modifier = modifier
+            .height(60.dp)
+            .clip(Shapes.medium)
+            .background(colors.primaryBackground)
+            .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+    ) {
+        MoonItemIcon(
+            painter = painter,
+            size = 16.dp,
+            color = colors.primaryForeground,
+            contentDescription = null,
+        )
+        Text(
+            modifier = Modifier.padding(horizontal = 4.dp),
+            text = title,
+            style = UIKit.typography.label3,
+            color = colors.primaryForeground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Preview(widthDp = 360)
+@Composable
+private fun AssetActionButtonsRowPreview() {
+    ThemedPreview {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            AssetActionButtonsRow(showSend = true, showCashBuy = true, showCashSell = true)
+            AssetActionButtonsRow(showSend = true, showCashBuy = false, showCashSell = false)
+            AssetActionButtonsRow(showSend = false, showCashBuy = true, showCashSell = false)
+            AssetActionButtonsRow(showSend = false, showCashBuy = false, showCashSell = false)
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun AssetDetailsBottomBarNoBalancePreview() {
+    ThemedPreview {
+        AssetDetailsBottomBar(hasBalance = false)
+    }
+}
+
+private const val FavoriteLottieDurationMillis = 1_183
+
+@Composable
+fun FavoriteActionIcon(
+    isFavorite: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val progress = remember { Animatable(0f) }
+    var animateChanges by remember { mutableStateOf(false) }
+    val inactiveColor = UIKit.colorScheme.icon.tertiary
+    val accentColor = UIKit.colorScheme.accent.blue
+
+    LaunchedEffect(isFavorite) {
+        val target = if (isFavorite) 1f else 0f
+        if (animateChanges) {
+            progress.animateTo(
+                targetValue = target,
+                animationSpec = tween(FavoriteLottieDurationMillis),
+            )
+        } else {
+            progress.snapTo(target)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .size(Dimens.sizeAction)
+            .clip(CircleShape)
+            .background(UIKit.colorScheme.buttonSecondary.primaryBackground)
+            .clickable {
+                animateChanges = true
+                onClick()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        MoonFavoriteIconLottie(
+            inactiveColor = inactiveColor,
+            accentColor = accentColor,
+            modifier = Modifier.size(32.dp),
+            progress = { progress.value },
+        )
     }
 }

@@ -15,12 +15,15 @@ class AssetsFragment : ComposableFragment() {
     interface Delegate {
         fun onOpenToken(token: TokenEntity, eventsOnly: Boolean = false)
         fun onOpenUrl(url: String)
-        fun onOpenSwap(fromToken: String, toToken: String)
-        fun onOpenSend(tokenAddress: String)
-        fun onOpenReceive(token: TokenEntity?)
+        fun onOpenSwap(fromAssetId: String?, toAssetId: String?, fromToken: String, toToken: String)
+        fun onOpenSend(assetId: String, tokenAddress: String)
+        fun onOpenReceive(assetId: String, token: TokenEntity)
         fun onOpenTxDetails(tx: TxEvent, actionIndex: Int)
         fun onOpenStaking()
         fun onOpenUnverifiedInfo()
+        fun onSellToCard(assetId: String)
+        fun onBuyWithCard(assetId: String)
+        fun onOpenAssetHistory(assetId: String)
     }
 
     private val initial: AssetsRoutes
@@ -56,12 +59,17 @@ class AssetsFragment : ComposableFragment() {
                 initial = initial,
                 onOpenToken = { token, eventsOnly -> delegate?.onOpenToken(token, eventsOnly) },
                 onOpenUrl = { delegate?.onOpenUrl(it) },
-                onOpenSwap = { from, to -> delegate?.onOpenSwap(from, to) },
-                onOpenSend = { delegate?.onOpenSend(it) },
-                onOpenReceive = { delegate?.onOpenReceive(it) },
+                onOpenSwap = { fromAssetId, toAssetId, from, to ->
+                    delegate?.onOpenSwap(fromAssetId, toAssetId, from, to)
+                },
+                onOpenSend = { assetId, tokenAddress -> delegate?.onOpenSend(assetId, tokenAddress) },
+                onOpenReceive = { assetId, token -> delegate?.onOpenReceive(assetId, token) },
                 onOpenTxDetails = { tx, index -> delegate?.onOpenTxDetails(tx, index) },
                 onOpenStaking = { delegate?.onOpenStaking() },
                 onOpenUnverifiedInfo = { delegate?.onOpenUnverifiedInfo() },
+                onSellToCard = { delegate?.onSellToCard(it) },
+                onBuyWithCard = { delegate?.onBuyWithCard(it) },
+                onOpenAssetHistory = { delegate?.onOpenAssetHistory(it) },
                 onClose = { finish() },
             )
         }

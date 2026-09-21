@@ -72,7 +72,7 @@ fun ActionMenuContent(
     expandedState: MutableTransitionState<Boolean>,
     transformOriginState: MutableState<TransformOrigin>,
     items: List<ComposeActionItem>,
-    onItemClick: (ComposeActionItem) -> Unit,
+    onItemClick: (ComposeActionItem, Int) -> Unit,
     width: Dp,
 ) {
     ActionMenuAnimatedSurface(
@@ -84,7 +84,7 @@ fun ActionMenuContent(
             items.forEachIndexed { index, item ->
                 ActionMenuRow(
                     item = item,
-                    onClick = { onItemClick(item) },
+                    onClick = { onItemClick(item, index) },
                 )
 
                 if (index < items.lastIndex) {

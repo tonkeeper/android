@@ -296,7 +296,7 @@ internal class TxActionMapper(
             return withdrawStakeRequest(address, action.withdrawStakeRequest!!)
         }
         if (action.domainRenew != null) {
-            return domainRenew(action.domainRenew!!)
+            return domainRenew(action.domainRenew!!, action.simplePreview)
         }
         if (action.auctionBid != null) {
             return auctionBid(address,action.auctionBid!!)
@@ -430,9 +430,13 @@ internal class TxActionMapper(
         return builder.build()
     }
 
-    private fun domainRenew(action: DomainRenewAction): TxActionBody {
+    private fun domainRenew(
+        action: DomainRenewAction,
+        simplePreview: ActionSimplePreview
+    ): TxActionBody {
         val builder = TxActionBody.Builder(ActionType.DomainRenewal)
         builder.setSubtitle(action.domain)
+        builder.setDescription(simplePreview.description)
         return builder.build()
     }
 
@@ -532,7 +536,7 @@ internal class TxActionMapper(
     }
 
     private fun smartContract(address: BlockchainAddress, action: SmartContractAction): TxActionBody {
-        val amount = Coins.of(action.tonAttached)
+        val amount = Coins.of(action.gramAttached)
         val builder = TxActionBody.Builder(ActionType.CallContract)
         builder.setSender(account(action.executor, address.network.isTestnet))
         builder.setSubtitle(action.payload ?: action.operation)

@@ -97,6 +97,13 @@ class LabelEditorView @JvmOverloads constructor(
         nameInput = findViewById(R.id.label_name_input)
         nameInput.setOnDoneActionListener { done() }
 
+        val clearance = 56f.dp.toInt()
+        if (context.resources.configuration.layoutDirection == LAYOUT_DIRECTION_RTL) {
+            nameInput.setPadding(clearance, 0, 0, 0)
+        } else {
+            nameInput.setPadding(0, 0, clearance, 0)
+        }
+
         colorView = findViewById(R.id.label_color)
         colorView.setOnClickListener { nameInput.hideKeyboard() }
 

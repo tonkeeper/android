@@ -11,9 +11,6 @@ import android.view.WindowInsets
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.WindowInsetsCompat
-import com.tonapps.core.flags.TooltipManager
-import com.tonapps.core.flags.TooltipState
-import com.tonapps.core.flags.WalletTooltip
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.extensions.isLightTheme
@@ -22,15 +19,12 @@ import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.blockchain.model.legacy.Wallet
-import com.tonapps.wallet.localization.Localization
 import uikit.drawable.BarDrawable
 import uikit.drawable.DotDrawable
 import uikit.drawable.HeaderDrawable
-import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingTop
 import uikit.extensions.statusBarHeight
-import uikit.widget.BalloonTooltip
 import uikit.widget.RowLayout
 import kotlin.math.abs
 
@@ -91,6 +85,9 @@ class WalletHeaderView @JvmOverloads constructor(
         }
     }
 
+    val walletAnchorView: View
+        get() = walletView
+
     var onScanClick: (() -> Unit)? = null
         set(value) {
             field = value
@@ -100,13 +97,8 @@ class WalletHeaderView @JvmOverloads constructor(
     var onHistoryClick: (() -> Unit)? = null
         set(value) {
             field = value
-            historyView.setOnClickListener {
-                dismissHistoryTooltip()
-                value?.invoke()
-            }
+            historyView.setOnClickListener { value?.invoke() }
         }
-
-    private var historyTooltip: BalloonTooltip? = null
 
     var onSettingsClick: (() -> Unit)? = null
         set(value) {
@@ -144,63 +136,12 @@ class WalletHeaderView @JvmOverloads constructor(
         settingsDot.background = DotDrawable(context)
     }
 
-    fun setHistoryVisible(visible: Boolean) {
-        historyView.visibility = if (visible) View.VISIBLE else View.GONE
-        if (visible) {
-            tryShowHistoryTooltip()
-        }
-    }
-
-    private fun tryShowHistoryTooltip() {
-        if (historyTooltip != null) {
-            return
-        }
-        if (!WalletTooltip.HistoryHere.shouldShow) {
-            return
-        }
-
-        historyView.post {
-            if (!historyView.isAttachedToWindow || historyView.visibility != View.VISIBLE) {
-                return@post
-            }
-            historyTooltip = BalloonTooltip.show(
-                anchorView = historyView,
-                badgeText = context.getString(Localization.tooltip_new),
-                messageText = context.getString(Localization.tooltip_history_here_now),
-                placement = BalloonTooltip.Placement.BOTTOM,
-                offset = 12.dp,
-                autoDismissMs = BalloonTooltip.NO_AUTO_DISMISS,
-                onShown = {
-                    TooltipManager.markShownInSession(WalletTooltip.HistoryHere.key)
-                    TooltipManager.incrementShowCount(WalletTooltip.HistoryHere.key)
-                    markHistoryTooltipShown()
-                },
-                onClickListener = {
-                    markHistoryTooltipShown()
-                    dismissHistoryTooltip()
-                },
-            )
-        }
-    }
-
-    private fun markHistoryTooltipShown() {
-        if (WalletTooltip.HistoryHere.state != TooltipState.ALWAYS) {
-            TooltipManager.setState(WalletTooltip.HistoryHere.key, TooltipState.SHOWN)
-        }
-    }
-
-    private fun dismissHistoryTooltip() {
-        historyTooltip?.dismiss()
-        historyTooltip = null
-    }
-
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        dismissHistoryTooltip()
-    }
-
     fun setDot(dot: Boolean) {
-        settingsDot.visibility = if (dot) View.VISIBLE else View.GONE
+        settingsDot.visibility = if (dot) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 
     override fun setDivider(value: Boolean) {

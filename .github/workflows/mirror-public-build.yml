@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Parse tag into VERSION_NAME and VERSION_CODE
         run: |
@@ -30,13 +30,13 @@ jobs:
           echo "Parsed tag '$TAG' -> VERSION_NAME=$VERSION_NAME, VERSION_CODE=$VERSION_CODE"
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Cache Gradle Wrapper
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.gradle/wrapper
           key: gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
@@ -45,7 +45,7 @@ jobs:
         run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
 
       - name: Decode Keystore
         run: echo "${{ secrets.TONKEEPER_UPLOAD_STORE_FILE }}" | base64 -d > ${{ github.workspace }}/release.keystore
@@ -68,13 +68,20 @@ jobs:
           cp "$APK" release/Tonkeeper.apk
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Tonkeeper-apk-${{ github.ref_name }}
           path: release/Tonkeeper.apk
 
+      - name: Upload R8 mapping artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: Tonkeeper-mapping-${{ github.ref_name }}
+          path: apps/wallet/instance/main/build/outputs/mapping/siteRelease/**
+          if-no-files-found: error
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ env.VERSION_NAME }}

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +41,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ui.theme.Dimens
@@ -54,6 +57,8 @@ data class MoonToastData internal constructor(
     val text: CharSequence,
     val loading: Boolean,
     val color: Color,
+    @DrawableRes val icon: Int?,
+    val iconColor: Color,
     private val continuation: CancellableContinuation<Unit>,
 ) {
     internal fun dismiss() {
@@ -75,6 +80,8 @@ class MoonToastHostState {
         text: CharSequence,
         loading: Boolean = false,
         color: Color = Color.Unspecified,
+        @DrawableRes icon: Int? = null,
+        iconColor: Color = Color.Unspecified,
     ) {
         mutex.withLock {
             try {
@@ -83,6 +90,8 @@ class MoonToastHostState {
                         text = text,
                         loading = loading,
                         color = color,
+                        icon = icon,
+                        iconColor = iconColor,
                         continuation = continuation,
                     )
                 }
@@ -190,6 +199,14 @@ fun MoonToastContent(
                 strokeWidth = 2.dp,
             )
             Spacer(modifier = Modifier.width(10.dp))
+        } else if (data.icon != null) {
+            Icon(
+                modifier = Modifier.size(16.dp),
+                painter = painterResource(data.icon),
+                contentDescription = null,
+                tint = data.iconColor,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
         }
         Text(
             text = data.text.toString(),

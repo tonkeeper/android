@@ -25,7 +25,7 @@
     <uikit.widget.TextHeaderView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:title="@string/backup_attention_title"
+        android:title="@string/report_encrypted_comment_title"
         android:description="@string/report_encrypted_comment"/>
 
     <Button

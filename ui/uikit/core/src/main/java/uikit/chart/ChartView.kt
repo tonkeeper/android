@@ -20,16 +20,15 @@ class ChartView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : View(context, attrs, defStyle) {
 
-    private companion object {
-        private const val MIN_EXPANDED_POINTS = 100
-        private const val SMALL_DATA_REPEAT_COUNT = 4
-        private val TIME_LABEL_GUIDE_INDICES = intArrayOf(0, 2)
-    }
+    private enum class State { LOADING, EMPTY, DATA }
 
     private val chartDrawable = ChartDrawable(context)
     private val touchIndicatorDrawable = TouchIndicatorDrawable(context)
     private val loadingDrawable = LoadingDrawable(context)
+    private val emptyDrawable = EmptyChartDrawable(context)
     private val labelPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+
+    private var state: State = State.LOADING
 
     private val axisPriceEndPadding = 16f.dp
     private val axisPriceMinBottomPadding = 24f.dp
@@ -42,6 +41,13 @@ class ChartView @JvmOverloads constructor(
     private var lastChartPayload: List<ChartPoint>? = null
 
     var onPointSelected: ((ChartPoint?) -> Unit)? = null
+
+    var emptyText: String
+        get() = emptyDrawable.text
+        set(value) {
+            emptyDrawable.text = value
+            if (state == State.EMPTY) invalidate()
+        }
 
     var formatAxisPrice: ((Float) -> String)? = null
         set(value) {
@@ -65,12 +71,26 @@ class ChartView @JvmOverloads constructor(
         background = chartDrawable
         touchIndicatorDrawable.callback = this
         loadingDrawable.callback = this
+        emptyDrawable.callback = this
     }
 
-    fun setData(data: List<ChartPoint>, isSquare: Boolean) {
-        val payload = data.toChartPayload()
-        if (lastChartPayload == payload) return
+    fun setData(data: List<ChartPoint>?, isSquare: Boolean) {
+        if (data == null) {
+            if (state == State.LOADING) return
 
+            state = State.LOADING
+            lastChartPayload = null
+            chartDrawable.setData(emptyList(), isSquare)
+            clearSelection(dispatchCallback = true)
+            invalidate()
+            return
+        }
+
+        val payload = data.toChartPayload()
+        val newState = if (payload.isEmpty()) State.EMPTY else State.DATA
+        if (state == newState && lastChartPayload == payload) return
+
+        state = newState
         lastChartPayload = payload
         chartDrawable.setData(payload, isSquare)
         clearSelection(dispatchCallback = true)
@@ -80,7 +100,8 @@ class ChartView @JvmOverloads constructor(
     override fun verifyDrawable(who: Drawable): Boolean {
         return super.verifyDrawable(who) ||
                 who == touchIndicatorDrawable ||
-                who == loadingDrawable
+                who == loadingDrawable ||
+                who == emptyDrawable
     }
 
     override fun draw(canvas: Canvas) {
@@ -91,17 +112,19 @@ class ChartView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        if (chartDrawable.isEmpty) {
-            loadingDrawable.draw(canvas)
-            return
+        when (state) {
+            State.LOADING -> loadingDrawable.draw(canvas)
+            State.EMPTY -> emptyDrawable.draw(canvas)
+            State.DATA -> {
+                drawAxisPriceLabels(canvas)
+                drawAxisGuideTimeLabels(canvas)
+                touchIndicatorDrawable.draw(canvas)
+            }
         }
-
-        drawAxisPriceLabels(canvas)
-        drawAxisGuideTimeLabels(canvas)
-        touchIndicatorDrawable.draw(canvas)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (state != State.DATA) return super.onTouchEvent(event)
         return when (event.actionMasked) {
             MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_MOVE -> {
@@ -128,10 +151,15 @@ class ChartView @JvmOverloads constructor(
 
         chartDrawable.verticalGuidesBottomExtraPx = chartAreaBottomInset
 
+        if (!emptyDrawable.bounds.matches(0, 0, width, height)) {
+            emptyDrawable.setBounds(0, 0, width, height)
+        }
+
         if (chartDrawable.bounds.matches(0, top, width, bottom)) return
 
         chartDrawable.setBounds(0, top, width, bottom)
-        touchIndicatorDrawable.setBounds(0, top, width, bottom)
+        // The touch indicator line extends through the bottom time-axis zone.
+        touchIndicatorDrawable.setBounds(0, top, width, height)
         loadingDrawable.setBounds(0, top, width, bottom)
     }
 
@@ -250,5 +278,11 @@ class ChartView @JvmOverloads constructor(
         } finally {
             textAlign = previous
         }
+    }
+
+    private companion object {
+        private const val MIN_EXPANDED_POINTS = 100
+        private const val SMALL_DATA_REPEAT_COUNT = 4
+        private val TIME_LABEL_GUIDE_INDICES = intArrayOf(0, 2)
     }
 }

@@ -22,7 +22,6 @@ import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -163,21 +162,14 @@ class ContactFeature(
         }
     }
 
-    private val tronEnabled: Boolean
-        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
-
     private val tronLatestTransactionsFlow = flow {
-        if (!tronEnabled) {
-            emit(emptyList())
-            return@flow
-        }
-        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && tronEnabled) {
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
             accountRepository.getTronAddress(wallet.id)
         } else null
         val tonProofToken = accountRepository.requestTonProofToken(wallet)
 
         if (tronAddress != null && tonProofToken != null) {
-            emit(eventsRepository.tronLatestSentTransactions(tronAddress, tonProofToken))
+            emit(eventsRepository.tronLatestSentTransactions(tronAddress, walletId = wallet.id))
         } else {
             emit(emptyList())
         }

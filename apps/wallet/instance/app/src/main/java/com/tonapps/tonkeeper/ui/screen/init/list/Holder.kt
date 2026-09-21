@@ -2,20 +2,23 @@ package com.tonapps.tonkeeper.ui.screen.init.list
 
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
-import android.text.style.ForegroundColorSpan
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeperx.R
+import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.reject
 import uikit.extensions.setColor
+import uikit.extensions.withAlpha
 import uikit.widget.CheckBoxView
 
 class Holder(
@@ -23,9 +26,16 @@ class Holder(
     private val onClick: (AccountItem, Boolean) -> Boolean
 ): BaseListHolder<AccountItem>(parent, R.layout.view_select_wallet) {
 
+    private val walletIconView = findViewById<AppCompatImageView>(R.id.wallet_icon)
     private val addressView = findViewById<AppCompatTextView>(R.id.address)
     private val detailsView = findViewById<AppCompatTextView>(R.id.details)
     private val selectedView = findViewById<CheckBoxView>(R.id.selected)
+
+    init {
+        walletIconView.imageTintList = context.accentBlueColor.stateList
+        walletIconView.background =
+            context.drawable(uikit.R.drawable.bg_oval, context.accentBlueColor.withAlpha(.12f))
+    }
 
     override fun onBind(item: AccountItem) {
         itemView.background = item.position.drawable(context)
@@ -59,7 +69,7 @@ class Holder(
         }
         if (collectibles) {
             builder.append(", ")
-            builder.append("nft")
+            builder.append("NFT")
         }
         if (ledgerAdded) {
             builder.append(DOT)

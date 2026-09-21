@@ -64,11 +64,6 @@ class TokenScreen(wallet: WalletEntity) :
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        analytics?.simpleTrackEvent("token_open")
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val padding = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)

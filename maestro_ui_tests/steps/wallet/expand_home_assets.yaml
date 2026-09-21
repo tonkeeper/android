@@ -1,0 +1,23 @@
+# Home caps the Crypto list at 7 rows (WalletScreen.PreviewAssetsLimit); the
+# rest hide behind a "More assets" cell until it is tapped, and the expansion
+# resets every time home is recomposed (e.g. after Manage). A funded wallet
+# always has more than 7 rows, so expand before looking for a ticker further
+# down the list. A short list has no cell — both commands are optional.
+# scrollUntilVisible needs ~5 s per round trip on an emulator, hence 15 s.
+# centerElement: the cell is the last row and can sit right under the bottom
+# tab bar while still counting as 100% visible; a tap at its centre then hits
+# the Trade tab (middle tab, same x) instead of the cell — seen in Cloud.
+appId: com.ton_keeper.debug
+---
+- scrollUntilVisible:
+    element:
+      text: "^More assets$"
+    direction: DOWN
+    timeout: 15000
+    centerElement: true
+    optional: true
+- tapOn:
+    text: "^More assets$"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000

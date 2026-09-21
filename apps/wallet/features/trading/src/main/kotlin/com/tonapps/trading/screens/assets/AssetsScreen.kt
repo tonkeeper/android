@@ -38,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.wallet.localization.Localization
+import io.tradingapi.models.AssetRefSummary
 import io.tradingapi.models.AssetsTab
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
@@ -120,9 +121,7 @@ private fun AssetsContent(
         AssetsTab.etfs to stringResource(Localization.tab_etfs),
     )
     val tabs = remember(tabTitles) {
-        AssetsTab.entries.map { tab ->
-            MoonItem(id = tab.ordinal, title = tabTitles.getValue(tab))
-        }.toImmutableList()
+        tabTitles.map { (tab, title) -> MoonItem(id = tab.ordinal, title = title) }.toImmutableList()
     }
 
     MoonScaffold(
@@ -186,7 +185,9 @@ private fun AssetsList(
 ) {
     val shouldLoadMore by remember(hasMore) {
         derivedStateOf {
-            if (!hasMore) return@derivedStateOf false
+            if (!hasMore) {
+                return@derivedStateOf false
+            }
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
             val total = listState.layoutInfo.totalItemsCount
             total > 0 && lastVisible >= total - LOAD_MORE_THRESHOLD
@@ -194,7 +195,9 @@ private fun AssetsList(
     }
 
     LaunchedEffect(shouldLoadMore) {
-        if (shouldLoadMore) onLoadMore()
+        if (shouldLoadMore) {
+            onLoadMore()
+        }
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -227,7 +230,9 @@ private fun AssetsList(
         modifier = Modifier.nestedScroll(nestedScrollConnection),
     ) {
         itemsIndexed(items, key = { _, item -> item.id }) { index, item ->
-            if (index > 0) MoonItemDivider()
+            if (index > 0) {
+                MoonItemDivider()
+            }
             AssetCell(
                 item = item,
                 position = defaultBundleType(items.size, index),
@@ -259,6 +264,7 @@ private fun mockAssetItem(
     name: String,
     price: String,
     change: String,
+    verification: AssetRefSummary.Verification = AssetRefSummary.Verification.whitelist,
 ) = AssetItem(
     id = "mock::$symbol",
     symbol = symbol,
@@ -266,12 +272,13 @@ private fun mockAssetItem(
     imageUrl = "",
     formattedPrice = price,
     formattedChange = change,
+    verification = verification,
 )
 
 private val previewItems = listOf(
     mockAssetItem("TON", "Toncoin", "$5.42", "+ 3.21 %"),
     mockAssetItem("USDT", "Tether", "$1.00", "0.00 %"),
-    mockAssetItem("BTC", "Bitcoin", "$98 430", "- 1.54 %"),
+    mockAssetItem("BTC", "Bitcoin", "$98 430", "- 1.54 %", AssetRefSummary.Verification.trusted),
     mockAssetItem("ETH", "Ethereum", "$3 210", "+ 2.10 %"),
     mockAssetItem("NOT", "Notcoin", "$0.0071", "- 0.87 %"),
 )

@@ -1,0 +1,20 @@
+package com.tonapps.legacy.assets
+
+import com.tonapps.icu.Coins
+import com.tonapps.blockchain.model.legacy.WalletEntity
+
+data class WalletBalanceEntity(
+    val accountId: String,
+    val testnet: Boolean,
+    val balance: Coins
+) {
+
+    data class Balances(
+        val balances: List<WalletBalanceEntity>
+    ) {
+
+        fun getBalance(wallet: WalletEntity): WalletBalanceEntity? {
+            return balances.firstOrNull { it.accountId == wallet.accountId && it.testnet == wallet.testnet }
+        }
+    }
+}

@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.ton.contract)
     implementation(projects.lib.blockchain)
     implementation(projects.lib.icu)
+    implementation(projects.lib.extensions)
     implementation(projects.tonapi)
 
     implementation(projects.apps.wallet.api)

@@ -76,6 +76,16 @@
                         android:scaleType="centerCrop"
                         app:viewAspectRatio="1"/>
 
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/sale_badge"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_margin="8dp"
+                        android:layout_gravity="end|top"
+                        android:scaleType="centerInside"
+                        android:visibility="gone"
+                        android:src="@drawable/ic_sale_badge_16"/>
+
                 </FrameLayout>
 
                 <androidx.appcompat.widget.AppCompatTextView
@@ -97,14 +107,12 @@
                     android:textAppearance="@style/TextAppearance.Body2"
                     android:textColor="?attr/textSecondaryColor"/>
 
-                <androidx.appcompat.widget.AppCompatTextView
+                <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/nft_description"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
-                    android:layout_marginTop="8dp"
-                    android:textAppearance="@style/TextAppearance.Body2"
-                    android:textColor="?attr/textSecondaryColor"/>
+                    android:layout_marginTop="8dp"/>
 
                 <uikit.widget.ColumnLayout
                     android:id="@+id/about"
@@ -124,14 +132,12 @@
                         android:textColor="?attr/textPrimaryColor"
                         android:text="@string/about_collection"/>
 
-                    <androidx.appcompat.widget.AppCompatTextView
+                    <androidx.compose.ui.platform.ComposeView
                         android:id="@+id/collection_description"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="@dimen/offsetMedium"
-                        android:layout_marginTop="@dimen/offsetExtraSmall"
-                        android:textAppearance="@style/TextAppearance.Body2"
-                        android:textColor="?attr/textSecondaryColor"/>
+                        android:layout_marginTop="@dimen/offsetExtraSmall"/>
 
                 </uikit.widget.ColumnLayout>
 

@@ -1,0 +1,46 @@
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — trending network filters"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+- runFlow: "../../../steps/trade/open_multichain_trade.yaml"
+
+- extendedWaitUntil:
+    visible: Trending
+    timeout: 10000
+- assertVisible: All
+
+- tapOn:
+    text: All
+    rightOf: Trending
+- tapOn: Ethereum
+- assertVisible:
+    text: Ethereum
+    rightOf: Trending
+- runFlow:
+    file: "../../../steps/trade/assert_trending_network_headers.yaml"
+    env:
+      NETWORK_HEADER: "Ethereum"
+
+- tapOn:
+    text: Ethereum
+    rightOf: Trending
+- tapOn: Ton
+- assertVisible:
+    text: Ton
+    rightOf: Trending
+- runFlow:
+    file: "../../../steps/trade/assert_trending_network_headers.yaml"
+    env:
+      NETWORK_HEADER: "TON"
+
+- tapOn:
+    text: Ton
+    rightOf: Trending
+- tapOn:
+    text: All
+    index: 0
+- assertVisible:
+    text: All
+    rightOf: Trending

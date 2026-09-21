@@ -1,6 +1,7 @@
 package com.tonapps.blockchain.ton
 
-import org.ton.crypto.digest.sha256
+import org.ton.kotlin.crypto.sha256
+
 
 /**
  * Signature domain for L2 networks.

@@ -5,17 +5,18 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.rememberNavBackStack
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowBuyAsset
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.core.navigation.LocalResultStore
 import com.tonapps.core.navigation.rememberResultStore
 import com.tonapps.deposit.data.AssetFilter
 import com.tonapps.deposit.screens.assets.AssetsCryptoExtendedFeature
 import com.tonapps.deposit.screens.assets.AssetsCryptoExtendedFeatureData
 import com.tonapps.deposit.screens.assets.AssetsExtendedScreen
+import com.tonapps.deposit.screens.buy.crypto.BuyWithCryptoData
 import com.tonapps.deposit.screens.buy.crypto.BuyWithCryptoFeature
 import com.tonapps.deposit.screens.buy.crypto.BuyWithCryptoScreen
 import com.tonapps.deposit.screens.currency.SelectCurrencyFeature
@@ -43,14 +44,7 @@ import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ui.moon.MoonNav
-
-internal fun WalletCurrency.toBuyAsset(): DepositFlowBuyAsset {
-    return when (address) {
-        WalletCurrency.USDT_TON.address -> DepositFlowBuyAsset.TonJettonUSDT
-        WalletCurrency.USDT_TRON.address -> DepositFlowBuyAsset.TronTrc20USDT
-        else -> DepositFlowBuyAsset.TonNativeTON
-    }
-}
+import ui.moon.rememberNestedNavBackStack
 
 @Serializable
 sealed interface DepositRoutes : NavKey {
@@ -99,18 +93,12 @@ sealed interface DepositRoutes : NavKey {
 @Composable
 fun DepositRouter(
     initial: DepositRoutes = DepositRoutes.Ramp,
+    walletId: String? = null,
     onBack: () -> Unit,
     openProvider: (String) -> Unit,
 ) {
-    val backStack = rememberNavBackStack(initial)
+    val backStack = rememberNestedNavBackStack(initial, onBack)
     val resultStore = rememberResultStore()
-    val popBackStack = {
-        if (backStack.size > 1) {
-            backStack.removeLastOrNull()
-        } else {
-            onBack()
-        }
-    }
 
     CompositionLocalProvider(LocalResultStore provides resultStore) {
         MoonNav(
@@ -124,7 +112,10 @@ fun DepositRouter(
                         rampType = RampType.RampOn,
                         onClose = onBack,
                         onQr = {
-                            AnalyticsHelper.Default.events.depositFlow.depositClickReceiveTokens(from = DepositFlowFrom.WalletScreen)
+                            AnalyticsHelper.Default.events.depositFlow.depositOptionClick(
+                                from = DepositFlowFrom.WalletScreen,
+                                addFundsOption = DepositFlowAddFundsOption.ReceiveTokens,
+                            )
                             backStack.add(DepositRoutes.Qr)
                         },
                         onSend = { },
@@ -144,7 +135,7 @@ fun DepositRouter(
                 }
 
                 is DepositRoutes.ExtendedCryptoList -> NavEntry(key) {
-                    val viewModel = koinViewModel<AssetsCryptoExtendedFeature> { parametersOf(AssetsCryptoExtendedFeatureData(RampType.RampOn, key.filter)) }
+                    val viewModel = koinViewModel<AssetsCryptoExtendedFeature> { parametersOf(AssetsCryptoExtendedFeatureData(RampType.RampOn, key.filter, walletId)) }
 
                     val sectionFilter = when (key.filter) {
                         AssetFilter.Cash -> PaymentMethodSectionFilter.CashOnly
@@ -156,12 +147,14 @@ fun DepositRouter(
                         feature = viewModel,
                         title = stringResource(Localization.choose_asset),
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onSelected = { currency ->
                             when (key.filter) {
                                 AssetFilter.StablecoinRoot -> {
-                                    AnalyticsHelper.Default.events.depositFlow.depositClickBuy(
-                                        buyAsset = currency.toBuyAsset()
+                                    AnalyticsHelper.Default.events.depositFlow.depositClickFiatAsset(
+                                        from = DepositFlowFrom.WalletScreen,
+                                        addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+                                        buyAsset = currency.analyticsAssetId(),
                                     )
                                     backStack.add(DepositRoutes.Buy(
                                         asset = RampAsset.Currency(currency),
@@ -177,8 +170,10 @@ fun DepositRouter(
                                     ))
                                 }
                                 else -> {
-                                    AnalyticsHelper.Default.events.depositFlow.depositClickBuy(
-                                        buyAsset = currency.toBuyAsset()
+                                    AnalyticsHelper.Default.events.depositFlow.depositClickFiatAsset(
+                                        from = DepositFlowFrom.WalletScreen,
+                                        addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+                                        buyAsset = currency.analyticsAssetId(),
                                     )
                                     backStack.add(DepositRoutes.Buy(
                                         asset = RampAsset.Currency(currency),
@@ -193,7 +188,7 @@ fun DepositRouter(
 
                 is DepositRoutes.Buy -> NavEntry(key) {
                     val viewModel = koinViewModel<PaymentMethodFeature> {
-                        parametersOf(PaymentMethodFeatureData(key.asset, RampType.RampOn, key.ft, key.tn, key.tt, key.fn, key.cm, key.sectionFilter, key.preferredCurrency))
+                        parametersOf(PaymentMethodFeatureData(key.asset, RampType.RampOn, key.ft, key.tn, key.tt, key.fn, key.cm, key.sectionFilter, key.preferredCurrency, walletId))
                     }
                     val currencyResult = resultStore.removeResult<WalletCurrency>(KEY_CURRENCY_SELECTION_RESULT)
 
@@ -202,7 +197,7 @@ fun DepositRouter(
                         fallbackAsset = key.asset,
                         currencySelectionResult = currencyResult,
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onPaymentMethodClick = { asset, paymentMethodType, fiatCurrency ->
                             backStack.add(
                                 DepositRoutes.Amount(
@@ -260,31 +255,37 @@ fun DepositRouter(
                             backStack.add(DepositRoutes.BuyWithCrypto(from = networkInfo.currency, to = key.to))
                         },
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                     )
                 }
 
                 is DepositRoutes.Qr -> NavEntry(key) {
                     val viewModel = koinViewModel<QrAssetFeature> {
-                        parametersOf(QrAssetData())
+                        parametersOf(QrAssetData(walletId = walletId))
                     }
 
                     QrScreen(
                         viewModel = viewModel,
                         showBuyButton = false, // TODO
-                        onFinishClick = { popBackStack() },
+                        onFinishClick = { backStack.safeRemoveLastOrNull(key) },
                         onBuyClick = {}, // TODO
                     )
                 }
 
                 is DepositRoutes.BuyWithCrypto -> NavEntry(key) {
-                    val viewModel = koinViewModel<BuyWithCryptoFeature> { parametersOf(key.from, key.to) }
+                    val viewModel = koinViewModel<BuyWithCryptoFeature> {
+                        parametersOf(BuyWithCryptoData(
+                            from = key.from,
+                            to = key.to,
+                            walletId = walletId,
+                        ))
+                    }
                     BuyWithCryptoScreen(
                         viewModel = viewModel,
                         from = key.from,
                         to = key.to,
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                     )
                 }
 
@@ -296,7 +297,7 @@ fun DepositRouter(
                         onConfirm = { currency ->
                             resultStore.setResult(KEY_CURRENCY_SELECTION_RESULT, currency)
                         },
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onClose = onBack,
                     )
                 }
@@ -306,6 +307,7 @@ fun DepositRouter(
                         assetFrom = RampAsset.Currency(key.fiatCurrency),
                         assetTo = key.asset,
                         paymentMethodType = key.paymentMethodType,
+                        walletId = walletId,
                     )
                     val viewModel = koinViewModel<DepositAmountFeature> {
                         parametersOf(amountData)
@@ -314,7 +316,7 @@ fun DepositRouter(
                     DepositAmountScreen(
                         feature = viewModel,
                         onClose = onBack,
-                        onBack = { popBackStack() },
+                        onBack = { backStack.safeRemoveLastOrNull(key) },
                         onContinue = openProvider,
                     )
                 }

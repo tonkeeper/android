@@ -20,17 +20,23 @@ data class CreateP2PSessionRequest(
     @SerialName(value = "wallet")
     val wallet: String,
 
-    /* Blockchain chain identifier */
-    @SerialName(value = "network")
-    val network: String,
-
-    /* Crypto currency code */
-    @SerialName(value = "crypto_currency")
-    val cryptoCurrency: String,
-
     /* Fiat currency code */
     @SerialName(value = "fiat_currency")
     val fiatCurrency: String,
+
+    /* Internal asset identifier, e.g. `ton/mainnet/coin` or `ton/mainnet/jetton/{raw_address}`. Preferred over the legacy `crypto_currency` + `network` pair */
+    @SerialName(value = "asset_id")
+    val assetId: String? = null,
+
+    /* Crypto currency code. Deprecated: use asset_id instead */
+    @SerialName(value = "crypto_currency")
+    @Deprecated(message = "This property is deprecated.")
+    val cryptoCurrency: String? = null,
+
+    /* Blockchain network identifier. Deprecated: use asset_id instead */
+    @SerialName(value = "network")
+    @Deprecated(message = "This property is deprecated.")
+    val network: String? = null,
 
     /* Optional exchange amount */
     @SerialName(value = "amount")

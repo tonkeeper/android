@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImagePainter
+import com.tonapps.uikit.icon.UIKitIcon
+import ui.painterResource
 import ui.theme.Dimens
 import ui.theme.UIKit
 import ui.workaround.isEmpty
@@ -59,6 +61,13 @@ fun MoonItemIcon(
     )
 }
 
+@Composable
+fun MoonChevronRight() {
+    MoonItemIcon(
+        painter = painterResource(UIKitIcon.ic_chevron_right_16),
+        color = UIKit.colorScheme.icon.tertiary,
+    )
+}
 
 @Composable
 fun MoonActionIcon(

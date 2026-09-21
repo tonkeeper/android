@@ -2,6 +2,7 @@ package com.tonapps.deposit.screens.confirm
 
 import android.app.Application
 import android.content.Context
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.model.legacy.Amount
 import com.tonapps.blockchain.model.legacy.Fee
 import com.tonapps.blockchain.model.legacy.TokenEntity
@@ -17,7 +18,10 @@ import com.tonapps.blockchain.tron.TronTransfer
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
+import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.WalletRedMetadata
+import com.tonapps.core.helper.analyticsAssetId
+import com.tonapps.core.helper.nftAnalyticsAssetId
 import com.tonapps.deposit.screens.send.SendException
 import com.tonapps.deposit.screens.send.SendParams
 import com.tonapps.deposit.screens.send.state.SendDestination
@@ -42,6 +46,7 @@ import com.tonapps.mvi.contract.MviState
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.props.MviProperty
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.AuthorizationProvider
 import com.tonapps.wallet.api.tron.entity.TronResourcesEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryMapper
@@ -140,6 +145,7 @@ class ConfirmFeature(
     private val app: Application, // TODO remove from here
     private val accountRepository: AccountRepository,
     private val api: API,
+    private val authorizationProvider: AuthorizationProvider,
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
     private val ratesRepository: RatesRepository,
@@ -182,33 +188,27 @@ class ConfirmFeature(
 
     // endregion
 
-    private fun getWithdrawFeePaidIn(fee: SendFee?): Events.WithdrawFlow.WithdrawFlowFeePaidIn {
+    // The migrated schema names the payer asset rather than the fee source: a native-coin fee (TON
+    // or TRX) is "coin", and paying a Tron transfer in TON is the battery instant fee.
+    private fun getWithdrawFeeAsset(fee: SendFee?): Events.WithdrawFlow.WithdrawFlowFeeAsset {
         return when (fee) {
-            is SendFee.Ton -> Events.WithdrawFlow.WithdrawFlowFeePaidIn.Ton
-            is SendFee.Gasless -> Events.WithdrawFlow.WithdrawFlowFeePaidIn.Gasless
-            is SendFee.Battery -> Events.WithdrawFlow.WithdrawFlowFeePaidIn.Battery
-            is SendFee.TronTrx -> Events.WithdrawFlow.WithdrawFlowFeePaidIn.Trx
-            is SendFee.TronTon -> Events.WithdrawFlow.WithdrawFlowFeePaidIn.Ton
-            null -> Events.WithdrawFlow.WithdrawFlowFeePaidIn.Ton
+            is SendFee.Ton -> Events.WithdrawFlow.WithdrawFlowFeeAsset.Coin
+            is SendFee.Gasless -> Events.WithdrawFlow.WithdrawFlowFeeAsset.Gasless
+            is SendFee.Battery -> Events.WithdrawFlow.WithdrawFlowFeeAsset.BatteryCharges
+            is SendFee.TronTrx -> Events.WithdrawFlow.WithdrawFlowFeeAsset.Coin
+            is SendFee.TronTon -> Events.WithdrawFlow.WithdrawFlowFeeAsset.BatteryTonInstantFee
+            null -> Events.WithdrawFlow.WithdrawFlowFeeAsset.Coin
         }
     }
 
-    private fun getSellAsset(token: TokenEntity): Events.WithdrawFlow.WithdrawFlowSellAsset {
-        return when {
-            token.address == WalletCurrency.USDT_TON.address -> Events.WithdrawFlow.WithdrawFlowSellAsset.TonJettonUSDT
-            token.address == WalletCurrency.USDT_TRON.address -> Events.WithdrawFlow.WithdrawFlowSellAsset.TronTrc20USDT
-            else -> Events.WithdrawFlow.WithdrawFlowSellAsset.TonNativeTON
-        }
-    }
-
-    private fun getFeePaidIn(fee: SendFee?): Events.SendNative.SendNativeFeePaidIn {
+    private fun getFeeAsset(fee: SendFee?): Events.SendNative.SendNativeFeeAsset {
         return when (fee) {
-            is SendFee.Ton -> Events.SendNative.SendNativeFeePaidIn.Ton
-            is SendFee.Gasless -> Events.SendNative.SendNativeFeePaidIn.Gasless
-            is SendFee.Battery -> Events.SendNative.SendNativeFeePaidIn.Battery
-            is SendFee.TronTrx -> Events.SendNative.SendNativeFeePaidIn.Trx
-            is SendFee.TronTon -> Events.SendNative.SendNativeFeePaidIn.Ton
-            null -> Events.SendNative.SendNativeFeePaidIn.Ton
+            is SendFee.Ton -> Events.SendNative.SendNativeFeeAsset.Coin
+            is SendFee.Gasless -> Events.SendNative.SendNativeFeeAsset.Gasless
+            is SendFee.Battery -> Events.SendNative.SendNativeFeeAsset.BatteryCharges
+            is SendFee.TronTrx -> Events.SendNative.SendNativeFeeAsset.Coin
+            is SendFee.TronTon -> Events.SendNative.SendNativeFeeAsset.BatteryTonInstantFee
+            null -> Events.SendNative.SendNativeFeeAsset.Coin
         }
     }
 
@@ -252,7 +252,7 @@ class ConfirmFeature(
             otherMetadata = WalletRedMetadata.walletKit(),
         )
         try {
-            if (params.selectedToken.isTrc20) {
+            if (params.selectedToken.blockchain == Blockchain.TRON) {
                 initTron()
             } else {
                 initTon()
@@ -306,7 +306,15 @@ class ConfirmFeature(
             tronTransfer = transfer
 
             resetFees()
-            val resources = api.tron.estimateTransferResources(transfer)
+            val resources = if (params.selectedToken.isTrx) {
+                api.tron.estimateNativeTransferResources(
+                    from = transfer.from,
+                    to = transfer.to,
+                    amountSun = transfer.amount.toLong(),
+                )
+            } else {
+                api.tron.estimateTransferResources(transfer)
+            }
             tronResources = resources
 
             coroutineScope {
@@ -321,18 +329,23 @@ class ConfirmFeature(
             var fee: SendFee? = null
 
             // Default selection
-            if (batteryFee != null && batteryFee!!.enoughCharges) fee = batteryFee
-            else if (tronTonFee != null && tronTonFee!!.enoughBalance) fee = tronTonFee
-            else if (tronTrxFee != null && tronTrxFee!!.enoughBalance) fee = tronTrxFee
+            if (batteryFee != null && batteryFee!!.enoughCharges) {
+                fee = batteryFee
+            } else if (tronTonFee != null && tronTonFee!!.enoughBalance) {
+                fee = tronTonFee
+            } else if (tronTrxFee != null && tronTrxFee!!.enoughBalance) {
+                fee = tronTrxFee
+            }
 
             // Preferred method override
             val preferredFeeMethod = settingsRepository.getPreferredTronFeeMethod(wallet.id)
-            if (preferredFeeMethod == PreferredTronFeeMethod.BATTERY && batteryFee?.enoughCharges == true) fee =
-                batteryFee
-            else if (preferredFeeMethod == PreferredTronFeeMethod.TON && tronTonFee?.enoughBalance == true) fee =
-                tronTonFee
-            else if (preferredFeeMethod == PreferredTronFeeMethod.TRX && tronTrxFee?.enoughBalance == true) fee =
-                tronTrxFee
+            if (preferredFeeMethod == PreferredTronFeeMethod.BATTERY && batteryFee?.enoughCharges == true) {
+                fee = batteryFee
+            } else if (preferredFeeMethod == PreferredTronFeeMethod.TON && tronTonFee?.enoughBalance == true) {
+                fee = tronTonFee
+            } else if (preferredFeeMethod == PreferredTronFeeMethod.TRX && tronTrxFee?.enoughBalance == true) {
+                fee = tronTrxFee
+            }
 
             if (fee != null) {
                 transitionToReady(fee)
@@ -365,7 +378,9 @@ class ConfirmFeature(
                 fee is SendFee.Gasless -> displayAmount = tokenAmount - fee.amount.value
                 token.isTon && fee is SendFee.Ton -> displayAmount = tokenAmount - fee.amount.value
             }
-            if (displayAmount.isNegative) displayAmount = Coins.ZERO
+            if (displayAmount.isNegative) {
+                displayAmount = Coins.ZERO
+            }
         }
 
         val amountFormatted =
@@ -447,12 +462,18 @@ class ConfirmFeature(
     // region Fee Selection
 
     private suspend fun handleSelectFee(fee: SendFee) = withContext(Dispatchers.IO) {
-        if (fee is SendFee.TronTrx && !fee.enoughBalance) return@withContext
-        if (fee is SendFee.TronTon && !fee.enoughBalance) return@withContext
-        if (fee is SendFee.Battery && !fee.enoughCharges) return@withContext
+        if (fee is SendFee.TronTrx && !fee.enoughBalance) {
+            return@withContext
+        }
+        if (fee is SendFee.TronTon && !fee.enoughBalance) {
+            return@withContext
+        }
+        if (fee is SendFee.Battery && !fee.enoughCharges) {
+            return@withContext
+        }
 
         // Persist preferred fee method
-        if (params.selectedToken.isTrc20) {
+        if (params.selectedToken.blockchain == Blockchain.TRON) {
             when (fee) {
                 is SendFee.Battery -> settingsRepository.setPreferredTronFeeMethod(
                     wallet.id,
@@ -505,7 +526,9 @@ class ConfirmFeature(
             val totalFiat = rates.convert(token.address, total)
             val totalFiatFormatted = CurrencyFormatter.formatFiat(currency.code, totalFiat)
             totalFormatted to totalFiatFormatted
-        } else null
+        } else {
+            null
+        }
 
         setState<ConfirmState.Ready> {
             copy(
@@ -529,24 +552,26 @@ class ConfirmFeature(
         val token = params.selectedToken.balance.token
         val amount = params.tokenAmount.value.toDouble()
         val readyState = obtainSpecificState<ConfirmState.Ready>()
-        val feePaidIn = getFeePaidIn(readyState?.selectedFee)
+        val feeAsset = getFeeAsset(readyState?.selectedFee)
+        val assetId = token.analyticsAssetId()
 
         AnalyticsHelper.Default.events.sendNative.sendConfirm(
             from = analyticsFrom,
-            assetNetwork = token.blockchain.id,
-            tokenSymbol = token.symbol,
+            asset = assetId,
             amount = amount,
-            feePaidIn = feePaidIn,
+            feeAsset = feeAsset,
             appId = null,
         )
 
         if (params.exchangeData != null) {
             AnalyticsHelper.Default.events.withdrawFlow.withdrawSendConfirm(
-                sellAsset = getSellAsset(token),
-                assetNetwork = token.blockchain.id,
-                tokenSymbol = token.symbol,
+                from = Events.WithdrawFlow.WithdrawFlowFrom.WalletScreen,
+                withdrawOption = Events.WithdrawFlow.WithdrawFlowWithdrawOption.GetUsdtOtherNetworks,
+                sellAsset = assetId,
+                stablecoinSymbol = token.symbol,
+                buyAsset = assetId,
                 amount = amount,
-                feePaidIn = getWithdrawFeePaidIn(readyState?.selectedFee),
+                feeAsset = getWithdrawFeeAsset(readyState?.selectedFee),
             )
         }
 
@@ -588,20 +613,44 @@ class ConfirmFeature(
 
             AnalyticsHelper.Default.events.sendNative.sendSuccess(
                 from = analyticsFrom,
-                assetNetwork = token.blockchain.id,
-                tokenSymbol = token.symbol,
+                asset = assetId,
                 amount = amount,
-                feePaidIn = feePaidIn,
+                feeAsset = feeAsset,
                 appId = null,
+            )
+
+            TransactionSentAnalytics.transactionSent(
+                wallet = wallet,
+                category = Events.TransactionSent.TransactionSentCategory.Transfer,
+                categoryDetail = when {
+                    isNft -> Events.TransactionSent.TransactionSentCategoryDetail.Nft
+                    token.isTon || token.isTrx -> Events.TransactionSent.TransactionSentCategoryDetail.Coin
+                    else -> Events.TransactionSent.TransactionSentCategoryDetail.Token
+                },
+                asset = if (isNft) {
+                    nftAnalyticsAssetId(params.nftAddress)
+                } else {
+                    assetId
+                },
+                amount = if (isNft) {
+                    1.0
+                } else {
+                    amount
+                },
+                feeAsset = TransactionSentAnalytics.feeAsset(feeAsset),
+                initiatedBy = TransactionSentAnalytics.initiatedBy(analyticsFrom),
+                isMax = params.isMaxAmount,
             )
 
             if (params.exchangeData != null) {
                 AnalyticsHelper.Default.events.withdrawFlow.withdrawSendSuccess(
-                    sellAsset = getSellAsset(token),
-                    assetNetwork = token.blockchain.id,
-                    tokenSymbol = token.symbol,
+                    from = Events.WithdrawFlow.WithdrawFlowFrom.WalletScreen,
+                    withdrawOption = Events.WithdrawFlow.WithdrawFlowWithdrawOption.GetUsdtOtherNetworks,
+                    sellAsset = assetId,
+                    stablecoinSymbol = token.symbol,
+                    buyAsset = assetId,
                     amount = amount,
-                    feePaidIn = getWithdrawFeePaidIn(readyState?.selectedFee),
+                    feeAsset = getWithdrawFeeAsset(readyState?.selectedFee),
                 )
             }
 
@@ -621,13 +670,11 @@ class ConfirmFeature(
             if (e is CancellationException) {
                 setState<ConfirmState.Ready> { copy(signingState = SigningState.Idle) }
             } else {
-
                 AnalyticsHelper.Default.events.sendNative.sendFailed(
                     from = analyticsFrom,
-                    assetNetwork = token.blockchain.id,
-                    tokenSymbol = token.symbol,
+                    asset = assetId,
                     amount = amount,
-                    feePaidIn = feePaidIn,
+                    feeAsset = feeAsset,
                     errorCode = 0,
                     errorMessage = e.message ?: "unknown",
                     appId = null,
@@ -636,7 +683,8 @@ class ConfirmFeature(
                 val error = when (e) {
                     is SendException.InsufficientBalance -> ConfirmationError.InsufficientBalance
                     is SendBlockchainException -> e.getUserMessage(context)
-                        ?.let { ConfirmationError.Message(it) } ?: ConfirmationError.Unknown
+                        ?.let { ConfirmationError.Message(it) }
+                        ?: ConfirmationError.Unknown
 
                     else -> ConfirmationError.Unknown
                 }
@@ -666,7 +714,11 @@ class ConfirmFeature(
             }
         }
 
-        val excessesAddress = if (fee is SendFee.RelayerFee) fee.excessesAddress else null
+        val excessesAddress = if (fee is SendFee.RelayerFee) {
+            fee.excessesAddress
+        } else {
+            null
+        }
         val additionalGifts = if (fee is SendFee.Gasless) {
             listOf(
                 transfer.gaslessInternalGift(
@@ -674,15 +726,19 @@ class ConfirmFeature(
                     batteryAddress = fee.excessesAddress
                 )
             )
-        } else emptyList()
+        } else {
+            emptyList()
+        }
 
         val privateKey = if (transfer.commentEncrypted) {
             accountRepository.getPrivateKey(wallet.id)
-        } else null
+        } else {
+            null
+        }
 
         val internalMessage = excessesAddress != null
 
-        val jettonTransferAmount = when (fee) {
+        val jettonTransferAmount = when (fee) { // TODO fees: hardcoded values before sending
             is SendFee.Gasless -> TransferEntity.BASE_FORWARD_AMOUNT
             is SendFee.Extra -> {
                 val extra = Coins.of(fee.extra)
@@ -713,7 +769,9 @@ class ConfirmFeature(
                 excessesAddress = excessesAddress,
                 jettonAmount = if (transfer.max && fee is SendFee.Gasless) {
                     transfer.amount - fee.amount.value
-                } else null,
+                } else {
+                    null
+                },
                 jettonTransferAmount = jettonTransferAmount,
             ),
             seqNo = transfer.seqno,
@@ -727,7 +785,15 @@ class ConfirmFeature(
         val confirmState = obtainSpecificState<ConfirmState.Ready>()
         val fee = confirmState?.selectedFee ?: throw IllegalStateException("Fee is null")
         val transfer = tronTransfer ?: throw IllegalStateException("Tron transfer is null")
-        val transaction = api.tron.buildSmartContractTransaction(transfer).extendExpiration()
+        val transaction = if (params.selectedToken.isTrx) {
+            api.tron.buildNativeTransfer(
+                from = transfer.from,
+                to = transfer.to,
+                amountSun = transfer.amount.toLong(),
+            ).extendExpiration()
+        } else {
+            api.tron.buildSmartContractTransaction(transfer).extendExpiration()
+        }
         val resources = tronResources ?: throw IllegalStateException("Tron resources is null")
         val privateKey = accountRepository.getPrivateKey(wallet.id)
             ?: throw IllegalStateException("Private key is null")
@@ -738,8 +804,10 @@ class ConfirmFeature(
             transaction = transaction,
         )
 
-        val tonProofToken = accountRepository.requestTonProofToken(wallet)
-            ?: throw IllegalStateException("TonProofToken is null")
+        val auth = authorizationProvider.getAuthBy(wallet.id)
+        if (auth.isEmpty) {
+            throw IllegalStateException("Authorization is empty")
+        }
 
         when (fee) {
             is SendFee.Battery -> {
@@ -747,15 +815,13 @@ class ConfirmFeature(
                     transaction = signedTransaction,
                     resources = resources,
                     tronAddress = transfer.from,
-                    tonProofToken = tonProofToken,
+                    auth = auth,
                 )
             }
 
             is SendFee.TronTon -> {
                 val tonToken = tokenRepository.getTON(currency, wallet.accountId, wallet.network)
                     ?: throw IllegalStateException("TON token not found")
-                val tonProofToken = accountRepository.requestTonProofToken(wallet)
-                    ?: throw IllegalStateException("TonProofToken is null")
                 val sendMetadata = getSendParams()
                 val instantFeeTx = TransferEntity.Builder(wallet)
                     .setToken(tonToken.balance)
@@ -776,7 +842,7 @@ class ConfirmFeature(
                     resources = resources,
                     tronAddress = transfer.from,
                     userPublicKey = wallet.publicKey.base64(),
-                    batteryAuthToken = tonProofToken,
+                    auth = auth,
                 )
             }
 
@@ -841,9 +907,11 @@ class ConfirmFeature(
             builder.setMax(isMax)
             builder.setBounceable(true)
             builder.setAmount(
-                if (isMax) token.balance.value else token.balance.fromUIBalance(
-                    tokenAmount
-                )
+                if (isMax) {
+                    token.balance.value
+                } else {
+                    token.balance.fromUIBalance(tokenAmount)
+                }
             )
         } else {
             val tonBalance = getTONBalance()
@@ -886,7 +954,7 @@ class ConfirmFeature(
         withContext(Dispatchers.IO) {
             resetFees()
             val withRelayer = shouldAttemptWithRelayer(transfer)
-            val tonProofToken = accountRepository.requestTonProofToken(wallet)
+            val auth = authorizationProvider.getAuthBy(wallet.id)
             val batteryConfig = batteryRepository.getConfig(wallet.network)
             val tokenAddress = transfer.token.token.address
             val excessesAddress = batteryConfig.excessesAddress
@@ -894,7 +962,7 @@ class ConfirmFeature(
                 it.supportGasless && it.jettonMaster == tokenAddress
             }
             val isSupportsGasless = wallet.isSupportedFeature(WalletFeature.GASLESS) &&
-                    tonProofToken != null && excessesAddress != null && isGaslessToken
+                    !auth.isEmpty && excessesAddress != null && isGaslessToken
 
             coroutineScope {
                 val tonDeferred = async { calculateFeeDefault(transfer) }
@@ -903,32 +971,49 @@ class ConfirmFeature(
                         calculateFeeGasless(
                             transfer,
                             excessesAddress!!,
-                            tonProofToken!!,
                             tokenAddress
                         )
-                    } else null
+                    } else {
+                        null
+                    }
                 }
                 val batteryDeferred = async {
-                    if (withRelayer && tonProofToken != null && excessesAddress != null) {
-                        calculateFeeBattery(transfer, excessesAddress, tonProofToken)
-                    } else null
+                    if (withRelayer && !auth.isEmpty && excessesAddress != null) {
+                        calculateFeeBattery(transfer, excessesAddress)
+                    } else {
+                        null
+                    }
                 }
 
                 val tonFeeResult = tonDeferred.await()
                 gaslessFee = gaslessDeferred.await()
                 batteryFee = batteryDeferred.await()
 
-                tonFee = if (tonFeeResult.error is InsufficientBalanceError) null else tonFeeResult
+                tonFee = if (tonFeeResult.error is InsufficientBalanceError) {
+                    null
+                } else {
+                    tonFeeResult
+                }
 
                 // Preferred fee method
                 val preferredFeeMethod = settingsRepository.getPreferredFeeMethod(wallet.id)
-                if (preferredFeeMethod == PreferredFeeMethod.BATTERY && batteryFee != null) return@coroutineScope batteryFee!!
-                if (preferredFeeMethod == PreferredFeeMethod.GASLESS && gaslessFee != null) return@coroutineScope gaslessFee!!
-                if (preferredFeeMethod == PreferredFeeMethod.TON && tonFee != null) return@coroutineScope tonFee!!
+                if (preferredFeeMethod == PreferredFeeMethod.BATTERY && batteryFee != null) {
+                    return@coroutineScope batteryFee!!
+                }
+                if (preferredFeeMethod == PreferredFeeMethod.GASLESS && gaslessFee != null) {
+                    return@coroutineScope gaslessFee!!
+                }
+                if (preferredFeeMethod == PreferredFeeMethod.TON && tonFee != null) {
+                    return@coroutineScope tonFee!!
+                }
 
                 // Default selection
-                if (batteryFee != null) return@coroutineScope batteryFee!!
-                if (gaslessFee != null && tonFee == null) return@coroutineScope gaslessFee!!
+                if (batteryFee != null) {
+                    return@coroutineScope batteryFee!!
+                }
+                if (gaslessFee != null && tonFee == null) {
+                    return@coroutineScope gaslessFee!!
+                }
 
                 return@coroutineScope tonFeeResult
             }
@@ -953,7 +1038,6 @@ class ConfirmFeature(
     private suspend fun calculateFeeBattery(
         transfer: TransferEntity,
         excessesAddress: AddrStd,
-        tonProofToken: String,
     ): SendFee.Battery? {
         if (api.getConfig(wallet.network).batterySendDisabled) {
             return null
@@ -967,14 +1051,14 @@ class ConfirmFeature(
 
         try {
             val result = batteryRepository.emulate(
-                tonProofToken = tonProofToken,
-                publicKey = wallet.publicKey,
-                network = wallet.network,
+                wallet = wallet,
                 boc = message,
-                safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.network),
+                safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network),
             ) ?: return null
 
-            if (!result.withBattery) return null
+            if (!result.withBattery) {
+                return null
+            }
 
             val extra = result.consequences.event.extra
             val tonAmount = Coins.of(abs(extra))
@@ -983,7 +1067,9 @@ class ConfirmFeature(
             val charges =
                 BatteryMapper.calculateChargesAmount(tonAmount.value, batteryConfig.chargeCost)
 
-            if (charges > chargesBalance) return null
+            if (charges > chargesBalance) {
+                return null
+            }
 
             val excess = result.excess
             val excessCharges = when {
@@ -1017,15 +1103,20 @@ class ConfirmFeature(
     private suspend fun calculateFeeGasless(
         transfer: TransferEntity,
         excessesAddress: AddrStd,
-        tonProofToken: String,
         tokenAddress: String,
     ): SendFee.Gasless? {
         try {
-            if (api.getConfig(wallet.network).flags.disableGasless) return null
+            if (api.getConfig(wallet.network).flags.disableGasless) {
+                return null
+            }
 
             val message = transfer.signForEstimation(
                 internalMessage = true,
-                jettonAmount = if (transfer.max) Coins.of(1, transfer.token.decimals) else null,
+                jettonAmount = if (transfer.max) {
+                    Coins.of(1, transfer.token.decimals)
+                } else {
+                    null
+                },
                 additionalGifts = listOf(
                     transfer.gaslessInternalGift(
                         jettonAmount = Coins.of(1, transfer.token.decimals),
@@ -1037,7 +1128,7 @@ class ConfirmFeature(
             )
 
             val commission = api.estimateGaslessCost(
-                tonProofToken = tonProofToken,
+                auth = authorizationProvider.getAuthBy(wallet.id),
                 jettonMaster = tokenAddress,
                 cell = message,
                 network = wallet.network,
@@ -1045,8 +1136,12 @@ class ConfirmFeature(
 
             val gaslessFeeAmount = Coins.ofNano(commission, transfer.token.decimals)
 
-            if (transfer.max && gaslessFeeAmount > transfer.token.value) return null
-            if (!transfer.max && gaslessFeeAmount + transfer.amount > transfer.token.value) return null
+            if (transfer.max && gaslessFeeAmount > transfer.token.value) {
+                return null
+            }
+            if (!transfer.max && gaslessFeeAmount + transfer.amount > transfer.token.value) {
+                return null
+            }
 
             val fee = Fee(value = gaslessFeeAmount, isRefund = false, token = transfer.token.token)
             val rates = ratesRepository.getRates(wallet.network, currency, fee.token.address)
@@ -1072,9 +1167,15 @@ class ConfirmFeature(
     ): SendFee.Battery? {
         try {
             val batteryCharges = getBatteryCharges()
-            if (isBatteryDisabled && batteryCharges == 0) return null
+            if (isBatteryDisabled && batteryCharges == 0) {
+                return null
+            }
 
-            val batteryEstimation = api.tron.estimateBatteryCharges(transfer, resources)
+            val batteryEstimation = api.tron.estimateBatteryCharges(
+                transfer = transfer,
+                resources = resources,
+                auth = authorizationProvider.getAuthBy(wallet.id),
+            )
             val batteryConfig = batteryRepository.getConfig(wallet.network)
             val tonAmount = BatteryMapper.convertFromCharges(
                 batteryEstimation.charges,
@@ -1096,7 +1197,9 @@ class ConfirmFeature(
                 estimatedTron = batteryEstimation.estimated,
             )
 
-            if (isBatteryDisabled && fee.charges > fee.chargesBalance) return null
+            if (isBatteryDisabled && fee.charges > fee.chargesBalance) {
+                return null
+            }
             return fee
         } catch (_: Exception) {
             return null
@@ -1106,7 +1209,9 @@ class ConfirmFeature(
     private suspend fun getTronTonFee(
         batteryEstimated: EstimatedTronTx?,
     ): SendFee.TronTon? {
-        if (isBatteryDisabled || batteryEstimated == null) return null
+        if (isBatteryDisabled || batteryEstimated == null) {
+            return null
+        }
 
         try {
             val tonEstimation = api.tron.estimateTonFee(batteryEstimated)
@@ -1129,7 +1234,17 @@ class ConfirmFeature(
 
     private suspend fun getTronTrxFee(resources: TronResourcesEntity): SendFee.TronTrx {
         val trxEstimation = api.tron.estimateTrxFee(resources)
-        val trxBalance = getTrxBalance()
+        val trxSpendAmount = if (params.selectedToken.isTrx) {
+            params.tokenAmount
+        } else {
+            Coins.ZERO
+        }
+        val trxRemaining = getTrxBalance() - trxSpendAmount
+        val trxBalance = if (trxRemaining.isNegative) {
+            Coins.ZERO
+        } else {
+            trxRemaining
+        }
         return SendFee.TronTrx(
             amount = Fee(value = trxEstimation.fee, isRefund = false, token = TokenEntity.TRX),
             fiatAmount = ratesRepository.getRates(wallet.network, currency, TokenEntity.TRX.address)
@@ -1237,9 +1352,7 @@ class ConfirmFeature(
     }
 
     private suspend fun getBatteryCharges(): Int = withContext(Dispatchers.IO) {
-        accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.network, true)
-        } ?: 0
+        batteryRepository.getCharges(wallet, true)
     }
 
     private fun getTONBalance(): Coins {
@@ -1258,8 +1371,14 @@ class ConfirmFeature(
     }
 
     private fun shouldAttemptWithRelayer(transfer: TransferEntity): Boolean {
-        if ((transfer.isTon && !transfer.isNft) || transfer.wallet.isExternal) return false
-        val txType = if (transfer.isNft) BatteryTransaction.NFT else BatteryTransaction.JETTON
+        if ((transfer.isTon && !transfer.isNft) || transfer.wallet.isExternal) {
+            return false
+        }
+        val txType = if (transfer.isNft) {
+            BatteryTransaction.NFT
+        } else {
+            BatteryTransaction.JETTON
+        }
         return settingsRepository.batteryIsEnabledTx(transfer.wallet.accountId, txType)
     }
 
@@ -1277,7 +1396,7 @@ class ConfirmFeature(
                 network = transfer.wallet.network,
                 address = transfer.wallet.accountId,
                 balance = (Coins.ONE + Coins.ONE).toLong(),
-                safeModeEnabled = settingsRepository.isSafeModeEnabled(transfer.wallet.network),
+                safeModeEnabled = settingsRepository.isSafeModeEnabled(transfer.wallet.id, transfer.wallet.network),
             )
             val fee = Fee(emulated?.event?.extra ?: 0L)
 
@@ -1301,7 +1420,9 @@ class ConfirmFeature(
         }
 
         tokenCustomPayload?.let {
-            if (it.tokenAddress == token.address) return it
+            if (it.tokenAddress == token.address) {
+                return it
+            }
         }
 
         return try {

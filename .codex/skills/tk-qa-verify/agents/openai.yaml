@@ -1,0 +1,4 @@
+interface:
+  display_name: "TK QA Verify"
+  short_description: "Maestro verification of a Linear task: feasibility, approved plan, execution, evidence report"
+  default_prompt: "Use $tk-qa-verify for the given TK ticket: assess feasibility, propose the smoke/positive/negative plan with an estimate, wait for approval, then run the Maestro flows on the connected device and write the report with videos and uncovered cases."

@@ -106,7 +106,7 @@ internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DAT
         try {
             val field = CursorWindow::class.java.getDeclaredField("sCursorWindowSize")
             field.isAccessible = true
-            field.set(null, 100 * 1024 * 1024) //the 100MB is the new size
+            field.set(null, 16 * 1024 * 1024)
         } catch (e: Exception) {
             FirebaseCrashlytics.getInstance().recordException(e)
         }

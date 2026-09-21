@@ -18,7 +18,7 @@ fun appColorSchemeDark() = AppColorScheme(
         primary = Color(0xFFD9D9D9),
         secondary = Color(0xFF8D8D93),
         tertiary = Color(0xFF4E4E52),
-        accent = Color(0xFF45AEF5),
+        accent = Color(0xFF3C95FA),
         primaryAlternate = Color(0xFF000000)
     ),
     background = BackgroundColorScheme(
@@ -41,9 +41,9 @@ fun appColorSchemeDark() = AppColorScheme(
         primaryAlternate = Color(0xFF000000)
     ),
     buttonPrimary = ButtonColorScheme(
-        primaryBackground = Color(0xFF45AEF5),
-        primaryBackgroundDisable = Color(0xFF378AC3),
-        primaryBackgroundHighlighted = Color(0xFF5BB8F6),
+        primaryBackground = Color(0xFF3C95FA),
+        primaryBackgroundDisable = Color(0xFF387BC7),
+        primaryBackgroundHighlighted = Color(0xFF55A2FA),
         primaryForeground = Color(0xFFFFFFFF)
     ),
     buttonSecondary = ButtonColorScheme(
@@ -70,21 +70,27 @@ fun appColorSchemeDark() = AppColorScheme(
         primaryBackgroundHighlighted = Color(0xFFFFC25E),
         primaryForeground = Color(0xFFFFFFFF)
     ),
+    buttonRed = ButtonColorScheme(
+        primaryBackground = Color(0xFFFF4766),
+        primaryBackgroundDisable = Color(0xFFC2364E),
+        primaryBackgroundHighlighted = Color(0xFFFF5E79),
+        primaryForeground = Color(0xFFFFFFFF)
+    ),
     field = FieldColorScheme(
         background = Color(0xFF17171A),
-        activeBorder = Color(0xFF45AEF5),
+        activeBorder = Color(0xFF3C95FA),
         errorBorder = Color(0xFFFF4766),
         errorBackground = Color(0x14FF4766)
     ),
     accent = AccentColorScheme(
-        blue = Color(0xFF45AEF5),
+        blue = Color(0xFF3C95FA),
         green = Color(0xFF39CC83),
         red = Color(0xFFFF4766),
         orange = Color(0xFFF5A73B),
         purple = Color(0xFF7665E5)
     ),
     tabBar = TabBarColorScheme(
-        activeIcon = Color(0xFF45AEF5),
+        activeIcon = Color(0xFF3C95FA),
         inactiveIcon = Color(0xFF8D8D93)
     ),
     separator = SeparatorColorScheme(

@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonAccentButton
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import ui.theme.Dimens
 import ui.theme.UIKit
 

@@ -5,6 +5,7 @@ import com.tonapps.blockchain.ton.TonAddressTags
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.ton.toBigInt
 import com.tonapps.extensions.optStringCompatJS
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -39,7 +40,7 @@ data class RawMessageEntity(
 
     @IgnoredOnParcel
     val coins: Coins by lazy {
-        Coins.ofNano(amount)
+        Coins.ofNano(amount.toBigInt())
     }
 
     constructor(json: JSONObject, withBattery: Boolean) : this(

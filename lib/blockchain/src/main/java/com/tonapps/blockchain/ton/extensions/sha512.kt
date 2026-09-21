@@ -1,27 +1,26 @@
 package com.tonapps.blockchain.ton.extensions
 
-import org.ton.crypto.digest.sha2.SHA512Digest
-import org.ton.crypto.kdf.PKCSS2ParametersGenerator
-import org.ton.crypto.mac.hmac.HMac
-
+import org.ton.kotlin.crypto.HMac
+import org.ton.kotlin.crypto.Pbkdf2
+import org.ton.kotlin.crypto.Sha512
 
 fun hmac_sha512(key: String, data: String): ByteArray {
     return hmac_sha512(key.toByteArray(), data.toByteArray())
 }
 
 fun hmac_sha512(key: ByteArray, data: ByteArray): ByteArray {
-    val hMac = HMac(SHA512Digest())
-    hMac.init(key)
+    val hMac = HMac(Sha512(), key)
     hMac.update(data, 0, data.size)
-    return hMac.build()
+    return hMac.digest()
 }
 
 fun pbkdf2_sha512(key: ByteArray, salt: ByteArray, iterations: Int, keySize: Int): ByteArray {
-    val pbdkf2Sha512 = PKCSS2ParametersGenerator(
-        digest = SHA512Digest(),
+    val pbdkf2Sha512 = Pbkdf2(
+        digest = Sha512(),
         password = key,
         salt = salt,
         iterationCount = iterations
     )
-    return pbdkf2Sha512.generateDerivedParameters(keySize)
+
+    return pbdkf2Sha512.deriveKey(keySize)
 }

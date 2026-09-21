@@ -63,7 +63,6 @@ class SpamEventsViewModel(
             options = ActionOptions(
                 spamFilter = ActionOptions.SpamFilter.SPAM,
                 hiddenBalances = settingsRepository.hiddenBalances,
-                tronEnabled = settingsRepository.getTronUsdtEnabled(wallet.id),
             )
         ) + tronMapping(tronEvents)).sortedBy { it.timestampForSort }
     }.map {
@@ -89,9 +88,6 @@ class SpamEventsViewModel(
     }.flowOn(Dispatchers.Main)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), SpamUiState())
 
-    private val tronEnabled: Boolean
-        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
-
     init {
         viewModelScope.launch(Dispatchers.IO) {
             init()
@@ -105,15 +101,14 @@ class SpamEventsViewModel(
     private suspend fun init() {
         _eventsFlow.value = getLocalSpam()
 
-        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && tronEnabled) {
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
             accountRepository.getTronAddress(wallet.id)
         } else null
         _tronEventsFlow.value = emptyList()
 
         if (tronAddress != null) {
-            val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
             _tronEventsFlow.value =
-                eventsRepository.loadTronEvents(tronAddress, tonProofToken, limit = 50)
+                eventsRepository.loadTronEvents(tronAddress, wallet.id, limit = 50)
         }
 
         if (20 >= _eventsList.size) {
@@ -142,7 +137,7 @@ class SpamEventsViewModel(
     }
 
     private suspend fun loadMoreTron() {
-        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && tronEnabled) {
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
             accountRepository.getTronAddress(wallet.id)
         } else null
 
@@ -150,14 +145,13 @@ class SpamEventsViewModel(
             return
         }
 
-        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: ""
         val currentEvents = (_tronEventsFlow.value ?: emptyList())
         try {
             val tronLastTimestamp = getTronLastTimestamp()
             if (tronLastTimestamp != null) {
                 val tronEvents = eventsRepository.loadTronEvents(
                     tronAddress,
-                    tonProofToken,
+                    wallet.id,
                     maxTimestamp = tronLastTimestamp.value
                 ) ?: throw IllegalStateException("Failed to load tron events")
                 val events = (currentEvents + tronEvents).distinctBy { it.transactionHash }

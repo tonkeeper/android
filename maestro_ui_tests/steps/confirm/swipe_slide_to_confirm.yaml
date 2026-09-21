@@ -1,0 +1,82 @@
+appId: com.ton_keeper.debug
+# Slide-to-confirm (SlideActionView + MoonSlideConfirmation).
+# Maestro "direction: RIGHT" does not trigger drag handlers — use coordinate swipes.
+---
+- extendedWaitUntil:
+    visible: Confirm Action
+    timeout: 5000
+    optional: true
+
+- extendedWaitUntil:
+    visible:
+      id: slide
+    timeout: 3000
+    optional: true
+
+- extendedWaitUntil:
+    visible:
+      id: slide_confirm_track
+    timeout: 3000
+    optional: true
+
+- evalScript: ${output._slideConfirmed = false}
+
+- retry:
+    maxRetries: 3
+    commands:
+      - runFlow:
+          when:
+            true: ${output._slideConfirmed != true}
+          commands:
+            - swipe:
+                start: 10%, 80%
+                end: 96%, 80%
+                duration: 2200
+            - swipe:
+                start: 10%, 84%
+                end: 96%, 84%
+                duration: 2200
+            - swipe:
+                start: 10%, 87%
+                end: 96%, 87%
+                duration: 2200
+            - swipe:
+                start: 10%, 91%
+                end: 96%, 91%
+                duration: 2200
+
+      - waitForAnimationToEnd:
+          timeout: 2000
+
+      - runFlow:
+          when:
+            visible: Enter passcode
+          commands:
+            - evalScript: ${output._slideConfirmed = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: task
+          commands:
+            - evalScript: ${output._slideConfirmed = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: progress
+          commands:
+            - evalScript: ${output._slideConfirmed = true}
+
+      - runFlow:
+          when:
+            visible:
+              id: slide_confirm_track
+            notVisible:
+              id: slide_confirm_thumb
+          commands:
+            - evalScript: ${output._slideConfirmed = true}
+
+      - assertTrue:
+          condition: ${output._slideConfirmed == true}
+          label: Slide confirm did not complete

@@ -1,0 +1,54 @@
+# Opens Receive for NETWORK_NAME and copies its full address into output.fullAddr.
+# Env: NETWORK_NAME, ADDRESS_TITLE, PREV_NETWORK (row above, or the list subtitle).
+# Do not default PREV_NETWORK here — Maestro env: overrides the caller.
+appId: com.ton_keeper.debug
+---
+- extendedWaitUntil:
+    visible: Add Funds
+    timeout: 30000
+- tapOn: Add Funds
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Receive tokens
+    timeout: 15000
+- tapOn: Receive tokens
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Receiving address
+    timeout: 15000
+- assertVisible:
+    text: ${NETWORK_NAME}
+    below: ${PREV_NETWORK}
+
+- tapOn:
+    text: ".*\\.\\.\\..*"
+    below:
+      text: ${NETWORK_NAME}
+      below: ${PREV_NETWORK}
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: ${ADDRESS_TITLE}
+    timeout: 15000
+- copyTextFrom:
+    id: wallet_address_text
+- evalScript: ${output.fullAddr = (maestro.copiedText || '').replace(/\n/g, '')}
+- assertTrue:
+    condition: ${output.fullAddr != null && output.fullAddr.length > 25}
+    label: ${NETWORK_NAME} full address copied
+
+- tapOn: Copy
+- waitForAnimationToEnd:
+    timeout: 1500
+
+- tapOn: Navigation
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: Action
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Send
+    timeout: 15000

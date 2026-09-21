@@ -1,0 +1,17 @@
+# Opens the first Trending shelf cell and asserts NETWORK_HEADER in details.
+# Env: NETWORK_HEADER
+appId: com.ton_keeper.debug
+---
+- tapOn:
+    text: "[A-Za-z0-9₮]+"
+    below: "Market Cap"
+    above: "Core tokens"
+    index: 0
+- extendedWaitUntil:
+    visible: ${NETWORK_HEADER}
+    timeout: 8000
+- assertVisible: ${NETWORK_HEADER}
+- tapOn: Navigation
+- extendedWaitUntil:
+    visible: "Core tokens"
+    timeout: 8000

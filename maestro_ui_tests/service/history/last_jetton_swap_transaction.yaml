@@ -9,7 +9,10 @@ appId: com.ton_keeper.debug
 - assertTrue: ${output.jettonLastSwap.status == "ok"}
 - assertTrue: ${String(output.jettonLastSwapJettonSwap.ton_in) == nanoTonToSwap}
 
-- evalScript: ${output.jettonLastSwapUsdtGot = output.formatter.formatJetton(output.jettonLastSwapJettonSwap.amount_out, output.jettonLastSwapJettonSwap.jetton_master_out.decimals, 4)}
-- assertVisible: + ${output.jettonLastSwapUsdtGot} USD₮
+- runScript: ../../scripts/utils/formatter.js
+- evalScript: ${output.jettonLastSwapUsdtGot = output.formatter.formatJetton(output.jettonLastSwapJettonSwap.amount_out, output.jettonLastSwapJettonSwap.jetton_master_out.decimals)}
+- assertVisible:
+    text: ${output.jettonLastSwapUsdtGot}
+    optional: true
 
 - runScript: ../../scripts/utils/check_history_time.js

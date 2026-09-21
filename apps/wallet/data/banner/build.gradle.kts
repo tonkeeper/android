@@ -9,6 +9,7 @@ dependencies {
 
     implementation(projects.apps.wallet.api)
     implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.settings)
 
     implementation(projects.lib.blockchain)
     implementation(projects.lib.network)

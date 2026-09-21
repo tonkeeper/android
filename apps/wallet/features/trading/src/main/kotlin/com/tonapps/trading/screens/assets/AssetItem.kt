@@ -2,6 +2,7 @@ package com.tonapps.trading.screens.assets
 
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.Formatter
+import io.tradingapi.models.AssetRefSummary.Verification
 import io.tradingapi.models.MarketItem
 import java.math.BigDecimal
 
@@ -12,6 +13,7 @@ data class AssetItem(
     val imageUrl: String,
     val formattedPrice: String,
     val formattedChange: String,
+    val verification: Verification,
 )
 
 fun MarketItem.toAssetItem(currencyCode: String): AssetItem {
@@ -20,6 +22,7 @@ fun MarketItem.toAssetItem(currencyCode: String): AssetItem {
         symbol = asset.symbol,
         name = asset.name,
         imageUrl = asset.imageUrl,
+        verification = asset.verification,
         formattedPrice = CurrencyFormatter.formatFiat(
             currency = currencyCode,
             value = BigDecimal(metrics.price),

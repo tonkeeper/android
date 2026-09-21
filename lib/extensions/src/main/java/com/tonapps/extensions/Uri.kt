@@ -3,7 +3,6 @@ package com.tonapps.extensions
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import com.tonapps.log.L
 import java.net.URL
 import java.net.URLConnection
 
@@ -56,6 +55,9 @@ val Uri.withoutQuery: Uri
 
 val Uri.pathOrNull: String?
     get() = path?.replace("/", "")?.ifBlank { null }
+
+val Uri.fullPathOrNull: String?
+    get() = pathSegments.joinToString("/").ifBlank { null }
 
 val Uri.hostOrNull: String?
     get() = host?.ifBlank { null }

@@ -6,6 +6,7 @@ sealed class ConnectionState {
     data object Idle: ConnectionState()
     data object Scanning: ConnectionState()
     data object Connected: ConnectionState()
+    data object OpeningTonApp: ConnectionState()
     data object TonAppOpened: ConnectionState()
     data object Signed: ConnectionState()
     data class Disconnected(val error: BleError? = null): ConnectionState()

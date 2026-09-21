@@ -1,0 +1,111 @@
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — receive networks smoke"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+- extendedWaitUntil:
+    visible: Add Funds
+    timeout: 60000
+- tapOn: Add Funds
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Receive tokens
+    timeout: 30000
+- tapOn: Receive tokens
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- extendedWaitUntil:
+    visible: Receiving address
+    timeout: 30000
+- assertVisible: One address per network
+
+# Android receive order (ReceiveAccountsInteractor): TON, TRON, Ethereum,
+# Bitcoin, Base, BSC, Arbitrum. iOS paints Base before Bitcoin and Arbitrum
+# before BSC — do not copy that order here.
+- assertVisible: TON
+- assertVisible:
+    text: ".*\\.\\.\\..*"
+    below: TON
+- assertVisible: TRON
+- assertVisible:
+    text: ".*\\.\\.\\..*"
+    below: TRON
+- assertVisible: Ethereum
+- assertVisible:
+    text: ".*\\.\\.\\..*"
+    below: Ethereum
+- assertVisible: Bitcoin
+- assertVisible:
+    text: ".*\\.\\.\\..*"
+    below: Bitcoin
+- assertVisible: Base
+- assertVisible:
+    text: ".*\\.\\.\\..*"
+    below: Base
+- assertVisible: BSC
+- assertVisible:
+    text: ".*\\.\\.\\..*"
+    below: BSC
+- assertVisible: Arbitrum
+- assertVisible:
+    text: ".*\\.\\.\\..*"
+    below: Arbitrum
+
+- runFlow:
+    file: "../../../steps/recieve_modal/assert_multichain_network.yaml"
+    env:
+      NETWORK_NAME: TON
+      PREV_NETWORK: One address per network
+      ADDRESS_TITLE: Your TON address
+      DISCLAIMER: "Send only TON (GRAM) and tokens in TON network to this address, or you might lose your funds."
+
+- runFlow:
+    file: "../../../steps/recieve_modal/assert_multichain_network.yaml"
+    env:
+      NETWORK_NAME: TRON
+      PREV_NETWORK: TON
+      ADDRESS_TITLE: Your TRON address
+      DISCLAIMER: "Send only TRON (TRX) and tokens in TRON network to this address, or you might lose your funds."
+
+- runFlow:
+    file: "../../../steps/recieve_modal/assert_multichain_network.yaml"
+    env:
+      NETWORK_NAME: Ethereum
+      PREV_NETWORK: TRON
+      ADDRESS_TITLE: Your Ethereum address
+      DISCLAIMER: "Send only Ethereum (ETH) and tokens in Ethereum network to this address, or you might lose your funds."
+
+- runFlow:
+    file: "../../../steps/recieve_modal/assert_multichain_network.yaml"
+    env:
+      NETWORK_NAME: Bitcoin
+      PREV_NETWORK: Ethereum
+      ADDRESS_TITLE: Your Bitcoin address
+      DISCLAIMER: "Send only Bitcoin (BTC) and tokens in Bitcoin network to this address, or you might lose your funds."
+
+- runFlow:
+    file: "../../../steps/recieve_modal/assert_multichain_network.yaml"
+    env:
+      NETWORK_NAME: Base
+      PREV_NETWORK: Bitcoin
+      ADDRESS_TITLE: Your Base address
+      DISCLAIMER: "Send only Base (ETH) and tokens in Base network to this address, or you might lose your funds."
+
+- runFlow:
+    file: "../../../steps/recieve_modal/assert_multichain_network.yaml"
+    env:
+      NETWORK_NAME: BSC
+      PREV_NETWORK: Base
+      ADDRESS_TITLE: Your BSC address
+      DISCLAIMER: "Send only BSC (BNB) and tokens in BSC network to this address, or you might lose your funds."
+
+- runFlow:
+    file: "../../../steps/recieve_modal/assert_multichain_network.yaml"
+    env:
+      NETWORK_NAME: Arbitrum
+      PREV_NETWORK: BSC
+      ADDRESS_TITLE: Your Arbitrum address
+      DISCLAIMER: "Send only Arbitrum (ETH) and tokens in Arbitrum network to this address, or you might lose your funds."

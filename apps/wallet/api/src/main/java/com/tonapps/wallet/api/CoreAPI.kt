@@ -2,8 +2,6 @@ package com.tonapps.wallet.api
 
 import android.content.Context
 import android.os.Build
-import com.tonapps.apps.wallet.api.BuildConfig
-import com.tonapps.core.flags.WalletFeature
 import com.tonapps.extensions.Os
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.cacheFolder
@@ -12,8 +10,11 @@ import com.tonapps.network.interceptor.AcceptLanguageInterceptor
 import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.network.interceptor.LoggingInterceptor
 import com.tonapps.network.interceptor.RateLimitInterceptor
+import com.tonapps.network.interceptor.Tron429RetryInterceptor
 import com.tonapps.wallet.api.entity.ConfigEntity
+import com.tonapps.wallet.api.internal.DeviceAuthInterceptor
 import okhttp3.Cache
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -28,8 +29,21 @@ abstract class CoreAPI(
 ) {
 
     val appVersionName = context.appVersionName
+
     // e.g. Tonkeeper/1.2.3 (Android; 14; Pixel Tablet)
-    private val userAgent = "Tonkeeper/${appVersionName} (Android; ${Build.VERSION.RELEASE}; ${Os.deviceNameAndModel()})"
+    val userAgent = "Tonkeeper/${appVersionName} (Android; ${Build.VERSION.RELEASE}; ${Os.deviceNameAndModel()})"
+
+    @Volatile
+    protected var deviceAuthProvider: DeviceAuthProvider? = null
+        private set
+
+    fun setDeviceAuthProvider(provider: DeviceAuthProvider) {
+        deviceAuthProvider = provider
+    }
+
+    protected fun walletAuthToken(walletId: String, accessToken: String): String? {
+        return deviceAuthProvider?.walletAuthToken(walletId, accessToken)
+    }
 
 //    private var cronetEngine: CronetEngine? = null
 
@@ -48,10 +62,12 @@ abstract class CoreAPI(
     val tronHttpClient = baseOkHttpClientBuilder(
 //        cronetEngine = { cronetEngine },
         timeoutSeconds = 30,
-        rateLimit = 10,
+        // No proactive client throttle — TronGrid rate limits vary; retry on 429 instead.
+        rateLimit = 0,
         context = context,
         interceptors = listOf(
             UserAgentInterceptor(userAgent),
+            Tron429RetryInterceptor(),
         ),
         delegate = delegate,
     ).build()
@@ -60,11 +76,12 @@ abstract class CoreAPI(
         return createTonAPIHttpClient(
 //        cronetEngine = { null },
             timeoutSeconds = 60,
-            callTimeoutSeconds = 0,
             context = context,
             userAgent = userAgent,
             tonApiV2Key = { config().tonApiV2Key },
             allowDomains = { config().domains },
+            deviceAuthHosts = { deviceAuthHosts(config()) },
+            deviceAuthProvider = { deviceAuthProvider },
             delegate = delegate,
         )
     }
@@ -81,32 +98,53 @@ abstract class CoreAPI(
             userAgent = userAgent,
             tonApiV2Key = { config().tonApiV2Key },
             allowDomains = { config().domains },
+            deviceAuthHosts = { deviceAuthHosts(config()) },
+            deviceAuthProvider = { deviceAuthProvider },
             delegate = delegate,
 //            cronetEngine = { cronetEngine }
         )
+    }
+
+    protected fun <T> withExtraHeaders(headers: Map<String, String>, request: () -> T): T {
+        if (headers.isEmpty()) {
+            return request()
+        }
+
+        val previous = ExtraHeadersInterceptor.current.get()
+        ExtraHeadersInterceptor.current.set(headers)
+        try {
+            return request()
+        } finally {
+            if (previous == null) {
+                ExtraHeadersInterceptor.current.remove()
+            } else {
+                ExtraHeadersInterceptor.current.set(previous)
+            }
+        }
     }
 
     private companion object {
 
         const val MAX_CACHE_SIZE = 500L * 1024 * 1024
 
+        object ExtraHeadersInterceptor : Interceptor {
+
+            val current = ThreadLocal<Map<String, String>>()
+
+            override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+                val headers = current.get() ?: return chain.proceed(chain.request())
+                val request = chain.request().newBuilder()
+                for ((name, value) in headers) {
+                    request.header(name, value)
+                }
+                return chain.proceed(request.build())
+            }
+        }
+
         class UserAgentInterceptor(private val userAgent: String) : Interceptor {
             override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
                 val request = chain.request().newBuilder()
                     .addHeader("User-Agent", userAgent)
-                    .build()
-                return chain.proceed(request)
-            }
-        }
-
-        class XCapabilityInterceptor : Interceptor {
-            override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
-                if (!WalletFeature.StreamingV2.isEnabled) {
-                    return chain.proceed(chain.request())
-                }
-
-                val request = chain.request().newBuilder()
-                    .addHeader("X-Capability", "sub-second")
                     .build()
                 return chain.proceed(request)
             }
@@ -156,9 +194,11 @@ abstract class CoreAPI(
 //                    )
 //                }
 
-            builder.addInterceptor(
-                RateLimitInterceptor(requestsPerSecondLimit = rateLimit)
-            )
+            if (rateLimit > 0) {
+                builder.addInterceptor(
+                    RateLimitInterceptor(requestsPerSecondLimit = rateLimit)
+                )
+            }
 
             builder.addInterceptor(
                 LoggingInterceptor(delegate = delegate)
@@ -167,28 +207,51 @@ abstract class CoreAPI(
             return builder
         }
 
+        private val ownHosts: Set<String> by lazy {
+            setOfNotNull(
+                Constants.SWAP_API.toHttpUrlOrNull()?.host,
+                Constants.TRADING_API.toHttpUrlOrNull()?.host,
+                Constants.MULTICHAIN_API.toHttpUrlOrNull()?.host,
+            )
+        }
+
+        private fun deviceAuthHosts(config: ConfigEntity): Set<String> {
+            return ownHosts + listOfNotNull(
+                config.batteryHost.toHttpUrlOrNull()?.host,
+                config.batteryTestnetHost.toHttpUrlOrNull()?.host,
+            )
+        }
+
         private fun createTonAPIHttpClient(
             userAgent: String,
             context: Context,
             timeoutSeconds: Long = 30,
-            callTimeoutSeconds: Long = timeoutSeconds,
             rateLimit: Int = 10,
             tonApiV2Key: () -> String,
             allowDomains: () -> List<String>,
+            deviceAuthHosts: () -> Collection<String>,
+            deviceAuthProvider: () -> DeviceAuthProvider?,
             delegate: LoggingInterceptor.Delegate,
 //            cronetEngine: () -> CronetEngine?,
         ): OkHttpClient {
             val interceptors = mutableListOf(
                 UserAgentInterceptor(userAgent),
-                XCapabilityInterceptor(),
                 AcceptLanguageInterceptor(context.locale),
                 AuthorizationInterceptor.bearer(
                     token = tonApiV2Key,
                     allowDomains = allowDomains
                 ),
+                DeviceAuthInterceptor(
+                    hosts = deviceAuthHosts,
+                    provider = deviceAuthProvider,
+                ),
+                ExtraHeadersInterceptor,
             )
 
             return baseOkHttpClientBuilder(
+                timeoutSeconds = timeoutSeconds,
+                callTimeoutSeconds = 0,
+                rateLimit = rateLimit,
                 context = context,
                 interceptors = interceptors,
                 delegate = delegate,

@@ -1,20 +1,25 @@
 package com.tonapps.tonkeeper.manager.push
 
 import android.content.Context
-import com.tonapps.log.L
 import androidx.core.app.NotificationManagerCompat
 import com.tonapps.extensions.locale
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
+import io.walletapi.models.SubscribeDevicePushRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class PushManager(
@@ -23,6 +28,7 @@ class PushManager(
     private val api: API,
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
     private val dAppsRepository: DAppsRepository,
 ) {
 
@@ -38,25 +44,114 @@ class PushManager(
 
     private val notificationManager = NotificationManagerCompat.from(context)
 
+    private val multichainPushMutex = Mutex()
+
     fun clearNotifications() {
         notificationManager.cancelAll()
     }
 
     fun newFirebaseToken() {
         scope.launch(Dispatchers.IO) {
-            val wallets = accountRepository.getWallets()
-            wallets(wallets.filter { isPushEnabled(it) }, State.Enable)
-            wallets(wallets.filter { !isPushEnabled(it) }, State.Disable)
+            val enabled = unifiedAccountRepository.getTonWallets().filter { isPushEnabled(it) }
+            val legacy = enabled.filter { it.type != WalletType.Multichain && !it.testnet }
+
+            supervisorScope {
+                val legacyTask = async {
+                    runCatching { walletSubscribe(legacy) }.getOrDefault(false)
+                }
+                val multichainTask = async {
+                    runCatching { syncMultichainPush() }.getOrDefault(false)
+                }
+
+                legacyTask.await()
+                multichainTask.await()
+            }
         }
     }
 
     suspend fun wallet(wallet: WalletEntity, state: State) = wallets(listOf(wallet), state)
 
     suspend fun wallets(wallets: List<WalletEntity>, state: State): Boolean = withContext(Dispatchers.IO) {
-        if (state == State.Enable) {
-            walletSubscribe(wallets.filter { !it.testnet })
-        } else {
-            walletUnsubscribe(wallets, state == State.Delete)
+        val (multichain, legacy) = wallets.partition { it.type == WalletType.Multichain }
+
+        supervisorScope {
+            val legacyTask = async {
+                runCatching {
+                    if (state == State.Enable) {
+                        walletSubscribe(legacy.filter { !it.testnet })
+                    } else {
+                        walletUnsubscribe(legacy, state == State.Delete)
+                    }
+                }.getOrDefault(false)
+            }
+
+            val multichainTask = async {
+                runCatching { multichainPush(multichain, state) }.getOrDefault(false)
+            }
+
+            val legacyResult = legacyTask.await()
+            val multichainResult = multichainTask.await()
+
+            legacyResult && multichainResult
+        }
+    }
+
+    private suspend fun multichainPush(wallets: List<WalletEntity>, state: State): Boolean {
+        if (wallets.isEmpty()) {
+            return true
+        }
+
+        return multichainPushMutex.withLock {
+            val enable = state == State.Enable
+            val changed = wallets.map { it.id }.toSet()
+            val walletIds = enabledMultichainWalletIds().toMutableSet()
+
+            if (enable) {
+                walletIds.addAll(changed)
+            } else {
+                walletIds.removeAll(changed)
+            }
+
+            if (!sendMultichainPush(walletIds.toList())) {
+                return@withLock false
+            }
+
+            for (wallet in wallets) {
+                settingsRepository.setPushWallet(wallet.id, enable)
+            }
+
+            true
+        }
+    }
+
+    private suspend fun syncMultichainPush(): Boolean = multichainPushMutex.withLock {
+        sendMultichainPush(enabledMultichainWalletIds())
+    }
+
+    private suspend fun enabledMultichainWalletIds(): List<String> {
+        return unifiedAccountRepository.getTonWallets()
+            .filter { it.type == WalletType.Multichain && isPushEnabled(it) }
+            .map { it.id }
+    }
+
+    private suspend fun sendMultichainPush(walletIds: List<String>): Boolean {
+        return try {
+            if (walletIds.isEmpty()) {
+                api.multichain.auth.unsubscribeDevicePush()
+            } else {
+                val firebaseToken = getFirebaseToken()
+                    ?: throw IllegalStateException("Firebase token not found")
+                api.multichain.auth.subscribeDevicePush(
+                    SubscribeDevicePushRequest(
+                        pushToken = firebaseToken,
+                        locale = context.locale.toLanguageTag(),
+                        walletIds = walletIds,
+                    )
+                )
+            }
+            true
+        } catch (e: Throwable) {
+            false
         }
     }
 
@@ -78,9 +173,11 @@ class PushManager(
                 deviceId = settingsRepository.installId,
                 accounts = accounts,
             )
+
             if (!successful) {
                 throw IllegalStateException("Failed to subscribe")
             }
+
             for (wallet in wallets) {
                 val apps = dAppsRepository.getConnections(wallet.accountId, wallet.network)
                 for ((app, connections) in apps) {

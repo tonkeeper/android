@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.core.net.toUri
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events.DappBrowser.DappSharingCopyFrom
 import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
@@ -12,6 +13,7 @@ import com.tonapps.tonkeeper.extensions.copyToClipboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
+import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappOpenAnalytics
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -35,7 +37,12 @@ class DAppShareScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
         DeepLinkBuilder.dAppShare(appUrl)
     }
 
+    private val dappAnalytics: DappOpenAnalytics? by lazy {
+        arguments?.getParcelableCompat<DappOpenAnalytics>(ARG_ANALYTICS)
+    }
+
     private fun shareLink() {
+        dappAnalytics?.sharingCopy(DappSharingCopyFrom.Share)
         val sendIntent = Intent(Intent.ACTION_SEND)
         sendIntent.putExtra(Intent.EXTRA_TEXT, deepLink)
         sendIntent.type = "text/plain"
@@ -44,6 +51,7 @@ class DAppShareScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
     }
 
     private fun copyLink() {
+        dappAnalytics?.sharingCopy(DappSharingCopyFrom.CopyLink)
         navigation?.toast(getString(Localization.copied))
         context?.copyToClipboard(deepLink)
     }
@@ -63,11 +71,18 @@ class DAppShareScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
     companion object {
         private const val ARG_APP = "app"
         private const val ARG_URL = "url"
+        private const val ARG_ANALYTICS = "analytics"
 
-        fun newInstance(wallet: WalletEntity, app: AppEntity, url: Uri): BaseFragment {
+        fun newInstance(
+            wallet: WalletEntity,
+            app: AppEntity,
+            url: Uri,
+            analytics: DappOpenAnalytics? = null,
+        ): BaseFragment {
             val screen = DAppShareScreen(wallet)
             screen.putParcelableArg(ARG_APP, app)
             screen.putStringArg(ARG_URL, url.toString())
+            analytics?.let { screen.putParcelableArg(ARG_ANALYTICS, it) }
             return screen
         }
     }

@@ -5,10 +5,10 @@ import android.os.Parcelable
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.purchase.entity.PurchaseMethodEntity
+import io.ktor.util.hex
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
-import org.ton.crypto.digest.sha512
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.sha512
 import java.util.UUID
 
 @Parcelize

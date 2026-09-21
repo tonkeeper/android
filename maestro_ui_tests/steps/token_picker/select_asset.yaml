@@ -1,0 +1,28 @@
+# Selects an asset in the Android token picker by searching for it.
+# Env: SEARCH_QUERY, TOKEN_SYMBOL, CHAIN_NAME (optional chip under the search field)
+appId: com.ton_keeper.debug
+env:
+  CHAIN_NAME: ""
+---
+- extendedWaitUntil:
+    visible: "Search by ticker or name|Search"
+    timeout: 15000
+- tapOn: "Search by ticker or name|Search"
+
+- runFlow:
+    when:
+      true: ${CHAIN_NAME !== ""}
+    commands:
+      - tapOn: ${CHAIN_NAME}
+      - waitForAnimationToEnd:
+          timeout: 600
+
+- inputText: ${SEARCH_QUERY}
+- extendedWaitUntil:
+    visible: ${TOKEN_SYMBOL}
+    timeout: 15000
+- tapOn:
+    text: ${TOKEN_SYMBOL}
+    index: 1
+- waitForAnimationToEnd:
+    timeout: 1000

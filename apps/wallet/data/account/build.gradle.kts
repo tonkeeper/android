@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.ton.blockTlb)
     implementation(libs.ton.tonapiTl)
     implementation(libs.ton.contract)
+    implementation(libs.chainkit.sdk)
     implementation(projects.tonapi.legacy)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.rn)
@@ -25,5 +26,6 @@ dependencies {
     implementation(projects.lib.blockchain)
     implementation(projects.lib.sqlite)
     implementation(projects.lib.ledger)
+    implementation(projects.lib.bus)
     implementation(projects.kmp.async)
 }

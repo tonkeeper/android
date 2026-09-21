@@ -1,0 +1,44 @@
+# Core tokens shelf → open BTC/ETH/BNB/TRX/GRAM/USDT and check balance, price, activity.
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — core tokens open details"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+- runFlow: "../../../steps/trade/open_multichain_trade.yaml"
+
+- runFlow:
+    file: "../../../steps/trade/open_core_token_details.yaml"
+    env:
+      SYMBOL: "BTC"
+      EXPECT_TRANSACTION_HISTORY: "true"
+
+- runFlow:
+    file: "../../../steps/trade/open_core_token_details.yaml"
+    env:
+      SYMBOL: "ETH"
+      EXPECT_TRANSACTION_HISTORY: "true"
+
+- runFlow:
+    file: "../../../steps/trade/open_core_token_details.yaml"
+    env:
+      SYMBOL: "BNB"
+      EXPECT_TRANSACTION_HISTORY: "false"
+
+- runFlow:
+    file: "../../../steps/trade/open_core_token_details.yaml"
+    env:
+      SYMBOL: "TRX"
+      EXPECT_TRANSACTION_HISTORY: "true"
+
+- runFlow:
+    file: "../../../steps/trade/open_core_token_details.yaml"
+    env:
+      SYMBOL: "GRAM"
+      EXPECT_TRANSACTION_HISTORY: "true"
+
+- runFlow:
+    file: "../../../steps/trade/open_core_token_details.yaml"
+    env:
+      SYMBOL: "USD₮"
+      EXPECT_TRANSACTION_HISTORY: "true"

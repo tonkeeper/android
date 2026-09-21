@@ -44,8 +44,8 @@ class EmulationApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToWallet(xTonConnectAuth: String, emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String? = "en", enableValidation: Boolean? = false): Map<String, io.JsonAny> {
-        val localVarResponse = emulateMessageToWalletWithHttpInfo(xTonConnectAuth = xTonConnectAuth, emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, enableValidation = enableValidation)
+    fun emulateMessageToWallet(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String? = "en", enableValidation: Boolean? = false, tonConnectAuth: String? = null, xWalletId: String? = null): Map<String, io.JsonAny> {
+        val localVarResponse = emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
@@ -64,15 +64,15 @@ class EmulationApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToWalletWithHttpInfo(xTonConnectAuth: String, emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, enableValidation: Boolean?): ApiResponse<Map<String, io.JsonAny>?> {
-        val localVariableConfig = emulateMessageToWalletRequestConfig(xTonConnectAuth = xTonConnectAuth, emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, enableValidation = enableValidation)
+    fun emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<EmulateMessageToWalletRequest, Map<String, io.JsonAny>>(
             localVariableConfig
         )
     }
 
-    fun emulateMessageToWalletRequestConfig(xTonConnectAuth: String, emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, enableValidation: Boolean?): RequestConfig<EmulateMessageToWalletRequest> {
+    fun emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<EmulateMessageToWalletRequest> {
         val localVariableBody = emulateMessageToWalletRequest
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -82,7 +82,8 @@ class EmulationApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -91,7 +92,9 @@ class EmulationApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
             path = "/wallet/emulate",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

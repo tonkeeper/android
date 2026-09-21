@@ -1,15 +1,17 @@
 package com.tonapps.wallet.api
 
-import com.tonapps.log.L
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
 class FileDownloader(private val okHttpClient: OkHttpClient) {
@@ -31,10 +33,14 @@ class FileDownloader(private val okHttpClient: OkHttpClient) {
         url: String,
         outputFile: File,
         bufferSize: Int = DEFAULT_BUFFER_SIZE
-    ) = callbackFlow {
+    ): Flow<DownloadStatus> = flow {
         var connection: HttpURLConnection? = null
 
-        try {
+        // Compute the terminal status inside the try/catch, but emit it afterwards: emitting from
+        // within a try that swallows exceptions would violate flow exception transparency (a
+        // downstream cancellation surfaces as an exception here). Progress is emitted in-place; the
+        // terminal event is emitted last so conflate() (below) still delivers it.
+        val terminal: DownloadStatus = try {
             connection = URL(url).openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.connectTimeout = 15000
@@ -66,15 +72,18 @@ class FileDownloader(private val okHttpClient: OkHttpClient) {
 
                         if (timeElapsed >= 100) {
                             val speedBytesPerSec = (bytesFromLastEmit * 1000.0 / timeElapsed).roundToInt()
-                            val progress = DownloadStatus.Progress(
-                                downloadedBytes = downloadedBytes,
-                                totalBytes = contentLength,
-                                percent = if (contentLength > 0) {
-                                    (downloadedBytes * 100 / contentLength).toInt()
-                                } else 0,
-                                downloadSpeed = formatSpeed(speedBytesPerSec)
+                            emit(
+                                DownloadStatus.Progress(
+                                    downloadedBytes = downloadedBytes,
+                                    totalBytes = contentLength,
+                                    percent = if (contentLength > 0) {
+                                        (downloadedBytes * 100 / contentLength).toInt()
+                                    } else {
+                                        0
+                                    },
+                                    downloadSpeed = formatSpeed(speedBytesPerSec)
+                                )
                             )
-                            trySend(progress)
 
                             lastEmitTime = currentTime
                             bytesFromLastEmit = 0
@@ -85,17 +94,22 @@ class FileDownloader(private val okHttpClient: OkHttpClient) {
                 }
             }
 
-            trySend(DownloadStatus.Success(outputFile))
-
-        } catch (e: Exception) {
-            trySend(DownloadStatus.Error(e))
+            DownloadStatus.Success(outputFile)
+        } catch (e: CancellationException) {
             outputFile.delete()
+            throw e
+        } catch (e: Exception) {
+            outputFile.delete()
+            DownloadStatus.Error(e)
         } finally {
             connection?.disconnect()
         }
 
-        awaitClose { connection?.disconnect() }
-    }
+        emit(terminal)
+        // conflate() so a slow collector drops intermediate progress percentages instead of
+        // back-pressuring the download loop (we don't need every %). The terminal event is emitted
+        // last, so conflation still delivers it — only the terminal event needs a guarantee.
+    }.conflate().flowOn(Dispatchers.IO)
 
     private fun formatSpeed(bytesPerSec: Int): String {
         return when {

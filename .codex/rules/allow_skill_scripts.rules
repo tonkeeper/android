@@ -28,3 +28,13 @@ prefix_rule(
         "python3 .codex/skills/tondocs/scripts/tondocs.py search jetton",
     ],
 )
+
+prefix_rule(
+    pattern = ["maestro_ui_tests/tools/"],
+    decision = "allow",
+    justification = "Allow tk-qa-verify runner and helper scripts without prompts.",
+    match = [
+        "maestro_ui_tests/tools/preflight.sh emulator-5554",
+        "maestro_ui_tests/tools/qa_run.sh emulator-5554 flows/portfolio/portfolio.yaml portfolio build/maestro-qa/2026-09-08 -e PASSWORD_KEY=5",
+    ],
+)

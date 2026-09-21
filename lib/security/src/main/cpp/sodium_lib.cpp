@@ -1,7 +1,12 @@
 #include <jni.h>
 #include <malloc.h>
 #include <string>
+#include <errno.h>
+#include <android/log.h>
 #include <sodium.h>
+
+#define SODIUM_LOG_TAG "sodium_jni"
+#define SODIUM_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, SODIUM_LOG_TAG, __VA_ARGS__)
 
 extern "C" JNIEXPORT jint JNICALL Java_com_tonapps_security_Sodium_init(JNIEnv *, jobject) {
     return sodium_init();
@@ -115,21 +120,17 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_argon2I
 ) {
     jchar *native_passwd = env->GetCharArrayElements(passwd, nullptr);
     jsize passwdlen = env->GetArrayLength(passwd) * 2;
-
-    if (sodium_mlock(native_passwd, passwdlen) != 0) {
-        env->ReleaseCharArrayElements(passwd, native_passwd, JNI_ABORT);
-        return nullptr;
-    }
+    jsize saltlen = env->GetArrayLength(salt);
 
     jbyte *native_salt = env->GetByteArrayElements(salt, nullptr);
 
     char *out = (char *) malloc(outlen);
 
-    if (out == nullptr || sodium_mlock(out, outlen) != 0) {
+    if (out == nullptr) {
+        SODIUM_LOGE("argon2IdHash: malloc(%d) returned null errno=%d", outlen, errno);
         sodium_memzero(native_passwd, passwdlen);
-        sodium_munlock(native_passwd, passwdlen);
         env->ReleaseCharArrayElements(passwd, native_passwd, JNI_ABORT);
-        if (out != nullptr) free(out);
+        env->ReleaseByteArrayElements(salt, native_salt, JNI_ABORT);
         return nullptr;
     }
 
@@ -143,12 +144,14 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_argon2I
             );
 
     if (result != 0) {
+        SODIUM_LOGE(
+                "argon2IdHash: crypto_pwhash_argon2id failed result=%d errno=%d "
+                "passwdlen=%d saltlen=%d outlen=%d memlimit=%zu opslimit=%u",
+                result, errno, passwdlen, saltlen, outlen,
+                (size_t) crypto_pwhash_argon2id_MEMLIMIT_INTERACTIVE, 3U);
         sodium_memzero(out, outlen);
-        sodium_munlock(out, outlen);
         free(out);
         sodium_memzero(native_passwd, passwdlen);
-        sodium_munlock(native_passwd, passwdlen);
-
         env->ReleaseCharArrayElements(passwd, native_passwd, JNI_ABORT);
         env->ReleaseByteArrayElements(salt, native_salt, JNI_ABORT);
         return nullptr;
@@ -158,11 +161,8 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_tonapps_security_Sodium_argon2I
     env->SetByteArrayRegion(jhash, 0, outlen, (jbyte *) out);
 
     sodium_memzero(out, outlen);
-    sodium_munlock(out, outlen);
     free(out);
     sodium_memzero(native_passwd, passwdlen);
-    sodium_munlock(native_passwd, passwdlen);
-
     env->ReleaseCharArrayElements(passwd, native_passwd, JNI_ABORT);
     env->ReleaseByteArrayElements(salt, native_salt, JNI_ABORT);
 

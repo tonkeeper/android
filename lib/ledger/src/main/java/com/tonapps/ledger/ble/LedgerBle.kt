@@ -13,8 +13,9 @@ class LedgerBle(private val context: Context) {
     private val bleManager = BleManagerFactory.newInstance(context)
 
     fun deviceListener(callback: (device: BleDeviceModel) -> Unit) {
-        bleManager.startScanning {
-            callback(it.first())
+        bleManager.startScanning { devices ->
+            val device = devices.firstOrNull() ?: return@startScanning
+            callback(device)
             try {
                 bleManager.stopScanning()
             } catch (ignored: Exception) {}

@@ -13,7 +13,9 @@ data class AssetsExtendedEntity(
 ) {
 
     companion object {
-        val comparator = compareBy<AssetsExtendedEntity> {
+        val comparator = compareByDescending<AssetsExtendedEntity> {
+            it.fiat
+        }.thenBy {
             !it.isTon
         }.thenBy {
             !it.pinned
@@ -82,7 +84,7 @@ data class AssetsExtendedEntity(
         get() = token.blacklist
 
     val pinned: Boolean
-        get() = prefs.pinned
+        get() = prefs.pinned && !prefs.isHidden
 
     val hidden: Boolean
         get() = prefs.isHidden

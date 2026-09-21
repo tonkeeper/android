@@ -26,10 +26,20 @@ data class JettonSwapAction(
     val userWallet: AccountAddress,
     @SerialName(value = "router")
     val router: AccountAddress,
+
+    /* this field will gone after Sept. 2026, use gram_in instead */
     @SerialName(value = "ton_in")
+    @Deprecated(message = "This property is deprecated.")
     val tonIn: Long? = null,
+
+    /* this field will gone after Sept. 2026, use gram_out instead */
     @SerialName(value = "ton_out")
+    @Deprecated(message = "This property is deprecated.")
     val tonOut: Long? = null,
+    @SerialName(value = "gram_in")
+    val gramIn: Long? = null,
+    @SerialName(value = "gram_out")
+    val gramOut: Long? = null,
     @SerialName(value = "jetton_master_in")
     val jettonMasterIn: JettonPreview? = null,
     @SerialName(value = "jetton_master_out")

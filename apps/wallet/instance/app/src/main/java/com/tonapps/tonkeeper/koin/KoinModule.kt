@@ -1,19 +1,24 @@
 package com.tonapps.tonkeeper.koin
 
 import com.tonapps.async.Async
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
+import com.tonapps.core.flags.AddMcWalletTooltipInteractor
 import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.core.helper.EnvironmentHelper
-import com.tonapps.tonkeeper.manager.assets.AssetsManager
+import com.tonapps.extensions.AppLifecycleProvider
+import com.tonapps.legacy.assets.AssetsManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.helper.CacheHelper
 import com.tonapps.tonkeeper.helper.ReferrerClientHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.PushManager
+import com.tonapps.tonkeeper.manager.shortcut.AppShortcutRepository
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
@@ -27,7 +32,10 @@ import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.dev.DevViewModel
+import com.tonapps.tonkeeper.ui.screen.start.StartFeature
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
+import com.tonapps.tonkeeper.ui.screen.init.TonWalletVersionInteractor
+import com.tonapps.tonkeeper.ui.screen.init.WalletImportAnalytics
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.migration.MigrationViewModel
@@ -39,7 +47,10 @@ import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
 import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesViewModel
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectViewModel
+import com.tonapps.deposit.multicoin.screens.confirm.engine.TxFeeBuilder
+import com.tonapps.deposit.multicoin.screens.confirm.engine.GaslessSender
 import com.tonapps.deposit.usecase.emulation.EmulationUseCase
+import com.tonapps.deposit.usecase.sign.SignTransaction
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
@@ -65,9 +76,18 @@ val koinModel = module {
 
     singleOf(::SettingsRepository)
     singleOf(::NetworkMonitor)
+    singleOf(::AppLifecycleProvider)
     singleOf(::HistoryHelper)
     singleOf(::AssetsManager)
-    single<EmulationUseCase.Delegate> { get<AssetsManager>() } // TODO remove
+    single<EmulationUseCase.Delegate> { // TODO remove
+        val assetsManager = get<AssetsManager>()
+        object : EmulationUseCase.Delegate {
+            override suspend fun getTotalBalance(
+                wallet: WalletEntity,
+                currency: WalletCurrency,
+            ) = assetsManager.getTotalBalance(wallet, currency, sorted = false)
+        }
+    }
     singleOf(::BillingManager)
     singleOf(::TransactionManager)
     single<TransactionManager.Delegate> { // TODO remove
@@ -81,15 +101,22 @@ val koinModel = module {
     singleOf(::PushManager)
     singleOf(::SafeModeClient)
     singleOf(::APKManager)
+    singleOf(::AppShortcutRepository)
     singleOf(::CacheHelper)
     singleOf(::ReferrerClientHelper)
     singleOf(AnalyticsHelper::Default)
+    singleOf(::WalletImportAnalytics)
 
-    factoryOf(::SignUseCase)
     factoryOf(::SignUseCase)
     factoryOf(::EmulationUseCase)
+    singleOf(::SignTransaction)
+    singleOf(::TxFeeBuilder)
+    singleOf(::GaslessSender)
+    factoryOf(::TonWalletVersionInteractor)
+    factoryOf(::AddMcWalletTooltipInteractor)
 
     viewModelOf(::DevViewModel)
+    viewModelOf(::StartFeature)
     viewModelOf(::ChangePasscodeViewModel)
     viewModelOf(::CountryPickerViewModel)
     viewModelOf(::CurrencyViewModel)

@@ -154,7 +154,8 @@
                         android:textSize="14sp"
                         android:singleLine="true"
                         android:textColor="?attr/textPrimaryColor"
-                        android:fontFamily="@font/montserrat_medium"/>
+                        android:fontFamily="@font/tt_firs_neue_normal"
+                        android:fontFeatureSettings="'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"/>
 
                     <androidx.appcompat.widget.AppCompatTextView
                         android:id="@+id/nft_collection"
@@ -163,7 +164,8 @@
                         android:textSize="14sp"
                         android:singleLine="true"
                         android:textColor="?attr/textSecondaryColor"
-                        android:fontFamily="@font/montserrat_medium"/>
+                        android:fontFamily="@font/tt_firs_neue_normal"
+                        android:fontFeatureSettings="'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"/>
 
                 </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -179,7 +181,8 @@
                 android:drawablePadding="4dp"
                 android:maxLines="2"
                 android:background="@drawable/bg_content_tint"
-                android:fontFamily="@font/montserrat_medium"
+                android:fontFamily="@font/tt_firs_neue_normal"
+                android:fontFeatureSettings="'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"
                 android:textColor="?attr/textPrimaryColor"
                 android:textSize="14sp"/>
 

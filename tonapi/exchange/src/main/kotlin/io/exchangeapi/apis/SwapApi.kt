@@ -16,12 +16,11 @@ import okhttp3.HttpUrl
 
 import io.exchangeapi.models.BuildOmnistonSwapRequest
 import io.exchangeapi.models.CalculateSwap400Response
-import io.exchangeapi.models.EncodeSwapRequest
+import io.exchangeapi.models.Healthcheck500Response
 import io.exchangeapi.models.OmnistonSwapMessages
 import io.exchangeapi.models.Provider
 import io.exchangeapi.models.SwapAsset
 import io.exchangeapi.models.SwapCalculation
-import io.exchangeapi.models.SwapEncode
 import io.exchangeapi.models.SwapGas
 
 import kotlinx.serialization.SerialName
@@ -51,7 +50,9 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    @Deprecated(message = "This operation is deprecated.")
     fun buildOmnistonSwap(buildOmnistonSwapRequest: BuildOmnistonSwapRequest? = null): OmnistonSwapMessages {
+        @Suppress("DEPRECATION")
         val localVarResponse = buildOmnistonSwapWithHttpInfo(buildOmnistonSwapRequest = buildOmnistonSwapRequest)
 
         return when (localVarResponse.responseType) {
@@ -71,7 +72,9 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
+    @Deprecated(message = "This operation is deprecated.")
     fun buildOmnistonSwapWithHttpInfo(buildOmnistonSwapRequest: BuildOmnistonSwapRequest?): ApiResponse<OmnistonSwapMessages?> {
+        @Suppress("DEPRECATION")
         val localVariableConfig = buildOmnistonSwapRequestConfig(buildOmnistonSwapRequest = buildOmnistonSwapRequest)
 
         return request<BuildOmnistonSwapRequest, OmnistonSwapMessages>(
@@ -79,6 +82,7 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
         )
     }
 
+    @Deprecated(message = "This operation is deprecated.")
     fun buildOmnistonSwapRequestConfig(buildOmnistonSwapRequest: BuildOmnistonSwapRequest?): RequestConfig<BuildOmnistonSwapRequest> {
         val localVariableBody = buildOmnistonSwapRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
@@ -98,7 +102,9 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    @Deprecated(message = "This operation is deprecated.")
     fun calculateSwap(fromAsset: String, toAsset: String, fromAmount: String, provider: Provider): SwapCalculation {
+        @Suppress("DEPRECATION")
         val localVarResponse = calculateSwapWithHttpInfo(fromAsset = fromAsset, toAsset = toAsset, fromAmount = fromAmount, provider = provider)
 
         return when (localVarResponse.responseType) {
@@ -118,7 +124,9 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
+    @Deprecated(message = "This operation is deprecated.")
     fun calculateSwapWithHttpInfo(fromAsset: String, toAsset: String, fromAmount: String, provider: Provider): ApiResponse<SwapCalculation?> {
+        @Suppress("DEPRECATION")
         val localVariableConfig = calculateSwapRequestConfig(fromAsset = fromAsset, toAsset = toAsset, fromAmount = fromAmount, provider = provider)
 
         return request<Unit, SwapCalculation>(
@@ -126,6 +134,7 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
         )
     }
 
+    @Deprecated(message = "This operation is deprecated.")
     fun calculateSwapRequestConfig(fromAsset: String, toAsset: String, fromAmount: String, provider: Provider): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
@@ -150,55 +159,10 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun encodeSwap(encodeSwapRequest: EncodeSwapRequest? = null): SwapEncode {
-        val localVarResponse = encodeSwapWithHttpInfo(encodeSwapRequest = encodeSwapRequest)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as SwapEncode
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun encodeSwapWithHttpInfo(encodeSwapRequest: EncodeSwapRequest?): ApiResponse<SwapEncode?> {
-        val localVariableConfig = encodeSwapRequestConfig(encodeSwapRequest = encodeSwapRequest)
-
-        return request<EncodeSwapRequest, SwapEncode>(
-            localVariableConfig
-        )
-    }
-
-    fun encodeSwapRequestConfig(encodeSwapRequest: EncodeSwapRequest?): RequestConfig<EncodeSwapRequest> {
-        val localVariableBody = encodeSwapRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/v2/swap/encode",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun swapAssets(): List<SwapAsset> {
-        val localVarResponse = swapAssetsWithHttpInfo()
+    @Deprecated(message = "This operation is deprecated.")
+    fun swapAssets(q: String? = null, limit: Int? = null): List<SwapAsset> {
+        @Suppress("DEPRECATION")
+        val localVarResponse = swapAssetsWithHttpInfo(q = q, limit = limit)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as List<SwapAsset>
@@ -217,17 +181,28 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun swapAssetsWithHttpInfo(): ApiResponse<List<SwapAsset>?> {
-        val localVariableConfig = swapAssetsRequestConfig()
+    @Deprecated(message = "This operation is deprecated.")
+    fun swapAssetsWithHttpInfo(q: String?, limit: Int?): ApiResponse<List<SwapAsset>?> {
+        @Suppress("DEPRECATION")
+        val localVariableConfig = swapAssetsRequestConfig(q = q, limit = limit)
 
         return request<Unit, List<SwapAsset>>(
             localVariableConfig
         )
     }
 
-    fun swapAssetsRequestConfig(): RequestConfig<Unit> {
+    @Deprecated(message = "This operation is deprecated.")
+    fun swapAssetsRequestConfig(q: String?, limit: Int?): RequestConfig<Unit> {
         val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                if (q != null) {
+                    put("q", listOf(q.toString()))
+                }
+                if (limit != null) {
+                    put("limit", listOf(limit.toString()))
+                }
+            }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         localVariableHeaders["Accept"] = "application/json"
 
@@ -243,7 +218,9 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    @Deprecated(message = "This operation is deprecated.")
     fun swapGas(): SwapGas {
+        @Suppress("DEPRECATION")
         val localVarResponse = swapGasWithHttpInfo()
 
         return when (localVarResponse.responseType) {
@@ -263,7 +240,9 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
+    @Deprecated(message = "This operation is deprecated.")
     fun swapGasWithHttpInfo(): ApiResponse<SwapGas?> {
+        @Suppress("DEPRECATION")
         val localVariableConfig = swapGasRequestConfig()
 
         return request<Unit, SwapGas>(
@@ -271,6 +250,7 @@ class SwapApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
         )
     }
 
+    @Deprecated(message = "This operation is deprecated.")
     fun swapGasRequestConfig(): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf()

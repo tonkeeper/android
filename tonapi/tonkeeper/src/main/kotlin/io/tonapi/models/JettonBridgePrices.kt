@@ -20,14 +20,24 @@ data class JettonBridgePrices(
     val bridgeBurnFee: Long,
     @SerialName(value = "bridge_mint_fee")
     val bridgeMintFee: Long,
-    @SerialName(value = "wallet_min_tons_for_storage")
-    val walletMinTonsForStorage: Long,
+    @SerialName(value = "wallet_min_gram_for_storage")
+    val walletMinGramForStorage: Long,
     @SerialName(value = "wallet_gas_consumption")
     val walletGasConsumption: Long,
-    @SerialName(value = "minter_min_tons_for_storage")
-    val minterMinTonsForStorage: Long,
+    @SerialName(value = "minter_min_gram_for_storage")
+    val minterMinGramForStorage: Long,
     @SerialName(value = "discover_gas_consumption")
-    val discoverGasConsumption: Long
+    val discoverGasConsumption: Long,
+
+    /* this field will gone after Sept. 2026, use wallet_min_gram_for_storage instead */
+    @SerialName(value = "wallet_min_tons_for_storage")
+    @Deprecated(message = "This property is deprecated.")
+    val walletMinTonsForStorage: Long? = null,
+
+    /* this field will gone after Sept. 2026, use wallet_min_gram_for_storage instead */
+    @SerialName(value = "minter_min_tons_for_storage")
+    @Deprecated(message = "This property is deprecated.")
+    val minterMinTonsForStorage: Long? = null
 ) {
 }
 

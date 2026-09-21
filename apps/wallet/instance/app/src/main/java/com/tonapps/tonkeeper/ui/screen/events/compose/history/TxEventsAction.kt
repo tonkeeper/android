@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.events.compose.history
 
-import ui.components.events.EventItemClickPart
+import com.tonapps.wallet.features.events.components.legacy.EventItemClickPart
 
 sealed interface TxEventsAction {
     data object BuyTon : TxEventsAction

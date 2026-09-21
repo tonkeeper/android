@@ -45,19 +45,25 @@ data class AssetRefSummary(
 
     /* Ассет скам или нет */
     @SerialName(value = "is_scam")
+    @Deprecated(message = "This property is deprecated.")
     val isScam: Boolean,
 
     /* Усовершенствованная версия is_scam */
     @SerialName(value = "verification")
-    val verification: Verification
+    val verification: Verification,
+
+    /* Leverage для отображения и плеча. */
+    @SerialName(value = "leverage")
+    val leverage: Int? = null
 ) {
     /**
      * Усовершенствованная версия is_scam
      *
-     * Values: whitelist,none,blacklist
+     * Values: trusted,whitelist,none,blacklist
      */
     @Serializable
     enum class Verification(val value: String) {
+        @SerialName(value = "trusted") trusted("trusted"),
         @SerialName(value = "whitelist") whitelist("whitelist"),
         @SerialName(value = "none") none("none"),
         @SerialName(value = "blacklist") blacklist("blacklist");

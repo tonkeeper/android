@@ -1,6 +1,4 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="toncoin">Gram (ex-Toncoin)</string>
-    <string name="gram_symbol_home">GRAM (ex-TON)</string>
     <!-- Reviewed -->
     <string name="currency_usd_name">Доллар США</string>
     <string name="currency_eur_name">Евро</string>
@@ -58,11 +56,14 @@
     <string name="not_spam">Это не спам</string>
     <string name="unverified">Непроверенный</string>
     <string name="setup_finish_title">Завершить установку</string>
+    <string name="setup_finish_skip">Пропустить</string>
     <string name="setup_finish_push">Включите уведомления о транзакциях</string>
     <string name="setup_finish_biometry">Включите биометрию для подтверждения транзакций</string>
     <string name="setup_finish_backup">Сохраните секретный ключ</string>
-    <string name="setup_finish_backup_subtitle">Без ключа восстановить кошелёк невозможно</string>
-    <string name="setup_finish_telegram">Присоединяйтесь к каналу Tonkeeper</string>
+    <string name="setup_finish_backup_wallet">Сохраните секретный ключ кошелька</string>
+    <string name="setup_finish_backup_title">Сохраните\nсекретный ключ</string>
+    <string name="setup_finish_backup_subtitle">Без этой фразы вы можете потерять доступ к средствам, если удалите приложение или смените устройство.</string>
+    <string name="setup_finish_telegram">Присоединяйтесь к каналу Keeper</string>
     <string name="setup_onboarding">Изучите возможности своего кошелька</string>
     <string name="staked">Стейкинг</string>
     <string name="sending_error">Ошибка отправки. Попробуйте позже</string>
@@ -85,7 +86,7 @@
     <string name="w5_add_wallet">Попробовать W5</string>
     <string name="staking_minimum_deposit">Минимальный депозит %1$s.</string>
     <string name="staking_minimal_deposit">Минимальный депозит</string>
-    <string name="staking_details_description">Стейкинг основан на сторонних смарт-контрактах. Tonkeeper не несёт ответственность за стабильность и результат.</string>
+    <string name="staking_details_description">Стейкинг основан на сторонних смарт-контрактах. Keeper не несёт ответственность за стабильность и результат.</string>
     <string name="staking_confirm">Подтвердить и внести</string>
     <string name="unstake_confirm">Подтвердить и отправить</string>
     <string name="domain_link_button">Привязать домен</string>
@@ -96,13 +97,19 @@
     <string name="manual_description">Создайте резервную копию своего кошелька вручную, записав секретный ключ.</string>
     <string name="manual_backup_done">Резервная копия сделана</string>
     <string name="manual_backup_date">Последняя %1$s</string>
-    <string name="backup_attention_title">Внимание</string>
+    <string name="backup_attention_title">Проверка безопасности</string>
     <string name="backup_attention_description">Пожалуйста, внимательно прочитайте перед просмотром секретного ключа.</string>
-    <string name="backup_attention_line_1">Никогда и нигде не вводите свой секретный ключ для доступа к кошельку, кроме Tonkeeper.</string>
-    <string name="backup_attention_line_2">Поддержка Tonkeeper никогда не запрашивает секретный ключ.</string>
-    <string name="backup_attention_line_3">Любой, кто знает ваш секретный ключ, сможет использовать ваш кошелёк.</string>
+    <string name="backup_attention_line_1">Никогда не делитесь секретным ключом ни с кем.</string>
+    <string name="backup_attention_line_2">Если у кого-то есть ваш секретный ключ, он сможет получить доступ к кошельку и вывести средства.</string>
+    <string name="backup_attention_line_3">Поддержка Keeper никогда не попросит ваш секретный ключ.</string>
+    <string name="backup_attention_checkbox_prefix">Я понимаю, что передача секретного ключа может привести к </string>
+    <string name="backup_attention_checkbox_highlight">безвозвратной потере средств.</string>
+    <string name="backup_attention_checkbox_suffix"></string>
+    <string name="backup_attention_confirm">Показать секретный ключ</string>
     <string name="backup_check">Проверка резервной копии</string>
     <string name="backup_check_subtitle">Давайте проверим, все ли вы записали правильно. Введите слова %1$d, %2$d, и %3$d.</string>
+    <string name="backup_check_choose_subtitle">Давайте проверим, все ли вы записали правильно. Выберите слова %1$d, %2$d, и %3$d.</string>
+    <string name="backup_check_error_subtitle">Некоторые слова не совпадают с вашей фразой. Проверьте фразу и попробуйте ещё раз.</string>
     <string name="manual_backup_check">Проверить резервную копию</string>
     <string name="encrypted_comment">Зашифрованный комментарий</string>
     <string name="encrypted_comment_description">Комментарий зашифрован отправителем и может быть расшифрован только вами. Пожалуйста, осторожно относитесь к содержанию и остерегайтесь мошенничества.</string>
@@ -121,16 +128,20 @@
     <string name="all_assets">Все активы</string>
     <string name="pinned">Закреплённые</string>
     <string name="connected_placeholder_title">Подключённые приложения будут отображаться здесь</string>
-    <string name="connected_placeholder_subtitle">Исследуйте приложения и сервисы в браузере Tonkeeper.</string>
+    <string name="connected_placeholder_subtitle">Исследуйте приложения и сервисы в браузере Keeper.</string>
+    <string name="explore_apps">Смотреть приложения</string>
     <string name="push_notifications">Уведомления</string>
     <string name="push_notifications_description">Получайте уведомления при получении GRAM, токенов, NFT и уведомления от подключенных приложений.</string>
     <string name="browser">Браузер</string>
     <string name="activity">Активность</string>
     <string name="wallet">Кошелёк</string>
     <string name="collectibles">Коллекции</string>
-    <string name="rate_tonkeeper">Оценить Tonkeeper</string>
+    <string name="collectibles_ton_only_subtitle">Пока только коллекции TON</string>
+    <string name="collectibles_ton_only_dialog_title">Пока поддерживаются только\nколлекции TON</string>
+    <string name="collectibles_ton_only_dialog_message">Сейчас кошелёк поддерживает коллекции только в сети TON. Поддержка других сетей скоро появится.</string>
+    <string name="rate_tonkeeper">Оценить Keeper</string>
     <string name="domain_renew_button">Продлить домен</string>
-    <string name="backup">Резервная копия</string>
+    <string name="backup">Секретная фраза</string>
     <string name="sign_text_subtitle">Внимательно прочитайте сообщение и, если вы согласны, подпишите транзакцию.</string>
     <string name="refresh">Обновить</string>
     <string name="mute">Заглушить</string>
@@ -149,7 +160,7 @@
     <string name="error">Ошибка</string>
     <string name="empty_history_title">Ваша история будет показана здесь</string>
     <string name="empty_history_subtitle">Совершите первую транзакцию!</string>
-    <string name="buy_toncoin">Купить Gram (ex-Toncoin)</string>
+    <string name="buy_toncoin">Купить Gram</string>
     <string name="passcode_enter">Введите пин-код</string>
     <string name="passcode_create">Создать пин-код</string>
     <string name="passcode_re_enter">Введите пин-код ещё раз</string>
@@ -158,6 +169,8 @@
     <string name="receive_coin">Получить %1$s</string>
     <string name="receive_coin_description">Отправляйте на этот адрес только %1$s и токены в сети TON, иначе вы можете потерять свои средства.</string>
     <string name="receive_tron_description">Отправляйте только %1$s на этот адрес, иначе вы можете потерять свои средства.</string>
+    <string name="receive_asset_title">Ваш адрес %1$s</string>
+    <string name="receive_asset_description">Отправляйте на этот адрес только %1$s (%2$s) и токены в сети %1$s, иначе вы можете потерять свои средства.</string>
     <string name="testnet_wallet_subtitle">Добавить кошелёк с помощью секретного ключа из 24 или 12 слов для тестнета</string>
     <string name="signer_wallet">Подключить Signer</string>
     <string name="signer_wallet_subtitle">Полностью оффлайн, изолированный, все функции TON</string>
@@ -166,16 +179,18 @@
     <string name="signer_step_2">Подтвердите транзакцию в Signer</string>
     <string name="signer_step_3">Отсканируйте QR-код подписанной транзакции Signer</string>
     <string name="support">Поддержка</string>
-    <string name="tonkeeper_news">Новости Tonkeeper</string>
+    <string name="tonkeeper_news">Новости Keeper</string>
     <string name="contact_us">Написать команде</string>
     <string name="confirm_and_send">Подтвердить и отправить</string>
     <string name="send_request_comment">При отправке обязательно укажите memo или тег от биржи. Без него средства не поступят и могут быть утеряны.</string>
     <string name="import_wallet">Существующий кошелёк</string>
+    <string name="existing_wallet">Существующий кошелёк</string>
     <string name="import_wallet_words">Добавить кошелёк с помощью секретного ключа из 24 или 12 слов</string>
+    <string name="import_wallet_words_multichain">Импортируйте существующий кошелёк TON или Мультичейн</string>
     <string name="watch_wallet">Аккаунт для просмотра</string>
     <string name="watch_wallet_subtitle">Для отслеживания активности кошелька без ввода секретного ключа</string>
-    <string name="testnet_wallet">Аккаунт в Testnet</string>
-    <string name="keystone_description">Откройте Keystone » Программные кошельки » Tonkeeper</string>
+    <string name="testnet_wallet">Аккаунт в TON Testnet</string>
+    <string name="keystone_description">Откройте Keystone » Программные кошельки » Keeper</string>
     <string name="keystone_about">О Keystone</string>
     <string name="signer_about">Подробнее про Signer</string>
     <string name="signer_open">Открыть на этом устройстве</string>
@@ -218,6 +233,8 @@
     <string name="unknown_error">Неизвестная ошибка</string>
     <string name="add_wallet_description">Создайте новый кошелёк или добавьте существующий.</string>
     <string name="unverified_token">Непроверенный токен</string>
+    <string name="verified_token">Верифицированный токен</string>
+    <string name="verified_token_caption">Этот токен активно торгуется и широко известен. Верификация не означает, что Keeper рекомендует или одобряет этот токен.</string>
     <string name="invalid_link">Неверная ссылка</string>
     <string name="watch_only">Просмотр</string>
     <string name="allow_notification">Включить уведомления</string>
@@ -225,14 +242,14 @@
     <string name="yesterday">Вчера</string>
     <string name="open_anyway">Открыть всё равно</string>
     <string name="nft_warning_buttton_title">Вы уверены, что хотите открыть внешнюю ссылку?</string>
-    <string name="fiat_open_description">Вы открываете внешнее приложение, которым не управляет Tonkeeper.</string>
+    <string name="fiat_open_description">Вы открываете внешнее приложение, которым не управляет Keeper.</string>
     <string name="add_contact">Добавить в адресную книгу</string>
     <string name="wallet_address">Адрес кошелька</string>
     <string name="contacts_save_latest">Сохранить адрес</string>
     <string name="contacts">Адресная книга</string>
     <string name="add_to_home_screen">Добавить на главный экран</string>
     <string name="remind_me_later">Напомнить мне позже</string>
-    <string name="multi_account_secret_wrong">Пожалуйста, используйте Tonkeeper Desktop для акаунта мульти-кошелька</string>
+    <string name="multi_account_secret_wrong">Пожалуйста, используйте Keeper Desktop для акаунта мульти-кошелька</string>
     <string name="insufficient_balance_default">Необходимо: %1$s.\nВаш баланс: %2$s.</string>
     <string name="name">Имя</string>
     <string name="purchase">Покупка</string>
@@ -241,10 +258,12 @@
     <string name="edit_full">Изменить</string>
     <string name="contact_delete_dialog">Вы уверены, что хотите удалить «%1$s» из вашей адресной книги?</string>
     <string name="connected_apps">Подключённые приложения</string>
-    <string name="disconnect_dapp_confirm">Отключить «%1$s»?</string>
+    <string name="disconnect_dapp_confirm">Отключить %1$s?</string>
     <string name="disconnect_all_apps">Отключить все приложения</string>
     <string name="disconnect_all_apps_confirm">Отключить все приложения?</string>
     <string name="connected_apps_empty">Нет подключённых приложений</string>
+    <string name="connected_apps_source_deeplink">Внешняя ссылка</string>
+    <string name="connected_apps_source_qr">Другое устройство</string>
     <string name="send_all_balance">Вы уверены, что хотите отправить весь свой баланс?</string>
     <string name="wrong_promocode">Введённый промокод недействителен</string>
     <string name="token_id">Идентификатор токена</string>
@@ -258,7 +277,8 @@
     <string name="address_prefix">Адрес:</string>
     <string name="safe_mode_tokens_footer">Безопасный режим включён. Доступны только проверенные токены. <annotation colorAttr="textAccentColor">Настройки</annotation></string>
     <string name="all">Все</string>
-    <string name="report_encrypted_comment">Комментарий из этой транзакции будет отправлен вместе с жалобой в расшифрованном виде.</string>
+    <string name="report_encrypted_comment_title">Внимание</string>
+<string name="report_encrypted_comment">Комментарий из этой транзакции будет отправлен вместе с жалобой в расшифрованном виде.</string>
     <string name="report_encrypted_comment_button">Пожаловаться всё равно</string>
     <string name="tx_marked_as_not_spam">Отмечено как не спам</string>
     <string name="renew_dns_title">Истекающие домены</string>
@@ -313,7 +333,7 @@
     <string name="transfer">Отправить</string>
     <string name="jetton_transfer">Отправка %1$s</string>
     <string name="name_your_wallet">Имя кошелька</string>
-    <string name="name_your_wallet_subtitle">Назовите свой кошелек, чтобы его можно было легко идентифицировать при использовании Tonkeeper. Эти имена хранятся локально и видны только вам.</string>
+    <string name="name_your_wallet_subtitle">Назовите свой кошелек, чтобы его можно было легко идентифицировать при использовании Keeper. Эти имена хранятся локально и видны только вам.</string>
 
 
     <string name="nft_warning_buttton_subtitle">Посетите эту внешнюю ссылку, только если вы доверяете автору коллекции. %1$s</string>
@@ -336,20 +356,19 @@
 
 
     <string name="country_title">Выберите вашу страну</string>
-    <string name="intro_description">Создайте новый кошелек или добавьте существующий</string>
-    <string name="intro_title" formatted="true">Приветствуем в <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
+    <string name="intro_description">Создайте новый кошелек или добавьте существующий</string>
+    <string name="intro_title" formatted="true">Приветствуем в <annotation colorAttr="textAccentColor">Keeper</annotation></string>
     <string name="intro_line_1_title">Рекордная скорость</string>
     <string name="intro_line_1_description">TON — это сеть, созданная для скорости и пропускной способности. Комиссии значительно ниже, чем в других блокчейнах, а транзакции подтверждаются за считанные секунды.</string>
 
     <string name="intro_line_2_title">Сквозная защита</string>
-    <string name="intro_line_2_description">Tonkeeper хранит ваши криптографические ключи на вашем устройстве, не требуя документов, личной информации, контактных данных или KYC.</string>
+    <string name="intro_line_2_description">Keeper хранит ваши криптографические ключи на вашем устройстве, не требуя документов, личной информации, контактных данных или KYC.</string>
 
     <string name="intro_line_3_title">Встроенные подписки</string>
     <string name="intro_line_3_description">Подписки TON являются одноранговыми и не имеют границ, поэтому никто не может ограничивать поставщиков или клиентов. Практически нулевые комиссии и полный контроль для вас.</string>
 
     <string name="stories_safemode_3_subtitle">Чтобы избежать неожиданных рисков.</string>
-    <string name="start_title">Tonkeeper</string>
-    <string name="start_description">Создайте новый кошелек или добавьте существующий</string>
+    <string name="start_title">Keeper</string>
     <string name="start_create_new_wallet">Создать новый кошелёк</string>
     <string name="start_import_wallet">Подключить существующий</string>
     <string name="setup_safe_mode">Настройте экран блокировки и безопасный режим</string>
@@ -358,22 +377,24 @@
     <string name="cancel">Отмена</string>
     <string name="fee">Комиссия</string>
     <string name="period_24h">24ч</string>
-    <string name="enable_notification">Включить уведомления</string>
+    <string name="enable_notification">Включить</string>
     <string name="enable_notification_title">Получайте мгновенные уведомления</string>
-    <string name="enable_notification_subtitle">Получайте уведомления при получении GRAM, токенов и NFT.</string>
+    <string name="enable_notification_subtitle">Получайте уведомления о новых транзакциях.</string>
     <string name="widget_placeholder">Нужно выбрать кошелек</string>
 
     <string name="import_wallet_title">Введите секретный ключ</string>
 
     <string name="import_wallet_description">Чтобы восстановить доступ, введите 24 или 12 секретных слова, которые вы получили при создании кошелька.</string>
     <string name="start_dialog_title">Сперва подключим кошелёк</string>
-    <string name="start_dialog_description">Чтобы использовать Tonkeeper, нужен кошелёк. Создайте новый или подключите существующий.</string>
+    <string name="start_dialog_description">Чтобы использовать Keeper, нужен кошелёк. Создайте новый или подключите существующий.</string>
 
     <string name="wallet_generating">Создаём кошелёк…</string>
     <string name="wallet_created">Кошелёк создан!</string>
+    <string name="wallet_created_all_set">Всё готово!</string>
 
     <string name="wallet_attention_title">Возьмите ручку и лист бумаги</string>
     <string name="wallet_attention_description">Мы настоятельно рекомендуем вам записать секретный ключ. Это единственный способ вернуть доступ к кошельку, если потеряете устройство. Не отправляйте ключ себе по почте и не делайте скриншот. Безопаснее всего вообще не хранить ключ на устройстве.</string>
+    <string name="screenshot_warning">В целях безопасности не делайте скриншоты секретного ключа. Запишите его.</string>
 
     <string name="phrase_title">Ваш секретный ключ</string>
     <string name="phrase_description">Запишите эти слова с их номерами и сохраните их в надежном месте.</string>
@@ -400,6 +421,7 @@
     <string name="address_hint">Адрес или имя</string>
     <string name="comment">Комментарий</string>
     <string name="paste">Вставить</string>
+    <string name="clipboard_empty">Буфер обмена пуст</string>
     <string name="version">Версия %1$s (%2$d)</string>
 
     <string name="rename">Переименовать</string>
@@ -409,7 +431,6 @@
 
     <string name="do_not_show_again">Не показывать снова</string>
     <string name="licenses">Лицензии</string>
-    <string name="montserrat_font">Шрифт Montserrat</string>
     <string name="use_biometric">Использовать биометрию</string>
     <string name="biometric_description">Вы всегда можете разблокировать кошелёк с помощью пин-кода.</string>
     <string name="lock_screen">Экран блокировки</string>
@@ -434,15 +455,25 @@
     <string name="spam_folder_empty">Папка спама пуста</string>
     <string name="insufficient_balance_title">Недостаточно средств</string>
     <string name="insufficient_balance_description">Укажите сумму меньше или выберите максимальный свой баланс.</string>
+    <string name="confirmation_insufficient_balance">Недостаточно %s для комиссии</string>
+    <string name="confirmation_insufficient_balance_description">%1$s берёт %2$s за этот обмен. Зарядите батарейку, чтобы оплатить комиссию — %3$s не понадобится.</string>
+    <string name="deposit_asset">Пополнить %s</string>
 
 
 
     <string name="confirm_action">Подтвердить действие</string>
     <string name="ton_connect_title">Войти в %1$s</string>
+    <string name="wc_connect_title">Войти в %1$s?</string>
     <string name="not_supported">Не поддерживается</string>
     <string name="ton_connect_description">%1$s запрашивает доступ к адресу вашего кошелька %2$s</string>
     <string name="connect_wallet">Подключить кошелёк</string>
     <string name="ton_connect_subtitle">Обязательно проверьте адрес сервиса перед подключением кошелька.</string>
+    <string name="wc_connect_request">%1$s запрашивает доступ к вашему кошельку:</string>
+    <string name="wc_allow_this_app">Вы разрешаете приложению</string>
+    <string name="wc_permission_view_info">Просматривать баланс и историю операций</string>
+    <string name="wc_permission_request_approvals">Запрашивать подтверждение транзакций</string>
+    <string name="wc_permission_no_asset_transfer">Эта подпись не переводит ваши активы</string>
+    <string name="networks_to_connect">Сети для подключения</string>
     <string name="available_balance">Доступно:  %1$s</string>
     <string name="insufficient_balance">Недостаточно средств</string>
     <string name="to_address">Кому: %1$s</string>
@@ -459,8 +490,23 @@
     <string name="sent">Отправлено</string>
     <string name="system">Системная</string>
     <string name="network_fee">Комиссия</string>
+    <string name="choose_method">Выберите способ</string>
+    <string name="sending">Отправляется</string>
+    <string name="receiving">Поступает</string>
+    <string name="swapping">Обменивается</string>
+    <string name="staking">Стейкается</string>
+    <string name="unstaking">Выводится</string>
+    <string name="burning">Сжигается</string>
+    <string name="domain_renewing">Домен продлевается</string>
+    <string name="sent_on">Отправлено %1$s</string>
+    <string name="received_on">Получено %1$s</string>
+    <string name="swapped_on">Обменяно %1$s</string>
+    <string name="staked_on">Депозит %1$s</string>
+    <string name="unstake_on">Вывод %1$s</string>
+    <string name="burned_on">Сожжено %1$s</string>
+    <string name="renewed_on">Продлено %1$s</string>
     <string name="confirm">Подтвердить</string>
-    <string name="banner_top">Сейчас вы используете экспериментальную версию Tonkeeper.</string>
+    <string name="banner_top">Сейчас вы используете экспериментальную версию Keeper.</string>
     <string name="banner_top_button">Установить стабильную</string>
 
 
@@ -476,7 +522,7 @@
 
 
     <string name="choose_wallet_title">Выберите кошельки</string>
-    <string name="choose_wallet_subtitle">Выберите кошельки, которые хотите добавить.</string>
+    <string name="choose_wallet_subtitle">Эта сид-фраза содержит несколько кошельков. Выберите, какие хотите добавить.</string>
     <string name="choose_wallet_already_added">Уже добавлен</string>
 
 
@@ -489,6 +535,7 @@
     <string name="ledger_connect">Подключите Ledger к своему устройству с помощью Bluetooth</string>
     <string name="ledger_usb_connect">Подключите Ledger к своему устройству с помощью USB</string>
     <string name="ledger_open_ton_app">Разблокируйте его и откройте приложение TON</string>
+    <string name="ledger_approve_ton_app">Подтвердите открытие приложения TON на Ledger</string>
     <string name="ledger_install_ton_app">Установить приложение</string>
     <string name="ledger_confirm_tx">Подтвердите транзакцию в Ledger</string>
     <string name="ledger_confirm_tx_step">Подтвердите транзакцию #%1$d в Ledger</string>
@@ -507,12 +554,18 @@
     <string name="required_comment">Обязательный комментарий</string>
     <string name="biometric_enabled">Биометрия включена</string>
     <string name="spam">Спам</string>
+    <string name="filters">Фильтры</string>
+    <string name="hide_tiny_transfers">Скрыть мелкие переводы</string>
+    <string name="hide_tiny_transfers_desc">Переводы на сумму менее $0.01.</string>
+    <string name="hide_no_cost_assets">Скрыть активы без стоимости</string>
+    <string name="hide_no_cost_assets_desc">Активы на сумму менее $0.01.</string>
     <string name="later">Позже</string>
     <string name="testers_chat">Сообщить об ошибке (чат в Telegram)</string>
 
     <string name="battery">Батарейка</string>
-    <string name="battery_refill_title">Батарейка Tonkeeper</string>
+    <string name="battery_refill_title">Батарейка Keeper</string>
     <string name="battery_refill_subtitle">Легко меняйте и отправляйте GRAM токены и платите меньше комиссии в TRC-20</string>
+    <string name="battery_refill_negative_balance">Заряды закончились из-за возвратов покупок. Пополните баланс, чтобы продолжить.</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s заряд</item>
         <item quantity="few">%1$s заряда</item>
@@ -527,7 +580,7 @@
     <string name="transactions">Транзакции</string>
     <string name="battery_settings">Настройки батарейки</string>
     <string name="battery_nft">отправка NFT</string>
-    <string name="battery_swap">обмен через Tonkeeper</string>
+    <string name="battery_swap">обмен через Keeper</string>
     <string name="battery_jetton">отправка токенов</string>
     <string name="battery_trc20">отправка USD₮ TRC20</string>
     <string name="battery_swap_single">обмен</string>
@@ -545,10 +598,10 @@
         <item quantity="other">≈ %1$s отправок NFT</item>
     </plurals>
     <plurals name="battery_swap">
-        <item quantity="one">≈ %1$s обмен через Tonkeeper</item>
-        <item quantity="few">≈ %1$s обмена через Tonkeeper</item>
-        <item quantity="many">≈ %1$s обменов через Tonkeeper</item>
-        <item quantity="other">≈ %1$s обменов через Tonkeeper</item>
+        <item quantity="one">≈ %1$s обмен через Keeper</item>
+        <item quantity="few">≈ %1$s обмена через Keeper</item>
+        <item quantity="many">≈ %1$s обменов через Keeper</item>
+        <item quantity="other">≈ %1$s обменов через Keeper</item>
     </plurals>
     <plurals name="battery_jetton">
         <item quantity="one">≈ %1$s отправка токенов</item>
@@ -557,7 +610,7 @@
         <item quantity="other">≈ %1$s отправок токенов</item>
     </plurals>
     <string name="battery_settings_title">Настройки батарейки</string>
-    <string name="battery_settings_subtitle">Выбранные транзакции будут оплачены батарейкой Tonkeeper.</string>
+    <string name="battery_settings_subtitle">Выбранные транзакции будут оплачены батарейкой Keeper.</string>
     <string name="battery_recharge_title">Зарядка</string>
     <string name="battery_gift_title">Подарок</string>
     <string name="battery_other_title">Другое количество</string>
@@ -582,6 +635,8 @@
     <string name="staking_get_withdraw">Получить вывод</string>
     <string name="staking_withdrawal_amount">Сумма вывода</string>
     <string name="staking_pending_withdraw_liquid">%1$s будет выведено после окончания цикла</string>
+    <string name="staking_pending_unstake">Ожидает вывода</string>
+    <string name="staking_after_end_of_cycle">после окончания цикла</string>
     <string name="expired_link">Ссылка просрочена</string>
     <string name="payment_method_not_found">Способ оплаты недоступен</string>
     <string name="no_available_provider">Нет доступных провайдеров</string>
@@ -598,6 +653,11 @@
     <string name="hidden">Скрытые</string>
     <string name="show_all">Показать все</string>
     <string name="see_all">Смотреть все</string>
+    <string name="more_assets">Больше токенов</string>
+    <string name="all_assets_hidden_title">Все токены скрыты</string>
+    <string name="all_assets_hidden_subtitle">Показать их в «Управлении»</string>
+    <string name="all_collectibles_hidden_title">Все коллекции скрыты.</string>
+    <string name="all_collectibles_hidden_subtitle">Покажите их в «настройках коллекций».</string>
     <string name="token_details">Подробности токена</string>
     <string name="stories_safemode_1_title">Только проверенные приложения и сервисы</string>
     <string name="stories_safemode_1_subtitle">Чтобы избежать фишинга и мошенничества.</string>
@@ -611,8 +671,8 @@
     <string name="theme_light">Светлая</string>
     <string name="payment_method">Способ оплаты</string>
     <string name="downloading">Загрузка…</string>
-    <string name="update_tonkeeper">Обновление Tonkeeper</string>
-    <string name="update_tonkeeper_subtitle">Доступна новая версия Tonkeeper. Вы можете скачать ее сейчас.</string>
+    <string name="update_tonkeeper">Обновление Keeper</string>
+    <string name="update_tonkeeper_subtitle">Доступна новая версия Keeper. Вы можете скачать ее сейчас.</string>
     <string name="download_error">Ошибка загрузки. Нажмите, чтобы повторить попытку.</string>
     <string name="downloading_app_update">Загрузка обновления</string>
     <string name="preparing_for_downloading">Подготовка к загрузке</string>
@@ -638,24 +698,22 @@
     <string name="words12">12 слов</string>
     <string name="sign_data_binary_message">Вы подписываетесь вслепую. Подписывайте только из проверенных источников.</string>
     <string name="slide_to_sign">Свайп чтобы подписать</string>
-    <string name="tron_toggle_text">Используйте USD₮ TRC20 без TRX. Комиссии оплачиваются с помощью батарейки Tonkeeper.</string>
-    <string name="tron_toggle_trc_text">Для переводов USD₮ требуется TRX для оплаты комиссии.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Скопировать ключ</string>
     <string name="export_tron">Экспорт TRC20 кошелька</string>
     <string name="phrase_title_tron">TRC20 кошелёк</string>
     <string name="phrase_description_tron">Запишите эти слова с их номерами и сохраните их в надежном месте.</string>
     <string name="prhase_tron_warning">Этот ключ предназначен только для TRC20. Он не может восстановить ваш TON кошелёк. Для восстановления TON кошелька используйте ключ восстановления TON.</string>
-    <string name="battery_required_title">Для %1$s требуется батарейка Tonkeeper</string>
+    <string name="battery_required_title">Для %1$s требуется батарейка Keeper</string>
     <string name="battery_required_text">Заряд батарейки покрывает комиссии за транзакции, упрощая и удешевляя переводы.</string>
     <string name="charge_battery">Зарядить батарейку</string>
     <string name="send_wrong_blockchain">Указан адрес сети %1$s.</string>
     <string name="send_wrong_blockchain_swap">Обменяйте USD₮ %1$s на USD₮ %2$s через %3$s, чтобы продолжить отправку.</string>
     <string name="enable_usdt_tron">Включить USD₮ TRC20</string>
     <string name="dapp_share_title">Поделиться %1$s</string>
-    <string name="dapp_share_subtitle">Эта ссылка откроет %1$s напрямую в Tonkeeper. Вы можете сохранить её для себя или поделиться ею.</string>
+    <string name="dapp_share_subtitle">Эта ссылка откроет %1$s напрямую в Keeper. Вы можете сохранить её для себя или поделиться ею.</string>
     <string name="copy_link">Скопировать ссылку</string>
-    <string name="dapp_disclaimer">Вы открываете внешнее приложение, которым не управляет Tonkeeper. Переходите, только если доверяете источнику.</string>
+    <string name="dapp_disclaimer">Вы открываете внешнее приложение, которым не управляет Keeper. Переходите, только если доверяете источнику.</string>
     <string name="credit_card_subtitle">Visa или Mastercard</string>
     <string name="ton_assets">Активы GRAM</string>
     <string name="pair_not_available">Валютная пара недоступна. Пожалуйста, попробуйте другую.</string>
@@ -687,7 +745,7 @@
     <string name="about_ethena">Подробнее об Ethena</string>
     <string name="swap_disclaimer">Сервис предоставлен %1$s\n%2$s · %3$s</string>
     <string name="terms_of_use">Условия</string>
-    <string name="start_agree">Продолжая, вы соглашаетесь с <annotation colorAttr="textAccentColor">Условиями использования</annotation></string>
+    <string name="start_agree">Продолжая, вы соглашаетесь с <annotation colorAttr="textAccentColor">Условиями использования</annotation></string>
     <string name="privacy_policy">Политика</string>
     <string name="invalid_address">Неверный адрес кошелька.</string>
     <string name="scam_address_error">Переводы на этот адрес не поддерживаются.</string>
@@ -737,7 +795,7 @@
     <string name="trx_balance">Баланс TRX</string>
     <string name="trx_balance_desc">Пополните баланс для оплаты комиссии сети.</string>
     <string name="blockchain_fees">Комиссии сети</string>
-    <string name="blockchain_fees_desc">Батарейка Tonkeeper — самый простой способ оплаты комиссий сети. Также можно пополнить баланс напрямую GRAM или TRX.</string>
+    <string name="blockchain_fees_desc">Батарейка Keeper — самый простой способ оплаты комиссий сети. Также можно пополнить баланс напрямую GRAM или TRX.</string>
     <string name="required_prefix">Требуется: %1$s</string>
     <string name="tron_fees_learn_more">Размер комиссии динамический и зависит от рынка. <annotation colorAttr="textAccentColor">Подробнее</annotation></string>
     <string name="tetra_subtitle">Подключить сеть Tetra L2</string>
@@ -746,12 +804,15 @@
 
     <string name="more">Ещё</string>
     <string name="retry">Повторить</string>
+    <string name="try_again">Попробовать снова</string>
     <string name="operation">Операция</string>
     <string name="description">Описание</string>
     <string name="protocol">Протокол</string>
+    <string name="tx_hash">Хеш транзакции</string>
     <string name="cant_find_anything">Ничего не найдено.</string>
 
     <string name="deposit_from_another_wallet">Из другого TON/TRON кошелька</string>
+    <string name="deposit_from_another_wallet_mc">Из другого кошелька</string>
     <string name="deposit_send">Отправить %s</string>
     <string name="deposit_address">Адрес %s</string>
     <string name="deposit_to_another_wallet">На другой кошелёк</string>
@@ -814,17 +875,21 @@
     <string name="choose_network_error">Выберите сеть %s</string>
     <string name="choose_asset">Выберите актив</string>
     <string name="add_funds">Пополнить</string>
-    <string name="tooltip_new">НОВОЕ</string>
-    <string name="tooltip_history_here_now">История теперь здесь</string>
-    <string name="tooltip_trade_us_stocks_etfs">Торгуйте акциями США и ETF</string>
     <string name="trade">Трейдинг</string>
+    <string name="sell_to_card">Продать на карту</string>
+    <string name="cash_buy">Внести</string>
+    <string name="cash_sell">Вывести</string>
+    <string name="hide_from_portfolio">Скрыть из кошелька</string>
+    <string name="show_in_portfolio">Показать в кошельке</string>
     <string name="search_by_ticker">Поиск по тикеру или названию</string>
+    <string name="favorite_tokens">Избранные токены</string>
     <string name="tab_all">Все</string>
     <string name="tab_tokens">Токены</string>
     <string name="tab_stocks">Акции</string>
     <string name="tab_etfs">ETF</string>
     <string name="tokenized_stocks">Токенизированные акции</string>
     <string name="tokenized_etfs">Токенизированные ETF</string>
+    <string name="unverified_asset">Этот актив — непроверенный токен</string>
     <string name="asset_info_modal_stock_title">Что такое токенизированные акции?</string>
     <string name="asset_info_modal_stock_description">Токенизированные акции — это блокчейн-токены, обеспеченные 1:1 реальными акциями, которые позволяют покупать доли и связывают традиционные рынки с криптовалютой.</string>
     <string name="asset_info_modal_stock_bullet_1">Покупайте и продавайте 24/7, вне обычных часов работы рынка.</string>
@@ -841,6 +906,7 @@
     <string name="chart_period_last_month">За месяц</string>
     <string name="chart_period_last_6_months">За 6 месяцев</string>
     <string name="chart_period_last_year">За год</string>
+    <string name="no_price_data_available">Данные о цене недоступны.</string>
     <string name="your_balance">Ваш баланс</string>
     <string name="about">О токене</string>
     <string name="overview">Обзор</string>
@@ -851,10 +917,76 @@
     <string name="total_supply_tooltip">Все токены, включая заблокированные и ещё не выпущенные.</string>
     <string name="circulating_supply_tooltip">Объем токенов, доступных на рынке и у пользователей.</string>
     <string name="trading_activity">Торговая активность за 24 ч</string>
-    <string name="trading_activity_note">График цены, обзор и показатели предоставлены dyor.io.</string>
+    <string name="trading_activity_note">График цены, обзор и торговая активность предоставлены %s.</string>
     <string name="trading_activity_buy">Покупка · %1$s</string>
     <string name="trading_activity_sell">Продажа · %1$s</string>
+    <string name="perp_position">Позиция перпов</string>
+    <string name="trade_ton_perps">Торговать перпами TON</string>
+    <string name="trade_ton_perps_subtitle">Торгуйте с плечом до 10x</string>
+    <string name="perps_title">Перпы</string>
+    <string name="perps_learn_basics">Основы</string>
+    <string name="perps_balance">Баланс перпов</string>
+    <string name="perps_deposit">Пополнить</string>
+    <string name="perps_explore">Обзор перпов</string>
+    <string name="perps_trending">Перпы в тренде</string>
+    <string name="perps_volume">Объём</string>
+    <string name="perps_price_change">Изменение цены</string>
+    <string name="perps_open_interest">Открытый интерес</string>
+    <string name="perps_search_hint">Поиск по тикеру или названию</string>
+    <string name="perps_perpetual">Бессрочный</string>
+    <string name="perps_info">Информация</string>
+    <string name="perps_volume_24h">Объём за 24 ч</string>
+    <string name="perps_volume_24h_tooltip">Общий объём торгов за последние 24 часа</string>
+    <string name="perps_open_interest_tooltip">Общая стоимость всех открытых позиций на этом рынке</string>
+    <string name="perps_funding">Фандинг</string>
+    <string name="perps_funding_tooltip">Ставка, которую периодически платят друг другу лонги и шорты</string>
+    <string name="perps_about">О контракте</string>
+    <string name="perps_about_placeholder">Торгуйте движением цены %1$s к доллару США с плечом. Владеть %1$s не нужно — вы торгуете контрактом, который следует за его ценой.</string>
+    <string name="perps_more">Ещё</string>
+    <string name="perps_long">Лонг</string>
+    <string name="perps_short">Шорт</string>
+    <string name="perps_open_positions">Открытые позиции</string>
+    <string name="perps_total_amount">Общая сумма</string>
+    <string name="perps_coming_soon">Эта функция скоро появится.</string>
+    <string name="perps_load_failed">Не удалось загрузить рынок</string>
+    <string name="perps_markets_load_failed">Не удалось загрузить рынки</string>
+    <string name="perps_retry">Повторить</string>
+    <string name="perps_chart_empty">Нет данных графика</string>
+    <string name="perps_chart_failed">Не удалось загрузить график</string>
+    <string name="perps_chart_open">Открытие</string>
+    <string name="perps_chart_close">Закрытие</string>
+    <string name="perps_chart_high">Максимум</string>
+    <string name="perps_chart_low">Минимум</string>
+    <string name="perps_chart_volume">Объём</string>
+    <string name="perps_service_unavailable">Сервис временно недоступен. Повторите попытку позже.</string>
+    <string name="perps_filter_all">Все</string>
+    <string name="perps_filter_tokens">Токены</string>
+    <string name="perps_filter_commodities">Сырьё</string>
+    <string name="perps_filter_stocks">Акции</string>
+    <string name="perps_filter_etfs">ETF</string>
+    <string name="perps_your_position">Ваша позиция</string>
+    <string name="perps_share">Поделиться</string>
+    <string name="perps_size">Размер</string>
+    <string name="perps_liquidation_price">Цена ликвидации</string>
+    <string name="perps_liquidation_distance">%1$s от текущей цены</string>
+    <string name="perps_mark_price">Маркировочная цена</string>
+    <string name="perps_entry_price">Цена входа</string>
+    <string name="perps_adjust_margin">Изменить маржу</string>
+    <string name="perps_set_auto_close">Настроить автозакрытие</string>
+    <string name="perps_set_take_profit">Настроить тейк-профит</string>
+    <string name="perps_set_stop_loss">Настроить стоп-лосс</string>
+    <string name="perps_edit">Редактировать</string>
+    <string name="perps_cash_out">Вывести</string>
+    <string name="perps_orders">Ордера</string>
+    <string name="perps_buy">Купить</string>
+    <string name="perps_sell">Продать</string>
+    <string name="perps_order_price">Цена %1$s</string>
+    <string name="perps_position_load_failed">Не удалось загрузить позицию</string>
+    <string name="badge_new">NEW</string>
+    <string name="tooltip_add_multichain_wallet">Добавьте кошелёк для новых блокчейнов</string>
     <string name="volume">Объём</string>
+    <string name="top_gainers">Лидеры роста</string>
+    <string name="top_losers">Лидеры падения</string>
     <string name="volume_tooltip">Суммарный объём всех сделок за последние 24 часа.</string>
     <string name="transaction_history">История транзакций</string>
     <string name="something_went_wrong">Что-то пошло не так</string>
@@ -866,4 +998,167 @@
     <string name="dapp_manifest_error">Не удалось загрузить манифест dApp. Попробуйте ещё раз.</string>
     <string name="value_difference">Разница в стоимости</string>
     <string name="value_difference_info">Насколько ваша сделка сдвигает цену: при положительном значении вы получаете больше, при отрицательном — меньше.</string>
+    <string name="required">Обязательно</string>
+    <string name="approved">Одобрено</string>
+    <string name="rejected">Отклонено</string>
+    <string name="request">Запрос</string>
+    <string name="session">Сессия</string>
+    <string name="all_types">Все типы</string>
+    <string name="multichain">Мультичейн</string>
+    <string name="copy_details">Скопировать данные</string>
+    <string name="save_changes">Сохранить изменения</string>
+    <string name="connecting">Подключение</string>
+    <string name="wallets_list">Список кошельков</string>
+    <string name="swap_slippage_info">Максимальное изменение цены, которое вы готовы принять между котировкой и исполнением.</string>
+    <string name="no_results">Ничего не найдено</string>
+    <string name="receiving_address">Адрес получения</string>
+    <string name="receiving_address_subtitle">Один адрес на сеть</string>
+    <string name="min_received">Мин. к получению</string>
+    <string name="swap_avoid_extra_fees">Избегайте лишних комиссий при будущих обменах</string>
+    <string name="sign_message">Подписать сообщение</string>
+    <string name="claim_reward">Получить награду</string>
+    <string name="compound_stake">Реинвестировать стейк</string>
+    <string name="stake_asset">Застейкать %1$s</string>
+    <string name="unstake_asset">Вывести из стейкинга %1$s</string>
+    <string name="restake_asset">Перестейкать %1$s</string>
+    <string name="swap_asset">Обменять %1$s</string>
+    <string name="price_impact">Влияние на цену</string>
+    <string name="price_impact_too_high">Слишком сильное влияние на цену</string>
+    <string name="price_impact_too_high_description">Обмен может быть выполнен по курсу, который существенно отличается от рыночного.\n\nПожалуйста, подождите немного перед проведением этого обмена или попробуйте изменить сумму обмена.</string>
+    <string name="swap_at_changed_price">Обменять по изменённой цене</string>
+    <string name="back_to_swap">Назад к обмену</string>
+    <string name="networks">Сети</string>
+    <string name="error_with_message">Ошибка: %1$s</string>
+    <string name="domain_status_scam">Этот домен помечен как небезопасный несколькими сервисами безопасности. Немедленно покиньте его.</string>
+    <string name="domain_status_invalid">Домен этого сайта не совпадает с отправителем данного запроса.</string>
+    <string name="domain_status_valid">Обязательно проверьте адрес сервиса перед подключением кошелька.</string>
+    <string name="domain_status_unknown">Этот домен невозможно проверить. Внимательно проверьте запрос перед подтверждением.</string>
+    <string name="domain_risk_scam_title">Угроза безопасности</string>
+    <string name="domain_risk_invalid_title">Несовпадение домена</string>
+    <string name="domain_risk_unknown_title">Неизвестный домен</string>
+    <string name="connect_anyway">Всё равно подключить</string>
+    <string name="domain_risk_scam_description">Этот домен помечен как небезопасный несколькими сервисами безопасности. Немедленно покиньте его, чтобы защитить свои активы.</string>
+    <string name="domain_risk_invalid_description">Домен этого сайта не совпадает с отправителем данного запроса. Подтверждение может привести к потере средств.</string>
+    <string name="choose_wallet_version">Выберите версию кошелька</string>
+    <string name="choose_wallet_version_description">Эта seed-фраза содержит кошельки TON разных версий. Выберите одну для импорта сейчас.</string>
+    <string name="learn_wallet_versions">Узнать о версиях кошельков TON</string>
+    <string name="about_wallet_versions_title">О версиях кошельков TON</string>
+    <string name="about_wallet_versions_description">V4R2 и W5 используют разные публичные адреса TON. Вы можете импортировать одну версию сейчас, а другую добавить позже как отдельный кошелёк.</string>
+    <string name="wallet_version_w5_description">Мы рекомендуем W5, так как это новейшая версия кошелька TON. Она поддерживает транзакции без газа и пакетные отправки.</string>
+    <string name="wallet_version_v4r2_description">V4R2 — более старая версия с более широкой совместимостью. Используйте её, если сервис ещё не поддерживает W5.</string>
+    <string name="creating_wallet">Создание кошелька…</string>
+    <string name="wc_disconnect_remove_access">Это закроет %1$s доступ к вашему кошельку. Вы можете подключить его снова в любой момент.</string>
+    <string name="wc_disconnect_error">Ошибка отключения, проверьте подключение к сети</string>
+    <string name="wc_disconnected">Отключено</string>
+    <string name="wc_error_chains_unavailable">Некоторые сети недоступны для этого кошелька</string>
+    <string name="wc_error_no_wallet_selected">Кошелёк не выбран</string>
+    <string name="wc_error_multichain_only">WalletConnect поддерживается только мультичейн-кошельками</string>
+    <string name="wc_error_failed_to_approve">Не удалось подтвердить</string>
+    <string name="wc_error_failed_to_reject">Не удалось отклонить</string>
+    <string name="swap_error_quote_not_found">Не удалось получить котировку. Измените сумму</string>
+    <string name="swap_no_quote">Нет котировки</string>
+    <string name="swap_error_prepare_failed">Не удалось подготовить обмен</string>
+    <string name="confirmation_error_invalid_address">Адрес получателя недействителен</string>
+    <string name="confirmation_error_unsupported_transaction">Этот тип транзакции не поддерживается</string>
+    <string name="confirmation_error_unsupported_asset">Этот актив не поддерживается</string>
+    <string name="confirmation_error_missing_field">Отсутствуют необходимые данные транзакции</string>
+    <string name="confirmation_error_dust_amount">Сумма слишком мала для отправки</string>
+    <string name="confirmation_error_verification_failed">Не удалось проверить подпись</string>
+    <string name="confirmation_error_sign_internal">Не удалось подписать транзакцию</string>
+    <string name="confirmation_error_unauthorized">Неавторизованный запрос к сети</string>
+    <string name="confirmation_error_no_nodes">Нет доступных узлов, попробуйте позже</string>
+    <string name="confirmation_error_network">Ошибка сети, проверьте подключение</string>
+    <string name="confirmation_error_bad_response">Получен недействительный ответ от узла</string>
+    <string name="confirmation_error_bitcoin">Ошибка сети Bitcoin, попробуйте позже</string>
+    <string name="confirmation_error_mempool_conflict">Транзакция конфликтует с мемпулом</string>
+    <string name="confirmation_error_utxo">Не удалось построить набор UTXO, попробуйте позже</string>
+    <string name="confirmation_error_internal">Внутренняя ошибка, попробуйте ещё раз</string>
+
+    <string name="migration">Миграция</string>
+    <string name="migration_subtitle">Перенесите активы из ваших TON-кошельков</string>
+    <string name="migration_prepare_title">Перенесите активы из ваших TON-кошельков</string>
+    <string name="migration_prepare_description">Выберите TON-кошелёк для миграции. Его активы будут перенесены в мультичейн.</string>
+    <string name="migration_empty_title">Нечего переносить</string>
+    <string name="migration_empty_description">Добавьте TON-кошелёк с активами, чтобы перенести их в этот кошелёк.</string>
+    <string name="migration_add_ton_wallet">Добавить TON-кошелёк</string>
+    <string name="migration_how_it_works">Как это работает?</string>
+    <string name="migration_how_it_works_title">Как работает миграция</string>
+    <string name="migration_how_it_works_intro">Мы перенесём поддерживаемые активы из вашего TON-кошелька в мультичейн. Неподдерживаемые активы останутся в TON-кошельке.</string>
+    <string name="migration_how_it_works_will_migrate">Будут перенесены: верифицированные жетоны и NFT, TON DNS NFT, имена пользователей и номера Telegram, а также токены ликвидного стейкинга, например tsTON.</string>
+    <string name="migration_how_it_works_will_stay">Останутся в TON-кошельке: неверифицированные или заблокированные активы, позиции лендинга, неликвидный стейкинг, SBT и NFT Tonstakers.</string>
+    <string name="migration_how_it_works_note">Обратите внимание: TON DNS NFT будут перенесены, но привязку к новому адресу нужно сделать вручную.</string>
+    <string name="migration_confirm_subtitle">Перенести в</string>
+    <string name="migration_confirm_ton_fee">Комиссия TON</string>
+    <string name="migration_confirm_trc20_fee">Комиссия TRON</string>
+    <string name="migration_confirm_sending_transactions">Отправка транзакций</string>
+    <string name="migration_confirm_transaction_failed">Транзакция не удалась. Попробуйте ещё раз</string>
+    <string name="migration_insufficient_ton_title">Недостаточно GRAM для комиссий в кошельке</string>
+    <string name="migration_insufficient_trx_title">Недостаточно TRX для комиссий в кошельке</string>
+    <string name="migration_insufficient_funds_title">Недостаточно средств для комиссий в кошельке</string>
+    <string name="migration_insufficient_required">Требуется: %1$s.</string>
+    <string name="migration_insufficient_balance">Ваш баланс: %1$s.</string>
+    <string name="migration_insufficient_partial_note">Сейчас будут отправлены только транзакции %1$s. Транзакции %2$s будут приостановлены, пока вы не добавите %3$s.</string>
+    <string name="migration_deposit_ton">Пополнить GRAM</string>
+    <string name="migration_deposit_trx">Пополнить TRX</string>
+    <string name="migration_deposit_wallet">Пополнить кошелёк</string>
+
+    <string name="migration_coming_soon">Миграция скоро будет доступна</string>
+    <string name="raffle_ends_in">Закончится через %1$s</string>
+    <string name="raffle_more_on">Продолжение %1$s</string>
+    <plurals name="raffle_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
+    <plurals name="raffle_tickets">
+        <item quantity="one">%1$d билет</item>
+        <item quantity="few">%1$d билета</item>
+        <item quantity="many">%1$d билетов</item>
+        <item quantity="other">%1$d билета</item>
+    </plurals>
+    <plurals name="raffle_tickets_reward">
+        <item quantity="one">+%1$d билет</item>
+        <item quantity="few">+%1$d билета</item>
+        <item quantity="many">+%1$d билетов</item>
+        <item quantity="other">+%1$d билета</item>
+    </plurals>
+    <string name="raffle_your_tickets">Ваши билеты</string>
+    <string name="raffle_final_tickets">Ваш итог по билетам</string>
+    <string name="raffle_get_more">Получить ещё</string>
+    <string name="raffle_how_to_earn">Как заработать билеты</string>
+    <string name="raffle_milestones">Бонусы за объём</string>
+    <string name="raffle_history">История билетов</string>
+    <string name="raffle_zero_fee_swaps">Кросс-чейн свопы с комиссией 0%</string>
+    <string name="raffle_faq">FAQ</string>
+    <string name="raffle_faq_about_q">Что такое Mystery Raffle?</string>
+    <string name="raffle_faq_about_a">%1$s мы запустим мультичейн-розыгрыш, в котором будет более 2 000 победителей. Билеты — ваши шансы на победу.\n\nМигрируйте на мультичейн до этой даты и получите 10 билетов — наше спасибо за то, что вы давний пользователь Keeper.\n\nПризы, дополнительные способы заработать билеты и полную механику раскроем на следующей неделе.</string>
+    <string name="raffle_faq_migrate_before_q">Что я получу, если мигрирую до %1$s?</string>
+    <string name="raffle_faq_migrate_before_a">• 10 билетов\n• Кросс-чейн комиссия 0%</string>
+    <string name="raffle_faq_migrate_after_q">Что я получу, если мигрирую после %1$s?</string>
+    <string name="raffle_faq_migrate_after_a">• 5 билетов</string>
+    <string name="raffle_faq_fee_end_q">Когда закончится предложение с комиссией 0%?</string>
+    <string name="raffle_faq_fee_end_a">%1$s</string>
+    <string name="raffle_faq_earn_q">Как заработать билеты?</string>
+    <string name="raffle_faq_earn_a">• %1$s за миграцию из TON-кошелька в мультичейн-кошелёк\n• 1 билет за каждые $100 кросс-чейн свопов\n• До 1000 бонусных билетов за бонусы за объём\n• Дополнительные задания появятся по ходу кампании</string>
+    <string name="raffle_faq_prizes_q">Какие будут призы?</string>
+    <string name="raffle_faq_prizes_a">• Призовой фонд $100 000\n• 2 000 победителей\n• Стейблкоины, NFT и Батарейки</string>
+    <string name="raffle_faq_end_q">Когда закончится розыгрыш?</string>
+    <string name="raffle_faq_end_a">• Розыгрыш продлится 6 недель\n• Он закончится %1$s</string>
+    <string name="raffle_faq_winners_q">Когда вы объявите победителей?</string>
+    <string name="raffle_faq_winners_a">В течение недели после завершения розыгрыша</string>
+    <string name="raffle_faq_rewards_q">Когда будут распределены награды?</string>
+    <string name="raffle_faq_rewards_a">В течение двух недель после завершения розыгрыша</string>
+    <plurals name="setup_finish_migration_wallets_left">
+        <item quantity="one">остался %1$d кошелёк</item>
+        <item quantity="few">осталось %1$d кошелька</item>
+        <item quantity="many">осталось %1$d кошельков</item>
+        <item quantity="other">осталось %1$d кошельков</item>
+    </plurals>
+    <string name="choose_wallet">Выберите кошелёк</string>
+    <string name="choose_wallet_description">Эта seed-фраза содержит два кошелька. Выберите один для импорта сейчас.</string>
+    <string name="wallet_kind_ton">Кошелёк TON</string>
+    <string name="wallet_kind_multichain">Мультичейн-кошелёк</string>
+    <string name="wallet_already_imported">У вас уже есть этот кошелёк</string>
+    <string name="methods_of_purchase_for">Способы покупки для</string>
 </resources>

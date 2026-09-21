@@ -5,12 +5,13 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
-import com.tonapps.blockchain.ton.TonAddressTags
+import com.tonapps.bus.core.contract.TonAddressTags
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
+import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.screens.send.state.SendDestination
 import com.tonapps.icu.Coins
@@ -147,7 +148,13 @@ class SendFeature(
 
     init {
         addressSubject.events
-            .debounce { if (it.isEmpty()) 0L else 600L }
+            .debounce {
+                if (it.isEmpty()) {
+                    0L
+                } else {
+                    600L
+                }
+            }
             .distinctUntilChanged()
             .mapLatest { address ->
                 stateScope.launch {
@@ -189,7 +196,7 @@ class SendFeature(
             tokens = tokenRepository.get(fiatCurrency, wallet.accountId, wallet.network)
                 ?: emptyList()
 
-            tronAvailable = tokens.any { it.isTrc20 } && settingsRepository.getTronUsdtEnabled(wallet.id)
+            tronAvailable = tokens.any { it.blockchain == Blockchain.TRON }
 
             val selectedToken = if (data.presetCurrency != null) {
                 tokens.firstOrNull { it.address.equalsAddress(data.presetCurrency.address) }
@@ -213,8 +220,8 @@ class SendFeature(
                 hiddenBalance = settingsRepository.hiddenBalances,
                 isLedger = wallet.isLedger,
                 remainingTokenBalance = selectedToken.balance.uiBalance,
-                isCommentAvailable = !isExchange && !selectedToken.isTrc20,
-                availableTokens = tokens.filter { it.balance.isTransferable && !it.isTrx },
+                isCommentAvailable = !isExchange && selectedToken.blockchain != Blockchain.TRON,
+                availableTokens = tokens.filter { it.balance.isTransferable },
                 isAddressLocked = data.presetAddress != null,
                 exchangeAsset = data.sendExchangeData?.exchangeTo,
                 isNft = nftAddress.isNotBlank(),
@@ -248,7 +255,9 @@ class SendFeature(
 
     private fun handleAddressInput(address: String) {
         val state = obtainState()
-        if (state.isAddressLocked) return
+        if (state.isAddressLocked) {
+            return
+        }
 
         if (state.isExchangeMode) {
             setState {
@@ -308,8 +317,7 @@ class SendFeature(
 
         AnalyticsHelper.Default.events.sendNative.sendClick(
             from = data.analyticsFrom,
-            assetNetwork = input.selectedToken.balance.token.blockchain.id,
-            tokenSymbol = input.selectedToken.symbol,
+            asset = input.selectedToken.balance.token.analyticsAssetId(),
             amount = input.amount.value.toDouble(),
         )
 
@@ -380,7 +388,7 @@ class SendFeature(
 
             // Resolve the exchange's payin address as a TON/TRON destination
             val destination = withContext(Dispatchers.IO) {
-                if (tronAvailable && input.selectedToken.isTrc20 && payinAddress.isValidTronAddress()) {
+                if (tronAvailable && input.selectedToken.blockchain == Blockchain.TRON && payinAddress.isValidTronAddress()) {
                     SendDestination.TronAccount(payinAddress)
                 } else {
                     getDestinationAccount(payinAddress)
@@ -443,7 +451,7 @@ class SendFeature(
                 selectedToken = accountToken,
                 amount = Coins.of(0, accountToken.decimals),
                 isMaxAmount = false,
-                isCommentAvailable = !isExchangeMode && !accountToken.isTrc20,
+                isCommentAvailable = !isExchangeMode && accountToken.blockchain != Blockchain.TRON,
                 remainingTokenBalance = accountToken.balance.uiBalance,
             )
         }
@@ -487,7 +495,7 @@ class SendFeature(
 
         val destination = withContext(Dispatchers.IO) {
             if (tronAvailable && address.isValidTronAddress()) {
-                if (selectedToken.isTrc20) {
+                if (selectedToken.blockchain == Blockchain.TRON) {
                     SendDestination.TronAccount(address)
                 } else {
                     SendDestination.TokenError(
@@ -497,7 +505,7 @@ class SendFeature(
                 }
             } else {
                 val tonDest = getDestinationAccount(address)
-                if (tonDest is SendDestination.TonAccount && selectedToken.isTrc20) {
+                if (tonDest is SendDestination.TonAccount && selectedToken.blockchain == Blockchain.TRON) {
                     SendDestination.TokenError(
                         addressBlockchain = Blockchain.TON,
                         selectedToken = selectedToken.token,
@@ -519,7 +527,7 @@ class SendFeature(
                 isResolvingAddress = false,
                 isMemoRequired = memoRequired,
                 encryptedCommentAvailable = encryptedAvailable,
-                isCommentAvailable = !isExchangeMode && !selectedToken.isTrc20,
+                isCommentAvailable = !isExchangeMode && selectedToken.blockchain != Blockchain.TRON,
             )
         }
 
@@ -562,7 +570,11 @@ class SendFeature(
         val amountCurrency = input.amountCurrency
         val rates = ratesRepository.getRates(wallet.network, currency, token.address)
 
-        val balance = if (amountCurrency) token.fiat else token.balance.uiBalance
+        val balance = if (amountCurrency) {
+            token.fiat
+        } else {
+            token.balance.uiBalance
+        }
         val remaining = balance - amount
 
         val converted = if (amountCurrency) {
@@ -577,7 +589,11 @@ class SendFeature(
             token.balance.uiBalance - amount
         }
 
-        val insufficientBalance = if (remaining.isZero) false else remaining.isNegative
+        val insufficientBalance = if (remaining.isZero) {
+            false
+        } else {
+            remaining.isNegative
+        }
 
         setState {
             copy(
@@ -637,7 +653,9 @@ class SendFeature(
     // region Helpers
 
     private suspend fun getTokenAmount(input: SendModel.State): Coins {
-        if (!input.amountCurrency) return input.amount
+        if (!input.amountCurrency) {
+            return input.amount
+        }
         val rates = ratesRepository.getRates(wallet.network, currency, input.selectedToken.address)
         return rates.convertFromFiat(input.selectedToken.address, input.amount)
     }

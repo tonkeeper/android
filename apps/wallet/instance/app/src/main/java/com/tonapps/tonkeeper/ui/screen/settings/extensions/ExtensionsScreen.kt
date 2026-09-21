@@ -32,7 +32,7 @@ class ExtensionsScreen(private val wallet: WalletEntity): BaseListWalletScreen<S
         super.onViewCreated(view, savedInstanceState)
         setTitle(getString(Localization.installed_extensions))
         setActionIcon(UIKitIcon.ic_question_message_outline_28) {
-            navigation?.add(SupportScreen.newInstance(wallet))
+            navigation?.add(SupportScreen.newInstance())
         }
         setActionTint(requireContext().iconSecondaryColor)
         setAdapter(adapter)

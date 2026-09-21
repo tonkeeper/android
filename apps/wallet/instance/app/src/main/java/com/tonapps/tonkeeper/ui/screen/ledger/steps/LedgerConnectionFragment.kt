@@ -31,19 +31,20 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.entries.all {
-            it.value
-        }
-        if (allGranted) {
-            connectionViewModel.onBleReady()
+    ) {
+        if (isPermissionGranted()) {
+            checkPermissionsAndScan()
         } else {
             showBluetoothPermissionsAlert()
         }
     }
     private val enableBluetoothLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) {}
+    ) {
+        if (isBluetoothEnabled()) {
+            checkPermissionsAndScan()
+        }
+    }
     private val appSettingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -148,10 +149,12 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
     }
 
     private fun checkPermissionsAndScan() {
-        if (isPermissionGranted()) {
+        if (!isPermissionGranted()) {
+            requestPermissionLauncher.launch(blePermissions)
+        } else if (isBluetoothEnabled()) {
             connectionViewModel.onBleReady()
         } else {
-            requestPermissionLauncher.launch(blePermissions)
+            promptEnableBluetooth()
         }
     }
 
@@ -162,6 +165,14 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
             hasPermission(Manifest.permission.BLUETOOTH) &&
             hasPermission(Manifest.permission.BLUETOOTH_ADMIN) &&
             hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    private fun isBluetoothEnabled(): Boolean {
+        return try {
+            BluetoothAdapter.getDefaultAdapter()?.isEnabled ?: true
+        } catch (e: Throwable) {
+            true
         }
     }
 

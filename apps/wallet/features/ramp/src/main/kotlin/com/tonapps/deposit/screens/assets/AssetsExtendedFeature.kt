@@ -36,6 +36,7 @@ class DepositCryptoExtendedViewState(
 data class AssetsCryptoExtendedFeatureData(
     val rampType: RampType,
     val filter: AssetFilter = AssetFilter.All,
+    val walletId: String? = null,
 )
 
 private val tronUnsupportedWalletTypes = setOf(
@@ -53,7 +54,9 @@ class AssetsCryptoExtendedFeature(
 ) : MviFeature<DepositCryptoExtendedAction, DepositCryptoExtendedState, DepositCryptoExtendedViewState>(
     initState = runBlocking {
         try {
-            val walletType = accountRepository.getSelectedWallet()?.type
+            val walletType = data.walletId?.let { accountRepository.getWalletById(it) }
+                ?.type
+                ?: accountRepository.getSelectedWallet()?.type
             val hideTron = walletType in tronUnsupportedWalletTypes
             onRampRepository.getLayout(data.rampType).resolveAssets(data.filter)
                 .filterNot { hideTron && it.isTronChain }
@@ -93,7 +96,9 @@ class AssetsCryptoExtendedFeature(
 
     private suspend fun loadAssets() {
         try {
-            val walletType = accountRepository.getSelectedWallet()?.type
+            val walletType = data.walletId?.let { accountRepository.getWalletById(it) }
+                ?.type
+                ?: accountRepository.getSelectedWallet()?.type
             val hideTron = walletType in tronUnsupportedWalletTypes
             val layout = onRampRepository.getLayout(data.rampType)
             val assets = layout.resolveAssets(data.filter)

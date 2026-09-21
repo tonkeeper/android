@@ -27,6 +27,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.input.TextFieldValue
@@ -59,6 +61,7 @@ fun MoonTextFieldCell(
     disableClearButton: Boolean = false,
     trailingIcon: @Composable (RowScope.() -> Unit)? = null,
     trailingAction: @Composable (RowScope.() -> Unit)? = null,
+    suffix: @Composable (() -> Unit)? = null,
     hintColor: Color? = null,
     activeBorderColor: Color? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -93,6 +96,7 @@ fun MoonTextFieldCell(
         disableClearButton = disableClearButton,
         trailingIcon = trailingIcon,
         trailingAction = trailingAction,
+        suffix = suffix,
         hintColor = hintColor,
         activeBorderColor = activeBorderColor,
         interactionSource = interactionSource,
@@ -117,6 +121,7 @@ fun MoonTextFieldCell(
     disableClearButton: Boolean = false,
     trailingIcon: @Composable (RowScope.() -> Unit)? = null,
     trailingAction: @Composable (RowScope.() -> Unit)? = null,
+    suffix: @Composable (() -> Unit)? = null,
     hintColor: Color? = null,
     activeBorderColor: Color? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -151,6 +156,7 @@ fun MoonTextFieldCell(
         disableClearButton = disableClearButton,
         trailingIcon = trailingIcon,
         trailingAction = trailingAction,
+        suffix = suffix,
         hintColor = hintColor,
         activeBorderColor = activeBorderColor,
         interactionSource = interactionSource,
@@ -171,6 +177,7 @@ private fun MoonTextFieldCellImpl(
     disableClearButton: Boolean = false,
     trailingIcon: @Composable (RowScope.() -> Unit)? = null,
     trailingAction: @Composable (RowScope.() -> Unit)? = null,
+    suffix: @Composable (() -> Unit)? = null,
     hintColor: Color? = null,
     activeBorderColor: Color? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -222,6 +229,11 @@ private fun MoonTextFieldCellImpl(
             textField = {
                 textField(Modifier.fillMaxWidth())
             },
+            suffix = if (hasText) {
+                suffix
+            } else {
+                null
+            },
             trailing = {
                 val showClear = !disableClearButton && !loading && !success && hasText && isFocused && enabled
                 val hasTrailingAction = (disableClearButton || !hasText) && trailingAction != null
@@ -256,6 +268,7 @@ private fun MoonTextFieldLayout(
     modifier: Modifier = Modifier,
     label: @Composable (() -> Unit)?,
     textField: @Composable () -> Unit,
+    suffix: @Composable (() -> Unit)?,
     trailing: @Composable (() -> Unit)?,
 ) {
     Layout(
@@ -263,6 +276,7 @@ private fun MoonTextFieldLayout(
         content = {
             if (label != null) Box(Modifier.layoutId("label")) { label() }
             Box(Modifier.layoutId("textField")) { textField() }
+            if (suffix != null) Box(Modifier.layoutId("suffix")) { suffix() }
             if (trailing != null) Box(Modifier.layoutId("trailing")) { trailing() }
         }
     ) { measurables, constraints ->
@@ -273,20 +287,36 @@ private fun MoonTextFieldLayout(
         val trailingWidth = trailingPlaceable?.width ?: 0
         val trailingHeight = trailingPlaceable?.height ?: 0
 
-        // 2. Measure Label
         val remainingWidth = maxOf(0, constraints.maxWidth - trailingWidth)
+
+        // 2. Measure Suffix: it never shrinks, the text field gives up the space and scrolls instead
+        val suffixPlaceable = measurables.firstOrNull { it.layoutId == "suffix" }?.measure(
+            constraints.copy(minWidth = 0, minHeight = 0, maxWidth = remainingWidth)
+        )
+        val suffixSpacing = if (suffixPlaceable == null) 0 else 4.dp.roundToPx()
+        val suffixWidth = (suffixPlaceable?.width ?: 0) + suffixSpacing
+
+        // 3. Measure Label
         val labelPlaceable = measurables.firstOrNull { it.layoutId == "label" }?.measure(
             constraints.copy(minWidth = 0, minHeight = 0, maxWidth = remainingWidth)
         )
         val labelHeight = labelPlaceable?.height ?: 0
 
-        // 3. Measure TextField
-        val textFieldPlaceable = measurables.first { it.layoutId == "textField" }.measure(
-            constraints.copy(minWidth = 0, minHeight = 0, maxWidth = remainingWidth)
+        // 4. Measure TextField
+        val textFieldMeasurable = measurables.first { it.layoutId == "textField" }
+        val textFieldWidth = maxOf(0, remainingWidth - suffixWidth)
+        // Where the text ends: the suffix sticks to it until the text fills the whole field
+        val textContentWidth = if (suffixPlaceable == null) {
+            0
+        } else {
+            minOf(textFieldMeasurable.maxIntrinsicWidth(constraints.maxHeight), textFieldWidth)
+        }
+        val textFieldPlaceable = textFieldMeasurable.measure(
+            constraints.copy(minWidth = 0, minHeight = 0, maxWidth = textFieldWidth)
         )
         val textFieldHeight = textFieldPlaceable.height
 
-        // 4. Calculate Dimensions Dynamically
+        // 5. Calculate Dimensions Dynamically
         val scaledLabelHeight = labelHeight * 0.75f
         val labelSpacing = 4.dp.roundToPx() // Space between scaled label and text
 
@@ -317,6 +347,18 @@ private fun MoonTextFieldLayout(
             val tfY = lerp(tfCollapsedY, tfExpandedY, progress)
 
             textFieldPlaceable.placeRelative(0, tfY.roundToInt())
+
+            // Suffix Placement (baseline aligned with the text field)
+            if (suffixPlaceable != null) {
+                val textBaseline = textFieldPlaceable[FirstBaseline]
+                val suffixBaseline = suffixPlaceable[FirstBaseline]
+                val suffixY = if (textBaseline == AlignmentLine.Unspecified || suffixBaseline == AlignmentLine.Unspecified) {
+                    (totalHeight - suffixPlaceable.height) / 2
+                } else {
+                    tfY.roundToInt() + textBaseline - suffixBaseline
+                }
+                suffixPlaceable.placeRelative(textContentWidth + suffixSpacing, suffixY)
+            }
 
             // Label Placement & Scale
             if (labelPlaceable != null) {

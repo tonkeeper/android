@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.activity
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -21,9 +22,10 @@ object PasscodeBiometric {
 
     suspend fun showPrompt(
         context: Context,
-        title: String
+        title: String,
+        passcodeFallback: Boolean = false
     ): Boolean = suspendCancellableCoroutine { continuation ->
-        showPrompt(context, title, object : BiometricPrompt.AuthenticationCallback() {
+        showPrompt(context, title, passcodeFallback, object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 continuation.resume(false)
             }
@@ -38,6 +40,7 @@ object PasscodeBiometric {
     fun showPrompt(
         context: Context,
         title: String,
+        passcodeFallback: Boolean = false,
         callback: BiometricPrompt.AuthenticationCallback
     ) {
         val activity = context.activity as? FragmentActivity
@@ -52,12 +55,20 @@ object PasscodeBiometric {
                 .setTitle(title)
                 .setAllowedAuthenticators(authenticators)
                 .setConfirmationRequired(false)
-                .setNegativeButtonText(context.getString(android.R.string.cancel))
+                .setNegativeButtonText(negativeButtonText(context, passcodeFallback))
 
             biometricPrompt.authenticate(builder.build())
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             callback.onAuthenticationError(BiometricPrompt.ERROR_HW_NOT_PRESENT, "Unknown error")
+        }
+    }
+
+    private fun negativeButtonText(context: Context, passcodeFallback: Boolean): String {
+        return if (passcodeFallback) {
+            context.getString(Localization.passcode_enter)
+        } else {
+            context.getString(android.R.string.cancel)
         }
     }
 }

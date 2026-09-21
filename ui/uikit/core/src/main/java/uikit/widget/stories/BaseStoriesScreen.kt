@@ -217,9 +217,13 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         )
         val elapsedSincePause = System.currentTimeMillis() - state.lastPauseTime
         if (172 >= elapsedSincePause) {
-            if (next && !isLastStory) {
-                nextStory()
-            } else if (!next && !isFirstStory) {
+            if (next) {
+                if (isLastStory) {
+                    finish()
+                } else {
+                    nextStory()
+                }
+            } else if (!isFirstStory) {
                 prevStory()
             } else {
                 startStoryTimer()

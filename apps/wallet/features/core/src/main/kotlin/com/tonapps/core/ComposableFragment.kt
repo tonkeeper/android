@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -23,6 +24,10 @@ import ui.theme.appColorSchemeBlue
 import ui.theme.appColorSchemeDark
 import ui.theme.appColorSchemeLight
 import uikit.base.BaseFragment
+
+// True while this fragment is the top one; screens use it to react to being covered by (and returning
+// from) another fragment, which the fragment lifecycle can't tell them because navigation only adds.
+val LocalIsTopFragment = staticCompositionLocalOf { true }
 
 abstract class ComposableFragment : BaseFragment(R.layout.fragment_compose_host) {
 
@@ -91,13 +96,16 @@ abstract class ComposableFragment : BaseFragment(R.layout.fragment_compose_host)
             MoonTheme(colorScheme = theme) {
                 val parent = LocalNavigationEventDispatcherOwner.current
                 if (parent == null) {
-                    content()
+                    CompositionLocalProvider(LocalIsTopFragment provides isTopFragment) {
+                        content()
+                    }
                 } else {
                     val localDispatcherOwner = rememberNavigationEventDispatcherOwner(
                         enabled = isTopFragment,
                         parent = parent,
                     )
                     CompositionLocalProvider(
+                        LocalIsTopFragment provides isTopFragment,
                         LocalNavigationEventDispatcherOwner provides localDispatcherOwner,
                     ) {
                         content()

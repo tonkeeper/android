@@ -70,7 +70,8 @@ class TonConnectCryptoView @JvmOverloads constructor(
 
         private val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             textSize = 14f.sp
-            typeface = ResourcesCompat.getFont(context, uikit.R.font.montserrat_medium)
+            typeface = ResourcesCompat.getFont(context, uikit.R.font.tt_firs_neue_normal)
+            fontFeatureSettings = "'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"
             color = context.textTertiaryColor
         }
 

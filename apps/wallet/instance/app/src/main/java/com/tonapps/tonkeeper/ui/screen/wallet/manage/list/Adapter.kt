@@ -22,6 +22,9 @@ class Adapter(
 
     private var list = listOf<Item>()
 
+    val currentList: List<Item>
+        get() = list
+
     private fun getItem(position: Int) = list[position]
 
     override fun getItemViewType(position: Int) = list[position].type
@@ -32,12 +35,21 @@ class Adapter(
         notifyDataSetChanged()
     }
 
-    fun moveItem(fromPosition: Int, toPosition: Int) {
+    fun moveItem(fromPosition: Int, toPosition: Int): Boolean {
+        if (fromPosition == RecyclerView.NO_POSITION || toPosition == RecyclerView.NO_POSITION) {
+            return false
+        }
+
+        if (fromPosition !in list.indices || toPosition !in list.indices) {
+            return false
+        }
+
         val newList = list.toMutableList()
         val item = newList.removeAt(fromPosition)
         newList.add(toPosition, item)
         list = newList
         notifyItemMoved(fromPosition, toPosition)
+        return true
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder<*> {

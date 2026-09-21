@@ -2,8 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder
 
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.drawable.RippleDrawable
-import com.tonapps.log.L
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
@@ -12,7 +10,6 @@ import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.extensions.getWalletBadges
-import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
@@ -70,7 +67,7 @@ class WalletHolder(
 
     fun updateEditMode(item: Item.Wallet) {
         if (item.editMode) {
-            pencilView.setOnClickListener { navigation?.add(EditNameScreen.newInstance(item.wallet)) }
+            pencilView.setOnClickListener { navigation?.add(EditNameScreen.newInstance(item.wallet.id)) }
             itemView.setOnClickListener(null)
             editView.visibility = View.VISIBLE
             checkView.visibility = View.GONE

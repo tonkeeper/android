@@ -35,7 +35,7 @@ data class AccountEvent(
     @SerialName(value = "in_progress")
     val inProgress: Boolean,
 
-    /* Net TON change for this account not explained by actions, in nanotons: extra = final_balance - initial_balance - sum(explicit TON changes from actions). extra < 0 - implicit fee, extra > 0 - refund. For UI display only  */
+    /* Net Gram change for this account not explained by actions, in nanograms: extra = final_balance - initial_balance - sum(explicit Gram changes from actions). extra < 0 - implicit fee, extra > 0 - refund. For UI display only  */
     @SerialName(value = "extra")
     val extra: Long,
 

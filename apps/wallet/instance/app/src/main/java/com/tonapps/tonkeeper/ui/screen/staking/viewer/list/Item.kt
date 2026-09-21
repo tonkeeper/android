@@ -20,6 +20,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_SPACE = 6
         const val TYPE_DESCRIPTION = 7
         const val TYPE_ETHENA_DETAILS = 8
+        const val TYPE_PENDING_UNSTAKE = 9
     }
 
     data class Balance(
@@ -96,7 +97,8 @@ sealed class Item(type: Int): BaseListItem(type) {
         val verified: Boolean,
         val testnet: Boolean,
         val hiddenBalance: Boolean,
-        val blacklist: Boolean
+        val blacklist: Boolean,
+        val assetId: String? = null,
     ): Item(TYPE_TOKEN)
 
     data object Space: Item(TYPE_SPACE)
@@ -117,5 +119,15 @@ sealed class Item(type: Int): BaseListItem(type) {
         val bonusUrl: String? = null,
         val faqUrl: String,
     ): Item(TYPE_ETHENA_DETAILS)
+
+    data class PendingUnstake(
+        val balance: Coins,
+        val balanceFormat: CharSequence,
+        val fiat: Coins,
+        val fiatFormat: CharSequence,
+        val hiddenBalance: Boolean,
+        val titleRes: Int,
+        val subtitleRes: Int,
+    ): Item(TYPE_PENDING_UNSTAKE)
 
 }

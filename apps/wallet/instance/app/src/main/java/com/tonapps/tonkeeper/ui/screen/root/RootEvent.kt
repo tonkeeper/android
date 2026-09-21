@@ -7,8 +7,8 @@ import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import io.ton.walletkit.request.TONWalletConnectionRequest
-import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 sealed class RootEvent {
     data class OpenTab(

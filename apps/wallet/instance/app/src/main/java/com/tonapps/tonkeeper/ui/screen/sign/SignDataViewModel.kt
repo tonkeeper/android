@@ -16,13 +16,13 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayl
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import io.github.andreypfau.kotlinx.crypto.crc32.crc32
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.crypto.digest.sha256
-import org.ton.crypto.hex
+import com.tonapps.security.hex
+import org.ton.kotlin.crypto.crc32
+import org.ton.kotlin.crypto.sha256
 import java.io.ByteArrayOutputStream
 import java.net.IDN
 import java.nio.ByteOrder
@@ -130,7 +130,7 @@ class SignDataViewModel(
         val payloadBuffer = if (isText) payload.toByteArray() else payload.decodeBase64()
 
         val builder = ByteArrayOutputStream()
-        builder.write(hex("ffff"))
+        builder.write("ffff".hex())
         builder.write(prefix)
         builder.write(address.toByteArray(ByteOrder.BIG_ENDIAN))
         builder.write(domain.toByteArray(ByteOrder.BIG_ENDIAN))

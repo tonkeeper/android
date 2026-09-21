@@ -1,0 +1,15 @@
+# Opens Multichain Swap from the wallet home action row.
+appId: com.ton_keeper.debug
+---
+- extendedWaitUntil:
+    visible: Swap
+    timeout: 30000
+- tapOn: Swap
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Continue
+    timeout: 30000
+- extendedWaitUntil:
+    visible: MAX
+    timeout: 30000

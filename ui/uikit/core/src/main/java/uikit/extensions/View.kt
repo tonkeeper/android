@@ -2,20 +2,12 @@ package uikit.extensions
 
 import android.animation.Animator
 import android.animation.ValueAnimator
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Rect
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import com.tonapps.log.L
 import android.view.HapticFeedbackConstants
-import android.view.PixelCopy
-import android.view.SurfaceView
 import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
@@ -28,27 +20,17 @@ import androidx.annotation.AnimRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
-import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.updateMargins
-import androidx.core.widget.NestedScrollView
-import androidx.core.widget.NestedScrollView.OnScrollChangeListener
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.AutoTransition
 import androidx.transition.Transition
 import androidx.transition.TransitionListenerAdapter
 import androidx.transition.TransitionManager
 import androidx.viewpager2.widget.ViewPager2
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import uikit.insets.KeyboardAnimationCallback
 import kotlin.math.sin
 import androidx.core.graphics.drawable.toDrawable
@@ -194,7 +176,7 @@ fun View.round(radius: Float) {
 
 fun View.getDrawable(@DrawableRes resId: Int): Drawable {
     return try {
-        AppCompatResources.getDrawable(context, resId) ?: throw IllegalArgumentException()
+        AppCompatResources.getDrawable(context, resId) ?: throw IllegalArgumentException("Drawable not found for resId=$resId")
     } catch (e: Throwable) {
         Color.TRANSPARENT.toDrawable()
     }
@@ -341,6 +323,17 @@ inline fun View.doKeyboardAnimation(
         }
     }
     ViewCompat.setWindowInsetsAnimationCallback(this, animationCallback)
+    ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
+        animationCallback.applyWindowInsets(insets)
+        val platformInsets = insets.toWindowInsets()
+        if (platformInsets != null) {
+            // Chain to View.onApplyWindowInsets so BottomSheetLayout can still
+            // apply its top padding (listener alone would swallow it).
+            WindowInsetsCompat.toWindowInsetsCompat(v.onApplyWindowInsets(platformInsets), v)
+        } else {
+            insets
+        }
+    }
 }
 
 fun View.pinToBottomInsets() {

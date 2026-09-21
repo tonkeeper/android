@@ -19,7 +19,9 @@ data class PromoUsed(
     @SerialName(value = "promo_used")
     val promoUsed: Boolean,
     @SerialName(value = "bonus_charges")
-    val bonusCharges: String
+    val bonusCharges: String,
+    @SerialName(value = "purchases")
+    val purchases: List<PromoUsedPurchasesInner>? = null
 ) {
 }
 

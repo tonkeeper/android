@@ -81,10 +81,16 @@ data class Action(
     @SerialName(value = "LiquidityDeposit")
     val liquidityDeposit: LiquidityDepositAction? = null,
     @SerialName(value = "OracleRequest")
-    val oracleRequest: OracleRequestAction? = null
+    val oracleRequest: OracleRequestAction? = null,
+    @SerialName(value = "WithdrawXTR")
+    val withdrawXTR: WithdrawXTRAction? = null,
+    @SerialName(value = "DepositXTR")
+    val depositXTR: DepositXTRAction? = null,
+    @SerialName(value = "BuyXTR")
+    val buyXTR: BuyXTRAction? = null
 ) {
     /**
-     * Values: TonTransfer,ExtraCurrencyTransfer,ContractDeploy,JettonTransfer,FlawedJettonTransfer,JettonBurn,JettonMint,NftItemTransfer,Subscribe,UnSubscribe,AuctionBid,NftPurchase,DepositStake,WithdrawStake,WithdrawStakeRequest,ElectionsDepositStake,ElectionsRecoverStake,JettonSwap,SmartContractExec,DomainRenew,Purchase,AddExtension,RemoveExtension,SetSignatureAllowedAction,GasRelay,DepositTokenStake,WithdrawTokenStakeRequest,LiquidityDeposit,OracleRequest,Unknown
+     * Values: TonTransfer,ExtraCurrencyTransfer,ContractDeploy,JettonTransfer,FlawedJettonTransfer,JettonBurn,JettonMint,NftItemTransfer,Subscribe,UnSubscribe,AuctionBid,NftPurchase,DepositStake,WithdrawStake,WithdrawStakeRequest,ElectionsDepositStake,ElectionsRecoverStake,JettonSwap,SmartContractExec,DomainRenew,Purchase,AddExtension,RemoveExtension,SetSignatureAllowedAction,GasRelay,DepositTokenStake,WithdrawTokenStakeRequest,LiquidityDeposit,OracleRequest,BuyXTR,DepositXTR,WithdrawXTR,Unknown
      */
     @Serializable
     enum class Type(val value: String) {
@@ -117,6 +123,9 @@ data class Action(
         @SerialName(value = "WithdrawTokenStakeRequest") WithdrawTokenStakeRequest("WithdrawTokenStakeRequest"),
         @SerialName(value = "LiquidityDeposit") LiquidityDeposit("LiquidityDeposit"),
         @SerialName(value = "OracleRequest") OracleRequest("OracleRequest"),
+        @SerialName(value = "BuyXTR") BuyXTR("BuyXTR"),
+        @SerialName(value = "DepositXTR") DepositXTR("DepositXTR"),
+        @SerialName(value = "WithdrawXTR") WithdrawXTR("WithdrawXTR"),
         @SerialName(value = "Unknown") Unknown("Unknown");
     }
     /**

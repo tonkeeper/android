@@ -45,19 +45,27 @@ data class AssetRef(
 
     /* Ассет скам или нет */
     @SerialName(value = "is_scam")
+    @Deprecated(message = "This property is deprecated.")
     val isScam: Boolean,
 
     /* Усовершенствованная версия is_scam */
     @SerialName(value = "verification")
-    val verification: Verification
+    val verification: Verification,
+
+    /* Айди связанного spot-ассета, у которого заимствованы метаданные (например для perp-рынка lighter/... это ассет с тем же тикером). Отсутствует, если связи нет.  */
+    @SerialName(value = "reference_id")
+    val referenceId: String? = null,
+    @SerialName(value = "perps")
+    val perps: PerpMarket? = null
 ) {
     /**
      * Усовершенствованная версия is_scam
      *
-     * Values: whitelist,none,blacklist
+     * Values: trusted,whitelist,none,blacklist
      */
     @Serializable
     enum class Verification(val value: String) {
+        @SerialName(value = "trusted") trusted("trusted"),
         @SerialName(value = "whitelist") whitelist("whitelist"),
         @SerialName(value = "none") none("none"),
         @SerialName(value = "blacklist") blacklist("blacklist");

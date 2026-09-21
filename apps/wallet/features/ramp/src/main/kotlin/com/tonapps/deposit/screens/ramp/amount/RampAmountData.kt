@@ -8,6 +8,7 @@ data class RampAmountData(
     val assetFrom: RampAsset,
     val assetTo: RampAsset,
     val paymentMethodType: String,
+    val walletId: String? = null,
 ) {
     val fromNetwork: String? = assetFrom.network
     val toNetwork: String? = assetTo.network

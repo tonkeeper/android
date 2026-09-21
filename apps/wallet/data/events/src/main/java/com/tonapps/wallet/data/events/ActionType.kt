@@ -29,6 +29,16 @@ enum class ActionType {
     SetSignatureNotAllowed,
 }
 
+val ActionTypeFeeOnly = arrayOf(
+    ActionType.DomainRenewal,
+    ActionType.DeployContract,
+    ActionType.AddExtension,
+    ActionType.RemoveExtension,
+    ActionType.SetSignatureAllowed,
+    ActionType.SetSignatureNotAllowed,
+    ActionType.UnSubscribe
+)
+
 val ActionTypeOut = arrayOf(
     ActionType.Send,
     ActionType.CallContract,

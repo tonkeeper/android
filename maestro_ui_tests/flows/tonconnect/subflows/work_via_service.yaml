@@ -1,0 +1,34 @@
+# Connects STON.fi over TonConnect. Needs an empty connected-apps list, so
+# this case runs first in the shard: Cloud wipes between wrappers, then
+# launch_app_ensure imports. Later cases in this shard keep the wallet
+# (no clearState).
+name: "TonConnect — STON.fi browser swap"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+- tapOn: Browser
+# STON.fi is the first card under the DEX & LP header; anchor the tap to it.
+# Scroll to the card, not the header: centerElement on this GridView leaves the
+# header at the bottom edge and the card's name label clipped out of the tree.
+- scrollUntilVisible:
+    element:
+      text: DEX & LP
+- assertVisible: "DEX & LP"
+- tapOn:
+    text: STON.fi
+    below: "DEX & LP"
+
+- tapOn: "Confirm and agree"
+- tapOn: "Connect"
+- tapOn: "Ton Connect Connect"
+
+- extendedWaitUntil:
+    visible: "Connect to app.ston.fi"
+    timeout: 3000
+- tapOn: "Connect wallet"
+
+- tapOn:
+    id: "close"
+- tapOn: "Connected"
+- assertVisible: "STON.fi"

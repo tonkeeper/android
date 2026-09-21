@@ -19,7 +19,7 @@ data class ExchangeLayoutAsset(
     @SerialName(value = "symbol")
     val symbol: String,
 
-    /* CAIP-19 asset identifier (e.g. ton:mainnet/slip44:607) */
+    /* Internal asset identifier (e.g. `ton/mainnet/coin`, `eth/mainnet/erc20/0xdc03...`, `ton/mainnet/jetton/0:b113...`) */
     @SerialName(value = "asset_id")
     val assetId: String,
     @SerialName(value = "network")

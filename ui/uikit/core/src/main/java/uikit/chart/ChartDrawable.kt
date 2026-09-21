@@ -14,6 +14,8 @@ import android.graphics.Rect
 import android.graphics.Shader
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.core.graphics.withTranslation
+import com.tonapps.uikit.color.accentGreenColor
+import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.separatorCommonColor
 import uikit.extensions.dp
 import uikit.extensions.withAlpha
@@ -41,6 +43,10 @@ class ChartDrawable(context: Context) : BaseChartDrawable(context) {
             get() = kotlin.math.max(max - min, Float.MIN_VALUE)
     }
 
+    private val positiveColor = context.accentGreenColor
+    private val negativeColor = context.accentRedColor
+    private var chartColor = accentColor
+
     private var data: List<ChartPoint> = emptyList()
     private var dataPriceRange = PriceRange()
     private var morphPriceRange = PriceRange()
@@ -58,13 +64,13 @@ class ChartDrawable(context: Context) : BaseChartDrawable(context) {
     }
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = accentColor
+        color = chartColor
         strokeWidth = strokeSize
         style = Paint.Style.STROKE
     }
 
     private val gradientPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = accentColor
+        color = chartColor
         style = Paint.Style.FILL
     }
 
@@ -108,6 +114,7 @@ class ChartDrawable(context: Context) : BaseChartDrawable(context) {
         }
 
         dataPriceRange = computePriceRange(data)
+        updateChartColor()
 
         if (canMorph) {
             startMorphAnimation(fromData = oldData)
@@ -212,6 +219,26 @@ class ChartDrawable(context: Context) : BaseChartDrawable(context) {
         chartPathsValid = false
     }
 
+    private fun updateChartColor() {
+        val color = resolveChartColor()
+        if (chartColor == color) return
+
+        chartColor = color
+        linePaint.color = color
+        gradientPaint.color = color
+        updateGradient()
+    }
+
+    private fun resolveChartColor(): Int {
+        val prices = data.asSequence()
+            .filterNot { it.isEmpty }
+            .map { it.price }
+            .toList()
+        if (prices.size < 2) return chartColor
+
+        return if (prices.last() < prices.first()) negativeColor else positiveColor
+    }
+
     private fun updateGradient() {
         gradientPaint.shader = LinearGradient(
             0f,
@@ -219,11 +246,11 @@ class ChartDrawable(context: Context) : BaseChartDrawable(context) {
             0f,
             chartHeight,
             intArrayOf(
-                accentColor.withAlpha(FILL_GRADIENT_ALPHA),
-                accentColor.withAlpha(52),
-                accentColor.withAlpha(30),
-                accentColor.withAlpha(14),
-                accentColor.withAlpha(4),
+                chartColor.withAlpha(FILL_GRADIENT_ALPHA),
+                chartColor.withAlpha(52),
+                chartColor.withAlpha(30),
+                chartColor.withAlpha(14),
+                chartColor.withAlpha(4),
                 Color.TRANSPARENT,
             ),
             floatArrayOf(0f, 0.22f, 0.44f, 0.66f, 0.86f, 1f),

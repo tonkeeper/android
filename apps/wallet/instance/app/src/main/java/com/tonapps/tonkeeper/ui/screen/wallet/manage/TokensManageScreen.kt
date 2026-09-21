@@ -1,10 +1,10 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.manage
 
 import android.os.Bundle
-import com.tonapps.log.L
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -12,14 +12,10 @@ import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.TokenHolder
-import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import uikit.HapticHelper
 import uikit.R
 import uikit.base.BaseFragment
-import uikit.base.BaseListFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 
@@ -60,7 +56,13 @@ class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenConte
             ): Boolean {
                 val item = (viewHolder as? Holder<*>)?.item ?: return false
                 if (item is Item.Token && item.pinned) {
-                    adapter.moveItem(viewHolder.bindingAdapterPosition, target.bindingAdapterPosition)
+                    val fromPosition = viewHolder.bindingAdapterPosition
+                    val toPosition = target.bindingAdapterPosition
+
+                    if (!adapter.moveItem(fromPosition, toPosition)) {
+                        return false
+                    }
+
                     HapticHelper.impactLight(requireContext())
                     return true
                 }
@@ -74,7 +76,7 @@ class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenConte
                 super.clearView(recyclerView, viewHolder)
                 val item = (viewHolder as? Holder<*>)?.item ?: return
                 if (item is Item.Token && item.pinned) {
-                    viewModel.changeOrder(item.address, viewHolder.bindingAdapterPosition)
+                    viewModel.saveOrder(adapter.currentList)
                 }
             }
 

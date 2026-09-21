@@ -70,6 +70,11 @@ class SettingsRepository(
         private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
         private const val LEDGER_CONNECT_USB = "ledger_connect_usb"
         private const val SEND_TOOLTIP_SHOWN_KEY = "send_tooltip_shown"
+        private const val HAD_WALLETS_ON_MULTICHAIN_RELEASE_KEY =
+            "had_wallets_on_multichain_release"
+        private const val PUSH_PERMISSION_REQUESTED_KEY = "push_permission_requested"
+        private const val HIDE_DUST_ACTIVITIES_KEY = "hide_dust_activities"
+        private const val HIDE_DUST_ASSETS_KEY = "hide_dust_assets"
     }
 
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
@@ -102,8 +107,8 @@ class SettingsRepository(
     private val _walletPush = MutableEffectFlow<Unit>()
     val walletPush = _walletPush.shareIn(scope, SharingStarted.Eagerly)
 
-    private val _safeModeStateFlow = MutableStateFlow<SafeModeState?>(null)
-    val safeModeStateFlow = _safeModeStateFlow.asStateFlow().filterNotNull()
+    private val _safeModeChangedFlow = MutableStateFlow(0L)
+    val safeModeChangedFlow = _safeModeChangedFlow.asStateFlow()
 
     private val _isMigratedFlow = MutableStateFlow<Boolean?>(null)
     val isMigratedFlow = _isMigratedFlow.asStateFlow().filterNotNull()
@@ -135,6 +140,32 @@ class SettingsRepository(
             if (value != field) {
                 prefs.putBoolean(LEDGER_CONNECT_USB, value)
                 field = value
+            }
+        }
+
+    private val _hideDustActivitiesFlow =
+        MutableStateFlow(prefs.getBoolean(HIDE_DUST_ACTIVITIES_KEY, false))
+    val hideDustActivitiesFlow = _hideDustActivitiesFlow.asStateFlow()
+
+    private val _hideDustAssetsFlow =
+        MutableStateFlow(prefs.getBoolean(HIDE_DUST_ASSETS_KEY, false))
+    val hideDustAssetsFlow = _hideDustAssetsFlow.asStateFlow()
+
+    var hideDustActivities: Boolean = prefs.getBoolean(HIDE_DUST_ACTIVITIES_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.putBoolean(HIDE_DUST_ACTIVITIES_KEY, value)
+                field = value
+                _hideDustActivitiesFlow.tryEmit(value)
+            }
+        }
+
+    var hideDustAssets: Boolean = prefs.getBoolean(HIDE_DUST_ASSETS_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.putBoolean(HIDE_DUST_ASSETS_KEY, value)
+                field = value
+                _hideDustAssetsFlow.tryEmit(value)
             }
         }
 
@@ -264,10 +295,21 @@ class SettingsRepository(
             }
         }
 
+    val hadWalletsOnMultichainRelease: Boolean
+        get() = prefs.getBoolean(HAD_WALLETS_ON_MULTICHAIN_RELEASE_KEY, true)
+
     var sendTooltipShown: Boolean = prefs.getBoolean(SEND_TOOLTIP_SHOWN_KEY, false)
         set(value) {
             if (value != field) {
                 prefs.putBoolean(SEND_TOOLTIP_SHOWN_KEY, value)
+                field = value
+            }
+        }
+
+    var pushPermissionRequested: Boolean = prefs.getBoolean(PUSH_PERMISSION_REQUESTED_KEY, false)
+        set(value) {
+            if (value != field) {
+                prefs.putBoolean(PUSH_PERMISSION_REQUESTED_KEY, value)
                 field = value
             }
         }
@@ -295,8 +337,9 @@ class SettingsRepository(
             }
         }
 
-    fun getSafeModeState(): SafeModeState {
-        val disabledUnix = prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, -5)
+    fun getSafeModeState(walletId: String): SafeModeState {
+        val disabledUnix = walletPrefsFolder.getSafeModeDisabledUnix(walletId)
+            ?: prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, -5)
         if (disabledUnix == -5L) {
             return SafeModeState.Default
         } else if (1L == disabledUnix) {
@@ -314,6 +357,12 @@ class SettingsRepository(
         }
     }
 
+    fun resolveHadWalletsOnMultichainRelease(hasWallets: Boolean) {
+        if (!prefs.contains(HAD_WALLETS_ON_MULTICHAIN_RELEASE_KEY)) {
+            prefs.putBoolean(HAD_WALLETS_ON_MULTICHAIN_RELEASE_KEY, hasWallets)
+        }
+    }
+
     fun isStoriesViewed(storyId: String): Boolean {
         return prefs.getBoolean(STORIES_VIEWED_PREFIX + storyId, false)
     }
@@ -322,18 +371,23 @@ class SettingsRepository(
         prefs.putBoolean(STORIES_VIEWED_PREFIX + storyId, true)
     }
 
-    fun setSafeModeState(state: SafeModeState) {
+    fun resetStoriesViewed() {
+        val viewed = prefs.all.keys.filter { it.startsWith(STORIES_VIEWED_PREFIX) }
         prefs.edit {
-            val value = when (state) {
-                SafeModeState.Enabled -> 1
-                SafeModeState.DisabledPermanently -> 0
-                SafeModeState.Default -> -5
-                else -> System.currentTimeMillis()
-            }
-            putLong(SAFE_MODE_DISABLED_UNIX_KEY, value)
+            viewed.forEach { remove(it) }
         }
+    }
 
-        _safeModeStateFlow.tryEmit(state)
+    fun setSafeModeState(walletId: String, state: SafeModeState) {
+        val value = when (state) {
+            SafeModeState.Enabled -> 1L
+            SafeModeState.DisabledPermanently -> 0L
+            SafeModeState.Default -> -5L
+            else -> System.currentTimeMillis()
+        }
+        walletPrefsFolder.setSafeModeDisabledUnix(walletId, value)
+
+        _safeModeChangedFlow.value += 1
     }
 
     fun isUSDTW5(walletId: String) = walletPrefsFolder.isUSDTW5(walletId)
@@ -384,6 +438,12 @@ class SettingsRepository(
         }
     }
 
+    fun isMigrationOpened(walletId: String): Boolean = walletPrefsFolder.isMigrationOpened(walletId)
+
+    fun setMigrationOpened(walletId: String) {
+        walletPrefsFolder.setMigrationOpened(walletId)
+    }
+
     fun setTelegramChannel(walletId: String) {
         walletPrefsFolder.setTelegramChannel(walletId)
         scope.launch {
@@ -405,8 +465,8 @@ class SettingsRepository(
         walletPrefsFolder.setBatteryTxEnabled(accountId, types)
     }
 
-    fun isSafeModeEnabled(network: TonNetwork): Boolean {
-        val state = getSafeModeState()
+    fun isSafeModeEnabled(walletId: String, network: TonNetwork): Boolean {
+        val state = getSafeModeState(walletId)
         if (state == SafeModeState.Default) {
             return api.getConfig(network).flags.safeModeEnabled
         }
@@ -486,14 +546,12 @@ class SettingsRepository(
 
     fun getWalletPrefs(walletId: String) = walletPrefsFolder.get(walletId)
 
+    fun getWalletSortIndex(walletId: String): Int? = walletPrefsFolder.getSortIndex(walletId)
+
     fun getWalletLastUpdated(walletId: String) = walletPrefsFolder.getLastUpdated(walletId)
 
     fun setWalletLastUpdated(walletId: String) {
         walletPrefsFolder.setLastUpdated(walletId)
-    }
-
-    fun getTronUsdtEnabled(walletId: String): Boolean {
-        return !tokenPrefsFolder.getHidden(walletId, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
     }
 
     fun getPreferredFeeMethod(walletId: String) = walletPrefsFolder.getPreferredFeeMethod(walletId)
@@ -537,6 +595,8 @@ class SettingsRepository(
                 searchEngine = legacyValues.searchEngine
             }
 
+            tokenPrefsFolder.resetTronPrefs()
+
             _isMigratedFlow.value = true
             _currencyFlow.tryEmit(currency)
             _languageFlow.tryEmit(language)
@@ -545,7 +605,6 @@ class SettingsRepository(
             _searchEngineFlow.tryEmit(searchEngine)
             _biometricFlow.tryEmit(biometric)
             _lockscreenFlow.tryEmit(lockScreen)
-            _safeModeStateFlow.tryEmit(getSafeModeState())
             _walletPush.tryEmit(Unit)
         }
     }

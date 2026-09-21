@@ -18,7 +18,8 @@ import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
-import org.ton.api.pub.PublicKeyEd25519
+import kotlinx.io.bytestring.ByteString
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 internal class DatabaseSource(
     context: Context,
@@ -159,6 +160,19 @@ internal class DatabaseSource(
         }
     }
 
+    suspend fun getAccountsCount(): Int = withContext(scope.coroutineContext) {
+        val cursor = readableDatabase.rawQuery("SELECT COUNT(*) FROM $WALLET_TABLE_NAME;", null)
+        if (cursor.isNullOrEmpty()) {
+            cursor.closeSafe()
+            0
+        } else {
+            cursor.moveToFirst()
+            val count = cursor.getInt(0)
+            cursor.closeSafe()
+            count
+        }
+    }
+
     suspend fun getAccount(id: String): WalletEntity? = withContext(scope.coroutineContext) {
         if (id.isNotBlank()) {
             val query = "SELECT $walletFields FROM $WALLET_TABLE_NAME WHERE $WALLET_TABLE_ID_COLUMN = ?;"
@@ -203,7 +217,7 @@ internal class DatabaseSource(
 
             var wallet = WalletEntity(
                 id = cursor.getString(idIndex),
-                publicKey = PublicKeyEd25519(cursor.getBlob(publicKeyIndex)),
+                publicKey = PublicKeyEd25519(ByteString(cursor.getBlob(publicKeyIndex))),
                 type = Wallet.typeOf(cursor.getInt(typeIndex)),
                 version = walletVersion(cursor.getInt(versionIndex)),
                 label = label,

@@ -3,7 +3,7 @@ package com.tonapps.ledger.ton
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.contract.WalletV4R2Contract
 import kotlinx.parcelize.Parcelize
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import java.nio.ByteBuffer
 
 @Parcelize

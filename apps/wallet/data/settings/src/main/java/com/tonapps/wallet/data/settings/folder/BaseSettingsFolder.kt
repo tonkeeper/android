@@ -47,6 +47,8 @@ internal abstract class BaseSettingsFolder(
 
     fun contains(key: String) = prefs.contains(key)
 
+    fun keys(): Set<String> = prefs.all.keys
+
     fun getBoolean(key: String, defValue: Boolean = false) = prefs.getBoolean(key, defValue)
 
     fun getInt(key: String, defValue: Int = 0) = prefs.getInt(key, defValue)

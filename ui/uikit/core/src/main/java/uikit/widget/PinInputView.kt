@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import com.tonapps.log.L
 import android.view.View
+import androidx.core.animation.doOnEnd
 import androidx.core.graphics.withSave
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.fieldActiveBorderColor
@@ -144,8 +145,9 @@ class PinInputView @JvmOverloads constructor(
         setCount(0)
     }
 
-    fun setSuccess() {
+    fun setSuccess(onEnd: (() -> Unit)? = null) {
         if (state == PinCodeState.SUCCESS) {
+            onEnd?.invoke()
             return
         }
 
@@ -166,6 +168,9 @@ class PinInputView @JvmOverloads constructor(
             }
         }
         successAnimation.interpolator = ReverseInterpolator()
+        if (onEnd != null) {
+            successAnimation.doOnEnd { onEnd() }
+        }
         successAnimation.start()
     }
 

@@ -32,6 +32,7 @@ import ui.workaround.hideKeyboardOnScrollConnection
 fun SelectCurrencyScreen(
     feature: SelectCurrencyFeature,
     selectedCurrencyCode: String?,
+    availableCodes: List<String>? = null,
     onConfirm: (WalletCurrency) -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
@@ -45,8 +46,17 @@ fun SelectCurrencyScreen(
         )
 
         is SelectCurrencyState.Data -> {
+            val currencies = remember(s.currencies, availableCodes) {
+                if (availableCodes == null) {
+                    s.currencies
+                } else {
+                    s.currencies
+                        .filter { currency -> availableCodes.any { it.equals(currency.code, true) } }
+                        .ifEmpty { s.currencies }
+                }
+            }
             SelectCurrencyContent(
-                currencies = s.currencies,
+                currencies = currencies,
                 selectedCurrencyCode = selectedCurrencyCode,
                 onConfirm = onConfirm,
                 onBack = onBack,
@@ -106,7 +116,9 @@ private fun SelectCurrencyContent(
                     MoonBundleCell(
                         position = defaultBundleType(filteredCurrencies.size, index)
                     ) {
-                        if (index > 0) MoonItemDivider()
+                        if (index > 0) {
+                            MoonItemDivider()
+                        }
                         val isChecked = currency.code == selectedCurrencyCode
                         VerticalAssetCell(
                             currency = currency,

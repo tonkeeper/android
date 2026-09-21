@@ -4,20 +4,21 @@ import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.extensions.storeAddress
 import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeOpCode
+import com.tonapps.blockchain.ton.toBigInt
 import com.tonapps.ledger.transport.LedgerAppName
 import com.tonapps.ledger.transport.Transport
 import com.tonapps.ledger.transport.TransportStatusException
+import io.ktor.util.hex
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.ton.api.pub.PublicKeyEd25519
+import kotlinx.io.bytestring.ByteString
 import org.ton.block.Coins
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.cell.CellSlice
-import org.ton.crypto.digest.sha256
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.PublicKeyEd25519
+import org.ton.kotlin.crypto.sha256
 import org.ton.tlb.storeTlb
 import java.math.BigInteger
 import kotlin.math.ceil
@@ -27,6 +28,12 @@ data class ParseOptions(
     val disallowModification: Boolean = false,
     val encodeJettonBurnEthAddressAsHex: Boolean = true
 )
+
+enum class OpenAppResult {
+    Opened,
+    Denied,
+    NotInstalled,
+}
 
 class TonTransport(private val transport: Transport) {
     private var _currentVersion: String? = null
@@ -48,10 +55,16 @@ class TonTransport(private val transport: Transport) {
         transport.close()
     }
 
-    private suspend fun doRequest(ins: Int, p1: Int, p2: Int, data: ByteArray): ByteArray {
+    private suspend fun doRequest(
+        ins: Int,
+        p1: Int,
+        p2: Int,
+        data: ByteArray,
+        cla: Int = LEDGER_CLA
+    ): ByteArray {
         return lock.withLock {
             val r = transport.send(
-                LEDGER_CLA, ins, p1, p2, data,
+                cla, ins, p1, p2, data,
             )
             r.sliceArray(0 until r.size - 2)
         }
@@ -81,10 +94,27 @@ class TonTransport(private val transport: Transport) {
         }
     }
 
-    suspend fun requestOpenTONApp() {
-        doRequest(
-            INS_OPEN_APP, 0x00, 0x00, "TON".toByteArray()
-        )
+    suspend fun currentApp(): LedgerAppName {
+        val app = getCurrentApp()
+        if (app.isTonApp) {
+            _currentVersion = app.version
+        }
+        return app
+    }
+
+    suspend fun openTonApp(): OpenAppResult {
+        return try {
+            doRequest(INS_OPEN_APP, 0x00, 0x00, LedgerAppName.TON_APP_NAME.toByteArray())
+            OpenAppResult.Opened
+        } catch (_: TransportStatusException.DeniedByUser) {
+            OpenAppResult.Denied
+        } catch (_: TransportStatusException.AppNotInstalled) {
+            OpenAppResult.NotInstalled
+        }
+    }
+
+    suspend fun quitApp() {
+        doRequest(INS_QUIT_APP, 0x00, 0x00, ByteArray(0), cla = LEDGER_SYSTEM)
     }
 
     suspend fun isLocked(): Boolean {
@@ -95,17 +125,6 @@ class TonTransport(private val transport: Transport) {
             return true
         }
     }
-
-    suspend fun isTONAppOpen(): Boolean {
-        val app = getCurrentApp()
-        val isOpened = app.name == "TON"
-        if (isOpened) {
-            _currentVersion = app.version
-        }
-        return isOpened
-    }
-
-    suspend fun getTonAppVersion() = getVersion()
 
     suspend fun getVersion(): String {
         return _currentVersion ?: requestVersion().also {
@@ -133,7 +152,7 @@ class TonTransport(private val transport: Transport) {
             throw Exception("Invalid response")
         }
 
-        val publicKey = PublicKeyEd25519(response)
+        val publicKey = PublicKeyEd25519(ByteString(response))
         val contract = path.contract(publicKey)
 
         return LedgerAccount(contract.address, publicKey, path)
@@ -156,7 +175,7 @@ class TonTransport(private val transport: Transport) {
         val res = doRequest(INS_PROOF, 0x01, 0x00, pkg)
         val signature = res.sliceArray(1 until 1 + 64)
         val hash = res.sliceArray(2 + 64 until 2 + 64 + 32)
-        if (!publicKey.verify(hash, signature)) {
+        if (!publicKey.verifySignature(hash, signature)) {
             throw Exception("Received signature is invalid")
         }
 
@@ -166,15 +185,13 @@ class TonTransport(private val transport: Transport) {
     suspend fun signTransaction(
         path: AccountPath, transaction: Transaction
     ): Cell {
-        val publicKey = getAccount(path).publicKey
-
         var pkg =
             LedgerWriter.putUint8(0) + LedgerWriter.putUint32(transaction.seqno) + LedgerWriter.putUint32(
                 transaction.timeout
             ) + LedgerWriter.putVarUInt(transaction.coins.amount.toLong()) + LedgerWriter.putAddress(
                 transaction.destination
             ) + LedgerWriter.putUint8(
-                (if (transaction.bounceable) 1 else 0)
+                transaction.bounceable.asFlag()
             ) + LedgerWriter.putUint8(transaction.sendMode)
 
         var stateInit: Cell? = null
@@ -208,7 +225,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -251,7 +268,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -293,7 +310,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -341,7 +358,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -361,7 +378,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -375,14 +392,14 @@ class TonTransport(private val transport: Transport) {
                             val wallet = record.wallet
                             bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint8(0) +
                                     LedgerWriter.putAddress(wallet.address) +
-                                    LedgerWriter.putUint8(if (wallet.capabilities == null) 0 else 1)
+                                    LedgerWriter.putUint8((wallet.capabilities != null).asFlag())
                             val rb = CellBuilder.beginCell()
                                 .storeUInt(0x9fd3, 16)
                                 .storeTlb(MsgAddressInt, wallet.address)
-                                .storeUInt(if (wallet.capabilities == null) 0 else 1, 8)
+                                .storeUInt((wallet.capabilities != null).asFlag(), 8)
 
                             if (wallet.capabilities != null) {
-                                bytes += LedgerWriter.putUint8(if (wallet.capabilities.isWallet) 1 else 0)
+                                bytes += LedgerWriter.putUint8(wallet.capabilities.isWallet.asFlag())
                                 if (wallet.capabilities.isWallet) {
                                     rb.storeBit(true).storeUInt(0x2177, 16)
                                 }
@@ -399,7 +416,7 @@ class TonTransport(private val transport: Transport) {
                             throw Exception("DNS record key length must be 32 bytes long")
                         }
 
-                        bytes += LedgerWriter.putUint8(if (record.value != null) 1 else 0)
+                        bytes += LedgerWriter.putUint8((record.value != null).asFlag())
                         bytes += LedgerWriter.putUint8(1)
                         bytes += record.key
 
@@ -423,7 +440,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -443,7 +460,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -463,7 +480,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -487,7 +504,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -495,7 +512,7 @@ class TonTransport(private val transport: Transport) {
 
                 if (transaction.payload.appId != null) {
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(transaction.payload.appId)
-                    cell = cell.storeUInt(transaction.payload.appId, 64)
+                    cell = cell.storeUInt(transaction.payload.appId.toBigInt(), 64)
                 } else {
                     bytes += LedgerWriter.putUint8(0)
                 }
@@ -515,7 +532,7 @@ class TonTransport(private val transport: Transport) {
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
-                    cell = cell.storeUInt(queryId, 64)
+                    cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
                     bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
@@ -523,11 +540,11 @@ class TonTransport(private val transport: Transport) {
 
                 bytes += LedgerWriter.putAddress(transaction.payload.votingAddress) + LedgerWriter.putUint48(
                     transaction.payload.expirationDate
-                ) + LedgerWriter.putUint8(if (transaction.payload.vote) 1 else 0) + LedgerWriter.putUint8(
-                    if (transaction.payload.needConfirmation) 1 else 0
+                ) + LedgerWriter.putUint8(transaction.payload.vote.asFlag()) + LedgerWriter.putUint8(
+                    transaction.payload.needConfirmation.asFlag()
                 )
                 cell = cell.storeTlb(MsgAddressInt, transaction.payload.votingAddress)
-                    .storeUInt(transaction.payload.expirationDate, 48)
+                    .storeUInt(transaction.payload.expirationDate.toBigInt(), 48)
                     .storeBit(transaction.payload.vote)
                     .storeBit(transaction.payload.needConfirmation)
 
@@ -620,14 +637,15 @@ class TonTransport(private val transport: Transport) {
         const val LEDGER_CLA = 0xE0
         const val INS_VERSION = 0x03
         const val INS_OPEN_APP = 0xd8
+        const val INS_QUIT_APP = 0xA7
         const val INS_ADDRESS = 0x05
         const val INS_SIGN_TX = 0x06
         const val INS_PROOF = 0x08
-        const val INS_SIGN_DATA = 0x09
-
-        const val REQUIRED_VERSION = "2.1.0"
     }
 }
 
-val CellSlice.remainingRefs: Int
-    get() = refs.size - refsPosition
+private fun Boolean.asFlag(): Int = if (this) {
+    1
+} else {
+    0
+}

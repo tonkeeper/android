@@ -14,7 +14,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Values: card,card_mir,apple_pay,google_pay,paypal,sepa,venmo,revolut,pix,volt,p2p
+ * Values: card,card_mir,apple_pay,google_pay,paypal,sepa,venmo,revolut,pix,volt,p2p,ach
  */
 @Serializable
 enum class ExchangePaymentMethodType(val value: String) {
@@ -39,7 +39,9 @@ enum class ExchangePaymentMethodType(val value: String) {
     @SerialName(value = "volt")
     volt("volt"),
     @SerialName(value = "p2p")
-    p2p("p2p");
+    p2p("p2p"),
+    @SerialName(value = "ach")
+    ach("ach");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

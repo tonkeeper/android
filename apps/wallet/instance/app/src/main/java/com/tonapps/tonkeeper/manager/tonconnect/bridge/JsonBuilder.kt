@@ -142,7 +142,7 @@ internal object JsonBuilder {
     }
 
     private fun tonAddressItemReply(wallet: WalletEntity): JSONObject {
-        val stateInit = wallet.contract.stateInitCell().base64()
+        val stateInit = wallet.stateInitOverride ?: wallet.contract.stateInitCell().base64()
         val json = JSONObject()
         json.put("name", "ton_addr")
         json.put("address", wallet.accountId)

@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.base
 
 import android.os.Bundle
-import com.tonapps.log.L
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
@@ -79,6 +78,14 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
                 addFragment(fragment)
             }
         }
+    }
+
+    fun openNetwork(network: String) {
+        viewModel.setPendingChain(network)
+    }
+
+    fun trackBrowserOpen(from: String) {
+        viewModel.trackBrowserOpen(from)
     }
 
     override fun onBackPressed(): Boolean {

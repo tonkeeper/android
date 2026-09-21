@@ -26,6 +26,8 @@ dependencies {
     implementation(libs.ton.blockTlb)
     implementation(libs.ton.tonapiTl)
     implementation(libs.ton.contract)
+    implementation(libs.chainkit.models)
+    implementation(libs.chainkit.mnemonic)
 
     implementation(projects.kmp.ui)
     implementation(projects.kmp.mvi)
@@ -45,6 +47,7 @@ dependencies {
     implementation(projects.apps.wallet.data.events)
     implementation(projects.apps.wallet.data.browser)
     implementation(projects.apps.wallet.data.banner)
+    implementation(projects.apps.wallet.data.raffle)
     implementation(projects.apps.wallet.data.backup)
     implementation(projects.apps.wallet.data.rn)
     implementation(projects.apps.wallet.data.passcode)
@@ -57,15 +60,23 @@ dependencies {
     implementation(projects.apps.wallet.data.swap)
     implementation(projects.apps.wallet.data.plugins)
     implementation(projects.apps.wallet.data.legacy)
+    implementation(projects.apps.wallet.data.multichain.wallet)
+    implementation(projects.apps.wallet.data.multichain.exchange)
 
     implementation(projects.apps.wallet.features.core)
+    implementation(projects.apps.wallet.features.onboarding)
     implementation(projects.apps.wallet.features.ramp)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.lib.features)
     implementation(projects.apps.wallet.features.dapp)
+    implementation(projects.apps.wallet.features.swap)
     implementation(projects.apps.wallet.features.settings)
     implementation(projects.apps.wallet.features.trading)
+    implementation(projects.apps.wallet.features.portfolio)
+    implementation(projects.apps.wallet.features.migration)
+    implementation(projects.apps.wallet.features.perps)
     implementation(projects.apps.wallet.features.events)
+    implementation(projects.apps.wallet.features.embeded.scanner)
 
     implementation(projects.ui.uikit.core)
     implementation(projects.ui.uikit.flag)
@@ -95,12 +106,14 @@ dependencies {
     implementation(libs.firebase.performance)
 
     implementation(projects.tonapi.legacy)
+    implementation(projects.tonapi.wallet)
     implementation(projects.ui.blur)
 
     implementation(projects.lib.network)
     implementation(projects.lib.icu)
     implementation(projects.lib.qr)
     implementation(projects.lib.log)
+    implementation(projects.lib.wallet)
     implementation(projects.lib.emoji)
     implementation(projects.lib.security)
     implementation(projects.lib.blockchain)
@@ -108,6 +121,7 @@ dependencies {
     implementation(projects.lib.ledger)
     implementation(projects.lib.ur)
     implementation(projects.lib.base64)
+    implementation(projects.lib.wc)
 
     implementation(libs.camerax.base)
     implementation(libs.camerax.core)
@@ -136,10 +150,17 @@ dependencies {
     implementation(libs.compose.paging.runtime)
     debugImplementation(libs.compose.debugTooling)
 
+    implementation(libs.lottie)
 
     implementation(libs.compose.viewModel)
 
     implementation(projects.lib.walletKit)
+
+    testImplementation(libs.junit)
+}
+
+tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+    enabled = true
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {

@@ -3,4 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="merge"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:node="merge"/>
+    <application
+        tools:remove="android:manageSpaceActivity" />
 </manifest>

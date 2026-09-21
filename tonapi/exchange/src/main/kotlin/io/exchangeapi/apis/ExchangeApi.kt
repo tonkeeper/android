@@ -22,10 +22,12 @@ import io.exchangeapi.models.ExchangeCurrencies
 import io.exchangeapi.models.ExchangeDirection
 import io.exchangeapi.models.ExchangeFlow
 import io.exchangeapi.models.ExchangeLayout
+import io.exchangeapi.models.ExchangeLayoutCards
 import io.exchangeapi.models.ExchangeMerchantInfo
 import io.exchangeapi.models.ExchangePairs
 import io.exchangeapi.models.ExchangePaymentMethod
 import io.exchangeapi.models.ExchangeResult
+import io.exchangeapi.models.Healthcheck500Response
 import io.exchangeapi.models.Platform
 
 import kotlinx.serialization.SerialName
@@ -125,8 +127,10 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun exchangeCalculate(exchangeCalculateRequest: ExchangeCalculateRequest, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null): ExchangeCalculation {
-        val localVarResponse = exchangeCalculateWithHttpInfo(exchangeCalculateRequest = exchangeCalculateRequest, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
+    @Deprecated(message = "This operation is deprecated.")
+    fun exchangeCalculate(exchangeCalculateRequest: ExchangeCalculateRequest, xWalletID: String? = null, F: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null): ExchangeCalculation {
+        @Suppress("DEPRECATION")
+        val localVarResponse = exchangeCalculateWithHttpInfo(exchangeCalculateRequest = exchangeCalculateRequest, xWalletID = xWalletID, F = F, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as ExchangeCalculation
@@ -145,15 +149,18 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun exchangeCalculateWithHttpInfo(exchangeCalculateRequest: ExchangeCalculateRequest, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): ApiResponse<ExchangeCalculation?> {
-        val localVariableConfig = exchangeCalculateRequestConfig(exchangeCalculateRequest = exchangeCalculateRequest, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
+    @Deprecated(message = "This operation is deprecated.")
+    fun exchangeCalculateWithHttpInfo(exchangeCalculateRequest: ExchangeCalculateRequest, xWalletID: String?, F: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): ApiResponse<ExchangeCalculation?> {
+        @Suppress("DEPRECATION")
+        val localVariableConfig = exchangeCalculateRequestConfig(exchangeCalculateRequest = exchangeCalculateRequest, xWalletID = xWalletID, F = F, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
 
         return request<ExchangeCalculateRequest, ExchangeCalculation>(
             localVariableConfig
         )
     }
 
-    fun exchangeCalculateRequestConfig(exchangeCalculateRequest: ExchangeCalculateRequest, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): RequestConfig<ExchangeCalculateRequest> {
+    @Deprecated(message = "This operation is deprecated.")
+    fun exchangeCalculateRequestConfig(exchangeCalculateRequest: ExchangeCalculateRequest, xWalletID: String?, F: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): RequestConfig<ExchangeCalculateRequest> {
         val localVariableBody = exchangeCalculateRequest
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -180,6 +187,8 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        F?.apply { localVariableHeaders["F"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -189,14 +198,17 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
+            walletId = xWalletID,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getExchangeCurrencies(country: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null, direction: ExchangeDirection? = null): ExchangeCurrencies {
-        val localVarResponse = getExchangeCurrenciesWithHttpInfo(country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, direction = direction)
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangeCurrencies(F: String? = null, country: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null, direction: ExchangeDirection? = null): ExchangeCurrencies {
+        @Suppress("DEPRECATION")
+        val localVarResponse = getExchangeCurrenciesWithHttpInfo(F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, direction = direction)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as ExchangeCurrencies
@@ -215,15 +227,18 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getExchangeCurrenciesWithHttpInfo(country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, direction: ExchangeDirection?): ApiResponse<ExchangeCurrencies?> {
-        val localVariableConfig = getExchangeCurrenciesRequestConfig(country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, direction = direction)
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangeCurrenciesWithHttpInfo(F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, direction: ExchangeDirection?): ApiResponse<ExchangeCurrencies?> {
+        @Suppress("DEPRECATION")
+        val localVariableConfig = getExchangeCurrenciesRequestConfig(F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, direction = direction)
 
         return request<Unit, ExchangeCurrencies>(
             localVariableConfig
         )
     }
 
-    fun getExchangeCurrenciesRequestConfig(country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, direction: ExchangeDirection?): RequestConfig<Unit> {
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangeCurrenciesRequestConfig(F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, direction: ExchangeDirection?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -256,6 +271,7 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        F?.apply { localVariableHeaders["F"] = this.toString() }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -270,8 +286,10 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getExchangeLayout(flow: ExchangeFlow, currency: String? = null, lang: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, platform: Platform? = null): ExchangeLayout {
-        val localVarResponse = getExchangeLayoutWithHttpInfo(flow = flow, currency = currency, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, platform = platform)
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangeLayout(flow: ExchangeFlow, xWalletID: String? = null, F: String? = null, currency: String? = null, lang: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, platform: Platform? = null): ExchangeLayout {
+        @Suppress("DEPRECATION")
+        val localVarResponse = getExchangeLayoutWithHttpInfo(flow = flow, xWalletID = xWalletID, F = F, currency = currency, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, platform = platform)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as ExchangeLayout
@@ -290,15 +308,94 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getExchangeLayoutWithHttpInfo(flow: ExchangeFlow, currency: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, platform: Platform?): ApiResponse<ExchangeLayout?> {
-        val localVariableConfig = getExchangeLayoutRequestConfig(flow = flow, currency = currency, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, platform = platform)
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangeLayoutWithHttpInfo(flow: ExchangeFlow, xWalletID: String?, F: String?, currency: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, platform: Platform?): ApiResponse<ExchangeLayout?> {
+        @Suppress("DEPRECATION")
+        val localVariableConfig = getExchangeLayoutRequestConfig(flow = flow, xWalletID = xWalletID, F = F, currency = currency, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, platform = platform)
 
         return request<Unit, ExchangeLayout>(
             localVariableConfig
         )
     }
 
-    fun getExchangeLayoutRequestConfig(flow: ExchangeFlow, currency: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, platform: Platform?): RequestConfig<Unit> {
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangeLayoutRequestConfig(flow: ExchangeFlow, xWalletID: String?, F: String?, currency: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, platform: Platform?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("flow", listOf(flow.toString()))
+                if (currency != null) {
+                    put("currency", listOf(currency.toString()))
+                }
+                if (lang != null) {
+                    put("lang", listOf(lang.toString()))
+                }
+                if (deviceCountryCode != null) {
+                    put("device_country_code", listOf(deviceCountryCode.toString()))
+                }
+                if (storeCountryCode != null) {
+                    put("store_country_code", listOf(storeCountryCode.toString()))
+                }
+                if (simCountry != null) {
+                    put("sim_country", listOf(simCountry.toString()))
+                }
+                if (timezone != null) {
+                    put("timezone", listOf(timezone.toString()))
+                }
+                if (isVpnActive != null) {
+                    put("is_vpn_active", listOf(isVpnActive.toString()))
+                }
+                if (platform != null) {
+                    put("platform", listOf(platform.toString()))
+                }
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        F?.apply { localVariableHeaders["F"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/onramp/layout",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            walletId = xWalletID,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getExchangeLayoutCards(flow: ExchangeFlow, currency: String? = null, lang: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, platform: Platform? = null): ExchangeLayoutCards {
+        val localVarResponse = getExchangeLayoutCardsWithHttpInfo(flow = flow, currency = currency, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, platform = platform)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as ExchangeLayoutCards
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getExchangeLayoutCardsWithHttpInfo(flow: ExchangeFlow, currency: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, platform: Platform?): ApiResponse<ExchangeLayoutCards?> {
+        val localVariableConfig = getExchangeLayoutCardsRequestConfig(flow = flow, currency = currency, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, platform = platform)
+
+        return request<Unit, ExchangeLayoutCards>(
+            localVariableConfig
+        )
+    }
+
+    fun getExchangeLayoutCardsRequestConfig(flow: ExchangeFlow, currency: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, platform: Platform?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -333,7 +430,7 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
         return RequestConfig(
             method = RequestMethod.GET,
-            path = "/v2/onramp/layout",
+            path = "/v2/exchange/layout",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
@@ -343,8 +440,8 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getExchangeMerchants(lang: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null): List<ExchangeMerchantInfo> {
-        val localVarResponse = getExchangeMerchantsWithHttpInfo(lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
+    fun getExchangeMerchants(xWalletID: String? = null, F: String? = null, lang: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null): List<ExchangeMerchantInfo> {
+        val localVarResponse = getExchangeMerchantsWithHttpInfo(xWalletID = xWalletID, F = F, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as List<ExchangeMerchantInfo>
@@ -363,15 +460,15 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getExchangeMerchantsWithHttpInfo(lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): ApiResponse<List<ExchangeMerchantInfo>?> {
-        val localVariableConfig = getExchangeMerchantsRequestConfig(lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
+    fun getExchangeMerchantsWithHttpInfo(xWalletID: String?, F: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): ApiResponse<List<ExchangeMerchantInfo>?> {
+        val localVariableConfig = getExchangeMerchantsRequestConfig(xWalletID = xWalletID, F = F, lang = lang, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform)
 
         return request<Unit, List<ExchangeMerchantInfo>>(
             localVariableConfig
         )
     }
 
-    fun getExchangeMerchantsRequestConfig(lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): RequestConfig<Unit> {
+    fun getExchangeMerchantsRequestConfig(xWalletID: String?, F: String?, lang: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -401,6 +498,8 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        F?.apply { localVariableHeaders["F"] = this.toString() }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -409,14 +508,17 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
+            walletId = xWalletID,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getExchangePairs(deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, direction: ExchangeDirection? = null, fiat: String? = null, crypto: String? = null, network: String? = null, platform: Platform? = null, build: String? = null): ExchangePairs {
-        val localVarResponse = getExchangePairsWithHttpInfo(deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, direction = direction, fiat = fiat, crypto = crypto, network = network, platform = platform, build = build)
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangePairs(xWalletID: String? = null, F: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, direction: ExchangeDirection? = null, fiat: String? = null, crypto: String? = null, network: String? = null, platform: Platform? = null, build: String? = null): ExchangePairs {
+        @Suppress("DEPRECATION")
+        val localVarResponse = getExchangePairsWithHttpInfo(xWalletID = xWalletID, F = F, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, direction = direction, fiat = fiat, crypto = crypto, network = network, platform = platform, build = build)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as ExchangePairs
@@ -435,15 +537,18 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getExchangePairsWithHttpInfo(deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, direction: ExchangeDirection?, fiat: String?, crypto: String?, network: String?, platform: Platform?, build: String?): ApiResponse<ExchangePairs?> {
-        val localVariableConfig = getExchangePairsRequestConfig(deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, direction = direction, fiat = fiat, crypto = crypto, network = network, platform = platform, build = build)
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangePairsWithHttpInfo(xWalletID: String?, F: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, direction: ExchangeDirection?, fiat: String?, crypto: String?, network: String?, platform: Platform?, build: String?): ApiResponse<ExchangePairs?> {
+        @Suppress("DEPRECATION")
+        val localVariableConfig = getExchangePairsRequestConfig(xWalletID = xWalletID, F = F, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, direction = direction, fiat = fiat, crypto = crypto, network = network, platform = platform, build = build)
 
         return request<Unit, ExchangePairs>(
             localVariableConfig
         )
     }
 
-    fun getExchangePairsRequestConfig(deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, direction: ExchangeDirection?, fiat: String?, crypto: String?, network: String?, platform: Platform?, build: String?): RequestConfig<Unit> {
+    @Deprecated(message = "This operation is deprecated.")
+    fun getExchangePairsRequestConfig(xWalletID: String?, F: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, direction: ExchangeDirection?, fiat: String?, crypto: String?, network: String?, platform: Platform?, build: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -482,6 +587,8 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        F?.apply { localVariableHeaders["F"] = this.toString() }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -490,14 +597,15 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
+            walletId = xWalletID,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getExchangePaymentMethods(country: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null, currency: String? = null): List<ExchangePaymentMethod> {
-        val localVarResponse = getExchangePaymentMethodsWithHttpInfo(country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, currency = currency)
+    fun getExchangePaymentMethods(xWalletID: String? = null, F: String? = null, country: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null, currency: String? = null): List<ExchangePaymentMethod> {
+        val localVarResponse = getExchangePaymentMethodsWithHttpInfo(xWalletID = xWalletID, F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, currency = currency)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as List<ExchangePaymentMethod>
@@ -516,15 +624,15 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getExchangePaymentMethodsWithHttpInfo(country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, currency: String?): ApiResponse<List<ExchangePaymentMethod>?> {
-        val localVariableConfig = getExchangePaymentMethodsRequestConfig(country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, currency = currency)
+    fun getExchangePaymentMethodsWithHttpInfo(xWalletID: String?, F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, currency: String?): ApiResponse<List<ExchangePaymentMethod>?> {
+        val localVariableConfig = getExchangePaymentMethodsRequestConfig(xWalletID = xWalletID, F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, currency = currency)
 
         return request<Unit, List<ExchangePaymentMethod>>(
             localVariableConfig
         )
     }
 
-    fun getExchangePaymentMethodsRequestConfig(country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, currency: String?): RequestConfig<Unit> {
+    fun getExchangePaymentMethodsRequestConfig(xWalletID: String?, F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, currency: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -557,6 +665,8 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        F?.apply { localVariableHeaders["F"] = this.toString() }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -565,6 +675,7 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
+            walletId = xWalletID,
             body = localVariableBody
         )
     }

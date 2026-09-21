@@ -14,9 +14,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Тип ассета
+ * Тип ассета. commodities сейчас выставляется только perp-рынкам (золото, нефть, ...), спотовые товарные токены остаются asset.
  *
- * Values: asset,stocks,etfs
+ * Values: asset,stocks,etfs,commodities,perpetuals
  */
 @Serializable
 enum class AssetType(val value: String) {
@@ -25,7 +25,11 @@ enum class AssetType(val value: String) {
     @SerialName(value = "stocks")
     stocks("stocks"),
     @SerialName(value = "etfs")
-    etfs("etfs");
+    etfs("etfs"),
+    @SerialName(value = "commodities")
+    commodities("commodities"),
+    @SerialName(value = "perpetuals")
+    perpetuals("perpetuals");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.events.source
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.AuthorizationProvider
 import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.data.events.tx.TxActionMapper
@@ -17,6 +18,7 @@ import kotlinx.coroutines.coroutineScope
 
 internal class RemoteDataSource(
     private val api: API,
+    private val auth: AuthorizationProvider,
     private val mapper: TxActionMapper,
 ) {
 
@@ -34,8 +36,8 @@ internal class RemoteDataSource(
 
         val tronDeferred = async {
             val address = query.tronAddress ?: return@async emptyList<TxEvent>()
-            val tonProof = query.tonProofToken ?: return@async emptyList<TxEvent>()
-            tronEvents(address, tonProof, query.beforeTimestamp, query.afterTimestamp, fetchLimit)
+            val walletId = query.walletId ?: return@async emptyList<TxEvent>()
+            tronEvents(address, walletId, query.beforeTimestamp, query.afterTimestamp, fetchLimit)
         }
 
         val tonEvents = tonDeferred.await()
@@ -62,14 +64,14 @@ internal class RemoteDataSource(
 
     suspend fun tronEvents(
         address: BlockchainAddress,
-        tonProofToken: String,
+        walletId: String,
         beforeTimestamp: Timestamp?,
         afterTimestamp: Timestamp?,
         limit: Int
     ): List<TxEvent> {
         val events = api.fetchTronTransactions(
             tronAddress = address.value,
-            tonProofToken = tonProofToken,
+            auth = auth.getAuthBy(walletId),
             beforeTimestamp = beforeTimestamp,
             afterTimestamp = afterTimestamp,
             limit = limit

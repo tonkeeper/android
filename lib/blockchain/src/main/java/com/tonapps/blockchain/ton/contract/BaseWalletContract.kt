@@ -9,8 +9,6 @@ import com.tonapps.blockchain.ton.extensions.storeMaybeAddress
 import com.tonapps.blockchain.ton.extensions.storeMaybeStringTail
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.toAccountId
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.block.AddrNone
 import org.ton.block.AddrStd
@@ -24,10 +22,13 @@ import org.ton.block.MessageRelaxed
 import org.ton.block.MsgAddressExt
 import org.ton.block.MsgAddressInt
 import org.ton.block.StateInit
+import org.ton.block.invoke
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.buildCell
 import org.ton.contract.wallet.WalletTransfer
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.loadTlb
@@ -172,7 +173,7 @@ abstract class BaseWalletContract(
             val body = if (bodyCell.isEmpty()) {
                 Either.of<Cell, CellRef<Cell>>(Cell.empty(), null)
             } else {
-                Either.of<Cell, CellRef<Cell>>(null, CellRef(bodyCell))
+                Either.of<Cell, CellRef<Cell>>(null, CellRef(cell = bodyCell, AnyTlbConstructor)) // TODO TONSDK
             }
 
             return MessageRelaxed(
@@ -243,7 +244,7 @@ abstract class BaseWalletContract(
     ): Cell {
         val hash = unsignedBody.hash().toByteArray()
         val dataToSign = signatureGlobalId?.let { SignatureDomain.prefixedHash(it, hash) } ?: hash
-        val signature = BitString(privateKey.sign(dataToSign))
+        val signature = BitString(privateKey.signToByteArray(dataToSign))
         return signedBody(signature, unsignedBody)
     }
 
@@ -295,11 +296,11 @@ abstract class BaseWalletContract(
         } else null
 
         val maybeStateInit =
-            Maybe.of(init?.let { Either.of<StateInit, CellRef<StateInit>>(null, CellRef(it)) })
+            Maybe.of(init?.let { Either.of<StateInit, CellRef<StateInit>>(null, CellRef(value = it, StateInit)) })
 
         val transferBody = signBody(privateKey, unsignedBody)
 
-        val body = Either.of<Cell, CellRef<Cell>>(null, CellRef(transferBody))
+        val body = Either.of<Cell, CellRef<Cell>>(null, CellRef(cell = transferBody, AnyTlbConstructor))
         return Message(
             info = info,
             init = maybeStateInit,
@@ -323,9 +324,9 @@ abstract class BaseWalletContract(
         } else null
 
         val maybeStateInit =
-            Maybe.of(init?.let { Either.of<StateInit, CellRef<StateInit>>(null, CellRef(it)) })
+            Maybe.of(init?.let { Either.of<StateInit, CellRef<StateInit>>(null, CellRef(value = it, StateInit)) })
 
-        val body = Either.of<Cell, CellRef<Cell>>(null, CellRef(transferBody))
+        val body = Either.of<Cell, CellRef<Cell>>(null, CellRef(cell = transferBody, AnyTlbConstructor))
         return Message(
             info = info,
             init = maybeStateInit,

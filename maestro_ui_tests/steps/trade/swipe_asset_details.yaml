@@ -1,0 +1,12 @@
+# One page-swipe to get below the price chart.
+# A center-screen swipe lands on ChartSection and the chart eats the gesture,
+# so drag from "Your balance", which sits just under it.
+# Keep duration at 600: a shorter drag turns into a fling and overshoots the
+# whole page, landing below "24h Trading activity".
+appId: com.ton_keeper.debug
+---
+- swipe:
+    from:
+      text: "Your balance"
+    direction: UP
+    duration: 600

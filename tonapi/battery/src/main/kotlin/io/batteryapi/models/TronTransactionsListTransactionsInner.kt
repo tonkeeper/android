@@ -41,7 +41,11 @@ data class TronTransactionsListTransactionsInner(
 
     /* Fee amount in TON nano units */
     @SerialName(value = "fee_ton_nano")
-    val feeTonNano: Int? = null
+    val feeTonNano: Int? = null,
+
+    /* Whether this transaction was made using free pro transfers */
+    @SerialName(value = "is_free_pro")
+    val isFreePro: Boolean? = null
 ) {
 }
 

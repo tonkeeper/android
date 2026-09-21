@@ -114,8 +114,6 @@ platform :android do
         fetch_and_increment_build_number(app_identifier: "com.ton_keeper")
         build_release(flavor: "default")
         upload_release(app_identifier: "com.ton_keeper")
-
-        assemble_release(flavor: "site")
     end
 
     desc "Fetch latest version code from GP (no increment) and build site APK"

@@ -1,0 +1,31 @@
+# Runs first in the browser shard: asserts the empty Connected tab, so it must
+# precede any case that connects a dApp (walletconnect_aave disconnects at the end).
+name: "Browser — tabs smoke"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow: "../../../steps/browser/open_browser_tab.yaml"
+
+- extendedWaitUntil:
+    visible: Connected
+    timeout: 15000
+
+- tapOn:
+    id: connected_tab
+- extendedWaitUntil:
+    visible: Connected apps will be shown here
+    timeout: 15000
+# Copy renamed by the TK-3495 rebrand (was "…in the Tonkeeper browser.").
+- assertVisible: Explore apps and services in the Keeper browser.
+
+- runFlow:
+    when:
+      visible: Explore
+    commands:
+      - tapOn: Explore
+      - scrollUntilVisible:
+          element:
+            text: All
+      - extendedWaitUntil:
+          visible: All
+          timeout: 15000

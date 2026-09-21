@@ -9,7 +9,6 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
@@ -77,9 +76,6 @@ class SendContactsViewModel(
         uiItems.toList()
     }
 
-    private val tronEnabled: Boolean
-        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
-
     init {
         viewModelScope.launch(Dispatchers.IO) {
             _myWalletsFlow.value = getMyWallets()
@@ -110,18 +106,13 @@ class SendContactsViewModel(
     }
 
     private val tronLatestTransactionsFlow = flow {
-        if (!tronEnabled) {
-            emit(emptyList())
-            return@flow
-        }
-
-        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet && tronEnabled) {
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
             accountRepository.getTronAddress(wallet.id)
         } else null
         val tonProofToken = accountRepository.requestTonProofToken(wallet)
 
         if (tronAddress != null && tonProofToken != null) {
-            val events = eventsRepository.tronLatestSentTransactions(tronAddress, tonProofToken)
+            val events = eventsRepository.tronLatestSentTransactions(tronAddress, wallet.id)
             emit(events)
         } else {
             emit(emptyList())

@@ -5,6 +5,8 @@ import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
 import com.tonapps.ledger.LedgerException
 import com.tonapps.ledger.transport.Transport
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
@@ -49,9 +51,9 @@ class UsbTransport(
         return responseData ?: ByteArray(0)
     }
 
-    override suspend fun exchange(apdu: ByteArray): ByteArray {
+    override suspend fun exchange(apdu: ByteArray): ByteArray = withContext(Dispatchers.IO) {
         write(apdu)
-        return read()
+        read()
     }
 
     override fun close() {

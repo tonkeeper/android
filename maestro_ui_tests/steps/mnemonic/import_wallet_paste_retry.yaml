@@ -1,0 +1,27 @@
+# Assumes the app is already on (or will show) the start screen.
+# Callers that need a wiped profile launch with clearState themselves
+# (work_via_service). Do not clearState here — launch_app_ensure would
+# otherwise wipe a funded wallet if onboarding flashes during cold start.
+appId: com.ton_keeper.debug
+---
+- extendedWaitUntil:
+    visible: Import Existing Wallet
+    timeout: 45000
+- tapOn:
+    id: import_wallet
+- extendedWaitUntil:
+    visible:
+      id: action_cell_title
+      text: "Existing wallet.*"
+    timeout: 15000
+- tapOn:
+    id: action_cell_title
+    text: "Existing wallet.*"
+- runFlow:
+    file: 24key_words.yaml
+    env:
+      phrase: ${WALLET_WITH_MONEY}
+- runFlow: ../onboarding/confirm_import_selectors.yaml
+- extendedWaitUntil:
+    visible: Create passcode
+    timeout: 30000

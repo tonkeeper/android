@@ -3,12 +3,13 @@ package com.tonapps.blockchain.ton.connect
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonapps.base64.encodeBase64
+import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.extensions.readParcelableCompat
 import com.tonapps.extensions.toByteArray
-import org.ton.api.pk.PrivateKeyEd25519
+import io.ktor.util.hex
 import org.ton.block.AddrStd
-import org.ton.crypto.digest.sha256
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.sha256
 import java.nio.ByteOrder
 
 object TONProof {
@@ -30,7 +31,7 @@ object TONProof {
         )
 
         val body = sha256(prefixMessage + request.signatureMessage)
-        val signature = secretKey.sign(body)
+        val signature = secretKey.signToByteArray(body)
 
         return Result(
             timestamp = request.timestamp,

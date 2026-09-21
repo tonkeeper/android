@@ -13,12 +13,6 @@ object FirebaseHelper {
         }
     }
 
-    fun trc20Enabled(enabled: Boolean) {
-        Firebase.analytics.logEvent("trc20_enabled") {
-            param("enabled", enabled.toString())
-        }
-    }
-
     fun searchEngine(value: String) {
         Firebase.analytics.logEvent("search_engine") {
             param("engine", value)

@@ -16,6 +16,7 @@ data class BatteryConfigEntity(
     val meanPrices: MeanPrices,
     val chargeCost: String,
     val reservedAmount: String,
+    val packages: List<BatteryPackageEntity>,
 ) : Parcelable {
 
     @Parcelize
@@ -41,6 +42,7 @@ data class BatteryConfigEntity(
             meanPrices = MeanPrices(0, 0, 0, 0, 0f),
             chargeCost = "0",
             reservedAmount = "0",
+            packages = emptyList(),
         )
     }
 }

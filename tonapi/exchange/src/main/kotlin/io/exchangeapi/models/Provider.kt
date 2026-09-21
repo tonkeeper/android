@@ -14,12 +14,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Values: dedust,stonfi,omni
+ * Values: stonfi,omni
  */
 @Serializable
 enum class Provider(val value: String) {
-    @SerialName(value = "dedust")
-    dedust("dedust"),
     @SerialName(value = "stonfi")
     stonfi("stonfi"),
     @SerialName(value = "omni")

@@ -16,10 +16,16 @@ Files starting with '_' and 'analytics.yaml' are skipped.
 
 import sys
 import os
+import re
 import yaml
 
 
 PACKAGE = "com.tonapps.bus.generated"
+FLOWS_PACKAGE = PACKAGE + ".flows"
+FLOWS_DIR = "flows"
+
+# Aptabase rejects the whole event if any property key is longer than this.
+MAX_PROP_KEY_LENGTH = 40
 
 # Files to skip (meta-schemas, aggregators)
 SKIP_FILES = {"analytics.yaml"}
@@ -54,28 +60,55 @@ def discover_event_files(openapi_dir):
     return files
 
 
+def split_words(name):
+    """Split an identifier-ish string on any non-alphanumeric separator."""
+    return [p for p in re.split(r"[^A-Za-z0-9]+", name) if p]
+
+
 def snake_to_camel(name):
     """Convert snake_case to camelCase."""
-    parts = name.split("_")
-    return parts[0] + "".join(p[0].upper() + p[1:] for p in parts[1:] if p)
+    parts = split_words(name)
+    if not parts:
+        return name
+    return parts[0][0].lower() + parts[0][1:] + "".join(p[0].upper() + p[1:] for p in parts[1:])
 
 
 def snake_to_pascal(name):
     """Convert snake_case to PascalCase."""
-    parts = name.split("_")
-    return "".join(p[0].upper() + p[1:] for p in parts if p)
+    parts = split_words(name)
+    return "".join(p[0].upper() + p[1:] for p in parts)
 
 
 def value_to_enum_entry(value):
-    """Convert an enum string value to a PascalCase Kotlin enum entry name."""
-    normalized = value.replace("-", "_").replace(" ", "_").replace(":", "_")
-    parts = normalized.split("_")
-    result = ""
-    for p in parts:
-        if not p:
-            continue
-        result += p[0].upper() + p[1:]
+    """Convert an enum string value to a PascalCase Kotlin enum entry name.
+
+    Any character that is not a letter or a digit acts as a word separator, so
+    values like "ton/mainnet/coin" or "usd.e" become valid identifiers.
+    """
+    parts = [p for p in re.split(r"[^A-Za-z0-9]+", value) if p]
+    result = "".join(p[0].upper() + p[1:] for p in parts)
+    if not result:
+        return "Unknown"
+    if result[0].isdigit():
+        return "_" + result
     return result
+
+
+def value_to_enum_entries(values):
+    """Map enum values to unique entry names, preserving order.
+
+    Values that only differ by separators ("a-b" vs "a/b") would collapse onto
+    the same identifier, so collisions get a numeric suffix.
+    """
+    counts = {}
+    entries = []
+    for value in values:
+        name = value_to_enum_entry(value)
+        counts[name] = counts.get(name, 0) + 1
+        if counts[name] > 1:
+            name = f"{name}{counts[name]}"
+        entries.append(name)
+    return entries
 
 
 def yaml_type_to_kotlin(prop):
@@ -109,7 +142,21 @@ def extract_event_name(schema):
     return None
 
 
-def parse_schema(schema):
+def resolve_local_ref(prop, schemas, global_schemas=None):
+    ref = prop.get("$ref")
+    if not ref:
+        return prop
+    name = ref.rsplit("/", 1)[-1]
+    for candidates in (schemas, global_schemas or {}):
+        if name in candidates:
+            return candidates[name]
+        if (name + "Schema") in candidates:
+            return candidates[name + "Schema"]
+    return prop
+
+
+def parse_schema(schema, schemas=None, global_schemas=None):
+    schemas = schemas or {}
     event_name = extract_event_name(schema)
     if not event_name:
         return None
@@ -122,12 +169,13 @@ def parse_schema(schema):
     for prop_name, prop in properties.items():
         if prop_name == "eventName":
             continue
-        kotlin_type = yaml_type_to_kotlin(prop)
+        resolved = resolve_local_ref(prop, schemas, global_schemas)
+        kotlin_type = yaml_type_to_kotlin(resolved)
         nullable = is_nullable(prop_name, prop, required_list)
 
         enum_values = None
-        if prop.get("type") == "string" and "enum" in prop:
-            enum_values = prop["enum"]
+        if resolved.get("type") == "string" and "enum" in resolved:
+            enum_values = resolved["enum"]
 
         params.append({
             "name": snake_to_camel(prop_name),
@@ -136,6 +184,19 @@ def parse_schema(schema):
             "nullable": nullable,
             "enum_values": enum_values,
             "enum_class_name": None,
+        })
+
+    # launch_app carries client-side feature flags that are not part of the schema.
+    if event_name == "launch_app":
+        params.append({
+            "name": "featureFlags",
+            "original_name": None,
+            "type": "Map<String, Any>",
+            "nullable": False,
+            "enum_values": None,
+            "enum_class_name": None,
+            "custom_props": True,
+            "default": "emptyMap()",
         })
 
     return {
@@ -193,7 +254,15 @@ def get_param_type_str(param):
     return base + "?" if param["nullable"] else base
 
 
-def format_method_signature(event, indent):
+def get_param_decl_str(param, with_defaults):
+    decl = f"{param['name']}: {get_param_type_str(param)}"
+    default = param.get("default")
+    if with_defaults and default:
+        decl += f" = {default}"
+    return decl
+
+
+def format_method_signature(event, indent, with_defaults=False):
     lines = []
     params = event["params"]
     method_name = event["method_name"]
@@ -201,7 +270,7 @@ def format_method_signature(event, indent):
     if len(params) == 0:
         lines.append(f"{indent}fun {method_name}()")
     elif len(params) <= 3:
-        param_strs = [f"{p['name']}: {get_param_type_str(p)}" for p in params]
+        param_strs = [get_param_decl_str(p, with_defaults) for p in params]
         sig = f"{indent}fun {method_name}({', '.join(param_strs)})"
         if len(sig) <= 100:
             lines.append(sig)
@@ -209,13 +278,13 @@ def format_method_signature(event, indent):
             lines.append(f"{indent}fun {method_name}(")
             for j, p in enumerate(params):
                 comma = "," if j < len(params) - 1 else ""
-                lines.append(f"{indent}    {p['name']}: {get_param_type_str(p)}{comma}")
+                lines.append(f"{indent}    {get_param_decl_str(p, with_defaults)}{comma}")
             lines.append(f"{indent})")
     else:
         lines.append(f"{indent}fun {method_name}(")
         for j, p in enumerate(params):
             comma = "," if j < len(params) - 1 else ""
-            lines.append(f"{indent}    {p['name']}: {get_param_type_str(p)}{comma}")
+            lines.append(f"{indent}    {get_param_decl_str(p, with_defaults)}{comma}")
         lines.append(f"{indent})")
 
     return lines
@@ -250,8 +319,9 @@ def generate_interface(groups, version):
         for enum_name, enum_values in group["enum_definitions"]:
             lines.append("")
             lines.append(f"        enum class {enum_name}(val key: String) {{")
+            entry_names = value_to_enum_entries(enum_values)
             for vi, val in enumerate(enum_values):
-                entry_name = value_to_enum_entry(val)
+                entry_name = entry_names[vi]
                 comma = "," if vi < len(enum_values) - 1 else ""
                 lines.append(f'            {entry_name}("{val}"){comma}')
             lines.append("        }")
@@ -260,7 +330,7 @@ def generate_interface(groups, version):
         for event in group["events"]:
             lines.append("")
             lines.append(f"        /** {event['event_name']} */")
-            lines.extend(format_method_signature(event, "        "))
+            lines.extend(format_method_signature(event, "        ", with_defaults=True))
 
         lines.append("    }")
 
@@ -285,8 +355,10 @@ def generate_impl_method(event, indent):
     params = event["params"]
     event_name = event["event_name"]
 
-    required_params = [p for p in params if not p["nullable"]]
-    nullable_params = [p for p in params if p["nullable"]]
+    custom_params = [p for p in params if p.get("custom_props")]
+    schema_params = [p for p in params if not p.get("custom_props")]
+    required_params = [p for p in schema_params if not p["nullable"]]
+    nullable_params = [p for p in schema_params if p["nullable"]]
 
     # Signature
     if event["description"]:
@@ -297,7 +369,7 @@ def generate_impl_method(event, indent):
         lines.append(f"{indent} */")
     else:
         lines.append(f"{indent}/** {event_name} */")
-    lines.append(f"{indent}@UiThread")
+    lines.append(f"{indent}@AnyThread")
     sig_lines = format_method_signature(event, indent)
     for i, sl in enumerate(sig_lines):
         sig_lines[i] = sl.replace("fun ", "override fun ", 1)
@@ -305,6 +377,19 @@ def generate_impl_method(event, indent):
     lines.extend(sig_lines)
 
     # Body
+    if custom_params:
+        lines.append(f'{indent}    val props = mutableMapOf<String, Any>()')
+        for p in custom_params:
+            lines.append(f'{indent}    {p["name"]}.forEach {{ (key, value) -> props[key.take({MAX_PROP_KEY_LENGTH})] = value }}')
+        for p in required_params:
+            lines.append(f'{indent}    props["{p["original_name"]}"] = {param_value_expr(p)}')
+        for p in nullable_params:
+            val = "it.key" if p["enum_class_name"] else "it"
+            lines.append(f'{indent}    {p["name"]}?.let {{ props["{p["original_name"]}"] = {val} }}')
+        lines.append(f'{indent}    trackEvent("{event_name}", props)')
+        lines.append(f"{indent}}}")
+        return lines
+
     if len(params) == 0:
         lines.append(f'{indent}    trackEvent("{event_name}", emptyMap())')
     elif len(nullable_params) == 0:
@@ -347,16 +432,53 @@ def generate_impl_method(event, indent):
     return lines
 
 
+def impl_class_name(group):
+    return group["interface_name"] + "Impl"
+
+
+def generate_flow_implementation(group):
+    """Generate one top-level `<Group>Impl` file for the flows package."""
+    lines = []
+    lines.append(f"package {FLOWS_PACKAGE}")
+    lines.append("")
+    lines.append("import androidx.annotation.AnyThread")
+    lines.append("import com.tonapps.bus.core.contract.EventExecutor")
+    lines.append(f"import {PACKAGE}.Events")
+    enum_imports = [
+        f"import {PACKAGE}.Events.{group['interface_name']}.{class_name}"
+        for class_name, _ in group["enum_definitions"]
+    ]
+    lines.extend(sorted(enum_imports))
+    lines.append("")
+    lines.append("/**")
+    lines.append(" * Auto-generated from OpenAPI analytics schemas.")
+    lines.append(" * Do not edit manually — re-run the generator instead.")
+    lines.append(" */")
+    lines.append(f"class {impl_class_name(group)}(")
+    lines.append("    private val eventExecutor: EventExecutor,")
+    lines.append(f") : Events.{group['interface_name']} {{")
+    lines.append("")
+    lines.append("    private fun trackEvent(name: String, params: Map<String, Any>) {")
+    lines.append("        eventExecutor.trackEvent(name, params)")
+    lines.append("    }")
+
+    for event in group["events"]:
+        lines.append("")
+        lines.extend(generate_impl_method(event, "    "))
+
+    lines.append("}")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def generate_implementation(groups):
+    """Generate DefaultEvents.kt — the aggregator wiring one field per flow."""
     lines = []
     lines.append(f"package {PACKAGE}")
     lines.append("")
-    lines.append("import androidx.annotation.UiThread")
-    lines.append("import com.tonapps.bus.core.contract.EventExecutor")
-    # Import enum types from inner interfaces
-    for group in groups:
-        if group["enum_definitions"]:
-            lines.append(f"import {PACKAGE}.Events.{group['interface_name']}.*")
+    imports = ["import com.tonapps.bus.core.contract.EventExecutor"]
+    imports += [f"import {FLOWS_PACKAGE}.{impl_class_name(g)}" for g in groups]
+    lines.extend(sorted(imports))
     lines.append("")
     lines.append("/**")
     lines.append(" * Auto-generated from OpenAPI analytics schemas.")
@@ -367,32 +489,8 @@ def generate_implementation(groups):
     lines.append(") {")
     lines.append("")
 
-    # Public fields
     for group in groups:
-        impl_class = group["interface_name"] + "Impl"
-        lines.append(f"    val {group['field_name']} = {impl_class}(eventExecutor)")
-    lines.append("")
-
-    # Sub-implementation classes
-    for gi, group in enumerate(groups):
-        if gi > 0:
-            lines.append("")
-
-        impl_class = group["interface_name"] + "Impl"
-        iface = f"Events.{group['interface_name']}"
-        lines.append(f"    class {impl_class}(")
-        lines.append(f"        private val eventExecutor: EventExecutor,")
-        lines.append(f"    ) : {iface} {{")
-        lines.append("")
-        lines.append(f"        private fun trackEvent(name: String, params: Map<String, Any>) {{")
-        lines.append(f"            eventExecutor.trackEvent(name, params)")
-        lines.append(f"        }}")
-
-        for event in group["events"]:
-            lines.append("")
-            lines.extend(generate_impl_method(event, "        "))
-
-        lines.append("    }")
+        lines.append(f"    val {group['field_name']} = {impl_class_name(group)}(eventExecutor)")
 
     lines.append("}")
     lines.append("")
@@ -405,7 +503,7 @@ def generate_implementation(groups):
 
 def read_version(openapi_dir):
     """Read schema version from analytics.yaml."""
-    analytics_path = os.path.join(openapi_dir, "analytics.yaml")
+    analytics_path = os.path.join(openapi_dir, "_AnalyticsEventMobileNative.yaml")
     if not os.path.exists(analytics_path):
         return None
     with open(analytics_path, "r") as f:
@@ -417,16 +515,21 @@ def load_schemas_grouped(openapi_dir):
     groups = []
     event_files = discover_event_files(openapi_dir)
 
-    for filename, interface_name, enum_prefix, field_name in event_files:
-        filepath = os.path.join(openapi_dir, filename)
-
-        with open(filepath, "r") as f:
+    file_schemas = {}
+    global_schemas = {}
+    for filename, _, _, _ in event_files:
+        with open(os.path.join(openapi_dir, filename), "r") as f:
             doc = yaml.safe_load(f)
-
         schemas = doc.get("components", {}).get("schemas", {})
+        file_schemas[filename] = schemas
+        for schema_name, schema in schemas.items():
+            global_schemas.setdefault(schema_name, schema)
+
+    for filename, interface_name, enum_prefix, field_name in event_files:
+        schemas = file_schemas[filename]
         events = []
         for schema_name, schema in schemas.items():
-            event = parse_schema(schema)
+            event = parse_schema(schema, schemas, global_schemas)
             if event:
                 events.append(event)
 
@@ -466,20 +569,34 @@ def main():
     total_enums = sum(len(g["enum_definitions"]) for g in groups)
     print(f"Schema version {version}: {total_events} events, {total_enums} enums in {len(groups)} groups", file=sys.stderr)
 
-    interface_code = generate_interface(groups, version)
-    impl_code = generate_implementation(groups)
-
     os.makedirs(output_dir, exist_ok=True)
 
     interface_path = os.path.join(output_dir, "Events.kt")
     with open(interface_path, "w") as f:
-        f.write(interface_code)
+        f.write(generate_interface(groups, version))
     print(f"Generated {interface_path}", file=sys.stderr)
 
     impl_path = os.path.join(output_dir, "DefaultEvents.kt")
     with open(impl_path, "w") as f:
-        f.write(impl_code)
+        f.write(generate_implementation(groups))
     print(f"Generated {impl_path}", file=sys.stderr)
+
+    flows_dir = os.path.join(output_dir, FLOWS_DIR)
+    os.makedirs(flows_dir, exist_ok=True)
+
+    written = set()
+    for group in groups:
+        filename = impl_class_name(group) + ".kt"
+        written.add(filename)
+        with open(os.path.join(flows_dir, filename), "w") as f:
+            f.write(generate_flow_implementation(group))
+    print(f"Generated {len(written)} flows in {flows_dir}", file=sys.stderr)
+
+    # Drop impls whose schema file no longer exists — they would not compile.
+    for stale in sorted(set(os.listdir(flows_dir)) - written):
+        if stale.endswith("Impl.kt"):
+            os.remove(os.path.join(flows_dir, stale))
+            print(f"Removed stale {stale}", file=sys.stderr)
 
 
 if __name__ == "__main__":

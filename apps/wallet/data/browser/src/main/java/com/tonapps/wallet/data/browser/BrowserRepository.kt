@@ -3,8 +3,6 @@ package com.tonapps.wallet.data.browser
 import android.content.Context
 import android.net.Uri
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.log.L
-import com.tonapps.extensions.toUriOrNull
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
@@ -15,9 +13,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
-class BrowserRepository(context: Context, api: API) {
+class BrowserRepository(context: Context, private val api: API) {
 
     private val localDataSource: LocalDataSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         LocalDataSource(context)
@@ -30,9 +27,10 @@ class BrowserRepository(context: Context, api: API) {
         country: String,
         query: String,
         network: TonNetwork = TonNetwork.MAINNET,
-        locale: Locale
+        locale: Locale,
+        walletId: String?,
     ): List<BrowserAppEntity> {
-        val data = load(country, network, locale) ?: return emptyList()
+        val data = load(country, network, locale, walletId) ?: return emptyList()
         val all = data.categories.map { it.apps }.flatten()
         return all.filter {
             it.name.contains(query, ignoreCase = true) ||
@@ -41,12 +39,18 @@ class BrowserRepository(context: Context, api: API) {
         }.distinctBy { it.url }
     }
 
-    suspend fun isTrustedApp(country: String, network: TonNetwork, locale: Locale, deeplink: Uri): Boolean {
+    suspend fun isTrustedApp(
+        country: String,
+        network: TonNetwork,
+        locale: Locale,
+        deeplink: Uri,
+        walletId: String?,
+    ): Boolean {
         if (deeplink.host == "dapp.aeon.xyz" || deeplink.host == "tonkeeper.com" || deeplink.host?.endsWith(".tonkeeper.com") == true) {
             return true
         }
         val host = deeplink.host ?: return false
-        val apps = getApps(country, network, locale)
+        val apps = getApps(country, network, locale, walletId)
         for (app in apps) {
             if (app.useTG) {
                 continue
@@ -57,22 +61,35 @@ class BrowserRepository(context: Context, api: API) {
         return false
     }
 
-    suspend fun getApps(country: String, network: TonNetwork, locale: Locale): List<BrowserAppEntity> {
-        return load(country, network, locale)?.categories?.map { it.apps }?.flatten() ?: emptyList()
+    suspend fun getApps(
+        country: String,
+        network: TonNetwork,
+        locale: Locale,
+        walletId: String?,
+    ): List<BrowserAppEntity> {
+        return load(country, network, locale, walletId)?.categories?.map { it.apps }?.flatten()
+            ?: emptyList()
     }
 
-    suspend fun getApp(country: String, network: TonNetwork, locale: Locale, uri: Uri): BrowserAppEntity? {
+    suspend fun getApp(
+        country: String,
+        network: TonNetwork,
+        locale: Locale,
+        uri: Uri,
+        walletId: String?,
+    ): BrowserAppEntity? {
         val host = uri.host ?: return null
-        val browserApp = appCacheByHost[host]
+        val hostKey = walletId?.let { "${host}_$it" } ?: host
+        val browserApp = appCacheByHost[hostKey]
         if (browserApp != null) {
             return browserApp
         }
-        val apps = getApps(country, network, locale)
+        val apps = getApps(country, network, locale, walletId)
         for (app in apps) {
             if (app.useTG) {
                 continue
             } else if (app.host == host) {
-                appCacheByHost[host] = app
+                appCacheByHost[hostKey] = app
                 return app
             }
         }
@@ -82,34 +99,53 @@ class BrowserRepository(context: Context, api: API) {
     fun dataFlow(
         country: String,
         network: TonNetwork,
-        locale: Locale
+        locale: Locale,
+        walletId: String?,
     ) = flow {
-        loadLocal(country, locale)?.let { emit(it) }
-        loadRemote(country, network, locale)?.let { emit(it) }
+        loadLocal(country, locale, walletId)?.let { emit(it) }
+        loadRemote(country, network, locale, walletId)?.let { emit(it) }
     }
 
-    suspend fun load(country: String, network: TonNetwork, locale: Locale): BrowserDataEntity? = withContext(Dispatchers.IO) {
-        loadLocal(country, locale) ?: loadRemote(country, network, locale)
+    suspend fun load(
+        country: String,
+        network: TonNetwork,
+        locale: Locale,
+        walletId: String?,
+    ): BrowserDataEntity? = withContext(Dispatchers.IO) {
+        loadLocal(country, locale, walletId) ?: loadRemote(country, network, locale, walletId)
     }
 
     suspend fun loadCategories(
         country: String,
         network: TonNetwork,
-        locale: Locale
+        locale: Locale,
+        walletId: String?,
     ): List<String> {
-        return load(country, network, locale)?.categories?.map { it.id } ?: emptyList()
+        return load(country, network, locale, walletId)?.categories?.map { it.id } ?: emptyList()
     }
 
-    private fun loadLocal(country: String, locale: Locale): BrowserDataEntity? {
-        val key = cacheKey(country, locale)
+    private fun loadLocal(
+        country: String,
+        locale: Locale,
+        walletId: String?,
+    ): BrowserDataEntity? {
+        val key = cacheKey(country, locale, walletId)
         return localDataSource.getCache(key)
     }
 
-    private fun cacheKey(country: String, locale: Locale) = "browser_data_${country}_${locale.language}"
+    private fun cacheKey(country: String, locale: Locale, walletId: String?): String {
+        val base = "browser_data_v2_${country}_${locale.language}"
+        return walletId?.let { "${base}_$it" } ?: base
+    }
 
-    suspend fun loadRemote(country: String, network: TonNetwork, locale: Locale): BrowserDataEntity? {
-        val data = remoteDataSource.load(network, locale) ?: return null
-        val key = cacheKey(country, locale)
+    suspend fun loadRemote(
+        country: String,
+        network: TonNetwork,
+        locale: Locale,
+        walletId: String?,
+    ): BrowserDataEntity? {
+        val data = remoteDataSource.load(network, locale, walletId) ?: return null
+        val key = cacheKey(country, locale, walletId)
         localDataSource.setCache(key, data)
         return data
     }

@@ -18,6 +18,8 @@ class ChangePasscodeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragme
 
     override val viewModel: ChangePasscodeViewModel by viewModel()
 
+    private val create: Boolean by lazy { arguments?.getBoolean(ARG_CREATE, false) ?: false }
+
     private lateinit var headerView: HeaderView
     private lateinit var passcodeView: PasscodeView
 
@@ -29,6 +31,8 @@ class ChangePasscodeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragme
         passcodeView = view.findViewById(R.id.passcode)
         collectFlow(viewModel.stepFlow, ::setStep)
         collectFlow(viewModel.errorFlow) { applyError() }
+
+        viewModel.start(create)
     }
 
     private fun setStep(step: ChangePasscodeViewModel.Step) {
@@ -50,7 +54,11 @@ class ChangePasscodeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragme
 
     private fun applyNew() {
         passcodeView.clear()
-        passcodeView.setTitle(Localization.passcode_new)
+        passcodeView.setTitle(if (create) {
+            Localization.passcode_create
+        } else {
+            Localization.passcode_new
+        })
         passcodeView.doOnCheck = {
             viewModel.setNew(it)
         }
@@ -69,7 +77,15 @@ class ChangePasscodeScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragme
     }
 
     companion object {
-        fun newInstance() = ChangePasscodeScreen()
+        private const val ARG_CREATE = "create"
+
+        fun newInstance(create: Boolean = false): ChangePasscodeScreen {
+            val fragment = ChangePasscodeScreen()
+            if (create) {
+                fragment.putBooleanArg(ARG_CREATE, true)
+            }
+            return fragment
+        }
     }
 
 }

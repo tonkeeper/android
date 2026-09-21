@@ -5,9 +5,11 @@ import androidx.compose.runtime.Composable
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.tonapps.core.helper.EnvironmentHelper
+import com.tonapps.extensions.areNotificationsEnabled
+import com.tonapps.portfolio.screens.wallet.PushStatusProvider
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.isDarkMode
-import com.tonapps.tonkeeper.os.AppInstall
+import com.tonapps.tonkeeper.os.AppInfo
 import com.tonapps.tonkeeper.os.DeviceCountry
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -24,7 +26,7 @@ import java.util.Locale
 class Environment(
     private val context: Context,
     private val settingsRepository: SettingsRepository,
-) : EnvironmentHelper.Delegate {
+) : EnvironmentHelper.Delegate, PushStatusProvider {
 
     data class CountryData(
         val fromStore: String? = null,
@@ -38,7 +40,11 @@ class Environment(
     ) {
 
         private val debugValue: String?
-            get() = if (BuildConfig.DEBUG) debug else null
+            get() = if (BuildConfig.DEBUG) {
+                debug
+            } else {
+                null
+            }
 
         val value: String?
             get() = (debugValue ?: bySimCard ?: byNetwork ?: byIPAddress ?: byLocale)?.let(::fixCountryCode)
@@ -86,20 +92,31 @@ class Environment(
                 "blue" -> appColorSchemeBlue()
                 "dark" -> appColorSchemeDark()
                 "light" -> appColorSchemeLight()
-                else -> if (context.isDarkMode) appColorSchemeBlue() else appColorSchemeLight()
+                else -> if (context.isDarkMode) {
+                    appColorSchemeBlue()
+                } else {
+                    appColorSchemeLight()
+                }
             }
         }
 
-    val installerSource: AppInstall.Source by lazy { AppInstall.request(context) }
+    val installerSource: AppInfo.Source by lazy { AppInfo.request(context) }
 
     val isFromGooglePlay: Boolean by lazy {
-        installerSource == AppInstall.Source.GOOGLE_PLAY || installerSource == AppInstall.Source.AURORA_STORE
+        installerSource == AppInfo.Source.GOOGLE_PLAY || installerSource == AppInfo.Source.AURORA_STORE
     }
 
     val isGooglePlayServicesAvailable: Boolean by lazy {
         val googleApiAvailability = GoogleApiAvailability.getInstance()
         val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
         resultCode == ConnectionResult.SUCCESS
+    }
+
+    val areNotificationsEnabled: Boolean
+        get() = context.areNotificationsEnabled()
+
+    override fun needsPushSetup(): Boolean {
+        return isGooglePlayServicesAvailable && !areNotificationsEnabled
     }
 
     fun setDebugCountry(country: String?) {
@@ -146,7 +163,11 @@ class Environment(
 
     private companion object {
         private fun fixCountryCode(country: String): String {
-            val fixedCountry = if (country.length == 2) country.uppercase() else "AE"
+            val fixedCountry = if (country.length == 2) {
+                country.uppercase()
+            } else {
+                "AE"
+            }
             if (BuildConfig.DEBUG) {
                 return DevSettings.country ?: fixedCountry
             }

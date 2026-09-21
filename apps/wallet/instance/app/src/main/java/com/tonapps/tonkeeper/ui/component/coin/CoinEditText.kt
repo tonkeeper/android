@@ -133,6 +133,10 @@ class CoinEditText @JvmOverloads constructor(
     }
 
     private fun notifyUpdate(byUser: Boolean) {
+        if (!isAttachedToWindow) {
+            return
+        }
+
         val value = getValue()
         doOnValueChange?.invoke(value, byUser)
     }
@@ -277,6 +281,12 @@ class CoinEditText @JvmOverloads constructor(
         if (w != oldw) {
             checkTextSize()
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        notifyUpdateRunnable?.let(::removeCallbacks)
+        notifyUpdateRunnable = null
+        super.onDetachedFromWindow()
     }
 
     override fun onAttachedToWindow() {

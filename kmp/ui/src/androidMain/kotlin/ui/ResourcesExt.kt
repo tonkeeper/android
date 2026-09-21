@@ -18,6 +18,7 @@ actual fun fixAndroidResUrl(url: String): String {
         val packageName = context.packageName
         return "android.resource://$packageName/$resId"
     }
+
     return url
 }
 

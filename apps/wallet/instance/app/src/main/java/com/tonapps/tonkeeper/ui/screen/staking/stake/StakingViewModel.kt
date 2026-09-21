@@ -5,7 +5,10 @@ import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.TransferEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.model.legacy.toAssetId
 import com.tonapps.blockchain.model.legacy.toGrams
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonSendMode
@@ -15,6 +18,8 @@ import com.tonapps.blockchain.ton.extensions.storeQueryId
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
+import com.tonapps.core.helper.TON_COIN_ASSET_ID
+import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.deposit.usecase.emulation.Emulated
 import com.tonapps.deposit.usecase.emulation.EmulationUseCase
@@ -26,9 +31,12 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.legacy.enteties.SendMetadataEntity
+import com.tonapps.portfolio.analytics.StakingAnalytics
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.toAccountTokenEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
@@ -36,6 +44,7 @@ import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
 import com.tonapps.wallet.data.token.TokenRepository
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +72,7 @@ class StakingViewModel(
     app: Application,
     private val wallet: WalletEntity,
     private val poolAddress: String,
+    private val from: String,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
     private val tokenRepository: TokenRepository,
@@ -72,6 +82,7 @@ class StakingViewModel(
     private val signUseCase: SignUseCase,
     private val emulationUseCase: EmulationUseCase,
     private val api: API,
+    private val mcAccountRepository: McAccountRepository,
 ) : BaseWalletVM(app) {
 
     val installId: String
@@ -95,24 +106,8 @@ class StakingViewModel(
     private val _selectedPoolFlow = MutableStateFlow<PoolEntity?>(null)
     val selectedPoolFlow = _selectedPoolFlow.asStateFlow().filterNotNull()
 
-    val tokenFlow = selectedPoolFlow.map { pool ->
-        val tokens = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.network) ?: emptyList()
-
-        tokens.firstOrNull()
-    }.filterNotNull()
-
-    val analyticsFlow = combine(selectedPoolFlow, poolsFlow, tokenFlow) { pool, providers, token ->
-        val provider = providers.find { item -> item.pools.any { it.address == pool.address } }
-        hashMapOf<String, Any>(
-            "jetton_symbol" to token.symbol,
-            "provider_name" to (provider?.implementation?.title ?: ""),
-            "provider_domain" to (provider?.details?.url ?: ""),
-        )
-    }
-
-    private val ratesFlow = tokenFlow.map { token ->
-        ratesRepository.getRates(wallet.network, settingsRepository.currency, token.address)
-    }.flowOn(Dispatchers.IO)
+    private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
+    val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 
     val availableUiStateFlow = combine(
         amountFlow,
@@ -144,8 +139,8 @@ class StakingViewModel(
         }
     }
 
-    val fiatFlow = combine(amountFlow, ratesFlow, tokenFlow) { amount, rates, token ->
-        rates.convert(token.address, amount)
+    val fiatFlow = combine(amountFlow, tokenFlow) { amount, token ->
+        amount.multiply(token.rateNow)
     }
 
     val fiatFormatFlow = fiatFlow.map {
@@ -180,6 +175,8 @@ class StakingViewModel(
     }
 
     init {
+        StakingAnalytics.open(from)
+
         collectFlow(poolsFlow) { pools ->
             if (_selectedPoolFlow.value != null) {
                 return@collectFlow
@@ -197,10 +194,88 @@ class StakingViewModel(
         updateAmount(0.0)
 
         viewModelScope.launch(Dispatchers.IO) {
-            _poolsFlow.value = stakingRepository.get(wallet.accountId, wallet.network).pools.filter {
-                api.getConfig(wallet.network).enabledStaking.contains(it.implementation.title)
+            launch {
+                _poolsFlow.value = stakingRepository.get(wallet.accountId, wallet.network).pools.filter {
+                    api.getConfig(wallet.network).enabledStaking.contains(it.implementation.title)
+                }
+                trackStakeInputIfReady()
+            }
+            launch {
+                _tokenFlow.value = loadTonToken()
+                trackStakeInputIfReady()
             }
         }
+    }
+
+    private var stakeInputTracked = false
+
+    private fun analyticsProps(): StakingAnalytics.Props? {
+        val pool = _selectedPoolFlow.value ?: return null
+        val providers = _poolsFlow.value ?: return null
+        val token = _tokenFlow.value ?: return null
+        val provider = providers.find { item -> item.pools.any { it.address == pool.address } }
+        return StakingAnalytics.Props(
+            jettonSymbol = token.symbol,
+            providerName = provider?.implementation?.title.orEmpty(),
+            providerDomain = provider?.details?.url.orEmpty(),
+        )
+    }
+
+    private fun trackStakeInputIfReady() {
+        if (stakeInputTracked) return
+        val props = analyticsProps() ?: return
+        stakeInputTracked = true
+        StakingAnalytics.stakeInput(from, props)
+    }
+
+    fun onConfirm() {
+        analyticsProps()?.let(StakingAnalytics::stakeConfirm)
+    }
+
+    private fun trackStakeSuccess() {
+        analyticsProps()?.let(StakingAnalytics::stakeSuccess)
+        val pool = _selectedPoolFlow.value
+        TransactionSentAnalytics.transactionSent(
+            wallet = wallet,
+            category = Events.TransactionSent.TransactionSentCategory.Staking,
+            categoryDetail = Events.TransactionSent.TransactionSentCategoryDetail.Stake,
+            asset = TON_COIN_ASSET_ID,
+            amount = _amountFlow.value,
+            feeAsset = Events.TransactionSent.TransactionSentFeeAsset.Coin,
+            initiatedBy = Events.TransactionSent.TransactionSentInitiatedBy.User,
+            stakingProvider = pool?.address,
+            isLiquid = pool?.let { it.implementation == StakingPool.Implementation.LiquidTF },
+        )
+    }
+
+    private suspend fun loadTonToken(): AccountTokenEntity? {
+        if (wallet.type == WalletType.Multichain) {
+            return loadMultichainTonToken()
+        }
+        return tokenRepository.getTON(
+            settingsRepository.currency,
+            wallet.accountId,
+            wallet.network,
+        )
+    }
+
+    private suspend fun loadMultichainTonToken(): AccountTokenEntity? {
+        val assetId = WalletCurrency.TON.toAssetId(wallet.testnet)
+        val currency = settingsRepository.currency.code
+        val cached = runCatching {
+            mcAccountRepository.getCachedAccounts(
+                walletId = wallet.id,
+                currency = currency,
+                hideDust = settingsRepository.hideDustAssets,
+            )
+        }.getOrNull()?.accounts?.firstOrNull { it.asset.id == assetId }
+
+        val account = cached
+            ?: runCatching {
+                mcAccountRepository.findAccount(wallet.id, assetId, currency)
+            }.getOrNull()
+            ?: return null
+        return account.toAccountTokenEntity(settingsRepository.currency)
     }
 
     fun requestMax() = tokenFlow.take(1).map {
@@ -212,7 +287,9 @@ class StakingViewModel(
     }
 
     fun selectPool(pool: PoolEntity) {
+        if (_selectedPoolFlow.value?.address == pool.address) return
         _selectedPoolFlow.value = pool
+        trackStakeInputIfReady()
     }
 
     private suspend fun getSendParams(
@@ -365,7 +442,7 @@ class StakingViewModel(
             storeQueryId(TransferEntity.newWalletQueryId())
             storeUInt(0x000000000005b7c1, 64)
         }
-        val withdrawalFee = Coins.ONE
+        val withdrawalFee = Coins.ONE // TODO fees: will it remain static?
         val amountWithFee = withdrawalFee + amount
 
         this.coins = amountWithFee.toGrams()
@@ -376,10 +453,10 @@ class StakingViewModel(
         val body = buildCell {
             storeOpCode(TONOpCode.WHALES_DEPOSIT)
             storeQueryId(TransferEntity.newWalletQueryId())
-            storeCoins(Coins.of(0.1).toGrams())
+            storeCoins(Coins.of(0.1).toGrams()) // TODO fees: internal fee should be less as well
         }
 
-        this.coins = amount.toGrams()
+        this.coins = amount.toGrams() // TODO fees: should we add 0.1 here?
         this.messageData = MessageData.raw(body, stateInitRef)
     }
 
@@ -411,6 +488,7 @@ class StakingViewModel(
             val message = signUseCase(context, wallet, seqno, transaction)
 
             transactionManager.send(wallet, message, false, "", 0.0)
+            trackStakeSuccess()
             val finishedAtMs = currentTimeMillis()
             AnalyticsHelper.Default.events.redOperations.opTerminal(
                 operationId = operationId,
@@ -453,6 +531,7 @@ class StakingViewModel(
             val cell = message.createUnsignedBody(false)
             val boc = signUseCase(context, wallet, cell, message.seqNo)
             transactionManager.send(wallet, boc, false, "", 0.0)
+            trackStakeSuccess()
             val finishedAtMs = currentTimeMillis()
             AnalyticsHelper.Default.events.redOperations.opTerminal(
                 operationId = operationId,

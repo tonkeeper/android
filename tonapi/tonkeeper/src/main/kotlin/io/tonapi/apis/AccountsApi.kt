@@ -18,6 +18,7 @@ import io.tonapi.models.Account
 import io.tonapi.models.AccountEvent
 import io.tonapi.models.AccountEvents
 import io.tonapi.models.Accounts
+import io.tonapi.models.DefiAssets
 import io.tonapi.models.DnsExpiring
 import io.tonapi.models.DomainNames
 import io.tonapi.models.FoundAccounts
@@ -197,6 +198,52 @@ class AccountsApi(basePath: String = defaultBasePath, client: Call.Factory = Api
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/accounts/{account_id}".replace("{"+"account_id"+"}", encodeURIComponent(accountId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getAccountDefiAssets(accountId: String): DefiAssets {
+        val localVarResponse = getAccountDefiAssetsWithHttpInfo(accountId = accountId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DefiAssets
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getAccountDefiAssetsWithHttpInfo(accountId: String): ApiResponse<DefiAssets?> {
+        val localVariableConfig = getAccountDefiAssetsRequestConfig(accountId = accountId)
+
+        return request<Unit, DefiAssets>(
+            localVariableConfig
+        )
+    }
+
+    fun getAccountDefiAssetsRequestConfig(accountId: String): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/accounts/{account_id}/defi/assets".replace("{"+"account_id"+"}", encodeURIComponent(accountId.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

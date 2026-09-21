@@ -3,8 +3,9 @@ package com.tonapps.tonkeeper.ui.screen.tronfees.list
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
-import com.tonapps.tonkeeper.view.BatteryView
+import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
@@ -23,7 +24,7 @@ class BatteryHolder(parent: ViewGroup): Holder<Item.Battery>(parent, R.layout.vi
     override fun onBind(item: Item.Battery) {
         itemView.background = item.position.drawable(context)
         itemView.setOnClickListener {
-            context.navigation?.add(BatteryScreen.newInstance(wallet = item.wallet, from = "tron_fees"))
+            context.navigation?.add(BatteryScreen.newInstance(wallet = item.wallet, from = BatteryNativeFrom.TronFees))
         }
         asyncImageView.visibility = View.GONE
         batteryContainerView.visibility = View.VISIBLE

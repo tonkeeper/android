@@ -37,6 +37,8 @@
     public static final android.os.Parcelable$Creator CREATOR;
 }
 
+-keepnames class * implements android.os.Parcelable
+
 -keep class java.time.** { *; }
 
 -keep class com.tonapps.tonkeeper.worker.** { *; }
@@ -86,3 +88,32 @@
 
 # WalletKit
 -keep class io.ton.walletkit.** { *; }
+
+# WalletKit resolves its bridge-DTO serializers reflectively
+# (serializersModule.serializer(klass)) and ships those @Serializable DTOs obfuscated and
+# package-flattened, so each DTO's Companion is a separate top-level class, not a nested
+# $Companion. That defeats both the stock kotlinx rules (keyed on $Companion) and
+# `-keep @Serializable` (which misses the companion's serializer()), and R8 full mode then
+# strips the reflectively-only serializer -> "Serializer for class 'x' is not found".
+# Keep the reflective serializer entry points structurally, not by package/annotation.
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault,InnerClasses,Signature
+-keepclassmembers @kotlinx.serialization.Serializable class ** { *; }
+-keepclassmembers class ** {
+    *** Companion;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,allowobfuscation class * implements kotlinx.serialization.KSerializer { *; }
+
+# JNA — native code resolves fields (e.g. com.sun.jna.Pointer#peer) and
+# Structure subclass field order by name via JNI/reflection. Stripping or
+# renaming them yields UnsatisfiedLinkError: "Can't obtain peer field ID".
+-dontwarn java.awt.*
+-keep class com.sun.jna.** { *; }
+-keepclassmembers class * extends com.sun.jna.** { *; }
+
+# UniFFI-generated bindings (Reown WalletKit / yttrium_wcpay) declare JNA
+# Structure subclasses whose field order must be preserved.
+-keep class uniffi.** { *; }
+-keepclassmembers class uniffi.** { *; }
+-keepnames class * extends androidx.fragment.app.Fragment
+-keepnames class * extends android.app.Fragment

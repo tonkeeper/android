@@ -4,6 +4,7 @@ package com.tonapps.tonkeeper.ui.screen.dev
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -13,12 +14,16 @@ import androidx.core.app.ShareCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.core.flags.WalletTooltipKey
+import com.tonapps.extensions.appVersionCode
+import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.retrieveUri
 import com.tonapps.log.L
 import com.tonapps.security.Security
 import com.tonapps.settings.dev.DevSettingsFragment
 import com.tonapps.settings.dev.ROUTE_FEATURE_FLAGS
+import com.tonapps.settings.dev.ROUTE_RAFFLE_DEBUG
 import com.tonapps.settings.dev.ROUTE_TOOLTIPS
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.copyToClipboard
@@ -28,6 +33,8 @@ import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.dev.list.launcher.LauncherAdapter
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
+import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentRedColor
@@ -61,12 +68,17 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
     private lateinit var systemFontSizeView: ItemSwitchView
     private lateinit var debugCountryInput: EditText
     private lateinit var debugCountryTextView: AppCompatTextView
+    private lateinit var buildOverrideInput: EditText
     private lateinit var dnsAllView: ItemSwitchView
+
+    private var titleTapCount = 0
+    private var titleTapStartTime = 0L
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val headerView = view.findViewById<HeaderView>(R.id.header)
         headerView.doOnCloseClick = { finish() }
+        headerView.titleView.setOnClickListener { onTitleTap() }
 
         val deviceView = view.findViewById<AppCompatTextView>(R.id.device)
         deviceView.text = getDeviceLines().joinToString("\n")
@@ -81,6 +93,11 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             if (byUser) {
                 DevSettings.tetraEnabled = isChecked
             }
+        }
+
+        view.findViewById<View>(R.id.import_testnet_wallet).setOnClickListener {
+            navigation?.add(InitScreen.newInstance(InitArgs.Type.Testnet))
+            finish()
         }
 
         dnsAllView = view.findViewById(R.id.dns_all)
@@ -124,7 +141,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         logs.doOnCheckedChanged = { isChecked, byUser ->
             if (byUser) {
                 DevSettings.isLogsEnabled = isChecked
-                L.setTargets(L.defaultTargets(requireContext(), isChecked))
+                L.setTargets(L.defaultTargets(requireContext(), DevSettings.isLogsEnabled, DevSettings.isLogcatEnabled))
             }
         }
 
@@ -138,8 +155,10 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             L.capture { file ->
                 val context = requireContext()
                 lifecycleScope.launch {
-                    DevSettings.isLogsEnabled = false
-                    L.setTargets(L.defaultTargets(context, false))
+                    DevSettings.resetLogsEnabled()
+                    val enabled = DevSettings.isLogsEnabled
+                    logs.setChecked(enabled, false)
+                    L.setTargets(L.defaultTargets(context, DevSettings.isLogsEnabled, DevSettings.isLogcatEnabled))
 
                     ShareCompat.IntentBuilder(context)
                         .run {
@@ -192,6 +211,17 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             debugCountryInput.visibility = View.GONE
         }
 
+        buildOverrideInput = view.findViewById(R.id.build_override_input)
+        buildOverrideInput.setText(DevSettings.buildOverride)
+        buildOverrideInput.doOnTextChanged { text, _, _, _ ->
+            DevSettings.buildOverride = text.toString().trim().ifEmpty { null }
+        }
+        buildOverrideInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                toastAfterChange()
+            }
+        }
+
         view.findViewById<Button>(R.id.log_close).setOnClickListener {
             logView.visibility = View.GONE
         }
@@ -218,22 +248,47 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         logCopy = view.findViewById(R.id.log_copy)
 
         view.findViewById<View>(R.id.feature_flags).apply {
-//             if (!BuildConfig.DEBUG) {
-//                 visibility = View.GONE
-//             }
-            setOnClickListener {
-                navigation?.add(DevSettingsFragment.newInstance(ROUTE_FEATURE_FLAGS))
+            if (!BuildConfig.DEBUG) {
+                visibility = View.GONE
             }
+            setOnClickListener { openFeatureFlags() }
         }
 
         view.findViewById<View>(R.id.tooltips).apply {
-            if (!BuildConfig.DEBUG) {
+            if (!BuildConfig.DEBUG || WalletTooltipKey.entries.isEmpty()) {
                 visibility = View.GONE
             }
             setOnClickListener {
                 navigation?.add(DevSettingsFragment.newInstance(ROUTE_TOOLTIPS))
             }
         }
+
+        view.findViewById<View>(R.id.raffle_qa).apply {
+            if (!BuildConfig.DEBUG) {
+                visibility = View.GONE
+            }
+            setOnClickListener {
+                navigation?.add(DevSettingsFragment.newInstance(ROUTE_RAFFLE_DEBUG))
+            }
+        }
+    }
+
+    private fun onTitleTap() {
+        val now = SystemClock.elapsedRealtime()
+        if (now - titleTapStartTime > TITLE_TAP_TIMEOUT) {
+            titleTapStartTime = now
+            titleTapCount = 0
+        }
+        titleTapCount++
+        if (titleTapCount >= TITLE_TAP_COUNT) {
+            titleTapCount = 0
+            titleTapStartTime = 0L
+            openFeatureFlags()
+        }
+    }
+
+    private fun openFeatureFlags() {
+        navigation?.add(DevSettingsFragment.newInstance(ROUTE_FEATURE_FLAGS))
     }
 
     private fun copyFirebasePushToken() {
@@ -294,6 +349,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
 
     private fun getDeviceLines(): List<String> {
         val list = mutableListOf<String>()
+        list.add("App version: ${requireContext().appVersionName} (${requireContext().appVersionCode})")
         list.add("Context locale: ${requireContext().locale.language}")
         list.add("Android version: ${android.os.Build.VERSION.RELEASE} (API level ${android.os.Build.VERSION.SDK_INT})")
         list.add("Device model: ${android.os.Build.MODEL}")
@@ -306,10 +362,17 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
     }
 
     private fun booleanToYesOrNo(value: Boolean): String {
-        return if (value) "yes" else "no"
+        return if (value) {
+            "yes"
+        } else {
+            "no"
+        }
     }
 
     companion object {
+
+        private const val TITLE_TAP_COUNT = 8
+        private const val TITLE_TAP_TIMEOUT = 5000L
 
         fun newInstance() = DevScreen()
     }

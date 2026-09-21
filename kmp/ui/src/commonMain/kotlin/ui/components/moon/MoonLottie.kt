@@ -13,4 +13,5 @@ expect fun MoonLottie(
     iterations: Int = Int.MAX_VALUE,
     contentDescription: String? = null,
     color: Color? = null,
+    progress: (() -> Float)? = null,
 )

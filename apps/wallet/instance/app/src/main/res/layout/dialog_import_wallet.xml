@@ -47,7 +47,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetMedium"
-                android:icon="@drawable/ic_magnifying_glass_28"
+                android:icon="@drawable/ic_magnifying_colorful_glass_28"
                 android:title="@string/watch_wallet"
                 android:subtitle="@string/watch_wallet_subtitle"/>
 

@@ -21,7 +21,7 @@ data class TonTransferAction(
     @SerialName(value = "recipient")
     val recipient: AccountAddress,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "amount")
     val amount: Long,
     @SerialName(value = "comment")

@@ -56,10 +56,17 @@ class SlideActionView @JvmOverloads constructor(
 
     private var isDone = false
 
-    private val drawCallback = object : ViewDragHelper.Callback() {
-        private val horizontalDragRange: Int
-            get() = measuredWidth - buttonView.measuredWidth
+    private val horizontalDragRange: Int
+        get() = measuredWidth - buttonView.measuredWidth
 
+    private val restLeft: Int
+        get() = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+            horizontalDragRange
+        } else {
+            0
+        }
+
+    private val drawCallback = object : ViewDragHelper.Callback() {
         override fun tryCaptureView(child: View, pointerId: Int): Boolean {
             return child == buttonView && !isDone && isEnabled
         }
@@ -74,20 +81,20 @@ class SlideActionView @JvmOverloads constructor(
 
         override fun onViewReleased(releasedChild: View, xvel: Float, yvel: Float) {
             super.onViewReleased(releasedChild, xvel, yvel)
-            val left = releasedChild.left
-            if (left >= horizontalDragRange) {
-                dragHelper.settleCapturedViewAt(left, 0)
+            if (dragProgress(releasedChild.left) >= 1f) {
+                dragHelper.settleCapturedViewAt(releasedChild.left, 0)
                 done()
             } else {
-                dragHelper.settleCapturedViewAt(0, 0)
+                dragHelper.settleCapturedViewAt(restLeft, 0)
             }
             invalidate()
         }
 
         override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
-            textView.alpha = 1f - left / horizontalDragRange.toFloat()
-            icon = if (left >= horizontalDragRange) {
+            val progress = dragProgress(left)
+            textView.alpha = 1f - progress
+            icon = if (progress >= 1f) {
                 checkIcon
             } else {
                 arrowIcon
@@ -129,6 +136,18 @@ class SlideActionView @JvmOverloads constructor(
         }
     }
 
+    private fun dragProgress(left: Int): Float {
+        val range = horizontalDragRange
+        if (range <= 0) {
+            return 0f
+        }
+        return if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+            (range - left) / range.toFloat()
+        } else {
+            left / range.toFloat()
+        }
+    }
+
     fun startReverseProgress() {
         progressView.setTrackColor(context.iconTertiaryColor)
         progressView.visibility = VISIBLE
@@ -151,7 +170,7 @@ class SlideActionView @JvmOverloads constructor(
     fun reset() {
         isDone = false
         icon = arrowIcon
-        dragHelper.smoothSlideViewTo(buttonView, 0, 0)
+        dragHelper.smoothSlideViewTo(buttonView, restLeft, 0)
         invalidate()
     }
 
@@ -243,7 +262,12 @@ class SlideActionView @JvmOverloads constructor(
             matrix.reset()
             val w = measuredWidth + gradientWidth
             val progress = animation.animatedValue as Float
-            matrix.setTranslate(w * progress, 0f)
+            val direction = if (layoutDirection == LAYOUT_DIRECTION_RTL) {
+                -1f
+            } else {
+                1f
+            }
+            matrix.setTranslate(w * progress * direction, 0f)
             paint.shader?.setLocalMatrix(matrix)
             invalidate()
         }

@@ -3,6 +3,7 @@ package com.tonapps.wallet.data.events
 import android.content.Context
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.AuthorizationProvider
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.wallet.api.entity.value.Timestamp
@@ -35,6 +36,7 @@ class EventsRepository(
     scope: CoroutineScope,
     context: Context,
     private val api: API,
+    private val auth: AuthorizationProvider,
     private val collectiblesRepository: CollectiblesRepository,
     private val ratesRepository: RatesRepository
 ) {
@@ -46,7 +48,7 @@ class EventsRepository(
     }
 
     private val txActionMapper = TxActionMapper(collectiblesRepository, ratesRepository, api)
-    private val remoteDataSource = RemoteDataSource(api, txActionMapper)
+    private val remoteDataSource = RemoteDataSource(api, auth, txActionMapper)
 
     val decryptedCommentFlow: Flow<Map<String, String>>
         get() = localDataSource.decryptedCommentFlow
@@ -103,9 +105,9 @@ class EventsRepository(
     }
 
     suspend fun tronLatestSentTransactions(
-        tronWalletAddress: String, tonProofToken: String
+        tronWalletAddress: String, walletId: String
     ): List<TronEventEntity> {
-        val events = loadTronEvents(tronWalletAddress, tonProofToken) ?: return emptyList()
+        val events = loadTronEvents(tronWalletAddress, walletId) ?: return emptyList()
 
         val sentTransactions =
             events.filter { it.from == tronWalletAddress && it.to != tronWalletAddress }
@@ -165,12 +167,12 @@ class EventsRepository(
 
     suspend fun loadTronEvents(
         tronWalletAddress: String,
-        tonProofToken: String,
+        walletId: String,
         maxTimestamp: Long? = null,
         limit: Int = 30
     ) = withContext(Dispatchers.IO) {
         try {
-            val events = api.tron.getTronHistory(tronWalletAddress, tonProofToken, limit, maxTimestamp?.let { Timestamp.from(it) })
+            val events = api.tron.getTronHistory(tronWalletAddress, auth.getAuthBy(walletId), limit, maxTimestamp?.let { Timestamp.from(it) })
 
             if (maxTimestamp == null) {
                 localDataSource.setTronEvents(tronWalletAddress, events)

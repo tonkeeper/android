@@ -46,6 +46,8 @@ data class OmnistonSwapMessages(
     val estimatedGasConsumption: String,
     @SerialName(value = "slippage")
     val slippage: Int,
+
+    /* USD value difference between input and output, in basis points (1% = 100 bps, so -300 = -3%). Negative means the user receives less USD than they pay. Omitted when |bps| < 300 or USD prices are unavailable.  */
     @SerialName(value = "valueDifferenceBps")
     val valueDifferenceBps: Int? = null
 ) {

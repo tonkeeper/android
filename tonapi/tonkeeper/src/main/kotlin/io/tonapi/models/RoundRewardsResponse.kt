@@ -40,11 +40,11 @@ data class RoundRewardsResponse(
     @SerialName(value = "end_block")
     val endBlock: Int,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "total_bonuses")
     val totalBonuses: Long,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "total_stake")
     val totalStake: Long,
     @SerialName(value = "validators")

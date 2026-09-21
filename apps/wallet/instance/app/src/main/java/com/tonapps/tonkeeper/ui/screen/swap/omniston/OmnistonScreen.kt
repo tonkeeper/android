@@ -458,6 +458,10 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
             try {
                 viewModel.next()
             } catch (e: Throwable) {
+                if (!isAdded) {
+                    return@launch
+                }
+
                 inputErrorState()
                 if (e is InsufficientFundsException) {
                     insufficientFundsDialog.show(wallet, e)

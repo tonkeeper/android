@@ -1,7 +1,6 @@
 package com.tonapps.deposit.screens.confirm
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +57,7 @@ import ui.components.moon.MoonItemTitle
 import ui.components.moon.MoonLoadingPreviewImage
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonDescriptionCell
+import ui.components.moon.cell.MoonPropertyBigCell
 import ui.components.moon.cell.MoonSlideConfirmation
 import ui.components.moon.cell.MoonSlideConfirmationState
 import ui.components.moon.cell.TextCell
@@ -72,7 +72,6 @@ import ui.preview.ThemedPreview
 import ui.text.withLink
 import ui.theme.LocalAppColorScheme
 import ui.theme.UIKit
-import ui.theme.modifiers.modifyIf
 import ui.theme.modifiers.rememberShimmerPhase
 import ui.theme.modifiers.shimmer
 import ui.utils.toRichSpanStyle
@@ -103,8 +102,7 @@ fun SendConfirmScreen(
     }
 
     insufficientFundsEvent?.let { event ->
-        InsufficientFundsDialog(
-            event = event,
+        event.InsufficientFundsDialog(
             onBuyTon = onBuyTon,
             onGetTrx = onGetTrx,
             onRechargeBattery = onRechargeBattery,
@@ -428,6 +426,17 @@ private fun SendConfirmContent(
             null -> null
         }
 
+        // Returns the thumb after a signing cancellation, which drops back to Idle without an error:
+        // a confirmed slider can't be dragged back and would re-fire onConfirm on the next drag end.
+        LaunchedEffect(state.signingState, state.error) {
+            if (state.signingState == SigningState.Idle &&
+                state.error == null &&
+                sliderState.isConfirmed
+            ) {
+                sliderState.reset()
+            }
+        }
+
         val confirmationState = when (state.signingState) {
             SigningState.Idle -> MoonSlideConfirmationState.Slider
             SigningState.Loading -> MoonSlideConfirmationState.Loader
@@ -443,10 +452,12 @@ private fun SendConfirmContent(
             error = errorText,
             title = when (confirmationState) {
                 MoonSlideConfirmationState.Slider,
-                MoonSlideConfirmationState.Loader -> stringResource(Localization.confirm_action)
+                MoonSlideConfirmationState.Loader -> stringResource(Localization.confirm)
 
                 MoonSlideConfirmationState.Done -> stringResource(Localization.done)
             },
+            subtitle = stringResource(Localization.swipe_right),
+            buttonTitle = stringResource(Localization.try_again),
             enabled = state.signingState == SigningState.Idle,
             onConfirm = {
                 if (state.isMax) {
@@ -455,7 +466,7 @@ private fun SendConfirmContent(
                     feature.sendAction(ConfirmAction.Sign(context))
                 }
             },
-            onRetry = { feature.sendAction(ConfirmAction.Retry(context)) },
+            onClick = { feature.sendAction(ConfirmAction.Retry(context)) },
             onDone = { onSendSuccess() },
         )
 
@@ -620,9 +631,9 @@ private fun feeSubtitle(fee: SendFee): String {
 
 // TODO remove this
 @Composable
-private fun SendConfirmShimmer(
+fun SendConfirmShimmer(
     onClose: () -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
 ) {
     val shimmer by rememberShimmerPhase()
 
@@ -641,135 +652,15 @@ private fun SendConfirmShimmer(
                 .nestedScroll(rememberNestedScrollInteropConnection()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            MoonLoadingPreviewImage(size = 96.dp)
-
-            Spacer(Modifier.height(16.dp))
-
-            Spacer(
-                Modifier
-                    .fillMaxWidth(0.4f)
-                    .height(20.dp)
-                    .shimmer(shimmer)
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            Spacer(
-                Modifier
-                    .fillMaxWidth(0.5f)
-                    .height(28.dp)
-                    .shimmer(shimmer)
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            MoonBundleCell {
-                Column {
-                    MoonPropertyBigCell(
-                        title = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.25f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                        content = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.3f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                    )
-
-                    MoonItemDivider()
-
-                    MoonPropertyBigCell(
-                        title = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.25f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                        content = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.5f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                    )
-
-                    MoonItemDivider()
-
-                    MoonPropertyBigCell(
-                        title = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.25f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                        content = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.3f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                        contentDescription = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.25f)
-                                    .height(16.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                    )
-
-                    MoonItemDivider()
-
-                    MoonPropertyBigCell(
-                        title = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.25f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                        content = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.3f)
-                                    .height(20.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                        contentDescription = {
-                            Spacer(
-                                Modifier
-                                    .fillMaxWidth(0.25f)
-                                    .height(16.dp)
-                                    .shimmer(shimmer)
-                            )
-                        },
-                    )
-                }
-            }
+            SendConfirmShimmerBody(shimmer)
         }
 
         MoonSlideConfirmation(
             state = MoonSlideConfirmationState.Slider,
             modifier = Modifier.shimmer(shimmer),
-            title = stringResource(Localization.confirm_action),
+            title = stringResource(Localization.confirm),
+            subtitle = stringResource(Localization.swipe_right),
+            buttonTitle = stringResource(Localization.try_again),
             enabled = false,
             onConfirm = {},
             onDone = {},
@@ -777,62 +668,165 @@ private fun SendConfirmShimmer(
     }
 }
 
-// TODO to design system
+/**
+ * Placeholder body of the confirm sheet. Lives on its own so the multichain scaffold can show it
+ * under the shared action slot instead of duplicating a second scaffold with a second slot.
+ */
 @Composable
-fun MoonPropertyBigCell(
-    title: CharSequence,
-    value: CharSequence,
-    valueDescription: CharSequence?,
-    onClick: (() -> Unit)? = null,
-) {
-    MoonPropertyBigCell(
-        title = {
-            MoonItemTitle(
-                modifier = Modifier,
-                text = title,
-                color = UIKit.colorScheme.text.secondary,
-            )
-        },
-        content = {
-            MoonItemTitle(text = value)
-        },
-        contentDescription = valueDescription?.let {
-            { MoonItemSubtitle(text = it) }
-        },
-        onClick = onClick,
+fun SendConfirmShimmerBody(shimmer: Float) {
+    MoonLoadingPreviewImage(size = 96.dp)
+
+    Spacer(Modifier.height(16.dp))
+
+    Spacer(
+        Modifier
+            .fillMaxWidth(0.4f)
+            .height(20.dp)
+            .shimmer(shimmer)
     )
-}
 
-// TODO to design system
-@Composable
-fun MoonPropertyBigCell(
-    title: @Composable () -> Unit,
-    content: @Composable () -> Unit,
-    contentDescription: (@Composable () -> Unit)? = null,
-    onClick: (() -> Unit)? = null,
-) {
-    Row(
-        modifier = Modifier
-            .padding(16.dp)
-            .modifyIf { onClick?.let { clickable(onClick = it) } },
-    ) {
-        title()
+    Spacer(Modifier.height(4.dp))
 
-        Spacer(Modifier.weight(1f))
+    Spacer(
+        Modifier
+            .fillMaxWidth(0.5f)
+            .height(28.dp)
+            .shimmer(shimmer)
+    )
 
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            content()
+    Spacer(Modifier.height(16.dp))
 
-            contentDescription?.let {
-                contentDescription.invoke()
-            }
+    MoonBundleCell {
+        Column {
+            MoonPropertyBigCell(
+                title = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.25f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+                content = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.3f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+            )
+
+            MoonItemDivider()
+
+            MoonPropertyBigCell(
+                title = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.25f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+                content = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.5f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+            )
+
+            MoonItemDivider()
+
+            MoonPropertyBigCell(
+                title = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.25f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+                content = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.3f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+                contentDescription = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.25f)
+                            .height(16.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+            )
+
+            MoonItemDivider()
+
+            MoonPropertyBigCell(
+                title = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.25f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+                content = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.3f)
+                            .height(20.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+                contentDescription = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth(0.25f)
+                            .height(16.dp)
+                            .shimmer(shimmer)
+                    )
+                },
+            )
         }
     }
 }
 
+@Preview
+@Composable
+private fun SendConfirmShimmerErrorPreview() {
+    ThemedPreview {
+        Column(Modifier.height(480.dp)) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                SendConfirmShimmerBody(shimmer = 0f)
+            }
+
+            MoonSlideConfirmation(
+                state = MoonSlideConfirmationState.Slider,
+                title = stringResource(Localization.confirm),
+                subtitle = stringResource(Localization.swipe_right),
+                error = stringResource(Localization.unknown_error),
+                buttonTitle = stringResource(Localization.try_again),
+                enabled = false,
+                onConfirm = {},
+                onClick = {},
+                onDone = {},
+            )
+        }
+    }
+}
 
 @Preview
 @Composable
@@ -850,7 +844,7 @@ private fun SendConfirmScreenPreview() {
                    Column {
                        FeeItemCell(
                            image = { MoonItemIcon(painterResource(UIKitIcon.ic_flash_24), color = UIKit.colorScheme.accent.green) },
-                           title = "Tonkeeper Battery",
+                           title = "Keeper Battery",
                            subtitle = "≈ 0.13 - 0.27 TON $0.07",
                            isChecked = false,
                            onClick = { },
@@ -886,7 +880,9 @@ private fun ExpandendScreen() {
 
             MoonSlideConfirmation(
                 state = MoonSlideConfirmationState.Slider,
-                title = stringResource(Localization.confirm_action),
+                title = stringResource(Localization.confirm),
+                subtitle = stringResource(Localization.swipe_right),
+                buttonTitle = stringResource(Localization.try_again),
                 enabled = false,
                 onConfirm = {},
                 onDone = {},

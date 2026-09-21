@@ -3,7 +3,7 @@ package com.tonapps.signer.screen.root.action
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.signer.deeplink.DeeplinkSource
 import com.tonapps.signer.deeplink.entities.ReturnResultEntity
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.cell.Cell
 
 sealed class RootAction {

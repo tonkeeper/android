@@ -4,5 +4,5 @@
         android:width="72dp"
         android:height="72dp"
         android:gravity="center"
-        android:drawable="@drawable/ic_logo_128_dark"/>
+        android:drawable="@drawable/ic_logo_128"/>
 </layer-list>

@@ -3,9 +3,9 @@ package com.tonapps.wallet.data.account
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.wallet.data.account.entities.ProofDomainEntity
 import com.tonapps.wallet.data.account.entities.ProofEntity
-import org.ton.api.pk.PrivateKeyEd25519
+import io.ktor.util.hex
+import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.block.AddrStd
-import org.ton.crypto.hex
 
 object WalletProof {
 

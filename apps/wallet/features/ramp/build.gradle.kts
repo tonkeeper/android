@@ -5,12 +5,43 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+android {
+    defaultConfig {
+        // Enables instrumented tests (src/androidTest). Host unit tests stay disabled by the
+        // convention plugin, but instrumented tests need TrustWalletCore's native lib, so they
+        // must run on a device/emulator anyway.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    packaging {
+        resources {
+            // Test-only deps (mockk / junit transitive jars) ship duplicate license metadata.
+            excludes += setOf(
+                "/META-INF/LICENSE.md",
+                "/META-INF/LICENSE-notice.md",
+                "/META-INF/LICENSE*",
+                "/META-INF/NOTICE*",
+                "/META-INF/AL2.0",
+                "/META-INF/LGPL2.1",
+            )
+        }
+    }
+}
+
 dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
     debugImplementation(libs.compose.debugTooling)
 
+    implementation(libs.chainkit.models)
+    implementation(libs.chainkit.api)
+    implementation(libs.chainkit.sdk)
+
+    implementation(libs.compose.paging)
+    implementation(libs.compose.paging.runtime)
+
     implementation(libs.bundles.nav3)
+    implementation(libs.kotlin.bignum)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.koin.core)
     implementation(libs.koin.compose)
@@ -20,6 +51,9 @@ dependencies {
 
     implementation(projects.apps.wallet.api)
     implementation(projects.apps.wallet.localization)
+
+    implementation(projects.apps.wallet.data.multichain.wallet)
+    implementation(projects.apps.wallet.data.multichain.exchange)
 
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.core)
@@ -55,7 +89,24 @@ dependencies {
     implementation(projects.lib.qr)
     implementation(projects.lib.bus)
     implementation(projects.lib.icu)
+    implementation(projects.lib.security)
+    implementation(projects.lib.security)
+    implementation(projects.lib.wallet)
     implementation(projects.lib.ledger)
     implementation(projects.lib.extensions)
     implementation(projects.lib.blockchain)
+
+    // Instrumented tests (src/androidTest) — build & encode real swap transactions on-device.
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.mockk.android)
+    // Reach the chainkit build path (mediator/SignDelegate) and swap payload parser directly.
+    androidTestImplementation(libs.chainkit.sdk)
+    androidTestImplementation(libs.chainkit.api)
+    androidTestImplementation(libs.chainkit.models)
+    // The unsigned SigningInput is a Wire protobuf Message; expose the type to the test classpath.
+    androidTestImplementation("com.squareup.wire:wire-runtime:4.5.6")
 }

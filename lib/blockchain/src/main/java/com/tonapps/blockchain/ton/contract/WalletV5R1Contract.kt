@@ -7,20 +7,20 @@ import com.tonapps.blockchain.ton.contract.WalletV5R1Contract.W5Context.Custom
 import com.tonapps.blockchain.ton.extensions.storeBuilder
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeSeqAndValidUntil
-import org.ton.api.pub.PublicKeyEd25519
+import io.ktor.util.hex
 import org.ton.bigint.BigInt
 import org.ton.bigint.toBigInt
+import org.ton.bigint.xor
 import org.ton.bitstring.BitString
 import org.ton.block.AddrStd
 import org.ton.block.Coins
-import org.ton.block.Message
 import org.ton.block.MessageRelaxed
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.buildCell
 import org.ton.contract.wallet.WalletTransfer
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
@@ -116,7 +116,7 @@ class WalletV5R1Contract(
         validUntil: Long,
         seqNo: Int,
         internalMessage: Boolean,
-        queryId: BigInt?,
+        queryId: BigInteger?,
         vararg gifts: WalletTransfer
     ): Cell {
         if (gifts.size > maxMessages) {
@@ -140,7 +140,7 @@ class WalletV5R1Contract(
         var list = Cell.empty()
 
         for (gift in gifts) {
-            val intMsg = CellRef(createIntMsg(gift))
+            val intMsg = CellRef(createIntMsg(gift), MessageRelaxed.tlbCodec(AnyTlbConstructor)) // TODO TONSDK
 
             val msg = CellBuilder.beginCell().apply {
                 storeOpCode(TONOpCode.OUT_ACTION_SEND_MSG_TAG)

@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.annotation.RawRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.os.LocaleListCompat
 import com.tonapps.log.L
 import uikit.extensions.activity
@@ -41,6 +42,10 @@ fun Context.setLocales(locales: LocaleListCompat) {
 fun Context.recreate() {
     val activity = activity ?: return
     ActivityCompat.recreate(activity)
+}
+
+fun Context.areNotificationsEnabled(): Boolean {
+    return NotificationManagerCompat.from(this).areNotificationsEnabled()
 }
 
 val Context.isDebug: Boolean

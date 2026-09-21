@@ -101,7 +101,7 @@ private fun TokenPickerContent(
                     if (index > 0) MoonItemDivider()
 
                     val balance = remember(token.token) {
-                        CurrencyFormatter.format(token.symbol.take(6), token.balance.uiBalance)
+                        CurrencyFormatter.format(token.symbol.take(6), token.balance.uiBalance, compact = true)
                             .toString()
                     }
 

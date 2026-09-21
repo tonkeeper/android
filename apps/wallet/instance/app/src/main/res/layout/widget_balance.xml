@@ -26,7 +26,8 @@
             android:textSize="32sp"
             android:text="@string/loading"
             android:textColor="#FFFFFF"
-            android:fontFamily="@font/montserrat_medium"
+            android:fontFamily="@font/tt_firs_neue_normal"
+            android:fontFeatureSettings="'ss09' on, 'ss17' on, 'ss18' on"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
@@ -37,7 +38,8 @@
             android:textSize="13sp"
             android:text="@string/loading"
             android:textColor="#556170"
-            android:fontFamily="@font/montserrat_regular"
+            android:fontFamily="@font/tt_firs_neue_normal"
+            android:fontFeatureSettings="'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 

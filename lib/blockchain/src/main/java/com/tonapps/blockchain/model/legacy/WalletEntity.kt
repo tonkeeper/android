@@ -19,8 +19,8 @@ import com.tonapps.extensions.readParcelableCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.extensions.writeEnum
 import kotlinx.parcelize.Parcelize
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 
@@ -33,7 +33,9 @@ data class WalletEntity(
     val ledger: Ledger? = null,
     val keystone: Keystone? = null,
     val initialized: Boolean,
-): Parcelable {
+    val addressOverride: String? = null,
+    val stateInitOverride: String? = null,
+) : Parcelable {
 
     companion object {
 
@@ -72,8 +74,22 @@ data class WalletEntity(
     val contract: BaseWalletContract by lazy {
         val contractNetwork = if (tetra) TonNetwork.MAINNET else network
         val signatureNetwork = if (tetra) network else null
-        BaseWalletContract.Companion.create(publicKey, version.title, contractNetwork, signatureNetwork)
+        BaseWalletContract.Companion.create(
+            publicKey,
+            version.title,
+            contractNetwork,
+            signatureNetwork
+        )
     }
+
+    val multichainWalletId: String?
+        get() {
+            if (isMultichain) {
+                return id
+            }
+
+            return null
+        }
 
     val maxMessages: Int
         get() = if (type == WalletType.Ledger) 1 else contract.maxMessages
@@ -97,9 +113,9 @@ data class WalletEntity(
     val hasPrivateKey: Boolean
         get() = type == WalletType.Default || type == WalletType.Tetra || type == WalletType.Testnet || type == WalletType.Lockup
 
-    val accountId: String = contract.address.toAccountId()
+    val accountId: String = addressOverride?.toRawAddress() ?: contract.address.toAccountId()
 
-    val address: String = contract.address.toWalletAddress(testnet)
+    val address: String = addressOverride ?: contract.address.toWalletAddress(testnet)
 
     val blockchainAddress: BlockchainAddress
         get() = BlockchainAddress(
@@ -116,6 +132,9 @@ data class WalletEntity(
 
     val isKeystone: Boolean
         get() = type == WalletType.Keystone
+
+    val isMultichain: Boolean
+        get() = type == WalletType.Multichain
 
     val isW5: Boolean
         get() = version == WalletVersion.V5BETA || version == WalletVersion.V5R1
@@ -135,6 +154,8 @@ data class WalletEntity(
         ledger = parcel.readParcelableCompat(),
         keystone = parcel.readParcelableCompat(),
         initialized = parcel.readBooleanCompat(),
+        addressOverride = parcel.readString(),
+        stateInitOverride = parcel.readString(),
     )
 
     fun isMyAddress(address: String): Boolean {
@@ -181,6 +202,8 @@ data class WalletEntity(
         parcel.writeParcelable(ledger, flags)
         parcel.writeParcelable(keystone, flags)
         parcel.writeBooleanCompat(initialized)
+        parcel.writeString(addressOverride)
+        parcel.writeString(stateInitOverride)
     }
 
     override fun describeContents(): Int {

@@ -1,52 +1,63 @@
 package com.tonapps.tonkeeper.helper
 
 import android.content.Context
-import android.os.CancellationSignal
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
 import com.android.installreferrer.api.ReferrerDetails
 import com.tonapps.tonkeeper.Environment
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
-class ReferrerClientHelper(context: Context, environment: Environment) {
-
-    private val referrerClient: InstallReferrerClient? by lazy {
-        if (environment.isFromGooglePlay) {
-            try {
-                InstallReferrerClient.newBuilder(context).build()
-            } catch (ignored: Throwable) {
-                null
-            }
-        } else {
-            null
-        }
-    }
+class ReferrerClientHelper(
+    private val context: Context,
+    private val environment: Environment,
+) {
 
     suspend fun getInstallReferrer(): String? {
-        return referrerClient?.getReferrerDetails()?.installReferrer
+        if (!environment.isFromGooglePlay) {
+            return null
+        }
+        return withContext(Dispatchers.Main) {
+            val client = try {
+                InstallReferrerClient.newBuilder(context).build()
+            } catch (ignored: Throwable) {
+                return@withContext null
+            }
+            try {
+                client.getReferrerDetails()?.installReferrer
+            } finally {
+                client.endConnection()
+            }
+        }
     }
 
     private companion object {
 
         suspend fun InstallReferrerClient.getReferrerDetails(): ReferrerDetails? = suspendCancellableCoroutine { continuation ->
+            fun complete(details: ReferrerDetails?) {
+                if (continuation.isActive) {
+                    continuation.resume(details)
+                }
+            }
+
             try {
-                continuation.invokeOnCancellation { endConnection() }
                 startConnection(object : InstallReferrerStateListener {
                     override fun onInstallReferrerSetupFinished(responseCode: Int) {
-                        if (continuation.isActive) {
-                            if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK && isReady) {
-                                continuation.resume(installReferrer)
-                            } else {
-                                continuation.resume(null)
-                            }
+                        if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK && isReady) {
+                            complete(runCatching { installReferrer }.getOrNull())
+                        } else {
+                            complete(null)
                         }
-                        endConnection()
                     }
-                    override fun onInstallReferrerServiceDisconnected() { }
+
+                    override fun onInstallReferrerServiceDisconnected() {
+                        complete(null)
+                    }
                 })
             } catch (e: Throwable) {
-                continuation.resume(null)
+                complete(null)
             }
         }
     }

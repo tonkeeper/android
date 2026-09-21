@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.rn.data
 
+import com.tonapps.extensions.toStringList
 import com.tonapps.security.Security
 import com.tonapps.security.hex
 import org.json.JSONObject

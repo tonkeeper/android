@@ -1,7 +1,9 @@
 package uikit.widget.webview
 
 import android.app.Dialog
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -136,7 +138,7 @@ open class WebViewFixed @JvmOverloads constructor(
                         return true
                     }
                 }
-                return false
+                return handleDeeplink(request.url)
             }
 
             override fun onPageFinished(view: WebView?, url: String) {
@@ -353,6 +355,19 @@ open class WebViewFixed @JvmOverloads constructor(
 
     fun loadUrl(uri: Uri) {
         loadUrl(uri.toString())
+    }
+
+    private fun handleDeeplink(uri: Uri): Boolean {
+        val scheme = uri.scheme?.lowercase() ?: return false
+        if (scheme == "http" || scheme == "https") return false
+        return try {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
     }
 
     override fun hasOverlappingRendering(): Boolean {

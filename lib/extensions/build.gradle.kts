@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.androidx.core)
     implementation(libs.androidx.security)
+    implementation(libs.androidx.lifecycleProcess)
     implementation(projects.ui.uikit.core)
     implementation(projects.lib.icu)
     implementation(projects.lib.base64)

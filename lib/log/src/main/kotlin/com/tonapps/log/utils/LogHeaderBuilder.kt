@@ -3,8 +3,11 @@ package com.tonapps.log.utils
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import com.tonapps.lib.log.BuildConfig
 import java.util.concurrent.ConcurrentHashMap
 
 open class LogHeaderBuilder {
@@ -33,6 +36,53 @@ open class LogHeaderBuilder {
             header.append(it.key).append(it.value).append("\n")
         }
         return header.apply { append("\n\n") }
+    }
+
+    internal class AppSettingsProvider(
+        private val context: Context,
+    ) {
+
+        fun provide(): Map<String, String> {
+            return context.run {
+                buildMap {
+                    put("APP_VERSION_NAME", context.appVersionName)
+                    put("APP_VERSION_CODE", context.appVersionCode.toString())
+                    put("APP_INSTALLED_SOURCE", context.installerPackageName.toString())
+                    put("APP_IS_DEBUG", BuildConfig.DEBUG.toString())
+                }
+            }
+        }
+
+        private val Context.appPackageInfo: PackageInfo
+            get() = if (Build.VERSION.SDK_INT >= 33) {
+                packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0)
+            }
+
+        private val Context.appVersionName: String
+            get() = appPackageInfo.versionName ?: ""
+
+        private  val Context.appVersionCode: Long
+            get() = if (Build.VERSION.SDK_INT >= 28) {
+                appPackageInfo.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                appPackageInfo.versionCode.toLong()
+            }
+
+        private val Context.installerPackageName: String?
+            get() = try {
+                if (Build.VERSION.SDK_INT >= 30) {
+                    packageManager.getInstallSourceInfo(packageName).installingPackageName
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageManager.getInstallerPackageName(packageName)
+                }
+            } catch (e: PackageManager.NameNotFoundException) {
+                null
+            }
     }
 
     internal class DeviceSettingsProvider {
@@ -180,12 +230,21 @@ open class LogHeaderBuilder {
     ) : LogHeaderBuilder() {
 
         private val deviceSettingsProvider = DeviceSettingsProvider()
+        private val appSettingsProvider = AppSettingsProvider(context)
 
         override fun build(): StringBuilder {
+            fillAppInfo()
             fillDeviceInfo()
             fillDeviceSettingsInfo()
 
             return super.build()
+        }
+
+        private fun fillAppInfo() {
+            appSettingsProvider.provide()
+                .forEach { (k, v) ->
+                    add(k, v)
+                }
         }
 
         private fun fillDeviceInfo() {

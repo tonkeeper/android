@@ -4,10 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.tonapps.blockchain.ton.extensions.hex
-import org.ton.api.pub.PublicKeyEd25519
-import org.ton.boc.BagOfCells
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.cell.Cell
-import org.ton.crypto.hex
 
 object SignerApp {
 
@@ -33,13 +31,7 @@ object SignerApp {
     }
 
     fun createSignUri(cell: Cell, publicKey: PublicKeyEd25519): Uri {
-        val boc = BagOfCells(cell)
-        return createSignUri(boc, publicKey)
-    }
-
-    fun createSignUri(boc: BagOfCells, publicKey: PublicKeyEd25519): Uri {
-        val body = hex(boc.toByteArray())
-        return createSignUri(body, publicKey)
+        return createSignUri(cell.hex(), publicKey)
     }
 
     fun createSignUri(boc: String, publicKey: PublicKeyEd25519): Uri {

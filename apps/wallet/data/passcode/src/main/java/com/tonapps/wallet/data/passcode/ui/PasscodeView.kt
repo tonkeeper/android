@@ -4,9 +4,11 @@ import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.apps.wallet.data.passcode.R
+import kotlinx.coroutines.suspendCancellableCoroutine
 import uikit.widget.ColumnLayout
 import uikit.widget.NumPadView
 import uikit.widget.PinInputView
+import kotlin.coroutines.resume
 
 class PasscodeView @JvmOverloads constructor(
     context: Context,
@@ -59,8 +61,12 @@ class PasscodeView @JvmOverloads constructor(
         pinInputView.setError()
     }
 
-    fun setSuccess() {
-        pinInputView.setSuccess()
+    suspend fun setSuccess() = suspendCancellableCoroutine { continuation ->
+        pinInputView.setSuccess {
+            if (continuation.isActive) {
+                continuation.resume(Unit)
+            }
+        }
     }
 
     fun clear() {

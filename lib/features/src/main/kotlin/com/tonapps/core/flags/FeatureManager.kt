@@ -2,7 +2,9 @@ package com.tonapps.core.flags
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import androidx.core.content.edit
+import org.json.JSONObject
 
 @SuppressLint("StaticFieldLeak")
 object FeatureManager {
@@ -11,6 +13,8 @@ object FeatureManager {
 
     private lateinit var context: Context
     private lateinit var remote: RemoteConfigProvider
+
+    private var staticOverrides: Map<String, Boolean> = emptyMap()
 
     private val prefs by lazy {
         context.getSharedPreferences(
@@ -22,6 +26,24 @@ object FeatureManager {
     fun initialize(context: Context, remote: RemoteConfigProvider) {
         this.context = context
         this.remote = remote
+    }
+
+    fun applyStaticOverrides(json: String) {
+        if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) {
+            return
+        }
+        if (json.isBlank()) {
+            return
+        }
+        try {
+            val obj = JSONObject(json)
+            val map = HashMap<String, Boolean>(obj.length())
+            obj.keys().forEach { key ->
+                map[key] = obj.getBoolean(key)
+            }
+            staticOverrides = map
+        } catch (ignored: Throwable) {
+        }
     }
 
     fun setFeatureEnabled(feature: FeatureKey, isEnabled: Boolean) {
@@ -51,7 +73,12 @@ object FeatureManager {
         return prefs.contains(feature.featureKey) || prefs.contains(valueKey(feature))
     }
 
+    fun isStaticOverridden(feature: FeatureKey): Boolean {
+        return staticOverrides.containsKey(feature.featureKey)
+    }
+
     fun isEnabled(feature: FeatureKey): Boolean {
+        staticOverrides[feature.featureKey]?.let { return it }
         return prefs.getBoolean(feature.featureKey, remote.isFeatureEnabled(feature))
     }
 

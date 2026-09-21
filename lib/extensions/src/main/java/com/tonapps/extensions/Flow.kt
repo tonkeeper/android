@@ -9,12 +9,14 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -101,5 +103,49 @@ inline fun <T, R> Flow<T>.flat(crossinline transform: suspend (value: T) -> List
     return flatMapLatest { value ->
         val flows = transform(value).toTypedArray()
         join(*flows)
+    }
+}
+
+
+fun noneOfFlows(
+    vararg flows: Flow<Boolean>
+): Flow<Boolean> {
+    return combine(flows = flows) { values ->
+        values.none { it }
+    }
+}
+
+fun allOfFlows(
+    vararg flows: Flow<Boolean>
+): Flow<Boolean> {
+    return combine(flows = flows) { values ->
+        values.all { it }
+    }
+}
+
+fun anyOfFlows(
+    vararg flows: Flow<Boolean>
+): Flow<Boolean> {
+    return combine(flows = flows) { values ->
+        values.any { it }
+    }
+}
+
+fun <T, R> Flow<T>.transformFirst(
+    transform: suspend FlowCollector<R>.(value: T) -> Unit,
+): Flow<R> = channelFlow {
+    val busy = AtomicBoolean(false)
+    val collector = FlowCollector<R> { send(it) }
+
+    collect { value ->
+        if (busy.compareAndSet(false, true)) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                try {
+                    collector.transform(value)
+                } finally {
+                    busy.set(false)
+                }
+            }
+        }
     }
 }

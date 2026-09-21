@@ -14,7 +14,8 @@
         android:id="@+id/review_value"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/montserrat_semi_bold"
+        android:fontFamily="@font/tt_firs_neue_medium"
+        android:fontFeatureSettings="'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"
         android:textSize="20sp"
         android:textColor="?attr/textPrimaryColor"/>
 

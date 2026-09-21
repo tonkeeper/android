@@ -1,6 +1,7 @@
 package com.tonapps.ledger.ble
 
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
@@ -59,12 +60,22 @@ class BleManager internal constructor(
     val bleEvents: Flow<BleEvent>
         get() = _bleEvents
 
-    private val bluetoothAdapter by lazy {
-        context.getSystemService(BluetoothManager::class.java).adapter
+    private val bluetoothAdapter: BluetoothAdapter? by lazy {
+        try {
+            context.getSystemService(BluetoothManager::class.java)?.adapter
+        } catch (e: Throwable) {
+            L.e(e)
+            null
+        }
     }
 
     private val bluetoothScanner: BluetoothLeScanner?
-        get() = bluetoothAdapter.bluetoothLeScanner
+        get() = try {
+            bluetoothAdapter?.bluetoothLeScanner
+        } catch (e: Throwable) {
+            L.e(e)
+            null
+        }
 
     private var scannedDevices: MutableList<BleDeviceModel> = mutableListOf()
     private val scanCallback: ScanCallback = object : ScanCallback() {
@@ -224,7 +235,9 @@ class BleManager internal constructor(
         val serviceList: MutableList<UUID> = ArrayList()
         for (i in parcelUuids.indices) {
             val serviceUUID = parcelUuids[i].uuid
-            if (!serviceList.contains(serviceUUID)) serviceList.add(serviceUUID)
+            if (!serviceList.contains(serviceUUID)) {
+                serviceList.add(serviceUUID)
+            }
         }
         return serviceList
     }
@@ -251,13 +264,11 @@ class BleManager internal constructor(
      * Stop
      */
     private fun internalStartScanning(): Boolean {
-        //Assure to stop every runnning scan or active connection
         disconnect()
         stopScanning()
 
-        isScanning = true
+        val scanner = bluetoothScanner ?: return false
 
-        //Filter every Bluetooth capable Ledger device by its service UUID
         val filters = Devices.getBluetoothDevices().mapNotNull { device ->
             device.bluetoothSpec?.let { spec ->
                 ScanFilter.Builder()
@@ -273,9 +284,15 @@ class BleManager internal constructor(
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
 
         val scanSettings = builder.build()
-        bluetoothScanner?.startScan(filters, scanSettings, scanCallback) ?: return false
+        try {
+            scanner.startScan(filters, scanSettings, scanCallback)
+        } catch (e: Throwable) {
+            L.e(e)
+            return false
+        }
 
-        //Expose scanned device list every second
+        isScanning = true
+
         if (pollingJob == null) {
             pollingJob = scope.launch {
                 while (true) {
@@ -298,7 +315,11 @@ class BleManager internal constructor(
         L.d("Stop Scanning")
         pollingJob?.cancel()
         pollingJob = null
-        bluetoothScanner?.stopScan(scanCallback)
+        try {
+            bluetoothScanner?.stopScan(scanCallback)
+        } catch (e: Throwable) {
+            L.e(e)
+        }
         isScanning = false
     }
 
@@ -355,8 +376,15 @@ class BleManager internal constructor(
 
         connectionCallback = callback
 
+        val bondedDevices = try {
+            bluetoothAdapter?.bondedDevices
+        } catch (e: Throwable) {
+            L.e(e)
+            null
+        }
+
         val device = scannedDevices.firstOrNull { it.id == address }
-            ?: bluetoothAdapter.bondedDevices.firstOrNull {
+            ?: bondedDevices?.firstOrNull {
                 it.address == address
             }?.let {
                 BleDeviceModel(

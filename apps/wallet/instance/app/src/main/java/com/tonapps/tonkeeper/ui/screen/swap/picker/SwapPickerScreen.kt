@@ -20,7 +20,9 @@ import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.activity
 import uikit.extensions.addForResult
+import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.smartScrollTo
 import uikit.widget.LoaderView
 import uikit.widget.ModalHeader
@@ -59,6 +61,7 @@ class SwapPickerScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragm
 
         listView = view.findViewById(R.id.list)
         listView.adapter = adapter
+        listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium))
 
         loaderView = view.findViewById(R.id.loader)
         loaderView.startAnimation()

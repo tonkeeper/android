@@ -1,7 +1,6 @@
 package com.tonapps.tonkeeper.extensions
 
 import android.net.Uri
-import com.tonapps.log.L
 import com.tonapps.extensions.filterList
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
@@ -55,7 +54,8 @@ suspend fun DAppsRepository.getAppFixIcon(
         country = settingsRepository.country,
         network = wallet.network,
         locale = settingsRepository.getLocale(),
-        uri = url
+        uri = url,
+        walletId = wallet.multichainWalletId,
     )
     if (browserApp != null) {
         app = app.copy(

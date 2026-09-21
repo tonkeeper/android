@@ -1,8 +1,7 @@
 <resources>
-    <string name="app_name" translatable="false">Tonkeeper</string>
+    <string name="app_name" translatable="false">Keeper</string>
     <string name="ton" translatable="false">TON</string>
-    <string name="toncoin">Gram (prev. Toncoin)</string>
-    <string name="gram_symbol_home">GRAM (prev. TON)</string>
+    <string name="toncoin" translatable="false">Gram</string>
     <string name="bitcoin" translatable="false">Bitcoin</string>
     <string name="w5beta" translatable="false">W5 Beta</string>
     <string name="fake" translatable="false">FAKE</string>
@@ -20,6 +19,8 @@
     <string name="dApps" translatable="false">dApps</string>
     <string name="keystone" translatable="false">Keystone</string>
     <string name="w5" translatable="false">W5</string>
+    <string name="tron_resource_energy" translatable="false">%1$s Energy</string>
+    <string name="tron_resource_bandwidth" translatable="false">%1$s Bandwidth</string>
     <string name="select_from_gallery">Select from Gallery</string>
     <string name="staking_apy" translatable="false">APY</string>
     <string name="transaction_expired">Transaction expired</string>
@@ -45,8 +46,13 @@
     <string name="theme_dark">Dark</string>
     <string name="theme_light">Light</string>
     <string name="payment_method">Payment Method</string>
+    <string name="methods_of_purchase_for">Methods of purchase for</string>
     <string name="downloading">Downloading…</string>
     <string name="required">Required</string>
+    <string name="approved">Approved</string>
+    <string name="rejected">Rejected</string>
+    <string name="request">Request</string>
+    <string name="session">Session</string>
 
     <string name="send_transaction_detail_nfts">The total value of the tokens you send. NFTs will also be sent.</string>
     <string name="close">Close</string>
@@ -54,8 +60,8 @@
     <string name="dapp_safe_model_button">How to stay safe</string>
     <string name="dapp_safe_modal_subtitle">We didn’t open it for safety reasons</string>
     <string name="emulation_failed_warning">After confirmation, anything can happen, including losing all your funds. All transactions are irreversible. We couldn’t emulate the transaction and don’t know what will happen next.</string>
-    <string name="update_tonkeeper">Update Tonkeeper</string>
-    <string name="update_tonkeeper_subtitle">A new version of Tonkeeper is available. You can download it now.</string>
+    <string name="update_tonkeeper">Update Keeper</string>
+    <string name="update_tonkeeper_subtitle">A new version of Keeper is available. You can download it now.</string>
     <string name="download_error">Download error. Tap to retry.</string>
     <string name="downloading_app_update">Downloading app update</string>
     <string name="preparing_for_downloading">Preparing for downloading</string>
@@ -68,7 +74,7 @@
     <string name="tap_to_update">Tap to update</string>
     <string name="download">Download</string>
     <string name="remind_me_later">Remind me later</string>
-    <string name="multi_account_secret_wrong">Please use Tonkeeper Desktop for Multi-Wallet Account</string>
+    <string name="multi_account_secret_wrong">Please use Keeper Desktop for Multi-Wallet Account</string>
     <string name="total">Total: %1$s</string>
     <string name="credit_card">Credit Card</string>
     <string name="best" translatable="false">Best</string>
@@ -82,7 +88,9 @@
     <string name="burn">Burn</string>
     <string name="staking_get_withdraw">Get withdraw</string>
     <string name="staking_withdrawal_amount">Withdrawal amount</string>
-    <string name="staking_pending_withdraw_liquid">%1$s unstaked after the end of the cycle</string>
+    <string name="staking_pending_withdraw_liquid">%1$s will be unstaked after the end of the cycle</string>
+    <string name="staking_pending_unstake">Pending Unstake</string>
+    <string name="staking_after_end_of_cycle">after the end of the cycle</string>
     <string name="expired_link">Expired link</string>
     <string name="payment_method_not_found">Payment method not available</string>
     <string name="no_available_provider">No available providers</string>
@@ -99,6 +107,11 @@
     <string name="hidden">Hidden</string>
     <string name="show_all">Show all</string>
     <string name="see_all">See all</string>
+    <string name="more_assets">More assets</string>
+    <string name="all_assets_hidden_title">All assets are hidden</string>
+    <string name="all_assets_hidden_subtitle">Show them in ‘Manage’</string>
+    <string name="all_collectibles_hidden_title">All collectibles are hidden.</string>
+    <string name="all_collectibles_hidden_subtitle">Show them in “collectibles settings.”</string>
     <string name="token_details">Token details</string>
     <string name="token_id">Token ID</string>
     <string name="safe_mode">Safe mode</string>
@@ -111,6 +124,7 @@
         <item quantity="many">%1$d NFTs</item>
         <item quantity="other">%1$d NFTs</item>
     </plurals>
+    <string name="fiat_nft_subtitle" translatable="false">%1$s · %2$s</string>
     <string name="exchange_rate">Exchange rate</string>
     <string name="address_prefix">Address:</string>
     <string name="your_address">Your address</string>
@@ -143,13 +157,22 @@
     <string name="report_spam">Report spam</string>
     <string name="not_spam">Not spam</string>
     <string name="spam">Spam</string>
+    <string name="filters">Filters</string>
+    <string name="hide_tiny_transfers">Hide tiny transfers</string>
+    <string name="hide_tiny_transfers_desc">Transfers worth less than $0.01.</string>
+    <string name="hide_no_cost_assets">Hide assets with no cost</string>
+    <string name="hide_no_cost_assets_desc">Assets worth less than $0.01.</string>
+    <string name="scam" translatable="false">Scam</string>
     <string name="unverified">Unverified</string>
     <string name="setup_finish_title">Finish setting up</string>
+    <string name="setup_finish_skip">Skip</string>
     <string name="setup_finish_push">Enable transaction notifications</string>
     <string name="setup_finish_biometry">Use biometry to approve transactions</string>
     <string name="setup_finish_backup">Back up your recovery phrase</string>
-    <string name="setup_finish_backup_subtitle">Without it, you can’t restore your wallet</string>
-    <string name="setup_finish_telegram">Join Tonkeeper channel</string>
+    <string name="setup_finish_backup_wallet">Back up the wallet recovery phrase</string>
+    <string name="setup_finish_backup_title">Back up your\nrecovery phrase</string>
+    <string name="setup_finish_backup_subtitle">Without this phrase you may lose access to your funds if you delete the app or change device.</string>
+    <string name="setup_finish_telegram">Join Keeper channel</string>
     <string name="setup_onboarding">Learn how to use your wallet</string>
     <string name="contacts">Address Book</string>
     <string name="step_1">Step 1</string>
@@ -165,6 +188,10 @@
     <string name="insufficient_balance_title">Insufficient Funds</string>
     <string name="insufficient_balance_description">Enter an amount less or choose your maximum balance.</string>
 
+    <string name="confirmation_insufficient_balance">Not Enough %s for the Fee</string>
+    <string name="confirmation_insufficient_balance_description">%1$s charges %2$s for this swap. Recharge Battery to pay the fee — no %3$s needed.</string>
+    <string name="deposit_asset">Deposit %s</string>
+
     <string name="insufficient_balance_in_wallet">Insufficient funds in wallet</string>
     <string name="insufficient_battery_charges">Insufficient\nBattery Charges</string>
     <string name="insufficient_balance_charges">Required for fee: %1$s\nAvailable: %2$s</string>
@@ -176,11 +203,11 @@
     <string name="w5_story_title_3">Up to 255 Operations in One Transaction</string>
     <string name="w5_story_title_4">Recovery Phrase Does Not Change</string>
 
-    <string name="unverified_token_description">This token looks suspicious for one or several reasons.</string>
-    <string name="unverified_token_reason_1">Low liquidity. Token may have some value, but it is extremely low.</string>
-    <string name="unverified_token_reason_2">Token is not listed on trading platforms and has limited demand.</string>
-    <string name="unverified_token_reason_3">Used for spam. Employed for sending unwanted and often irrelevant messages at scale.</string>
-    <string name="unverified_token_reason_4">Used for scam. Token\'s name or image can lead users into deception.</string>
+    <string name="unverified_token_description">This token looks suspicious for one or more of the following reasons:</string>
+    <string name="unverified_token_reason_1">Low liquidity. The token may hold some value, but very little.</string>
+    <string name="unverified_token_reason_2">This token isn\'t listed on trading platforms and has limited demand.</string>
+    <string name="unverified_token_reason_3">Used for spam. Sent in bulk as unwanted, often irrelevant messages.</string>
+    <string name="unverified_token_reason_4">Used for scams. The token\'s name or image may be designed to deceive.</string>
 
     <string name="w5_story_description_1">Send USDT without having GRAM – transaction fees will be covered by a few cents of USDT automatically.</string>
     <string name="w5_story_description_3">W5 increases the number of simultaneous operations from 4 to 255, which can save on fee costs.</string>
@@ -204,14 +231,14 @@
     <string name="pinned">Pinned</string>
     <string name="all_assets">All Assets</string>
     <string name="currency_not_found">Currency not found</string>
-    <string name="onrmap_provider_description">Other providers available for different currency pairs.</string>
+    <string name="onrmap_provider_description">Other providers are available for different currency pairs.</string>
     <string name="all_ton_assets">All GRAM Assets</string>
     <string name="sorted_by_price">Sorted by Price</string>
     <string name="staking_max_apy" translatable="false">MAX APY</string>
     <string name="staking_minimum_deposit">Minimum deposit %1$s.</string>
     <string name="staking_options">Options</string>
     <string name="staking_minimal_deposit">Minimal deposit</string>
-    <string name="staking_details_description">Staking is based on smart contracts by third parties. Tonkeeper is not responsible for staking experience.</string>
+    <string name="staking_details_description">Staking is based on smart contracts by third parties. Keeper is not responsible for staking experience.</string>
     <string name="staking_links">Links</string>
     <string name="links">Links</string>
     <string name="staking_choose">Choose</string>
@@ -221,7 +248,9 @@
     <string name="domain_renew_button">Renew domain</string>
     <string name="staked">Staked</string>
     <string name="all">All</string>
-    <string name="report_encrypted_comment">Comment from this transaction will be sent with report in decrypted form.</string>
+    <string name="all_types">All Types</string>
+    <string name="report_encrypted_comment_title">Attention</string>
+<string name="report_encrypted_comment">Comment from this transaction will be sent with report in decrypted form.</string>
     <string name="report_encrypted_comment_button">Report Spam Anyway</string>
 
     <string name="manual">Manual</string>
@@ -229,14 +258,20 @@
     <string name="manual_backup_done">Manual Backup Done</string>
     <string name="manual_backup_date">Last backup %1$s</string>
     <string name="manual_start_button">Back Up Manually</string>
-    <string name="backup_attention_title">Attention</string>
+    <string name="backup_attention_title">Safety Check</string>
     <string name="backup_attention_description">Please read the following carefully before viewing your recovery phrase.</string>
-    <string name="backup_attention_line_1">Never enter your recovery phrase any other place than Tonkeeper to access your wallet.</string>
-    <string name="backup_attention_line_2">Tonkeeper Support never asks for a recovery phrase.</string>
-    <string name="backup_attention_line_3">Anyone with your recovery phrase can use your wallet.</string>
+    <string name="backup_attention_line_1">Never share your Recovery Phrase with anyone.</string>
+    <string name="backup_attention_line_2">If someone has your Recovery Phrase they can access your wallet and withdraw funds.</string>
+    <string name="backup_attention_line_3">Keeper Support will never ask you for your Recovery Phrase.</string>
+    <string name="backup_attention_checkbox_prefix">I understand that sharing my Recovery Phrase could result in </string>
+    <string name="backup_attention_checkbox_highlight">permanent loss of funds.</string>
+    <string name="backup_attention_checkbox_suffix"></string>
+    <string name="backup_attention_confirm">Show Recovery Phrase</string>
     <string name="manual_backup_check">Check Backup</string>
-    <string name="backup_check">Let’s check</string>
+    <string name="backup_check">Backup check</string>
     <string name="backup_check_subtitle">Let\'s see if you\'ve got everything right. Enter words %1$d, %2$d, and %3$d.</string>
+    <string name="backup_check_choose_subtitle">Let\'s see if you\'ve got everything right. Choose\u00A0words\u00A0%1$d,\u00A0%2$d,\u00A0and\u00A0%3$d.</string>
+    <string name="backup_check_error_subtitle">Some words don\'t match your phrase. Check your phrase and try again.</string>
 
 
     <string name="sign_data_binary_message">You are signing blindly. Sign only from trusted sources.</string>
@@ -255,7 +290,7 @@
     <string name="faq" translatable="false">FAQ</string>
     <string name="failed">Failed</string>
     <string name="remove_dapp_confirm">Remove %1$s?</string>
-    <string name="rate_tonkeeper">Rate Tonkeeper</string>
+    <string name="rate_tonkeeper">Rate Keeper</string>
     <string name="encrypted_comment">Encrypted comment</string>
     <string name="encrypted_comment_description">The comment is encrypted by sender and can only be decrypted by you. Please be careful with the content and beware of scams.</string>
     <string name="decrypted_comment_action">Decrypt the comment</string>
@@ -288,6 +323,8 @@
     <string name="stake">Stake</string>
     <string name="watch_only">Watch only</string>
     <string name="unverified_token">Unverified Token</string>
+    <string name="verified_token">Verified Token</string>
+    <string name="verified_token_caption">This token is actively traded and widely recognized. Verification is not an endorsement by Keeper.</string>
     <string name="wallet_initialized">Wallet Initialized</string>
     <string name="bid">Bid</string>
     <string name="theme">Theme</string>
@@ -319,7 +356,7 @@
     <string name="transfer">Transfer</string>
     <string name="jetton_transfer">Transfer %1$s</string>
     <string name="name_your_wallet">Name your wallet</string>
-    <string name="name_your_wallet_subtitle">Name your wallet to easily identify it while using the Tonkeeper. These names are stored locally, and can only be seen by you.</string>
+    <string name="name_your_wallet_subtitle">Name your wallet to easily identify it while using the Keeper. These names are stored locally, and can only be seen by you.</string>
     <string name="open_anyway">Open anyway</string>
     <string name="nft_warning_buttton_title">Are you sure you want to open an external link?</string>
     <string name="nft_warning_buttton_subtitle">Visit this external link only if you trust the author of the collection.  %1$s</string>
@@ -329,6 +366,9 @@
     <string name="address">Address</string>
     <string name="yesterday">Yesterday</string>
     <string name="collectibles">Collectibles</string>
+    <string name="collectibles_ton_only_subtitle">Only TON collectibles for now</string>
+    <string name="collectibles_ton_only_dialog_title">Only TON collectibles\nare supported for now</string>
+    <string name="collectibles_ton_only_dialog_message">This wallet currently supports collectibles on the TON network only. Support for other networks is coming soon.</string>
     <string name="purchases">Purchases</string>
     <string name="choose_token">Choose Token</string>
     <string name="enter_amount">Enter Amount</string>
@@ -342,31 +382,35 @@
     <string name="open_market">Open market</string>
 
     <string name="widget">Widget</string>
-    <string name="empty_history_title">Your activity will be shown here</string>
+    <string name="empty_history_title">Your activity\nwill be shown here</string>
     <string name="empty_history_subtitle">Make your first transaction!</string>
 
     <string name="empty_collectibles_title">Your collectibles will be shown here</string>
     <string name="empty_collectibles_subtitle">Get your first item!</string>
 
     <string name="new_wallet">New wallet</string>
-    <string name="buy_toncoin">Buy Gram (prev. Toncoin)</string>
+    <string name="buy_toncoin">Buy Gram</string>
     <string name="buy_ton">Buy %1$s</string>
     <string name="buy_or_sell_dot">Buy &amp; Sell Crypto</string>
     <string name="buy_or_sell">Buy or sell</string>
-    <string name="fiat_open_description">You are opening an external app not operated by Tonkeeper.</string>
+    <string name="fiat_open_description">You are opening an external app not operated by Keeper.</string>
     <string name="buy">Buy</string>
     <string name="sell">Sell</string>
+    <string name="sell_to_card">Sell to card</string>
+    <string name="cash_buy">Cash buy</string>
+    <string name="cash_sell">Cash sell</string>
     <string name="search">Search</string>
     <string name="add_wallet">Add wallet</string>
     <string name="wallets">Wallets</string>
+    <string name="multichain">Multichain</string>
     <string name="country_title">Choose your country</string>
-    <string name="intro_description">Create a new wallet or add an existing one</string>
-    <string name="intro_title" formatted="true">Welcome to <annotation colorAttr="textAccentColor">Tonkeeper</annotation></string>
+    <string name="intro_description">Create a new wallet\nor add\u00A0an existing one</string>
+    <string name="intro_title" formatted="true">Welcome to <annotation colorAttr="textAccentColor">Keeper</annotation></string>
     <string name="intro_line_1_title">World-class speed</string>
     <string name="intro_line_1_description">TON is a network designed for speed and throughput. Fees are significantly lower than on other blockchains, and transactions are confirmed in a matter of seconds.</string>
 
     <string name="intro_line_2_title">End-to-end security</string>
-    <string name="intro_line_2_description">Tonkeeper stores your cryptographic keys on your device without requiring documents, personal information, contact details, or KYC.</string>
+    <string name="intro_line_2_description">Keeper stores your cryptographic keys on your device without requiring documents, personal information, contact details, or KYC.</string>
 
     <string name="intro_line_3_title">Built-in subscriptions</string>
     <string name="intro_line_3_description">TON subscriptions are peer-to-peer and borderless so that no one can restrict providers or customers. Near-zero fees and full control for you.</string>
@@ -382,12 +426,15 @@
 
     <string name="more">More</string>
     <string name="retry">Retry</string>
+    <string name="try_again">Try Again</string>
     <string name="operation">Operation</string>
     <string name="description">Description</string>
     <string name="protocol">Protocol</string>
+    <string name="tx_hash">Tx hash</string>
     <string name="cant_find_anything">Can\'t find anything.</string>
 
     <string name="deposit_from_another_wallet">From another TON/TRON wallet</string>
+    <string name="deposit_from_another_wallet_mc">From another wallet</string>
     <string name="deposit_send">Send %s</string>
     <string name="deposit_address">%s address</string>
     <string name="deposit_to_another_wallet">To another TON/TRON wallet</string>
@@ -451,48 +498,51 @@
     <string name="signature_allowed">Signature Allowed</string>
     <string name="signature_not_allowed">Signature Not Allowed</string>
 
-    <string name="start_title">Tonkeeper</string>
+    <string name="start_title">Keeper</string>
     <string name="no_internet_connection">No internet connection</string>
-    <string name="start_description">Create a new wallet or add an existing one</string>
-    <string name="start_create_new_wallet">Create new wallet</string>
-    <string name="add_wallet_description">Create a new wallet or add an existing one.</string>
-    <string name="start_import_wallet">Import existing wallet</string>
+    <string name="start_create_new_wallet">Create New Wallet</string>
+    <string name="add_wallet_description">Create a new wallet or add\nan existing one.</string>
+    <string name="start_import_wallet">Import Existing Wallet</string>
     <string name="passcode_enter">Enter passcode</string>
-    <string name="passcode_create">Create passcode</string>
-    <string name="passcode_re_enter">Re-enter passcode</string>
+    <string name="passcode_create">Create Passcode</string>
+    <string name="passcode_re_enter">Re-enter Passcode</string>
     <string name="passcode_current">Enter current passcode</string>
     <string name="passcode_new">Create new passcode</string>
     <string name="import_wallet">Import wallet</string>
+    <string name="existing_wallet">Existing wallet</string>
     <string name="import_wallet_subtitle">Choose from the options below.</string>
-    <string name="import_wallet_words">Import wallet with a 24 or 12 secret recovery words</string>
+    <string name="import_wallet_words">Import wallet with 12 or 24 secret recovery words</string>
+    <string name="import_wallet_words_multichain">Import your existing TON or multichain wallet</string>
     <string name="watch_wallet">Watch Account</string>
     <string name="watch_wallet_subtitle">For monitor wallet activity without recovery phrase</string>
     <string name="watch_wallet_add">Monitor wallet activity without recovery phrase. You will be notified of any transactions from this wallet.</string>
-    <string name="testnet_wallet">Testnet Account</string>
+    <string name="testnet_wallet">TON Testnet Account</string>
     <string name="testnet_wallet_subtitle">Import wallet with a 24 or 12 secret recovery words to Testnet</string>
     <string name="signer_wallet">Pair with Signer</string>
-    <string name="signer_wallet_subtitle">A higher level of control and security</string>
+    <string name="signer_wallet_subtitle">Completely offline, air-gapped, all TON features</string>
     <string name="cancel">Cancel</string>
     <string name="fee">Fee</string>
     <string name="period_24h">24h</string>
     <string name="notifications">Notifications</string>
-    <string name="enable_notification">Enable notification</string>
+    <string name="enable_notification">Enable</string>
     <string name="allow_notification">Allow Notifications</string>
     <string name="enable_notification_title">Get instant notifications</string>
-    <string name="enable_notification_subtitle">Get notified when you receive GRAM, tokens and NFTs</string>
+    <string name="enable_notification_subtitle">Get notified when you receive new transactions.</string>
     <string name="widget_placeholder">Need to select a wallet</string>
 
     <string name="import_wallet_title">Enter recovery phrase</string>
     <string name="import_wallet_description">To restore access to your wallet, enter the 24 or 12 secret recovery words given to you when you created your wallet.</string>
 
     <string name="start_dialog_title">Let’s set up your wallet</string>
-    <string name="start_dialog_description">You need a connected wallet to use Tonkeeper. Either create a new wallet or import an existing one.</string>
+    <string name="start_dialog_description">You need a connected wallet to use Keeper. Either create a new wallet or import an existing one.</string>
 
     <string name="wallet_generating">Generating wallet…</string>
     <string name="wallet_created">Your wallet has just been created!</string>
+    <string name="wallet_created_all_set">You’re all set!</string>
 
     <string name="wallet_attention_title">Grab a pen and a piece of paper</string>
     <string name="wallet_attention_description">We strongly recommend you write down the recovery phrase because it’s the only way to have access to and recover your wallet should you lose your device. Do not send it to yourself via email or take a screenshot. It’s safer when kept offline.</string>
+    <string name="screenshot_warning">For your safety, avoid taking screenshots of your seed phrase. Write it down.</string>
 
     <string name="phrase_title">Your recovery phrase</string>
     <string name="phrase_description">Write down these words with their numbers and store them in a safe place.</string>
@@ -505,16 +555,18 @@
     <string name="transaction_confirmed">Transaction confirmed</string>
 
     <string name="connected_placeholder_title">Connected apps will be shown here</string>
-    <string name="connected_placeholder_subtitle">Explore apps and services in Tonkeeper browser.</string>
+    <string name="connected_placeholder_subtitle">Explore apps and services in the Keeper browser.</string>
+    <string name="explore_apps">Explore Apps</string>
 
     <string name="send">Send</string>
     <string name="swap">Swap</string>
     <string name="manage">Manage</string>
+    <string name="save_changes">Save Changes</string>
     <string name="manage_wallets">Manage wallets</string>
     <string name="receive">Receive</string>
     <string name="log_out">Sign out</string>
     <string name="amount">Amount</string>
-    <string name="backup">Backup</string>
+    <string name="backup">Recovery Phrase</string>
     <string name="unstake_amount">Unstake amount</string>
 
     <string name="recipient">Recipient</string>
@@ -525,11 +577,13 @@
 
     <string name="transaction">Transaction</string>
     <string name="incorrect_phrase">Incorrect phrase</string>
+    <string name="wallet_already_imported">You already have this wallet</string>
 
     <string name="address_hint">Address or name</string>
     <string name="comment">Comment</string>
     <string name="required_comment">Required comment</string>
     <string name="paste">Paste</string>
+    <string name="clipboard_empty">Clipboard is empty</string>
     <string name="version">Version %1$s (%2$d)</string>
     <string name="currency">Currency</string>
     <string name="rename">Rename</string>
@@ -573,17 +627,20 @@
     <string name="sending_error">Sending error, try again later</string>
     <string name="unnamed_collection">Unnamed collection</string>
     <string name="view_details">View details</string>
+    <string name="hide_from_portfolio">Hide from Wallet</string>
+    <string name="show_in_portfolio">Show in Wallet</string>
 
     <string name="receive_coin">Receive %1$s</string>
     <string name="receive_coin_description">Send only %1$s and tokens in TON network to this address, or you might lose your funds.</string>
     <string name="receive_tron_description">Send only %1$s to this address, or you might lose your funds.</string>
+    <string name="receive_asset_title">Your %1$s address</string>
+    <string name="receive_asset_description">Send only %1$s (%2$s) and tokens in %1$s network to this address, or you might lose your funds.</string>
     <string name="copy">Copy</string>
     <string name="legal">Legal</string>
     <string name="terms">Terms of use</string>
     <string name="privacy">Privacy policy</string>
     <string name="do_not_show_again">Don\'t show again</string>
     <string name="licenses">Licenses</string>
-    <string name="montserrat_font">Montserrat font</string>
     <string name="use_biometric">Use biometric</string>
     <string name="biometric_enabled">Biometric enabled</string>
     <string name="biometric_description">You can always unlock your wallet with a passcode.</string>
@@ -601,10 +658,17 @@
     <string name="confirm_and_send">Confirm and send</string>
     <string name="confirm_action">Confirm Action</string>
     <string name="ton_connect_title">Connect to %1$s</string>
+    <string name="wc_connect_title">Connect to %1$s?</string>
     <string name="not_supported">Not supported</string>
     <string name="ton_connect_description">%1$s is requesting access to your wallet address %2$s</string>
     <string name="connect_wallet">Connect wallet</string>
     <string name="ton_connect_subtitle">Be sure to check the service address before connecting the wallet.</string>
+    <string name="wc_connect_request">%1$s is requesting access to your wallet:</string>
+    <string name="wc_allow_this_app">You allow this app to</string>
+    <string name="wc_permission_view_info">View your wallet balance and activity</string>
+    <string name="wc_permission_request_approvals">Request approval for transactions</string>
+    <string name="wc_permission_no_asset_transfer">This signature won\'t transfer your assets</string>
+    <string name="networks_to_connect">Networks to connect</string>
     <string name="available_balance">Available: %1$s</string>
     <string name="insufficient_balance">Insufficient balance</string>
     <string name="to_address">To: %1$s</string>
@@ -614,25 +678,40 @@
     <string name="widget_updated">Updated at %1$s</string>
     <string name="set_up_wallet">Set up wallet</string>
     <string name="support">Support</string>
-    <string name="tonkeeper_news">Tonkeeper news</string>
+    <string name="tonkeeper_news">Keeper news</string>
     <string name="testers_chat">Report bug (chat in Telegram)</string>
     <string name="contact_us">Contact us</string>
     <string name="language">Language</string>
     <string name="sent">Sent</string>
     <string name="system">System</string>
     <string name="network_fee">Network fee</string>
+    <string name="choose_method">Choose method</string>
+    <string name="sending">Sending</string>
+    <string name="receiving">Receiving</string>
+    <string name="swapping">Swapping</string>
+    <string name="staking">Staking</string>
+    <string name="unstaking">Unstaking</string>
+    <string name="burning">Burning</string>
+    <string name="domain_renewing">Renewing Domain</string>
+    <string name="sent_on">Sent on %1$s</string>
+    <string name="received_on">Received on %1$s</string>
+    <string name="swapped_on">Swapped on %1$s</string>
+    <string name="staked_on">Staked on %1$s</string>
+    <string name="unstake_on">Unstake on %1$s</string>
+    <string name="burned_on">Burned on %1$s</string>
+    <string name="renewed_on">Renewed on %1$s</string>
     <string name="confirm">Confirm</string>
     <string name="send_request_comment">When sending, make sure to include the memo or tag from the exchange. Without it, the funds won’t be deposited and may be lost.</string>
-    <string name="banner_top">You currently using an experimental version of Tonkeeper.</string>
+    <string name="banner_top">You currently using an experimental version of Keeper.</string>
     <string name="banner_top_button">Install stable version</string>
     <string name="signer_description">Open Signer » Select the required key » Scan QR code</string>
-    <string name="keystone_description">Open Keystone » Connect Software Wallet » Tonkeeper</string>
+    <string name="keystone_description">Open Keystone » Connect Software Wallet » Keeper</string>
     <string name="keystone_about">About Keystone</string>
     <string name="signer_about">About Signer</string>
     <string name="signer_open">Open Signer on this device</string>
     <string name="signer" translatable="false">Signer</string>
     <string name="choose_wallet_title">Choose wallets</string>
-    <string name="choose_wallet_subtitle">Choose wallets you want to add.</string>
+    <string name="choose_wallet_subtitle">This seed phrase contains multiple wallets. Choose the ones you want to add.</string>
     <string name="choose_wallet_already_added">Already added</string>
     <string name="hide">Hide</string>
 
@@ -652,6 +731,7 @@
     <string name="search_browser">Search or enter address</string>
     <string name="explore">Explore</string>
     <string name="connected">Connected</string>
+    <string name="connecting">Connecting</string>
     <string name="browser_search_placeholder">Enter an address or search the web</string>
 
     <string name="ledger" translatable="false">Ledger</string>
@@ -662,6 +742,7 @@
     <string name="ledger_connect">Connect Ledger to your device via Bluetooth</string>
     <string name="ledger_usb_connect">Connect Ledger to your device via USB</string>
     <string name="ledger_open_ton_app">Unlock it and open TON App</string>
+    <string name="ledger_approve_ton_app">Approve opening TON App on Ledger</string>
     <string name="ledger_install_ton_app">Install TON App</string>
     <string name="ledger_confirm_tx">Confirm your transaction on Ledger</string>
     <string name="ledger_confirm_tx_step">Confirm transaction #%1$d on Ledger</string>
@@ -679,8 +760,9 @@
     <string name="bluetooth_permissions_alert_open_settings">Open Settings</string>
 
     <string name="battery">Battery</string>
-    <string name="battery_refill_title">Tonkeeper Battery</string>
+    <string name="battery_refill_title">Keeper Battery</string>
     <string name="battery_refill_subtitle">Swap and send GRAM tokens and pay less in TRC-20 fees</string>
+    <string name="battery_refill_negative_balance">Your battery ran out due to refunded purchases. Top up your charges to keep going.</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s charge</item>
         <item quantity="few">%1$s charges</item>
@@ -695,7 +777,7 @@
     <string name="transactions">Transactions</string>
     <string name="battery_settings">Battery Settings</string>
     <string name="battery_nft">NFT transfers</string>
-    <string name="battery_swap">swaps via Tonkeeper</string>
+    <string name="battery_swap">swaps via Keeper</string>
     <string name="battery_jetton">token transfers</string>
     <string name="battery_trc20">USD₮ TRC20 transfers</string>
     <string name="battery_swap_single">swap</string>
@@ -713,10 +795,10 @@
         <item quantity="other">≈ %1$s NFT transfers</item>
     </plurals>
     <plurals name="battery_swap">
-        <item quantity="one">≈ %1$s swap via Tonkeeper</item>
-        <item quantity="few">≈ %1$s swaps via Tonkeeper</item>
-        <item quantity="many">≈ %1$s swaps via Tonkeeper</item>
-        <item quantity="other">≈ %1$s swaps via Tonkeeper</item>
+        <item quantity="one">≈ %1$s swap via Keeper</item>
+        <item quantity="few">≈ %1$s swaps via Keeper</item>
+        <item quantity="many">≈ %1$s swaps via Keeper</item>
+        <item quantity="other">≈ %1$s swaps via Keeper</item>
     </plurals>
     <plurals name="battery_jetton">
         <item quantity="one">≈ %1$s token transfer</item>
@@ -725,7 +807,7 @@
         <item quantity="other">≈ %1$s token transfers</item>
     </plurals>
     <string name="battery_settings_title">Battery Settings</string>
-    <string name="battery_settings_subtitle">Selected transactions will be paid by Tonkeeper Battery.</string>
+    <string name="battery_settings_subtitle">Selected transactions will be paid by Keeper Battery.</string>
     <string name="battery_recharge_title">Recharge</string>
     <string name="battery_gift_title">Gift</string>
     <string name="battery_other_title">Other</string>
@@ -748,21 +830,23 @@
     <string name="battery_refilled">Battery refilled</string>
     <string name="nothing_to_restore">Nothing to restore</string>
     <string name="connected_apps">Connected Apps</string>
-    <string name="disconnect_dapp_confirm">Disconnect “%1$s”?</string>
+    <string name="disconnect_dapp_confirm">Disconnect %1$s?</string>
     <string name="disconnect_all_apps">Disconnect All Apps</string>
     <string name="disconnect_all_apps_confirm">Disconnect All Apps?</string>
     <string name="connected_apps_empty">No connected apps</string>
+    <string name="connected_apps_source_dapp" translatable="false">Keeper</string>
+    <string name="connected_apps_source_deeplink">External link</string>
+    <string name="connected_apps_source_qr">Another device</string>
+    <string name="connected_apps_source_format" translatable="false">%1$s · %2$s</string>
     <string name="send_all_balance">Are you sure you want to send all your balance?</string>
     <string name="wrong_promocode">The entered code is not valid</string>
-    <string name="tron_toggle_text">Use USD₮ TRC20 without TRX. Fees are covered by Tonkeeper Battery.</string>
-    <string name="tron_toggle_trc_text">USD₮ transfers require TRX for network fees.</string>
     <string name="trc20">TRC20</string>
     <string name="copy_phrase">Copy Phrase</string>
     <string name="export_tron">Export TRC20 Wallet</string>
     <string name="phrase_title_tron">TRC20 Wallet</string>
     <string name="phrase_description_tron">Write down these words with their numbers and store them in a safe place.</string>
     <string name="prhase_tron_warning">This phrase is for TRC20 only. It cannot restore your TON wallet. Use your TON recovery phrase for TON wallet recovery.</string>
-    <string name="battery_required_title">Tonkeeper Battery required for %1$s</string>
+    <string name="battery_required_title">Keeper Battery required for %1$s</string>
     <string name="battery_required_text">Battery charges are used to cover transaction fees, making transfers simpler and more cost-effective.</string>
     <string name="charge_battery">Charge Battery</string>
     <string name="send_wrong_blockchain">The address belongs to the %1$s network.</string>
@@ -770,9 +854,9 @@
     <string name="enable_usdt_tron">Enable USD₮ TRC20</string>
     <string name="tron" translatable="false">TRON</string>
     <string name="dapp_share_title">Share %1$s</string>
-    <string name="dapp_share_subtitle">This link opens %1$s directly in Tonkeeper. You can use it again later or share it if needed.</string>
+    <string name="dapp_share_subtitle">This link opens %1$s directly in Keeper. You can use it again later or share it if needed.</string>
     <string name="copy_link">Copy Link</string>
-    <string name="dapp_disclaimer">You are opening an external app not operated by Tonkeeper. Proceed only if you trust the source.</string>
+    <string name="dapp_disclaimer">You are opening an external app not operated by Keeper. Proceed only if you trust the source.</string>
     <string name="support_title">Need help?</string>
     <string name="support_subtitle">Ask us via Telegram or Email — we’ll do our best to help.</string>
     <string name="ask_question">Ask on Telegram</string>
@@ -839,7 +923,7 @@
     <string name="trx_balance">TRX Balance</string>
     <string name="trx_balance_desc">Top up your balance to pay network fees.</string>
     <string name="blockchain_fees">Blockchain Fees</string>
-    <string name="blockchain_fees_desc">Tonkeeper Battery is the easiest way to pay blockchain fees. You can also top up balance with GRAM and TRX coins directly.</string>
+    <string name="blockchain_fees_desc">Keeper Battery is the easiest way to pay blockchain fees. You can also top up balance with GRAM and TRX coins directly.</string>
     <string name="required_prefix">Required: %1$s</string>
     <string name="tron_fees_learn_more">Fees change in real time based on market conditions and other factors. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
     <string name="tetra" translatable="false">TETRA</string>
@@ -847,18 +931,17 @@
     <string name="tetra_subtitle">Connect Tetra L2 network</string>
     <string name="other_options">Other options</string>
     <string name="for_developers">For developers</string>
-    <string name="tooltip_new">NEW</string>
-    <string name="tooltip_history_here_now">History is here now</string>
-    <string name="tooltip_trade_us_stocks_etfs">Trade US Stocks &amp; ETFs</string>
     <string name="choose_asset">Choose asset</string>
     <string name="trade">Trade</string>
     <string name="search_by_ticker">Search by ticker or name</string>
+    <string name="favorite_tokens">Favorite tokens</string>
     <string name="tab_all">All</string>
     <string name="tab_tokens">Tokens</string>
     <string name="tab_stocks">Stocks</string>
     <string name="tab_etfs">ETFs</string>
-    <string name="tokenized_stocks">Tokenized Stocks</string>
-    <string name="tokenized_etfs">Tokenized ETFs</string>
+    <string name="tokenized_stocks">This asset is a Tokenized Stock</string>
+    <string name="tokenized_etfs">This asset is a Tokenized ETFs</string>
+    <string name="unverified_asset">This asset is an Unverified Token</string>
     <string name="asset_info_modal_stock_title">What are tokenized stocks?</string>
     <string name="asset_info_modal_stock_description">Tokenized stocks are blockchain tokens backed 1:1 by real shares, allowing fractional purchases and linking traditional markets with crypto.</string>
     <string name="asset_info_modal_stock_bullet_1">Buy or sell 24/7, beyond regular market hours.</string>
@@ -875,6 +958,7 @@
     <string name="chart_period_last_month">Last month</string>
     <string name="chart_period_last_6_months">Last 6 months</string>
     <string name="chart_period_last_year">Last year</string>
+    <string name="no_price_data_available">No price data is available.</string>
     <string name="your_balance">Your balance</string>
     <string name="about">About</string>
     <string name="overview">Overview</string>
@@ -885,11 +969,83 @@
     <string name="total_supply_tooltip">All tokens that exist, including locked and unreleased.</string>
     <string name="circulating_supply_tooltip">Tokens currently available in the market and held by users.</string>
     <string name="trading_activity">24h Trading activity</string>
-    <string name="trading_activity_note">Price chart, overview and performance are provided by dyor.io.</string>
+    <string name="trading_activity_note">Price chart, overview and trading activity are provided by %s.</string>
     <string name="trading_activity_buy">Buy · %1$s</string>
     <string name="trading_activity_sell">Sell · %1$s</string>
     <string name="volume">Volume</string>
     <string name="volume_tooltip">The total volume of all transactions over the past 24 hours.</string>
+    <string name="perp_position">Perp position</string>
+    <string name="trade_ton_perps">Trade TON perps</string>
+    <string name="trade_ton_perps_subtitle">Trade with leverage up to 10x</string>
+    <string name="perps_title">Perpetuals</string>
+    <string name="perps_learn_basics">Learn Basics</string>
+    <string name="perps_balance">Perps balance</string>
+    <string name="perps_deposit">Deposit</string>
+    <string name="perps_explore">Explore Perps</string>
+    <string name="perps_trending">Trending Perpetuals</string>
+    <string name="perps_volume">Volume</string>
+    <string name="perps_price_change">Price Change</string>
+    <string name="perps_open_interest">Open Interest</string>
+    <string name="perps_search_hint">Search by ticker or name</string>
+    <string name="perps_perpetual">Perpetual</string>
+    <string name="perps_info">Info</string>
+    <string name="perps_volume_24h">24h Volume</string>
+    <string name="perps_volume_24h_tooltip">Total value traded over the last 24 hours</string>
+    <string name="perps_open_interest_tooltip">Total value of all open positions in this market</string>
+    <string name="perps_funding">Funding</string>
+    <string name="perps_funding_tooltip">Rate periodically paid between long and short positions</string>
+    <string name="perps_about">About</string>
+    <string name="perps_about_placeholder">Trade %1$s price movements against the US dollar with leverage. You don’t need to own %1$s directly — you’re trading a contract that tracks its price.</string>
+    <string name="perps_more">More</string>
+    <string name="perps_long">Long</string>
+    <string name="perps_short">Short</string>
+    <string name="perps_open_positions">Open positions</string>
+    <string name="perps_total_amount">Total amount</string>
+    <string name="perps_coming_soon">This feature is coming soon.</string>
+    <string name="perps_load_failed">Couldn’t load market</string>
+    <string name="perps_markets_load_failed">Couldn’t load markets</string>
+    <string name="perps_retry">Retry</string>
+    <string name="perps_chart_empty">No chart data</string>
+    <string name="perps_chart_failed">Couldn’t load chart</string>
+    <string name="perps_chart_open">Open</string>
+    <string name="perps_chart_close">Close</string>
+    <string name="perps_chart_high">High</string>
+    <string name="perps_chart_low">Low</string>
+    <string name="perps_chart_volume">Vol</string>
+    <string name="perps_service_unavailable">The service is temporarily unavailable. Try again shortly.</string>
+    <string name="perps_filter_all">All</string>
+    <string name="perps_filter_tokens">Tokens</string>
+    <string name="perps_filter_commodities">Commodities</string>
+    <string name="perps_filter_stocks">Stocks</string>
+    <string name="perps_filter_etfs">ETFs</string>
+    <string name="perps_your_position">Your position</string>
+    <string name="perps_share">Share</string>
+    <string name="perps_size">Size</string>
+    <string name="perps_liquidation_price">Liquidation price</string>
+    <string name="perps_liquidation_distance">%1$s from current price</string>
+    <string name="perps_mark_price">Mark price</string>
+    <string name="perps_entry_price">Entry price</string>
+    <string name="perps_adjust_margin">Adjust Margin</string>
+    <string name="perps_set_auto_close">Set Auto Close</string>
+    <string name="perps_set_take_profit">Set Take Profit</string>
+    <string name="perps_set_stop_loss">Set Stop Loss</string>
+    <string name="perps_edit">Edit</string>
+    <string name="perps_cash_out">Cash Out</string>
+    <string name="perps_orders">Orders</string>
+    <string name="perps_buy">Buy</string>
+    <string name="perps_sell">Sell</string>
+    <string name="perps_order_price">Price %1$s</string>
+    <string name="perps_position_load_failed">Couldn’t load position</string>
+    <string name="perps_leverage_pattern" translatable="false">%1$dX</string>
+    <string name="perps_take_profit_short" translatable="false">TP</string>
+    <string name="perps_stop_loss_short" translatable="false">SL</string>
+    <string name="perps_order_share_pattern" translatable="false">%1$s %2$s%%</string>
+    <string name="perps_order_amount_pattern" translatable="false">%1$s %2$s</string>
+    <string name="volume_short_pattern" translatable="false">%1$s vol</string>
+    <string name="badge_new">NEW</string>
+    <string name="tooltip_add_multichain_wallet">Add a wallet for new blockchains</string>
+    <string name="top_gainers">Top Gainers</string>
+    <string name="top_losers">Top Losers</string>
     <string name="transaction_history">Transaction history</string>
     <string name="something_went_wrong">Something went wrong</string>
     <string name="could_not_load_content">We couldn’t load content.</string>
@@ -897,5 +1053,149 @@
     <string name="search_no_result">There were no results for ‘%1$s’.</string>
     <string name="earn_apy">Earn %1$s APY</string>
     <string name="p2p_error">Couldn’t create a P2P session. Please try again.</string>
+    <string name="wallets_list">Wallets list</string>
+    <string name="migration">Migration</string>
+    <string name="migration_subtitle">Migrate assets from your TON wallets</string>
+    <string name="migration_prepare_title">Migrate assets from your TON wallets</string>
+    <string name="migration_prepare_description">Choose a TON wallet to migrate from. Its assets will be moved to multichain.</string>
+    <string name="migration_empty_title">Nothing to migrate</string>
+    <string name="migration_empty_description">Add a TON wallet with assets to migrate them to this wallet.</string>
+    <string name="migration_add_ton_wallet">Add TON Wallet</string>
+    <string name="migration_how_it_works">How does it work?</string>
+    <string name="migration_how_it_works_title">How migration works</string>
+    <string name="migration_how_it_works_intro">We’ll move supported assets from your TON wallet to multichain. Unsupported assets will stay in your TON wallet.</string>
+    <string name="migration_how_it_works_will_migrate">Will migrate: verified jettons and NFTs, TON DNS NFTs, Telegram usernames and numbers, as well as liquid staking tokens like tsTON.</string>
+    <string name="migration_how_it_works_will_stay">Will stay in your TON wallet: unverified or blacklisted assets, lending positions, non-liquid staking positions, SBT and Tonstakers NFTs.</string>
+    <string name="migration_how_it_works_note">Please note: TON DNS NFTs will migrate, but rebinding them to your new address is done manually.</string>
+    <string name="migration_confirm_subtitle">Migrate to</string>
+    <string name="migration_confirm_ton_fee">TON Fee</string>
+    <string name="migration_confirm_trc20_fee">TRON Fee</string>
+    <string name="migration_confirm_sending_transactions">Sending transactions</string>
+    <string name="migration_confirm_transaction_failed">Transaction failed. Try again</string>
+    <string name="migration_insufficient_ton_title">Insufficient GRAM for fees in wallet</string>
+    <string name="migration_insufficient_trx_title">Insufficient TRX for fees in wallet</string>
+    <string name="migration_insufficient_funds_title">Insufficient funds for fees in wallet</string>
+    <string name="migration_insufficient_required">Required: %1$s.</string>
+    <string name="migration_insufficient_balance">Your balance: %1$s.</string>
+    <string name="migration_insufficient_partial_note">Only %1$s transactions will be sent now. %2$s transactions will be paused until you add more %3$s.</string>
+    <string name="migration_deposit_ton">Deposit GRAM</string>
+    <string name="migration_deposit_trx">Deposit TRX</string>
+    <string name="migration_deposit_wallet">Deposit Wallet</string>
+    <string name="swap_slippage_info">Maximum price change you’ll accept between quote and execution.</string>
+    <string name="no_results">There were no results</string>
+    <string name="receiving_address">Receiving address</string>
+    <string name="receiving_address_subtitle">One address per network</string>
+    <string name="min_received">Min. received</string>
+    <string name="swap_avoid_extra_fees">Avoid extra fees on future swaps</string>
+    <string name="sign_message">Sign Message</string>
+    <string name="claim_reward">Claim reward</string>
+    <string name="compound_stake">Compound stake</string>
+    <string name="stake_asset">Stake %1$s</string>
+    <string name="unstake_asset">Unstake %1$s</string>
+    <string name="restake_asset">Restake %1$s</string>
+    <string name="swap_asset">Swap %1$s</string>
+    <string name="price_impact">Price impact</string>
+    <string name="price_impact_too_high">Price impact is too high</string>
+    <string name="price_impact_too_high_description">This swap may execute at a rate that differs significantly from the market price.\n\nWait a little longer, or try changing the amount you\'re swapping.</string>
+    <string name="swap_at_changed_price">Swap Anyway</string>
+    <string name="back_to_swap">Back to Swap</string>
+    <string name="networks">Networks</string>
+    <string name="error_with_message">Error: %1$s</string>
+    <string name="domain_status_scam">This domain is flagged as unsafe by multiple security providers. Leave immediately.</string>
+    <string name="domain_status_invalid">This website has a domain that does not match the sender of this request.</string>
+    <string name="domain_status_valid">Be sure to check the service address before connecting the wallet.</string>
+    <string name="domain_status_unknown">This domain cannot be verified. Check the request carefully before approving.</string>
+    <string name="domain_risk_scam_title">Security risk</string>
+    <string name="domain_risk_invalid_title">Domain mismatch</string>
+    <string name="domain_risk_unknown_title">Unknown domain</string>
+    <string name="connect_anyway">Connect Anyway</string>
+    <string name="domain_risk_scam_description">This domain is flagged as unsafe by multiple security providers. Leave immediately to protect your assets.</string>
+    <string name="domain_risk_invalid_description">This website has a domain that does not match the sender of this request. Approving may lead to loss of funds.</string>
+    <string name="choose_wallet_version">Choose wallet version</string>
+    <string name="choose_wallet_version_description">This seed phrase contains TON wallets in different versions. Choose one to import now.</string>
+    <string name="learn_wallet_versions">Learn about TON wallet versions</string>
+    <string name="about_wallet_versions_title">About TON wallet versions</string>
+    <string name="about_wallet_versions_description">V4R2 and W5 use different public TON addresses. You can import one version now and add the other later as a separate wallet.</string>
+    <string name="wallet_version_w5_description">We recommend W5 because it’s the latest TON wallet version. It supports gasless transactions and batch sends.</string>
+    <string name="wallet_version_v4r2_description">V4R2 is an older version with wider compatibility. Use it if a service doesn’t support W5 yet.</string>
+    <string name="choose_wallet">Choose wallet</string>
+    <string name="choose_wallet_description">This seed phrase contains two wallets. Choose one to import now.</string>
+    <string name="wallet_kind_ton">TON wallet</string>
+    <string name="wallet_kind_multichain">Multichain wallet</string>
+    <string name="creating_wallet">Creating wallet…</string>
+    <string name="wc_disconnect_remove_access">This will remove %1$s’s access to your wallet. You can reconnect it anytime.</string>
+    <string name="wc_disconnect_error">Disconnect error, check network connection</string>
+    <string name="wc_disconnected">Disconnected</string>
+    <string name="wc_error_chains_unavailable">Some chains are not available for this wallet</string>
+    <string name="wc_error_no_wallet_selected">No wallet selected</string>
+    <string name="wc_error_multichain_only">Only multichain wallets support WalletConnect</string>
+    <string name="wc_error_failed_to_approve">Failed to approve</string>
+    <string name="wc_error_failed_to_reject">Failed to reject</string>
+    <string name="swap_error_quote_not_found">Couldn’t get a quote. Change amount</string>
+    <string name="swap_no_quote">No Quote</string>
+    <string name="swap_error_prepare_failed">Prepare failed</string>
+    <string name="confirmation_error_invalid_address">Recipient address is invalid</string>
+    <string name="confirmation_error_unsupported_transaction">This transaction type is not supported</string>
+    <string name="confirmation_error_unsupported_asset">This asset is not supported</string>
+    <string name="confirmation_error_missing_field">Required transaction data is missing</string>
+    <string name="confirmation_error_dust_amount">Amount is too small to send</string>
+    <string name="confirmation_error_verification_failed">Signature verification failed</string>
+    <string name="confirmation_error_sign_internal">Failed to sign the transaction</string>
+    <string name="confirmation_error_unauthorized">Unauthorized request to the network</string>
+    <string name="confirmation_error_no_nodes">No available nodes, try again later</string>
+    <string name="confirmation_error_network">Network error, check your connection</string>
+    <string name="confirmation_error_bad_response">Received an invalid response from the node</string>
+    <string name="confirmation_error_bitcoin">Bitcoin network error, try again later</string>
+    <string name="confirmation_error_mempool_conflict">Transaction conflicts with the mempool</string>
+    <string name="confirmation_error_utxo">Failed to build UTXO set, try again later</string>
+    <string name="confirmation_error_internal">Internal error, please try again</string>
     <string name="dapp_manifest_error">Couldn’t load the dApp manifest. Please try again.</string>
+
+    <string name="migration_coming_soon">Migration flow is coming soon</string>
+    <string name="raffle_ends_in">Ends in %1$s</string>
+    <string name="raffle_more_on">More on %1$s</string>
+    <plurals name="raffle_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="raffle_tickets">
+        <item quantity="one">%1$d ticket</item>
+        <item quantity="other">%1$d tickets</item>
+    </plurals>
+    <plurals name="raffle_tickets_reward">
+        <item quantity="one">+%1$d ticket</item>
+        <item quantity="other">+%1$d tickets</item>
+    </plurals>
+    <string name="raffle_your_tickets">Your tickets</string>
+    <string name="raffle_final_tickets">Your final ticket count</string>
+    <string name="raffle_get_more">Get More</string>
+    <string name="raffle_how_to_earn">How to earn tickets</string>
+    <string name="raffle_milestones">Milestone bonuses</string>
+    <string name="raffle_history">Tickets history</string>
+    <string name="raffle_zero_fee_swaps">Get 0% fee cross-chain swaps</string>
+    <string name="raffle_faq">FAQ</string>
+    <string name="raffle_faq_about_q">What’s the Mystery Raffle?</string>
+    <string name="raffle_faq_about_a">On %1$s we will launch a multichain giveaway with more than 2,000 winners. Tickets are your chances to win.\n\nMigrate to multichain before then and you get 10 tickets, our thank you for being an early Keeper user.\n\nPrizes, extra ways to earn tickets, and the full mechanic all get revealed next week.</string>
+    <string name="raffle_faq_migrate_before_q">What do I get if I migrate before %1$s?</string>
+    <string name="raffle_faq_migrate_before_a">• 10 tickets\n• 0% cross-chain fee</string>
+    <string name="raffle_faq_migrate_after_q">What do I get if I migrate after %1$s?</string>
+    <string name="raffle_faq_migrate_after_a">• 5 tickets</string>
+    <string name="raffle_faq_fee_end_q">When will the 0% fee offer end?</string>
+    <string name="raffle_faq_fee_end_a">On %1$s</string>
+    <string name="raffle_faq_earn_q">How do I earn tickets?</string>
+    <string name="raffle_faq_earn_a">• %1$s for migration from TON Wallet to Multichain Wallet\n• 1 ticket for every $100 cross-chain swap\n• Up to 1000 bonus tickets for completing Milestone Bonuses\n• Additional tasks to be revealed during the campaign</string>
+    <string name="raffle_faq_prizes_q">What are the prizes?</string>
+    <string name="raffle_faq_prizes_a">• $100,000 in prizes\n• 2,000 winners\n• Stablecoins, NFTs and Batteries</string>
+    <string name="raffle_faq_end_q">When does the raffle end?</string>
+    <string name="raffle_faq_end_a">• The raffle will be open for 6 weeks\n• It will end on %1$s</string>
+    <string name="raffle_faq_winners_q">When will you announce the winners?</string>
+    <string name="raffle_faq_winners_a">Within 1 week after the raffle conclusion</string>
+    <string name="raffle_faq_rewards_q">When will rewards be distributed?</string>
+    <string name="raffle_faq_rewards_a">Within 2 weeks after the raffle conclusion</string>
+    <plurals name="setup_finish_migration_wallets_left">
+        <item quantity="one">%1$d wallet left</item>
+        <item quantity="few">%1$d wallets left</item>
+        <item quantity="many">%1$d wallets left</item>
+        <item quantity="other">%1$d wallets left</item>
+    </plurals>
 </resources>

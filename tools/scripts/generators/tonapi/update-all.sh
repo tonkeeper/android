@@ -24,4 +24,12 @@ echo "💱 Generating Trading API..."
 bash "$SCRIPT_DIR/generate-trading.sh"
 
 echo ""
+echo "📈 Generating Perps API..."
+bash "$SCRIPT_DIR/generate-perps.sh"
+
+echo ""
+echo "🕯️ Generating Kandelabr API..."
+bash "$SCRIPT_DIR/generate-kandelabr.sh"
+
+echo ""
 echo "✅ All APIs generated successfully!"

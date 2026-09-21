@@ -1,9 +1,12 @@
 package uikit.widget.webview.bridge
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.AttributeSet
 import android.webkit.JavascriptInterface
+import androidx.annotation.MainThread
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebViewCompat
@@ -13,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONException
 import org.json.JSONObject
 import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.message.BridgeMessage
@@ -27,9 +31,8 @@ open class BridgeWebView @JvmOverloads constructor(
 
     private var jsBridge: JsBridge? = null
 
-
-    private val scope: CoroutineScope
-        get() = findViewTreeLifecycleOwner()?.lifecycleScope ?: throw IllegalStateException("No lifecycle owner")
+    private val scope: CoroutineScope?
+        get() = findViewTreeLifecycleOwner()?.lifecycleScope
 
     private val webViewCallback = object : Callback() {
         override fun onPageStarted(url: String, favicon: Bitmap?) {
@@ -56,6 +59,17 @@ open class BridgeWebView @JvmOverloads constructor(
         }
         addCallback(webViewCallback)
         initBridge()
+    }
+
+    @SuppressLint("JavascriptInterface")
+    @MainThread
+    fun setJavascriptInterface(value: Any) {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.removeWebMessageListener(this, "ReactNativeWebView")
+        }
+
+        removeJavascriptInterface("ReactNativeWebView")
+        addJavascriptInterface(value, "ReactNativeWebView")
     }
 
     fun setJsBridge(value: JsBridge) {
@@ -102,14 +116,54 @@ open class BridgeWebView @JvmOverloads constructor(
         executeJS(code)
     }
 
+    @MainThread
+    fun postMessage(
+        message: JSONObject,
+        onResult: ((String?) -> Unit)? = null,
+    ) {
+        evaluateJavascript("""
+            (function() {
+                window.postMessage($message);
+                return 'posted';
+            })();
+        """.trimIndent()) { result ->
+            onResult?.invoke(result)
+        }
+    }
+
+    fun emitEvent(event: JSONObject) {
+        val message = JSONObject()
+        message.put("type", BridgeMessage.Type.Event.value)
+        message.put("event", event)
+        val code = """
+            (function() {
+                window.dispatchEvent(new MessageEvent('message', {
+                    data: $message
+                }));
+            })();
+        """
+        executeJS(code)
+    }
+
     @JavascriptInterface
     fun postMessage(message: String) {
-        val json = JSONObject(message)
-        val type = json.getString("type")
-        if (type == BridgeMessage.Type.InvokeRnFunc.value) {
-            scope.launch {
-                invokeFunction(FunctionInvokeBridgeMessage(json))
+        val invokeMessage = try {
+            val json = JSONObject(message)
+            if (json.optString("type") != BridgeMessage.Type.InvokeRnFunc.value) {
+                return
             }
+            FunctionInvokeBridgeMessage(json)
+        } catch (e: JSONException) {
+            L.e(e)
+            return
+        }
+        val scope = scope
+        if (scope == null) {
+            L.w("bridge message dropped: no lifecycle owner")
+            return
+        }
+        scope.launch {
+            invokeFunction(invokeMessage)
         }
     }
 

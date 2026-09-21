@@ -31,7 +31,7 @@ fun TKDetailsInfoPreview() {
         TKDetailsInfo(
             aboveTitle = "Sent",
             title = "−1.5 TON",
-            subtitle = "Tonkeeper",
+            subtitle = "Keeper",
             verifiedSubtitle = true,
             date = "Today, 12:34",
             failedText = null

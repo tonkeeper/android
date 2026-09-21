@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.net.Uri
 import android.os.Build
@@ -19,18 +18,37 @@ import com.google.firebase.crashlytics.setCustomKeys
 import com.tonapps.base64.decodeBase64
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
+import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
+import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.core.deeplink.DeepLink
 import com.tonapps.core.deeplink.DeepLinkRoute
-import com.tonapps.dapp.warning.DAppConfirmFragment
+import com.tonapps.core.deeplink.withRaffleSourceWalletId
+import com.tonapps.core.flags.InAppReviewManager
+import com.tonapps.core.flags.WalletFeature
+import com.tonapps.core.helper.navigationDelegate
+import com.tonapps.dapp.screens.confirm.DappConfirmFragment
+import com.tonapps.dapp.screens.session.WcSessionFragment
 import com.tonapps.deposit.DepositFragment
 import com.tonapps.deposit.DepositRoutes
 import com.tonapps.deposit.WithdrawFragment
 import com.tonapps.deposit.WithdrawRoutes
+import com.tonapps.deposit.multicoin.DepositMulticoinFragment
+import com.tonapps.deposit.multicoin.DepositMulticoinRoutes
+import com.tonapps.deposit.multicoin.WcConfirmFragment
+import com.tonapps.deposit.multicoin.WithdrawMulticoinFragment
+import com.tonapps.deposit.multicoin.WithdrawMulticoinRoutes
 import com.tonapps.deposit.screens.qr.QrAssetFragment
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.bestMessage
@@ -42,12 +60,15 @@ import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.legacy.enteties.WalletPurchaseMethodEntity
 import com.tonapps.log.L
+import com.tonapps.migration.MigrationFragment
+import com.tonapps.migration.analytics.MigrationAnalytics
+import com.tonapps.swap.SwapFragment
+import com.tonapps.swap.SwapRoutes
+import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.api.getCurrencyCodeByCountry
 import com.tonapps.tonkeeper.billing.BillingManager
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
-import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.core.history.ActionOptions
@@ -63,25 +84,30 @@ import com.tonapps.tonkeeper.helper.ShortcutHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.FirebasePush
 import com.tonapps.tonkeeper.manager.push.PushManager
+import com.tonapps.tonkeeper.manager.shortcut.AppShortcutRepository
 import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.manager.walletkit.WalletKitEvent
-import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
-import com.tonapps.walletkit.WalletKitRequestHandler
-import com.tonapps.blockchain.ton.connect.TONProof
-import io.ton.walletkit.request.TONWalletConnectionRequest
-import com.tonapps.tonkeeper.os.AppInstall
+import com.tonapps.tonkeeper.os.AppInfo
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.component.UpdateAvailableDialog
-import com.tonapps.tonkeeper.ui.screen.add.AddWalletScreen
+import com.tonapps.portfolio.screens.raffle.ConfigStoriesAutoShow
+import com.tonapps.portfolio.screens.raffle.RaffleFragment
+import com.tonapps.portfolio.screens.raffle.RaffleStoryAutoShow
+import com.tonapps.portfolio.screens.raffle.StoryAutoShowSession
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
+import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.safe.DAppSafeScreen
 import com.tonapps.tonkeeper.ui.screen.camera.CameraScreen
+import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesScreen
 import com.tonapps.tonkeeper.ui.screen.dns.renew.DNSRenewScreen
+import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsScreen
+import com.tonapps.wallet.features.events.screens.EventsFragment
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
@@ -92,8 +118,6 @@ import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsScreen
 import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityScreen
 import com.tonapps.tonkeeper.ui.screen.sign.SignDataScreen
-import com.tonapps.trading.AssetsFragment
-import com.tonapps.trading.TradeEntryTracker
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
 import com.tonapps.tonkeeper.ui.screen.stories.remote.RemoteStoriesScreen
@@ -101,7 +125,10 @@ import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeper.ui.screen.transaction.TransactionScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
+import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.tonkeeperx.R
+import com.tonapps.trading.AssetsFragment
+import com.tonapps.trading.TradeEntryTracker
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.configs.CountryConfig
 import com.tonapps.wallet.data.account.AccountRepository
@@ -110,36 +137,69 @@ import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.dapps.wc.WcRepository
+import com.tonapps.wallet.data.dapps.wc.WcRequestResult
+import com.tonapps.wallet.data.multichain.account.AccountWithDetails
+import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.wallet.data.multichain.device.SecureDeviceRepository
+import com.tonapps.wallet.data.multichain.realtime.McWalletRealtimeProvider
 import com.tonapps.wallet.data.passcode.LockScreen
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.purchase.PurchaseRepository
+import com.tonapps.tonkeeper.koin.koin
+import com.tonapps.wallet.data.raffle.RaffleRepository
+import com.tonapps.wallet.data.raffle.ownsStoryId
+import com.tonapps.wallet.data.raffle.toStories
+import com.tonapps.wallet.data.raffle.debug.RaffleDebugStore
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.localization.Localization
+import com.tonapps.wallet.localization.RStr
+import com.tonapps.walletkit.WalletKitRequestHandler
+import com.tonapps.wc.models.WcConnection
+import io.ton.walletkit.request.TONWalletConnectionRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import kotlin.math.abs
 
-@SuppressLint("LargeClass")
+private val regexPrivateData: Regex by lazy {
+    Regex("[a-f0-9]{64}|0:[a-f0-9]{64}")
+}
+
+private fun removePrivateDataFromUrl(url: String): String {
+    return url.replace(regexPrivateData, "X")
+}
+
+@Suppress("LargeClass")
 class RootViewModel(
     app: Application,
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
     private val api: API,
     private val historyHelper: HistoryHelper,
     private val purchaseRepository: PurchaseRepository,
@@ -156,18 +216,41 @@ class RootViewModel(
     private val ratesRepository: RatesRepository,
     private val analyticsHelper: AnalyticsHelper,
     private val billingManager: BillingManager,
+    private val wcRepository: WcRepository,
     savedStateHandle: SavedStateHandle,
 ): BaseWalletVM(app) {
 
     private val savedState = RootModelState(savedStateHandle)
 
-    private val selectedWalletFlow: Flow<WalletEntity> = accountRepository.selectedWalletFlow
+    // Resolved via Koin rather than the constructor only because viewModelOf
+    // caps constructors at 22 parameters and RootViewModel is already at the
+    // limit; move these to the constructor when the class gets split up.
+    private val mcAccountRepository: McAccountRepository? by lazy { context.koin?.get() }
+    private val mcWalletRealtimeProvider: McWalletRealtimeProvider? by lazy { context.koin?.get() }
+    private val secureDeviceRepository: SecureDeviceRepository by lazy { requireNotNull(context.koin).get() }
+    private val raffleRepository: RaffleRepository? by lazy { context.koin?.get() }
+    private val appShortcutRepository: AppShortcutRepository? by lazy { context.koin?.get() }
+    private val raffleDebugStore: RaffleDebugStore? by lazy { context.koin?.get() }
+    private val storyAutoShowSession = StoryAutoShowSession()
+    private val raffleStoryAutoShow: RaffleStoryAutoShow? by lazy {
+        val repository = raffleRepository ?: return@lazy null
+        val debugStore = raffleDebugStore ?: return@lazy null
+        RaffleStoryAutoShow(repository, settingsRepository, debugStore, storyAutoShowSession)
+    }
+    private val configStoriesAutoShow: ConfigStoriesAutoShow by lazy {
+        ConfigStoriesAutoShow(api, settingsRepository, raffleDebugStore, storyAutoShowSession)
+    }
+
+    private val selectedWalletFlow: Flow<WalletEntity> = unifiedAccountRepository.selectedTonWalletFlow.filterNotNull()
 
     private val _hasWalletFlow = MutableEffectFlow<Boolean?>()
     val hasWalletFlow = _hasWalletFlow.asSharedFlow().filterNotNull()
 
     private val _eventFlow = MutableEffectFlow<RootEvent?>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
+
+    private val _inAppReviewRequestFlow = Channel<Unit>(capacity = Channel.BUFFERED)
+    val inAppReviewRequestFlow = _inAppReviewRequestFlow.receiveAsFlow()
 
     private val ignoreTonConnectTransaction = mutableListOf<String>()
 
@@ -178,7 +261,14 @@ class RootViewModel(
         passcodeManager.lockscreenFlow,
         accountRepository.selectedStateFlow.filter { it !is AccountRepository.SelectedState.Initialization }.take(1)
     ) { lockscreen, state ->
-        if ((lockscreen is LockScreen.State.Input || lockscreen is LockScreen.State.Biometric) && state !is AccountRepository.SelectedState.Wallet) {
+        // "PIN exists but no wallets" cleanup. Must check BOTH repos on their raw rows: reset()
+        // destroys the vault master key, so running it with MC wallets still in the DB would make
+        // their mnemonics undecryptable forever. Any read failure counts as "wallets exist" —
+        // never reset on an error.
+        if ((lockscreen is LockScreen.State.Input || lockscreen is LockScreen.State.Biometric) &&
+            state !is AccountRepository.SelectedState.Wallet &&
+            !hasAnyWallet()
+        ) {
             passcodeManager.reset()
             LockScreen.State.None
         } else {
@@ -207,6 +297,10 @@ class RootViewModel(
 
         pushManager.clearNotifications()
 
+        mcWalletRealtimeProvider?.balanceHints?.collectFlow {
+            mcAccountRepository?.refresh()
+        }
+
         settingsRepository.languageFlow.collectFlow {
             context.setLocales(settingsRepository.localeList)
             App.instance.updateThemes()
@@ -225,6 +319,67 @@ class RootViewModel(
                 }
             }
             .flowOn(Dispatchers.IO)
+            .launchIn(viewModelScope)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            unifiedAccountRepository.selectedTonWalletFlow
+                .filterNotNull()
+                .filter { it.type == WalletType.Multichain }
+                .distinctUntilChangedBy { it.id }
+                .collectLatest { wallet ->
+                    raffleStoryAutoShow?.prefetch(wallet.id)
+                    awaitLockscreenHidden()
+                    raffleStoryAutoShow?.showOnce(wallet.id) { raffleId ->
+                        showStory(raffleId, "auto")
+                    }
+                }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            combine(
+                unifiedAccountRepository.selectedTonWalletFlow,
+                api.configFlow.filter { !it.empty },
+            ) { wallet, config -> wallet to config.stories }
+                .distinctUntilChangedBy { (wallet, stories) -> wallet?.id to stories }
+                .collectLatest { (wallet, _) ->
+                    if (wallet != null) {
+                        awaitLockscreenHidden()
+                        configStoriesAutoShow.showOnce(wallet) { stories ->
+                            openScreen(RemoteStoriesScreen.newInstance(stories, "auto"))
+                            true
+                        }
+                    }
+                }
+        }
+
+        wcRepository.request
+            .onEach { result ->
+                L.d("WcResult: $result")
+                when (result) {
+                    is WcRequestResult.Connecting -> toast(RStr.connecting)
+                    is WcRequestResult.Proposal -> openScreen(WcSessionFragment.newInstance(result.requestId))
+                    is WcRequestResult.Request -> openScreen(WcConfirmFragment.newInstance(result.requestId))
+                    is WcRequestResult.Error -> { toast(result.cause.bestMessage) }
+                    is WcRequestResult.NoInternet -> toast(RStr.no_internet_connection)
+                    is WcRequestResult.Executed -> {
+                        val type = when (result.type) {
+                            WcRequestResult.Executed.Type.Session -> RStr.session
+                            WcRequestResult.Executed.Type.Request -> RStr.request
+                        }
+
+                        val outcome = when (result.isApproved) {
+                            true -> RStr.approved
+                            false -> RStr.rejected
+                        }
+
+                        toast("${context.getString(type)} ${context.getString(outcome)}")
+
+                        if (result.connection.isDeeplink) {
+                            context.navigationDelegate?.navigateTaskBack()
+                        }
+                    }
+                }
+            }
             .launchIn(viewModelScope)
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -251,6 +406,7 @@ class RootViewModel(
                     aptabaseAppKey = config.aptabaseAppKey,
                     aptabaseEndpoint = config.aptabaseEndpoint,
                     installId = settingsRepository.installId,
+                    deviceId = secureDeviceRepository.registerIfNeeded(),
                     storeCountryCode = environment.storeCountry,
                     deviceCountryCode = environment.deviceCountry,
                 )
@@ -260,7 +416,7 @@ class RootViewModel(
             }
 
         val initialWalletAndConfigFlow = combine(
-            accountRepository.selectedWalletFlow.take(1),
+            selectedWalletFlow.take(1),
             api.configFlow.filter { !it.empty }
         ) { _, config ->
             config
@@ -277,11 +433,30 @@ class RootViewModel(
             showUpdateAvailable(it as APKManager.Status.UpdateAvailable)
         }
 
+        InAppReviewManager.requestFlow.collectFlow {
+            _inAppReviewRequestFlow.trySend(Unit)
+        }
+
         bgScope.launch {
             accountRepository.selectedStateFlow.filter {
                 it !is AccountRepository.SelectedState.Initialization
             }.firstOrNull()
+            resolveHadWalletsOnMultichainRelease()
             resolvePubkeysOnStart()
+        }
+    }
+
+    private suspend fun hasAnyWallet(): Boolean {
+        return runCatching { unifiedAccountRepository.hasAnyWallet() }.getOrDefault(true)
+    }
+
+    private suspend fun resolveHadWalletsOnMultichainRelease() = withContext(Dispatchers.IO) {
+        try {
+            settingsRepository.resolveHadWalletsOnMultichainRelease(
+                unifiedAccountRepository.getWalletsCount() > 0
+            )
+        } catch (e: Throwable) {
+            L.e(e)
         }
     }
 
@@ -311,7 +486,7 @@ class RootViewModel(
         if (DevSettings.firstLaunchDate <= 0) {
             val referrer = referrerClientHelper.getInstallReferrer()
             val deeplink = DevSettings.firstLaunchDeeplink.ifBlank { null }
-            val installerStore = AppInstall.getInstallerPackageName(context)
+            val installerStore = AppInfo.getInstallerPackageName(context)
             AnalyticsHelper.Default.events.installApp.installApp(referrer, deeplink, installerStore)
             DevSettings.isWebviewFolderMigrated = true
             DevSettings.firstLaunchDate = currentTimeSeconds()
@@ -391,8 +566,8 @@ class RootViewModel(
         val isInjected = connectionRequest.event.isJsBridge == true
         val wallet = if (isInjected) {
             connectionRequest.event.walletId
-                ?.let { accountRepository.getWalletById(it) }
-                ?: accountRepository.getSelectedWallet()
+                ?.let { unifiedAccountRepository.getTonWalletById(it) }
+                ?: unifiedAccountRepository.getSelectedWallet()
         } else {
             null
         }
@@ -412,11 +587,21 @@ class RootViewModel(
         }
 
         val wallet = event.wallet
+        val sendNativeFrom = if (event.request.event.isJsBridge == true) {
+            Events.SendNative.SendNativeFrom.TonconnectLocal
+        } else {
+            Events.SendNative.SendNativeFrom.TonconnectRemote
+        }
         try {
             WalletKitRequestHandler.handleTransactionRequest(
                 request = event.request
             ) { signRequestJson ->
-                SendTransactionScreen.run(context, wallet, SignRequestEntity(signRequestJson, dAppUrl))
+                SendTransactionScreen.run(
+                    context, wallet,
+                    SignRequestEntity.parse(signRequestJson, dAppUrl)
+                        ?: throw BridgeException(message = "Failed to parse message params"),
+                    sendNativeFrom = sendNativeFrom,
+                )
             }
             DevSettings.tonConnectLog("WalletKit transaction approved", error = false)
         } catch (e: Throwable) {
@@ -507,9 +692,24 @@ class RootViewModel(
         }
     }
 
-    private suspend fun showStory(id: String, from: String) = withContext(Dispatchers.IO) {
-        val stories = api.getStories(id) ?: return@withContext
+    // The lockscreen is an overlay view inside the activity, so a story opened under it would run
+    // its timers and burn through frames while the passcode is being typed.
+    private suspend fun awaitLockscreenHidden() {
+        passcodeManager.lockscreenHiddenFlow.first { it }
+    }
+
+    private suspend fun showStory(id: String, from: String): Boolean = withContext(Dispatchers.IO) {
+        val mcWalletId = unifiedAccountRepository.getSelectedWallet()
+            ?.takeIf { it.type == WalletType.Multichain }
+            ?.id
+        val raffle = mcWalletId?.let { raffleRepository?.getRaffle(it, raffleId = id, forced = false) }
+            ?.takeIf { it.ownsStoryId(id) }
+        val stories = when {
+            raffle != null && mcWalletId != null -> raffle.toStories(id)?.withRaffleSourceWalletId(mcWalletId)
+            else -> api.getStories(id, mcWalletId, !settingsRepository.hadWalletsOnMultichainRelease)
+        } ?: return@withContext false
         openScreen(RemoteStoriesScreen.newInstance(stories, from))
+        true
     }
 
     fun connectTonConnectBridge() {
@@ -545,7 +745,7 @@ class RootViewModel(
     private suspend fun signTransaction(tx: RootSignTransaction) {
         val eventId = tx.id
         try {
-            val signRequests = tx.params.map { SignRequestEntity(it, tx.connection.appUrl) }
+            val signRequests = tx.params.mapNotNull { SignRequestEntity.parse(it, tx.connection.appUrl) }
             if (signRequests.isEmpty()) {
                 throw IllegalArgumentException("Empty sign requests")
             }
@@ -644,6 +844,7 @@ class RootViewModel(
     private suspend fun initShortcuts(
         currentWallet: WalletEntity
     ) = withContext(Dispatchers.IO) {
+        appShortcutRepository?.migrateLegacyPinnedShortcuts()
         val wallets = accountRepository.getWallets()
         val list = mutableListOf<ShortcutInfoCompat>()
         if (!currentWallet.testnet) {
@@ -693,7 +894,8 @@ class RootViewModel(
 
     fun signOut() {
         viewModelScope.launch {
-            accountRepository.logout()
+            unifiedAccountRepository.deleteAllWallets()
+            passcodeManager.reset()
         }
     }
 
@@ -707,12 +909,20 @@ class RootViewModel(
         }
     }
 
+    fun openLegacyShortcutDApp(url: String) {
+        val repository = appShortcutRepository ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            if (repository.migrateAndResolveLegacyPin(url)) {
+                url.toUriOrNull()?.let { openDApp(it, "push") }
+            }
+        }
+    }
+
     fun openDappScreen(
         walletId: String, app: AppEntity, dAppUrl: Uri, source: String
     ) {
         viewModelScope.launch { // TODO Refactor
-            val wallet = accountRepository.getWalletById(walletId)
-                ?: throw IllegalArgumentException("walletId doesn't exists")
+            val wallet = unifiedAccountRepository.getTonWalletById(walletId) ?: return@launch
 
             navigation?.add(
                 DAppScreen.newInstance(
@@ -734,9 +944,9 @@ class RootViewModel(
                 processDAppPush(bundle)
             } else {
                 val deeplink = bundle.getString("deeplink")?.toUriOrNull() ?: return@collectFlow
-                analyticsHelper.trackPushClick(
+                analyticsHelper.events.pushClick.pushClick(
                     pushId = pushId ?: pushType,
-                    payload = deeplink.toString(),
+                    deepLink = removePrivateDataFromUrl(deeplink.toString()),
                 )
                 processDeepLinkPush(deeplink, bundle)
             }
@@ -777,7 +987,7 @@ class RootViewModel(
             val accountId = bundle.getString("account") ?: throw IllegalArgumentException("Key 'account' not found")
             return accountRepository.getWalletByAccountId(accountId) ?: throw IllegalArgumentException("Wallet not found")
         } catch (e: Throwable) {
-            return accountRepository.selectedWalletFlow.firstOrNull()
+            return selectedWalletFlow.firstOrNull()
         }
     }
 
@@ -786,10 +996,12 @@ class RootViewModel(
         fromQR: Boolean,
         refSource: Uri?,
         internal: Boolean,
-        fromPackageName: String?
+        fromPackageName: String?,
+        fromExternal: Boolean = false,
+        fromBrowser: Boolean = false,
     ): Boolean {
         savedState.returnUri = null
-        val deeplink = DeepLink(uri, fromQR, refSource)
+        val deeplink = DeepLink(uri, fromQR, refSource, fromExternal)
         if (deeplink.route is DeepLinkRoute.Unknown) {
             viewModelScope.launch { showInvalidLinkToast(deeplink.route) }
             return false
@@ -797,18 +1009,49 @@ class RootViewModel(
         if (deeplink.route is DeepLinkRoute.Internal && !internal) {
             return true
         }
-        accountRepository.selectedStateFlow
-            .filter { it !is AccountRepository.SelectedState.Initialization }
+        // A scanned crypto address (send?address=…) is resolved against the multichain-aware
+        // repository, not the legacy selectedStateFlow which never emits for a multichain wallet.
+        val sendAddress = (deeplink.route as? DeepLinkRoute.Send)?.address
+        if (sendAddress != null) {
+            viewModelScope.launch { openSendWithAddress(sendAddress, deeplink) }
+            return true
+        }
+        unifiedAccountRepository.selectedTonWalletFlow
             .take(1)
-            .onEach { state ->
+            .onEach { wallet ->
                 val route = deeplink.route
                 if (route is DeepLinkRoute.Signer) {
                     processSignerDeepLink(route, fromQR)
-                } else if (state is AccountRepository.SelectedState.Wallet) {
-                    processDeepLink(state.wallet, deeplink, fromPackageName)
+                } else if (wallet != null) {
+                    processDeepLink(wallet, deeplink, fromPackageName, fromBrowser)
                 }
-            }.launch()
+            }
+            .launch()
         return true
+    }
+
+    private suspend fun openSendWithAddress(address: String, deeplink: DeepLink) {
+        val wallet = unifiedAccountRepository.getSelectedWallet() ?: return
+        if (wallet.isWatchOnly) {
+            return
+        }
+        if (wallet.type == WalletType.Multichain) {
+            openScreen(
+                WithdrawMulticoinFragment.create(
+                    initial = WithdrawMulticoinRoutes.Picker(presetAddress = address),
+                    analyticsFrom = Events.WithdrawFlow.WithdrawFlowFrom.DeepLink,
+                )
+            )
+        } else {
+            openScreen(
+                SendScreen.newInstance(
+                    wallet,
+                    targetAddress = address,
+                    type = SendScreen.Companion.Type.Default,
+                    from = deeplink.source.analytic,
+                )
+            )
+        }
     }
 
     fun processTonConnectDeepLink(deeplink: DeepLink, fromPackageName: String?) {
@@ -826,20 +1069,58 @@ class RootViewModel(
     private suspend fun processDeepLink(
         wallet: WalletEntity,
         deeplink: DeepLink,
-        fromPackageName: String?
+        fromPackageName: String?,
+        fromBrowser: Boolean = false
     ) {
         val route = deeplink.route
         L.d("processDeepLink route: $route")
         if (route is DeepLinkRoute.DnsRenew) {
             openScreen(DNSRenewScreen.newInstance(wallet, emptyList()))
         } else if (route is DeepLinkRoute.TonConnect) {
-            if (!wallet.isTonConnectSupported && accountRepository.getWallets().count { it.isTonConnectSupported } == 0) {
-                openScreen(AddWalletScreen.newInstance(true))
+            if (!wallet.isTonConnectSupported && unifiedAccountRepository.getTonWallets().count { it.isTonConnectSupported } == 0) {
+                openScreen(InitScreen.newInstance(InitArgs.Type.AddWallet))
                 return
             }
             processTonConnectDeepLink(deeplink, fromPackageName)
+        } else if (route is DeepLinkRoute.WalletConnect) {
+            val selected = unifiedAccountRepository.getSelectedWallet()
+            if (selected?.type != WalletType.Multichain) {
+                toast(Localization.wc_error_multichain_only)
+                return
+            }
+
+            val source = when {
+                deeplink.fromQR -> WcConnection.Qr
+                fromBrowser -> WcConnection.DApp
+                else -> WcConnection.Deeplink
+            }
+            wcRepository.pair(route.uri.toString(), source)
         } else if (route is DeepLinkRoute.Story) {
             showStory(route.id, "deep-link")
+        } else if (route is DeepLinkRoute.Raffle) {
+            // Raffles exist only for multichain wallets; ignore the route for legacy ones.
+            // The raw selected wallet is a legacy stub, so resolve the real type first.
+            val selected = unifiedAccountRepository.getSelectedWallet()
+            if (selected?.type == WalletType.Multichain && WalletFeature.Raffles.isEnabled) {
+                openScreen(RaffleFragment.newInstance(selected.id, route.id, route.source))
+            }
+        } else if (route is DeepLinkRoute.Migrate) {
+            if (WalletFeature.Migration.isEnabled) {
+                openScreen(MigrationFragment.newInstance(MigrationAnalytics.from(route.from)))
+            } else {
+                toast(Localization.migration_coming_soon)
+            }
+        } else if (route is DeepLinkRoute.AddWallet) {
+            openScreen(InitScreen.newInstance(InitArgs.Type.AddWallet, raffleSourceWalletId = route.raffleSourceWalletId))
+        } else if (route is DeepLinkRoute.Tabs.Activity) {
+            val selected = unifiedAccountRepository.getSelectedWallet() ?: wallet
+            if (selected.type == WalletType.Multichain) {
+                openScreen(EventsFragment())
+            } else {
+                openScreen(TxEventsScreen.newInstance(wallet))
+            }
+        } else if (route is DeepLinkRoute.Tabs.Collectibles) {
+            openScreen(CollectiblesScreen.newInstance(from = route.from))
         } else if (route is DeepLinkRoute.Tabs) {
             if (route is DeepLinkRoute.Tabs.Trading) {
                 TradeEntryTracker.markDeepLink()
@@ -854,9 +1135,11 @@ class RootViewModel(
                 )
             )
         } else if (route is DeepLinkRoute.Staking && !wallet.isWatchOnly) {
-            openScreen(StakingScreen.newInstance(wallet, from = "deeplink"))
+            val tonWallet = unifiedAccountRepository.getSelectedWallet() ?: wallet
+            openScreen(StakingScreen.newInstance(tonWallet, from = "deeplink"))
         } else if (route is DeepLinkRoute.StakingPool) {
-            openScreen(StakeViewerScreen.newInstance(wallet, address = route.poolAddress, name = ""))
+            val tonWallet = unifiedAccountRepository.getSelectedWallet() ?: wallet
+            openScreen(StakeViewerScreen.newInstance(tonWallet, address = route.poolAddress, name = ""))
         } else if (route is DeepLinkRoute.AccountEvent) {
             val address = route.address
             if (address == null) {
@@ -866,57 +1149,88 @@ class RootViewModel(
             }
         } else if (route is DeepLinkRoute.Transfer && !wallet.isWatchOnly) {
             processTransferDeepLink(wallet, deeplink, route)
+        } else if (route is DeepLinkRoute.EvmTransfer && !wallet.isWatchOnly) {
+            openEvmTransfer(route)
         } else if (route is DeepLinkRoute.PickWallet) {
             accountRepository.setSelectedWallet(route.walletId)
         } else if (route is DeepLinkRoute.Swap && !api.getConfig(wallet.network).flags.disableSwap) {
-            _eventFlow.tryEmit(
-                RootEvent.Swap(
-                    wallet = wallet,
-                    uri = api.getConfig(wallet.network).swapUri,
-                    address = wallet.address,
-                    from = route.from,
-                    to = route.to
+            val selected = unifiedAccountRepository.getSelectedWallet()
+            if (selected?.type == WalletType.Multichain) {
+                openScreen(
+                    SwapFragment.create(
+                        SwapRoutes.Swap(
+                            sellAssetId = route.fromAssetId,
+                            buyAssetId = route.toAssetId,
+                        )
+                    )
                 )
-            )
+            } else {
+                // Asset-id deeplinks are multichain-only: the legacy web swap can't open
+                // cross-chain pairs or most of the networks, so they are deliberately not
+                // mapped back to symbols — the screen opens with defaults as a fail-safe.
+                val isMultichainDeepLink = route.fromAssetId != null || route.toAssetId != null
+                _eventFlow.tryEmit(
+                    RootEvent.Swap(
+                        wallet = wallet,
+                        uri = api.getConfig(wallet.network).swapUri,
+                        address = wallet.address,
+                        from = route.from.takeUnless { isMultichainDeepLink } ?: "TON",
+                        to = route.to.takeUnless { isMultichainDeepLink },
+                    )
+                )
+            }
         } else if (route is DeepLinkRoute.Battery && !wallet.isWatchOnly) {
             openBattery(wallet, route)
         } else if (route is DeepLinkRoute.Purchase && !wallet.isWatchOnly) {
-            openScreen(DepositFragment())
-        } else if (route is DeepLinkRoute.Deposit && !wallet.isWatchOnly) {
-            val hasParams = route.fromToken != null || route.toToken != null || route.cashMethod != null
-            if (hasParams) {
-                openScreen(DepositFragment.create(
-                    DepositRoutes.Buy(
-                        ft = route.fromToken,
-                        tn = route.toNetwork,
-                        tt = route.toToken,
-                        fn = route.fromNetwork,
-                        cm = route.cashMethod,
-                    )
-                ))
+            if (unifiedAccountRepository.getSelectedWallet()?.type == WalletType.Multichain) {
+                openScreen(DepositMulticoinFragment.create(analyticsFrom = DepositFlowFrom.DeepLink))
             } else {
                 openScreen(DepositFragment())
             }
-        } else if (route is DeepLinkRoute.Withdraw && !wallet.isWatchOnly) {
-            val hasParams = route.fromToken != null || route.toToken != null || route.cashMethod != null
-            if (hasParams) {
-                openScreen(WithdrawFragment.create(
-                    WithdrawRoutes.WithdrawMethod(
-                        ft = route.fromToken,
-                        tn = route.toNetwork,
-                        tt = route.toToken,
-                        fn = route.fromNetwork,
-                        cm = route.cashMethod,
-                    )
-                ))
+        } else if (route is DeepLinkRoute.Deposit && !wallet.isWatchOnly) {
+            if (unifiedAccountRepository.getSelectedWallet()?.type == WalletType.Multichain) {
+                openScreen(DepositMulticoinFragment.create(analyticsFrom = DepositFlowFrom.DeepLink))
             } else {
-                openScreen(WithdrawFragment.create())
+                val hasParams = route.fromToken != null || route.toToken != null || route.cashMethod != null
+                if (hasParams) {
+                    openScreen(DepositFragment.create(
+                        DepositRoutes.Buy(
+                            ft = route.fromToken,
+                            tn = route.toNetwork,
+                            tt = route.toToken,
+                            fn = route.fromNetwork,
+                            cm = route.cashMethod,
+                        )
+                    ))
+                } else {
+                    openScreen(DepositFragment())
+                }
+            }
+        } else if (route is DeepLinkRoute.Withdraw && !wallet.isWatchOnly) {
+            if (unifiedAccountRepository.getSelectedWallet()?.type == WalletType.Multichain) {
+                openScreen(WithdrawMulticoinFragment.create(analyticsFrom = WithdrawFlowFrom.DeepLink))
+            } else {
+                val hasParams = route.fromToken != null || route.toToken != null || route.cashMethod != null
+                if (hasParams) {
+                    openScreen(WithdrawFragment.create(
+                        WithdrawRoutes.WithdrawMethod(
+                            ft = route.fromToken,
+                            tn = route.toNetwork,
+                            tt = route.toToken,
+                            fn = route.fromNetwork,
+                            cm = route.cashMethod,
+                        )
+                    ))
+                } else {
+                    openScreen(WithdrawFragment.create())
+                }
             }
         } else if (route is DeepLinkRoute.Exchange && !wallet.isWatchOnly) {
             val method = purchaseRepository.getMethod(
                 id = route.methodName,
                 network = wallet.network,
-                locale = settingsRepository.getLocale()
+                locale = settingsRepository.getLocale(),
+                walletId = wallet.id,
             )
             if (method == null) {
                 toast(Localization.payment_method_not_found)
@@ -930,10 +1244,10 @@ class RootViewModel(
                     )
                 )
             }
-        } else if (route is DeepLinkRoute.Backups && wallet.hasPrivateKey) {
-            openScreen(BackupScreen.newInstance(wallet))
+        } else if (route is DeepLinkRoute.Backups && (wallet.hasPrivateKey || wallet.isMultichain)) {
+            openScreen(BackupScreen.newInstance(WalletFlowSource.Settings))
         } else if (route is DeepLinkRoute.Settings) {
-            openScreen(SettingsScreen.newInstance(wallet, from = "deeplink"))
+            openScreen(SettingsScreen.newInstance("deeplink"))
         } else if (route is DeepLinkRoute.DApp) {
             val dAppUri = route.url.toUriOrNull()
             if (dAppUri == null) {
@@ -958,11 +1272,12 @@ class RootViewModel(
                 country = settingsRepository.country,
                 network = wallet.network,
                 locale = settingsRepository.getLocale(),
-                deeplink = dAppUri
+                deeplink = dAppUri,
+                walletId = wallet.multichainWalletId,
             )
 
             if (!isTrustedApp && settingsRepository.isDAppOpenConfirm(wallet.id, app.host)) {
-                openScreen(DAppConfirmFragment.newInstance(wallet.id, app, dAppUri))
+                openScreen(DappConfirmFragment.newInstance(wallet.id, app, dAppUri))
             } else {
                 openScreen(
                     DAppScreen.newInstance(
@@ -983,17 +1298,27 @@ class RootViewModel(
         } else if (route is DeepLinkRoute.SettingsExtensions) {
             openScreen(ExtensionsScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.SettingsNotifications) {
-            openScreen(SettingsScreen.newInstance(wallet, "deeplink"))
+            openScreen(SettingsScreen.newInstance("deeplink"))
         } else if (route is DeepLinkRoute.EditWalletLabel) {
-            openScreen(EditNameScreen.newInstance(wallet))
+            openScreen(EditNameScreen.newInstance())
         } else if (route is DeepLinkRoute.Camera && !wallet.isWatchOnly) {
             openScreen(CameraScreen.newInstance())
         } else if (route is DeepLinkRoute.Receive) {
-            openScreen(QrAssetFragment.newInstance())
+            val selected = unifiedAccountRepository.getSelectedWallet()
+            if (selected?.type == WalletType.Multichain) {
+                openScreen(
+                    DepositMulticoinFragment.create(
+                        initial = DepositMulticoinRoutes.Receive,
+                        analyticsFrom = DepositFlowFrom.DeepLink,
+                    )
+                )
+            } else {
+                openScreen(QrAssetFragment.newInstance())
+            }
         } else if (route is DeepLinkRoute.ManageAssets) {
             openScreen(TokensManageScreen.newInstance(wallet))
         } else if (route is DeepLinkRoute.WalletPicker) {
-            openScreen(PickerScreen.newInstance(from = "deeplink"))
+            openScreen(PickerScreen.newInstance())
         } else if (route is DeepLinkRoute.Jetton) {
             openTokenViewer(wallet, route)
         } else if (route is DeepLinkRoute.Asset) {
@@ -1003,8 +1328,6 @@ class RootViewModel(
                     from = Events.AssetScreen.AssetScreenFrom.DeepLink,
                 )
             )
-        } else if (route is DeepLinkRoute.Install) {
-            installAPK(route)
         } else {
             showInvalidLinkToast(deeplink.route)
         }
@@ -1016,16 +1339,18 @@ class RootViewModel(
         }
     }
 
-    private suspend fun installAPK(route: DeepLinkRoute.Install) {
-        if (!apkManager.install(context, route.file)) {
-            toast(Localization.invalid_link)
+    fun installDownloadedAPK(token: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (!apkManager.installDownloaded(context, token)) {
+                toast(Localization.failed)
+            }
         }
     }
 
     private suspend fun openBattery(wallet: WalletEntity, route: DeepLinkRoute.Battery) {
         val promoCode = route.promocode
         if (promoCode.isNullOrEmpty()) {
-            openScreen(BatteryScreen.newInstance(wallet, from = "deeplink", jetton = route.jetton))
+            openScreen(BatteryScreen.newInstance(wallet, from = BatteryNativeFrom.Deeplink, jetton = route.jetton))
         } else {
             loading(true)
             val validCode = api.batteryVerifyPurchasePromo(wallet.network, promoCode)
@@ -1035,7 +1360,7 @@ class RootViewModel(
                     BatteryScreen.newInstance(
                         wallet,
                         promoCode,
-                        "deeplink",
+                        BatteryNativeFrom.Deeplink,
                         jetton = route.jetton
                     )
                 )
@@ -1067,8 +1392,15 @@ class RootViewModel(
             return
         }
 
-        val decimals = route.jettonAddress?.let {
-            tokenRepository.getToken(wallet.accountId, wallet.network, it)
+        val selected = unifiedAccountRepository.getSelectedWallet() ?: wallet
+        if (selected.type == WalletType.Multichain) {
+            openMulticoinTransfer(selected, route)
+            return
+        }
+
+        val jettonMaster = route.jettonMaster()
+        val decimals = jettonMaster?.let {
+            tokenRepository.getToken(selected.accountId, selected.network, it)
         }?.decimals ?: WalletCurrency.TON.decimals
 
         val amount = route.amount?.let {
@@ -1077,15 +1409,104 @@ class RootViewModel(
 
         _eventFlow.tryEmit(
             RootEvent.Transfer(
-                wallet = wallet,
+                wallet = selected,
                 address = route.address,
                 amount = amount,
                 text = route.text,
-                jettonAddress = route.jettonAddress,
+                jettonAddress = jettonMaster,
                 bin = route.bin,
                 initStateBase64 = route.initStateBase64,
                 validUnit = route.exp,
                 source = deepLink.source,
+            )
+        )
+    }
+
+    private suspend fun openEvmTransfer(route: DeepLinkRoute.EvmTransfer) {
+        val selected = unifiedAccountRepository.getSelectedWallet() ?: return
+        if (selected.type != WalletType.Multichain) {
+            toast(Localization.invalid_link)
+            return
+        }
+        loading(true)
+        val account = findEvmAccount(selected.id, route)
+        loading(false)
+        val initial = if (account != null) {
+            WithdrawMulticoinRoutes.Send(
+                assetId = account.asset.id,
+                presetAddress = route.recipient,
+                presetAmount = route.amount?.toString(),
+            )
+        } else {
+            WithdrawMulticoinRoutes.Picker(presetAddress = route.recipient)
+        }
+        openScreen(
+            WithdrawMulticoinFragment.create(
+                initial = initial,
+                analyticsFrom = Events.WithdrawFlow.WithdrawFlowFrom.DeepLink,
+            )
+        )
+    }
+
+    private suspend fun findEvmAccount(
+        walletId: String,
+        route: DeepLinkRoute.EvmTransfer
+    ): AccountWithDetails? {
+        val repository = mcAccountRepository ?: return null
+        route.chain?.let { chain ->
+            return repository.findAccountOrNull(walletId, route.assetId(chain))
+        }
+        if (route.contract == null) {
+            return null
+        }
+        val matches = coroutineScope {
+            Chain.all.filterIsInstance<Chain.Evm>().filter { it.network.mode == Network.Mode.Mainnet }.map { chain ->
+                async { repository.findAccountOrNull(walletId, route.assetId(chain)) }
+            }.awaitAll()
+        }.filterNotNull()
+        return matches.singleOrNull()
+    }
+
+    private suspend fun McAccountRepository.findAccountOrNull(
+        walletId: String,
+        assetId: String
+    ): AccountWithDetails? {
+        return try {
+            findAccount(walletId, assetId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private suspend fun openMulticoinTransfer(wallet: WalletEntity, route: DeepLinkRoute.Transfer) {
+        val hasPayload = route.bin != null || route.initStateBase64 != null
+        val account = if (hasPayload) {
+            null
+        } else {
+            route.targetAssetId(wallet.testnet)?.let { assetId ->
+                runCatching { mcAccountRepository?.findAccount(wallet.id, assetId) }.getOrNull()
+            }
+        }
+        val initial = if (account != null) {
+            WithdrawMulticoinRoutes.Send(
+                assetId = account.asset.id,
+                presetAddress = route.address,
+                presetAmount = route.amount?.toString(),
+                presetComment = route.text,
+            )
+        } else {
+            WithdrawMulticoinRoutes.Picker(
+                presetAddress = route.address,
+                presetComment = route.text,
+            )
+        }
+
+        openScreen(
+            WithdrawMulticoinFragment.create(
+                initial = initial,
+                analyticsFrom = Events.WithdrawFlow.WithdrawFlowFrom.DeepLink,
             )
         )
     }
@@ -1106,7 +1527,7 @@ class RootViewModel(
             wallet = wallet,
             eventId = hash,
             options = ActionOptions(
-                safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
+                safeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network),
             )
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))
@@ -1119,7 +1540,7 @@ class RootViewModel(
             wallet = wallet,
             event = event,
             options = ActionOptions(
-                safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
+                safeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network),
             )
         ).filterIsInstance<HistoryItem.Event>().firstOrNull() ?: return
         openScreen(TransactionScreen.newInstance(tx))

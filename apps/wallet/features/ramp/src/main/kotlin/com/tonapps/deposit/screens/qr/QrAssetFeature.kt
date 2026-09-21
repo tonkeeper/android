@@ -12,8 +12,8 @@ import com.tonapps.extensions.CacheKey
 import com.tonapps.extensions.TimedCacheMemory
 import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.legacy.enteties.AssetsExtendedEntity
+import com.tonapps.log.L
 import com.tonapps.mvi.MviFeature
-import com.tonapps.mvi.MviRelay
 import com.tonapps.mvi.contract.MviAction
 import com.tonapps.mvi.contract.MviState
 import com.tonapps.mvi.contract.MviViewState
@@ -22,10 +22,10 @@ import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
+import kotlinx.coroutines.CancellationException
 
 sealed interface QrAssetAction : MviAction {
     object Init : QrAssetAction
-    object EnableTron : QrAssetAction
     data class SelectTab(val tab: QrAssetTab) : QrAssetAction
 }
 
@@ -39,12 +39,12 @@ data class QrAssetSelectedData(
     val qrContent: String,
     val wallet: WalletEntity,
     val isBatteryEnabled: Boolean,
-    val showBlockchain: Boolean,
 )
 
 data class QrAssetState(
     val data: QrAssetSelectedData? = null,
     val isTabsVisible: Boolean = false,
+    val isError: Boolean = false,
 ) : MviState
 
 class QrAssetViewState(
@@ -54,11 +54,8 @@ class QrAssetViewState(
 data class QrAssetData(
     val token: TokenEntity? = null,
     val withBuyButton: Boolean = false,
+    val walletId: String? = null,
 )
-
-sealed interface QrAssetEvent {
-    data object ShowTronUsdtEnable : QrAssetEvent
-}
 
 class QrAssetFeature(
     private val data: QrAssetData,
@@ -77,13 +74,12 @@ class QrAssetFeature(
 
     private val tokensCache = TimedCacheMemory<Keys>()
 
-    private val relay = MviRelay<QrAssetEvent>()
-    val events = relay.events
-
     init {
         AnalyticsHelper.Default.simpleTrackEvent("receive_open")
         AnalyticsHelper.Default.events.depositFlow.depositViewReceiveTokens(
-            from = Events.DepositFlow.DepositFlowFrom.WalletScreen
+            from = Events.DepositFlow.DepositFlowFrom.WalletScreen,
+            addFundsOption = Events.DepositFlow.DepositFlowAddFundsOption.ReceiveTokens,
+            network = Events.DepositFlow.DepositFlowNetwork.TON,
         )
     }
 
@@ -100,7 +96,6 @@ class QrAssetFeature(
     override suspend fun executeAction(action: QrAssetAction) {
         when (action) {
             is QrAssetAction.Init -> init()
-            is QrAssetAction.EnableTron -> enableTron()
             is QrAssetAction.SelectTab -> {
                 when (action.tab) {
                     QrAssetTab.TON -> selectToken(token = TokenEntity.TON)
@@ -111,26 +106,38 @@ class QrAssetFeature(
     }
 
     private suspend fun init() {
-        val wallet = accountRepository.requiredSelectedWallet()
-        val token = getDefaultToken()
-        val address = when (token.blockchain) {
-            Blockchain.TON -> wallet.address
-            Blockchain.TRON -> accountRepository.getTronAddress(wallet.id)!!
-        }
-        val qrContent = getQrContent(address, token, wallet)
-        val isBatteryEnabled = !api.getConfig(wallet.network).flags.disableBattery
+        val wallet = try {
+            val resolved = resolveWallet()
+            val token = getDefaultToken()
+            val address = when (token.blockchain) {
+                Blockchain.TON -> resolved.address
+                Blockchain.TRON -> accountRepository.getTronAddress(resolved.id)
+            }
+            if (address == null) {
+                setState { copy(isError = true) }
+                return
+            }
+            val qrContent = getQrContent(address, token, resolved)
+            val isBatteryEnabled = !api.getConfig(resolved.network).flags.disableBattery
 
-        setState {
-            copy(
-                data = QrAssetSelectedData(
-                    token = token,
-                    address = address,
-                    qrContent = qrContent,
-                    wallet = wallet,
-                    isBatteryEnabled = isBatteryEnabled,
-                    showBlockchain = settingsRepository.getTronUsdtEnabled(wallet.id),
-                ),
-            )
+            setState {
+                copy(
+                    data = QrAssetSelectedData(
+                        token = token,
+                        address = address,
+                        qrContent = qrContent,
+                        wallet = resolved,
+                        isBatteryEnabled = isBatteryEnabled,
+                    ),
+                )
+            }
+            resolved
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            L.e(e)
+            setState { copy(isError = true) }
+            return
         }
 
         val tokens = getTokens(wallet)
@@ -144,19 +151,14 @@ class QrAssetFeature(
     }
 
     private suspend fun selectToken(token: TokenEntity) {
-        val wallet = accountRepository.requiredSelectedWallet()
-        if (token == TokenEntity.TRON_USDT && !settingsRepository.getTronUsdtEnabled(wallet.id)) {
-            relay.emit(QrAssetEvent.ShowTronUsdtEnable)
-            return
-        }
-
+        val wallet = resolveWallet()
         val tokens = getTokens(wallet)
         updateToken(tokens, token, wallet)
     }
 
     private suspend fun getTokens(wallet: WalletEntity): List<AssetsExtendedEntity> {
         return tokensCache.getOrLoad(Tokens) {
-            val isSafeMode = settingsRepository.isSafeModeEnabled(wallet.network)
+            val isSafeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
 
             tokenRepository.mustGet(
                 settingsRepository.currency,
@@ -183,27 +185,6 @@ class QrAssetFeature(
         }
     }
 
-    private suspend fun enableTron() {
-        val wallet = accountRepository.requiredSelectedWallet()
-
-        val tokens = getTokens(wallet)
-        val usdtIndex = tokens.indexOfFirst { it.isUsdt }
-
-        val sortAddresses = mutableListOf<String>()
-        tokens.forEachIndexed { index, token ->
-            sortAddresses.add(token.address)
-            if (index == usdtIndex + 1 && token.address != TokenEntity.TRON_USDT.address) {
-                sortAddresses.add(TokenEntity.TRON_USDT.address)
-            }
-        }
-
-        settingsRepository.setTokenHidden(wallet.id, TokenEntity.TRON_USDT.address, false)
-        settingsRepository.setTokenPinned(wallet.id, TokenEntity.TRON_USDT.address, true)
-        settingsRepository.setTokensSort(wallet.id, sortAddresses)
-
-        updateToken(tokens, TokenEntity.TRON_USDT, wallet)
-    }
-
     private suspend fun updateToken(
         tokens: List<AssetsExtendedEntity>,
         token: TokenEntity,
@@ -221,7 +202,10 @@ class QrAssetFeature(
 
         val activeAddress = when (token.blockchain) {
             Blockchain.TON -> wallet.address
-            Blockchain.TRON -> accountRepository.getTronAddress(wallet.id)!!
+            Blockchain.TRON -> accountRepository.getTronAddress(wallet.id)
+        }
+        if (activeAddress == null) {
+            return
         }
 
         val qrContent = getQrContent(activeAddress, token, wallet)
@@ -230,11 +214,19 @@ class QrAssetFeature(
             address = activeAddress,
             qrContent = qrContent,
             wallet = wallet,
-            isBatteryEnabled = isBatteryEnabled,
-            showBlockchain = settingsRepository.getTronUsdtEnabled(wallet.id)
+            isBatteryEnabled = isBatteryEnabled
         )
 
         setState { copy(data = data, isTabsVisible = isTabsVisible) }
+    }
+
+    private suspend fun resolveWallet(): WalletEntity {
+        val walletId = data.walletId
+        if (walletId != null) {
+            return accountRepository.getWalletById(walletId)
+                ?: accountRepository.requiredSelectedWallet()
+        }
+        return accountRepository.requiredSelectedWallet()
     }
 
     private fun getQrContent(address: String, token: TokenEntity, wallet: WalletEntity): String {

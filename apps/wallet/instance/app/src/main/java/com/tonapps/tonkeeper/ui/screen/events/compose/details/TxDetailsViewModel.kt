@@ -43,7 +43,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ui.components.details.UiDetails
-import ui.components.popup.ComposeActionItem
 import java.util.Locale
 
 class TxDetailsViewModel(
@@ -68,10 +67,6 @@ class TxDetailsViewModel(
         private const val OPERATION_ROW_ID = "operation"
         private const val DESCRIPTION_ROW_ID = "description"
         private const val PROTOCOL_ROW_ID = "protocol"
-
-        private const val NOT_SPAM_ACTION_ID = "not_spam"
-        private const val REPORT_SPAM_ACTION_ID = "report_spam"
-        private const val OPEN_EXPLORER_ACTION_ID = "open_explorer"
     }
 
     private val locale: Locale
@@ -104,10 +99,15 @@ class TxDetailsViewModel(
     private val isUsdt: Boolean
         get() = primaryValue?.currency?.isUSDT == true
 
+    private val rateTokens: List<String>
+        get() = (action.tokens.map { it.address } + WalletCurrency.TON.address).distinct()
+
     private val title: CharSequence?
         get() {
             return if (isSimplePreview) {
                 action.body.value
+            } else if (action.type == ActionType.DomainRenewal) {
+                action.subtitle
             } else {
                 action.product?.title ?: (incomingFormatted ?: outgoingFormatted)
             }
@@ -134,9 +134,6 @@ class TxDetailsViewModel(
                 else -> UiState.Spam.No
             }
         }
-
-    private val _uiActionItemsFlow = MutableStateFlow<List<ComposeActionItem>>(emptyList())
-    val uiActionItemsFlow = _uiActionItemsFlow.asStateFlow()
 
     private val _uiStateFlow = MutableStateFlow(UiState.Data(
         hash = txId.shortAddress,
@@ -178,12 +175,8 @@ class TxDetailsViewModel(
         }
     }
 
-    private fun updateUiActionItems() {
-        _uiActionItemsFlow.value = buildActionItems()
-    }
-
     private suspend fun updateData() {
-        val rates = ratesRepository.getRates(wallet.network, currency, action.tokens.map { it.address })
+        val rates = ratesRepository.getRates(wallet.network, currency, rateTokens)
         val rateAmount = if (!isUsdt && primaryValue != null) {
             val value = rates.convert(primaryValue.currency.code, primaryValue.value)
             if (value.isPositive) {
@@ -201,8 +194,6 @@ class TxDetailsViewModel(
                 details = details(rates)
             )
         }
-
-        updateUiActionItems()
     }
 
     private fun accountRow(
@@ -342,6 +333,16 @@ class TxDetailsViewModel(
                 }
             }
 
+            if (action.type == ActionType.DomainRenewal) {
+                action.description?.let {
+                    add(UiDetails.Row(
+                        id = DESCRIPTION_ROW_ID,
+                        key = getString(Localization.description),
+                        value = it
+                    ))
+                }
+            }
+
             if (action.type == ActionType.DepositStake && action.account == null) {
                 action.subtitle?.let {
                     add(UiDetails.Row(
@@ -389,14 +390,6 @@ class TxDetailsViewModel(
         }
     }
 
-    fun onClickActionMenuItem(id: String) {
-        when (id) {
-            OPEN_EXPLORER_ACTION_ID -> openTx()
-            NOT_SPAM_ACTION_ID -> markAsNotSpam()
-            REPORT_SPAM_ACTION_ID -> markAsSpam()
-        }
-    }
-
     private fun clickOnComment() {
         val text = action.text ?: return
         if (text is TxActionBody.Text.Encrypted) {
@@ -437,7 +430,7 @@ class TxDetailsViewModel(
                     network = wallet.network,
                     address = nftAddress
                 ) ?: throw IllegalStateException("NFT not found")
-                openScreen(NftScreen.newInstance(wallet, nft))
+                openScreen(NftScreen.newInstance(nft))
             } catch (e: Throwable) {
                 toast(Localization.unknown_error)
             }
@@ -484,8 +477,6 @@ class TxDetailsViewModel(
             settingsRepository.setSpamStateTransaction(wallet.id, txId, SpamTransactionState.NOT_SPAM)
             eventsRepository.removeSpam(wallet.accountId, wallet.network, txId)
             toast(Localization.tx_marked_as_not_spam)
-
-            updateUiActionItems()
         }
     }
 
@@ -508,43 +499,15 @@ class TxDetailsViewModel(
                     recipient = wallet.accountId
                 )
                 eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)
+                _uiStateFlow.update {
+                    it.copy(spam = UiState.Spam.Spam)
+                }
                 loading(false)
                 toast(Localization.tx_marked_as_spam)
             } catch (ignored: Throwable) {
                 loading(false)
                 toast(Localization.unknown_error)
             }
-
-            updateUiActionItems()
         }
-    }
-
-    private fun buildActionItems(): List<ComposeActionItem> {
-        val actionItems = mutableListOf<ComposeActionItem>()
-        if (!action.isOut && !wallet.testnet && !wallet.isWatchOnly) {
-            if (spam == UiState.Spam.Spam) {
-                actionItems.add(ComposeActionItem(
-                    id = NOT_SPAM_ACTION_ID,
-                    text = getString(Localization.not_spam),
-                    icon = context.composeIcon(UIKitIcon.ic_block_16)
-                ))
-            } else if (spam == UiState.Spam.Maybe) {
-                actionItems.add(ComposeActionItem(
-                    id = REPORT_SPAM_ACTION_ID,
-                    text = getString(Localization.report_spam),
-                    icon = context.composeIcon(UIKitIcon.ic_block_16)
-                ))
-            }
-        }
-
-        val openExplorerText = if (tx.blockchain == Blockchain.TON) Localization.open_tonviewer else Localization.open_explorer
-
-        actionItems.add(ComposeActionItem(
-            id = OPEN_EXPLORER_ACTION_ID,
-            text = getString(openExplorerText),
-            icon = context.composeIcon(UIKitIcon.ic_globe_16)
-        ))
-
-        return actionItems.toList()
     }
 }

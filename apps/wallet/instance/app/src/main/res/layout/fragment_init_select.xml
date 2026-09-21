@@ -12,13 +12,12 @@
             android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/offsetLarge">
+            android:layout_marginHorizontal="@dimen/offsetMedium">
 
             <uikit.widget.TextHeaderView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="@dimen/offsetLarge"
-                android:layout_marginTop="24dp"
+                android:layout_marginHorizontal="@dimen/offsetMedium"
                 android:description="@string/choose_wallet_subtitle"
                 android:title="@string/choose_wallet_title" />
 
@@ -26,7 +25,7 @@
                 android:id="@+id/accounts"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetLarge"
+                android:layout_marginTop="@dimen/offsetMedium"
                 android:layout_marginBottom="72dp" />
 
         </uikit.widget.ColumnLayout>
@@ -38,7 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@drawable/bg_gradient"
-        android:paddingHorizontal="@dimen/offsetLarge"
+        android:paddingHorizontal="@dimen/offsetMedium"
         android:paddingTop="@dimen/offsetMedium">
 
         <Button

@@ -12,8 +12,11 @@ import com.tonapps.extensions.activity
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.legacy.enteties.WalletPurchaseMethodEntity
+import com.tonapps.bus.generated.Events.DappBrowser.DappBrowserAssetChain
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.koin.analytics
+import com.tonapps.tonkeeper.koin.environment
+import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textPrimaryColor
@@ -26,7 +29,23 @@ object BrowserHelper {
 
     private fun Uri.isHttpOrHttps() = scheme == "http" || scheme == "https"
 
-    fun BrowserAppEntity.openDApp(context: Context, wallet: WalletEntity, source: String, country: String) {
+    fun BrowserAppEntity.openDApp(
+        context: Context,
+        wallet: WalletEntity,
+        source: String,
+        country: String,
+        multichain: Boolean = false,
+    ) {
+        val dappAnalytics = DappBrowserAnalytics.catalogContext(
+            source = source,
+            app = this,
+            fallbackChain = if (multichain) {
+                DappBrowserAssetChain.Multichain
+            } else {
+                DappBrowserAssetChain.Ton
+            },
+            country = context.environment?.deviceCountry
+        )
         if (useCustomTabs || useTG) {
             if (useCustomTabs) {
                 open(context, url.toString())
@@ -37,8 +56,9 @@ object BrowserHelper {
                 url = url.toString(),
                 name = name,
                 source = source,
-                country = country
+                country = context.environment?.deviceCountry ?: country
             )
+            dappAnalytics?.click()
         } else {
             Navigation.from(context)?.add(
                 DAppScreen.newInstance(
@@ -46,7 +66,8 @@ object BrowserHelper {
                     title = name,
                     url = url,
                     iconUrl = icon.toString(),
-                    source = source
+                    source = source,
+                    analytics = dappAnalytics
                 )
             )
         }

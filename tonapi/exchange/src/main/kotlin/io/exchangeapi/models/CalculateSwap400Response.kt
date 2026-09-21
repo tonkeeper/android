@@ -16,8 +16,17 @@ import kotlinx.serialization.Contextual
 
 @Serializable
 data class CalculateSwap400Response(
+    /* Human-readable message, safe to show the user */
     @SerialName(value = "error")
-    val error: String
+    val error: String,
+
+    /* Stable machine-readable code — clients should branch on this */
+    @SerialName(value = "code")
+    val code: String,
+
+    /* UUID v4 for correlating the response to server logs */
+    @SerialName(value = "request_id")
+    val requestId: String
 ) {
 }
 

@@ -1,0 +1,45 @@
+# Multichain Tonstakers deposit: Wallet → Stake → amount 1 → confirm.
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — Tonstakers deposit 1 GRAM"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+- extendedWaitUntil:
+    visible: "^Stake$"
+    timeout: 60000
+- tapOn:
+    text: "^Stake$"
+
+- extendedWaitUntil:
+    visible:
+      id: stake_amount
+    timeout: 60000
+- assertVisible: Tonstakers
+
+- tapOn:
+    id: stake_amount
+- inputText: "1"
+
+- extendedWaitUntil:
+    visible:
+      id: next_button
+      enabled: true
+    timeout: 30000
+- tapOn:
+    id: next_button
+
+- extendedWaitUntil:
+    visible: Confirm Action
+    timeout: 60000
+- tapOn:
+    id: button
+
+- runFlow: "../../../steps/wallet/unlock_passcode_if_needed.yaml"
+
+- extendedWaitUntil:
+    visible: History
+    timeout: 180000

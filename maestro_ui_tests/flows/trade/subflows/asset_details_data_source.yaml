@@ -1,0 +1,46 @@
+# TK-3277: data-source attribution under "24h Trading activity" comes from the
+# API `info_source` — TON-network assets (GRAM, USD₮) say dyor.io, every other
+# network (BTC, ETH, BNB, TRX) says coinmarketcap.com.
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+# Env: SCREENSHOT_DIR (optional, default "." — where per-token screenshots go)
+name: "Multichain — asset details data source (TK-3277)"
+appId: com.ton_keeper.debug
+env:
+  SCREENSHOT_DIR: "."
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow: "../../../steps/trade/open_multichain_trade.yaml"
+
+# TON network → dyor.io
+- runFlow:
+    file: "../../../steps/trade/assert_asset_details_data_source.yaml"
+    env:
+      SYMBOL: "GRAM"
+      EXPECTED_SOURCE: "dyor.io"
+- runFlow:
+    file: "../../../steps/trade/assert_asset_details_data_source.yaml"
+    env:
+      SYMBOL: "USD₮"
+      EXPECTED_SOURCE: "dyor.io"
+
+# Other networks → coinmarketcap.com
+- runFlow:
+    file: "../../../steps/trade/assert_asset_details_data_source.yaml"
+    env:
+      SYMBOL: "BTC"
+      EXPECTED_SOURCE: "coinmarketcap.com"
+- runFlow:
+    file: "../../../steps/trade/assert_asset_details_data_source.yaml"
+    env:
+      SYMBOL: "ETH"
+      EXPECTED_SOURCE: "coinmarketcap.com"
+- runFlow:
+    file: "../../../steps/trade/assert_asset_details_data_source.yaml"
+    env:
+      SYMBOL: "BNB"
+      EXPECTED_SOURCE: "coinmarketcap.com"
+- runFlow:
+    file: "../../../steps/trade/assert_asset_details_data_source.yaml"
+    env:
+      SYMBOL: "TRX"
+      EXPECTED_SOURCE: "coinmarketcap.com"

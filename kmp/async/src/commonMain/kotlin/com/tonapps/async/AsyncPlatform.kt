@@ -11,4 +11,5 @@ expect object ThreadChecker {
     fun isMainThread(): Boolean
     fun isStateThread(): Boolean
     fun isStateDiffThread(): Boolean
+    fun finishProcess()
 }

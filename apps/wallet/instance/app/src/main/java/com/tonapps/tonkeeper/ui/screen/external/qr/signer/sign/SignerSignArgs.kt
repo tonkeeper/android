@@ -4,7 +4,7 @@ import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.cell.Cell
 import uikit.base.BaseArgs
 

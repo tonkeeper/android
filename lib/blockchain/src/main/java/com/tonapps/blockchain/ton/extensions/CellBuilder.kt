@@ -1,6 +1,9 @@
 package com.tonapps.blockchain.ton.extensions
 
 import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.blockchain.ton.toBigInt
+import kotlinx.io.bytestring.ByteString
+import okio.ByteString.Companion.toByteString
 import org.ton.block.Coins
 import org.ton.block.MsgAddress
 import org.ton.block.MsgAddressInt
@@ -8,8 +11,6 @@ import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.cell.CellBuilder.Companion.beginCell
 import org.ton.contract.CellStringTlbConstructor
-import org.ton.tl.ByteString
-import org.ton.tl.ByteString.Companion.toByteString
 import org.ton.tlb.CellRef
 import org.ton.tlb.TlbCodec
 import org.ton.tlb.storeRef
@@ -49,7 +50,7 @@ fun asCellRef(src: String?): Cell? {
 
 fun CellBuilder.storeStringTail(src: String) = apply {
     val bytes = src.encodeToByteArray()
-    storeTlb(CellStringTlbConstructor, bytes.toByteString())
+    storeTlb(CellStringTlbConstructor, ByteString(bytes))
 }
 
 fun CellBuilder.storeMaybeStringTail(src: String?) = apply {
@@ -129,5 +130,5 @@ fun CellBuilder.storeAddress(value: MsgAddress) = apply {
 }
 
 fun CellBuilder.storeQueryId(value: BigInteger) = apply {
-    storeUInt(value, 64)
+    storeUInt(value.toBigInt(), 64)
 }

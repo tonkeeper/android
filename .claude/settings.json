@@ -11,6 +11,7 @@
       "Bash(git blame:*)",
       "Bash(git stash list:*)",
       "Bash(ls:*)",
+      "Bash(cd:*)",
       "Bash(find:*)",
       "Bash(cat:*)",
       "Bash(head:*)",
@@ -42,7 +43,16 @@
       "Bash(uname:*)",
       "Read",
       "Glob",
-      "Grep"
+      "Grep",
+      "Bash(adb:*)",
+      "Bash(maestro:*)",
+      "Bash(maestro_ui_tests/tools/*)",
+      "Bash(./maestro_ui_tests/tools/*)",
+      "Bash(python3 maestro_ui_tests/tools/*)",
+      "Bash(mitmdump:*)",
+      "Bash(pkill -f mitmdump)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)"
     ],
     "deny": []
   }

@@ -31,9 +31,7 @@ data class Trade(
     @SerialName(value = "routerAddress")
     val routerAddress: String? = null,
     @SerialName(value = "stonfiRawTrade")
-    val stonfiRawTrade: StonFiTrade? = null,
-    @SerialName(value = "dedustRawTrade")
-    val dedustRawTrade: List<DeDustTrade>? = null
+    val stonfiRawTrade: StonFiTrade? = null
 ) {
 }
 

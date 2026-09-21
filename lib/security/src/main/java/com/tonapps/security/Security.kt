@@ -8,7 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.security.crypto.EncryptedSharedPreferences
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.bus.core.IssueHelper
 import com.tonapps.extensions.getByteArray
 import com.tonapps.log.L
 import java.security.MessageDigest
@@ -54,7 +54,7 @@ class SecurityStorageBox(
 
                     return SecurityStorageBox(prefs)
                 } catch (e: Throwable) {
-                    FirebaseCrashlytics.getInstance()
+                    IssueHelper
                         .recordException(KeyHelperException.Create("Can't create new KeyStore", e))
 
                     throw e
@@ -165,7 +165,7 @@ object Security {
             L.e(e, "Error during private key generation")
 
             throw KeyHelperException.Create("Failed to generate AES SK").also {
-                FirebaseCrashlytics.getInstance()
+                IssueHelper
                     .recordException(it)
             }
         }

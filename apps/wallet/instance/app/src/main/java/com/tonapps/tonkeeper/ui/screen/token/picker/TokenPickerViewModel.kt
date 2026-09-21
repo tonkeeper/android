@@ -34,7 +34,7 @@ class TokenPickerViewModel(
     private val api: API,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(wallet.network)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
 
     private val _selectedTokenFlow = MutableStateFlow(selectedToken)
 
@@ -47,7 +47,7 @@ class TokenPickerViewModel(
 
     private val tokensFlow = settingsRepository.currencyFlow.map { currency ->
         val tokens = tokenRepository.get(currency, wallet.accountId, wallet.network)?.filter {
-            it.balance.isTransferable && !it.isTrx
+            it.balance.isTransferable
         } ?: emptyList()
 
         val list = if (allowedTokens.isNotEmpty()) {
@@ -57,7 +57,7 @@ class TokenPickerViewModel(
         }
 
         if (safeMode) {
-            val safeModeList = mutableListOf< AccountTokenEntity>()
+            val safeModeList = mutableListOf<AccountTokenEntity>()
             for (token in list) {
                 if (token.verified) {
                     safeModeList.add(token)
@@ -85,17 +85,15 @@ class TokenPickerViewModel(
             )
         }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator)
 
-        val tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(wallet.id)
-
         sortedTokens.mapIndexed { index, tokenExtendedEntity ->
             val token = (tokenExtendedEntity.raw as AssetsEntity.Token).token
             Item.Token(
                 position = ListCell.getPosition(sortedTokens.size, index),
                 raw = token,
                 selected = token.address == selectedToken.address,
-                balance = CurrencyFormatter.format(token.symbol, token.balance.uiBalance),
+                balance = CurrencyFormatter.format(token.symbol, token.balance.uiBalance, compact = true),
                 hiddenBalance = settingsRepository.hiddenBalances,
-                showNetwork = tronUsdtEnabled && (token.isUsdt || token.isTrc20)
+                showNetwork = token.isUsdt || token.isTrc20
             )
         }
     }.flowOn(Dispatchers.IO)

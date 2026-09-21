@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center">
 
-        <com.tonapps.tonkeeper.view.BatteryView
+        <uikit.widget.BatteryView
             style="@style/Battery.VeryBig"
             android:id="@+id/battery_view"
             android:layout_gravity="center"
@@ -50,6 +50,18 @@
             android:text="@string/battery_refill_subtitle"
             android:textAppearance="@style/TextAppearance.Body1"
             android:textColor="?attr/textSecondaryColor" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/battery_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:paddingHorizontal="@dimen/offsetMedium"
+            android:gravity="center"
+            android:text="@string/battery_refill_negative_balance"
+            android:textAppearance="@style/TextAppearance.Body2"
+            android:textColor="?attr/accentRedColor"
+            android:visibility="gone" />
 
     </uikit.widget.ColumnLayout>
 

@@ -37,11 +37,11 @@ data class ExchangeResult(
     @SerialName(value = "estimated_duration")
     val estimatedDuration: Int,
 
-    /* Memo / Destination Tag the user must include with the deposit transfer (when required by the source chain). */
+    /* Memo / Destination Tag the user must include with the deposit transfer (when required by the source chain) */
     @SerialName(value = "payin_extra_id")
     val payinExtraId: String? = null,
 
-    /* Human-readable name of the extra id required at the destination (e.g. \"Destination Tag\", \"Memo\"). Empty when not required. */
+    /* Human-readable name of the extra id required at the destination (e.g. \"Destination Tag\", \"Memo\"). Empty when not required */
     @SerialName(value = "extra_id_name")
     val extraIdName: String? = null
 ) {

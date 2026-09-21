@@ -3,6 +3,9 @@ package com.tonapps.wallet.api.entity
 import android.net.Uri
 import android.os.Parcelable
 import androidx.core.net.toUri
+import com.tonapps.chainkit.core.chain.model.account.Address
+import com.tonapps.chainkit.core.chain.model.account.Asset
+import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.extensions.toStringList
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.Constants
@@ -67,6 +70,7 @@ data class ConfigEntity(
     val termsOfUseUrl: String,
     val webSwapsUrl: String,
     val tronFeeFaqUrl: String,
+    val explorers: List<ExplorerEntity> = ExplorerEntity.defaults,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -151,6 +155,7 @@ data class ConfigEntity(
         termsOfUseUrl = json.getString("terms_of_use"),
         webSwapsUrl = json.optString("web_swaps_url", Constants.SWAP_API),
         tronFeeFaqUrl = json.getString("faq_tron_fee_url"),
+        explorers = ExplorerEntity.of(json.optJSONArray("explorers")),
     )
 
     constructor() : this(
@@ -207,17 +212,33 @@ data class ConfigEntity(
         privacyPolicyUrl = "https://tonkeeper.com/privacy",
         termsOfUseUrl = "https://tonkeeper.com/terms",
         webSwapsUrl = Constants.SWAP_API,
-        tronFeeFaqUrl = "https://tonkeeper.helpscoutdocs.com/article/137-multichain"
+        tronFeeFaqUrl = "https://tonkeeper.helpscoutdocs.com/article/137-multichain",
+        explorers = ExplorerEntity.defaults,
     )
 
-    fun formatTransactionExplorer(testnet: Boolean, tron: Boolean, hash: String): String {
-        return if (tron) {
-            "https://tronscan.org/#/transaction/$hash"
-        } else if (testnet) {
-            "https://testnet.tonviewer.com/transaction/$hash"
-        } else {
-            transactionExplorer.format(hash)
+    fun explorerFor(chain: Chain): ExplorerEntity? =
+        explorers.firstOrNull { it.chain.equals(chain.network.type.id, ignoreCase = true) }
+
+    fun explorerUrl(asset: Asset, accountAddress: Address?): String? {
+        val explorer = explorerFor(asset.chain) ?: return null
+        return when (asset) {
+            is Asset.Token -> explorer.formatToken(asset.contract.display)
+            is Asset.Coin -> accountAddress?.let { explorer.formatAccount(it.display) }
         }
+    }
+
+    fun txExplorerUrl(chain: Chain, hash: String): String? =
+        explorerFor(chain)?.formatTx(hash)
+
+    fun formatTransactionExplorer(testnet: Boolean, tron: Boolean, hash: String): String {
+        if (tron) {
+            return txExplorerUrl(Chain.Tron.Mainnet, hash)
+                ?: "https://tronscan.org/#/transaction/$hash"
+        }
+        if (testnet) {
+            return "https://testnet.tonviewer.com/transaction/$hash"
+        }
+        return txExplorerUrl(Chain.Ton.Mainnet, hash) ?: transactionExplorer.format(hash)
     }
 
     companion object {

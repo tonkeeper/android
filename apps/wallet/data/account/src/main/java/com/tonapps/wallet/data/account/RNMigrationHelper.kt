@@ -9,8 +9,8 @@ import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallet.Companion.int
-import org.ton.api.pub.PublicKeyEd25519
-import org.ton.crypto.hex
+import kotlinx.io.bytestring.hexToByteString
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 internal class RNMigrationHelper(
     private val rnLegacy: RNLegacy
@@ -70,7 +70,7 @@ internal class RNMigrationHelper(
 
             val entity = WalletEntity(
                 id = legacyWallet.identifier,
-                publicKey = PublicKeyEd25519(hex(legacyWallet.pubkey)),
+                publicKey = PublicKeyEd25519(legacyWallet.pubkey.hexToByteString()),
                 type = type,
                 version = version,
                 label = label,

@@ -1,0 +1,49 @@
+# Env: NETWORK_NAME, ADDRESS_TITLE, DISCLAIMER, PREV_NETWORK
+# PREV_NETWORK is the row above this network (or the list subtitle for TON).
+# Home badges (ARBITRUM, BASE) sit under the sheet and steal a bare tap.
+# Do not default PREV_NETWORK here — Maestro env: in this file overrides the caller.
+appId: com.ton_keeper.debug
+---
+- assertVisible:
+    text: ${NETWORK_NAME}
+    below: ${PREV_NETWORK}
+- copyTextFrom:
+    text: ".*\\.\\.\\..*"
+    below:
+      text: ${NETWORK_NAME}
+      below: ${PREV_NETWORK}
+- tapOn:
+    text: ".*\\.\\.\\..*"
+    below:
+      text: ${NETWORK_NAME}
+      below: ${PREV_NETWORK}
+
+- evalScript: ${output.shortAddress = maestro.copiedText; output.addrPrefixRegex = output.shortAddress.split('...')[0] + '.*'}
+- assertTrue:
+    condition: ${output.shortAddress != null && output.shortAddress.indexOf('...') >= 0}
+    label: ${NETWORK_NAME} short address visible
+- waitForAnimationToEnd:
+    timeout: 300
+- extendedWaitUntil:
+    visible: ${ADDRESS_TITLE}
+    timeout: 150
+- assertVisible: ${DISCLAIMER}
+- copyTextFrom:
+    id: wallet_address_text
+- evalScript: ${output.fullAddr = (maestro.copiedText || '').replace(/\n/g, ''); var parts = output.shortAddress.split('...'); output.addrOk = parts.length === 2 && output.fullAddr.startsWith(parts[0]) && output.fullAddr.endsWith(parts[1]);}
+- assertTrue:
+    condition: ${output.addrOk}
+    label: ${NETWORK_NAME} full address matches short
+
+- tapOn: Copy
+- extendedWaitUntil:
+    visible: Copied
+    timeout: 300
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 150
+
+- tapOn: Navigation
+- waitForAnimationToEnd:
+    timeout: 200
+- assertVisible: Receiving address

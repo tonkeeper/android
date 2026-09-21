@@ -29,8 +29,8 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonAsyncImage
 import ui.components.moon.MoonTopAppBarSimple
-import ui.components.moon.cell.MoonButtonCell
-import ui.components.moon.cell.MoonInfoCell
+import ui.components.moon.cell.MoonBottomButtonCell
+import ui.components.moon.cell.MoonWarningCell
 import ui.components.moon.cell.MoonTextCheckboxCell
 import ui.components.moon.cell.MoonTextContentCell
 import ui.components.moon.dialog.MoonModalDialog
@@ -101,12 +101,12 @@ private fun ProviderConfirmDialogContent(
 
         Spacer(modifier = Modifier.height(Dimens.offsetLarge))
 
-        MoonInfoCell(
+        MoonWarningCell(
             text = stringResource(Localization.fiat_open_description),
             painter = painterResource(UIKitIcon.ic_exclamationmark_circle_16),
         )
 
-        MoonButtonCell(
+        MoonBottomButtonCell(
             onClick = { onConfirm(isChecked) },
             text = stringResource(Localization.open),
         )

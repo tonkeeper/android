@@ -1,6 +1,6 @@
 package com.tonapps.blockchain.model.legacy
 
-import org.ton.api.pk.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 

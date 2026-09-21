@@ -6,6 +6,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.wallet.localization.Localization
+import com.tonapps.wallet.localization.RStr
 
 sealed class Item(type: Int): BaseListItem(type) {
 
@@ -16,16 +17,11 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         const val IMPORT_WALLET_ID = 1
         const val WATCH_WALLET_ID = 2
-        const val TESTNET_WALLET_ID = 3
         const val SIGNER_WALLET_ID = 4
         const val LEDGER_WALLET_ID = 5
         const val KEYSTONE_WALLET_ID = 6
         const val NEW_WALLET_ID = 7
         const val TETRA_WALLET_ID = 8
-
-        fun header(title: Int, subtitle: Int): Header {
-            return Header(title, subtitle)
-        }
 
         val forDevelopersTitle = SectionTitle(titleResId = Localization.for_developers)
 
@@ -35,14 +31,30 @@ sealed class Item(type: Int): BaseListItem(type) {
             id = NEW_WALLET_ID,
             iconResId = R.drawable.ic_plus_circle_28,
             titleResId = Localization.new_wallet,
-            subtitleResId = Localization.start_create_new_wallet
+            subtitleResId = Localization.start_create_new_wallet,
+        )
+
+        val newMultichain = Wallet(
+            id = NEW_WALLET_ID,
+            iconResId = UIKitIcon.ic_plus_outline_28,
+            titleResId = Localization.new_wallet,
+            subtitleResId = Localization.start_create_new_wallet,
+            tagResId = RStr.multichain,
         )
 
         val import = Wallet(
             id = IMPORT_WALLET_ID,
-            iconResId = UIKitIcon.ic_key_28,
-            titleResId = Localization.import_wallet,
-            subtitleResId = Localization.import_wallet_words
+            iconResId = UIKitIcon.ic_import_wallet_outline_28,
+            titleResId = Localization.existing_wallet,
+            subtitleResId = Localization.import_wallet_words,
+        )
+
+        val importMultichain = Wallet(
+            id = IMPORT_WALLET_ID,
+            iconResId = UIKitIcon.ic_import_wallet_outline_28,
+            titleResId = Localization.existing_wallet,
+            subtitleResId = Localization.import_wallet_words_multichain,
+            chainIconResIds = listOf(UIKitIcon.ic_ton, UIKitIcon.ic_btc, UIKitIcon.ic_eth, UIKitIcon.ic_bsc),
         )
 
         val watch = Wallet(
@@ -52,16 +64,9 @@ sealed class Item(type: Int): BaseListItem(type) {
             subtitleResId = Localization.watch_wallet_subtitle
         )
 
-        val testnet = Wallet(
-            id = TESTNET_WALLET_ID,
-            iconResId = R.drawable.ic_testnet_28,
-            titleResId = Localization.testnet_wallet,
-            subtitleResId = Localization.testnet_wallet_subtitle
-        )
-
         val signer = Wallet(
             id = SIGNER_WALLET_ID,
-            iconResId = UIKitIcon.ic_key_28,
+            iconResId = R.drawable.ic_signer_28,
             titleResId = Localization.signer_wallet,
             subtitleResId = Localization.signer_wallet_subtitle
         )
@@ -86,13 +91,19 @@ sealed class Item(type: Int): BaseListItem(type) {
             titleResId = Localization.tetra_title,
             subtitleResId = Localization.tetra_subtitle
         )
+
+        fun header(title: Int, subtitle: Int): Header {
+            return Header(title, subtitle)
+        }
     }
 
     data class Wallet(
         val id: Int,
         @DrawableRes val iconResId: Int,
         @StringRes val titleResId: Int,
-        @StringRes val subtitleResId: Int
+        @StringRes val subtitleResId: Int,
+        @StringRes val tagResId: Int? = null,
+        val chainIconResIds: List<Int> = emptyList(),
     ): Item(TYPE_WALLET)
 
     data class Header(

@@ -3,7 +3,7 @@ package com.tonapps.blockchain.ton.extensions
 import android.util.Base64
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.base64.fixBase64
-import org.ton.api.pk.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
 
 fun String.decodePrivateKey(): PrivateKeyEd25519? {
     if (isNullOrEmpty()) {

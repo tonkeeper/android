@@ -20,11 +20,15 @@ import io.batteryapi.models.AppStoreNotificationRequest
 import io.batteryapi.models.ApplyPromoRequest
 import io.batteryapi.models.Balance
 import io.batteryapi.models.BatteryCharged
+import io.batteryapi.models.BatteryNftTransferRequest
+import io.batteryapi.models.BatterySwapTonToUsdtRequest
+import io.batteryapi.models.BatteryTransferRequest
 import io.batteryapi.models.Config
 import io.batteryapi.models.CreateCustomRefundRequest
 import io.batteryapi.models.CreatePromoCampaign200Response
+import io.batteryapi.models.CreatePromoCampaignByUser200Response
+import io.batteryapi.models.CreatePromoCampaignByUserRequest
 import io.batteryapi.models.CreatePromoCampaignRequest
-import io.batteryapi.models.EmulateMessageToWalletRequest
 import io.batteryapi.models.EnterpriseEstimate200Response
 import io.batteryapi.models.EnterpriseEstimateRequest
 import io.batteryapi.models.EnterpriseGetMessage200Response
@@ -32,23 +36,31 @@ import io.batteryapi.models.EnterpriseGetStatus200Response
 import io.batteryapi.models.EnterpriseSend200Response
 import io.batteryapi.models.EnterpriseWalletConfig
 import io.batteryapi.models.EstimateGaslessCostRequest
+import io.batteryapi.models.EstimateGaslessJettonTransferRequest
 import io.batteryapi.models.EstimatedTronTx
+import io.batteryapi.models.GaslessCommissionJettonTransfer
 import io.batteryapi.models.GaslessEstimation
 import io.batteryapi.models.GetTonConnectPayloadDefaultResponse
 import io.batteryapi.models.GetTronConfig200Response
 import io.batteryapi.models.IOSBatteryPurchaseStatus
 import io.batteryapi.models.IncreaseUserBalanceRequest
 import io.batteryapi.models.IosBatteryPurchaseRequest
+import io.batteryapi.models.MigrateOldBatteryRequest
+import io.batteryapi.models.MigrateRelayerRequest
 import io.batteryapi.models.PromoCodeBatteryPurchaseRequest
 import io.batteryapi.models.PromoCodeBatteryPurchaseStatus
 import io.batteryapi.models.PromoUsed
 import io.batteryapi.models.Purchases
 import io.batteryapi.models.RechargeMethods
+import io.batteryapi.models.RelayerToBatteryRequest
+import io.batteryapi.models.ReplenishOKXBalanceRequest
 import io.batteryapi.models.RequestRefundRequest
 import io.batteryapi.models.ResetUserBalanceRequest
+import io.batteryapi.models.SendMessageRequest
 import io.batteryapi.models.SentTronTx
 import io.batteryapi.models.Status
 import io.batteryapi.models.Transactions
+import io.batteryapi.models.TronAvailableTransfers
 import io.batteryapi.models.TronSendRequest
 import io.batteryapi.models.TronTransactionsList
 import io.batteryapi.models.VerifyPurchasePromo200Response
@@ -80,8 +92,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun androidBatteryPurchase(xTonConnectAuth: String, androidBatteryPurchaseRequest: AndroidBatteryPurchaseRequest): AndroidBatteryPurchaseStatus {
-        val localVarResponse = androidBatteryPurchaseWithHttpInfo(xTonConnectAuth = xTonConnectAuth, androidBatteryPurchaseRequest = androidBatteryPurchaseRequest)
+    fun androidBatteryPurchase(androidBatteryPurchaseRequest: AndroidBatteryPurchaseRequest, tonConnectAuth: String? = null, xWalletId: String? = null): AndroidBatteryPurchaseStatus {
+        val localVarResponse = androidBatteryPurchaseWithHttpInfo(androidBatteryPurchaseRequest = androidBatteryPurchaseRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as AndroidBatteryPurchaseStatus
@@ -100,19 +112,20 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun androidBatteryPurchaseWithHttpInfo(xTonConnectAuth: String, androidBatteryPurchaseRequest: AndroidBatteryPurchaseRequest): ApiResponse<AndroidBatteryPurchaseStatus?> {
-        val localVariableConfig = androidBatteryPurchaseRequestConfig(xTonConnectAuth = xTonConnectAuth, androidBatteryPurchaseRequest = androidBatteryPurchaseRequest)
+    fun androidBatteryPurchaseWithHttpInfo(androidBatteryPurchaseRequest: AndroidBatteryPurchaseRequest, tonConnectAuth: String?, xWalletId: String?): ApiResponse<AndroidBatteryPurchaseStatus?> {
+        val localVariableConfig = androidBatteryPurchaseRequestConfig(androidBatteryPurchaseRequest = androidBatteryPurchaseRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<AndroidBatteryPurchaseRequest, AndroidBatteryPurchaseStatus>(
             localVariableConfig
         )
     }
 
-    fun androidBatteryPurchaseRequestConfig(xTonConnectAuth: String, androidBatteryPurchaseRequest: AndroidBatteryPurchaseRequest): RequestConfig<AndroidBatteryPurchaseRequest> {
+    fun androidBatteryPurchaseRequestConfig(androidBatteryPurchaseRequest: AndroidBatteryPurchaseRequest, tonConnectAuth: String?, xWalletId: String?): RequestConfig<AndroidBatteryPurchaseRequest> {
         val localVariableBody = androidBatteryPurchaseRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -121,7 +134,9 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/purchase-battery/android",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
@@ -225,6 +240,156 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun batteryNftTransfer(token: String, batteryNftTransferRequest: BatteryNftTransferRequest): Map<String, io.JsonAny> {
+        val localVarResponse = batteryNftTransferWithHttpInfo(token = token, batteryNftTransferRequest = batteryNftTransferRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun batteryNftTransferWithHttpInfo(token: String, batteryNftTransferRequest: BatteryNftTransferRequest): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = batteryNftTransferRequestConfig(token = token, batteryNftTransferRequest = batteryNftTransferRequest)
+
+        return request<BatteryNftTransferRequest, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun batteryNftTransferRequestConfig(token: String, batteryNftTransferRequest: BatteryNftTransferRequest): RequestConfig<BatteryNftTransferRequest> {
+        val localVariableBody = batteryNftTransferRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/battery-nft-transfer",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun batterySwapTonToUsdt(token: String, batterySwapTonToUsdtRequest: BatterySwapTonToUsdtRequest): Map<String, io.JsonAny> {
+        val localVarResponse = batterySwapTonToUsdtWithHttpInfo(token = token, batterySwapTonToUsdtRequest = batterySwapTonToUsdtRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun batterySwapTonToUsdtWithHttpInfo(token: String, batterySwapTonToUsdtRequest: BatterySwapTonToUsdtRequest): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = batterySwapTonToUsdtRequestConfig(token = token, batterySwapTonToUsdtRequest = batterySwapTonToUsdtRequest)
+
+        return request<BatterySwapTonToUsdtRequest, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun batterySwapTonToUsdtRequestConfig(token: String, batterySwapTonToUsdtRequest: BatterySwapTonToUsdtRequest): RequestConfig<BatterySwapTonToUsdtRequest> {
+        val localVariableBody = batterySwapTonToUsdtRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/battery-swap-ton-to-usdt",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun batteryTransfer(token: String, batteryTransferRequest: BatteryTransferRequest): Map<String, io.JsonAny> {
+        val localVarResponse = batteryTransferWithHttpInfo(token = token, batteryTransferRequest = batteryTransferRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun batteryTransferWithHttpInfo(token: String, batteryTransferRequest: BatteryTransferRequest): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = batteryTransferRequestConfig(token = token, batteryTransferRequest = batteryTransferRequest)
+
+        return request<BatteryTransferRequest, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun batteryTransferRequestConfig(token: String, batteryTransferRequest: BatteryTransferRequest): RequestConfig<BatteryTransferRequest> {
+        val localVariableBody = batteryTransferRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/battery-transfer",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
     fun createCustomRefund(token: String, createCustomRefundRequest: CreateCustomRefundRequest): Map<String, io.JsonAny> {
         val localVarResponse = createCustomRefundWithHttpInfo(token = token, createCustomRefundRequest = createCustomRefundRequest)
 
@@ -316,6 +481,56 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/restricted/promo-campaign",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun createPromoCampaignByUser(token: String, createPromoCampaignByUserRequest: CreatePromoCampaignByUserRequest): CreatePromoCampaignByUser200Response {
+        val localVarResponse = createPromoCampaignByUserWithHttpInfo(token = token, createPromoCampaignByUserRequest = createPromoCampaignByUserRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as CreatePromoCampaignByUser200Response
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun createPromoCampaignByUserWithHttpInfo(token: String, createPromoCampaignByUserRequest: CreatePromoCampaignByUserRequest): ApiResponse<CreatePromoCampaignByUser200Response?> {
+        val localVariableConfig = createPromoCampaignByUserRequestConfig(token = token, createPromoCampaignByUserRequest = createPromoCampaignByUserRequest)
+
+        return request<CreatePromoCampaignByUserRequest, CreatePromoCampaignByUser200Response>(
+            localVariableConfig
+        )
+    }
+
+    fun createPromoCampaignByUserRequestConfig(token: String, createPromoCampaignByUserRequest: CreatePromoCampaignByUserRequest): RequestConfig<CreatePromoCampaignByUserRequest> {
+        val localVariableBody = createPromoCampaignByUserRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/promo-campaign-by-user",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
@@ -568,8 +783,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun estimateGaslessCost(jettonMaster: String, estimateGaslessCostRequest: EstimateGaslessCostRequest, xTonConnectAuth: String? = null, walletAddress: String? = null, walletPublicKey: String? = null, enableValidation: Boolean? = false): GaslessEstimation {
-        val localVarResponse = estimateGaslessCostWithHttpInfo(jettonMaster = jettonMaster, estimateGaslessCostRequest = estimateGaslessCostRequest, xTonConnectAuth = xTonConnectAuth, walletAddress = walletAddress, walletPublicKey = walletPublicKey, enableValidation = enableValidation)
+    fun estimateGaslessCost(jettonMaster: String, estimateGaslessCostRequest: EstimateGaslessCostRequest, walletAddress: String? = null, walletPublicKey: String? = null, enableValidation: Boolean? = false, tonConnectAuth: String? = null, xWalletId: String? = null): GaslessEstimation {
+        val localVarResponse = estimateGaslessCostWithHttpInfo(jettonMaster = jettonMaster, estimateGaslessCostRequest = estimateGaslessCostRequest, walletAddress = walletAddress, walletPublicKey = walletPublicKey, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GaslessEstimation
@@ -588,15 +803,15 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun estimateGaslessCostWithHttpInfo(jettonMaster: String, estimateGaslessCostRequest: EstimateGaslessCostRequest, xTonConnectAuth: String?, walletAddress: String?, walletPublicKey: String?, enableValidation: Boolean?): ApiResponse<GaslessEstimation?> {
-        val localVariableConfig = estimateGaslessCostRequestConfig(jettonMaster = jettonMaster, estimateGaslessCostRequest = estimateGaslessCostRequest, xTonConnectAuth = xTonConnectAuth, walletAddress = walletAddress, walletPublicKey = walletPublicKey, enableValidation = enableValidation)
+    fun estimateGaslessCostWithHttpInfo(jettonMaster: String, estimateGaslessCostRequest: EstimateGaslessCostRequest, walletAddress: String?, walletPublicKey: String?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<GaslessEstimation?> {
+        val localVariableConfig = estimateGaslessCostRequestConfig(jettonMaster = jettonMaster, estimateGaslessCostRequest = estimateGaslessCostRequest, walletAddress = walletAddress, walletPublicKey = walletPublicKey, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<EstimateGaslessCostRequest, GaslessEstimation>(
             localVariableConfig
         )
     }
 
-    fun estimateGaslessCostRequestConfig(jettonMaster: String, estimateGaslessCostRequest: EstimateGaslessCostRequest, xTonConnectAuth: String?, walletAddress: String?, walletPublicKey: String?, enableValidation: Boolean?): RequestConfig<EstimateGaslessCostRequest> {
+    fun estimateGaslessCostRequestConfig(jettonMaster: String, estimateGaslessCostRequest: EstimateGaslessCostRequest, walletAddress: String?, walletPublicKey: String?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<EstimateGaslessCostRequest> {
         val localVariableBody = estimateGaslessCostRequest
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -611,13 +826,63 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/gasless/estimate-cost/{jetton_master}".replace("{"+"jetton_master"+"}", encodeURIComponent(jettonMaster.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun estimateGaslessJettonTransfer(estimateGaslessJettonTransferRequest: EstimateGaslessJettonTransferRequest): GaslessCommissionJettonTransfer {
+        val localVarResponse = estimateGaslessJettonTransferWithHttpInfo(estimateGaslessJettonTransferRequest = estimateGaslessJettonTransferRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as GaslessCommissionJettonTransfer
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun estimateGaslessJettonTransferWithHttpInfo(estimateGaslessJettonTransferRequest: EstimateGaslessJettonTransferRequest): ApiResponse<GaslessCommissionJettonTransfer?> {
+        val localVariableConfig = estimateGaslessJettonTransferRequestConfig(estimateGaslessJettonTransferRequest = estimateGaslessJettonTransferRequest)
+
+        return request<EstimateGaslessJettonTransferRequest, GaslessCommissionJettonTransfer>(
+            localVariableConfig
+        )
+    }
+
+    fun estimateGaslessJettonTransferRequestConfig(estimateGaslessJettonTransferRequest: EstimateGaslessJettonTransferRequest): RequestConfig<EstimateGaslessJettonTransferRequest> {
+        val localVariableBody = estimateGaslessJettonTransferRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/gasless/estimate/jetton-transfer",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
@@ -693,8 +958,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getBalance(xTonConnectAuth: String, units: UnitsGetBalance? = UnitsGetBalance.usd, region: String? = null): Balance {
-        val localVarResponse = getBalanceWithHttpInfo(xTonConnectAuth = xTonConnectAuth, units = units, region = region)
+    fun getBalance(units: UnitsGetBalance? = UnitsGetBalance.usd, region: String? = null, tonConnectAuth: String? = null, xWalletId: String? = null): Balance {
+        val localVarResponse = getBalanceWithHttpInfo(units = units, region = region, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Balance
@@ -713,15 +978,15 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getBalanceWithHttpInfo(xTonConnectAuth: String, units: UnitsGetBalance?, region: String?): ApiResponse<Balance?> {
-        val localVariableConfig = getBalanceRequestConfig(xTonConnectAuth = xTonConnectAuth, units = units, region = region)
+    fun getBalanceWithHttpInfo(units: UnitsGetBalance?, region: String?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<Balance?> {
+        val localVariableConfig = getBalanceRequestConfig(units = units, region = region, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<Unit, Balance>(
             localVariableConfig
         )
     }
 
-    fun getBalanceRequestConfig(xTonConnectAuth: String, units: UnitsGetBalance?, region: String?): RequestConfig<Unit> {
+    fun getBalanceRequestConfig(units: UnitsGetBalance?, region: String?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -733,7 +998,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -741,7 +1007,9 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/balance",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
@@ -892,8 +1160,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getPurchases(xTonConnectAuth: String, limit: Int? = 1000, offset: Int? = 0, includeGiftsOnTheWay: Boolean? = false): Purchases {
-        val localVarResponse = getPurchasesWithHttpInfo(xTonConnectAuth = xTonConnectAuth, limit = limit, offset = offset, includeGiftsOnTheWay = includeGiftsOnTheWay)
+    fun getPurchases(limit: Int? = 1000, offset: Int? = 0, includeGiftsOnTheWay: Boolean? = false, tonConnectAuth: String? = null, xWalletId: String? = null): Purchases {
+        val localVarResponse = getPurchasesWithHttpInfo(limit = limit, offset = offset, includeGiftsOnTheWay = includeGiftsOnTheWay, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Purchases
@@ -912,15 +1180,15 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getPurchasesWithHttpInfo(xTonConnectAuth: String, limit: Int?, offset: Int?, includeGiftsOnTheWay: Boolean?): ApiResponse<Purchases?> {
-        val localVariableConfig = getPurchasesRequestConfig(xTonConnectAuth = xTonConnectAuth, limit = limit, offset = offset, includeGiftsOnTheWay = includeGiftsOnTheWay)
+    fun getPurchasesWithHttpInfo(limit: Int?, offset: Int?, includeGiftsOnTheWay: Boolean?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<Purchases?> {
+        val localVariableConfig = getPurchasesRequestConfig(limit = limit, offset = offset, includeGiftsOnTheWay = includeGiftsOnTheWay, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<Unit, Purchases>(
             localVariableConfig
         )
     }
 
-    fun getPurchasesRequestConfig(xTonConnectAuth: String, limit: Int?, offset: Int?, includeGiftsOnTheWay: Boolean?): RequestConfig<Unit> {
+    fun getPurchasesRequestConfig(limit: Int?, offset: Int?, includeGiftsOnTheWay: Boolean?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -935,7 +1203,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -943,7 +1212,9 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/purchases",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
@@ -1001,8 +1272,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getStatus(xTonConnectAuth: String): Status {
-        val localVarResponse = getStatusWithHttpInfo(xTonConnectAuth = xTonConnectAuth)
+    fun getStatus(tonConnectAuth: String? = null, xWalletId: String? = null): Status {
+        val localVarResponse = getStatusWithHttpInfo(tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Status
@@ -1021,19 +1292,20 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getStatusWithHttpInfo(xTonConnectAuth: String): ApiResponse<Status?> {
-        val localVariableConfig = getStatusRequestConfig(xTonConnectAuth = xTonConnectAuth)
+    fun getStatusWithHttpInfo(tonConnectAuth: String?, xWalletId: String?): ApiResponse<Status?> {
+        val localVariableConfig = getStatusRequestConfig(tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<Unit, Status>(
             localVariableConfig
         )
     }
 
-    fun getStatusRequestConfig(xTonConnectAuth: String): RequestConfig<Unit> {
+    fun getStatusRequestConfig(tonConnectAuth: String?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -1041,15 +1313,17 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/status",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getTransactions(xTonConnectAuth: String, limit: Int? = 1000, offset: Int? = 0): Transactions {
-        val localVarResponse = getTransactionsWithHttpInfo(xTonConnectAuth = xTonConnectAuth, limit = limit, offset = offset)
+    fun getTransactions(limit: Int? = 1000, offset: Int? = 0, tonConnectAuth: String? = null, xWalletId: String? = null): Transactions {
+        val localVarResponse = getTransactionsWithHttpInfo(limit = limit, offset = offset, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Transactions
@@ -1068,15 +1342,15 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getTransactionsWithHttpInfo(xTonConnectAuth: String, limit: Int?, offset: Int?): ApiResponse<Transactions?> {
-        val localVariableConfig = getTransactionsRequestConfig(xTonConnectAuth = xTonConnectAuth, limit = limit, offset = offset)
+    fun getTransactionsWithHttpInfo(limit: Int?, offset: Int?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<Transactions?> {
+        val localVariableConfig = getTransactionsRequestConfig(limit = limit, offset = offset, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<Unit, Transactions>(
             localVariableConfig
         )
     }
 
-    fun getTransactionsRequestConfig(xTonConnectAuth: String, limit: Int?, offset: Int?): RequestConfig<Unit> {
+    fun getTransactionsRequestConfig(limit: Int?, offset: Int?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -1088,12 +1362,62 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/transactions",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getTronAvailableTransfers(xProAuth: String): TronAvailableTransfers {
+        val localVarResponse = getTronAvailableTransfersWithHttpInfo(xProAuth = xProAuth)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as TronAvailableTransfers
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getTronAvailableTransfersWithHttpInfo(xProAuth: String): ApiResponse<TronAvailableTransfers?> {
+        val localVariableConfig = getTronAvailableTransfersRequestConfig(xProAuth = xProAuth)
+
+        return request<Unit, TronAvailableTransfers>(
+            localVariableConfig
+        )
+    }
+
+    fun getTronAvailableTransfersRequestConfig(xProAuth: String): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xProAuth.apply { localVariableHeaders["X-Pro-Auth"] = this.toString() }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v0/tron/available-transfers",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
@@ -1149,8 +1473,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getTronTransactions(xTonConnectAuth: String, limit: Int? = 1000, maxTimestamp: Long? = null): TronTransactionsList {
-        val localVarResponse = getTronTransactionsWithHttpInfo(xTonConnectAuth = xTonConnectAuth, limit = limit, maxTimestamp = maxTimestamp)
+    fun getTronTransactions(limit: Int? = 1000, maxTimestamp: Long? = null, tonConnectAuth: String? = null, xWalletId: String? = null): TronTransactionsList {
+        val localVarResponse = getTronTransactionsWithHttpInfo(limit = limit, maxTimestamp = maxTimestamp, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as TronTransactionsList
@@ -1169,15 +1493,15 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getTronTransactionsWithHttpInfo(xTonConnectAuth: String, limit: Int?, maxTimestamp: Long?): ApiResponse<TronTransactionsList?> {
-        val localVariableConfig = getTronTransactionsRequestConfig(xTonConnectAuth = xTonConnectAuth, limit = limit, maxTimestamp = maxTimestamp)
+    fun getTronTransactionsWithHttpInfo(limit: Int?, maxTimestamp: Long?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<TronTransactionsList?> {
+        val localVariableConfig = getTronTransactionsRequestConfig(limit = limit, maxTimestamp = maxTimestamp, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<Unit, TronTransactionsList>(
             localVariableConfig
         )
     }
 
-    fun getTronTransactionsRequestConfig(xTonConnectAuth: String, limit: Int?, maxTimestamp: Long?): RequestConfig<Unit> {
+    fun getTronTransactionsRequestConfig(limit: Int?, maxTimestamp: Long?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -1189,7 +1513,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -1197,7 +1522,9 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/v0/tron/transactions",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
@@ -1254,8 +1581,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun iosBatteryPurchase(xTonConnectAuth: String, iosBatteryPurchaseRequest: IosBatteryPurchaseRequest): IOSBatteryPurchaseStatus {
-        val localVarResponse = iosBatteryPurchaseWithHttpInfo(xTonConnectAuth = xTonConnectAuth, iosBatteryPurchaseRequest = iosBatteryPurchaseRequest)
+    fun iosBatteryPurchase(iosBatteryPurchaseRequest: IosBatteryPurchaseRequest, tonConnectAuth: String? = null, xWalletId: String? = null): IOSBatteryPurchaseStatus {
+        val localVarResponse = iosBatteryPurchaseWithHttpInfo(iosBatteryPurchaseRequest = iosBatteryPurchaseRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as IOSBatteryPurchaseStatus
@@ -1274,19 +1601,20 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun iosBatteryPurchaseWithHttpInfo(xTonConnectAuth: String, iosBatteryPurchaseRequest: IosBatteryPurchaseRequest): ApiResponse<IOSBatteryPurchaseStatus?> {
-        val localVariableConfig = iosBatteryPurchaseRequestConfig(xTonConnectAuth = xTonConnectAuth, iosBatteryPurchaseRequest = iosBatteryPurchaseRequest)
+    fun iosBatteryPurchaseWithHttpInfo(iosBatteryPurchaseRequest: IosBatteryPurchaseRequest, tonConnectAuth: String?, xWalletId: String?): ApiResponse<IOSBatteryPurchaseStatus?> {
+        val localVariableConfig = iosBatteryPurchaseRequestConfig(iosBatteryPurchaseRequest = iosBatteryPurchaseRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<IosBatteryPurchaseRequest, IOSBatteryPurchaseStatus>(
             localVariableConfig
         )
     }
 
-    fun iosBatteryPurchaseRequestConfig(xTonConnectAuth: String, iosBatteryPurchaseRequest: IosBatteryPurchaseRequest): RequestConfig<IosBatteryPurchaseRequest> {
+    fun iosBatteryPurchaseRequestConfig(iosBatteryPurchaseRequest: IosBatteryPurchaseRequest, tonConnectAuth: String?, xWalletId: String?): RequestConfig<IosBatteryPurchaseRequest> {
         val localVariableBody = iosBatteryPurchaseRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -1295,15 +1623,17 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/purchase-battery/ios",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun itrxIoCallback(requestBody: Map<String, io.JsonAny>): Map<String, io.JsonAny> {
-        val localVarResponse = itrxIoCallbackWithHttpInfo(requestBody = requestBody)
+    fun itrxIoCallback(SIGNATURE: String, TIMESTAMP: String, requestBody: Map<String, io.JsonAny>): Map<String, io.JsonAny> {
+        val localVarResponse = itrxIoCallbackWithHttpInfo(SIGNATURE = SIGNATURE, TIMESTAMP = TIMESTAMP, requestBody = requestBody)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
@@ -1322,18 +1652,20 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun itrxIoCallbackWithHttpInfo(requestBody: Map<String, io.JsonAny>): ApiResponse<Map<String, io.JsonAny>?> {
-        val localVariableConfig = itrxIoCallbackRequestConfig(requestBody = requestBody)
+    fun itrxIoCallbackWithHttpInfo(SIGNATURE: String, TIMESTAMP: String, requestBody: Map<String, io.JsonAny>): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = itrxIoCallbackRequestConfig(SIGNATURE = SIGNATURE, TIMESTAMP = TIMESTAMP, requestBody = requestBody)
 
         return request<Map<String, io.JsonAny>, Map<String, io.JsonAny>>(
             localVariableConfig
         )
     }
 
-    fun itrxIoCallbackRequestConfig(requestBody: Map<String, io.JsonAny>): RequestConfig<Map<String, io.JsonAny>> {
+    fun itrxIoCallbackRequestConfig(SIGNATURE: String, TIMESTAMP: String, requestBody: Map<String, io.JsonAny>): RequestConfig<Map<String, io.JsonAny>> {
         val localVariableBody = requestBody
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        SIGNATURE.apply { localVariableHeaders["SIGNATURE"] = this.toString() }
+        TIMESTAMP.apply { localVariableHeaders["TIMESTAMP"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -1349,8 +1681,160 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun promoCodeBatteryPurchase(xTonConnectAuth: String, promoCodeBatteryPurchaseRequest: PromoCodeBatteryPurchaseRequest, acceptLanguage: String? = "en"): PromoCodeBatteryPurchaseStatus {
-        val localVarResponse = promoCodeBatteryPurchaseWithHttpInfo(xTonConnectAuth = xTonConnectAuth, promoCodeBatteryPurchaseRequest = promoCodeBatteryPurchaseRequest, acceptLanguage = acceptLanguage)
+    fun migrateOldBattery(token: String, migrateOldBatteryRequest: MigrateOldBatteryRequest): Map<String, io.JsonAny> {
+        val localVarResponse = migrateOldBatteryWithHttpInfo(token = token, migrateOldBatteryRequest = migrateOldBatteryRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun migrateOldBatteryWithHttpInfo(token: String, migrateOldBatteryRequest: MigrateOldBatteryRequest): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = migrateOldBatteryRequestConfig(token = token, migrateOldBatteryRequest = migrateOldBatteryRequest)
+
+        return request<MigrateOldBatteryRequest, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun migrateOldBatteryRequestConfig(token: String, migrateOldBatteryRequest: MigrateOldBatteryRequest): RequestConfig<MigrateOldBatteryRequest> {
+        val localVariableBody = migrateOldBatteryRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/migrate-old-battery",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun migrateRelayer(token: String, migrateRelayerRequest: MigrateRelayerRequest): Map<String, io.JsonAny> {
+        val localVarResponse = migrateRelayerWithHttpInfo(token = token, migrateRelayerRequest = migrateRelayerRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun migrateRelayerWithHttpInfo(token: String, migrateRelayerRequest: MigrateRelayerRequest): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = migrateRelayerRequestConfig(token = token, migrateRelayerRequest = migrateRelayerRequest)
+
+        return request<MigrateRelayerRequest, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun migrateRelayerRequestConfig(token: String, migrateRelayerRequest: MigrateRelayerRequest): RequestConfig<MigrateRelayerRequest> {
+        val localVariableBody = migrateRelayerRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/migrate-relayer",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun omnistonSwap(token: String, master0: String, master1: String, fromAmount: String): Map<String, io.JsonAny> {
+        val localVarResponse = omnistonSwapWithHttpInfo(token = token, master0 = master0, master1 = master1, fromAmount = fromAmount)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun omnistonSwapWithHttpInfo(token: String, master0: String, master1: String, fromAmount: String): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = omnistonSwapRequestConfig(token = token, master0 = master0, master1 = master1, fromAmount = fromAmount)
+
+        return request<Unit, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun omnistonSwapRequestConfig(token: String, master0: String, master1: String, fromAmount: String): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+                put("master0", listOf(master0.toString()))
+                put("master1", listOf(master1.toString()))
+                put("from_amount", listOf(fromAmount.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/omniston-swap",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun promoCodeBatteryPurchase(promoCodeBatteryPurchaseRequest: PromoCodeBatteryPurchaseRequest, acceptLanguage: String? = "en", tonConnectAuth: String? = null, xWalletId: String? = null): PromoCodeBatteryPurchaseStatus {
+        val localVarResponse = promoCodeBatteryPurchaseWithHttpInfo(promoCodeBatteryPurchaseRequest = promoCodeBatteryPurchaseRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as PromoCodeBatteryPurchaseStatus
@@ -1369,20 +1853,21 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun promoCodeBatteryPurchaseWithHttpInfo(xTonConnectAuth: String, promoCodeBatteryPurchaseRequest: PromoCodeBatteryPurchaseRequest, acceptLanguage: String?): ApiResponse<PromoCodeBatteryPurchaseStatus?> {
-        val localVariableConfig = promoCodeBatteryPurchaseRequestConfig(xTonConnectAuth = xTonConnectAuth, promoCodeBatteryPurchaseRequest = promoCodeBatteryPurchaseRequest, acceptLanguage = acceptLanguage)
+    fun promoCodeBatteryPurchaseWithHttpInfo(promoCodeBatteryPurchaseRequest: PromoCodeBatteryPurchaseRequest, acceptLanguage: String?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<PromoCodeBatteryPurchaseStatus?> {
+        val localVariableConfig = promoCodeBatteryPurchaseRequestConfig(promoCodeBatteryPurchaseRequest = promoCodeBatteryPurchaseRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<PromoCodeBatteryPurchaseRequest, PromoCodeBatteryPurchaseStatus>(
             localVariableConfig
         )
     }
 
-    fun promoCodeBatteryPurchaseRequestConfig(xTonConnectAuth: String, promoCodeBatteryPurchaseRequest: PromoCodeBatteryPurchaseRequest, acceptLanguage: String?): RequestConfig<PromoCodeBatteryPurchaseRequest> {
+    fun promoCodeBatteryPurchaseRequestConfig(promoCodeBatteryPurchaseRequest: PromoCodeBatteryPurchaseRequest, acceptLanguage: String?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<PromoCodeBatteryPurchaseRequest> {
         val localVariableBody = promoCodeBatteryPurchaseRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -1391,14 +1876,116 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/purchase-battery/promo-code",
             query = localVariableQuery,
             headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun relayerToBattery(token: String, relayerToBatteryRequest: RelayerToBatteryRequest): Map<String, io.JsonAny> {
+        val localVarResponse = relayerToBatteryWithHttpInfo(token = token, relayerToBatteryRequest = relayerToBatteryRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun relayerToBatteryWithHttpInfo(token: String, relayerToBatteryRequest: RelayerToBatteryRequest): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = relayerToBatteryRequestConfig(token = token, relayerToBatteryRequest = relayerToBatteryRequest)
+
+        return request<RelayerToBatteryRequest, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun relayerToBatteryRequestConfig(token: String, relayerToBatteryRequest: RelayerToBatteryRequest): RequestConfig<RelayerToBatteryRequest> {
+        val localVariableBody = relayerToBatteryRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/relayer-to-battery",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun replenishOKXBalance(token: String, replenishOKXBalanceRequest: ReplenishOKXBalanceRequest): Map<String, io.JsonAny> {
+        val localVarResponse = replenishOKXBalanceWithHttpInfo(token = token, replenishOKXBalanceRequest = replenishOKXBalanceRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun replenishOKXBalanceWithHttpInfo(token: String, replenishOKXBalanceRequest: ReplenishOKXBalanceRequest): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = replenishOKXBalanceRequestConfig(token = token, replenishOKXBalanceRequest = replenishOKXBalanceRequest)
+
+        return request<ReplenishOKXBalanceRequest, Map<String, io.JsonAny>>(
+            localVariableConfig
+        )
+    }
+
+    fun replenishOKXBalanceRequestConfig(token: String, replenishOKXBalanceRequest: ReplenishOKXBalanceRequest): RequestConfig<ReplenishOKXBalanceRequest> {
+        val localVariableBody = replenishOKXBalanceRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
+            .apply {
+                put("token", listOf(token.toString()))
+            }
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/restricted/okx-deposit",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
             requiresAuthentication = false,
             body = localVariableBody
         )
     }
 
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun requestRefund(xTonConnectAuth: String, requestRefundRequest: RequestRefundRequest): Unit {
-        val localVarResponse = requestRefundWithHttpInfo(xTonConnectAuth = xTonConnectAuth, requestRefundRequest = requestRefundRequest)
+    fun requestRefund(requestRefundRequest: RequestRefundRequest, tonConnectAuth: String? = null, xWalletId: String? = null): Unit {
+        val localVarResponse = requestRefundWithHttpInfo(requestRefundRequest = requestRefundRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> Unit
@@ -1416,19 +2003,20 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
     }
 
     @Throws(IllegalStateException::class, IOException::class)
-    fun requestRefundWithHttpInfo(xTonConnectAuth: String, requestRefundRequest: RequestRefundRequest): ApiResponse<Unit?> {
-        val localVariableConfig = requestRefundRequestConfig(xTonConnectAuth = xTonConnectAuth, requestRefundRequest = requestRefundRequest)
+    fun requestRefundWithHttpInfo(requestRefundRequest: RequestRefundRequest, tonConnectAuth: String?, xWalletId: String?): ApiResponse<Unit?> {
+        val localVariableConfig = requestRefundRequestConfig(requestRefundRequest = requestRefundRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<RequestRefundRequest, Unit>(
             localVariableConfig
         )
     }
 
-    fun requestRefundRequestConfig(xTonConnectAuth: String, requestRefundRequest: RequestRefundRequest): RequestConfig<RequestRefundRequest> {
+    fun requestRefundRequestConfig(requestRefundRequest: RequestRefundRequest, tonConnectAuth: String?, xWalletId: String?): RequestConfig<RequestRefundRequest> {
         val localVariableBody = requestRefundRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -1437,7 +2025,9 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/request-refund",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
@@ -1493,8 +2083,8 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
     }
 
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun sendMessage(xTonConnectAuth: String, emulateMessageToWalletRequest: EmulateMessageToWalletRequest): Unit {
-        val localVarResponse = sendMessageWithHttpInfo(xTonConnectAuth = xTonConnectAuth, emulateMessageToWalletRequest = emulateMessageToWalletRequest)
+    fun sendMessage(sendMessageRequest: SendMessageRequest, xPromo: String? = null, tonConnectAuth: String? = null, xWalletId: String? = null): Unit {
+        val localVarResponse = sendMessageWithHttpInfo(sendMessageRequest = sendMessageRequest, xPromo = xPromo, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> Unit
@@ -1512,19 +2102,21 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
     }
 
     @Throws(IllegalStateException::class, IOException::class)
-    fun sendMessageWithHttpInfo(xTonConnectAuth: String, emulateMessageToWalletRequest: EmulateMessageToWalletRequest): ApiResponse<Unit?> {
-        val localVariableConfig = sendMessageRequestConfig(xTonConnectAuth = xTonConnectAuth, emulateMessageToWalletRequest = emulateMessageToWalletRequest)
+    fun sendMessageWithHttpInfo(sendMessageRequest: SendMessageRequest, xPromo: String?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<Unit?> {
+        val localVariableConfig = sendMessageRequestConfig(sendMessageRequest = sendMessageRequest, xPromo = xPromo, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
-        return request<EmulateMessageToWalletRequest, Unit>(
+        return request<SendMessageRequest, Unit>(
             localVariableConfig
         )
     }
 
-    fun sendMessageRequestConfig(xTonConnectAuth: String, emulateMessageToWalletRequest: EmulateMessageToWalletRequest): RequestConfig<EmulateMessageToWalletRequest> {
-        val localVariableBody = emulateMessageToWalletRequest
+    fun sendMessageRequestConfig(sendMessageRequest: SendMessageRequest, xPromo: String?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<SendMessageRequest> {
+        val localVariableBody = sendMessageRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        xPromo?.apply { localVariableHeaders["X-Promo"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -1533,15 +2125,17 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/message",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun tronEstimate(wallet: String, xTonConnectAuth: String? = null, energy: Int? = null, bandwidth: Int? = null, enableValidation: Boolean? = false): EstimatedTronTx {
-        val localVarResponse = tronEstimateWithHttpInfo(wallet = wallet, xTonConnectAuth = xTonConnectAuth, energy = energy, bandwidth = bandwidth, enableValidation = enableValidation)
+    fun tronEstimate(wallet: String, xEnterpriseAuth: String? = null, xProAuth: String? = null, energy: Int? = null, bandwidth: Int? = null, enableValidation: Boolean? = false, tonConnectAuth: String? = null, xWalletId: String? = null): EstimatedTronTx {
+        val localVarResponse = tronEstimateWithHttpInfo(wallet = wallet, xEnterpriseAuth = xEnterpriseAuth, xProAuth = xProAuth, energy = energy, bandwidth = bandwidth, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as EstimatedTronTx
@@ -1560,15 +2154,15 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun tronEstimateWithHttpInfo(wallet: String, xTonConnectAuth: String?, energy: Int?, bandwidth: Int?, enableValidation: Boolean?): ApiResponse<EstimatedTronTx?> {
-        val localVariableConfig = tronEstimateRequestConfig(wallet = wallet, xTonConnectAuth = xTonConnectAuth, energy = energy, bandwidth = bandwidth, enableValidation = enableValidation)
+    fun tronEstimateWithHttpInfo(wallet: String, xEnterpriseAuth: String?, xProAuth: String?, energy: Int?, bandwidth: Int?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<EstimatedTronTx?> {
+        val localVariableConfig = tronEstimateRequestConfig(wallet = wallet, xEnterpriseAuth = xEnterpriseAuth, xProAuth = xProAuth, energy = energy, bandwidth = bandwidth, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<Unit, EstimatedTronTx>(
             localVariableConfig
         )
     }
 
-    fun tronEstimateRequestConfig(wallet: String, xTonConnectAuth: String?, energy: Int?, bandwidth: Int?, enableValidation: Boolean?): RequestConfig<Unit> {
+    fun tronEstimateRequestConfig(wallet: String, xEnterpriseAuth: String?, xProAuth: String?, energy: Int?, bandwidth: Int?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -1584,7 +2178,10 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        xEnterpriseAuth?.apply { localVariableHeaders["X-Enterprise-Auth"] = this.toString() }
+        xProAuth?.apply { localVariableHeaders["X-Pro-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -1592,15 +2189,17 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/v0/tron/estimate",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun tronSend(tronSendRequest: TronSendRequest, xTonConnectAuth: String? = null, userPublicKey: String? = null): SentTronTx {
-        val localVarResponse = tronSendWithHttpInfo(tronSendRequest = tronSendRequest, xTonConnectAuth = xTonConnectAuth, userPublicKey = userPublicKey)
+    fun tronSend(tronSendRequest: TronSendRequest, xEnterpriseAuth: String? = null, xProAuth: String? = null, userPublicKey: String? = null, tonConnectAuth: String? = null, xWalletId: String? = null): SentTronTx {
+        val localVarResponse = tronSendWithHttpInfo(tronSendRequest = tronSendRequest, xEnterpriseAuth = xEnterpriseAuth, xProAuth = xProAuth, userPublicKey = userPublicKey, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as SentTronTx
@@ -1619,15 +2218,15 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun tronSendWithHttpInfo(tronSendRequest: TronSendRequest, xTonConnectAuth: String?, userPublicKey: String?): ApiResponse<SentTronTx?> {
-        val localVariableConfig = tronSendRequestConfig(tronSendRequest = tronSendRequest, xTonConnectAuth = xTonConnectAuth, userPublicKey = userPublicKey)
+    fun tronSendWithHttpInfo(tronSendRequest: TronSendRequest, xEnterpriseAuth: String?, xProAuth: String?, userPublicKey: String?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<SentTronTx?> {
+        val localVariableConfig = tronSendRequestConfig(tronSendRequest = tronSendRequest, xEnterpriseAuth = xEnterpriseAuth, xProAuth = xProAuth, userPublicKey = userPublicKey, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
 
         return request<TronSendRequest, SentTronTx>(
             localVariableConfig
         )
     }
 
-    fun tronSendRequestConfig(tronSendRequest: TronSendRequest, xTonConnectAuth: String?, userPublicKey: String?): RequestConfig<TronSendRequest> {
+    fun tronSendRequestConfig(tronSendRequest: TronSendRequest, xEnterpriseAuth: String?, xProAuth: String?, userPublicKey: String?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<TronSendRequest> {
         val localVariableBody = tronSendRequest
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -1636,7 +2235,10 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xTonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        xEnterpriseAuth?.apply { localVariableHeaders["X-Enterprise-Auth"] = this.toString() }
+        xProAuth?.apply { localVariableHeaders["X-Pro-Auth"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -1645,7 +2247,9 @@ class DefaultApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/v0/tron/send",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

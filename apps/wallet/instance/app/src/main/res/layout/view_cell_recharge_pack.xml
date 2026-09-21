@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="76dp"
         android:gravity="center">
-        <com.tonapps.tonkeeper.view.BatteryView
+        <uikit.widget.BatteryView
             android:id="@+id/battery"
             style="@style/Battery.Big"
             android:layout_gravity="center"

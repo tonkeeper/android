@@ -9,9 +9,10 @@ abstract class Features<T> {
     abstract val key: FeatureKey
     protected abstract fun provide(): T
 
-    val value: T by lazy { provide() }
-    val isEnabled: Boolean by lazy { FeatureManager.isEnabled(key) }
-    val isDisabled: Boolean get() = !isEnabled
+    open val value: T by lazy { provide() }
+    open val isEnabled: Boolean get() = FeatureManager.isEnabled(key)
+    open val isOverridden: Boolean get() = FeatureManager.isOverridden(key)
+    open val isDisabled: Boolean get() = !isEnabled
 
     protected fun getValue(default: String = ""): String {
         return FeatureManager.getValue(key, default)

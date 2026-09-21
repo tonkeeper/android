@@ -38,7 +38,7 @@
                 android:id="@+id/action_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Manage"
+                android:text="@string/manage"
                 android:textAppearance="@style/TextAppearance.Label2"
                 android:textColor="@color/constantBlack"/>
 

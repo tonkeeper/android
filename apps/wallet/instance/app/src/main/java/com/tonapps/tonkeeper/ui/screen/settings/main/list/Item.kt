@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.settings.main.list
 
 import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.tonkeeper.os.AppInstall
+import com.tonapps.tonkeeper.os.AppInfo
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.BaseListItem
@@ -19,7 +19,7 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         const val TYPE_TEXT = 2
         const val TYPE_ICON = 3
         const val TYPE_LOGO = 4
-        const val TYPE_TRON = 5
+        const val TYPE_MIGRATION = 6
     }
 
     data class Account(
@@ -43,14 +43,10 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
 
     }
 
-    data class TronToggle(
-        val enabled: Boolean,
-    ): Item(TYPE_TRON, "tron")
-
     data object Space: Item(TYPE_SPACE, "")
 
     data class Logo(
-        val installerSource: AppInstall.Source
+        val installerSource: AppInfo.Source
     ): Item(TYPE_LOGO, "version")
 
     sealed class Text(
@@ -286,4 +282,9 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         secondaryIcon = false,
         name = "battery"
     )
+
+    data class Migration(
+        val position: ListCell.Position,
+        val showDot: Boolean,
+    ) : Item(TYPE_MIGRATION, "migration")
 }

@@ -1,0 +1,16 @@
+# Multichain transfer deeplink without a jetton opens Choose asset (Picker),
+# then Send with presetAddress. iOS skips the picker.
+appId: com.ton_keeper.debug
+---
+- extendedWaitUntil:
+    visible: "Choose asset|Address|Confirm Action"
+    timeout: 15000
+- runFlow:
+    when:
+      visible: Choose asset
+    commands:
+      - tapOn:
+          text: "^GRAM$"
+          below: Search
+      - waitForAnimationToEnd:
+          timeout: 2000

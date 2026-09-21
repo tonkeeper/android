@@ -19,8 +19,8 @@
             android:endX="44"
             android:endY="44"
             android:type="linear">
-          <item android:offset="0" android:color="#FF45AEF5"/>
-          <item android:offset="0.067" android:color="#FF45AEF5"/>
+          <item android:offset="0" android:color="#FF3C95FA"/>
+          <item android:offset="0.067" android:color="#FF3C95FA"/>
           <item android:offset="0.133" android:color="#FF45ADF5"/>
           <item android:offset="0.2" android:color="#FF46ABF6"/>
           <item android:offset="0.267" android:color="#FF47A9F6"/>

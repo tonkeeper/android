@@ -34,14 +34,14 @@ object WidgetManager {
 
         private fun pinnedBalance(context: Context, args: Bundle) {
             val params = args.getParcelableCompat<WidgetParams.Balance>(ARG_PARAMS) ?: return
-            val widgetId = getWidgetIds(context).lastOrNull() ?: return
+            val widgetId = getWidgetIds(context, WidgetReceiver.Balance::class.java).lastOrNull() ?: return
             settings.setType(widgetId, TYPE_BALANCE)
             settings.setParams(widgetId, params)
         }
 
         private fun pinnedRate(context: Context, args: Bundle) {
             val params = args.getParcelableCompat<WidgetParams.Rate>(ARG_PARAMS) ?: return
-            val widgetId = getWidgetIds(context).lastOrNull() ?: return
+            val widgetId = getWidgetIds(context, WidgetReceiver.Rate::class.java).lastOrNull() ?: return
             settings.setType(widgetId, TYPE_RATE)
             settings.setParams(widgetId, params)
         }

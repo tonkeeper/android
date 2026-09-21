@@ -15,4 +15,10 @@ dependencies {
     implementation(projects.lib.network)
     implementation(projects.lib.icu)
     implementation(projects.lib.security)
+
+    testImplementation(libs.junit)
+}
+
+tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+    enabled = true
 }

@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ui.theme.UIKit
 
@@ -13,6 +14,7 @@ import ui.theme.UIKit
 fun MoonDescriptionCell(
     text: CharSequence,
     modifier: Modifier = Modifier,
+    align: TextAlign = TextAlign.Start,
 ) {
     when (text) {
         is AnnotatedString -> Text(
@@ -21,6 +23,7 @@ fun MoonDescriptionCell(
                 .padding(16.dp),
             color = UIKit.colorScheme.text.secondary,
             style = UIKit.typography.body2,
+            textAlign = align,
         )
 
         else -> Text(
@@ -29,6 +32,7 @@ fun MoonDescriptionCell(
                 .padding(16.dp),
             color = UIKit.colorScheme.text.secondary,
             style = UIKit.typography.body2,
+            textAlign = align,
         )
     }
 }

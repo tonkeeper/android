@@ -16,7 +16,7 @@ import kotlinx.serialization.Contextual
 
 @Serializable
 data class ShelfGroup(
-    /* Имя группы. */
+    /* Имя группы. (в контексте мультичейн группы - имя сети) */
     @SerialName(value = "name")
     val name: String,
 

@@ -9,40 +9,33 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.extensions.query
 import com.tonapps.log.L
-import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.removeAllFragments
 import com.tonapps.tonkeeper.koin.serverFlags
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
-import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
-import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesScreen
-import com.tonapps.core.flags.TooltipManager
-import com.tonapps.core.flags.TooltipState
-import com.tonapps.core.flags.WalletFeature
-import com.tonapps.core.flags.WalletTooltip
-import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsScreen
+import com.tonapps.portfolio.PortfolioFragment
+import com.tonapps.portfolio.analytics.PortfolioAnalytics
+import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletScreen
+import com.tonapps.trading.screens.shelves.ShelvesFragment
 import com.tonapps.tonkeeper.ui.screen.root.RootEvent
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
-import com.tonapps.tonkeeper.ui.screen.wallet.main.WalletScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.PickerScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.trading.screens.shelves.ShelvesFragment
-import com.tonapps.wallet.localization.Localization
 import com.tonapps.uikit.color.backgroundPageColor
-import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.uikit.color.constantBlackColor
 import com.tonapps.uikit.color.drawable
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import uikit.base.BaseFragment
 import uikit.drawable.BarDrawable
 import uikit.extensions.activity
 import uikit.extensions.collectFlow
@@ -50,18 +43,16 @@ import uikit.extensions.isMaxScrollReached
 import uikit.extensions.roundTop
 import uikit.extensions.scale
 import uikit.utils.RecyclerVerticalScrollListener
-import uikit.extensions.dp
-import uikit.widget.BalloonTooltip
 import uikit.widget.BottomTabsView
 
 class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, ScreenContext.None) {
 
     override val fragmentName: String = "MainScreen"
 
-    abstract class Child(
+    abstract class MainTabChildFragment<C : ScreenContext>(
         @LayoutRes layoutId: Int,
-        wallet: WalletEntity,
-    ): WalletContextScreen(layoutId, wallet) {
+        screenContext: C,
+    ) : BaseWalletScreen<C>(layoutId, screenContext) {
 
         val mainViewModel: MainViewModel by lazy {
             requireParentFragment().getViewModel()
@@ -116,6 +107,19 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
     }
 
+    abstract class Child(
+        @LayoutRes layoutId: Int,
+        wallet: WalletEntity,
+    ) : MainTabChildFragment<ScreenContext.Wallet>(layoutId, ScreenContext.Wallet(wallet)) {
+
+        val wallet: WalletEntity
+            get() = screenContext.wallet
+    }
+
+    abstract class ChildScreen(
+        @LayoutRes layoutId: Int,
+    ) : MainTabChildFragment<ScreenContext.None>(layoutId, ScreenContext.None)
+
     override val viewModel: MainViewModel by viewModel()
     private val rootViewModel: RootViewModel by activityViewModel()
 
@@ -125,21 +129,15 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
 
     private lateinit var bottomTabsView: BottomTabsView
 
-    private var tradingTabTooltip: BalloonTooltip? = null
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         childFragmentManager.removeAllFragments()
 
         bottomTabsView = view.findViewById(R.id.bottom_tabs)
-        if (requireContext().isLightTheme) {
-            bottomTabsView.setBgColor(requireContext().backgroundPageColor)
-        } else {
-            bottomTabsView.setBgColor(requireContext().backgroundTransparentColor)
-        }
+        bottomTabsView.setBgColor(requireContext().backgroundPageColor)
         bottomTabsView.doOnLongClick = { itemId ->
             if (itemId == R.id.wallet) {
-                navigation?.add(PickerScreen.newInstance(from = getCurrentFrom()))
+                navigation?.add(PickerScreen.newInstance())
             }
         }
         collectFlow(viewModel.childBottomScrolled) {
@@ -157,7 +155,8 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 R.id.trading -> it.link.query("shelf")
                 else -> null
             }
-            setFragment(itemId, it.wallet, it.from, extra, true)
+            val network = if (itemId == R.id.browser) it.link.query("network") else null
+            setFragment(itemId, it.wallet, it.from, extra, true, network)
             parentClearState()
         }.launchIn(lifecycleScope)
 
@@ -174,92 +173,25 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
                 toTokenRaw = it.to
             ))
         }
-        collectFlow(viewModel.selectedWalletFlow) { wallet ->
+        collectFlow(viewModel.selectedWalletFlow.filterNotNull()) { wallet ->
             applyWallet(wallet)
-            setFragment(bottomTabsView.selectedItemId, wallet, "wallet",null, false)
+            setFragment(bottomTabsView.selectedItemId, wallet, "wallet", null, false)
         }
 
-        collectFlow(viewModel.disbleNftsFlow) {
-            bottomTabsView.toggleItem(R.id.collectibles, !it)
-        }
-
-        val isTradingEnabled = WalletFeature.TradingTab.isEnabled
-        bottomTabsView.toggleItem(R.id.activity, !isTradingEnabled)
-        bottomTabsView.toggleItem(R.id.trading, isTradingEnabled)
-        if (isTradingEnabled) {
-            bottomTabsView.setLottieTabIcons(
-                mapOf(
-                    R.id.wallet to uikit.R.raw.lottie_wallet,
-                    R.id.trading to uikit.R.raw.lottie_trade,
-                    R.id.browser to uikit.R.raw.lottie_browser,
-                    R.id.collectibles to uikit.R.raw.lottie_collectibles,
-                ),
-            )
-            bottomTabsView.post { tryShowTradingTabTooltip() }
-        }
-    }
-
-    override fun onDestroyView() {
-        dismissTradingTabTooltip()
-        super.onDestroyView()
-    }
-
-    private fun tryShowTradingTabTooltip() {
-        if (tradingTabTooltip != null) {
-            return
-        }
-        if (!WalletFeature.TradingTab.isEnabled) {
-            return
-        }
-        if (!WalletTooltip.TradingTab.shouldShow) {
-            return
-        }
-        val tab = bottomTabsView.findTabView(R.id.trading)
-        if (tab == null) {
-            return
-        }
-        tab.post {
-            if (tradingTabTooltip != null) {
-                return@post
-            }
-            if (!tab.isAttachedToWindow || tab.visibility != View.VISIBLE) {
-                return@post
-            }
-            tradingTabTooltip = BalloonTooltip.show(
-                anchorView = tab,
-                badgeText = getString(Localization.tooltip_new),
-                messageText = getString(Localization.tooltip_trade_us_stocks_etfs),
-                placement = BalloonTooltip.Placement.TOP,
-                offset = -(2.dp),
-                autoDismissMs = BalloonTooltip.NO_AUTO_DISMISS,
-                onShown = {
-                    TooltipManager.markShownInSession(WalletTooltip.TradingTab.key)
-                    TooltipManager.incrementShowCount(WalletTooltip.TradingTab.key)
-                    markTradingTabTooltipShown()
-                },
-                onClickListener = {
-                    markTradingTabTooltipShown()
-                    dismissTradingTabTooltip()
-                },
-            )
-        }
-    }
-
-    private fun markTradingTabTooltipShown() {
-        if (WalletTooltip.TradingTab.state != TooltipState.ALWAYS) {
-            TooltipManager.setState(WalletTooltip.TradingTab.key, TooltipState.SHOWN)
-        }
-    }
-
-    private fun dismissTradingTabTooltip() {
-        tradingTabTooltip?.dismiss()
-        tradingTabTooltip = null
+        bottomTabsView.toggleItem(R.id.trading, true)
+        bottomTabsView.setLottieTabIcons(
+            mapOf(
+                R.id.wallet to uikit.R.raw.lottie_wallet,
+                R.id.trading to uikit.R.raw.lottie_trade,
+                R.id.browser to uikit.R.raw.lottie_browser,
+            ),
+        )
     }
 
     override fun onBackPressed(): Boolean {
         val visibleFragment = childFragmentManager.fragments.find {
             !it.isHidden && !it.isDetached
-        } as BaseFragment
+        }
         return if (visibleFragment is BrowserBaseScreen) {
             visibleFragment.onBackPressed()
         } else {
@@ -284,24 +216,10 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         currentWalletId = wallet.id
 
         bottomTabsView.doOnClick = { itemId ->
-            if (itemId == R.id.trading) {
-                dismissTradingTabTooltip()
-            }
-            setFragment(itemId, wallet, "wallet",null, false)
+            setFragment(itemId, wallet, "wallet", null, false)
             if (itemId == R.id.browser) {
                 analytics?.simpleTrackEvent("browser_click")
             }
-        }
-    }
-
-    private fun getCurrentFrom(): String {
-        return when(bottomTabsView.selectedItemId) {
-            R.id.wallet -> "wallet"
-            R.id.activity -> "activity"
-            R.id.trading -> "trading"
-            R.id.collectibles -> "collectibles"
-            R.id.browser -> "browser"
-            else -> "unknown"
         }
     }
 
@@ -312,23 +230,25 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     }
 
     private fun createFragment(itemId: Int, wallet: WalletEntity): Fragment {
-        val fragment = when(itemId) {
-            R.id.wallet -> WalletScreen.newInstance(wallet)
-            R.id.activity -> TxEventsScreen.newInstance(wallet, canGoBack = false)
+        val fragment = when (itemId) {
+            R.id.wallet -> if (wallet.type == WalletType.Multichain) {
+                PortfolioFragment.newInstance()
+            } else {
+                WalletScreen.newInstance(wallet)
+            }
             R.id.trading -> ShelvesFragment()
-            R.id.collectibles -> CollectiblesScreen.newInstance(wallet)
             R.id.browser -> BrowserBaseScreen.newInstance(wallet)
             else -> throw IllegalArgumentException("Unknown itemId: $itemId")
         }
         return fragment
     }
 
-    private fun setFragment(itemId: Int, wallet: WalletEntity, from: String, extra: String?, forceScrollUp: Boolean) {
+    private fun setFragment(itemId: Int, wallet: WalletEntity, from: String, extra: String?, forceScrollUp: Boolean, network: String? = null) {
         viewModel.setData(wallet, itemId)
-        setFragment(getFragment(itemId, wallet), forceScrollUp, from, extra, 0)
+        setFragment(getFragment(itemId, wallet), forceScrollUp, from, extra, 0, wallet, network)
     }
 
-    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, from: String, extra: String?, attempt: Int) {
+    private fun setFragment(fragment: Fragment, forceScrollUp: Boolean, from: String, extra: String?, attempt: Int, wallet: WalletEntity, network: String? = null) {
         if (attempt > 3) {
             throw IllegalStateException("Failed to set main fragment")
         }
@@ -338,7 +258,8 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         }
 
         if (fragment.isAdded && !fragment.isHidden) {
-            (fragment as? Child)?.scrollUp()
+            (fragment as? MainTabChildFragment<*>)?.scrollUp()
+            applyBrowserExtras(fragment, extra, network)
             return
         }
         val transaction = childFragmentManager.beginTransaction()
@@ -349,7 +270,7 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         if (fragment.isAdded) {
             transaction.show(fragment)
             if (forceScrollUp) {
-                (fragment as? Child)?.scrollUp()
+                (fragment as? MainTabChildFragment<*>)?.scrollUp()
             }
         } else {
             transaction.add(R.id.child_fragment, fragment)
@@ -357,23 +278,14 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
         transaction.runOnCommit {
             checkBottomDivider(fragment)
             if (fragment is BrowserBaseScreen) {
-                analytics?.simpleTrackScreenEvent("browser_open", from)
-                if (!extra.isNullOrBlank()) {
-                    fragment.openCategory(extra)
-                }
+                fragment.trackBrowserOpen(from)
+                applyBrowserExtras(fragment, extra, network)
             } else if (fragment is ShelvesFragment) {
                 if (!extra.isNullOrBlank()) {
                     fragment.scrollToShelf(extra)
                 }
-            } else if (fragment is TxEventsScreen) {
-                analytics?.simpleTrackScreenEvent("history_open", from)
-            } else if (fragment is CollectiblesScreen) {
-                analytics?.simpleTrackScreenEvent("collectibles_open", from)
-            } else if (fragment is WalletScreen) {
-                analytics?.simpleTrackEvent("wallet_open", hashMapOf(
-                    "from" to from,
-                    "wallet_type" to fragment.wallet.version.title
-                ))
+            } else if (fragment is PortfolioFragment || fragment is WalletScreen) {
+                PortfolioAnalytics.open(wallet)
             }
         }
         try {
@@ -383,8 +295,20 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
             L.e("MainScreenLog", "Failed to set fragment", e)
             FirebaseCrashlytics.getInstance().recordException(e)
             postDelayed(1000) {
-                setFragment(fragment, forceScrollUp, from,extra, attempt + 1)
+                setFragment(fragment, forceScrollUp, from, extra, attempt + 1, wallet, network)
             }
+        }
+    }
+
+    private fun applyBrowserExtras(fragment: Fragment, category: String?, network: String?) {
+        if (fragment !is BrowserBaseScreen) {
+            return
+        }
+        if (!category.isNullOrBlank()) {
+            fragment.openCategory(category)
+        }
+        if (!network.isNullOrBlank()) {
+            fragment.openNetwork(network)
         }
     }
 
@@ -400,17 +324,12 @@ class MainScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_main, S
     }
 
     private fun resolveId(deeplink: String): Int {
-        if (deeplink.startsWith("tonkeeper://activity")) {
-            return R.id.activity
-        } else if (deeplink.startsWith("tonkeeper://browser")) {
+        if (deeplink.startsWith("tonkeeper://browser")) {
             return R.id.browser
-        } else if (deeplink.startsWith("tonkeeper://collectibles")) {
-            return R.id.collectibles
         } else if (deeplink.startsWith("tonkeeper://trading")) {
             return R.id.trading
         }
         return R.id.wallet
-
     }
 
     companion object {

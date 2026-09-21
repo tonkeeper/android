@@ -8,6 +8,7 @@ import android.text.Spanned
 import android.text.TextWatcher
 import android.text.method.DigitsKeyListener
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
@@ -263,6 +264,21 @@ class InputView @JvmOverloads constructor(
 
         setOnClickListener {
             editText.focusWithKeyboard()
+        }
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        val rtl = layoutDirection == LAYOUT_DIRECTION_RTL
+        hintView.pivotX = if (rtl) {
+            hintView.width.toFloat()
+        } else {
+            0f
+        }
+        editText.gravity = Gravity.TOP or if (rtl) {
+            Gravity.RIGHT
+        } else {
+            Gravity.LEFT
         }
     }
 

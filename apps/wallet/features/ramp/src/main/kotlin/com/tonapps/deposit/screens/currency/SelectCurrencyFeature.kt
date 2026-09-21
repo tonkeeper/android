@@ -44,7 +44,7 @@ class SelectCurrencyFeature(
             SelectCurrencyAction.Init -> {
                 val wallet = accountRepository.forceSelectedWallet()
                 val currencies =
-                    exchangeRepository.getCurrencies(wallet.network, settingsRepository.getLocale())
+                    exchangeRepository.getCurrencies(wallet.network, settingsRepository.getLocale(), wallet.multichainWalletId)
 
                 if (currencies.isEmpty()) {
                     setState { SelectCurrencyState.Empty }

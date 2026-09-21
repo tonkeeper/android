@@ -26,6 +26,7 @@ import com.tonapps.ledger.devices.Devices
 import com.tonapps.ledger.ton.AccountPath
 import com.tonapps.ledger.ton.LedgerAccount
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.ledger.ton.OpenAppResult
 import com.tonapps.ledger.ton.TonPayloadFormat
 import com.tonapps.ledger.ton.TonTransport
 import com.tonapps.ledger.ton.Transaction
@@ -47,6 +48,7 @@ import com.tonapps.wallet.localization.Localization
 import io.ktor.util.reflect.instanceOf
 import io.tonapi.models.Account
 import io.tonapi.models.AccountStatus
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -57,6 +59,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -108,7 +111,12 @@ class LedgerConnectionViewModel(
             ConnectionState.Idle -> LedgerStep.CONNECT
             ConnectionState.Scanning -> LedgerStep.CONNECT
             is ConnectionState.Connected -> LedgerStep.OPEN_TON_APP
-            is ConnectionState.TonAppOpened -> if (_walletId != null) LedgerStep.CONFIRM_TX else LedgerStep.DONE
+            is ConnectionState.OpeningTonApp -> LedgerStep.APPROVE_TON_APP
+            is ConnectionState.TonAppOpened -> if (_walletId != null) {
+                LedgerStep.CONFIRM_TX
+            } else {
+                LedgerStep.DONE
+            }
             is ConnectionState.Disconnected -> LedgerStep.CONNECT
             ConnectionState.Signed -> LedgerStep.DONE
         }
@@ -160,6 +168,7 @@ class LedgerConnectionViewModel(
         _connectionState.tryEmit(ConnectionState.Scanning)
         ledgerUsbJob = usbLedger
             .deviceFlow()
+            .distinctUntilChanged()
             .map(usbLedger::connectDevice)
             .map { transport ->
                 _connectionState.tryEmit(ConnectionState.Connected)
@@ -265,8 +274,9 @@ class LedgerConnectionViewModel(
             }
         } else {
             _connectionState.tryEmit(ConnectionState.Scanning)
-            bleManager.startScanning {
-                val device = it.first()
+
+            val started = bleManager.startScanning { devices ->
+                val device = devices.firstOrNull() ?: return@startScanning
 
                 try {
                     bleManager.stopScanning()
@@ -274,6 +284,13 @@ class LedgerConnectionViewModel(
                 }
 
                 connectBle(device.id)
+            }
+
+            if (!started) {
+                _connectionState.tryEmit(ConnectionState.Idle)
+                _eventFlow.tryEmit(
+                    LedgerEvent.Error(context.getString(Localization.something_went_wrong))
+                )
             }
         }
     }
@@ -368,7 +385,7 @@ class LedgerConnectionViewModel(
         try {
             _eventFlow.tryEmit(LedgerEvent.Loading(true))
             val accounts = mutableListOf<LedgerAccount>()
-            for (i in 0 until 10) {
+            for (i in 0 until 20) {
                 val account = _tonTransport!!.getAccount(AccountPath(i))
                 accounts.add(account)
             }
@@ -575,22 +592,67 @@ class LedgerConnectionViewModel(
         pollTonAppJob?.cancel()
         pollTonAppJob = viewModelScope.launch {
             try {
-                suspend fun isAppOpen() = try {
-                    tonTransport.isTONAppOpen()
-                } catch (_: Exception) {
-                    false
-                }
-
-                while (!isAppOpen()) {
-                    L.d("LEDGER", "Waiting for app to open")
+                var quitAttempted = false
+                var openAttempted = false
+                while (true) {
+                    val app = try {
+                        tonTransport.currentApp()
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        null
+                    }
+                    if (app == null) {
+                        L.d("LEDGER", "Waiting for device to respond")
+                    } else if (app.isTonApp) {
+                        setTonTransport(tonTransport, type)
+                        return@launch
+                    } else if (app.isDashboard) {
+                        if (!openAttempted) {
+                            openAttempted = requestOpenTonApp(tonTransport)
+                        }
+                    } else if (!quitAttempted) {
+                        quitAttempted = true
+                        quitForeignApp(tonTransport)
+                    }
                     delay(1000)
                 }
-
-                setTonTransport(tonTransport, type)
-            } catch (e: Throwable) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
                 L.d("LEDGER", "Error waiting for TON app", e)
                 _connectionState.tryEmit(ConnectionState.Disconnected())
             }
+        }
+    }
+
+    private suspend fun requestOpenTonApp(tonTransport: TonTransport): Boolean {
+        _connectionState.tryEmit(ConnectionState.OpeningTonApp)
+        return try {
+            val result = tonTransport.openTonApp()
+            if (result != OpenAppResult.Opened) {
+                _connectionState.tryEmit(ConnectionState.Connected)
+            }
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: TransportStatusException.LockedDevice) {
+            _connectionState.tryEmit(ConnectionState.Connected)
+            false
+        } catch (e: Exception) {
+            L.d("LEDGER", "Error opening TON app", e)
+            _connectionState.tryEmit(ConnectionState.Connected)
+            true
+        }
+    }
+
+    private suspend fun quitForeignApp(tonTransport: TonTransport) {
+        try {
+            tonTransport.quitApp()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            L.d("LEDGER", "Error quitting current app", e)
         }
     }
 
@@ -617,9 +679,15 @@ class LedgerConnectionViewModel(
 
         uiItems.add(
             Item.Step(
-                context.getString(Localization.ledger_open_ton_app),
+                context.getString(
+                    if (currentStep == LedgerStep.APPROVE_TON_APP) {
+                        Localization.ledger_approve_ton_app
+                    } else {
+                        Localization.ledger_open_ton_app
+                    }
+                ),
                 currentStep == LedgerStep.DONE || currentStep == LedgerStep.CONFIRM_TX,
-                currentStep == LedgerStep.OPEN_TON_APP,
+                currentStep == LedgerStep.OPEN_TON_APP || currentStep == LedgerStep.APPROVE_TON_APP,
                 _walletId == null
             )
         )

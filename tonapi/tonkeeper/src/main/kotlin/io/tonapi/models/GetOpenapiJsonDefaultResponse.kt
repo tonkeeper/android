@@ -19,7 +19,9 @@ data class GetOpenapiJsonDefaultResponse(
     @SerialName(value = "error")
     val error: String,
     @SerialName(value = "error_code")
-    val errorCode: Long? = null
+    val errorCode: Long? = null,
+    @SerialName(value = "details")
+    val details: InsufficientFunds? = null
 ) {
 }
 

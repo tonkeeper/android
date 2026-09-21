@@ -4,10 +4,11 @@ import com.tonapps.log.L
 import androidx.core.net.toUri
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.hex
-import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.tonkeeper.extensions.webViewProfileName
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import io.ton.walletkit.api.generated.TONDAppInfo
 import io.ton.walletkit.model.TONUserFriendlyAddress
 import io.ton.walletkit.session.SessionFilter
@@ -29,7 +30,7 @@ internal fun normalizedHost(urlOrDomain: String): String {
  * Session manager that bridges the SDK to Tonkeeper's database.
  */
 class TonkeeperSessionManager(
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
     private val dAppsRepository: DAppsRepository,
 ) : TONConnectSessionManager {
 
@@ -40,7 +41,7 @@ class TonkeeperSessionManager(
         walletAddress: String,
         isJsBridge: Boolean,
     ): TONConnectSession {
-        val wallet = accountRepository.getWallets().find { it.id == walletId }
+        val wallet = accountRepository.getTonWalletById(walletId)
             ?: throw IllegalArgumentException("Wallet not found: $walletId")
 
         val keyPair = CryptoBox.keyPair()
@@ -53,12 +54,10 @@ class TonkeeperSessionManager(
             type = if (isJsBridge) AppConnectEntity.Type.Internal else AppConnectEntity.Type.External,
             appUrl = appUrl,
             keyPair = keyPair,
-            proofSignature = null,
-            proofPayload = null,
             pushEnabled = false
         )
 
-        if (dAppsRepository.newConnect(connection)) {
+        if (dAppsRepository.newConnect(connection, wallet.webViewProfileName())) {
             return SessionHelper.buildSession(
                 connection = connection,
                 walletId = walletId,
@@ -72,9 +71,8 @@ class TonkeeperSessionManager(
 
     override suspend fun getSession(sessionId: String): TONConnectSession? {
         val connection = dAppsRepository.getConnections().find { it.clientId == sessionId } ?: return null
-        val wallet = accountRepository.getWallets().find {
-            it.accountId == connection.accountId && it.network == connection.network
-        } ?: return null
+        val wallet = accountRepository.getTonWalletByAccountId(connection.accountId, connection.network)
+            ?: return null
         val app = dAppsRepository.getApp(connection.appUrl)
         val dApp = TONDAppInfo(app.name, null, app.url.toString(), app.iconUrl.toString(), null)
 
@@ -84,7 +82,7 @@ class TonkeeperSessionManager(
     }
 
     override suspend fun getSessions(filter: SessionFilter?): List<TONConnectSession> {
-        val wallets = accountRepository.getWallets()
+        val wallets = accountRepository.getTonWallets()
         val allConnections = dAppsRepository.getConnections()
         val filterDomainHost = filter?.domain?.let { normalizedHost(it) }
 

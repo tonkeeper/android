@@ -3,9 +3,9 @@ package com.tonapps.tonkeeper.ui.screen.events.compose.history.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.NonRestartableComposable
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsAction
-import ui.components.events.EventHeader
-import ui.components.events.EventItem
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.EventHeader
+import com.tonapps.wallet.features.events.components.legacy.EventItem
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 
 @Composable
 @NonRestartableComposable

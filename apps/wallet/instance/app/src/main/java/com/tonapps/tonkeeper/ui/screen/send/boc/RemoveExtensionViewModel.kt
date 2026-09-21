@@ -3,6 +3,9 @@ package com.tonapps.tonkeeper.ui.screen.send.boc
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.bus.generated.Events
+import com.tonapps.core.helper.TON_COIN_ASSET_ID
+import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.model.legacy.Amount
 import com.tonapps.blockchain.model.legacy.TransferEntity
@@ -67,7 +70,7 @@ class RemoveExtensionViewModel(
                 val queryId = TransferEntity.newWalletQueryId()
 
                 val address = AddrStd(pluginAddress)
-                val forwardAmount = org.ton.block.Coins.of(0.05)
+                val forwardAmount = org.ton.block.Coins.of(5,16)
 
                 val unsignedBody = wallet.contract.removePlugin(
                     seqNo = seqNo,
@@ -170,7 +173,7 @@ class RemoveExtensionViewModel(
             seqNo = seqNo,
             validUntil = validUntil,
             queryId = queryId,
-            forwardAmount = org.ton.block.Coins.of(0.05),
+            forwardAmount = org.ton.block.Coins.of(5, 16),
             pluginAddress = AddrStd(pluginAddress)
         )
 
@@ -190,6 +193,15 @@ class RemoveExtensionViewModel(
             withBattery = false,
             source = "local",
             confirmationTime = confirmationTimeSeconds
+        )
+        TransactionSentAnalytics.transactionSent(
+            wallet = wallet,
+            category = Events.TransactionSent.TransactionSentCategory.Call,
+            categoryDetail = Events.TransactionSent.TransactionSentCategoryDetail.Subscription,
+            asset = TON_COIN_ASSET_ID,
+            amount = 0.0,
+            feeAsset = Events.TransactionSent.TransactionSentFeeAsset.Coin,
+            initiatedBy = Events.TransactionSent.TransactionSentInitiatedBy.User,
         )
         emit(cell.base64())
     }.flowOn(Dispatchers.IO)

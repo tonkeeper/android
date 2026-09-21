@@ -18,7 +18,7 @@ class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.l
 
     override fun onBind(item: BannerAppItem) {
         itemView.setOnClickListener {
-            item.app.openDApp(context, item.wallet, "banner", item.country)
+            item.app.openDApp(context, item.wallet, "banner", item.country, item.multichain)
         }
 
         bgView.doOnLayout {

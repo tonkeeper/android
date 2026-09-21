@@ -1,18 +1,29 @@
 appId: com.ton_keeper.debug
 ---
-- runScript: ../../scripts/utils/formatter.js
-
-- runFlow:
-    when:
-      true: ${need_first_screen == true}
+# Wallet UI can lag behind API; refetch + assert up to 3 times (initial + 2 retries).
+# API + formatter run in one JS file to avoid GraalVM "API object must not be garbage collected" crashes.
+- retry:
+    maxRetries: 2
     commands:
-      - launchApp
-- runScript:
-    file: ../../scripts/api/v2/accounts/getAddressInfo.js
-    env:
-      addr: ${WALLET_WITH_MONEY_ADDR}
-      auth_token: ${auth}
+      - runFlow:
+          when:
+            true: ${need_first_screen == true}
+          commands:
+            - runFlow: ../../steps/wallet/relaunch_app_multichain.yaml
 
-- evalScript: ${output.screenTonValue = output.formatter.formatTon(output.balance)}
+      - runScript:
+          file: ../../scripts/api/compare_ton_balance.js
+          env:
+            addr: ${WALLET_WITH_MONEY_ADDR}
+            auth_token: ${auth}
 
-- assertVisible: ${output.screenTonValue}
+      # Compose home: native token amount sits under the GRAM row, not id: balance.
+      - extendedWaitUntil:
+          visible:
+            text: ${output.screenTonValue}
+            below: GRAM
+          timeout: 6000
+
+      - assertVisible:
+          text: ${output.screenTonValue}
+          below: GRAM

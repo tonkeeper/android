@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import org.ton.mnemonic.Mnemonic
+import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import uikit.extensions.activity
 
 class DevViewModel(
@@ -196,7 +196,7 @@ class DevViewModel(
                     } else {
                         for ((walletId, decryptedData) in vaultState.keys) {
                             val parsedMnemonic = parseMnemonic(decryptedData.mnemonic)
-                            if (Mnemonic.isValid(parsedMnemonic)) {
+                            if (Mnemonic(parsedMnemonic).isValid()) {
                                 accountRepository.addMnemonic(parsedMnemonic)
                                 lines.add("Valid mnemonic added to vault: $walletId")
                             } else {

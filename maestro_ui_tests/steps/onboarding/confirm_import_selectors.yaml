@@ -1,0 +1,32 @@
+# After the recovery phrase the app may ask which wallet to import.
+# - Choose wallet: seed is valid as both TON and BIP39
+# - Choose wallet version: both W5 and V4R2 are funded (W5 is preselected)
+# Then Create passcode. Do not hideKeyboard — on Android that is Back.
+appId: com.ton_keeper.debug
+---
+- extendedWaitUntil:
+    visible: "Create passcode|Choose wallet version|Choose wallet"
+    timeout: 60000
+
+- runFlow:
+    when:
+      visible: "Choose wallet version"
+    commands:
+      - tapOn: Continue
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+- runFlow:
+    when:
+      visible: "^Choose wallet$"
+    commands:
+      - tapOn: Continue
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - runFlow:
+          when:
+            visible: "Choose wallet version"
+          commands:
+            - tapOn: Continue
+            - waitForAnimationToEnd:
+                timeout: 3000

@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TONOpCode
+import com.tonapps.bus.generated.Events
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeQueryId
 import com.tonapps.extensions.currentTimeSeconds
@@ -76,7 +77,10 @@ class DNSRenewViewModel(
     private suspend fun sign(signRequests: List<SignRequestEntity>): Boolean {
         for (signRequest in signRequests) {
             try {
-                SendTransactionScreen.run(context, wallet, signRequest)
+                SendTransactionScreen.run(
+                    context, wallet, signRequest,
+                    transactionSentDetail = Events.TransactionSent.TransactionSentCategoryDetail.DomainRenew
+                )
             } catch (e: Throwable) {
                 return false
             }

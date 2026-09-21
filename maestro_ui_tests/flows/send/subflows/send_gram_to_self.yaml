@@ -1,0 +1,18 @@
+# Multichain Send: GRAM on TON to self (address from Receive).
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — send GRAM to self"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow:
+    file: "../../../steps/recieve_modal/copy_network_address.yaml"
+    env:
+      NETWORK_NAME: "TON"
+      PREV_NETWORK: "One address per network"
+      ADDRESS_TITLE: "Your TON address"
+- runFlow:
+    file: "../../../steps/send/send_to_clipboard_recipient.yaml"
+    env:
+      SEARCH_QUERY: "GRAM"
+      TOKEN_SYMBOL: "GRAM"
+      AMOUNT: "0.01"

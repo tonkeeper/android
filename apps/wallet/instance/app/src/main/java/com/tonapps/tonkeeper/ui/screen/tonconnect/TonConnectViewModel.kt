@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.deposit.usecase.sign.SignUseCase
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class TonConnectViewModel(
     app: Application,
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
     private val signUseCase: SignUseCase,
     private val settingsRepository: SettingsRepository,
     private val environment: Environment,
@@ -35,12 +35,12 @@ class TonConnectViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            val wallet = accountRepository.selectedWalletFlow.firstOrNull() ?: run {
+            val wallet = accountRepository.selectedTonWalletFlow.firstOrNull() ?: run {
                 _stateFlow.value = TonConnectScreenState.Failure
                 return@launch
             }
 
-            val wallets = accountRepository.getWallets().filter { it.isTonConnectSupported }
+            val wallets = accountRepository.getTonWallets().filter { it.isTonConnectSupported }
 
             if (wallets.isEmpty()) {
                 _stateFlow.value = TonConnectScreenState.Failure

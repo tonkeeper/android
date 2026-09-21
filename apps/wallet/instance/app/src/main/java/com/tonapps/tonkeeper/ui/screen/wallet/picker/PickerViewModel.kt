@@ -2,15 +2,12 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.tonapps.extensions.filterList
 import com.tonapps.icu.Coins
-import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.legacy.enteties.WalletExtendedEntity
-import com.tonapps.tonkeeper.manager.assets.AssetsManager
-import com.tonapps.tonkeeper.manager.assets.WalletBalanceEntity
+import com.tonapps.legacy.assets.AssetsManager
+import com.tonapps.legacy.assets.WalletBalanceEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -22,20 +19,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PickerViewModel(
     app: Application,
     private val mode: PickerMode,
-    private val from: String,
     private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
-    private val assetsManager: AssetsManager,
-    private val analytics: AnalyticsHelper
+    private val assetsManager: AssetsManager
 ): BaseWalletVM(app) {
 
     private val hiddenBalances = settingsRepository.hiddenBalances
@@ -90,13 +82,6 @@ class PickerViewModel(
                 loadRemoteBalances(wallets)
             }
         }
-
-        uiItemsFlow.take(1).filterList { it is Item.Wallet }.map { it as List<Item.Wallet> }.onEach { wallets ->
-            analytics.simpleTrackEvent("wallet_click", hashMapOf(
-                "wallet_count" to wallets.size,
-                "wallet_type_list" to wallets.map { it.wallet.version.name }.distinct().joinToString(",")
-            ))
-        }.launch()
     }
 
     fun toggleEditMode() {

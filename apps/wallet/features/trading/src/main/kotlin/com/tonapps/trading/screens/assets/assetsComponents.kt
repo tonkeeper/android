@@ -10,12 +10,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tonapps.trading.percentDiffColor
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.localization.Localization
+import io.tradingapi.models.AssetRefSummary.Verification
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonItemTitle
+import ui.components.moon.MoonVerificationBadge
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.TextCell
@@ -36,7 +40,19 @@ internal fun AssetCell(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    MoonItemTitle(text = item.symbol)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false),
+                    ) {
+                        MoonItemTitle(
+                            text = item.symbol,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (item.verification == Verification.trusted) {
+                            MoonVerificationBadge()
+                        }
+                    }
                     MoonItemTitle(text = item.formattedPrice)
                 }
             },
@@ -47,10 +63,24 @@ internal fun AssetCell(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     MoonItemSubtitle(text = item.name)
-                    MoonItemSubtitle(
-                        text = item.formattedChange,
-                        color = item.formattedChange.percentDiffColor(),
-                    )
+                    when (item.verification) {
+                        Verification.trusted -> MoonItemSubtitle(
+                            text = item.formattedChange,
+                            color = item.formattedChange.percentDiffColor(),
+                        )
+                        Verification.whitelist -> MoonItemSubtitle(
+                            text = item.formattedChange,
+                            color = item.formattedChange.percentDiffColor(),
+                        )
+                        Verification.none -> MoonItemSubtitle(
+                            text = stringResource(Localization.unverified_token),
+                            color = UIKit.colorScheme.accent.orange,
+                        )
+                        Verification.blacklist -> MoonItemSubtitle(
+                            text = stringResource(Localization.scam),
+                            color = UIKit.colorScheme.accent.red,
+                        )
+                    }
                 }
             },
             image = {

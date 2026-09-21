@@ -5,9 +5,7 @@ enum class WalletTooltipKey(
     override val maxTimeToShow: Int,
     override val defaultState: TooltipState = TooltipState.NOT_SHOWN,
 ) : TooltipKey {
-    HISTORY_HERE("history_here_tooltip", 1),
-    TRADING_TAB("trading_tab_tooltip", 1),
-    ;
+    ADD_MULTICHAIN_WALLET("add_multichain_wallet", maxTimeToShow = 3);
 }
 
 sealed interface WalletTooltip {
@@ -15,12 +13,4 @@ sealed interface WalletTooltip {
 
     val shouldShow: Boolean get() = TooltipManager.shouldShow(key)
     val state: TooltipState get() = TooltipManager.getState(key)
-
-    data object HistoryHere : WalletTooltip {
-        override val key: TooltipKey get() = WalletTooltipKey.HISTORY_HERE
-    }
-
-    data object TradingTab : WalletTooltip {
-        override val key: TooltipKey get() = WalletTooltipKey.TRADING_TAB
-    }
 }

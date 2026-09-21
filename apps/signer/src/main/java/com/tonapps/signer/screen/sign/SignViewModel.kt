@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import org.ton.api.pk.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.CommonMsgInfoRelaxed

@@ -7,6 +7,7 @@ import android.view.View
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.blockchain.ton.extensions.equalsAddress
@@ -23,8 +24,8 @@ import com.tonapps.security.CryptoBox
 import com.tonapps.tonkeeper.client.safemode.SafeModeClient
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.core.FirebaseHelper
-import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.extensions.showToast
+import com.tonapps.tonkeeper.extensions.webViewProfileName
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.Bridge
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
@@ -41,11 +42,10 @@ import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.readBody
-import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
@@ -74,7 +74,7 @@ import kotlin.concurrent.withLock
 class TonConnectManager(
     private val scope: CoroutineScope,
     private val api: API,
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
     private val dAppsRepository: DAppsRepository,
     private val pushManager: PushManager,
     private val safeModeClient: SafeModeClient,
@@ -185,7 +185,7 @@ class TonConnectManager(
             bridge.sendDisconnectResponseSuccess(connection, messageId)
         }
 
-        accountRepository.getWalletByAccountId(connection.accountId, connection.network)?.let {
+        accountRepository.getTonWalletByAccountId(connection.accountId, connection.network)?.let {
             pushManager.dAppUnsubscribe(it, listOf(connection))
         }
     }
@@ -220,6 +220,9 @@ class TonConnectManager(
                 }
                 pushManager.dAppUnsubscribe(wallet, connections)
             }
+
+            dAppsRepository.cleanupDisconnectedOrigin(wallet, appUrl)
+
             withContext(Dispatchers.Main.immediate) {
                 reconnectBridge()
             }
@@ -272,12 +275,10 @@ class TonConnectManager(
             type = type,
             appUrl = appUrl,
             keyPair = keyPair,
-            proofSignature = proof?.signature,
             timestamp = timestamp,
-            proofPayload = proof?.payload,
             pushEnabled = pushEnabled
         )
-        if (!dAppsRepository.newConnect(connection)) {
+        if (!dAppsRepository.newConnect(connection, wallet.webViewProfileName())) {
             throw Exception("Failed to save connection")
         }
         connection
@@ -336,10 +337,8 @@ class TonConnectManager(
         }
 
         val clientId = tonConnect.clientId
-        var appUrl = Uri.EMPTY
         try {
             val app = readManifest(tonConnect.manifestUrl)
-            appUrl = app.url
             if (isScam(activity, wallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
                 return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
             }
@@ -393,7 +392,6 @@ class TonConnectManager(
                 activity.appVersionName
             )
         } catch (e: CancellationException) {
-            wallet?.let { showLogoutAppBar(it, activity, appUrl) }
             JsonBuilder.connectEventError(BridgeError.userDeclinedTransaction())
         } catch (e: ManifestException) {
             FirebaseHelper.manifestFetchFailed(
@@ -412,26 +410,29 @@ class TonConnectManager(
         }
     }
 
-    override suspend fun showLogoutAppBar(wallet: WalletEntity, context: Context, url: Uri) = withContext(Dispatchers.Main.immediate) {
-        val connections = dAppsRepository.getConnections(wallet.accountId, wallet.network).flatMap {
-            it.value
-        }.filter { it.accountId.equalsAddress(wallet.accountId) && it.network == wallet.network }
+    override suspend fun showLogoutAppBar(
+        wallet: WalletEntity,
+        context: Context,
+        url: Uri,
+        type: AppConnectEntity.Type?
+    ) = withContext(Dispatchers.Main.immediate) {
+        val host = url.host ?: return@withContext
 
-        if (connections.isNotEmpty()) {
-            val text = context.getString(Localization.disconnect_dapp_confirm, url.host)
+        if (dAppsRepository.hasConnections(wallet.accountId, wallet.network, url, type)) {
+            val text = context.getString(Localization.disconnect_dapp_confirm, host)
             SnackBarView.show(
                 context = context,
                 text = text,
                 buttonText = context.getString(Localization.disconnect),
                 onClickListener = View.OnClickListener {
-                    disconnect(wallet, url, null)
+                    disconnect(wallet, url, type)
                 }
             )
         }
     }
 
     override suspend fun isScam(context: Context, wallet: WalletEntity, vararg uris: Uri): Boolean {
-        if (settingsRepository.isSafeModeEnabled(wallet.network) && safeModeClient.isHasScamUris(*uris)) {
+        if (settingsRepository.isSafeModeEnabled(wallet.id, wallet.network) && safeModeClient.isHasScamUris(*uris)) {
             withContext(Dispatchers.Main) {
                 TonConnectSafeModeDialog(context).show(wallet)
             }

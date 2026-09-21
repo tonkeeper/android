@@ -3,11 +3,10 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 import android.view.ViewGroup
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
-import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
-import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
 import com.tonapps.deposit.DepositFragment
 import com.tonapps.deposit.WithdrawFragment
+import com.tonapps.deposit.multicoin.DepositMulticoinFragment
+import com.tonapps.deposit.multicoin.WithdrawMulticoinFragment
 import com.tonapps.tonkeeper.koin.serverFlags
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.swap.SwapScreen
@@ -30,8 +29,11 @@ class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout
         val isStakeEnabled = item.walletType != WalletType.Watch && item.walletType != WalletType.Testnet && !item.isStakingDisabled
 
         receiveView.setOnClickListener {
-            AnalyticsHelper.Default.events.depositFlow.depositOpen(from = DepositFlowFrom.WalletScreen)
-            navigation?.add(DepositFragment())
+            if (item.walletType == WalletType.Multichain) {
+                navigation?.add(DepositMulticoinFragment())
+            } else {
+                navigation?.add(DepositFragment())
+            }
         }
 
         swapView.setOnClickListener {
@@ -50,7 +52,6 @@ class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout
         }
 
         sendView.setOnClickListener {
-            AnalyticsHelper.Default.events.withdrawFlow.withdrawOpen(from = WithdrawFlowFrom.WalletScreen)
             if (isWatchOnly) {
                 openWatchInfo(item.wallet)
                 return@setOnClickListener
@@ -58,7 +59,11 @@ class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout
                 return@setOnClickListener
             }
 
-            navigation?.add(WithdrawFragment.create())
+            if (item.walletType == WalletType.Multichain) {
+                navigation?.add(WithdrawMulticoinFragment())
+            } else {
+                navigation?.add(WithdrawFragment.create())
+            }
         }
         stakeView.setOnClickListener {
             if (isWatchOnly) {

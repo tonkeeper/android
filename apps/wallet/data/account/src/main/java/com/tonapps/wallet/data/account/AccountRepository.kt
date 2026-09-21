@@ -30,8 +30,12 @@ import com.tonapps.wallet.data.rn.data.RNKeystone
 import com.tonapps.wallet.data.rn.data.RNLedger
 import com.tonapps.wallet.data.rn.data.RNWallet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -40,10 +44,10 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.contract.wallet.WalletTransfer
-import org.ton.mnemonic.Mnemonic
+import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import java.math.BigInteger
 import java.util.UUID
 
@@ -81,6 +85,12 @@ class AccountRepository(
         .map { it.wallet }
         .shareIn(scope, SharingStarted.Eagerly, 1)
         .distinctUntilChanged()
+
+    private val _accountsChangedFlow = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val accountsChangedFlow: SharedFlow<Unit> = _accountsChangedFlow.asSharedFlow()
 
     private val selectedId: String?
         get() = (selectedStateFlow.value as? SelectedState.Wallet)?.wallet?.id
@@ -207,10 +217,13 @@ class AccountRepository(
             }
 
             val newLabel = Wallet.Label(name, emoji, color)
-            _selectedStateFlow.value = SelectedState.Wallet(wallet.copy(label = newLabel))
+            if (isEditSelectedWallet) {
+                _selectedStateFlow.value = SelectedState.Wallet(wallet.copy(label = newLabel))
+            }
 
-            database.editAccount(wallet.id, Wallet.Label(name, emoji, color))
+            database.editAccount(wallet.id, newLabel)
             rnLegacy.edit(wallet.id, name, RNWallet.fixEmoji(emoji), color)
+            _accountsChangedFlow.tryEmit(Unit)
         }
     }
 
@@ -248,6 +261,8 @@ class AccountRepository(
 
     suspend fun getWallets() = database.getAccounts()
 
+    suspend fun getWalletsCount() = database.getAccountsCount()
+
     suspend fun getUninitializedWallets() = database.getAccounts().filter { !it.initialized }
 
     suspend fun getInitializedWallets() = database.getAccounts().filter { it.initialized }
@@ -269,7 +284,7 @@ class AccountRepository(
     private suspend fun getTrxAccountsProvider(id: String): KeychainTrxAccountsProvider? {
         val mnemonic = getMnemonic(id)?.toList() ?: return null
         if (MnemonicHelper.isValidStandardTonMnemonic(mnemonic)) {
-            val entropy = Mnemonic.toEntropy(mnemonic)
+            val entropy = Mnemonic(mnemonic).toEntropy()
             return KeychainTrxAccountsProvider.fromEntropy(entropy)
         } else {
             return KeychainTrxAccountsProvider.fromMnemonic(mnemonic)
@@ -469,6 +484,10 @@ class AccountRepository(
         scope.launch { setSelectedWallet(id) }
     }
 
+    fun getSelectedWalletId(): String? {
+        return storageSource.getSelectedId()
+    }
+
     suspend fun setSelectedWallet(id: String?) {
         storageSource.setSelectedId(id)
         if (id == null) {
@@ -476,18 +495,13 @@ class AccountRepository(
             return
         }
 
-        val entity = database.getAccount(id) ?: database.getAccounts().firstOrNull()
-        if (entity == null) {
-            setSelectedWallet(null)
-        } else {
-            _selectedStateFlow.value = SelectedState.Wallet(entity)
-            rnLegacy.setSelectedWallet(id)
-        }
+        val entity = database.getAccount(id) ?: WalletEntity.EMPTY.copy(id = id)
+        _selectedStateFlow.value = SelectedState.Wallet(entity)
+        rnLegacy.setSelectedWallet(id)
     }
 
-    suspend fun delete(wallet: WalletEntity) = withContext(scope.coroutineContext) {
-        database.deleteAccount(wallet.id)
-        setSelectedWallet(database.getFirstAccountId())
+    suspend fun deleteAccount(id: String) = withContext(scope.coroutineContext) {
+        database.deleteAccount(id)
     }
 
     suspend fun logout() = withContext(scope.coroutineContext) {

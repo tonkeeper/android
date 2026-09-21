@@ -1,58 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:theme="@style/Theme.App.Blue">
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/logo"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
         android:scaleType="centerCrop"
-        android:src="@drawable/bg_intro_blue" />
+        android:src="@drawable/bg_intro_gradient" />
 
     <uikit.widget.ColumnLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="@dimen/offsetLarge"
-        android:paddingTop="@dimen/offsetLarge"
-        android:paddingBottom="@dimen/offsetMedium">
+        android:layout_height="match_parent">
 
-        <uikit.widget.TextHeaderView
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/logo"
+            android:layout_width="148dp"
+            android:layout_height="148dp"
+            android:layout_gravity="center_horizontal"
+            app:lottie_autoPlay="true"
+            app:lottie_rawRes="@raw/keeper_logo" />
+
+        <uikit.widget.ColumnLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/offsetMedium"
-            android:description="@string/intro_description"
-            android:title="@string/app_name" />
+            android:paddingHorizontal="@dimen/offsetLarge"
+            android:paddingTop="12dp"
+            android:paddingBottom="@dimen/offsetMedium">
 
-        <Button
-            android:id="@+id/new_wallet"
-            style="@style/Widget.App.Button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/offsetLarge"
-            android:text="@string/start_create_new_wallet"
-            android:textAppearance="@style/TextAppearance.Label1" />
+            <uikit.widget.TextHeaderView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/offsetLarge"
+                android:description="@string/intro_description"
+                android:title="@string/app_name" />
 
-        <Button
-            android:id="@+id/import_wallet"
-            style="@style/Widget.App.Button.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/offsetMedium"
-            android:text="@string/start_import_wallet"
-            android:textAppearance="@style/TextAppearance.Label1" />
+            <Button
+                android:id="@+id/new_wallet"
+                style="@style/Widget.App.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:text="@string/start_create_new_wallet"
+                android:textAppearance="@style/TextAppearance.Label1" />
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/terms"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/offsetLarge"
-            android:gravity="center"
-            android:text="@string/start_agree"
-            android:textAppearance="@style/TextAppearance.Body2"
-            android:textColor="?attr/textTertiaryColor" />
+            <Button
+                android:id="@+id/import_wallet"
+                style="@style/Widget.App.Button.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetMedium"
+                android:text="@string/start_import_wallet"
+                android:textAppearance="@style/TextAppearance.Label1" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/terms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetLarge"
+                android:gravity="center"
+                android:text="@string/start_agree"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textTertiaryColor" />
+
+        </uikit.widget.ColumnLayout>
 
     </uikit.widget.ColumnLayout>
 
-</uikit.widget.ColumnLayout>
+</FrameLayout>

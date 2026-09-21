@@ -75,7 +75,12 @@ interface ITonConnectBridge {
 
     fun isPushEnabled(wallet: WalletEntity, appUrl: Uri): Boolean
 
-    suspend fun showLogoutAppBar(wallet: WalletEntity, context: Context, url: Uri)
+    suspend fun showLogoutAppBar(
+        wallet: WalletEntity,
+        context: Context,
+        url: Uri,
+        type: AppConnectEntity.Type? = null
+    )
 
     fun createInjector(
         bridge: DAppBridge,

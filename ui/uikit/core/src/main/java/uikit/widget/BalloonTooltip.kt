@@ -58,7 +58,6 @@ class BalloonTooltip private constructor(
 
     companion object {
 
-        private const val DEFAULT_ARROW_MARGIN_START_DP = 24
         private const val ARROW_HALF_WIDTH_DP = 8
         private const val SCREEN_EDGE_PADDING_DP = 16
         private const val AUTO_DISMISS_MS = 5000L
@@ -137,7 +136,9 @@ class BalloonTooltip private constructor(
         }
 
         private fun watchAnchor(anchor: View) {
-            if (pendingAnchors.containsKey(anchor)) return
+            if (pendingAnchors.containsKey(anchor)) {
+                return
+            }
             val watcher = AnchorWatcher(anchor)
             pendingAnchors[anchor] = watcher
             watcher.attach()
@@ -188,13 +189,18 @@ class BalloonTooltip private constructor(
         }
 
         private fun View.isAnchorVisible(): Boolean {
-            if (!isShown) return false
+            if (!isShown) {
+                return false
+            }
             val activity = context.findActivity() as? FragmentActivity ?: return true
             val topFragment = activity.supportFragmentManager.fragments
-                .lastOrNull { !it.isHidden && !it.isDetached } ?: return true
+                .lastOrNull { !it.isHidden && !it.isDetached }
+                ?: return true
             var fragment: Fragment? = runCatching { findFragment<Fragment>() }.getOrNull()
             while (fragment != null) {
-                if (fragment === topFragment) return true
+                if (fragment === topFragment) {
+                    return true
+                }
                 fragment = fragment.parentFragment
             }
             return false
@@ -217,7 +223,6 @@ class BalloonTooltip private constructor(
             val screenWidth = context.resources.displayMetrics.widthPixels
             val edgePadding = SCREEN_EDGE_PADDING_DP.dp
             val arrowHalfWidth = ARROW_HALF_WIDTH_DP.dp
-            val defaultArrowMarginStart = DEFAULT_ARROW_MARGIN_START_DP.dp
 
             val location = IntArray(2)
             anchor.getLocationOnScreen(location)
@@ -225,7 +230,7 @@ class BalloonTooltip private constructor(
             val anchorTopY = location[1]
             val anchorBottomY = anchorTopY + anchor.height
 
-            val rawXOffset = anchorCenterX - defaultArrowMarginStart - arrowHalfWidth
+            val rawXOffset = anchorCenterX - tooltipWidth / 2
             val maxXOffset = (screenWidth - edgePadding - tooltipWidth).coerceAtLeast(edgePadding)
             val xOffset = rawXOffset.coerceIn(edgePadding, maxXOffset)
 
@@ -252,7 +257,9 @@ class BalloonTooltip private constructor(
     private var visibilityAnchorRef: WeakReference<View>? = null
 
     private fun display() {
-        if (dismissed) return
+        if (dismissed) {
+            return
+        }
         val anchor = anchor() ?: run {
             dismissOrphaned()
             return
@@ -272,7 +279,9 @@ class BalloonTooltip private constructor(
     }
 
     private fun dismissOrphaned() {
-        if (dismissed) return
+        if (dismissed) {
+            return
+        }
         dismissed = true
         mainHandler.removeCallbacks(dismissRunnable)
         removeAnchorVisibilityListener()
@@ -284,11 +293,15 @@ class BalloonTooltip private constructor(
     }
 
     private fun enqueueDeferredIfNeeded() {
-        if (this !in queue) queue.addFirst(this)
+        if (this !in queue) {
+            queue.addFirst(this)
+        }
     }
 
     private fun performShow() {
-        if (dismissed) return
+        if (dismissed) {
+            return
+        }
         val anchor = anchor() ?: run {
             dismissOrphaned()
             return
@@ -369,7 +382,9 @@ class BalloonTooltip private constructor(
         content.animate().cancel()
 
         content.post {
-            if (dismissed) return@post
+            if (dismissed) {
+                return@post
+            }
             applyArrowPivot(content)
             content.animate()
                 .alpha(1f)
@@ -420,7 +435,9 @@ class BalloonTooltip private constructor(
 
     fun dismiss() {
         assertBalloonTooltipMainThread()
-        if (dismissed) return
+        if (dismissed) {
+            return
+        }
         dismissed = true
         removeAnchorVisibilityListener()
         mainHandler.removeCallbacks(dismissRunnable)
@@ -448,7 +465,9 @@ class BalloonTooltip private constructor(
     }
 
     private fun finishDismissAfterAnimation() {
-        if (dismissCleanupDone) return
+        if (dismissCleanupDone) {
+            return
+        }
         if (popup?.isShowing == true) {
             popup?.dismiss()
         } else {
@@ -457,7 +476,9 @@ class BalloonTooltip private constructor(
     }
 
     private fun performAfterPopupDismissed() {
-        if (dismissCleanupDone) return
+        if (dismissCleanupDone) {
+            return
+        }
         dismissCleanupDone = true
         popup = null
 
@@ -475,7 +496,9 @@ class BalloonTooltip private constructor(
     private fun advanceQueue() {
         current = null
         mainHandler.removeCallbacks(advanceRunnable)
-        if (queue.isEmpty()) return
+        if (queue.isEmpty()) {
+            return
+        }
         mainHandler.postDelayed(advanceRunnable, ADVANCE_QUEUE_DELAY_MS)
     }
 }

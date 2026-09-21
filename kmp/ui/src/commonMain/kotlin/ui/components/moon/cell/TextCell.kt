@@ -31,10 +31,12 @@ fun TextCell(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     minHeight: Dp = DefaultItemHeight,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 ) {
     BaseTextCell(
         modifier = modifier,
         isContentHasPriority = isContentHasPriority,
+        verticalAlignment = verticalAlignment,
         paddingBetween = paddingBetween,
         description = description,
         icon = image?.let {

@@ -16,3 +16,11 @@ mavenLocal
 
 ## Codex generated skill artifacts
 .codex/skills/tk-impact-analisys/reports/
+.codex/skills/qa-report/reports/
+
+# Maestro QA: local-only material, never pushed (see .codex/skills/tk-qa-verify)
+maestro_ui_tests/flows/*_local/
+maestro_ui_tests/mocks/scenarios/
+maestro_ui_tests/mocks/_recorded/
+maestro_ui_tests/secrets/*
+!maestro_ui_tests/secrets/wallets.env.example

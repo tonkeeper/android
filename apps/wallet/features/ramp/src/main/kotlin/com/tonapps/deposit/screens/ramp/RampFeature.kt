@@ -2,13 +2,13 @@ package com.tonapps.deposit.screens.ramp
 
 import com.tonapps.async.Async
 import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowSellAsset
-import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowBuyAsset
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
+import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowWithdrawOption
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.data.toWalletCurrency
 import com.tonapps.deposit.screens.method.RampAsset
-import com.tonapps.deposit.toBuyAsset
-import com.tonapps.deposit.toSellAsset
 import com.tonapps.log.L
 import com.tonapps.mvi.MviFeature
 import com.tonapps.mvi.MviRelay
@@ -67,6 +67,52 @@ class RampFeature(
             is RampAction.Init -> loadAssets()
         }
     }
+    private fun trackStarted(
+        isSendAvailable: Boolean,
+        hasFiat: Boolean = false,
+        hasCrypto: Boolean = false,
+        hasStablecoin: Boolean = false,
+    ) {
+        val events = AnalyticsHelper.Default.events
+        when (rampType) {
+            RampType.RampOn -> {
+                val options = buildList {
+                    add(DepositFlowAddFundsOption.ReceiveTokens)
+                    if (hasFiat) {
+                        add(DepositFlowAddFundsOption.BuyWithFiat)
+                    }
+                    if (hasCrypto) {
+                        add(DepositFlowAddFundsOption.BuyTonWithCrypto)
+                    }
+                    if (hasStablecoin) {
+                        add(DepositFlowAddFundsOption.BuyWithStablecoins)
+                    }
+                }
+                events.depositFlow.depositStarted(
+                    from = DepositFlowFrom.WalletScreen,
+                    availableOptions = options.joinToString(separator = ",") { it.key },
+                )
+            }
+
+            RampType.RampOff -> {
+                val options = buildList {
+                    if (isSendAvailable) {
+                        add(WithdrawFlowWithdrawOption.SendTokens)
+                    }
+                    if (hasFiat) {
+                        add(WithdrawFlowWithdrawOption.SellToCard)
+                    }
+                    if (hasStablecoin) {
+                        add(WithdrawFlowWithdrawOption.GetUsdtOtherNetworks)
+                    }
+                }
+                events.withdrawFlow.withdrawStarted(
+                    from = WithdrawFlowFrom.WalletScreen,
+                    availableOptions = options.joinToString(separator = ",") { it.key },
+                )
+            }
+        }
+    }
 
     private suspend fun loadAssets() {
         try {
@@ -90,6 +136,7 @@ class RampFeature(
                     isSendAvailable = !wallet.isWatchOnly,
                 )
             }
+            trackStarted(isSendAvailable = !wallet.isWatchOnly)
             return
         }
 
@@ -100,6 +147,7 @@ class RampFeature(
                     isSendAvailable = false,
                 )
             }
+            trackStarted(isSendAvailable = false)
             return
         }
 
@@ -122,6 +170,13 @@ class RampFeature(
                 stablecoinItem = stablecoinItem,
             )
         }
+
+        trackStarted(
+            isSendAvailable = true,
+            hasFiat = fiatItem != null,
+            hasCrypto = cryptoItem != null,
+            hasStablecoin = stablecoinItem != null,
+        )
     }
 
     override fun onCleared() {

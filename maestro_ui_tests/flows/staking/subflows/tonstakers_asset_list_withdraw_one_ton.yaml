@@ -1,0 +1,96 @@
+# Multichain Tonstakers withdraw: Wallet list → Tonstakers → Unstake → 1 → confirm.
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — Tonstakers withdraw 1 GRAM"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+- tapOn:
+    id: title
+    text: Wallet
+    childOf:
+      id: bottom_tabs
+
+# Tonstakers can be below the collapsed asset list. Once "More assets" is
+# tapped, Manage scrolls off-screen, so it cannot be used as a swipe origin.
+- scrollUntilVisible:
+    element: "Tonstakers|More assets"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "More assets"
+      notVisible: Tonstakers
+    commands:
+      - tapOn: "More assets"
+      - waitForAnimationToEnd:
+          timeout: 2000
+
+- scrollUntilVisible:
+    element: Tonstakers
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- tapOn: "Tonstakers"
+
+- extendedWaitUntil:
+    visible: Unstake
+    timeout: 30000
+- tapOn: Unstake
+
+- extendedWaitUntil:
+    visible:
+      id: unstake_amount
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "Available: .* GRAM"
+    timeout: 30000
+
+# A deposit is visible in the asset list before it becomes withdrawable at the
+# next validation cycle. Exercise the transaction path when a mature balance
+# exists; otherwise verify the zero-balance/cycle state without sending.
+- evalScript: ${output._unstakeStateHandled = false}
+- runFlow:
+    when:
+      visible: "^Available: (?!0(?:[.,]0+)? GRAM$).+ GRAM$"
+    commands:
+      # MAX selects the full rate-adjusted position (for example 0.87 tsTON
+      # received for a 1 GRAM deposit) without precision/rounding failures.
+      - tapOn: "MAX"
+      - extendedWaitUntil:
+          visible:
+            id: next_button
+            enabled: true
+          timeout: 30000
+      - tapOn:
+          id: next_button
+      - extendedWaitUntil:
+          visible: Confirm Action
+          timeout: 60000
+      - tapOn:
+          id: button
+      - runFlow: "../../../steps/wallet/unlock_passcode_if_needed.yaml"
+      - extendedWaitUntil:
+          visible: History
+          timeout: 180000
+      - evalScript: ${output._unstakeStateHandled = true}
+
+- runFlow:
+    when:
+      visible: "^Available: 0(?:[.,]0+)? GRAM$"
+    commands:
+      - assertVisible: "Unstake request will be processed after.*validation cycle.*"
+      - tapOn:
+          id: header_close
+      - extendedWaitUntil:
+          visible: Tonstakers
+          timeout: 30000
+      - evalScript: ${output._unstakeStateHandled = true}
+
+- assertTrue:
+    condition: ${output._unstakeStateHandled === true}
+    label: "Tonstakers unstake state was handled"

@@ -24,7 +24,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -71,7 +70,7 @@ import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonItemTitle
 import ui.components.moon.MoonTopAppBar
-import ui.components.moon.cell.MoonButtonCell
+import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.cell.MoonTextFieldCell
 import ui.components.moon.container.MoonScaffold
 import ui.preview.ThemedPreview
@@ -181,7 +180,7 @@ private fun SendInputContent(
             addressState.onTextChange(address)
             onAddressInput(address)
 
-            val tokenDecimals = transfer.jettonAddress?.let { jettonAddr ->
+            val tokenDecimals = transfer.jettonMaster()?.let { jettonAddr ->
                 onSelectTokenByAddress(jettonAddr)
                 state.availableTokens
                     .firstOrNull { it.address.equalsAddress(jettonAddr) }
@@ -421,6 +420,11 @@ private fun SendInputContent(
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Next,
                     ),
+                    suffix = if (state.amountCurrency) {
+                        { MoonItemSubtitle(text = state.currency.code, maxLines = 1) }
+                    } else {
+                        null
+                    },
                     trailingAction = {
                         val secondaryColor = UIKit.colorScheme.text.secondary
                         val badgeText = remember(state.exchangeAsset, state.selectedToken, secondaryColor) {
@@ -668,7 +672,7 @@ private fun SendInputContent(
 
             Spacer(Modifier.weight(1f))
 
-            MoonButtonCell(
+            MoonBottomButtonCell(
                 text = stringResource(Localization.continue_action),
                 enabled = state.isContinueEnabled && !state.isProcessing,
             ) {

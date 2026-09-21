@@ -16,6 +16,7 @@ sealed class Item(type: Int) : BaseListItem(type) {
         const val TYPE_ADDRESS = 4
         const val TYPE_BUTTON = 5
         const val TYPE_PROMO = 6
+        const val TYPE_LOADING = 7
     }
 
     data class RechargePack(
@@ -75,4 +76,6 @@ sealed class Item(type: Int) : BaseListItem(type) {
     }
 
     data object Space : Item(TYPE_SPACE)
+
+    data object Loading : Item(TYPE_LOADING)
 }

@@ -242,8 +242,8 @@ class JettonsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getJettons(limit: Int? = 100, offset: Int? = 0): Jettons {
-        val localVarResponse = getJettonsWithHttpInfo(limit = limit, offset = offset)
+    fun getJettons(limit: Int? = 100, offset: Int? = 0, lastAccountId: String? = null): Jettons {
+        val localVarResponse = getJettonsWithHttpInfo(limit = limit, offset = offset, lastAccountId = lastAccountId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Jettons
@@ -262,15 +262,15 @@ class JettonsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getJettonsWithHttpInfo(limit: Int?, offset: Int?): ApiResponse<Jettons?> {
-        val localVariableConfig = getJettonsRequestConfig(limit = limit, offset = offset)
+    fun getJettonsWithHttpInfo(limit: Int?, offset: Int?, lastAccountId: String?): ApiResponse<Jettons?> {
+        val localVariableConfig = getJettonsRequestConfig(limit = limit, offset = offset, lastAccountId = lastAccountId)
 
         return request<Unit, Jettons>(
             localVariableConfig
         )
     }
 
-    fun getJettonsRequestConfig(limit: Int?, offset: Int?): RequestConfig<Unit> {
+    fun getJettonsRequestConfig(limit: Int?, offset: Int?, lastAccountId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -279,6 +279,9 @@ class JettonsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
                 if (offset != null) {
                     put("offset", listOf(offset.toString()))
+                }
+                if (lastAccountId != null) {
+                    put("last_account_id", listOf(lastAccountId.toString()))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()

@@ -2,65 +2,84 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="TextAppearance.NUM1" parent="@android:style/TextAppearance">
         <item name="android:textSize">32sp</item>
-        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_medium</item>
+        <item name="android:fontFeatureSettings">"'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.H1" parent="@android:style/TextAppearance">
         <item name="android:textSize">32sp</item>
-        <item name="android:fontFamily">@font/montserrat_bold</item>
-        <item name="android:textFontWeight" tools:targetApi="p">700</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_demi_bold</item>
+        <item name="android:textFontWeight" tools:targetApi="p">600</item>
+        <item name="android:fontFeatureSettings">"'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.NUM2" parent="@android:style/TextAppearance">
         <item name="android:textSize">28sp</item>
-        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_medium</item>
+        <item name="android:fontFeatureSettings">"'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.H2" parent="@android:style/TextAppearance">
         <item name="android:textSize">24sp</item>
         <item name="android:lineHeight" tools:targetApi="p">32sp</item>
-        <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_demi_bold</item>
+        <item name="android:fontFeatureSettings">"'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.H3" parent="@android:style/TextAppearance">
         <item name="android:textSize">20sp</item>
-        <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_demi_bold</item>
+        <item name="android:fontFeatureSettings">"'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.Label1" parent="@android:style/TextAppearance">
         <item name="android:textSize">16sp</item>
-        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_medium</item>
+        <item name="android:letterSpacing">0.005</item>
+        <item name="android:fontFeatureSettings">"'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.Label2" parent="@android:style/TextAppearance">
         <item name="android:textSize">14sp</item>
-        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_medium</item>
+        <item name="android:letterSpacing">0.005</item>
+        <item name="android:fontFeatureSettings">"'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.Label3" parent="@android:style/TextAppearance">
         <item name="android:textSize">12sp</item>
-        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_medium</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:fontFeatureSettings">"'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.Body1" parent="@android:style/TextAppearance">
         <item name="android:textSize">16sp</item>
-        <item name="android:fontFamily">@font/montserrat_medium</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_normal</item>
         <item name="android:lineHeight" tools:targetApi="p">24sp</item>
+        <item name="android:letterSpacing">0.005</item>
+        <item name="android:fontFeatureSettings">"'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.Body2" parent="@android:style/TextAppearance">
         <item name="android:textSize">14sp</item>
-        <item name="android:fontFamily">@font/montserrat_medium</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_normal</item>
+        <item name="android:letterSpacing">0.005</item>
+        <item name="android:fontFeatureSettings">"'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.Body3" parent="@android:style/TextAppearance">
         <item name="android:textSize">12sp</item>
-        <item name="android:fontFamily">@font/montserrat_medium</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_normal</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:fontFeatureSettings">"'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 
     <style name="TextAppearance.Body4CAPS" parent="@android:style/TextAppearance">
         <item name="android:textSize">10sp</item>
-        <item name="android:fontFamily">@font/montserrat_semi_bold</item>
+        <item name="android:fontFamily">@font/tt_firs_neue_medium</item>
         <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:fontFeatureSettings">"'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"</item>
     </style>
 </resources>

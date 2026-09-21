@@ -1,0 +1,55 @@
+# Opens Compose send, picks TOKEN_SYMBOL, types RECIPIENT, enters AMOUNT, continues.
+# Env: SEARCH_QUERY, TOKEN_SYMBOL, AMOUNT, RECIPIENT, CHAIN_NAME (optional)
+appId: com.ton_keeper.debug
+env:
+  CHAIN_NAME: ""
+---
+- extendedWaitUntil:
+    visible: Send
+    timeout: 1500
+- tapOn: Send
+- waitForAnimationToEnd:
+    timeout: 300
+
+- runFlow:
+    when:
+      notVisible: Choose asset
+    commands:
+      - extendedWaitUntil:
+          visible: Amount
+          timeout: 200
+          optional: true
+      - tapOn:
+          text: Amount
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 200
+
+- extendedWaitUntil:
+    visible: Choose asset
+    timeout: 500
+    optional: true
+- runFlow:
+    when:
+      visible: Choose asset
+    file: ../token_picker/select_asset.yaml
+    env:
+      SEARCH_QUERY: ${SEARCH_QUERY}
+      TOKEN_SYMBOL: ${TOKEN_SYMBOL}
+      CHAIN_NAME: ${CHAIN_NAME}
+
+- extendedWaitUntil:
+    visible: Address
+    timeout: 1500
+- tapOn: Address
+- inputText: ${RECIPIENT}
+
+- tapOn: Amount
+- inputText: ${AMOUNT}
+
+- extendedWaitUntil:
+    visible:
+      text: Continue
+      enabled: true
+    timeout: 1500
+- tapOn: Continue

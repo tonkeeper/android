@@ -1,0 +1,28 @@
+# Thin sequencer for active transaction cases. Nested subflows/ are not
+# matched by config.yaml `transactions/*`. Each subflow launches itself.
+# A failed case does not block the next one; the final assertion reports
+# every failed case and keeps the Cloud row red.
+name: "Transactions"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.transactions_send_ok = false; output.transactions_fee_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Transactions — send GRAM"
+    commands:
+      - runFlow: subflows/transactions_tests.yaml
+      - evalScript: ${output.transactions_send_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Transactions — GRAM send fee on confirm"
+    commands:
+      - runFlow: subflows/send_ton_confirmation_fee_visible.yaml
+      - evalScript: ${output.transactions_fee_ok = true}
+
+- evalScript: ${var f = []; if (output.transactions_send_ok !== true) f.push('send GRAM'); if (output.transactions_fee_ok !== true) f.push('GRAM fee'); output.transactions_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.transactions_failed === ''}
+    label: "${output.transactions_failed ? 'transactions shard: failed ' + output.transactions_failed : 'transactions shard: all cases passed'}"

@@ -3,7 +3,7 @@
     <color name="textPrimaryBlue">#FFFFFF</color>
     <color name="textSecondaryBlue">#8994A3</color>
     <color name="textTertiaryBlue">#556170</color>
-    <color name="textAccentBlue">#45AEF5</color>
+    <color name="textAccentBlue">#3C95FA</color>
     <color name="textPrimaryAlternateBlue">#10161F</color>
 
     <color name="backgroundPageBlue">#10161F</color>
@@ -21,9 +21,9 @@
     <color name="iconTertiaryBlue">#556170</color>
     <color name="iconPrimaryAlternateBlue">#10161F</color>
 
-    <color name="buttonPrimaryBackgroundBlue">#45AEF5</color>
-    <color name="buttonPrimaryBackgroundDisabledBlue">#378AC2</color>
-    <color name="buttonPrimaryBackgroundHighlightedBlue">#5BB8F6</color>
+    <color name="buttonPrimaryBackgroundBlue">#3C95FA</color>
+    <color name="buttonPrimaryBackgroundDisabledBlue">#387BC7</color>
+    <color name="buttonPrimaryBackgroundHighlightedBlue">#55A2FA</color>
     <color name="buttonPrimaryForegroundBlue">#FFFFFF</color>
 
     <color name="buttonSecondaryBackgroundBlue">#1D2633</color>
@@ -45,17 +45,17 @@
     <color name="buttonOrangeBackgroundHighlightedBlue">#FFC25E</color>
 
     <color name="fieldBackgroundBlue">#1D2633</color>
-    <color name="fieldActiveBorderBlue">#45AEF5</color>
+    <color name="fieldActiveBorderBlue">#3C95FA</color>
     <color name="fieldErrorBorderBlue">#FF4766</color>
     <color name="fieldErrorBackgroundBlue">#241A25</color>
 
-    <color name="accentBlueBlue">#45AEF5</color>
+    <color name="accentBlueBlue">#3C95FA</color>
     <color name="accentGreenBlue">#39CC83</color>
     <color name="accentRedBlue">#FF4766</color>
     <color name="accentOrangeBlue">#F5A73B</color>
     <color name="accentPurpleBlue">#7665E5</color>
 
-    <color name="tabBarActiveIconBlue">#45AEF5</color>
+    <color name="tabBarActiveIconBlue">#3C95FA</color>
     <color name="tabBarInactiveIconBlue">#8994A3</color>
 
     <color name="separatorCommonBlue">#14C2DAFF</color>

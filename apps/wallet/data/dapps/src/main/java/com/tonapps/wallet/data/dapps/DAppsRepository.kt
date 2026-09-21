@@ -1,22 +1,34 @@
 package com.tonapps.wallet.data.dapps
 
-import android.content.Context
 import android.net.Uri
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.chainkit.core.chain.model.account.Chain
 import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.map
+import com.tonapps.extensions.toByteArray
+import com.tonapps.extensions.toParcel
 import com.tonapps.extensions.withoutQuery
+import com.tonapps.security.CryptoBox
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.recordException
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
+import com.tonapps.wallet.data.dapps.entities.AppConnectWithDetails
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.dapps.entities.AppNotificationsEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
-import com.tonapps.wallet.data.dapps.source.DatabaseSource
+import com.tonapps.wallet.data.dapps.entities.DappProvider
+import com.tonapps.wallet.data.dapps.source.TonConnectPrefs
+import com.tonapps.wallet.data.dapps.source.db.AppDao
+import com.tonapps.wallet.data.dapps.source.db.AppRow
+import com.tonapps.wallet.data.dapps.source.db.ConnectDao
+import com.tonapps.wallet.data.dapps.source.db.ConnectEntity
+import com.tonapps.wallet.data.dapps.source.db.NotificationDao
+import com.tonapps.wallet.data.dapps.source.db.NotificationRow
+import com.tonapps.wallet.data.dapps.wc.WcRepository
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.rn.data.RNTC
 import com.tonapps.wallet.data.rn.data.RNTCApp
@@ -24,53 +36,67 @@ import com.tonapps.wallet.data.rn.data.RNTCApps
 import com.tonapps.wallet.data.rn.data.RNTCConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class DAppsRepository(
-    context: Context,
+class DAppsRepository internal constructor(
     private val scope: CoroutineScope,
     private val rnLegacy: RNLegacy,
     private val api: API,
+    private val appDao: AppDao,
+    private val connectDao: ConnectDao,
+    private val notificationDao: NotificationDao,
+    private val tonConnectPrefs: TonConnectPrefs,
+    private val wcRepository: WcRepository,
 ) {
 
     private val _connectionsFlow = MutableStateFlow<List<AppConnectEntity>?>(null)
     val connectionsFlow = _connectionsFlow.shareIn(scope, SharingStarted.Eagerly, 1).filterNotNull()
 
+    // Raw-row-only deletes leave the projection unchanged, so _connectionsFlow conflates and never emits.
+    private val _connectionsInvalidationFlow = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
     private val _notificationsFlow = MutableStateFlow<List<AppNotificationsEntity>>(emptyList())
     val notificationsFlow = _notificationsFlow.asStateFlow()
 
-    private val database: DatabaseSource by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        DatabaseSource(context)
-    }
-
     var lastEventId: Long
-        get() = database.getLastEventId()
+        get() = tonConnectPrefs.getLastEventId()
         set(value) {
-            database.setLastEventId(value)
+            tonConnectPrefs.setLastEventId(value)
         }
 
     init {
         scope.launch(Dispatchers.IO) {
             try {
+                backfillKeyPairsFromLegacyPrefs()
+
                 if (rnLegacy.isRequestMigration()) {
                     migrationFromLegacy()
                 }
 
-                val connections = database.getConnections()
+                val connections = loadConnections()
                 if (connections.isEmpty()) {
                     migrationFromLegacy()
-                    _connectionsFlow.value = database.getConnections()
+                    _connectionsFlow.value = loadConnections()
                 } else {
                     _connectionsFlow.value = connections
                 }
@@ -104,8 +130,14 @@ class DAppsRepository(
     }
 
     fun insertDAppNotification(body: AppPushEntity.Body) {
-        scope.launch {
-            database.insertNotification(body)
+        scope.launch(Dispatchers.IO) {
+            notificationDao.insert(
+                NotificationRow(
+                    appUrl = body.dappUrl.withoutQuery.toString().removeSuffix("/"),
+                    accountId = body.account.toRawAddress(),
+                    body = body.toByteArray(),
+                )
+            )
             refreshLocalPushes(body.account.toRawAddress())
         }
     }
@@ -121,21 +153,35 @@ class DAppsRepository(
         _notificationsFlow.value = values
     }
 
-    private suspend fun getPushes(accountId: String): AppNotificationsEntity {
-        val pushes = database.getNotifications(accountId)
+    private suspend fun getPushes(accountId: String): AppNotificationsEntity = withContext(Dispatchers.IO) {
+        val pushes = notificationDao.getByAccountId(accountId)
+            .mapNotNull { it.body?.toParcel<AppPushEntity.Body>() }
         if (pushes.isEmpty()) {
-            return AppNotificationsEntity(accountId)
+            AppNotificationsEntity(accountId)
+        } else {
+            createAppNotifications(accountId, pushes)
         }
-        return createAppNotifications(accountId, pushes)
     }
 
     private suspend fun loadPushes(accountId: String, tonProof: String): AppNotificationsEntity {
         val pushes = api.getPushFromApps(tonProof, accountId).map { AppPushEntity.Body(it) }
-        database.insertNotifications(accountId, pushes)
-        if (pushes.isEmpty()) {
-            return AppNotificationsEntity(accountId)
+        withContext(Dispatchers.IO) {
+            notificationDao.replaceForAccount(
+                accountId = accountId,
+                rows = pushes.map { body ->
+                    NotificationRow(
+                        appUrl = body.dappUrl.withoutQuery.toString().removeSuffix("/"),
+                        accountId = accountId,
+                        body = body.toByteArray(),
+                    )
+                }
+            )
         }
-        return createAppNotifications(accountId, pushes)
+        return if (pushes.isEmpty()) {
+            AppNotificationsEntity(accountId)
+        } else {
+            createAppNotifications(accountId, pushes)
+        }
     }
 
     private suspend fun createAppNotifications(
@@ -169,20 +215,105 @@ class DAppsRepository(
         return result
     }
 
-    suspend fun getConnections(): List<AppConnectEntity> {
-        return database.getConnections()
+    suspend fun getConnections(): List<AppConnectEntity> = loadConnections()
+
+    // Raw-row check so the disconnect confirmation is offered for rows the projection drops.
+    suspend fun hasConnections(
+        accountId: String,
+        network: TonNetwork,
+        appUrl: Uri? = null,
+        type: AppConnectEntity.Type? = null
+    ): Boolean = withContext(Dispatchers.IO) {
+        val targetHost = appUrl?.host?.lowercase()
+        val targetPath = appUrl?.path?.trimEnd('/').orEmpty()
+        connectDao.getTonConnectAll().any { row ->
+            row.accountId == accountId &&
+            (row.mode ?: TonNetwork.MAINNET.value) == network.value &&
+            (type == null || row.type == type.value) &&
+            (targetHost == null || matchesTarget(row.appUrl?.toUri(), targetHost, targetPath))
+        }
     }
 
+    // Unified view across TonConnect + WalletConnect rows joined with their app metadata,
+    // scoped to a single wallet.
+    // - TonConnect: filtered by account/mode at the DAO level; AppRow comes from the `app`
+    //   table, joined by appUrl in memory.
+    // - WalletConnect: filtered by walletId at the DAO level. The row carries no appUrl, so we
+    //   synthesize AppRow from the live WC session metadata. Topics the SDK no longer reports
+    //   as active drop out automatically — including stale DB rows where we missed the
+    //   Disconnected event.
+    fun getConnectionsWithDetails(
+        walletId: String,
+        accountId: String,
+        mode: Int,
+    ): List<AppConnectWithDetails> {
+        val tonConnectRows = connectDao.getTonConnectByWallet(accountId, mode)
+        val wcRows = connectDao.getWalletConnectByWalletId(walletId)
+        val activeWcSessions = wcRepository.getActiveSessions().associateBy { it.topic }
+
+        val tcAppUrls = tonConnectRows.mapNotNull { it.appUrl }.distinct()
+        val appsByUrl = if (tcAppUrls.isEmpty()) {
+            emptyMap()
+        } else {
+            appDao.getByUrls(tcAppUrls).associateBy { it.url }
+        }
+
+        val result = ArrayList<AppConnectWithDetails>(tonConnectRows.size + wcRows.size)
+
+        for (row in tonConnectRows) {
+            val app = appsByUrl[row.appUrl] ?: continue
+            result.add(AppConnectWithDetails(row, app, chains = listOf(Chain.Ton.Mainnet.network.type)))
+        }
+
+        for (row in wcRows) {
+            val topic = row.topic ?: continue
+            val session = activeWcSessions[topic] ?: continue
+            val app = AppRow(
+                url = session.app.url,
+                name = session.app.name,
+                iconUrl = session.app.icon,
+            )
+            result.add(AppConnectWithDetails(row, app, chains = session.chains.toList()))
+        }
+
+        return result
+    }
+
+    fun connectionsWithDetailsFlow(
+        walletId: String,
+        accountId: String,
+        mode: Int,
+    ): Flow<List<AppConnectWithDetails>> = flow {
+        emit(getConnectionsWithDetails(walletId, accountId, mode))
+        merge(
+            connectionsFlow.drop(1).map { },
+            _connectionsInvalidationFlow.map { },
+            wcRepository.sessions.map { },
+        ).collect { emit(getConnectionsWithDetails(walletId, accountId, mode)) }
+    }.flowOn(Dispatchers.IO)
+
     fun getLastAppRequestId(clientId: String): Long {
-        return database.getLastAppRequestId(clientId)
+        return tonConnectPrefs.getLastAppRequestId(clientId)
     }
 
     fun setLastAppRequestId(clientId: String, requestId: Long) {
-        database.setLastAppRequestId(clientId, requestId)
+        tonConnectPrefs.setLastAppRequestId(clientId, requestId)
+    }
+
+    fun markOriginCleanup(profileName: String, host: String) {
+        tonConnectPrefs.addPendingOriginCleanup(profileName, host)
+    }
+
+    fun hasOriginCleanup(profileName: String, host: String): Boolean {
+        return tonConnectPrefs.hasPendingOriginCleanup(profileName, host)
+    }
+
+    fun consumeOriginCleanup(profileName: String, host: String): Boolean {
+        return tonConnectPrefs.consumePendingOriginCleanup(profileName, host)
     }
 
     fun isPushEnabled(accountId: String, network: TonNetwork, appUrl: Uri): Boolean {
-        return database.isPushEnabled(accountId, network, appUrl.withoutQuery)
+        return tonConnectPrefs.isPushEnabled(accountId, network, appUrl.withoutQuery)
     }
 
     fun setPushEnabled(accountId: String, network: TonNetwork, appUrl: Uri, enabled: Boolean): List<AppConnectEntity> {
@@ -201,34 +332,63 @@ class DAppsRepository(
             return emptyList()
         }
 
-        database.setPushEnabled(accountId, network, appUrl, enabled)
+        tonConnectPrefs.setPushEnabled(accountId, network, appUrl, enabled)
         _connectionsFlow.value = otherConnections + accountConnections
         return accountConnections
     }
 
-    suspend fun newConnect(connection: AppConnectEntity): Boolean {
+    // webViewProfileName is null only for legacy migration, which predates any cleanup marker.
+    suspend fun newConnect(
+        connection: AppConnectEntity,
+        webViewProfileName: String? = null,
+    ): Boolean = withContext(Dispatchers.IO) {
         try {
-            database.insertConnection(connection)
+            connectDao.insert(
+                ConnectEntity(
+                    id = connection.clientId,
+                    provider = DappProvider.TonConnect,
+                    walletId = null,
+                    appUrl = connection.appUrl.withoutQuery.toString().removeSuffix("/"),
+                    createdAt = connection.timestamp,
+                    accountId = connection.accountId,
+                    mode = connection.network.value,
+                    type = connection.type.value,
+                    topic = null,
+                    source = null,
+                    keyPair = connection.keyPair.toByteArray(),
+                )
+            )
+            tonConnectPrefs.clearLastEventId()
+
             updateConnectionsFlow { value ->
                 value.add(connection.copy())
                 value
             }
-            return true
+
+            // A live session must not be purged by a marker left behind by an earlier disconnect.
+            val host = connection.appUrl.host?.lowercase()
+            if (webViewProfileName != null && host != null) {
+                consumeOriginCleanup(webViewProfileName, host)
+            }
+            true
         } catch (e: Throwable) {
             recordException(e)
-            return false
+            false
         }
     }
 
-    suspend fun deleteConnect(connection: AppConnectEntity): Boolean {
-        if (!database.deleteConnect(connection)) {
-            return false
+    suspend fun deleteConnect(connection: AppConnectEntity): Boolean = deleteConnect(connection.clientId)
+
+    suspend fun deleteConnect(clientId: String): Boolean = withContext(Dispatchers.IO) {
+        val removed = connectDao.deleteById(clientId) > 0
+        if (!removed) {
+            return@withContext false
         }
         updateConnectionsFlow { value ->
-            value.removeIf { connection.clientId == it.clientId }
+            value.removeIf { clientId == it.clientId }
             value
         }
-        return true
+        true
     }
 
     suspend fun deleteApp(
@@ -237,45 +397,78 @@ class DAppsRepository(
         appUrl: Uri,
         type: AppConnectEntity.Type? = null
     ): List<AppConnectEntity> {
-        if (type == null) {
-            val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.network == network && it.appUrl.withoutQuery == appUrl.withoutQuery
-            }
-
-            return deleteConnections(predicate)
-        } else {
-            val predicate: (AppConnectEntity) -> Boolean = {
-                it.accountId == accountId && it.network == network && it.appUrl.withoutQuery == appUrl.withoutQuery && it.type == type
-            }
-
-            return deleteConnections(predicate)
+        val targetHost = appUrl.host?.lowercase() ?: return emptyList()
+        val targetPath = appUrl.path.orEmpty().trimEnd('/')
+        return deleteConnections { row ->
+            row.accountId == accountId &&
+            (row.mode ?: TonNetwork.MAINNET.value) == network.value &&
+            matchesTarget(row.appUrl?.toUri(), targetHost, targetPath) &&
+            (type == null || row.type == type.value)
         }
+    }
+
+    suspend fun getMatchingConnections(
+        accountId: String,
+        network: TonNetwork,
+        appUrl: Uri,
+        type: AppConnectEntity.Type?
+    ): List<AppConnectEntity> {
+        val targetHost = appUrl.host?.lowercase() ?: return emptyList()
+        val targetPath = appUrl.path.orEmpty().trimEnd('/')
+        return getConnections().filter { connection ->
+            connection.accountId == accountId &&
+            connection.network == network &&
+            matchesTarget(connection.appUrl, targetHost, targetPath) &&
+            (type == null || connection.type == type)
+        }
+    }
+
+    // TODO: replace URL-based matching with a stable per-connection requestId (UUID or similar).
+    // Origin-style rows (the norm) match the whole host; rows carrying a path (Telegram mini apps)
+    // only match targets under that path, so a sibling's disconnect cannot delete them.
+    private fun matchesTarget(storedUrl: Uri?, targetHost: String, targetPath: String): Boolean {
+        if (storedUrl?.host?.lowercase() != targetHost) {
+            return false
+        }
+        val storedPath = storedUrl.path.orEmpty().trimEnd('/')
+        if (storedPath.isEmpty()) {
+            return true
+        }
+        return targetPath == storedPath || targetPath.startsWith("$storedPath/")
     }
 
     suspend fun deleteApps(
         accountId: String,
         network: TonNetwork
     ): List<AppConnectEntity> {
-        val predicate: (AppConnectEntity) -> Boolean = {
-            it.accountId == accountId && it.network == network
+        return deleteConnections { row ->
+            row.accountId == accountId &&
+            (row.mode ?: TonNetwork.MAINNET.value) == network.value
         }
-        return deleteConnections(predicate)
     }
 
+    // Matches raw rows: rows the projection drops (null key pair / unknown type) are still visible in the UI.
     private suspend fun deleteConnections(
-        predicate: (AppConnectEntity) -> Boolean
+        rawPredicate: (ConnectEntity) -> Boolean
     ): List<AppConnectEntity> {
-        val connections = (_connectionsFlow.value ?: emptyList()).filter(predicate)
+        val ids = withContext(Dispatchers.IO) {
+            connectDao.getTonConnectAll().filter(rawPredicate).map { it.id }
+        }
+        val removed = (_connectionsFlow.value ?: emptyList()).filter { it.clientId in ids }
 
-        updateConnectionsFlow { value ->
-            value.removeIf(predicate)
-            value
+        if (ids.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
+                connectDao.deleteByIds(ids)
+            }
+
+            updateConnectionsFlow { value ->
+                value.removeIf { it.clientId in ids }
+                value
+            }
         }
 
-        for (connection in connections) {
-            database.deleteConnect(connection)
-        }
-        return connections
+        _connectionsInvalidationFlow.tryEmit(Unit)
+        return removed
     }
 
     private fun updateConnectionsFlow(function: (MutableList<AppConnectEntity>) -> List<AppConnectEntity>) {
@@ -287,7 +480,7 @@ class DAppsRepository(
     suspend fun getApps(url: Uri) = getApps(listOf(url))
 
     suspend fun getApps(urls: List<Uri>): List<AppEntity> {
-        val apps = database.getApps(urls).toMutableList()
+        val apps = readApps(urls).toMutableList()
         val notFoundApps = urls.filter { url -> apps.none { it.host == url.host } }
         if (notFoundApps.isNotEmpty()) {
             for (url in notFoundApps) {
@@ -305,8 +498,19 @@ class DAppsRepository(
         return getApps(listOf(url)).firstOrNull() ?: resolveAppByHost(url)
     }
 
-    suspend fun insertApp(app: AppEntity) {
-        database.insertApp(app)
+    suspend fun insertApp(app: AppEntity) = withContext(Dispatchers.IO) {
+        try {
+            appDao.insert(
+                AppRow(
+                    url = app.url.withoutQuery.toString().removeSuffix("/"),
+                    name = app.name,
+                    iconUrl = app.iconUrl,
+                )
+            )
+            tonConnectPrefs.clearLastEventId()
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
     }
 
     private suspend fun migrationFromLegacy() {
@@ -332,20 +536,22 @@ class DAppsRepository(
                 iconUrl = legacyApp.icon,
                 empty = false,
             )
-            database.insertApp(newApp)
+            insertApp(newApp)
             for (legacyConnections in legacyApp.connections) {
                 val newConnection = AppConnectEntity(
                     accountId = accountId,
                     network = network,
                     clientId = legacyConnections.clientId,
-                    type = if (legacyConnections.type == "remote") AppConnectEntity.Type.External else AppConnectEntity.Type.Internal,
+                    type = if (legacyConnections.type == "remote") {
+                        AppConnectEntity.Type.External
+                    } else {
+                        AppConnectEntity.Type.Internal
+                    },
                     appUrl = newApp.url,
                     keyPair = legacyConnections.keyPair,
-                    proofSignature = null,
-                    proofPayload = null,
                     pushEnabled = legacyApp.notificationsEnabled,
                 )
-                database.insertConnection(newConnection)
+                newConnect(newConnection)
             }
         }
     }
@@ -432,6 +638,66 @@ class DAppsRepository(
             iconUrl = "https://$domain/favicon.ico",
             empty = true
         )
+    }
+
+    private suspend fun loadConnections(): List<AppConnectEntity> = withContext(Dispatchers.IO) {
+        connectDao.getTonConnectAll().mapNotNull(::toAppConnect)
+    }
+
+    private fun toAppConnect(row: ConnectEntity): AppConnectEntity? {
+        val accountId = row.accountId ?: return null
+        val mode = row.mode ?: TonNetwork.MAINNET.value
+        val network = TonNetwork.entries.firstOrNull { it.value == mode } ?: return null
+        val type = AppConnectEntity.Type.entries.firstOrNull { it.value == row.type } ?: return null
+        val timestamp = row.createdAt ?: return null
+        val appUrl = row.appUrl?.toUri()?.withoutQuery ?: return null
+        val keyPair = row.keyPair?.toParcel<CryptoBox.KeyPair>() ?: return null
+
+        return AppConnectEntity(
+            accountId = accountId,
+            network = network,
+            clientId = row.id,
+            type = type,
+            appUrl = appUrl,
+            keyPair = keyPair,
+            timestamp = timestamp,
+            pushEnabled = tonConnectPrefs.isPushEnabled(accountId, network, appUrl),
+        )
+    }
+
+    // One-shot backfill: for upgrading users, copy keypairs that used to live in
+    // EncryptedSharedPreferences into the connect row's `key_pair` column, then drop the
+    // legacy prefs entry. New connections write straight to the row, so this is idempotent
+    // and becomes a no-op once everyone is migrated.
+    private fun backfillKeyPairsFromLegacyPrefs() {
+        try {
+            val rows = connectDao.getTonConnectMissingKeyPair()
+            for (row in rows) {
+                val accountId = row.accountId ?: continue
+                val mode = row.mode ?: TonNetwork.MAINNET.value
+                val network = TonNetwork.entries.firstOrNull { it.value == mode } ?: continue
+                val bytes = tonConnectPrefs.consumeLegacyKeyPair(accountId, network, row.id)
+                    ?: continue
+                connectDao.updateKeyPair(row.id, bytes)
+            }
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
+    }
+
+    private suspend fun readApps(urls: List<Uri>): List<AppEntity> = withContext(Dispatchers.IO) {
+        if (urls.isEmpty()) {
+            return@withContext emptyList()
+        }
+        val keys = urls.map { it.withoutQuery.toString() }
+        appDao.getByUrls(keys).map { row ->
+            AppEntity(
+                url = (row.url).removeSuffix("/").toUri(),
+                name = row.name.orEmpty(),
+                iconUrl = row.iconUrl.orEmpty(),
+                empty = false,
+            )
+        }
     }
 
     companion object {

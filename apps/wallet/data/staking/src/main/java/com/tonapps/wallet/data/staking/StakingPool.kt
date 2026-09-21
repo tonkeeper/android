@@ -39,8 +39,8 @@ object StakingPool {
 
     fun getTotalFee(fee: Coins, implementation: Implementation): Coins {
         return when (implementation) {
-            Implementation.Whales -> fee.abs() + Coins.of(0.2)
-            Implementation.TF -> fee.abs() + Coins.ONE
+            Implementation.Whales -> fee.abs() + Coins.of(0.2) // TODO fees: hardcoded formated
+            Implementation.TF -> fee.abs() + Coins.ONE // TODO fees: hardcoded formated
             else -> fee.abs()
         }
     }

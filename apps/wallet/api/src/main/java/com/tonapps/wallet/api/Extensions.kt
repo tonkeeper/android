@@ -2,6 +2,7 @@ package com.tonapps.wallet.api
 
 import android.os.SystemClock
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.bus.core.IssueHelper
 import com.tonapps.log.L
 import com.tonapps.network.OkHttpError
 import com.tonapps.network.backoff.ExponentialBackoff
@@ -44,7 +45,7 @@ fun <R> withRetry(
                 return null
             }
 
-            FirebaseCrashlytics.getInstance().recordException(e)
+            IssueHelper.recordException(e)
         }
     } while (index < times)
 

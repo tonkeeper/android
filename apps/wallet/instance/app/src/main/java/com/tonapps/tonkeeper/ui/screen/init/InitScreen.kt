@@ -2,10 +2,17 @@ package com.tonapps.tonkeeper.ui.screen.init
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.onboading.screens.loader.InitLoaderDialog
+import com.tonapps.tonkeeper.Environment
+import com.tonapps.tonkeeper.koin.accountRepository
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
@@ -15,40 +22,76 @@ import com.tonapps.tonkeeper.ui.screen.init.step.BackupStartScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.LabelScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PasscodeScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.PushScreen
+import com.tonapps.tonkeeper.ui.screen.init.step.SelectMnemonicTypeScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.SelectScreen
+import com.tonapps.tonkeeper.ui.screen.init.step.SelectTypeScreen
+import com.tonapps.tonkeeper.ui.screen.init.step.SelectWalletVersionScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WatchScreen
 import com.tonapps.tonkeeper.ui.screen.init.step.WordsScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundPageColor
+import com.tonapps.wallet.data.passcode.PasscodeBiometric
+import com.tonapps.wallet.localization.Localization
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
+import ui.theme.MoonTheme
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.runAnimation
 import uikit.extensions.withAlpha
+import uikit.widget.BottomSheetLayout
 import uikit.widget.HeaderView
 
-class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, ScreenContext.None), BaseFragment.SwipeBack {
+class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, ScreenContext.None), BaseFragment.BottomSheet {
 
     override val fragmentName: String = "InitScreen"
 
     private val args: InitArgs by lazy { InitArgs(requireArguments()) }
 
+    private val environment: Environment by inject()
+
     override val viewModel: InitViewModel by viewModel { parametersOf(args) }
 
     private val backStackChangedListener = FragmentManager.OnBackStackChangedListener {
+        updateHeaderNavigation()
         childFragmentManager.fragments.lastOrNull()?.let { onChildFragment(it) }
     }
 
     private lateinit var headerView: HeaderView
     private lateinit var loaderContainerView: View
     private lateinit var loaderIconView: View
+    private lateinit var syncLoaderComposeView: ComposeView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         args.accounts?.let { viewModel.setAccounts(it.toList()) }
+
+        // In selector mode the user can leave for an external pairing flow (Signer/Ledger/Keystone),
+        // which finishes in its own InitScreen; close this one once a wallet actually appears.
+        if (args.type == InitArgs.Type.AddWallet) {
+            context?.accountRepository?.selectedWalletFlow?.drop(1)?.let { flow ->
+                collectFlow(flow) { finish() }
+            }
+        }
+    }
+
+    // The first step can only be closed: X on the right, nothing on the left. Deeper steps
+    // navigate back with a chevron on the left and no close button.
+    private fun updateHeaderNavigation() {
+        if (childFragmentManager.backStackEntryCount <= 1) {
+            headerView.setIcon(0)
+            headerView.setAction(UIKitIcon.ic_close_16)
+        } else {
+            headerView.setIcon(UIKitIcon.ic_chevron_left_16)
+            headerView.setAction(0)
+        }
     }
 
     private fun onChildFragment(fragment: Fragment) {
@@ -66,7 +109,9 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
         headerView = view.findViewById(R.id.header)
         headerView.setBackgroundResource(uikit.R.drawable.bg_page_gradient)
         headerView.doOnCloseClick = { viewModel.routePopBackStack() }
+        headerView.doOnActionClick = { viewModel.routePopBackStack() }
         headerView.doOnLayout { viewModel.setUiTopOffset(it.measuredHeight) }
+        updateHeaderNavigation()
 
         loaderContainerView = view.findViewById(R.id.loader_container)
         loaderContainerView.setOnClickListener { }
@@ -74,8 +119,25 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
 
         loaderIconView = view.findViewById(R.id.loader_icon)
 
+        syncLoaderComposeView = view.findViewById(R.id.sync_loader_compose)
+        syncLoaderComposeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        syncLoaderComposeView.setContent {
+            MoonTheme(colorScheme = environment.theme) {
+                val loaderState by viewModel.loaderState.collectAsState()
+                loaderState?.let { state ->
+                    InitLoaderDialog(
+                        state = state,
+                        onDone = { viewModel.onSyncLoaderFinished() },
+                    )
+                }
+            }
+        }
+
         collectFlow(viewModel.eventFlow, ::onEvent)
         collectFlow(viewModel.routeFlow, ::onRoute)
+        // Dragging is blocked while a loader runs: a drag-away dismiss would bypass the loader
+        // guard in popBackStack and could cancel wallet creation mid-write.
+        collectFlow(viewModel.loaderState) { updateDraggable() }
 
         childFragmentManager.addOnBackStackChangedListener(backStackChangedListener)
     }
@@ -89,6 +151,17 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
         when (event) {
             is InitEvent.Back -> popBackStack()
             is InitEvent.Loading -> setLoading(event.loading)
+            is InitEvent.RequestBiometry -> requestBiometry()
+        }
+    }
+
+    private fun requestBiometry() {
+        lifecycleScope.launch {
+            val enabled = PasscodeBiometric.showPrompt(
+                requireContext(),
+                getString(Localization.app_name),
+            )
+            viewModel.setBiometryEnabled(enabled)
         }
     }
 
@@ -98,12 +171,16 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
         }
 
         val fragment = when (route) {
-            InitRoute.CreatePasscode -> PasscodeScreen.newInstance(false)
-            InitRoute.ReEnterPasscode -> PasscodeScreen.newInstance(true)
+            InitRoute.SelectType -> SelectTypeScreen.newInstance(args.withNew)
+            InitRoute.CreatePasscode -> PasscodeScreen.newInstance(PasscodeScreen.Mode.Create)
+            InitRoute.ReEnterPasscode -> PasscodeScreen.newInstance(PasscodeScreen.Mode.ReEnter)
+            InitRoute.EnterPasscode -> PasscodeScreen.newInstance(PasscodeScreen.Mode.Enter)
             InitRoute.ImportWords -> WordsScreen.newInstance(false)
             InitRoute.WatchAccount -> WatchScreen.newInstance()
             InitRoute.LabelAccount -> LabelScreen.newInstance()
             InitRoute.SelectAccount -> SelectScreen.newInstance()
+            InitRoute.SelectWalletVersion -> SelectWalletVersionScreen.newInstance()
+            InitRoute.SelectMnemonicType -> SelectMnemonicTypeScreen.newInstance()
             InitRoute.Push -> PushScreen.newInstance()
             InitRoute.BackupStart -> BackupStartScreen.newInstance()
             InitRoute.BackupPhrase -> BackupPhraseScreen.newInstance()
@@ -115,13 +192,21 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
         }
 
         val transaction = childFragmentManager.beginTransaction()
-        transaction.setCustomAnimations(uikit.R.anim.fragment_enter_from_right, uikit.R.anim.fragment_exit_to_left, uikit.R.anim.fragment_enter_from_left, uikit.R.anim.fragment_exit_to_right)
+        // The sheet itself slides up when opening; animating the first step from the right on
+        // top of that reads as a diagonal enter. Only animate step-to-step transitions.
+        if (childFragmentManager.fragments.isNotEmpty()) {
+            transaction.setCustomAnimations(uikit.R.anim.fragment_enter_from_right, uikit.R.anim.fragment_exit_to_left, uikit.R.anim.fragment_enter_from_left, uikit.R.anim.fragment_exit_to_right)
+        }
         transaction.replace(R.id.step_container, fragment, fragment.toString())
         transaction.addToBackStack(fragment.toString())
         transaction.commit()
     }
 
     private fun popBackStack() {
+        if (childFragmentManager.isStateSaved) {
+            return
+        }
+
         if (loaderContainerView.visibility == View.VISIBLE) {
             return
         }
@@ -145,6 +230,12 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             loaderContainerView.visibility = View.GONE
             loaderIconView.clearAnimation()
         }
+        updateDraggable()
+    }
+
+    private fun updateDraggable() {
+        val busy = loaderContainerView.visibility == View.VISIBLE || viewModel.loaderState.value != null
+        (view as? BottomSheetLayout)?.behavior?.isDraggable = !busy
     }
 
     companion object {
@@ -157,7 +248,9 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             accounts: List<AccountItem>? = null,
             keystone: WalletEntity.Keystone? = null,
             watchRecoveryAccountId: String? = null,
-        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts, keystone, watchRecoveryAccountId))
+            withNew: Boolean = true,
+            raffleSourceWalletId: String? = null,
+        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts, keystone, watchRecoveryAccountId, withNew, raffleSourceWalletId))
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()

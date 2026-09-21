@@ -75,14 +75,14 @@ class CollectiblesRepository(
         }
     }.cancellable()
 
-    private fun getLocalNftItems(
+    fun getLocalNftItems(
         address: String,
         network: TonNetwork
     ): List<NftEntity> {
         return localDataSource.get(address, network.isTestnet)
     }
 
-    private fun getRemoteNftItems(
+    fun getRemoteNftItems(
         address: String,
         network: TonNetwork
     ): List<NftEntity>? {

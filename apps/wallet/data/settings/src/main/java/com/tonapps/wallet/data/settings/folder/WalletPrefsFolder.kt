@@ -19,14 +19,29 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         private const val PUSH_PREFIX = "push_"
         private const val PURCHASE_PREFIX = "purchase_"
         private const val SETUP_HIDDEN_PREFIX = "setup_hidden_"
+        private const val MIGRATION_OPENED_PREFIX = "migration_opened_"
         private const val LAST_UPDATED_PREFIX = "last_updated_"
         private const val TELEGRAM_CHANNEL_PREFIX = "telegram_channel_"
         private const val SPAM_STATE_TRANSACTION_PREFIX = "spam_state_transaction_"
         private const val BATTERY_TX_ENABLED_PREFIX = "batter_tx_enabled_"
         private const val USDT_W5_PREFIX = "usdt_w5_"
         private const val DAPP_CONFIRM_PREFIX = "dapp_confirm_"
+        private const val SAFE_MODE_DISABLED_UNIX_PREFIX = "safe_mode_disabled_unix_"
         private const val PREFERRED_FEE_PREFIX = "preferred_fee_"
 		private const val PREFERRED_TRON_FEE_PREFIX = "preferred_tron_fee_"
+    }
+
+    fun getSafeModeDisabledUnix(walletId: String): Long? {
+        val key = key(SAFE_MODE_DISABLED_UNIX_PREFIX, walletId)
+        return if (contains(key)) {
+            getLong(key)
+        } else {
+            null
+        }
+    }
+
+    fun setSafeModeDisabledUnix(walletId: String, value: Long) {
+        putLong(key(SAFE_MODE_DISABLED_UNIX_PREFIX, walletId), value, false)
     }
 
     fun isUSDTW5(walletId: String): Boolean {
@@ -86,6 +101,14 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         putBoolean(key(SETUP_HIDDEN_PREFIX, walletId), true)
     }
 
+    fun isMigrationOpened(walletId: String): Boolean {
+        return getBoolean(key(MIGRATION_OPENED_PREFIX, walletId), false)
+    }
+
+    fun setMigrationOpened(walletId: String) {
+        putBoolean(key(MIGRATION_OPENED_PREFIX, walletId), true)
+    }
+
     fun setTelegramChannel(walletId: String) {
         putBoolean(keyTelegramChannel(walletId), true)
     }
@@ -120,6 +143,15 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         return WalletPrefsEntity(
             index = index
         )
+    }
+
+    fun getSortIndex(walletId: String): Int? {
+        val key = keySort(walletId)
+        return if (contains(key)) {
+            getInt(key)
+        } else {
+            null
+        }
     }
 
     fun setSort(walletIds: List<String>) {

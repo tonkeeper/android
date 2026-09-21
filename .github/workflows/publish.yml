@@ -39,6 +39,13 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
+      - name: Create local.properties
+        uses: ./.github/actions/local-properties
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          chainkit-user: ${{ secrets.CHAINKIT_GITHUB_USER }}
+          chainkit-token: ${{ secrets.CHAINKIT_GITHUB_TOKEN }}
+
       - name: Decode signing certificate into a file
         env:
           CERTIFICATE_BASE64: ${{ secrets.ANDROID_DIST_SIGNING_KEY }}
@@ -73,9 +80,10 @@ jobs:
           path: |
             ${{ env.AAB_OUTPUT_PATH }}
 
-      - name: Upload android apk to artifacts
+      - name: Upload R8 mapping to artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: Tonkeeper apk ${{ env.VERSION_CODE }}
+          name: Tonkeeper mapping ${{ env.VERSION_CODE }}
           path: |
-            ${{ env.APK_OUTPUT_PATH }}
+            apps/wallet/instance/main/build/outputs/mapping/**
+          if-no-files-found: error

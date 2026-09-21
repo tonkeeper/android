@@ -1,0 +1,57 @@
+# Opens SYMBOL from the Core tokens shelf and asserts price / balance / activity.
+# Env: SYMBOL (BTC, ETH, BNB, TRX, GRAM, USD₮), EXPECT_TRANSACTION_HISTORY
+# BNB is the only core token without Transaction history (same as iOS).
+# 24h Trading activity is required for every core token.
+#
+# Only the chart needs a hand-rolled swipe; below it scrollUntilVisible drives
+# the page itself. Do not go back to a swipe loop that picks its origin from the
+# first visible section header: once "Transaction history" is clipped against
+# the top edge, a swipe from it travels nowhere and the loop spins forever.
+appId: com.ton_keeper.debug
+---
+- scrollUntilVisible:
+    element: "Core tokens"
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+
+- extendedWaitUntil:
+    visible: ${SYMBOL}
+    timeout: 30000
+- tapOn:
+    text: ${SYMBOL}
+    below: "Core tokens"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible: "Your balance"
+    timeout: 60000
+- assertVisible: "Your balance"
+- assertVisible: Buy
+- assertVisible: "Last day"
+
+- runFlow: swipe_asset_details.yaml
+
+- runFlow:
+    when:
+      true: ${EXPECT_TRANSACTION_HISTORY == "true"}
+    commands:
+      - scrollUntilVisible:
+          element: "Transaction history"
+          direction: DOWN
+          timeout: 30000
+      - assertVisible: "Transaction history"
+
+- scrollUntilVisible:
+    element: "24h Trading activity"
+    direction: DOWN
+    timeout: 30000
+- assertVisible: "24h Trading activity"
+
+- tapOn: Navigation
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: "Core tokens"
+    timeout: 30000

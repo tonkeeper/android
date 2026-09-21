@@ -59,14 +59,16 @@ data class TronTransaction(private val tx: Transaction) {
             put("ref_block_hash", toHex(rawData.refBlockHash.toByteArray()))
             put("expiration", rawData.expiration)
             put("timestamp", rawData.timestamp)
-            put("fee_limit", rawData.feeLimit)
+            if (rawData.feeLimit > 0) {
+                put("fee_limit", rawData.feeLimit)
+            }
 
             val contracts = JSONArray()
             for (contract in rawData.contractList) {
                 val contractJson = JSONObject()
                 contractJson.put("type", contract.type.name)
 
-                val parameter = when (contract.type) {
+                val (parameter, typeUrl) = when (contract.type) {
                     Transaction.Contract.ContractType.TriggerSmartContract -> {
                         val unpacked =
                             Contract.TriggerSmartContract.parseFrom(contract.parameter.value)
@@ -74,7 +76,17 @@ data class TronTransaction(private val tx: Transaction) {
                             put("owner_address", toHex(unpacked.ownerAddress.toByteArray()))
                             put("contract_address", toHex(unpacked.contractAddress.toByteArray()))
                             put("data", toHex(unpacked.data.toByteArray()))
-                        }
+                        } to "type.googleapis.com/protocol.TriggerSmartContract"
+                    }
+
+                    Transaction.Contract.ContractType.TransferContract -> {
+                        val unpacked =
+                            Contract.TransferContract.parseFrom(contract.parameter.value)
+                        JSONObject().apply {
+                            put("owner_address", toHex(unpacked.ownerAddress.toByteArray()))
+                            put("to_address", toHex(unpacked.toAddress.toByteArray()))
+                            put("amount", unpacked.amount)
+                        } to "type.googleapis.com/protocol.TransferContract"
                     }
 
                     else -> {
@@ -83,7 +95,7 @@ data class TronTransaction(private val tx: Transaction) {
                 }
                 contractJson.put("parameter", JSONObject().apply {
                     put("value", parameter)
-                    put("type_url", "type.googleapis.com/protocol.TriggerSmartContract")
+                    put("type_url", typeUrl)
                 })
                 contracts.put(contractJson)
             }

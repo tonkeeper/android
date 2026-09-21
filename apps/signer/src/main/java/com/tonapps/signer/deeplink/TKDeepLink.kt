@@ -3,12 +3,10 @@ package com.tonapps.signer.deeplink
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.tonapps.log.L
-import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.security.hex
 import com.tonapps.signer.Key
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 object TKDeepLink {
 

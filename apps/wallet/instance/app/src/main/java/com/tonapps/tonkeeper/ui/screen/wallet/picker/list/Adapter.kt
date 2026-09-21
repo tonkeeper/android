@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.tonkeeper.manager.assets.WalletBalanceEntity
+import com.tonapps.legacy.assets.WalletBalanceEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.AddHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.SkeletonHolder
@@ -21,50 +21,6 @@ import java.util.Collections
 class Adapter(
     private val onClick: (WalletEntity) -> Unit
 ): RecyclerView.Adapter<Holder<*>>() {
-
-    companion object {
-
-        private val defaultItems: List<Item> = listOf(
-            Item.Skeleton(ListCell.Position.SINGLE),
-            Item.AddWallet
-        )
-
-        fun map(
-            context: Context,
-            wallets: List<WalletEntity>,
-            activeWallet: WalletEntity,
-            currency: WalletCurrency,
-            balances: List<WalletBalanceEntity>,
-            hiddenBalance: Boolean = false,
-            walletIdFocus: String = "",
-        ): List<Item> {
-            val uiItems = mutableListOf<Item>()
-            for ((index, wallet) in wallets.withIndex()) {
-                val balance = balances.find {
-                    it.accountId.equalsAddress(wallet.accountId) && it.testnet == wallet.testnet
-                }
-
-                val balanceFormat = balance?.balance?.let {
-                    CurrencyFormatter.formatFiat(
-                        currency = if (wallet.testnet) WalletCurrency.TON.code else currency.code,
-                        value = it
-                    )
-                } ?: context.getString(Localization.loading)
-
-                val item = Item.Wallet(
-                    selected = wallet.id == activeWallet.id,
-                    position = ListCell.getPosition(wallets.size, index),
-                    balance = balanceFormat,
-                    hiddenBalance = hiddenBalance,
-                    wallet = wallet.copy(),
-                    focusAnimation = walletIdFocus == wallet.id
-                )
-                uiItems.add(item)
-            }
-            uiItems.add(Item.AddWallet)
-            return uiItems.toList()
-        }
-    }
 
     private class DiffCallback(
         private val oldList: List<Item>,
@@ -125,8 +81,8 @@ class Adapter(
         Collections.swap(wallets, fromPosition, toPosition)
 
         val uiItems = mutableListOf<Item>()
-        uiItems.addAll(wallets.mapIndexed { index, it ->
-            it.copy(position = ListCell.getPosition(wallets.size, index))
+        uiItems.addAll(wallets.mapIndexed { index, item ->
+            item.copy(position = ListCell.getPosition(wallets.size, index))
         })
         uiItems.add(Item.AddWallet)
         submitList(uiItems.toList())
@@ -134,8 +90,8 @@ class Adapter(
 
     fun rebuild(): List<String> {
         var wallets = list.filterIsInstance<Item.Wallet>()
-        wallets = wallets.mapIndexed { index, it ->
-            it.copy(position = ListCell.getPosition(wallets.size, index))
+        wallets = wallets.mapIndexed { index, item ->
+            item.copy(position = ListCell.getPosition(wallets.size, index))
         }
         val uiItems = mutableListOf<Item>()
         uiItems.addAll(wallets)
@@ -190,5 +146,49 @@ class Adapter(
         recyclerView.isNestedScrollingEnabled = true
         recyclerView.itemAnimator = null
         recyclerView.layoutAnimation = null
+    }
+
+    companion object {
+
+        private val defaultItems: List<Item> = listOf(
+            Item.Skeleton(ListCell.Position.SINGLE),
+            Item.AddWallet
+        )
+
+        fun map(
+            context: Context,
+            wallets: List<WalletEntity>,
+            activeWallet: WalletEntity,
+            currency: WalletCurrency,
+            balances: List<WalletBalanceEntity>,
+            hiddenBalance: Boolean = false,
+            walletIdFocus: String = "",
+        ): List<Item> {
+            val uiItems = mutableListOf<Item>()
+            for ((index, wallet) in wallets.withIndex()) {
+                val balance = balances.find {
+                    it.accountId.equalsAddress(wallet.accountId) && it.testnet == wallet.testnet
+                }
+
+                val balanceFormat = balance?.balance?.let {
+                    CurrencyFormatter.formatFiat(
+                        currency = if (wallet.testnet) WalletCurrency.TON.code else currency.code,
+                        value = it
+                    )
+                } ?: context.getString(Localization.loading)
+
+                val item = Item.Wallet(
+                    selected = wallet.id == activeWallet.id,
+                    position = ListCell.getPosition(wallets.size, index),
+                    balance = balanceFormat,
+                    hiddenBalance = hiddenBalance,
+                    wallet = wallet.copy(),
+                    focusAnimation = walletIdFocus == wallet.id
+                )
+                uiItems.add(item)
+            }
+            uiItems.add(Item.AddWallet)
+            return uiItems.toList()
+        }
     }
 }

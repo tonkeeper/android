@@ -1,7 +1,6 @@
 package com.tonapps.deposit.screens.send.contact
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +15,7 @@ import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonTopAppBarSimple
-import ui.components.moon.cell.MoonButtonCell
+import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.container.MoonSurface
 
 // TODO
@@ -83,7 +82,7 @@ fun SendContactsScreen(
                 }
             }
 
-            MoonButtonCell(
+            MoonBottomButtonCell(
                 text = stringResource(Localization.add_contact),
             ) {
                 onAddContact()

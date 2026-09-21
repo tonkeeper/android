@@ -1,0 +1,41 @@
+appId: com.ton_keeper.debug
+---
+- runFlow: ../mnemonic/import_wallet_paste_retry.yaml
+
+- runFlow: ../password/enter_password.yaml
+- assertVisible: Re-enter passcode
+- runFlow: ../password/enter_password.yaml
+
+# After re-enter: Play Services → Get instant notifications, else Customize.
+# iOS skip copy is "Later"; Android is "Skip" (id: later). Do not tap skip —
+# primary CTA (id: button, "Enable") requests POST_NOTIFICATIONS, then Allow.
+- extendedWaitUntil:
+    visible: "Get instant notifications|Customize your Wallet"
+    timeout: 30000
+
+- runFlow:
+    when:
+      visible: Get instant notifications
+    commands:
+      - tapOn:
+          id: button
+          text: Enable
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn:
+          text: "^Allow$"
+          optional: true
+      - waitForAnimationToEnd:
+          timeout: 2000
+
+- extendedWaitUntil:
+    visible: Customize your Wallet
+    timeout: 20000
+- tapOn:
+    id: label_button
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    id: stories_close
+    optional: true

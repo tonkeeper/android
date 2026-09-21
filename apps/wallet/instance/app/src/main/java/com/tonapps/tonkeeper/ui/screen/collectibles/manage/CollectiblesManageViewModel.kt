@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.collectibles.manage
 import android.app.Application
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.mvi.AsyncViewModel
-import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -34,7 +33,7 @@ class CollectiblesManageViewModel(
         get() = args.spamOnly
 
     private val safeMode: Boolean
-        get() = settingsRepository.isSafeModeEnabled(wallet.network)
+        get() = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
 
     private var showedAll = false
     private var collectibles: List<NftEntity> = emptyList()

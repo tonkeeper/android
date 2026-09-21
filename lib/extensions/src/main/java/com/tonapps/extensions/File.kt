@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
 import java.io.File
+import java.io.IOException
 
 fun File.folder(name: String): File {
     val folder = File(this, name)
@@ -13,12 +14,22 @@ fun File.folder(name: String): File {
     return folder
 }
 
-fun File.file(name: String): File {
+fun File.file(name: String): File? {
     val file = File(this, name)
-    if (!file.exists()) {
-        file.createNewFile()
+
+    if (file.exists()) {
+        return file
     }
-    return file
+
+    return try {
+        file.parentFile?.mkdirs()
+
+        file.createNewFile()
+
+        file.takeIf { it.exists() }
+    } catch (e: IOException) {
+        null
+    }
 }
 
 fun retrieveUri(context: Context, file: File): Uri =

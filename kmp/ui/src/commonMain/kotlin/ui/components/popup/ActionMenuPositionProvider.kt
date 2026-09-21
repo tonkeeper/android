@@ -19,6 +19,7 @@ import ui.theme.Dimens
 internal data class ActionMenuPositionProvider(
     val contentOffset: DpOffset,
     val density: Density,
+    val horizontalAlignment: ActionMenuHorizontalAlignment = ActionMenuHorizontalAlignment.Start,
     val onPositionCalculated: (anchorBounds: IntRect, menuBounds: IntRect) -> Unit = { _, _ -> }
 ): PopupPositionProvider {
 
@@ -31,9 +32,15 @@ internal data class ActionMenuPositionProvider(
         val offsetX = with(density) { contentOffset.x.roundToPx() }
         val offsetY = with(density) { contentOffset.y.roundToPx() }
 
-        val initialX = when (layoutDirection) {
-            LayoutDirection.Ltr -> anchorBounds.left + offsetX
-            LayoutDirection.Rtl -> (anchorBounds.right - popupContentSize.width - offsetX)
+        val initialX = when (horizontalAlignment) {
+            ActionMenuHorizontalAlignment.Center -> {
+                val anchorCenterX = anchorBounds.left + anchorBounds.width / 2
+                anchorCenterX - popupContentSize.width / 2 + offsetX
+            }
+            ActionMenuHorizontalAlignment.Start -> when (layoutDirection) {
+                LayoutDirection.Ltr -> anchorBounds.left + offsetX
+                LayoutDirection.Rtl -> anchorBounds.right - popupContentSize.width - offsetX
+            }
         }
 
         val initialY = anchorBounds.bottom + offsetY
@@ -124,6 +131,8 @@ internal class AnchorTooltipPositionProvider(
     private val gapBelowAnchor: Dp,
     private val density: Density,
     private val onTailOnTopOfBubble: (Boolean) -> Unit,
+    private val preferAbove: Boolean = false,
+    private val centerTail: Boolean = false,
 ) : PopupPositionProvider {
 
     override fun calculatePosition(
@@ -142,23 +151,37 @@ internal class AnchorTooltipPositionProvider(
             windowWidthPx = windowSize.width,
             density = density,
         )
-        val idealLeft = anchorCenterX - tailCenterFromStartPx
-        var x = idealLeft.coerceIn(0, max(0, windowSize.width - maxBubblePx))
+        val x = if (centerTail) {
+            val marginPx = with(density) { AnchorTooltipTailSpec.horizontalScreenMargin.roundToPx() }
+            val maxLeft = max(marginPx, windowSize.width - marginPx - popupContentSize.width)
+            (anchorCenterX - popupContentSize.width / 2).coerceIn(marginPx, maxLeft)
+        } else {
+            val idealLeft = anchorCenterX - tailCenterFromStartPx
+            idealLeft.coerceIn(0, max(0, windowSize.width - maxBubblePx))
+        }
 
-        var y = anchorBounds.bottom + gapPx
-        var tailOnTopOfBubble = true
+        val belowY = anchorBounds.bottom + gapPx
+        val aboveY = anchorBounds.top - popupContentSize.height - gapPx
 
-        if (y + popupContentSize.height > windowSize.height) {
-            val aboveY = anchorBounds.top - popupContentSize.height - gapPx
+        var y: Int
+        var tailOnTopOfBubble: Boolean
+        if (preferAbove) {
             if (aboveY >= 0) {
                 y = aboveY
                 tailOnTopOfBubble = false
             } else {
-                y = y.coerceIn(0, max(0, windowSize.height - popupContentSize.height))
+                y = belowY
+                tailOnTopOfBubble = true
             }
         } else {
-            y = y.coerceIn(0, max(0, windowSize.height - popupContentSize.height))
+            y = belowY
+            tailOnTopOfBubble = true
+            if (belowY + popupContentSize.height > windowSize.height && aboveY >= 0) {
+                y = aboveY
+                tailOnTopOfBubble = false
+            }
         }
+        y = y.coerceIn(0, max(0, windowSize.height - popupContentSize.height))
 
         onTailOnTopOfBubble(tailOnTopOfBubble)
         return IntOffset(x, y)

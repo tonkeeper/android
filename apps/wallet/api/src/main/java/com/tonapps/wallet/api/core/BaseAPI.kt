@@ -9,6 +9,7 @@ import io.tonapi.apis.EventsApi
 import io.tonapi.apis.GaslessApi
 import io.tonapi.apis.JettonsApi
 import io.tonapi.apis.LiteServerApi
+import io.tonapi.apis.MigrationApi
 import io.tonapi.apis.NFTApi
 import io.tonapi.apis.RatesApi
 import io.tonapi.apis.StakingApi
@@ -38,6 +39,8 @@ class BaseAPI(
     val jettons: JettonsApi by lazy { JettonsApi(basePath, okHttpClient) }
 
     val liteServer: LiteServerApi by lazy { LiteServerApi(basePath, okHttpClient) }
+
+    val migration: MigrationApi by lazy { MigrationApi(basePath, okHttpClient) }
 
     val nft: NFTApi by lazy { NFTApi(basePath, okHttpClient) }
 

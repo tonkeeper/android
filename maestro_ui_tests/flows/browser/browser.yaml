@@ -1,0 +1,30 @@
+# Thin sequencer for the browser shard: tabs smoke (needs the empty Connected
+# tab) first, then WalletConnect via Aave (cleans up after itself). Nested
+# subflows/ are not matched by config.yaml `browser/*`. Each subflow
+# launches (stopApp + unlock). optional runFlow continues after a case
+# failure; evalScript runs only if that case succeeded. Final assertTrue
+# fails the Cloud row if any case failed and names them.
+name: "Browser"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.browser_tabs_ok = false; output.browser_wc_aave_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Browser — tabs smoke"
+    commands:
+      - runFlow: subflows/browser_tabs_smoke.yaml
+      - evalScript: ${output.browser_tabs_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Browser — WalletConnect Aave"
+    commands:
+      - runFlow: subflows/walletconnect_aave.yaml
+      - evalScript: ${output.browser_wc_aave_ok = true}
+
+- evalScript: ${var f = []; if (output.browser_tabs_ok !== true) f.push('tabs smoke'); if (output.browser_wc_aave_ok !== true) f.push('WalletConnect Aave'); output.browser_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.browser_failed === ''}
+    label: "${output.browser_failed ? 'browser shard: failed ' + output.browser_failed : 'browser shard: all cases passed'}"

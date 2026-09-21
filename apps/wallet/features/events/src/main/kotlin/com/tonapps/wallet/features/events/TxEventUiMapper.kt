@@ -1,6 +1,7 @@
 package com.tonapps.wallet.features.events
 
 import android.content.Context
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.core.extensions.externalDrawableUrl
 import com.tonapps.extensions.locale
@@ -15,7 +16,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.SpamTransactionState
 import com.tonapps.wallet.localization.Localization
 import kotlinx.collections.immutable.toImmutableList
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import ui.uiPosition
 import java.time.Instant
 import java.time.ZoneId
@@ -81,9 +82,17 @@ class TxEventUiMapper(
         return null
     }
 
-    private fun amount(action: TxAction): Pair<String?, String?> {
+    private fun feeFormatted(event: TxEvent): CharSequence? {
+        val fee = (event.extra as? TxEvent.Extra.Fee)?.value ?: return null
+        if (!fee.isPositive) {
+            return null
+        }
+        return TxActionBody.Value(fee, WalletCurrency.TON).formatted
+    }
+
+    private fun amount(action: TxAction, feeFormatted: CharSequence?): Pair<String?, String?> {
         var incomingFormatted = action.incomingFormatted
-        var outgoingFormatted = action.outgoingFormatted
+        var outgoingFormatted = action.outgoingFormatted ?: feeFormatted
 
         if (action.type == ActionType.Unknown) {
             outgoingFormatted = action.body.value
@@ -121,8 +130,13 @@ class TxEventUiMapper(
 
     fun toUiItem(event: TxEvent, wallet: WalletEntity): UiEvent.Item {
         val isSpam = isSpam(event, wallet)
+        val feeFormatted = feeFormatted(event)
+        val feeOwnerIndex = event.actions.indexOfFirst { it.isFeeOnly }
         val actions = event.actions.mapIndexed { index, action ->
-            val (incomingFormatted, outgoingFormatted) = amount(action)
+            val (incomingFormatted, outgoingFormatted) = amount(
+                action = action,
+                feeFormatted = feeFormatted.takeIf { index == feeOwnerIndex }
+            )
 
             val badge = if (event.isTron) context.getString(Localization.trc20) else null
             val state = state(event, action)

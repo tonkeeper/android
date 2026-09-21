@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.ui.screen.wallet.picker
 
 import android.content.Context
 import android.os.Bundle
-import com.tonapps.log.L
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -14,8 +13,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
-import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item.Companion.height
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.WalletHolder
 import com.tonapps.uikit.color.buttonSecondaryForegroundColor
@@ -23,15 +22,12 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
-import org.ton.bitstring.BitString
-import org.ton.crypto.hex
 import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
-import java.util.concurrent.CancellationException
 
 class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.Modal {
 
@@ -51,13 +47,12 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
     }
 
     private val mode: PickerMode by lazy { requireArguments().getParcelableCompat<PickerMode>(ARG_MODE)!! }
-    private val from: String by lazy { requireArguments().getString(ARG_FROM)!! }
     private var hasWalletPicked = false
 
     override val scaleBackground: Boolean
         get() = mode !is PickerMode.TonConnect
 
-    override val viewModel: PickerViewModel by viewModel { parametersOf(mode, from) }
+    override val viewModel: PickerViewModel by viewModel { parametersOf(mode) }
 
     private val adapter = Adapter { wallet ->
         if (mode is PickerMode.TonConnect) {
@@ -182,15 +177,10 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
     companion object {
 
         private const val ARG_MODE = "mode"
-        private const val ARG_FROM = "from"
 
-        fun newInstance(
-            type: PickerMode = PickerMode.Default,
-            from: String
-        ): PickerScreen {
+        fun newInstance(type: PickerMode = PickerMode.Default): PickerScreen {
             val fragment = PickerScreen()
             fragment.putParcelableArg(ARG_MODE, type)
-            fragment.putStringArg(ARG_FROM, from)
             return fragment
         }
     }

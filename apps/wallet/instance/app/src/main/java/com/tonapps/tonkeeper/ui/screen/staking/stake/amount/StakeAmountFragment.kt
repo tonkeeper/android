@@ -5,7 +5,6 @@ import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
-import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
@@ -28,12 +27,9 @@ import uikit.extensions.hideKeyboard
 import uikit.extensions.withAlpha
 import uikit.widget.AsyncImageView
 import uikit.widget.HeaderView
-import kotlin.collections.plus
 
 class StakeAmountFragment :
     BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_amount) {
-
-    private val from: String by lazy { arguments?.getString(ARG_FROM) ?: "" }
 
     private lateinit var amountView: CoinEditText
     private lateinit var poolItemView: View
@@ -98,12 +94,6 @@ class StakeAmountFragment :
 
         collectFlow(primaryViewModel.tokenFlow) { token ->
             amountView.suffix = token.symbol
-        }
-
-        collectFlow(primaryViewModel.analyticsFlow) { props ->
-            context?.analytics?.simpleTrackEvent(
-                "staking_plus_input", props.plus("from" to from) as MutableMap<String, Any>
-            )
         }
     }
 
@@ -176,6 +166,7 @@ class StakeAmountFragment :
     }
 
     private fun openConfirm() {
+        primaryViewModel.onConfirm()
         setFragment(StakeConfirmFragment.newInstance())
     }
 
@@ -183,14 +174,6 @@ class StakeAmountFragment :
 
         const val TAG = "stake_amount_fragment"
 
-        private const val ARG_FROM = "from"
-
-        fun newInstance(from: String): StakeAmountFragment {
-            val fragment = StakeAmountFragment()
-            fragment.arguments = Bundle().apply {
-                putString(ARG_FROM, from)
-            }
-            return fragment
-        }
+        fun newInstance() = StakeAmountFragment()
     }
 }

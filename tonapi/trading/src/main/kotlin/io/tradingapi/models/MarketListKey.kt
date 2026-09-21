@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 /**
  * Ключ списка/полки.
  *
- * Values: top_gainers,top_losers,most_traded,core,rwa
+ * Values: top_gainers,top_losers,most_traded,core,rwa,market_cap,volume,commodities,stocks,etfs
  */
 @Serializable
 enum class MarketListKey(val value: String) {
@@ -29,7 +29,17 @@ enum class MarketListKey(val value: String) {
     @SerialName(value = "core")
     core("core"),
     @SerialName(value = "rwa")
-    rwa("rwa");
+    rwa("rwa"),
+    @SerialName(value = "market_cap")
+    market_cap("market_cap"),
+    @SerialName(value = "volume")
+    volume("volume"),
+    @SerialName(value = "commodities")
+    commodities("commodities"),
+    @SerialName(value = "stocks")
+    stocks("stocks"),
+    @SerialName(value = "etfs")
+    etfs("etfs");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

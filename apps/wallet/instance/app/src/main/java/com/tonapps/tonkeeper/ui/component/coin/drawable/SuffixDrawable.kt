@@ -15,7 +15,8 @@ class SuffixDrawable(
     context: Context,
     private val textPaint: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = 28f.dp
-        typeface = ResourcesCompat.getFont(context, uikit.R.font.montserrat_semi_bold)
+        typeface = ResourcesCompat.getFont(context, uikit.R.font.tt_firs_neue_medium)
+        fontFeatureSettings = "'ss09' on, 'ss17' on, 'ss18' on"
         textAlign = Paint.Align.LEFT
         color = context.textSecondaryColor
     }

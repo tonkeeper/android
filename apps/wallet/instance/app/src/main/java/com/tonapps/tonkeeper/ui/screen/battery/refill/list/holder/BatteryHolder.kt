@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
-import com.tonapps.tonkeeper.view.BatteryView
+import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.stateList
@@ -17,6 +17,7 @@ import com.tonapps.wallet.localization.Plurals
 import uikit.extensions.hideKeyboard
 import uikit.extensions.withAlpha
 import uikit.span.ClickableSpanCompat
+import kotlin.math.absoluteValue
 
 class BatteryHolder(
     parent: ViewGroup,
@@ -26,6 +27,7 @@ class BatteryHolder(
     private val batteryView = itemView.findViewById<BatteryView>(R.id.battery_view)
     private val betaView = itemView.findViewById<AppCompatTextView>(R.id.beta)
     private val subtitleView = itemView.findViewById<AppCompatTextView>(R.id.battery_subtitle)
+    private val warningView = itemView.findViewById<AppCompatTextView>(R.id.battery_warning)
 
     init {
         subtitleView.movementMethod = LinkMovementMethod.getInstance()
@@ -35,7 +37,17 @@ class BatteryHolder(
         itemView.setOnClickListener {
             context.hideKeyboard()
         }
+        batteryView.emptyState = if (item.isNegative) {
+            BatteryView.EmptyState.ACCENT_RED
+        } else {
+            BatteryView.EmptyState.ACCENT
+        }
         batteryView.setBatteryLevel(item.balance)
+        warningView.visibility = if (item.isNegative) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
         if (item.beta) {
             val color = context.accentOrangeColor
             betaView.setTextColor(color)
@@ -43,8 +55,8 @@ class BatteryHolder(
             betaView.visibility = View.VISIBLE
         }
 
-        if (item.balance > 0) {
-            subtitleView.text = context.resources.getQuantityString(Plurals.battery_charges, item.changes, item.formattedChanges)
+        if (item.isNegative || item.balance > 0) {
+            subtitleView.text = context.resources.getQuantityString(Plurals.battery_charges, item.changes.absoluteValue, item.formattedChanges)
         } else {
             val subtitleText = context.getString(Localization.battery_refill_subtitle)
             val clickText = context.getString(Localization.battery_supported_transaction)

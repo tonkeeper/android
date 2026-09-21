@@ -14,10 +14,10 @@ jobs:
     if: contains(github.event.pull_request.body, '/claude-overview') || contains(github.event.pull_request.body, '@claude')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Main changes summary
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@38ec876110f9fbf8b950c79f534430740c3ac009 # v1.0.101
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           settings: '{"permissions":{"allow":["Bash(gh pr comment:*)","Bash(gh pr diff:*)","Bash(gh pr view:*)"]}}'
@@ -39,16 +39,16 @@ jobs:
             gh pr comment <PR_NUMBER> --repo ${{ github.repository }} --body "<your summary>"
           claude_args: |
             --max-turns 8
-            --model claude-sonnet-4-5-20250929
+            --model claude-sonnet-5
             --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
   review:
     if: contains(github.event.pull_request.body, '/claude-review') || contains(github.event.pull_request.body, '@claude')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@38ec876110f9fbf8b950c79f534430740c3ac009 # v1.0.101
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           settings: '{"permissions":{"allow":["Bash(gh pr comment:*)","Bash(gh pr diff:*)","Bash(gh pr view:*)"]}}'
@@ -75,5 +75,78 @@ jobs:
             Use inline comments for specific issues found in the code.
           claude_args: |
             --max-turns 25
-            --model claude-opus-4-6
+            --model claude-opus-5
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+
+      - name: Maestro breaking-change guard
+        uses: anthropics/claude-code-action@38ec876110f9fbf8b950c79f534430740c3ac009 # v1.0.101
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          settings: '{"permissions":{"allow":["Bash(gh pr diff:*)","Bash(gh pr view:*)"]}}'
+          # Inlined analysis prompt for the Maestro breaking-change guard.
+          prompt: |
+            You are a CI guard that detects when a pull request may break Maestro UI tests.
+            You run as a step of code review, in your own isolated context.
+
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            STEP 0 — SELF-GATE:
+            Run `gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --name-only`.
+            If none of the changed paths match `(kmp/ui/|ui/|apps/).*\.(kt|xml)$`,
+            there is nothing to analyze — post nothing and exit. Do not read the suite.
+
+            CONTEXT:
+            Maestro flows live in `maestro_ui_tests/`. Flows (`maestro_ui_tests/flows/**`)
+            include reusable steps via `runFlow: <path>` from `maestro_ui_tests/steps/**`
+            and `maestro_ui_tests/service/**`. A locator used in a step file therefore
+            affects every flow that runFlows it.
+
+            Flows target UI elements two ways:
+            - `id: <value>` → an Android testTag (Kotlin `testTag = "<value>"`, with
+              `testTagsAsResourceId = true`) OR a View id (`android:id="@+id/<value>"`
+              in a `res/layout/*.xml`).
+            - `text: <value>` / bare `tapOn: <value>` / `assertVisible: <value>` →
+              visible UI text, from a Compose string literal or a
+              `<string name="...">VALUE</string>` value in `res/values*/strings.xml`
+              (matched by VALUE, not by resource name).
+
+            ANALYSIS STEPS:
+            1. Get the full diff: `gh pr diff ${{ github.event.pull_request.number }} --repo ${{ github.repository }}`.
+            2. Extract every changed token that could alter a locator:
+               - renamed/removed `testTag("<value>")` / `testTag = "<value>"`,
+               - renamed/removed `android:id="@+id/<value>"`,
+               - changed/removed `<string name="...">VALUE</string>` (the VALUE),
+               - changed/removed inline Compose text literal.
+            3. For each token, search the WHOLE suite for flows that depend on it:
+               - Grep `maestro_ui_tests/` for the token used as `id:`, `text:`,
+                 `tapOn:`, or `assertVisible:`.
+               - If the match is in `maestro_ui_tests/steps/**` or `.../service/**`,
+                 trace `runFlow:` references back to the flow file(s) under `.../flows/**`.
+            4. Judge, per affected flow, whether the change likely BREAKS it (the
+               value the test targets no longer exists / changed). Assign
+               confidence high / medium / low.
+
+            RULES:
+            - Only READ and comment. Never edit files, never push, never open PRs.
+            - Do not flag a change that does not touch a locator some flow actually uses.
+            - Common words ("Send", "Continue", "Connect wallet") appear widely — only
+              flag when a flow targets that exact text AND the change alters that exact value.
+            - Ignore interpolated locators whose value contains `${...}` (e.g. `word_${i}`).
+            - Ignore non-default locales (`res/values-*/strings.xml`) unless the same
+              value also changed in the default `res/values/strings.xml`.
+
+            OUTPUT:
+            For each affected flow with high or medium confidence, post ONE inline
+            comment on the changed line using
+            `mcp__github_inline_comment__create_inline_comment`:
+
+              ⚠️ May break Maestro flow `<flow path>` — this change alters locator
+              `<value>` used at `<flow-or-step file>`. Verify the flow still matches.
+
+            If nothing is affected, or all matches are low-confidence, post NOTHING
+            and exit successfully. Silence is the correct result for a clean PR.
+          claude_args: |
+            --max-turns 15
+            --model claude-sonnet-4-5-20250929
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*)"

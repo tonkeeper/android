@@ -3,8 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.settings.passcode
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.passcode.PasscodeManager
@@ -30,8 +30,15 @@ class ChangePasscodeViewModel(
     private val _errorFlow = MutableEffectFlow<Unit>()
     val errorFlow = _errorFlow.asSharedFlow()
 
-    init {
-        setStep(Step.Current)
+    private var started = false
+
+    fun start(create: Boolean) {
+        if (started) {
+            return
+        }
+        started = true
+        savedState.create = create
+        setStep(firstStep())
     }
 
     fun checkCurrent(context: Context, pin: String) {
@@ -59,7 +66,6 @@ class ChangePasscodeViewModel(
 
     private fun checkAndSave(context: Context) {
         viewModelScope.launch {
-            val oldPasscode = savedState.oldPasscode ?: return@launch
             val passcode = savedState.passcode ?: return@launch
             val reEnterPasscode = savedState.reEnterPasscode ?: return@launch
             if (passcode != reEnterPasscode) {
@@ -69,15 +75,38 @@ class ChangePasscodeViewModel(
                 return@launch
             }
 
-            val saved = passcodeManager.change(context, oldPasscode, passcode)
+            val saved = if (savedState.create) {
+                createPasscode(passcode)
+            } else {
+                val oldPasscode = savedState.oldPasscode ?: return@launch
+                passcodeManager.change(context, oldPasscode, passcode)
+            }
+
             if (!saved) {
                 setError()
                 delay(400)
-                setStep(Step.Current)
+                setStep(firstStep())
                 return@launch
             }
 
             setStep(Step.Saved)
+        }
+    }
+
+    private suspend fun createPasscode(passcode: String): Boolean {
+        return try {
+            passcodeManager.create(passcode)
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            false
+        }
+    }
+
+    private fun firstStep(): Step {
+        return if (savedState.create) {
+            Step.New
+        } else {
+            Step.Current
         }
     }
 
@@ -88,5 +117,4 @@ class ChangePasscodeViewModel(
     private fun setStep(step: Step) {
         _stepFlow.tryEmit(step)
     }
-
 }

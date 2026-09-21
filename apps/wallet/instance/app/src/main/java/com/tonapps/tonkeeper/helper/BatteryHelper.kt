@@ -20,9 +20,7 @@ object BatteryHelper {
         accountRepository: AccountRepository,
         batteryRepository: BatteryRepository
     ): Int = withContext(Dispatchers.IO) {
-        accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.network, true)
-        } ?: 0
+        batteryRepository.getCharges(wallet, true)
     }
 
     suspend fun getBalance(
@@ -30,11 +28,8 @@ object BatteryHelper {
         accountRepository: AccountRepository,
         batteryRepository: BatteryRepository
     ): Coins {
-        val tonProof = accountRepository.requestTonProofToken(wallet) ?: return Coins.ZERO
         val entity = batteryRepository.getBalance(
-            tonProofToken = tonProof,
-            publicKey = wallet.publicKey,
-            network = wallet.network,
+            wallet = wallet,
             ignoreCache = true
         )
         return entity.balance

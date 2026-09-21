@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.external.qr.keystone.add
 import android.os.Bundle
 import android.view.View
 import androidx.camera.view.PreviewView
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
@@ -10,6 +11,7 @@ import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
 import com.tonapps.tonkeeper.ui.screen.external.qr.urFlow
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.init.WalletImportAnalytics
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.constantWhiteColor
 import com.tonapps.uikit.color.stateList
@@ -18,8 +20,10 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import org.ton.api.pub.PublicKeyEd25519
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.PublicKeyEd25519
+import com.tonapps.security.hex
+import kotlinx.io.bytestring.ByteString
+import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.withAlpha
@@ -39,6 +43,8 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
     override lateinit var cameraView: PreviewView
 
     private lateinit var flashView: CameraFlashIconView
+
+    private val importAnalytics: WalletImportAnalytics by inject()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -60,7 +66,7 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
         flashView = view.findViewById(R.id.flash)
         flashView.setOnClickListener { toggleFlash() }
 
-        collectFlow(urFlow<CryptoHDKey>().map { cryptoHDKey ->
+        val keystoneDataFlow = urFlow(CryptoHDKey::class.java, ::onScanError).map { cryptoHDKey ->
             val name = if (cryptoHDKey.name.isNullOrBlank()) {
                 cryptoHDKey.note
             } else {
@@ -71,14 +77,14 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
             val path = cryptoHDKey.origin?.let { "m/${it.path}" }
 
             KeystoneData(
-                publicKey = PublicKeyEd25519(cryptoHDKey.key),
+                publicKey = PublicKeyEd25519(ByteString(cryptoHDKey.key)),
                 xfp = xfp ?: "",
                 path = path ?: "",
                 name = name
             )
-        }.catch {
-            navigation?.toast(Localization.unknown_error)
-        }, ::addAccount)
+        }.catch { onScanError(it) }
+
+        collectFlow(keystoneDataFlow, ::addAccount)
 
         collectFlow(flashConfigFlow) { flashConfig ->
             if (!flashConfig.isFlashAvailable) {
@@ -87,6 +93,15 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
                 flashView.setFlashState(flashConfig.isFlashEnabled)
             }
         }
+    }
+
+    private suspend fun onScanError(error: Throwable) {
+        navigation?.toast(Localization.unknown_error)
+        importAnalytics.trackError(
+            walletSource = WalletFlowWalletSource.Keystone,
+            errorType = "keystone_qr_scan_error",
+            errorMessage = error.message,
+        )
     }
 
     private fun addAccount(data: KeystoneData) {

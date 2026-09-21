@@ -1,0 +1,29 @@
+# Thin sequencer: core tokens then trending filters. Nested subflows/ are
+# not matched by config.yaml `trade/*`. Each subflow launches (stopApp +
+# unlock). optional runFlow continues after a case failure; evalScript
+# runs only if that case succeeded. Final assertTrue fails the Cloud row
+# if any case failed and names them.
+name: "Multichain — trade"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.trade_core_tokens_ok = false; output.trade_trending_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Multichain — core tokens open details"
+    commands:
+      - runFlow: subflows/core_tokens_open_details.yaml
+      - evalScript: ${output.trade_core_tokens_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — trending network filters"
+    commands:
+      - runFlow: subflows/trending_network_filters.yaml
+      - evalScript: ${output.trade_trending_ok = true}
+
+- evalScript: ${var f = []; if (output.trade_core_tokens_ok !== true) f.push('core tokens'); if (output.trade_trending_ok !== true) f.push('trending filters'); output.trade_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.trade_failed === ''}
+    label: "${output.trade_failed ? 'trade shard: failed ' + output.trade_failed : 'trade shard: all cases passed'}"

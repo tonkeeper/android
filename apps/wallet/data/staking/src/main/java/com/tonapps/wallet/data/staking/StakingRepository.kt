@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.staking
 
 import android.content.Context
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.staking.entities.StakingEntity
 import com.tonapps.wallet.data.staking.source.LocalDataSource
@@ -9,7 +10,7 @@ import com.tonapps.wallet.data.staking.source.RemoteDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class StakingRepository(context: Context, api: API) {
+class StakingRepository(context: Context, private val api: API) {
 
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
@@ -42,6 +43,25 @@ class StakingRepository(context: Context, api: API) {
         }
 
         StakingEntity(pools = pools, info = info ?: emptyList())
+    }
+
+    suspend fun getMaxApyFormatted(
+        accountId: String,
+        network: TonNetwork,
+        ignoreCache: Boolean = false,
+        initializedAccount: Boolean = true,
+    ): String? = withContext(Dispatchers.IO) {
+        try {
+            val enabledStaking = api.getConfig(network).enabledStaking
+            val maxApy = get(accountId, network, ignoreCache, initializedAccount)
+                .pools
+                .filter { enabledStaking.contains(it.implementation.title) }
+                .maxOfOrNull { it.apy }
+                ?: return@withContext null
+            CurrencyFormatter.formatPercent(maxApy).toString()
+        } catch (e: Throwable) {
+            null
+        }
     }
 
     private fun cacheKey(accountId: String, network: TonNetwork): String {

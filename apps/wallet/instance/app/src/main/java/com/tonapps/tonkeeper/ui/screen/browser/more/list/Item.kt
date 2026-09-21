@@ -6,22 +6,36 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 
-data class Item(
-    val wallet: WalletEntity,
-    val app: BrowserAppEntity,
-    val position: ListCell.Position,
-    val country: String
-): BaseListItem(0) {
+sealed class Item(type: Int): BaseListItem(type) {
 
-    val icon: Uri
-        get() = app.icon
+    companion object {
+        const val TYPE_APP = 0
+        const val TYPE_CHAIN_FILTER = 1
+        const val TYPE_CHAIN_EMPTY = 2
+    }
 
-    val name: String
-        get() = app.name
+    data object ChainFilter : Item(TYPE_CHAIN_FILTER)
 
-    val url: Uri
-        get() = app.url
+    data object ChainEmpty : Item(TYPE_CHAIN_EMPTY)
 
-    val description: String
-        get() = app.description
+    data class App(
+        val wallet: WalletEntity,
+        val app: BrowserAppEntity,
+        val position: ListCell.Position,
+        val country: String,
+        val multichain: Boolean
+    ): Item(TYPE_APP) {
+
+        val icon: Uri
+            get() = app.icon
+
+        val name: String
+            get() = app.name
+
+        val url: Uri
+            get() = app.url
+
+        val description: String
+            get() = app.description
+    }
 }

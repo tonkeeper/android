@@ -16,12 +16,10 @@ import kotlinx.serialization.Contextual
 
 @Serializable
 data class SwapGas(
-    @SerialName(value = "dedust")
-    val dedust: SwapGasDedust,
     @SerialName(value = "stonfi")
-    val stonfi: SwapGasDedust,
+    val stonfi: SwapGasStonfi,
     @SerialName(value = "omniston")
-    val omniston: SwapGasDedust
+    val omniston: SwapGasStonfi
 ) {
 }
 

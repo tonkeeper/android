@@ -197,10 +197,12 @@ open class HeaderView @JvmOverloads constructor(
         }
     }
 
+    // Hiding is alpha-based on purpose: the click callbacks are gated on alpha != 0f, so the
+    // listener must survive a setIcon(0)/setIcon(resId) round trip (e.g. toggling back/close
+    // per navigation depth).
     private fun setDrawableForView(view: AppCompatImageView, @DrawableRes resId: Int) {
         if (resId == 0) {
             view.alpha = 0f
-            view.setOnClickListener(null)
         } else {
             view.setImageResource(resId)
             view.alpha = 1f

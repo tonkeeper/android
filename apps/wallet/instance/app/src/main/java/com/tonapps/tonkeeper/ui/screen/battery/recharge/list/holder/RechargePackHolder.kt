@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
-import com.tonapps.tonkeeper.view.BatteryView
+import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.settings.BatteryTransaction

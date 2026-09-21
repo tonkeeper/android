@@ -54,7 +54,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
+import org.koin.mp.ThreadLocal
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.Calendar
 import java.util.Locale
 
@@ -79,22 +83,24 @@ class HistoryHelper(
         const val MINUS_SYMBOL = "-"
         const val PLUS_SYMBOL = "+"
 
-        private val monthYearFormatter = SimpleDateFormat("MMMM yyyy", Locale.US)
-        private val dayMonthFormatter = SimpleDateFormat("d MMMM", Locale.US)
+        // TODO by threadLocal
+        // TODO remove duplications
+        private val monthYearFormatter = ThreadLocal.withInitial { SimpleDateFormat("MMMM yyyy", Locale.US) }
+        private val dayMonthFormatter = ThreadLocal.withInitial { SimpleDateFormat("d MMMM", Locale.US) }
 
         private fun getGroupKey(timestamp: Long): String {
             try {
                 val calendar = Calendar.getInstance()
                 calendar.timeInMillis = timestamp
-                val now = Calendar.getInstance()
-                val yearDiff = now.get(Calendar.YEAR) - calendar.get(Calendar.YEAR)
-                val monthDiff =
-                    yearDiff * 12 + now.get(Calendar.MONTH) - calendar.get(Calendar.MONTH)
+                val zone = ZoneId.systemDefault()
+                val date = Instant.ofEpochMilli(timestamp).atZone(zone).toLocalDate()
+                val today = ZonedDateTime.now(zone).toLocalDate()
+                val monthDiff = (today.year - date.year) * 12 + (today.monthValue - date.monthValue)
 
-                return if (monthDiff < 1) {
-                    dayMonthFormatter.format(calendar.time)
+                return if (monthDiff < 1 || date == today.minusDays(1)) {
+                    dayMonthFormatter.get().format(calendar.time)
                 } else {
-                    monthYearFormatter.format(calendar.time)
+                    monthYearFormatter.get().format(calendar.time)
                 }
             } catch (e: Throwable) {
                 return "zero"
@@ -537,7 +543,7 @@ class HistoryHelper(
                         ),
                         lt = event.lt,
                         hiddenBalance = options.hiddenBalances,
-                        showNetwork = item.tokenAddress == TokenEntity.USDT.address && options.tronEnabled,
+                        showNetwork = item.tokenAddress == TokenEntity.USDT.address,
                     )
                 )
             }
@@ -896,7 +902,7 @@ class HistoryHelper(
             val smartContractExec = action.smartContractExec!!
             val executor = smartContractExec.executor
 
-            val amount = Coins.of(smartContractExec.tonAttached)
+            val amount = Coins.of(smartContractExec.gramAttached)
             val value = CurrencyFormatter.format("TON", amount)
             val valueFullFormatted = CurrencyFormatter.formatFull("TON", amount, 9)
 

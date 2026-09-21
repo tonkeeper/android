@@ -55,7 +55,7 @@ sealed class Item(type: Int): BaseListItem(type) {
             address = token.address,
             symbol = token.symbol,
             balance = token.balance.value,
-            balanceFormat = CurrencyFormatter.format(token.symbol, token.balance.value),
+            balanceFormat = CurrencyFormatter.format(token.symbol, token.balance.value, compact = true),
             pinned = token.pinned,
             hidden = token.hidden,
             hiddenBalance = hiddenBalance,

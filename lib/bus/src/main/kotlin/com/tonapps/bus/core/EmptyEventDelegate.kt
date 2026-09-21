@@ -5,7 +5,6 @@ import com.tonapps.bus.core.contract.EventDelegate
 
 class EmptyEventDelegate : EventDelegate {
     override fun openRefDeeplink(deeplink: String) = Unit
-    override fun batterySuccess(type: String, promo: String, token: String, size: String?) = Unit
 
     override fun swapOpen(uri: Uri, native: Boolean) = Unit
     override fun swapClick(
@@ -62,7 +61,6 @@ class EmptyEventDelegate : EventDelegate {
         url: String
     ) = Unit
 
-    override fun trackPushClick(pushId: String, payload: String) = Unit
     override fun trackStoryClick(
         storiesId: String,
         title: String,

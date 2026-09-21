@@ -4,7 +4,6 @@ import android.net.Uri
 
 interface EventDelegate {
     fun openRefDeeplink(deeplink: String)
-    fun trackPushClick(pushId: String, payload: String)
 
     fun swapOpen(uri: Uri, native: Boolean)
     fun swapClick(
@@ -37,8 +36,6 @@ interface EventDelegate {
     fun tcConnect(url: String, pushEnabled: Boolean)
     fun tcViewConfirm(url: String, address: String)
     fun tcSendSuccess(url: String, address: String, feePaid: String)
-
-    fun batterySuccess(type: String, promo: String, token: String, size: String?)
 
     fun onRampOpen(source: String)
     fun onRampEnterAmount(type: String, sellAsset: String, buyAsset: String, countryCode: String)

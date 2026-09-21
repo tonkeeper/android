@@ -7,13 +7,18 @@ import com.tonapps.icu.Formatter
 import com.tonapps.trading.asTokenEntity
 import com.tonapps.trading.iconRes
 import com.tonapps.wallet.data.events.tx.model.TxEvent
+import com.tonapps.wallet.data.multichain.account.AccountWithDetails
+import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import com.tonapps.wallet.localization.Localization
 import io.tradingapi.models.AssetDetailsResponse
-import ui.components.events.UiEvent
+import io.tradingapi.models.AssetInfoSource
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import io.tradingapi.models.SectionLinks
 import io.tradingapi.models.SectionTradingActivity
 import java.math.BigDecimal
+import com.tonapps.chainkit.core.chain.model.num.Formatter as ChainKitFormatter
 
 data class AssetDetailsSections(
     val balance: Balance?,
@@ -21,10 +26,11 @@ data class AssetDetailsSections(
     val overview: Overview?,
     val trading: Trading?,
     val recentEvents: RecentEvents?,
+    val recentActivities: RecentActivities?,
     val links: Links?,
 ) {
     data class Balance(
-        val token: TokenEntity,
+        val token: TokenEntity? = null,
         val balanceFormatted: String,
         val fiatFormatted: String,
     )
@@ -50,6 +56,8 @@ data class AssetDetailsSections(
         val sellWeight: Float,
         val buy24hFormatted: String,
         val sell24hFormatted: String,
+        val sourceName: String,
+        val sourceUrl: String?,
     )
 
     data class RecentEvents(
@@ -63,6 +71,12 @@ data class AssetDetailsSections(
             val uiEvent: UiEvent.Item,
         )
     }
+
+    data class RecentActivities(
+        val items: List<HistoryEventEntity>,
+        val showSeeAll: Boolean,
+        val wallet: McWalletEntity?,
+    )
 
     data class Links(
         val items: List<LinkItem>,
@@ -81,22 +95,50 @@ data class AssetDetailsSections(
             currencyCode: String,
             hiddenBalances: Boolean,
             accountToken: AccountTokenEntity?,
+            account: AccountWithDetails?,
             recentEvents: List<RecentEvents.Item>?,
+            recentActivities: List<HistoryEventEntity>?,
+            recentActivitiesWallet: McWalletEntity?,
         ): AssetDetailsSections {
             return AssetDetailsSections(
-                balance = buildBalance(accountToken),
+                balance = buildBalance(accountToken, account),
                 about = buildAbout(details),
                 overview = buildOverview(details, currencyCode),
-                trading = buildTrading(details.sections.tradingActivity, currencyCode),
+                trading = buildTrading(details.sections.tradingActivity, details.infoSource, currencyCode),
                 recentEvents = buildRecentEvents(details, hiddenBalances, recentEvents),
+                recentActivities = buildRecentActivities(recentActivities, recentActivitiesWallet),
                 links = buildLinks(details.sections.links),
             )
         }
 
         private fun buildBalance(
             accountToken: AccountTokenEntity?,
+            account: AccountWithDetails?,
         ): Balance? {
+            // Sell in the bottom bar and Send/Cash sell in the actions row are gated on this
+            // section being present, so a zero balance must produce no section at all.
+            if (account != null) {
+                if (!account.unitBalance.isPositive) {
+                    return null
+                }
+                return Balance(
+                    balanceFormatted = ChainKitFormatter.formatShort(
+                        value = account.displayBalance,
+                        asset = account.asset.value
+                    ),
+                    fiatFormatted = account.rate?.let {
+                        ChainKitFormatter.formatFiat(
+                            value = account.displayBalance,
+                            rate = it.value
+                        )
+                    } ?: "",
+                )
+            }
+
             val token = accountToken ?: return null
+            if (!token.balance.value.isPositive) {
+                return null
+            }
             return Balance(
                 token = token.token,
                 balanceFormatted = CurrencyFormatter.format(
@@ -180,6 +222,7 @@ data class AssetDetailsSections(
 
         private fun buildTrading(
             tradingActivity: SectionTradingActivity,
+            infoSource: AssetInfoSource,
             currencyCode: String,
         ): Trading? {
             if (!tradingActivity.enabled) return null
@@ -217,6 +260,8 @@ data class AssetDetailsSections(
                 sellWeight = sellWeight,
                 buy24hFormatted = buy24hFormatted,
                 sell24hFormatted = sell24hFormatted,
+                sourceName = infoSource.displayedName,
+                sourceUrl = infoSource.url.takeIf { it.isNotBlank() },
             )
         }
 
@@ -227,7 +272,7 @@ data class AssetDetailsSections(
                 items = items.map { item ->
                     LinkItem(
                         name = item.name,
-                        iconRes = item.type.iconRes(),
+                        iconRes = item.type.iconRes(name = item.name, url = item.url),
                         url = item.url,
                     )
                 },
@@ -246,6 +291,18 @@ data class AssetDetailsSections(
                 showSeeAll = recentEvents.size > 3,
                 hiddenBalances = hiddenBalances,
                 token = token,
+            )
+        }
+
+        private fun buildRecentActivities(
+            recentActivities: List<HistoryEventEntity>?,
+            wallet: McWalletEntity?,
+        ): RecentActivities? {
+            if (recentActivities.isNullOrEmpty()) return null
+            return RecentActivities(
+                items = recentActivities.take(3),
+                showSeeAll = recentActivities.size > 3,
+                wallet = wallet,
             )
         }
     }

@@ -8,16 +8,22 @@ data class DeepLink(
     val route: DeepLinkRoute,
     val fromQR: Boolean,
     val referrer: Uri?,
-    val isTonConnect: Boolean = false,
+    val connect: Connect? = null,
+    val fromExternal: Boolean = false,
 ) {
 
+    enum class Connect {
+        WalletConnect, TonConnect
+    }
+
     enum class Source {
-        Deeplink, QR, TonConnect; // TODO refactor
+        Deeplink, QR, TonConnect, WalletConnect; // TODO refactor
 
         val analytic: Events.SendNative.SendNativeFrom get() {
             return when (this) {
                 Deeplink -> Events.SendNative.SendNativeFrom.DeepLink
                 QR -> Events.SendNative.SendNativeFrom.QrCode
+                WalletConnect -> Events.SendNative.SendNativeFrom.Walletconnect
                 TonConnect -> Events.SendNative.SendNativeFrom.TonconnectLocal
             }
         }
@@ -25,11 +31,29 @@ data class DeepLink(
 
     val source: Source get() {
         return when {
-            isTonConnect -> Source.TonConnect
+            connect == Connect.TonConnect -> Source.TonConnect
             fromQR -> Source.QR
+            connect == Connect.WalletConnect -> Source.WalletConnect
             else -> Source.Deeplink
         }
     }
+
+    constructor(
+        uri: Uri,
+        fromQR: Boolean,
+        referrer: Uri?,
+        fromExternal: Boolean = false,
+    ): this(
+        route = DeepLinkRoute.resolve(uri),
+        fromQR = fromQR,
+        referrer = referrer,
+        connect = when {
+            isTonConnectDeepLink(uri) -> Connect.TonConnect
+            isWalletConnectDeepLink(uri) -> Connect.WalletConnect
+            else -> null
+        },
+        fromExternal = fromExternal,
+    )
 
     companion object {
 
@@ -49,16 +73,11 @@ data class DeepLink(
         ): Boolean {
             return uri.scheme?.lowercase() == "tc" || uri.path?.lowercase() == "/ton-connect" || uri.host?.lowercase() == "ton-connect"
         }
-    }
 
-    constructor(
-        uri: Uri,
-        fromQR: Boolean,
-        referrer: Uri?
-    ): this(
-        route = DeepLinkRoute.resolve(uri),
-        fromQR = fromQR,
-        referrer = referrer,
-        isTonConnect = isTonConnectDeepLink(uri)
-    )
+        fun isWalletConnectDeepLink(
+            uri: Uri
+        ): Boolean {
+            return uri.scheme?.lowercase() == "wc" || uri.host?.lowercase() == "wc"
+        }
+    }
 }

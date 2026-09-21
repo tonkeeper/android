@@ -64,6 +64,19 @@
                         android:textColor="?attr/textPrimaryColor"
                         android:textColorHint="?attr/textSecondaryColor" />
 
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/build_override_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:digits="0123456789."
+                        android:hint="Metrics tag"
+                        android:imeOptions="actionDone"
+                        android:inputType="numberDecimal"
+                        android:singleLine="true"
+                        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                        android:textColor="?attr/textPrimaryColor"
+                        android:textColorHint="?attr/textSecondaryColor" />
+
                 </uikit.widget.ColumnLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -82,6 +95,14 @@
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:text="Tetra L2"
                     app:position="first" />
+
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/import_testnet_wallet"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Import Testnet Wallet"
+                    app:position="middle" />
 
                 <uikit.widget.item.ItemSwitchView
                     android:id="@+id/blur"
@@ -202,6 +223,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:text="Tooltips"
+                    app:position="middle" />
+
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/raffle_qa"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Raffle QA"
                     app:position="last" />
 
 

@@ -4,10 +4,10 @@ import android.content.Context
 import android.net.Uri
 import com.aptabase.Aptabase
 import com.aptabase.InitOptions
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.async.Async
 import com.tonapps.async.AsyncPlatform
 import com.tonapps.bus.core.contract.EventExecutor
+import com.tonapps.bus.generated.Events
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -21,8 +21,9 @@ class AptabaseEventExecutor : EventExecutor {
 
     private var installId: String? = null
     private var storeCountryCode: String? = null
+    private var deviceId: String? = null
     private var deviceCountryCode: String? = null
-    private val version: String = "2.7.1"
+    private val version: String = Events.VERSION
     private val platform: String = "android-native"
 
     private val dispatcher = AsyncPlatform.createDispatcherPool("tk-analytic-queue")
@@ -37,12 +38,14 @@ class AptabaseEventExecutor : EventExecutor {
         appKey: String,
         host: String,
         installId: String,
+        deviceId: String?,
         storeCountryCode: String?,
         deviceCountryCode: String?,
     ) {
         scope.launch {
             this@AptabaseEventExecutor.installId = installId
             this@AptabaseEventExecutor.storeCountryCode = storeCountryCode
+            this@AptabaseEventExecutor.deviceId = deviceId
             this@AptabaseEventExecutor.deviceCountryCode = deviceCountryCode
             val options = InitOptions(host = host)
 
@@ -52,7 +55,7 @@ class AptabaseEventExecutor : EventExecutor {
                     processEventQueue()
                 }
             } catch (e: Throwable) {
-                FirebaseCrashlytics.getInstance().recordException(e)
+                IssueHelper.recordException(e)
             }
         }
     }
@@ -94,6 +97,7 @@ class AptabaseEventExecutor : EventExecutor {
             .toMutableMap()
 
         installId?.let { fixedProps["firebase_user_id"] = it }
+        deviceId?.let { fixedProps["device_id"] = it }
         fixedProps["schema_version"] = version
         fixedProps["platform"] = platform
 

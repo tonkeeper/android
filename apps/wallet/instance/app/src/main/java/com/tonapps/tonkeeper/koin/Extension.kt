@@ -5,9 +5,9 @@ import androidx.annotation.MainThread
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -27,9 +27,6 @@ import com.tonapps.wallet.data.token.TokenRepository
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.core.Koin
 import org.koin.core.component.KoinComponent
-import org.koin.core.definition.Definition
-import org.koin.core.definition.KoinDefinition
-import org.koin.core.module.Module
 import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.Qualifier
@@ -120,3 +117,6 @@ val Context.installId: String
 
 val Context.analytics: AnalyticsHelper?
     get() = koin?.get<AnalyticsHelper>()
+
+val Context.environment: Environment?
+    get() = koin?.get<Environment>()

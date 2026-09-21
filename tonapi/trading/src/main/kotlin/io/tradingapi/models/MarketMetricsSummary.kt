@@ -15,6 +15,10 @@ import kotlinx.serialization.SerialName
 
 @Serializable
 data class MarketMetricsSummary(
+    /* Объем торгов */
+    @SerialName(value = "volume")
+    val volume: String,
+
     /* Цена. */
     @SerialName(value = "price")
     val price: String,
@@ -29,7 +33,11 @@ data class MarketMetricsSummary(
 
     /* Timestamp, когда метрика была актуальна у провайдера. */
     @SerialName(value = "as_of")
-    val asOf: String
+    val asOf: String,
+
+    /* Рыночная капитализация в USD (decimal string). Отсутствует, если неизвестна. */
+    @SerialName(value = "market_cap")
+    val marketCap: String? = null
 ) {
 }
 

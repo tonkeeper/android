@@ -1,5 +1,6 @@
 package ui.components.moon.cell
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -12,6 +13,8 @@ fun MoonCardCell(
     modifier: Modifier = Modifier,
     title: CharSequence,
     subtitle: CharSequence,
+    tags: (@Composable RowScope.() -> Unit)? = null,
+    content: (@Composable () -> Unit)? = null,
     image: (@Composable () -> Unit)? = null,
     minHeight: Dp = DefaultCardHeight,
     position: MoonBundlePosition = MoonBundlePosition.Default,
@@ -27,6 +30,8 @@ fun MoonCardCell(
                 image = image,
                 title = title,
                 subtitle = subtitle,
+                tags = tags,
+                content = content,
                 minHeight = minHeight,
                 maxLinesTitle = maxLinesTitle,
                 maxLinesSubtitle = maxLinesSubtitle,

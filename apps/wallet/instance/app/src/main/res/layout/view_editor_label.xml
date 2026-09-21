@@ -15,22 +15,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:singleLine="true"
-            app:disableClearButton="true"
-            android:hint="@string/wallet_name"/>
+            android:hint="@string/wallet_name"
+            app:disableClearButton="true" />
 
         <FrameLayout
             android:id="@+id/label_color"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginEnd="8dp"
             android:layout_gravity="center|end"
+            android:layout_marginEnd="8dp"
             android:background="@drawable/bg_emoji_edit">
+
             <com.tonapps.emoji.ui.EmojiView
                 android:id="@+id/label_emoji"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center" />
+
         </FrameLayout>
+
     </FrameLayout>
 
     <FrameLayout
@@ -73,9 +76,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_gradient"
-        android:paddingHorizontal="@dimen/offsetLarge"
+        android:paddingHorizontal="@dimen/offsetMedium"
         android:paddingTop="@dimen/offsetMedium"
-        android:paddingBottom="@dimen/offsetLarge">
+        android:paddingBottom="@dimen/offsetMedium">
 
         <Button
             style="@style/Widget.App.Button"

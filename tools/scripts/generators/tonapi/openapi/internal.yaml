@@ -1,0 +1,1631 @@
+openapi: 3.0.1
+info:
+  title: "REST API to Ton Endpoint"
+  version: 1.0.0
+  contact:
+    name: "Support"
+    email: "contact@tonaps.org"
+
+servers:
+  - url: "http://localhost:8888"
+
+paths:
+  /ready:
+    get:
+      operationId: pingReadyGet
+      summary: "Liveness probe"
+      tags:
+        - system
+      responses:
+        '200':
+          description: "Ok"
+        '500':
+          $ref: '#/components/responses/InternalError'
+    head:
+      operationId: pingReadyHead
+      summary: "Liveness probe"
+      tags:
+        - system
+      responses:
+        '200':
+          description: "Ok"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /check-for-updates:
+    get:
+      operationId: checkForUpdates
+      summary: "Latest mobile app version"
+      tags:
+        - system
+      responses:
+        '200':
+          $ref: '#/components/responses/LatestVersion'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  
+  /fiat/methods:
+    get:
+      operationId: getFiatMethods
+      summary: "Fiat on/off-ramp methods available for the resolved country"
+      tags:
+        - fiat
+      parameters:
+        - $ref: '#/components/parameters/chainNameQuery'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/countryCodeQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/FiatMethods'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  
+  /keys:
+    get:
+      operationId: getKeys
+      summary: "Config blob (mainnet/testnet/tetra)"
+      deprecated: true
+      tags:
+        - keys
+      parameters:
+        - $ref: '#/components/parameters/chainNameQuery'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/Keys'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /keys/all:
+    get:
+      operationId: getAllKeys
+      summary: "Full config blob across all chains"
+      deprecated: true
+      tags:
+        - keys
+      parameters:
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/AllKeys'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  
+  /apps/popular:
+    get:
+      operationId: getPopularApps
+      summary: "Country and platform filtered list of popular apps grouped by category"
+      tags:
+        - content
+      parameters:
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/withAdsQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/PopularApps'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sign/moonpay:
+    get:
+      operationId: signMoonpay
+      summary: "Signed Moonpay deep-link redirect"
+      tags:
+        - fiat
+      parameters:
+        - $ref: '#/components/parameters/currencyCodeFromQuery'
+        - $ref: '#/components/parameters/currencyCodeToQuery'
+        - $ref: '#/components/parameters/walletAddressQuery'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '302':
+          description: "Redirect to Moonpay"
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+                format: uri
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /notifications:
+    get:
+      operationId: getNotifications
+      summary: "Platform/build gated user facing notifications"
+      tags:
+        - notifications
+      parameters:
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/Notifications'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /widget/sell/rates:
+    get:
+      operationId: getSellRatesWidget
+      summary: "Provider sell rates for the given currency"
+      tags:
+        - widget
+      parameters:
+        - $ref: '#/components/parameters/currencyQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/WidgetRates'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /widget/buy/rates:
+    get:
+      operationId: getBuyRatesWidget
+      summary: "Provider buy rates for the given currency"
+      tags:
+        - widget
+      parameters:
+        - $ref: '#/components/parameters/currencyQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/WidgetRates'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /stories:
+    get:
+      operationId: getStoriesBatch
+      summary: "Onboarding/feature stories by id list"
+      tags:
+        - stories
+      parameters:
+        - $ref: '#/components/parameters/storyIdsQuery'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/StoriesPages'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /stories/{story_id}:
+    get:
+      operationId: getStories
+      summary: "Single story by id"
+      deprecated: true
+      tags:
+        - stories
+      parameters:
+        - $ref: '#/components/parameters/storyId'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/StoryPages'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /banners:
+    get:
+      operationId: getBanners
+      summary: "Home-screen banner carousel"
+      tags:
+        - content
+      parameters:
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/Banners'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /staking/ethena:
+    get:
+      operationId: getStakingEthenaMethods
+      summary: "Ethena staking methods"
+      tags:
+        - ethena
+      parameters:
+        - $ref: '#/components/parameters/addressQuery'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/StakingEthenaMethods'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /currencies:
+    get:
+      operationId: getCurrencies
+      summary: "Available fiat currencies"
+      tags:
+        - content
+      parameters:
+        - $ref: '#/components/parameters/platformQuery'
+        - $ref: '#/components/parameters/buildQuery'
+        - $ref: '#/components/parameters/langQuery'
+        - $ref: '#/components/parameters/storeCountyCodeQuery'
+        - $ref: '#/components/parameters/deviceCountyCodeQuery'
+        - $ref: '#/components/parameters/simCountryQuery'
+        - $ref: '#/components/parameters/timezoneQuery'
+        - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/Currencies'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /my/ip:
+    get:
+      operationId: myIp
+      summary: "Client IP plus resolved country code"
+      tags:
+        - system
+      responses:
+        '200':
+          $ref: '#/components/responses/MyIp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  parameters:
+    chainNameQuery:
+      description: Chain Name
+      in: query
+      name: chainName
+      schema:
+        $ref: '#/components/schemas/ChainName'
+    langQuery:
+      description: Language code
+      in: query
+      name: lang
+      schema:
+        type: string
+        default: "en"
+        example: "en"
+    countryCodeQuery:
+      description: Country Code
+      in: query
+      name: countryCode
+      schema:
+        type: string
+        pattern: '^[A-Z]{2}$'
+        example: "RU"
+    buildQuery:
+      description: Build Version
+      in: query
+      name: build
+      schema:
+        type: string
+        example: "3.2.20"
+    platformQuery:
+      description: Platform
+      in: query
+      name: platform
+      schema:
+        $ref: '#/components/schemas/Platform'
+    storeCountyCodeQuery:
+      description: Store country code
+      in: query
+      name: store_country_code
+      required: false
+      schema:
+        type: string
+        #        pattern: '^[A-Z]{2}$'
+        example: "UK"
+    deviceCountyCodeQuery:
+      description: Device country code
+      in: query
+      name: device_country_code
+      required: false
+      schema:
+        type: string
+        #        pattern: '^[A-Z]{2}$'
+        example: "UK"
+    simCountryQuery:
+      description: SIM card country code
+      in: query
+      name: sim_country
+      required: false
+      schema:
+        type: string
+        example: "DE"
+    timezoneQuery:
+      description: Device timezone (IANA format)
+      in: query
+      name: timezone
+      required: false
+      schema:
+        type: string
+        example: "Europe/Berlin"
+    isVpnActiveQuery:
+      description: Whether VPN is currently active
+      in: query
+      name: is_vpn_active
+      required: false
+      schema:
+        type: boolean
+    withAdsQuery:
+      description: Include ads in response
+      in: query
+      name: with_ads
+      schema:
+        type: boolean
+        default: false
+    currencyCodeFromQuery:
+      description: Base currency code
+      in: query
+      name: baseCurrencyCode
+      required: true
+      schema:
+        type: string
+        #        pattern: '^[A-Z]{3,4}$'
+        example: "USD"
+    currencyCodeToQuery:
+      description: Target currency code
+      in: query
+      name: currencyCode
+      required: true
+      schema:
+        type: string
+        #        pattern: '^[A-Z]{3,4}$'
+        example: "TON"
+    walletAddressQuery:
+      description: Wallet address
+      in: query
+      name: walletAddress
+      required: true
+      schema:
+        type: string
+    addressQuery:
+      description: Address
+      in: query
+      name: address
+      required: true
+      schema:
+        type: string
+    currencyQuery:
+      description: Currency code
+      in: query
+      name: currency
+      required: true
+      schema:
+        type: string
+        pattern: '^[A-Z]{3}$'
+        example: "USD"
+    storyId:
+      description: Story identifier
+      in: path
+      name: story_id
+      required: true
+      schema:
+        type: string
+        example: "hamster"
+    storyIdsQuery:
+      description: Story identifiers
+      in: query
+      name: ids
+      required: true
+      schema:
+        type: string
+        example: "hamster,usdt-trc20"
+    walletIdQuery:
+      description: "Stable wallet identifier"
+      in: query
+      name: wallet_id
+      required: false
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 64
+        pattern: "^([a-f0-9]{64}|[a-z2-7]{32})$"
+
+  schemas:
+    ChainName:
+      type: string
+      enum:
+        - mainnet
+        - testnet
+        - tetra
+      example: "mainnet"
+    Platform:
+      type: string
+      enum:
+        - web
+        - android
+        - ios
+        - desktop
+        - tablet
+        - pro_mobile_ios
+        - swap_widget_web
+        - extension
+        - twa
+      example: "web"
+    FiatMethodsCountryCode:
+      type: string
+      example: "RU"
+      enum:
+        - AL
+        - AD
+        - AG
+        - AR
+        - AM
+        - AT
+        - AZ
+        - BH
+        - BY
+        - BE
+        - BZ
+        - BJ
+        - BT
+        - BA
+        - BW
+        - BR
+        - BN
+        - BG
+        - BF
+        - CV
+        - KH
+        - CM
+        - CA
+        - TD
+        - JE
+        - CL
+        - CO
+        - KM
+        - CI
+        - HR
+        - CY
+        - CZ
+        - DK
+        - DJ
+        - DM
+        - DO
+        - CD
+        - EG
+        - SV
+        - GQ
+        - ER
+        - EE
+        - SZ
+        - ET
+        - FO
+        - FI
+        - FR
+        - GA
+        - GM
+        - GE
+        - DE
+        - GH
+        - GI
+        - GR
+        - GD
+        - GN
+        - HT
+        - VA
+        - HK
+        - HU
+        - IS
+        - IN
+        - ID
+        - IE
+        - IM
+        - IL
+        - IT
+        - JM
+        - JP
+        - JO
+        - KZ
+        - KE
+        - KW
+        - KG
+        - LA
+        - LV
+        - LS
+        - LI
+        - LT
+        - LU
+        - MO
+        - MG
+        - MW
+        - MY
+        - MV
+        - MT
+        - MR
+        - MU
+        - YT
+        - MX
+        - MD
+        - MC
+        - MN
+        - ME
+        - MZ
+        - NL
+        - NZ
+        - NE
+        - NG
+        - MK
+        - "NO"
+        - OM
+        - PA
+        - PY
+        - PE
+        - PH
+        - PL
+        - PT
+        - QA
+        - RE
+        - RO
+        - RU
+        - RW
+        - SH
+        - KN
+        - LC
+        - VC
+        - SM
+        - ST
+        - SA
+        - SN
+        - RS
+        - SC
+        - SG
+        - SK
+        - SI
+        - ZA
+        - KR
+        - SS
+        - ES
+        - LK
+        - PS
+        - SR
+        - SE
+        - CH
+        - TW
+        - TJ
+        - TZ
+        - TH
+        - BS
+        - TL
+        - TG
+        - TT
+        - TR
+        - TM
+        - UG
+        - UA
+        - AE
+        - GB
+        - UK
+        - US
+        - UY
+        - UZ
+        - VN
+        - EH
+        - ZM
+        - BD
+        - CN
+    FiatMethodsCurrency:
+      type: string
+      example: "rub"
+      enum:
+        - all  # Albania
+        - xcd  # Antigua and Barbuda
+        - ars  # Argentina
+        - amd  # Armenia
+        - eur  # Andorra, Austria, Belgium, Cyprus, Estonia, Finland, France, Germany, Greece, Ireland, Italy, Latvia, Lithuania, Luxembourg, Malta, Monaco, Montenegro, Netherlands, Portugal, Slovakia, Slovenia, Spain, San Marino
+        - azn  # Azerbaijan
+        - bhd  # Bahrain
+        - byn  # Belarus
+        - bzd  # Belize
+        - xof  # Benin, Burkina Faso, Côte d'Ivoire, Guinea-Bissau, Mali, Niger, Senegal, Togo
+        - btn  # Bhutan
+        - bam  # Bosnia and Herzegovina
+        - bwp  # Botswana
+        - brl  # Brazil
+        - bnd  # Brunei
+        - bgn  # Bulgaria
+        - cve  # Cape Verde
+        - khr  # Cambodia
+        - xaf  # Cameroon, Chad, Central African Republic, Republic of the Congo, Gabon, Equatorial Guinea
+        - cad  # Canada
+        - clp  # Chile
+        - cop  # Colombia
+        - kmf  # Comoros
+        - hrk  # Croatia
+        - czk  # Czech Republic
+        - dkk  # Denmark, Faroe Islands
+        - djf  # Djibouti
+        - dop  # Dominican Republic
+        - cdf  # Congo, Democratic Republic of the
+        - egp  # Egypt
+        - usd  # El Salvador, Timor-Leste, United States, Ecuador, Zimbabwe, Micronesia, Palau, Panama, East Timor, Marshall Islands, Turks and Caicos Islands, British Virgin Islands
+        - ern  # Eritrea
+        - szl  # Eswatini
+        - etb  # Ethiopia
+        - gmd  # Gambia
+        - gel  # Georgia
+        - ghs  # Ghana
+        - gip  # Gibraltar
+        - htg  # Haiti
+        - hkd  # Hong Kong
+        - huf  # Hungary
+        - isk  # Iceland
+        - inr  # India
+        - idr  # Indonesia
+        - ils  # Israel, Palestine
+        - jmd  # Jamaica
+        - jpy  # Japan
+        - jod  # Jordan
+        - kzt  # Kazakhstan
+        - kes  # Kenya
+        - kwd  # Kuwait
+        - kgs  # Kyrgyzstan
+        - lak  # Laos
+        - lsl  # Lesotho
+        - chf  # Liechtenstein, Switzerland
+        - mop  # Macao
+        - mga  # Madagascar
+        - mwk  # Malawi
+        - myr  # Malaysia
+        - mvr  # Maldives
+        - mru  # Mauritania
+        - mur  # Mauritius
+        - mxn  # Mexico
+        - mdl  # Moldova
+        - mnt  # Mongolia
+        - mzn  # Mozambique
+        - nzd  # New Zealand
+        - ngn  # Nigeria
+        - mkd  # North Macedonia
+        - nok  # Norway
+        - omr  # Oman
+        - pab  # Panama
+        - pyg  # Paraguay
+        - pen  # Peru
+        - php  # Philippines
+        - pln  # Poland
+        - qar  # Qatar
+        - ron  # Romania
+        - rub  # Russia
+        - rwf  # Rwanda
+        - shp  # Saint Helena, Ascension and Tristan da Cunha
+        - rsd  # Serbia
+        - scr  # Seychelles
+        - sgd  # Singapore
+        - zar  # South Africa
+        - krw  # South Korea
+        - ssp  # South Sudan
+        - lkr  # Sri Lanka
+        - srd  # Suriname
+        - sek  # Sweden
+        - twd  # Taiwan
+        - tjs  # Tajikistan
+        - tzs  # Tanzania
+        - thb  # Thailand
+        - bsd  # Bahamas
+        - ttd  # Trinidad and Tobago
+        - try  # Turkey
+        - tmt  # Turkmenistan
+        - ugx  # Uganda
+        - uah  # Ukraine
+        - aed  # United Arab Emirates
+        - uyu  # Uruguay
+        - uzs  # Uzbekistan
+        - vnd  # Vietnam
+        - mad  # Western Sahara
+        - zmw  # Zambia
+        - gbp  # UK
+    Method:
+      type: string
+      enum:
+        - mercuryo_pro
+        - mercuryo_not
+        - mercuryo_not_sell
+        - mercuryo_usdt
+        - mercuryo_usdt_sell
+        - mercuryo_usdt_trc20
+        - mercuryo_usdt_trc20_sell
+        - neocrypto_usdt
+        - neocrypto_usdt_sell
+        - moonpay_usdt
+        - moonpay_usdt_sell
+        - dreamwalkers_usdt
+        - dreamwalkers_usdt_sell
+        - mercuryo
+        - neocrypto
+        - wallet_bot
+        - dreamwalkers
+        - dreamwalkers_not
+        - changelly
+        - transak
+        - transak_sell
+        - transak_usdt
+        - transak_usdt_sell
+        - mercuryo_sell
+        - 1nio
+        - moonpay
+        - dreamwalkers_sell
+        - dreamwalkers_hamster
+        - dreamwalkers_hamster_sell
+        - changelly_sell_swap
+        - changelly_buy_swap
+        - letsexchange_buy_swap
+        - letsexchange_sell_swap
+        - simple_buy_swap
+        - simple_sell_swap
+        - letsExchange
+        - simpleSwap
+
+    AssetType:
+      type: string
+      enum:
+        - USDT
+        - USDT trc-20
+        - BTC
+        - ETH
+        - SOL
+        - TON
+        - GRAM
+        - BNB
+        - XRP
+        - ADA
+        - NOT
+        - HMSTR
+    CategoryType:
+      type: string
+      enum:
+        - buy
+        - sell
+        - swap
+        - buy_usdt
+        - sell_usdt
+        - buy_usdt_trc20
+        - sell_usdt_trc20
+        - sell_not
+        - buy_not
+        - sell_hmstr
+        - buy_hmstr
+    FiatCategory:
+      type: object
+      required:
+        - type
+        - title
+        - subtitle
+      properties:
+        type:
+          $ref: '#/components/schemas/CategoryType'
+        title:
+          type: string
+          example: "Buy TON"
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetType'
+        subtitle:
+          type: string
+          example: "Buy Toncoins and other crypto with credit card"
+        badge:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - title
+              - description
+              - subtitle
+              - icon_url
+              - disabled
+              - action_button
+            properties:
+              id:
+                type: string
+                example: "neocrypto"
+              title:
+                type: string
+                example: "Neocrypto"
+              disabled:
+                type: boolean
+                default: false
+              badge:
+                type: string
+                nullable: true
+              subtitle:
+                type: string
+                example: "Instantly buy with a credit card"
+              description:
+                type: string
+                example: "Instantly buy with a credit card."
+              icon_url:
+                type: string
+                example: "https://tonkeeper.com/assets/neocrypto-new.png"
+              features:
+                type: array
+                items:
+                  type: string
+              assets:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetType'
+              action_button:
+                type: object
+                required:
+                  - title
+                  - url
+                properties:
+                  title:
+                    type: string
+                    example: "Open Neocrypto"
+                  url:
+                    type: string
+              successUrlPattern:
+                type: object
+                required:
+                  - pattern
+                properties:
+                  pattern:
+                    type: string
+                    example: "&status=1"
+                  purchaseIdIndex:
+                    type: integer
+                    example: 1
+              info_buttons:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - title
+                    - url
+                  properties:
+                    title:
+                      type: string
+                      example: "Terms of use"
+                    url:
+                      type: string
+                      example: "https://neocrypto.net/policy/term-of-use.pdf"
+    PopularCategory:
+      type: object
+      required:
+        - id
+        - title
+        - apps
+      properties:
+        id:
+          type: string
+          enum:
+            - featured
+            - digital_nomads
+            - exchanges
+            - defi
+            - nft
+            - utils
+            - games
+            - ads
+            - ai
+            - lending
+            - dex_lp
+            - yield
+            - staking_restaking
+            - fun
+        title:
+          type: string
+          example: "Test"
+        apps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopularApp'
+    PopularApp:
+      type: object
+      required:
+        - name
+        - description
+        - id
+        - chains
+      properties:
+        id:
+          type: string
+          description: "App identifier for client purposes"
+        banner_id:
+          type: string
+        name:
+          type: string
+          description: "Application name"
+        description:
+          type: string
+          description: "Application description"
+        icon:
+          type: string
+          description: "Icon URL"
+        poster:
+          type: string
+          description: "Poster image URL"
+        url:
+          type: string
+          description: "Application URL"
+        chains:
+          type: array
+          description: "Blockchain identifiers the app targets (e.g. [\"ton\"] or [\"ton\", \"multi\"])"
+          items:
+            type: string
+        excludeCountries:
+          type: array
+          description: "Countries where app is not available"
+          items:
+            type: string
+            pattern: '^[A-Z]{2}$'
+        includeCountries:
+          type: array
+          description: "Countries where app is available (ISO 3166-1)"
+          items:
+            type: string
+            pattern: '^[A-Z]{2}$'
+        textColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          example: "#000000"
+        button:
+          $ref: '#/components/schemas/Button'
+    Notification:
+      type: object
+      required:
+        - id
+        - title
+        - caption
+        - mode
+        - action
+      properties:
+        id:
+          type: string
+          example: "update-4.1.2"
+        title:
+          type: string
+          example: "Update Tonkeeper"
+        caption:
+          type: string
+          example: "A new version of Tonkeeper is available"
+        mode:
+          type: string
+          enum:
+            - warning
+            - tertiary
+          example: "warning"
+        action:
+          type: object
+          required:
+            - type
+            - label
+            - url
+          properties:
+            type:
+              type: string
+              enum:
+                - open_link
+              example: "open_link"
+            label:
+              type: string
+              example: "Update"
+            url:
+              type: string
+              example: "https://apps.apple.com/us/app/tonkeeper/id1587742107"
+        isPersistenceHide:
+          type: boolean
+          default: false
+    WidgetRate:
+      type: object
+      required:
+        - id
+        - name
+        - rate
+        - currency
+        - logo
+      properties:
+        id:
+          type: string
+          example: "moonpay"
+        name:
+          type: string
+          enum:
+            - Mercuryo
+            - Dreamalkers
+            - Neocrypto
+            - Moonpay
+        rate:
+          type: number
+          minimum: 0
+          example: 100.2
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: "USD"
+        logo:
+          type: string
+        min_ton_buy_amount:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 1000000000
+        min_ton_sell_amount:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 100000000
+    Button:
+      type: object
+      required:
+        - type
+        - payload
+        - title
+      properties:
+        type:
+          type: string
+          enum:
+            - deeplink
+            - link
+        payload:
+          type: string
+        title:
+          type: string
+          example: "Open"
+    Banner:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - chains
+      properties:
+        id:
+          type: string
+          description: "Banner identifier"
+        title:
+          type: string
+          description: "Localized banner title"
+        description:
+          type: string
+          description: "Localized banner description"
+        image:
+          type: string
+          description: "Banner image URL"
+        textColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          example: "#FFFFFF"
+        backgroundColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          example: "#000000"
+        chains:
+          type: array
+          description: "Blockchain identifiers the banner targets (optional, e.g. [\"ton\", \"multi\"]; the client decides whether to show the banner)"
+          items:
+            type: string
+        button:
+          $ref: '#/components/schemas/Button'
+    StoryInfo:
+      type: object
+      required:
+        - story_id
+        - preview
+        - main_screen
+        - pages
+      properties:
+        story_id:
+          type: string
+        preview:
+          type: string
+        main_screen:
+          $ref: '#/components/schemas/StoryMainScreen'
+        pages:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryPage'
+    StoryMainScreen:
+      type: object
+      required:
+        - title
+        - description
+        - icon
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+    StoryPage:
+      type: object
+      required:
+        - title
+        - description
+        - image
+        - include_wallets
+      properties:
+        title:
+          type: string
+          example: "Hello world!"
+        description:
+          type: string
+          example: "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+        image:
+          type: string
+        include_wallets:
+          type: array
+          items:
+            type: string
+            enum:
+              - ledger
+              - keystone
+              - signer
+              - watch-only
+              - imported
+        button:
+          deprecated: true
+          $ref: '#/components/schemas/Button'
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Button'
+    StakingEthenaMethod:
+      type: object
+      required:
+        - name
+        - type
+        - image
+        - jetton_master
+        - links
+        - apy
+        - apy_title
+        - apy_description
+        - apy_bonus_title
+        - apy_bonus_description
+        - deposit_url
+        - withdrawal_url
+        - eligible_bonus_url
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - stonfi
+            - affluent
+        image:
+          type: string
+        links:
+          type: array
+          items:
+            type: string
+        jetton_master:
+          type: string
+        apy:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        apy_title:
+          type: string
+        apy_description:
+          type: string
+        apy_bonus_title:
+          type: string
+        apy_bonus_description:
+          type: string
+        deposit_url:
+          type: string
+        withdrawal_url:
+          type: string
+        eligible_bonus_url:
+          type: string
+    Currency:
+      type: object
+      required:
+        - code
+        - name
+        - image
+        - type
+      properties:
+        code:
+          type: string
+          example: "USD"
+        name:
+          type: string
+          example: "United States Dollar"
+        image:
+          type: string
+          example: "https://tonkeeper.com/assets/currencies/usd.png"
+        type:
+          type: string
+          enum:
+            - fiat
+            - crypto
+          example: "fiat"
+  
+  responses:
+    NotFound:
+      description: "The specified resource was not found"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                description: "Error message"
+    InternalError:
+      description: "Internal server error"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                description: "Error message"
+    BadRequest:
+      description: "Bad request"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                description: "Error message"
+    Keys:
+      description: "Keys configuration"
+      content:
+        application/json:
+          schema:
+            additionalProperties: true
+            example: { }
+    AllKeys:
+      description: "All keys configuration"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - mainnet
+              - testnet
+              - tetra
+            properties:
+              mainnet:
+                additionalProperties: true
+                example: { }
+              testnet:
+                additionalProperties: true
+                example: { }
+              tetra:
+                additionalProperties: true
+                example: { }
+    LatestVersion:
+      description: "Latest version information"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - version
+              - size
+            properties:
+              version:
+                type: string
+                example: "4.1.2"
+              size:
+                type: number
+                minimum: 0
+    FiatMethods:
+      description: "Available fiat payment methods"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+                required:
+                  - layoutByCountry
+                  - defaultLayout
+                  - categories
+                  - buy
+                  - sell
+                properties:
+                  layoutByCountry:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - countryCode
+                        - currency
+                        - methods
+                      properties:
+                        countryCode:
+                          $ref: '#/components/schemas/FiatMethodsCountryCode'
+                        currency:
+                          $ref: '#/components/schemas/FiatMethodsCurrency'
+                        methods:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Method'
+                  defaultLayout:
+                    type: object
+                    required:
+                      - methods
+                    properties:
+                      methods:
+                        type: array
+                        items:
+                          type: string
+                          example: "mercuryo"
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FiatCategory'
+                  buy:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FiatCategory'
+                  sell:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FiatCategory'
+    PopularApps:
+      description: "Popular applications"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - success
+              - data
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+                required:
+                  - categories
+                  - apps
+                  - moreEnabled
+                properties:
+                  moreEnabled:
+                    type: boolean
+                  categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PopularCategory'
+                  apps:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PopularApp'
+    Notifications:
+      description: "System notifications"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - notifications
+            properties:
+              notifications:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+    WidgetRates:
+      description: "Widget exchange rates"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - items
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WidgetRate'
+    StoriesPages:
+      description: "Stories with their pages"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - stories
+            properties:
+              stories:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoryInfo'
+    Banners:
+      description: "Home screen banners carousel"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - banners
+            properties:
+              banners:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banner'
+    StoryPages:
+      description: "Story pages"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StoryInfo'
+    MyIp:
+      description: "Client IP information"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - ip
+              - country
+            properties:
+              ip:
+                type: string
+                example: "51.123.28.1"
+              country:
+                type: string
+                pattern: '^[A-Z]{2}$'
+                example: "ID"
+    StakingEthenaMethods:
+      description: "Ethena staking methods"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - methods
+              - about
+            properties:
+              methods:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StakingEthenaMethod'
+              about:
+                type: object
+                required:
+                  - description
+                  - faq_url
+                  - about_url
+                  - tsusde_stake_title
+                  - tsusde_stake_description
+                  - tsusde_description
+                properties:
+                  description:
+                    type: string
+                  faq_url:
+                    type: string
+                  about_url:
+                    type: string
+                  tsusde_description:
+                    type: string
+                  tsusde_stake_title:
+                    type: string
+                  tsusde_stake_description:
+                    type: string
+    Currencies:
+      description: "Currencies"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - currencies
+            properties:
+              currencies:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Currency'

@@ -2,12 +2,14 @@ package com.tonapps.tonkeeper.ui.screen.battery.recharge.list
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AddressHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AmountHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.ButtonHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.CustomAmountHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.InputHolder
+import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.LoadingHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.PromoHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.RechargePackHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.SpaceHolder
@@ -24,6 +26,7 @@ class Adapter(
     private val onCustomAmountSelect: () -> Unit,
     private val onContinue: () -> Unit,
     private val onSubmitPromo: (String) -> Unit,
+    private val environment: Environment,
 ): BaseListAdapter() {
 
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
@@ -35,6 +38,7 @@ class Adapter(
             Item.TYPE_ADDRESS -> AddressHolder(parent, onAddressChange, openAddressBook)
             Item.TYPE_BUTTON -> ButtonHolder(parent, onContinue)
             Item.TYPE_PROMO -> PromoHolder(parent, onSubmitPromo)
+            Item.TYPE_LOADING -> LoadingHolder(parent, environment)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

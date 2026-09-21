@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.ton_keeper"
         versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1000000000 // more than github
-        versionName = System.getenv("VERSION_NAME") ?: "26.06.2" // Format is "yy.mm.iteration" (e.g. "26.02.0") and only numbers are allowed
+        versionName = System.getenv("VERSION_NAME") ?: "26.09.3" // Format is "yy.mm.iteration" (e.g. "26.02.0") and only numbers are allowed
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -32,7 +32,6 @@ android {
     productFlavors {
         create("default") {
             dimension = "version"
-
         }
         create("site") {
             dimension = "version"
@@ -61,8 +60,8 @@ android {
             isShrinkResources = true
             isCrunchPngs = true
 
+            signingConfig = signingConfigs.getByName("release")
             if (isCI) {
-                signingConfig = signingConfigs.getByName("release")
                 manifestPlaceholders += if (isAPK) {
                     mapOf("build_type" to "site")
                 } else {
@@ -82,7 +81,7 @@ android {
             isShrinkResources = true
             isCrunchPngs = true
             
-            resValue("string", "app_name", "Tonkeeper Beta")
+            resValue("string", "app_name", "Keeper Beta")
             applicationIdSuffix = ".beta"
             signingConfig = signingConfigs.getByName("debug")
             manifestPlaceholders += mapOf("build_type" to "internal_beta")
@@ -95,7 +94,7 @@ android {
         debug {
             isMinifyEnabled = false
 
-            resValue("string", "app_name", "Tonkeeper Dev")
+            resValue("string", "app_name", "Keeper Dev")
             applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("debug")
             manifestPlaceholders += mapOf("build_type" to "internal_debug")
@@ -161,7 +160,11 @@ dependencies {
     implementation(projects.apps.wallet.features.core)
     implementation(projects.apps.wallet.features.events)
     implementation(projects.apps.wallet.features.trading)
+    implementation(projects.apps.wallet.features.portfolio)
+    implementation(projects.apps.wallet.features.migration)
+    implementation(projects.apps.wallet.features.perps)
     implementation(projects.apps.wallet.features.ramp)
+    implementation(projects.apps.wallet.features.dapp)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.passcode)
@@ -171,25 +174,33 @@ dependencies {
     implementation(projects.apps.wallet.data.dapps)
     implementation(projects.apps.wallet.data.contacts)
     implementation(projects.apps.wallet.data.swap)
+    implementation(projects.apps.wallet.data.dapps)
     implementation(projects.apps.wallet.data.plugins)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.data.tokens)
     implementation(projects.apps.wallet.data.account)
+    implementation(projects.apps.wallet.data.cache)
+    implementation(projects.apps.wallet.data.multichain.wallet)
+    implementation(projects.apps.wallet.data.multichain.exchange)
     implementation(projects.apps.wallet.data.rates)
     implementation(projects.apps.wallet.data.collectibles)
     implementation(projects.apps.wallet.data.events)
     implementation(projects.apps.wallet.data.browser)
     implementation(projects.apps.wallet.data.banner)
+    implementation(projects.apps.wallet.data.raffle)
     implementation(projects.apps.wallet.data.backup)
     implementation(projects.apps.wallet.data.rn)
+    implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.localization)
     implementation(projects.apps.wallet.api)
 
     implementation(projects.lib.bus)
     implementation(projects.lib.features)
     implementation(projects.lib.icu)
+    implementation(projects.lib.wc)
     implementation(projects.lib.extensions)
     implementation(projects.lib.log)
+    implementation(projects.lib.wallet)
 
     implementation(projects.kmp.async)
     implementation(projects.kmp.mvi)

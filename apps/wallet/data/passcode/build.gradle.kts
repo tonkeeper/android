@@ -7,10 +7,13 @@ dependencies {
     implementation(libs.koin.core)
 
     implementation(projects.ui.uikit.core)
+    implementation(projects.apps.wallet.localization)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.account)
+    implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.rn)
     implementation(projects.lib.extensions)
     implementation(projects.lib.security)
+    implementation(projects.lib.bus)
 }

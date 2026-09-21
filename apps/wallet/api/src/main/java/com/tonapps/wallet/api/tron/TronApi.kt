@@ -7,6 +7,7 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.blockchain.tron.TronTransfer
 import com.tonapps.blockchain.tron.encodeTronAddress
+import com.tonapps.blockchain.tron.toEvmHex
 import com.tonapps.blockchain.tron.tronHex
 import com.tonapps.extensions.CacheKey
 import com.tonapps.extensions.TimedCacheMemory
@@ -17,6 +18,7 @@ import com.tonapps.network.get
 import com.tonapps.network.postJSON
 import com.tonapps.network.backoff.ExponentialBackoff
 import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.wallet.api.entity.value.Timestamp
@@ -33,12 +35,14 @@ import io.batteryapi.models.TronSendRequest
 import io.ktor.util.encodeBase64
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
+import org.json.JSONArray
 import org.json.JSONObject
 import org.ton.cell.Cell
 import java.math.BigInteger
@@ -86,6 +90,16 @@ class TronApi(
     fun getTronUsdtBalance(
         tronAddress: String,
     ): BalanceEntity {
+        return getTronUsdtBalanceOrNull(tronAddress) ?: BalanceEntity(
+            token = TokenEntity.TRON_USDT,
+            value = Coins.of(BigInteger.ZERO, TokenEntity.TRON_USDT.decimals),
+            walletAddress = tronAddress,
+        )
+    }
+
+    fun getTronUsdtBalanceOrNull(
+        tronAddress: String,
+    ): BalanceEntity? {
         try {
             val builder = config.tronApiUrl.toUri().buildUpon()
                 .appendEncodedPath("wallet/triggersmartcontract")
@@ -112,40 +126,187 @@ class TronApi(
                 walletAddress = tronAddress,
             )
         } catch (_: Throwable) {
-            return BalanceEntity(
-                token = TokenEntity.TRON_USDT,
-                value = Coins.of(BigInteger.ZERO, TokenEntity.TRON_USDT.decimals),
-                walletAddress = tronAddress,
-            )
+            return null
         }
     }
 
     fun getTrxBalance(
         tronAddress: String,
     ): BalanceEntity {
+        return getTronAccountBalances(tronAddress).trx
+    }
+
+    fun getTrxBalanceOrNull(
+        tronAddress: String,
+    ): BalanceEntity? {
+        return getTronAccountBalancesOrNull(tronAddress)?.trx
+    }
+
+    /**
+     * Single TronGrid request for TRX + USDT TRC20 balances via `/v1/accounts/{address}`.
+     */
+    fun getTronAccountBalances(tronAddress: String): TronAccountBalances {
+        return getTronAccountBalancesOrNull(tronAddress)
+            ?: emptyTronAccountBalances(tronAddress)
+    }
+
+    fun getTronAccountBalancesOrNull(tronAddress: String): TronAccountBalances? {
         return try {
             val builder = config.tronApiUrl.toUri().buildUpon()
                 .appendEncodedPath("v1/accounts/$tronAddress")
-            val url = builder.build()
+            val account = JSONObject(get(builder.build()))
+                .getJSONArray("data")
+                .optJSONObject(0)
 
-            val body = get(url)
-            val json = JSONObject(body).getJSONArray("data")
+            val balanceSun = account?.optLong("balance") ?: 0L
+            val usdtNano = parseTrc20Balance(account, TokenEntity.TRC20_USDT)
 
-            val balanceSun = json.optJSONObject(0)?.optLong("balance") ?: 0L
-
-            return BalanceEntity(
-                token = TokenEntity.TRX,
-                value = Coins.of(balanceSun, TokenEntity.TRX.decimals),
-                walletAddress = tronAddress,
+            tronAccountBalances(
+                tronAddress = tronAddress,
+                trxSun = BigInteger.valueOf(balanceSun),
+                usdtNano = usdtNano,
             )
         } catch (_: Throwable) {
-            BalanceEntity(
-                token = TokenEntity.TRX,
-                value = Coins.of(BigInteger.ZERO, TokenEntity.TRX.decimals),
-                walletAddress = tronAddress,
-            )
+            null
         }
     }
+
+    /** Batch TRX + USDT balances via TronGrid `POST /jsonrpc` (eth_getBalance + eth_call). */
+    fun getTronAccountBalancesBatch(addresses: List<String>): Map<String, TronAccountBalances> {
+        if (addresses.isEmpty()) {
+            return emptyMap()
+        }
+        return buildMap {
+            addresses.chunked(JSON_RPC_BALANCE_CHUNK).forEach { chunk ->
+                putAll(fetchTronAccountBalancesJsonRpc(chunk))
+            }
+        }
+    }
+
+    private fun fetchTronAccountBalancesJsonRpc(
+        addresses: List<String>,
+    ): Map<String, TronAccountBalances> {
+        return try {
+            val usdtContract = "0x${TokenEntity.TRC20_USDT.toEvmHex()}"
+            val requests = JSONArray()
+            addresses.forEachIndexed { index, address ->
+                val hexAddress = "0x${address.tronHex()}"
+                requests.put(
+                    jsonRpcRequest(
+                        id = index * 2,
+                        method = "eth_getBalance",
+                        params = JSONArray().put(hexAddress).put("latest"),
+                    ),
+                )
+                requests.put(
+                    jsonRpcRequest(
+                        id = index * 2 + 1,
+                        method = "eth_call",
+                        params = JSONArray()
+                            .put(
+                                JSONObject()
+                                    .put("to", usdtContract)
+                                    .put("data", "0x70a08231${address.encodeTronAddress()}"),
+                            )
+                            .put("latest"),
+                    ),
+                )
+            }
+
+            val url = config.tronApiUrl.toUri().buildUpon()
+                .appendEncodedPath("jsonrpc")
+                .build()
+            val body = tronRetry {
+                okHttpClient.postJSON(url.toString(), requests.toString(), headers()).readBody()
+            } ?: throw Exception("tron jsonrpc failed")
+
+            val byId = HashMap<Int, String>(addresses.size * 2)
+            val responses = JSONArray(body)
+            for (i in 0 until responses.length()) {
+                val item = responses.optJSONObject(i) ?: continue
+                val id = item.optInt("id", -1)
+                if (id < 0 || item.has("error")) {
+                    continue
+                }
+                val result = item.optString("result")
+                if (result.isNullOrBlank() || result == "null") {
+                    continue
+                }
+                byId[id] = result
+            }
+
+            addresses.mapIndexed { index, address ->
+                address to tronAccountBalances(
+                    tronAddress = address,
+                    trxSun = parseHexQuantity(byId[index * 2]),
+                    usdtNano = parseHexQuantity(byId[index * 2 + 1]),
+                )
+            }.toMap()
+        } catch (_: Throwable) {
+            addresses.associateWith(::emptyTronAccountBalances)
+        }
+    }
+
+    private fun jsonRpcRequest(
+        id: Int,
+        method: String,
+        params: JSONArray,
+    ) = JSONObject()
+        .put("jsonrpc", "2.0")
+        .put("id", id)
+        .put("method", method)
+        .put("params", params)
+
+    private fun parseHexQuantity(hex: String?): BigInteger {
+        if (hex.isNullOrBlank()) {
+            return BigInteger.ZERO
+        }
+        val normalized = hex.removePrefix("0x").ifBlank { "0" }
+        return normalized.toBigIntegerOrNull(16) ?: BigInteger.ZERO
+    }
+
+    private fun tronAccountBalances(
+        tronAddress: String,
+        trxSun: BigInteger,
+        usdtNano: BigInteger,
+    ) = TronAccountBalances(
+        trx = BalanceEntity(
+            token = TokenEntity.TRX,
+            value = Coins.ofNano(trxSun.toString(), TokenEntity.TRX.decimals),
+            walletAddress = tronAddress,
+        ),
+        usdt = BalanceEntity(
+            token = TokenEntity.TRON_USDT,
+            value = Coins.ofNano(usdtNano.toString(), TokenEntity.TRON_USDT.decimals),
+            walletAddress = tronAddress,
+        ),
+    )
+
+    private fun emptyTronAccountBalances(tronAddress: String) = tronAccountBalances(
+        tronAddress = tronAddress,
+        trxSun = BigInteger.ZERO,
+        usdtNano = BigInteger.ZERO,
+    )
+
+    private fun parseTrc20Balance(account: JSONObject?, contractAddress: String): BigInteger {
+        val trc20 = account?.optJSONArray("trc20") ?: return BigInteger.ZERO
+        for (i in 0 until trc20.length()) {
+            val item = trc20.optJSONObject(i) ?: continue
+            val keys = item.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                if (key.equals(contractAddress, ignoreCase = true)) {
+                    return item.optString(key).toBigIntegerOrNull() ?: BigInteger.ZERO
+                }
+            }
+        }
+        return BigInteger.ZERO
+    }
+
+    data class TronAccountBalances(
+        val trx: BalanceEntity,
+        val usdt: BalanceEntity,
+    )
 
     private fun getTronBlockchainHistory(
         tronAddress: String,
@@ -177,13 +338,21 @@ class TronApi(
     }
 
     private fun getBatteryTransfersHistory(
-        batteryAuthToken: String,
+        auth: Authorization,
         limit: Int,
         beforeTimestamp: Timestamp?,
     ): List<TronEventEntity> {
+        if (auth.isEmpty) {
+            return emptyList()
+        }
         val maxTimestamp = beforeTimestamp?.toLong()?.let { it - 1 }
         val response = withRetry {
-            batteryApi.getTronTransactions(batteryAuthToken, limit, maxTimestamp)
+            batteryApi.getTronTransactions(
+                tonConnectAuth = auth.tonProof,
+                xWalletId = auth.walletId,
+                limit = limit,
+                maxTimestamp = maxTimestamp,
+            )
         } ?: return emptyList()
 
         return response.transactions.filter { it.txid.isNotEmpty() }.map { TronEventEntity(it) }
@@ -191,7 +360,7 @@ class TronApi(
 
     suspend fun getTronHistory(
         tronAddress: String,
-        tonProofToken: String,
+        auth: Authorization,
         limit: Int,
         beforeTimestamp: Timestamp?,
         afterTimestamp: Timestamp? = null,
@@ -206,7 +375,7 @@ class TronApi(
                 )
             }
             val batteryEventsDeferred =
-                async { getBatteryTransfersHistory(tonProofToken, limit, beforeTimestamp) }
+                async { getBatteryTransfersHistory(auth, limit, beforeTimestamp) }
             Pair(blockchainEventsDeferred.await(), batteryEventsDeferred.await())
         }
 
@@ -325,6 +494,8 @@ class TronApi(
         return resources.copy(energy = energy, bandwidth = bandwidth)
     }
 
+    fun getAccountFreeBandwidth(tronAddress: String): Int = getAccountBandwidth(tronAddress)
+
     private fun getAccountBandwidth(tronAddress: String): Int {
         val url = config.tronApiUrl.toUri()
             .buildUpon()
@@ -341,13 +512,19 @@ class TronApi(
         val json = JSONObject(body)
 
         val freeNetLimit = json.optLong("freeNetLimit", 0L)
-        if (freeNetLimit <= 0) return 0
+        if (freeNetLimit <= 0) {
+            return 0
+        }
 
         val freeNetUsed = json.optLong("freeNetUsed", 0L)
 
         val available = freeNetLimit - freeNetUsed
 
-        return if (available > 0) available.toInt() else 0
+        return if (available > 0) {
+            available.toInt()
+        } else {
+            0
+        }
     }
 
     private fun broadcastSignedTransaction(
@@ -383,13 +560,110 @@ class TronApi(
         return resources
     }
 
+    fun estimateNativeTransferResources(
+        from: String,
+        to: String,
+        amountSun: Long,
+        bandwidthAvailableOverride: Int? = null,
+    ): TronResourcesEntity {
+        val transaction = runCatching {
+            buildNativeTransfer(from = from, to = to, amountSun = 1L)
+        }.getOrNull()
+
+        val bandwidth = if (transaction != null) {
+            estimateBandwidth(transaction.rawDataHex)
+        } else {
+            transferDefaultResources.bandwidth
+        }
+
+        var resources = applyResourcesSafetyMargin(
+            TronResourcesEntity(energy = 0, bandwidth = bandwidth),
+        )
+        val bandwidthAvailable = bandwidthAvailableOverride ?: getAccountBandwidth(from)
+        if (bandwidthAvailable > resources.bandwidth) {
+            resources = resources.copy(bandwidth = 0)
+        }
+        return resources
+    }
+
+    fun buildNativeTransfer(
+        from: String,
+        to: String,
+        amountSun: Long,
+    ): TronTransaction {
+        val url = config.tronApiUrl.toUri().buildUpon()
+            .appendEncodedPath("wallet/createtransaction")
+            .build()
+
+        val requestBody = buildJsonObject {
+            put("owner_address", from)
+            put("to_address", to)
+            put("amount", amountSun)
+            put("visible", true)
+        }
+
+        val response = post(url, requestBody)
+        val body = response.readBody()
+        val json = JSONObject(body)
+
+        if (!json.has("raw_data_hex")) {
+            val message = json.optString("Error")
+                .ifBlank { json.optString("message", "Failed to create TRX transfer") }
+            throw Exception(message)
+        }
+
+        return TronTransaction(json = json)
+    }
+
+    fun getTransactionInfo(txId: String): JSONObject? {
+        val url = config.tronApiUrl.toUri().buildUpon()
+            .appendEncodedPath("wallet/gettransactioninfobyid")
+            .build()
+
+        val requestBody = buildJsonObject {
+            put("value", txId)
+        }
+
+        val response = post(url, requestBody)
+        val json = JSONObject(response.readBody())
+        if (!json.has("id") && !json.has("blockNumber")) {
+            return null
+        }
+        return json
+    }
+
+    suspend fun waitForSuccessfulTransaction(
+        txId: String,
+        pollIntervalMs: Long = 3_000L,
+        timeoutMs: Long = 120_000L,
+    ) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            val info = getTransactionInfo(txId)
+            if (info != null && (info.has("blockNumber") || info.has("id"))) {
+                val result = info.optJSONObject("receipt")?.optString("result")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "SUCCESS"
+                if (result != "SUCCESS") {
+                    throw Exception("Transaction failed: $result")
+                }
+                return
+            }
+            delay(pollIntervalMs)
+        }
+        throw Exception("Timeout waiting for TRON transaction")
+    }
+
     fun estimateBatteryCharges(
         transfer: TronTransfer,
-        resources: TronResourcesEntity
+        resources: TronResourcesEntity,
+        auth: Authorization,
     ): TronEstimationEntity.Charges {
         val estimated = withRetry {
             batteryApi.tronEstimate(
                 wallet = transfer.from,
+                tonConnectAuth = auth.tonProof,
+                xWalletId = auth.walletId,
                 energy = resources.energy,
                 bandwidth = resources.bandwidth
             )
@@ -424,7 +698,7 @@ class TronApi(
         instantFeeTx: Cell,
         resources: TronResourcesEntity,
         tronAddress: String,
-        batteryAuthToken: String,
+        auth: Authorization,
         userPublicKey: String,
     ) {
         val base64 = transaction.json.toString().encodeBase64()
@@ -437,8 +711,9 @@ class TronApi(
         )
 
         batteryApi.tronSend(
-            request,
-            xTonConnectAuth = batteryAuthToken,
+            tronSendRequest = request,
+            tonConnectAuth = auth.tonProof,
+            xWalletId = auth.walletId,
             userPublicKey = userPublicKey
         )
     }
@@ -455,7 +730,7 @@ class TronApi(
         transaction: TronTransaction,
         resources: TronResourcesEntity,
         tronAddress: String,
-        tonProofToken: String
+        auth: Authorization,
     ) {
         val base64 = transaction.json.toString().encodeBase64()
         val request = TronSendRequest(
@@ -465,7 +740,11 @@ class TronApi(
             bandwidth = resources.bandwidth,
         )
 
-        batteryApi.tronSend(request, tonProofToken)
+        batteryApi.tronSend(
+            tronSendRequest = request,
+            tonConnectAuth = auth.tonProof,
+            xWalletId = auth.walletId,
+        )
     }
 
     fun buildSmartContractTransaction(transfer: TronTransfer): TronTransaction {
@@ -500,5 +779,6 @@ class TronApi(
         private const val DATA_HEX_PROTOBUF_EXTRA = 9
         private const val MAX_RESULT_SIZE_IN_TX = 64
         private const val A_SIGNATURE = 67
+        private const val JSON_RPC_BALANCE_CHUNK = 25
     }
 }

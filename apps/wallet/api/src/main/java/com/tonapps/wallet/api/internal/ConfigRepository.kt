@@ -2,11 +2,11 @@ package com.tonapps.wallet.api.internal
 
 import android.content.Context
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.extensions.file
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toParcel
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.ConfigResponseEntity
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,13 +14,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private const val CONFIG_FILE_NAME = "config_all"
+
 internal class ConfigRepository(
-    context: Context,
+    private val context: Context,
     scope: CoroutineScope,
     private val internalApi: InternalApi,
 ) {
 
-    private val configFile = context.cacheDir.file("config_all")
+    private val configFileLock = Any()
+
     private val _stream = MutableStateFlow(ConfigEntity.default)
 
     val stream = _stream.asStateFlow()
@@ -55,36 +58,48 @@ internal class ConfigRepository(
         _stream.value = configMainnetEntity
     }
 
+    private fun getConfigFile(): File {
+        return synchronized(configFileLock) {
+            val file = File(context.filesDir, CONFIG_FILE_NAME)
+
+            val legacy = File(context.cacheDir, CONFIG_FILE_NAME)
+            if (legacy.exists() && !legacy.renameTo(file)) {
+                return@synchronized legacy
+            }
+
+            file
+        }
+    }
+
     private fun readCache(): ConfigResponseEntity? {
-        if (configFile.exists() && configFile.length() > 0) {
-            return configFile.readBytes().toParcel()
+        val file = getConfigFile()
+        if (file.length() > 0) {
+            return file.readBytes().toParcel()
         }
         return null
     }
 
     private suspend fun remote(): ConfigResponseEntity? = withContext(Dispatchers.IO) {
-        val response = internalApi.downloadConfig() ?: return@withContext null
-        configFile.writeBytes(response.toByteArray())
-        response
+        internalApi.downloadConfig()
     }
 
     suspend fun refresh() {
         val config = remote() ?: return
+        withContext(Dispatchers.IO) {
+            getConfigFile().writeBytes(config.toByteArray())
+        }
         setConfig(config)
     }
 
-    suspend fun initConfig() {
-        remote()?.let {
-            setConfig(it)
-        }
-    }
+    suspend fun initConfig() = refresh()
 
     fun getConfig(network: TonNetwork): ConfigEntity {
-        return when (network) {
+        val base = when (network) {
             TonNetwork.MAINNET -> configMainnetEntity
             TonNetwork.TESTNET -> configTestnetEntity
             TonNetwork.TETRA -> configTetraEntity
         }
+        return BootConfigOverrides.applyTo(base)
     }
 
 }

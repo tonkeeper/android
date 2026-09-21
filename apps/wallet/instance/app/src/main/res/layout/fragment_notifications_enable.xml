@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_margin="@dimen/offsetMedium"
-        android:text="@string/later"
+        android:text="@string/setup_finish_skip"
         android:textAppearance="@style/TextAppearance.Label2"
         android:textColor="?attr/buttonSecondaryForegroundColor"
         android:background="@drawable/bg_button_secondary"
@@ -46,7 +46,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
         android:layout_marginBottom="@dimen/offsetMedium"
         android:textAppearance="@style/TextAppearance.Label1"
         android:text="@string/enable_notification"/>

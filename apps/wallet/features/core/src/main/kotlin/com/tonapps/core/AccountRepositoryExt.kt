@@ -6,8 +6,8 @@ import com.tonapps.wallet.data.rn.RNException
 import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.mnemonic.Mnemonic
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import uikit.navigation.NavigationActivity
 
 suspend fun AccountRepository.sign(
@@ -17,8 +17,8 @@ suspend fun AccountRepository.sign(
     bytes: ByteArray,
 ): ByteArray {
     var privateKey: PrivateKeyEd25519? = requestPrivateKey(activity, rnLegacy, walletId)
-    val signature = privateKey?.sign(bytes)
-        ?: throw IllegalStateException("Signature is null") // SendException.UnableSendTransaction()
+    val signature = privateKey?.signToByteArray(bytes)
+    ?: throw IllegalStateException("Signature is null") // throw SendException.UnableSendTransaction()
     privateKey = null
 // TODO   tryCallGC()
     return signature
@@ -35,9 +35,8 @@ suspend fun AccountRepository.requestPrivateKey(
             privateKeyEd25519
         } else {
             val vaultState = rnLegacy.requestVault(activity)
-            val mnemonic = vaultState.getDecryptedData(walletId)?.mnemonic
-                ?: throw RNException.NotFoundMnemonic(walletId)
-            val seed = Mnemonic.toSeed(splitMnemonic(mnemonic))
+            val mnemonic = vaultState.getDecryptedData(walletId)?.mnemonic ?: throw RNException.NotFoundMnemonic(walletId)
+            val seed = Mnemonic(splitMnemonic(mnemonic)).toSeed()
             PrivateKeyEd25519(seed)
         }
     } catch (e: Throwable) {

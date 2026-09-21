@@ -28,16 +28,14 @@ class BackupStartScreen: BaseFragment(R.layout.fragment_backup_start) {
         button.setOnClickListener { startBackup() }
 
         val offsetMedium = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
-        val offsetLarge = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetLarge)
 
+        // The screen lives inside a bottom sheet that already starts below the status bar, so the
+        // skip button keeps its XML margin to stay within the top bar row; only the bottom button
+        // still needs the navigation-bar inset.
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
-            val systemBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars() + WindowInsetsCompat.Type.navigationBars())
-            laterView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = systemBarInsets.top + offsetMedium
-            }
-
+            val navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             button.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = systemBarInsets.bottom + offsetLarge
+                bottomMargin = navBottom + offsetMedium
             }
             insets
         }

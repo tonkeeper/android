@@ -9,9 +9,11 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
@@ -28,14 +30,17 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import com.tonapps.wallet.features.events.screens.EventsFragment
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.extensions.circle
@@ -53,6 +58,7 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
 
     override val hasApplyWindowInsets: Boolean = false
 
+    private val environment: Environment by inject()
     private val args: RechargeArgs by lazy { RechargeArgs(requireArguments()) }
     private val contractsRequestKey: String by lazy { "contacts_${UUID.randomUUID()}" }
     private val tokenRequestKey: String by lazy { "token_${UUID.randomUUID()}" }
@@ -74,7 +80,8 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
         onSubmitPromo = {
             hideKeyboard()
             viewModel.applyPromo(it)
-        }
+        },
+        environment = environment,
     )
 
     private lateinit var listContainer: View
@@ -218,11 +225,12 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
 
         fun newInstance(
             wallet: WalletEntity,
+            from: BatteryNativeFrom,
             token: AccountTokenEntity? = null,
             isGift: Boolean = false
         ): BatteryRechargeScreen {
             val fragment = BatteryRechargeScreen(wallet)
-            fragment.setArgs(RechargeArgs(token, isGift))
+            fragment.setArgs(RechargeArgs(token, isGift, from))
             return fragment
         }
     }

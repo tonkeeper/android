@@ -11,15 +11,16 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
+import com.tonapps.tonkeeper.extensions.clearClipboard
+import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.copyToClipboard
+import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.accountRepository
-import com.tonapps.tonkeeper.koin.settingsRepository
-import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
+import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckScreen
-import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
-import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -28,16 +29,17 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.widget.HeaderView
 import uikit.widget.PhraseWords
 import uikit.widget.TextHeaderView
+import uikit.widget.ToastView
 
-class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_phrase, wallet), BaseFragment.SwipeBack {
+class PhraseScreen : BaseWalletScreen<ScreenContext.None>(R.layout.fragment_phrase, ScreenContext.None), BaseFragment.SwipeBack {
 
     override val fragmentName: String = "PhraseScreen"
 
     private val args: PhraseArgs by lazy { PhraseArgs(requireArguments()) }
 
-    override val viewModel: BaseWalletVM.EmptyViewViewModel by viewModel()
+    override val viewModel: PhraseViewModel by viewModel()
 
-    override val secure: Boolean = !BuildConfig.DEBUG
+    override val detectScreenCapture: Boolean = true
 
     private lateinit var headerView: HeaderView
     private lateinit var textHeaderView: TextHeaderView
@@ -46,6 +48,17 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
     private lateinit var copyButton: Button
     private lateinit var tronButton: Button
     private lateinit var checkButton: Button
+
+    private var copiedPhrase = false
+
+    override fun onScreenCaptured() {
+        navigation?.toast(Localization.screenshot_warning, ToastView.DURATION_LONG)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        copiedPhrase = savedInstanceState?.getBoolean(STATE_COPIED_PHRASE) == true
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -87,19 +100,21 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
         copyButton = view.findViewById(R.id.copy)
         copyButton.setOnClickListener {
             requireContext().copyToClipboard(args.words.joinToString(" "), true)
+            copiedPhrase = true
         }
 
         tronButton = view.findViewById(R.id.tron)
         tronButton.setOnClickListener {
             lifecycleScope.launch {
-                val tronWords = requireContext().accountRepository?.getTronMnemonic(wallet.id) ?: return@launch
-                navigation?.add(newInstance(wallet, tronWords, isTron = true))
+                val legacyId = viewModel.legacyWalletIdOrNull() ?: return@launch
+                val tronWords = requireContext().accountRepository?.getTronMnemonic(legacyId) ?: return@launch
+                navigation?.add(newInstance(tronWords, isTron = true))
             }
         }
 
         checkButton = view.findViewById(R.id.check)
         checkButton.setOnClickListener {
-            navigation?.add(BackupCheckScreen.newInstance(wallet, args.words, args.backupId))
+            navigation?.add(BackupCheckScreen.newInstance(args.words, args.backupId, args.source))
             finish()
         }
 
@@ -109,10 +124,12 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
             copyButton.visibility = View.VISIBLE
         }
 
-        val tronUsdtEnabled = context?.settingsRepository?.getTronUsdtEnabled(wallet.id) ?: false
-
-        if (tronUsdtEnabled && !args.isTron && !args.backup) {
-            tronButton.visibility = View.VISIBLE
+        if (!args.isTron && !args.backup) {
+            lifecycleScope.launch {
+                if (viewModel.legacyWalletIdOrNull() != null) {
+                    tronButton.visibility = View.VISIBLE
+                }
+            }
         }
 
         view.doKeyboardAnimation { offset, _, _ ->
@@ -120,8 +137,27 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(STATE_COPIED_PHRASE, copiedPhrase)
+    }
+
+    override fun onDestroy() {
+        val host = activity
+        if (host != null &&
+            !host.isChangingConfigurations &&
+            copiedPhrase &&
+            host.clipboardText() == args.words.joinToString(" ")
+        ) {
+            host.clearClipboard()
+        }
+        super.onDestroy()
+    }
+
     private fun applyFontScaleFix(view: View, fontScale: Float) {
-        if (fontScale <= 1f) return
+        if (fontScale <= 1f) {
+            return
+        }
         if (view is TextView) {
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, view.textSize / fontScale)
         }
@@ -134,15 +170,17 @@ class PhraseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_
 
     companion object {
 
+        private const val STATE_COPIED_PHRASE = "copied_phrase"
+
         fun newInstance(
-            wallet: WalletEntity,
             words: Array<String>,
             backup: Boolean = false,
             backupId: Long = 0,
             isTron: Boolean = false,
+            source: WalletFlowSource = WalletFlowSource.Settings,
         ): PhraseScreen {
-            val fragment = PhraseScreen(wallet)
-            fragment.setArgs(PhraseArgs(words, backup, backupId, isTron))
+            val fragment = PhraseScreen()
+            fragment.setArgs(PhraseArgs(words, backup, backupId, isTron, source))
             return fragment
         }
     }

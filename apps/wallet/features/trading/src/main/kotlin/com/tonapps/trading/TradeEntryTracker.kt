@@ -1,6 +1,6 @@
 package com.tonapps.trading
 
-import com.tonapps.bus.generated.Events.TradeUiFlow.TradeUiFlowFrom
+import com.tonapps.bus.generated.Events.TradeUiFlow.TradeStartedFrom
 import java.util.concurrent.atomic.AtomicBoolean
 
 object TradeEntryTracker {
@@ -11,11 +11,11 @@ object TradeEntryTracker {
         fromDeepLink.set(true)
     }
 
-    fun consumeFrom(): TradeUiFlowFrom {
+    fun consumeFrom(): TradeStartedFrom {
         return if (fromDeepLink.get()) {
-            TradeUiFlowFrom.DeepLink
+            TradeStartedFrom.DeepLink
         } else {
-            TradeUiFlowFrom.TabBar
+            TradeStartedFrom.TabBar
         }
     }
 }

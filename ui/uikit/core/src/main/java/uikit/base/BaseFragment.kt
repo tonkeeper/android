@@ -1,9 +1,11 @@
 package uikit.base
 
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.text.SpannableString
@@ -21,6 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.LayoutRes
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
@@ -28,6 +31,7 @@ import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
+import uikit.extensions.atLeastApi34
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomSheetLayout
@@ -49,35 +53,23 @@ open class BaseFragment(
     interface SingleTask
 
     interface PredictiveBackGesture {
-        fun onPredictiveBackCancelled() {
+        fun onPredictiveBackCancelled() { }
 
-        }
+        fun onPredictiveBackProgressed(backEvent: BackEventCompat) { }
 
-        fun onPredictiveBackProgressed(backEvent: BackEventCompat) {
-
-        }
-
-        fun onPredictiveOnBackStarted(backEvent: BackEventCompat) {
-
-        }
+        fun onPredictiveOnBackStarted(backEvent: BackEventCompat) { }
     }
 
     interface SwipeBack: PredictiveBackGesture {
 
-        fun onEndShowingAnimation() {
-
-        }
+        fun onEndShowingAnimation() { }
     }
 
     interface BottomSheet {
 
-        fun onEndShowingAnimation() {
+        fun onEndShowingAnimation() { }
 
-        }
-
-        fun onDragging() {
-
-        }
+        fun onDragging() { }
     }
 
     interface Modal {
@@ -100,9 +92,7 @@ open class BaseFragment(
         val scaleBackground: Boolean
             get() = false
 
-        fun onEndShowingAnimation() {
-
-        }
+        fun onEndShowingAnimation() { }
     }
 
     open val fragmentName: String
@@ -131,7 +121,14 @@ open class BaseFragment(
 
     open val secure: Boolean = false
 
+    open val detectScreenCapture: Boolean = false
+
     open val title: CharSequence? = null
+
+    @get:RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private val screenCaptureCallback by lazy {
+        Activity.ScreenCaptureCallback { onScreenCaptured() }
+    }
 
     private val isFinished = AtomicBoolean(false)
 
@@ -322,10 +319,15 @@ open class BaseFragment(
         navigation?.remove(this)
     }
 
+    open fun onScreenCaptured() { }
+
     override fun onResume() {
         super.onResume()
         if (secure) {
             window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+        if (detectScreenCapture && atLeastApi34) {
+            activity?.registerScreenCaptureCallback(mainExecutor, screenCaptureCallback)
         }
         (view as? BottomSheetLayout)?.show()
     }
@@ -334,6 +336,9 @@ open class BaseFragment(
         super.onPause()
         if (secure) {
             window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+        if (detectScreenCapture && atLeastApi34) {
+            activity?.unregisterScreenCaptureCallback(screenCaptureCallback)
         }
     }
 

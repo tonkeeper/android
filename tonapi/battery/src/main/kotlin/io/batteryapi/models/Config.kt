@@ -38,7 +38,11 @@ data class Config(
 
     /* reserved amount in TON that is kept for gas fees */
     @SerialName(value = "battery_reserved_amount")
-    val batteryReservedAmount: String
+    val batteryReservedAmount: String,
+    @SerialName(value = "packages")
+    val packages: List<PackageItem>,
+    @SerialName(value = "transfer_cost")
+    val transferCost: ConfigTransferCost
 ) {
 }
 

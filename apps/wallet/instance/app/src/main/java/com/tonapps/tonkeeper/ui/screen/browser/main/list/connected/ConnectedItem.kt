@@ -8,6 +8,8 @@ import com.tonapps.wallet.data.dapps.entities.AppEntity
 data class ConnectedItem(
     val wallet: WalletEntity,
     val app: AppEntity,
+    val wcTopics: List<String> = emptyList(),
+    val chain: String? = null,
 ): BaseListItem(0) {
 
     val icon: Uri

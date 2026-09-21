@@ -16,13 +16,13 @@ import kotlinx.serialization.Contextual
 
 @Serializable
 data class Risk(
-    /* True if the message semantics allow sweeping all current and future remaining TON balance of the wallet (e.g. “send all” / drain patterns).  */
+    /* True if the message semantics allow sweeping all current and future remaining Gram balance of the wallet (e.g. “send all” / drain patterns).  */
     @SerialName(value = "transfer_all_remaining_balance")
     val transferAllRemainingBalance: Boolean,
 
-    /* Maximum TON amount that may leave the wallet in the worst case, in nanotons. */
-    @SerialName(value = "ton")
-    val ton: Long,
+    /* Maximum Gram amount that may leave the wallet in the worst case, in nanogram. */
+    @SerialName(value = "gram")
+    val gram: Long,
 
     /* Jetton positions that may be debited from the wallet in the worst case. */
     @SerialName(value = "jettons")
@@ -32,7 +32,12 @@ data class Risk(
     @SerialName(value = "nfts")
     val nfts: List<NftItem>,
 
-    /* Estimated equivalent of all assets at risk (TON, jettons, NFTs) in the selected currency from currencyQuery (e.g. USD). Approximate, best-effort UI value.  */
+    /* this field will gone after Sept. 2026, use gram instead */
+    @SerialName(value = "ton")
+    @Deprecated(message = "This property is deprecated.")
+    val ton: Long? = null,
+
+    /* Estimated equivalent of all assets at risk (Gram, jettons, NFTs) in the selected currency from currencyQuery (e.g. USD). Approximate, best-effort UI value.  */
     @SerialName(value = "total_equivalent")
     val totalEquivalent: Float? = null
 ) {

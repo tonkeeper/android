@@ -1,13 +1,15 @@
 package com.tonapps.tonkeeper.manager
 
 import android.content.Context
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.walletkit.WalletKitTonConnect
+import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.dapps.DAppsRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import kotlinx.coroutines.CoroutineScope
 
 class TonConnectBridgeResolver constructor(
@@ -16,7 +18,7 @@ class TonConnectBridgeResolver constructor(
     private val pushManager: PushManager,
     private val context: Context,
     private val scope: CoroutineScope,
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
     private val dAppsRepository: DAppsRepository,
     private val wrapped: ITonConnectBridge
 ) : ITonConnectBridge by wrapped {
@@ -28,16 +30,20 @@ class TonConnectBridgeResolver constructor(
             pushManager: PushManager,
             context: Context,
             scope: CoroutineScope,
-            accountRepository: AccountRepository,
-            dAppsRepository: DAppsRepository
+            accountRepository: UnifiedAccountRepository,
+            dAppsRepository: DAppsRepository,
+            chainKitProvider: ChainKitProvider,
         ): TonConnectBridgeResolver {
-            val wrapped: ITonConnectBridge = if (WalletKitTonConnect.isEnabled(api)) {
+            val isWalletKitEnabled = WalletKitTonConnect.isEnabled(api)
+            L.e("isWalletKitEnabled: ${isWalletKitEnabled}")
+            val wrapped: ITonConnectBridge = if (isWalletKitEnabled) {
                 WalletKitTonConnect(
                     context = context,
                     scope = scope,
                     accountRepository = accountRepository,
                     dAppsRepository = dAppsRepository,
                     pushManager = pushManager,
+                    chainKitProvider = chainKitProvider,
                     manager = manager
                 )
             } else {

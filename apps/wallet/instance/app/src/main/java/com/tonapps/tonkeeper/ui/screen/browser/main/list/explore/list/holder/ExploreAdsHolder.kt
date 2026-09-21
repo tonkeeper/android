@@ -37,7 +37,7 @@ class ExploreAdsHolder(parent: ViewGroup): ExploreHolder<ExploreItem.Ads>(parent
 
             if (result is DeepLinkRoute.DApp) {
                 item.app.copy(url = result.url.toUri())
-                    .openDApp(context, item.wallet, "ads", item.country)
+                    .openDApp(context, item.wallet, "ads", item.country, item.multichain)
             } else {
                 activity?.processDeepLink(item.uri, true, context.packageName)
             }

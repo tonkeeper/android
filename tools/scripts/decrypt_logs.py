@@ -10,61 +10,82 @@ Output:
 """
 
 import os
-import re
 import subprocess
 import sys
 
+_VENV_DIR = os.path.join(
+    os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")),
+    "tonkeeper",
+    "decrypt-logs-venv",
+)
 
-def get_key_size_bytes(pk_path):
-    r = subprocess.run(
-        ["openssl", "rsa", "-in", pk_path, "-text", "-noout"],
-        capture_output=True, text=True,
-    )
-    if r.returncode != 0:
-        # Try DER format
-        r = subprocess.run(
-            ["openssl", "rsa", "-in", pk_path, "-inform", "DER", "-text", "-noout"],
-            capture_output=True, text=True,
+
+def _can_import(python):
+    try:
+        return subprocess.run(
+            [python, "-c", "import cryptography"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode == 0
+    except OSError:
+        return False
+
+
+def _create_venv():
+    venv_python = os.path.join(_VENV_DIR, "bin", "python3")
+    if not os.path.isfile(venv_python):
+        print("Installing 'cryptography' into a local venv (first run only) ...")
+        subprocess.run([sys.executable, "-m", "venv", _VENV_DIR], check=True)
+    if not _can_import(venv_python):
+        subprocess.run(
+            [venv_python, "-m", "pip", "install", "--quiet", "--upgrade", "pip", "cryptography"],
+            check=True,
         )
-    if r.returncode != 0:
-        sys.exit(f"Cannot read private key: {r.stderr.strip()}")
-
-    m = re.search(r"(\d+)\s*bit", r.stdout)
-    if not m:
-        sys.exit("Cannot determine RSA key size from private key")
-    return int(m.group(1)) // 8
+    return venv_python
 
 
-def try_decrypt(block, pk_path, inform):
-    """Try decrypting a block with rsautl, then pkeyutl."""
-    base = ["openssl", "rsautl", "-decrypt", "-inkey", pk_path, "-pkcs"]
-    if inform == "DER":
-        base += ["-keyform", "DER"]
+def _reexec_with_cryptography():
+    """Re-run this script under an interpreter that has 'cryptography'."""
+    if os.environ.get("DECRYPT_LOGS_BOOTSTRAPPED"):
+        sys.exit("Requires the 'cryptography' package: pip3 install cryptography")
 
-    r = subprocess.run(base, input=block, capture_output=True)
-    if r.returncode == 0:
-        return r.stdout
-
-    # Fallback: pkeyutl (newer openssl)
-    base2 = [
-        "openssl", "pkeyutl", "-decrypt",
-        "-inkey", pk_path,
-        "-pkopt", "rsa_padding_mode:pkcs1",
+    candidates = [
+        os.path.join(_VENV_DIR, "bin", "python3"),
+        "/usr/bin/python3",
+        "/opt/homebrew/bin/python3",
     ]
-    if inform == "DER":
-        base2 += ["-keyform", "DER"]
+    python = next((c for c in candidates if c != sys.executable and _can_import(c)), None)
 
-    r2 = subprocess.run(base2, input=block, capture_output=True)
-    if r2.returncode == 0:
-        return r2.stdout
+    if python is None:
+        try:
+            python = _create_venv()
+        except (subprocess.CalledProcessError, OSError) as e:
+            sys.exit(f"Requires the 'cryptography' package and auto-install failed: {e}")
 
-    sys.exit(f"Decryption failed:\n  rsautl: {r.stderr.decode().strip()}\n  pkeyutl: {r2.stderr.decode().strip()}")
+    env = dict(os.environ, DECRYPT_LOGS_BOOTSTRAPPED="1")
+    os.execve(python, [python, os.path.abspath(__file__)] + sys.argv[1:], env)
 
 
-def detect_key_format(pk_path):
+try:
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import padding
+except ImportError:
+    _reexec_with_cryptography()
+
+
+def load_private_key(pk_path):
     with open(pk_path, "rb") as f:
-        head = f.read(32)
-    return "PEM" if b"-----BEGIN" in head else "DER"
+        raw = f.read()
+
+    if b"-----BEGIN" in raw[:64]:
+        loader = serialization.load_pem_private_key
+    else:
+        loader = serialization.load_der_private_key
+
+    try:
+        return loader(raw, password=None)
+    except Exception as e:
+        sys.exit(f"Cannot read private key: {e}")
 
 
 def main():
@@ -79,8 +100,8 @@ def main():
         if not os.path.isfile(p):
             sys.exit(f"{label} not found: {p}")
 
-    inform = detect_key_format(pk_path)
-    block_size = get_key_size_bytes(pk_path)
+    key = load_private_key(pk_path)
+    block_size = key.key_size // 8
 
     base, ext = os.path.splitext(enc_path)
     out_path = f"{base}-decoded{ext}"
@@ -95,15 +116,20 @@ def main():
         print(f"Warning: file size ({total}) is not a multiple of block size ({block_size})")
 
     n_blocks = total // block_size
-    print(f"Key: {block_size * 8}-bit RSA, block: {block_size} bytes, blocks: {n_blocks}")
+    print(f"Key: {key.key_size}-bit RSA, block: {block_size} bytes, blocks: {n_blocks}")
 
+    pkcs1 = padding.PKCS1v15()
     with open(out_path, "wb") as out:
         for i in range(n_blocks):
             offset = i * block_size
             block = data[offset : offset + block_size]
-            print(f"\r  Decrypting {i + 1}/{n_blocks} ...", end="", flush=True)
-            dec = try_decrypt(block, pk_path, inform)
+            try:
+                dec = key.decrypt(block, pkcs1)
+            except Exception as e:
+                sys.exit(f"\nDecryption failed at block {i + 1}/{n_blocks}: {e}")
             out.write(dec)
+            if (i + 1) % 100 == 0 or i + 1 == n_blocks:
+                print(f"\r  Decrypting {i + 1}/{n_blocks} ...", end="", flush=True)
 
     print(f"\nDone: {out_path}")
 

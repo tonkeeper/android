@@ -1,8 +1,6 @@
 package com.tonapps.wallet.data.passcode
 
 import android.content.Context
-import android.content.res.Configuration
-import com.tonapps.log.L
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.passcode.source.PasscodeStore
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -21,8 +19,8 @@ class PasscodeHelper(
     val hasPinCode: Boolean
         get() = store.hasPinCode
 
-    suspend fun change(context: Context, old: String, new: String): Boolean {
-        if (!isValid(context, old)) {
+    suspend fun change(old: String, new: String): Boolean {
+        if (!isValid(old)) {
             return false
         }
         return store.change(old, new)
@@ -32,11 +30,23 @@ class PasscodeHelper(
         store.setPinCode(code)
     }
 
+    suspend fun getPinCode(): String? {
+        return store.getPinCode()
+    }
+
+    suspend fun setPendingPinChange(code: String?) {
+        store.setPendingPinChange(code)
+    }
+
+    suspend fun getPendingPinChange(): String? {
+        return store.getPendingPinChange()
+    }
+
     suspend fun reset() {
         store.clearPinCode()
     }
 
-    suspend fun isValid(context: Context, code: String): Boolean {
+    suspend fun isValid(code: String): Boolean {
         if (store.hasPinCode) {
             return store.compare(code)
         }

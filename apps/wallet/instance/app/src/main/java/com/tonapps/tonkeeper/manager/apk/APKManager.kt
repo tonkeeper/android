@@ -6,12 +6,15 @@ import android.content.Intent
 import android.os.Environment
 import android.os.Parcelable
 import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.file
-import com.tonapps.core.flags.RemoteConfig
+import com.tonapps.extensions.folder
 import com.tonapps.tonkeeper.extensions.safeCanRequestPackageInstalls
 import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.tonkeeperx.BuildConfig
@@ -28,8 +31,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import java.io.File
+import java.io.IOException
+import java.util.UUID
 
 class APKManager(
     private val context: Context,
@@ -58,7 +64,7 @@ class APKManager(
     val statusFlow = _statusFlow.asStateFlow()
 
     private val folder: File by lazy {
-        context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!
+        context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!.folder("apk")
     }
 
     init {
@@ -106,7 +112,7 @@ class APKManager(
         return daysDiff >= days
     }
 
-    private fun getFile(apk: ApkEntity): File {
+    private fun getFile(apk: ApkEntity): File? {
         return folder.file("Tonkeeper_${apk.apkName}.apk")
     }
 
@@ -121,7 +127,7 @@ class APKManager(
             return
         }
         val file = getFile(apk)
-        if (file.exists() && file.length() > 0) {
+        if (file != null && file.exists() && file.length() > 0) {
             _statusFlow.value = Status.Downloaded(apk, file)
         } else {
             _statusFlow.value = Status.UpdateAvailable(apk)
@@ -130,10 +136,17 @@ class APKManager(
 
     fun download(apk: ApkEntity) {
         val file = getFile(apk)
+        if (file == null) {
+            _statusFlow.value = Status.Failed(apk)
+            return
+        }
+        scope.launch(Dispatchers.IO) { cleanupApkFiles(keep = file) }
         val workerId = ApkDownloadWorker.start(context, apk.apkDownloadUrl, file.path)
         ApkDownloadWorker.flowProgress(context, workerId).onEach {
             if (it >= 100) {
                 _statusFlow.value = Status.Downloaded(apk, file)
+            } else if (it < 0) {
+                _statusFlow.value = Status.Failed(apk)
             } else {
                 _statusFlow.value = Status.Downloading(it, apk)
             }
@@ -143,19 +156,26 @@ class APKManager(
     }
 
     fun install(context: Context, file: File): Boolean {
-        if (!isValidFile(file) || environment.isFromGooglePlay) {
+        val installFile = getValidFile(file)
+        if (installFile == null || environment.isFromGooglePlay) {
             return false
         }
 
-        if (!context.safeCanRequestPackageInstalls()) {
-            openSettings()
-        } else {
-            val uri = FileProvider.getUriForFile(context, context.packageName + ".provider", file)
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.setDataAndType(uri, "application/vnd.android.package-archive")
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            context.startActivity(intent)
+        scope.launch(Dispatchers.Main) {
+            if (!context.safeCanRequestPackageInstalls()) {
+                openSettings()
+            } else {
+                val uri = FileProvider.getUriForFile(context, context.packageName + ".provider", installFile)
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.setDataAndType(uri, "application/vnd.android.package-archive")
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                context.startActivity(intent)
+                clearInstallRequest(context)
+                // Installer actually launched — now the install notification has served its
+                // purpose and can be dismissed (it is kept alive on the openSettings() branch).
+                NotificationManagerCompat.from(context).cancel(ApkDownloadWorker.INSTALL_NOTIFICATION_ID)
+            }
         }
         return true
     }
@@ -167,10 +187,103 @@ class APKManager(
         context.startActivity(intent)
     }
 
-    private fun isValidFile(file: File) = file.path.startsWith(folder.path)
+    fun installDownloaded(context: Context, token: String?): Boolean {
+        if (token.isNullOrBlank()) {
+            return false
+        }
+
+        val prefs = getInstallPrefs(context)
+        if (prefs.getString(INSTALL_TOKEN_KEY, null) != token) {
+            return false
+        }
+
+        val file = prefs.getString(INSTALL_FILE_KEY, null)?.let(::File) ?: return false
+        return install(context, file)
+    }
+
+    private fun cleanupApkFiles(keep: File) {
+        try {
+            val keepPath = keep.canonicalFile.path
+            cleanApkFolder(keepPath)
+            cleanLegacyApkFolder()
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
+    }
+
+    private fun cleanApkFolder(keepPath: String) {
+        folder.listFiles()?.forEach { file ->
+            if (
+                file.isFile &&
+                file.extension.equals("apk", ignoreCase = true) &&
+                file.canonicalFile.path != keepPath
+            ) {
+                file.delete()
+            }
+        }
+    }
+
+    private fun cleanLegacyApkFolder() {
+        folder.parentFile?.listFiles()?.forEach { file ->
+            if (
+                file.isFile &&
+                file.name.startsWith("Tonkeeper_") &&
+                file.extension.equals("apk", ignoreCase = true)
+            ) {
+                file.delete()
+            }
+        }
+    }
+
+    private fun getValidFile(file: File): File? {
+        return try {
+            val canonicalFile = file.canonicalFile
+            val canonicalFolder = folder.canonicalFile
+
+            if (
+                canonicalFile.isFile &&
+                canonicalFile.extension.equals("apk", ignoreCase = true) &&
+                canonicalFile.path.startsWith(canonicalFolder.path + File.separator)
+            ) {
+                canonicalFile
+            } else {
+                null
+            }
+        } catch (e: IOException) {
+            null
+        }
+    }
 
     companion object {
         private const val UPDATE_REMINDER_TIMESTAMP_KEY = "apk_update_reminder_timestamp"
         private const val UPDATE_REMINDER_COUNT_KEY = "apk_update_reminder_count"
+
+        private const val INSTALL_PREFS = "apk_install"
+        private const val INSTALL_TOKEN_KEY = "install_token"
+        private const val INSTALL_FILE_KEY = "install_file"
+
+        /**
+         * Stores the APK path in private prefs and returns a random token instead of putting the
+         * path into the PendingIntent. This prevents external apps from injecting an arbitrary file
+         * path to install. The token only authorizes the install-notification tap and is used to
+         * fetch our actual downloaded APK path back from prefs.
+         */
+        fun saveInstallRequest(context: Context, file: File): String {
+            val token = UUID.randomUUID().toString()
+            getInstallPrefs(context).edit {
+                putString(INSTALL_TOKEN_KEY, token)
+                putString(INSTALL_FILE_KEY, file.absolutePath)
+            }
+            return token
+        }
+
+        fun clearInstallRequest(context: Context) {
+            getInstallPrefs(context).edit {
+                remove(INSTALL_TOKEN_KEY)
+                remove(INSTALL_FILE_KEY)
+            }
+        }
+
+        private fun getInstallPrefs(context: Context) = context.getSharedPreferences(INSTALL_PREFS, Context.MODE_PRIVATE)
     }
 }

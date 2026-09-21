@@ -7,7 +7,10 @@ import com.tonapps.core.helper.EnvironmentHelper
 import com.tonapps.deposit.screens.ramp.RampType
 import com.tonapps.extensions.CacheKey
 import com.tonapps.extensions.TimedCacheMemory
+import com.tonapps.log.L
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.wallet.data.settings.SettingsRepository
 import io.exchangeapi.infrastructure.ApiResult
 import io.exchangeapi.infrastructure.extractApiErrorMessage
 import io.exchangeapi.models.CreateExchangeRequest
@@ -16,16 +19,21 @@ import io.exchangeapi.models.ExchangeCalculateRequest
 import io.exchangeapi.models.ExchangeCalculation
 import io.exchangeapi.models.ExchangeFlow
 import io.exchangeapi.models.ExchangeLayout
+import io.exchangeapi.models.ExchangeLayoutCards
+import io.exchangeapi.models.ExchangeLayoutItemType
 import io.exchangeapi.models.ExchangeMerchantInfo
 import io.exchangeapi.models.ExchangeResult
 import io.exchangeapi.models.P2PSessionResult
 import io.exchangeapi.models.Platform
+import io.infrastructure.ClientException
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class ExchangeRepository(
     private val api: API,
     private val environment: EnvironmentHelper,
+    private val settingsRepository: SettingsRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
 ) {
     sealed interface Keys : CacheKey {
         data object LayoutOn : Keys
@@ -35,6 +43,13 @@ class ExchangeRepository(
     }
 
     private val cache = TimedCacheMemory<Keys>()
+
+    private val settingsFiatCurrency: WalletCurrency?
+        get() = settingsRepository.currency.takeIf { it.isFiat }
+
+    private suspend fun multichainWalletId(): String? {
+        return unifiedAccountRepository.getSelectedWallet()?.multichainWalletId
+    }
 
     suspend fun clearRampCache(rampType: RampType) {
         cache.remove(
@@ -50,13 +65,57 @@ class ExchangeRepository(
             RampType.RampOn -> Keys.LayoutOn
             RampType.RampOff -> Keys.LayoutOff
         }
-        return cache.getOrLoad(key) {
-            withContext(Async.Io) {
+        val currency = settingsFiatCurrency
+        return cache.getOrLoad(key, payload = "${currency?.code}:${multichainWalletId()}") {
+            val layout = currency?.let { fiat -> orNullIfCurrencyRejected { getLayoutCurrency(rampType, fiat) } }
+            if (layout != null && layout.hasFiatCashMethods) {
+                layout
+            } else {
                 getLayoutCurrency(rampType, null)
             }
         }
     }
 
+
+    suspend fun getLayoutCards(rampType: RampType): ExchangeLayoutCards {
+        val currency = settingsFiatCurrency
+        val cards = currency?.let { fiat -> orNullIfCurrencyRejected { requestLayoutCards(rampType, fiat) } }
+        return if (cards != null && cards.items.isNotEmpty()) {
+            cards
+        } else {
+            requestLayoutCards(rampType, null)
+        }
+    }
+
+    private suspend fun requestLayoutCards(
+        rampType: RampType,
+        currency: WalletCurrency?,
+    ): ExchangeLayoutCards {
+        return withContext(Async.Io) {
+            api.exchange.exchange.getExchangeLayoutCards(
+                flow = when (rampType) {
+                    RampType.RampOn -> ExchangeFlow.deposit
+                    RampType.RampOff -> ExchangeFlow.withdraw
+                },
+                storeCountryCode = environment.storeCountry(),
+                deviceCountryCode = environment.deviceCountry(),
+                simCountry = environment.simCountry(),
+                timezone = environment.timezone(),
+                isVpnActive = environment.isVpnActive(),
+                platform = Platform.android,
+                currency = currency?.code,
+            )
+        }
+    }
+
+    private suspend fun <T> orNullIfCurrencyRejected(request: suspend () -> T): T? {
+        return try {
+            request()
+        } catch (e: ClientException) {
+            L.e(e)
+            null
+        }
+    }
 
     suspend fun getLayoutCurrency(rampType: RampType, currency: WalletCurrency?): ExchangeLayout {
         return withContext(Async.Io) {
@@ -73,13 +132,19 @@ class ExchangeRepository(
                 platform = Platform.android,
                 currency = currency?.code,
                 lang = environment.locale(),
+                xWalletID = multichainWalletId(),
+                F = settingsRepository.installId,
             )
         }
     }
 
-    suspend fun getCurrencies(network: TonNetwork, locale: Locale): List<WalletCurrency> {
-        return cache.getOrLoad(Keys.Currencies) {
-            val result = api.getCurrencies(network, locale)
+    suspend fun getCurrencies(
+        network: TonNetwork,
+        locale: Locale,
+        walletId: String?,
+    ): List<WalletCurrency> {
+        return cache.getOrLoad(Keys.Currencies, payload = walletId) {
+            val result = api.getCurrencies(network, locale, walletId)
             buildList {
                 for (i in 0 until result.length()) {
                     val item = result.getJSONObject(i)
@@ -95,7 +160,8 @@ class ExchangeRepository(
     }
 
     suspend fun getMerchants(): List<ExchangeMerchantInfo> {
-        return cache.getOrLoad(Keys.Merchants) {
+        val walletId = multichainWalletId()
+        return cache.getOrLoad(Keys.Merchants, payload = walletId) {
             withContext(Async.Io) {
                 api.exchange.exchange.getExchangeMerchants(
                     storeCountryCode = environment.storeCountry(),
@@ -105,6 +171,8 @@ class ExchangeRepository(
                     isVpnActive = environment.isVpnActive(),
                     platform = Platform.android,
                     lang = environment.locale(),
+                    xWalletID = walletId,
+                    F = settingsRepository.installId,
                 )
             }
         }
@@ -120,6 +188,8 @@ class ExchangeRepository(
                 isVpnActive = environment.isVpnActive(),
                 exchangeCalculateRequest = request,
                 platform = Platform.android,
+                xWalletID = multichainWalletId(),
+                F = settingsRepository.installId,
             )
         }
     }
@@ -151,3 +221,6 @@ class ExchangeRepository(
         }
     }
 }
+
+private val ExchangeLayout.hasFiatCashMethods: Boolean
+    get() = assetsOfType(ExchangeLayoutItemType.fiat).any { it.cashMethods.isNotEmpty() }

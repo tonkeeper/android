@@ -29,7 +29,6 @@ import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.localization.Localization
 import ui.ComposeIcon
@@ -99,14 +98,27 @@ fun Context.copyWithToast(text: String, color: Int = backgroundContentTintColor)
 }
 
 fun Context.clipboardText(): String {
-    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    val clip = clipboard.primaryClip
-    val text = clip?.getItemAt(0)?.text ?: ""
-    return text.toString()
+    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager ?: return ""
+    val clip = runCatching { clipboard.primaryClip }.getOrNull() ?: return ""
+    if (clip.itemCount == 0) {
+        return ""
+    }
+    return clip.getItemAt(0)?.text?.toString() ?: ""
 }
 
 fun Context.copyToClipboard(uri: Uri) {
     copyToClipboard(uri.toString())
+}
+
+fun Context.clearClipboard() {
+    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager ?: return
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        val cleared = runCatching { clipboard.clearPrimaryClip() }.isSuccess
+        if (cleared) {
+            return
+        }
+    }
+    runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("", "")) }
 }
 
 fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
@@ -173,6 +185,12 @@ fun Context.getWalletBadges(
 ): CharSequence {
     var builder = SpannableStringBuilder()
 
+    // Paranoid guard for the legacy picker: multichain wallets are rendered by the new
+    // Compose wallets list, but if one ever ends up here, show a badge instead of crashing.
+    if (type == WalletType.Multichain) {
+        return builder.badgeBlue(this, Localization.multichain)
+    }
+
     if (version == WalletVersion.V5R1 || version == WalletVersion.V5BETA) {
         val resId = if (version == WalletVersion.V5BETA) {
             Localization.w5beta
@@ -190,9 +208,11 @@ fun Context.getWalletBadges(
             WalletType.Ledger -> Localization.ledger
             WalletType.Keystone -> Localization.keystone
             WalletType.Tetra -> Localization.tetra
-            else -> throw IllegalArgumentException("Unknown wallet type: $type")
+            else -> null
         }
-        builder = builder.badgeDefault(this, resId)
+        if (resId != null) {
+            builder = builder.badgeDefault(this, resId)
+        }
     }
 
     return builder

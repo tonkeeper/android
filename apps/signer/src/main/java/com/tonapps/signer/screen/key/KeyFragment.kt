@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import com.tonapps.qr.ui.QRView
 import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.accentRedColor

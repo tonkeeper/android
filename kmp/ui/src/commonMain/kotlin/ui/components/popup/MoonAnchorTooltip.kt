@@ -7,9 +7,12 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -38,10 +41,10 @@ import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import ui.components.moon.MoonLabel
+import ui.components.moon.MoonLabelColors
 import ui.components.moon.container.MoonSurface
 import ui.theme.UIKit
-
-private val MoonIconTooltipMaxWidth = 200.dp
 
 private const val MoonIconTooltipAnimMs = 150
 private const val MoonIconTooltipHiddenScale = 0.3f
@@ -54,12 +57,21 @@ fun MoonAnchorTooltip(
     modifier: Modifier = Modifier,
     gapBelowAnchor: Dp = 4.dp,
     anchorBoundsInWindow: IntRect? = null,
+    badge: String? = null,
+    onClick: (() -> Unit)? = null,
+    backgroundColor: Color = UIKit.colorScheme.background.contentAttention,
+    textColor: Color = UIKit.colorScheme.text.primary,
+    maxWidth: Dp = 200.dp,
+    preferAbove: Boolean = false,
+    centerTail: Boolean = false,
 ) {
     val expandedState = remember { MutableTransitionState(false) }
     expandedState.targetState = expanded
-    if (!expandedState.currentState && !expandedState.targetState) return
+    if (!expandedState.currentState && !expandedState.targetState) {
+        return
+    }
 
-    var tailOnTop by remember { mutableStateOf(true) }
+    var tailOnTop by remember { mutableStateOf(!preferAbove) }
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val maxTooltipWidth = remember(anchorBoundsInWindow, configuration.screenWidthDp, density) {
@@ -76,10 +88,12 @@ fun MoonAnchorTooltip(
             AnchorTooltipTailSpec.absoluteMaxBubbleWidth
         }
     }
-    val positionProvider = remember(gapBelowAnchor, density) {
+    val positionProvider = remember(gapBelowAnchor, density, preferAbove, centerTail) {
         AnchorTooltipPositionProvider(
             gapBelowAnchor = gapBelowAnchor,
             density = density,
+            preferAbove = preferAbove,
+            centerTail = centerTail,
             onTailOnTopOfBubble = { tailOnTop = it },
         )
     }
@@ -103,7 +117,13 @@ fun MoonAnchorTooltip(
                 }
             },
             label = "scale",
-        ) { if (it) 1f else MoonIconTooltipHiddenScale }
+        ) {
+            if (it) {
+                1f
+            } else {
+                MoonIconTooltipHiddenScale
+            }
+        }
         val alpha by transition.animateFloat(
             transitionSpec = {
                 if (false isTransitioningTo true) {
@@ -113,7 +133,13 @@ fun MoonAnchorTooltip(
                 }
             },
             label = "alpha",
-        ) { if (it) 1f else 0f }
+        ) {
+            if (it) {
+                1f
+            } else {
+                0f
+            }
+        }
 
         var tooltipTransformOrigin by remember {
             mutableStateOf(TransformOrigin(0.14f, 0f))
@@ -121,14 +147,24 @@ fun MoonAnchorTooltip(
         MoonTooltipContent(
             text = text,
             modifier = modifier
-                .widthIn(max = maxTooltipWidth.coerceAtMost(MoonIconTooltipMaxWidth))
+                .widthIn(max = maxTooltipWidth.coerceAtMost(maxWidth))
                 .onSizeChanged { size ->
-                    if (size.width <= 0) return@onSizeChanged
-                    val tailCenterPx = with(density) {
-                        (AnchorTooltipTailSpec.insetFromStart + AnchorTooltipTailSpec.width / 2).roundToPx()
+                    if (size.width <= 0) {
+                        return@onSizeChanged
                     }
-                    val pivotX = (tailCenterPx / size.width.toFloat()).coerceIn(0.05f, 0.95f)
-                    val pivotY = if (tailOnTop) 0f else 1f
+                    val pivotX = if (centerTail) {
+                        0.5f
+                    } else {
+                        val tailCenterPx = with(density) {
+                            (AnchorTooltipTailSpec.insetFromStart + AnchorTooltipTailSpec.width / 2).roundToPx()
+                        }
+                        (tailCenterPx / size.width.toFloat()).coerceIn(0.05f, 0.95f)
+                    }
+                    val pivotY = if (tailOnTop) {
+                        0f
+                    } else {
+                        1f
+                    }
                     tooltipTransformOrigin = TransformOrigin(pivotX, pivotY)
                 }
                 .graphicsLayer {
@@ -138,6 +174,11 @@ fun MoonAnchorTooltip(
                     transformOrigin = tooltipTransformOrigin
                 },
             tailOnTop = tailOnTop,
+            badge = badge,
+            onClick = onClick,
+            backgroundColor = backgroundColor,
+            textColor = textColor,
+            centerTail = centerTail,
         )
     }
 }
@@ -149,6 +190,9 @@ private fun MoonTooltipContent(
     backgroundColor: Color = UIKit.colorScheme.background.contentAttention,
     textColor: Color = UIKit.colorScheme.text.primary,
     tailOnTop: Boolean = true,
+    badge: String? = null,
+    onClick: (() -> Unit)? = null,
+    centerTail: Boolean = false,
 ) {
     val surfaceShape = RoundedCornerShape(12.dp)
     Column(
@@ -156,21 +200,51 @@ private fun MoonTooltipContent(
         horizontalAlignment = Alignment.Start,
     ) {
         if (tailOnTop) {
-            TooltipTail(pointingUp = true, backgroundColor = backgroundColor)
+            TooltipTail(
+                pointingUp = true,
+                backgroundColor = backgroundColor,
+                centerTail = centerTail,
+            )
         }
         MoonSurface(
             shape = surfaceShape,
             color = backgroundColor,
         ) {
-            Text(
-                text = text,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                style = UIKit.typography.body2,
-                color = textColor,
-            )
+            Row(
+                modifier = Modifier
+                    .then(
+                        if (onClick != null) {
+                            Modifier.clickable(onClick = onClick)
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (badge != null) {
+                    MoonLabel(
+                        text = badge,
+                        colors = MoonLabelColors(
+                            textColor = backgroundColor,
+                            backgroundColor = Color.White,
+                        ),
+                    )
+                }
+                Text(
+                    text = text,
+                    style = UIKit.typography.body2,
+                    color = textColor,
+                )
+            }
         }
         if (!tailOnTop) {
-            TooltipTail(pointingUp = false, backgroundColor = backgroundColor)
+            TooltipTail(
+                pointingUp = false,
+                backgroundColor = backgroundColor,
+                centerTail = centerTail,
+            )
         }
     }
 }
@@ -179,6 +253,7 @@ private fun MoonTooltipContent(
 private fun TooltipTail(
     pointingUp: Boolean,
     backgroundColor: Color,
+    centerTail: Boolean,
 ) {
     Box(
         modifier = Modifier
@@ -188,8 +263,15 @@ private fun TooltipTail(
         Canvas(
             modifier = Modifier
                 .size(AnchorTooltipTailSpec.width, AnchorTooltipTailSpec.height)
-                .align(Alignment.TopStart)
-                .offset(x = AnchorTooltipTailSpec.insetFromStart),
+                .then(
+                    if (centerTail) {
+                        Modifier.align(Alignment.TopCenter)
+                    } else {
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .offset(x = AnchorTooltipTailSpec.insetFromStart)
+                    },
+                ),
         ) {
             val w = size.width
             val h = size.height

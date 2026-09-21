@@ -3,12 +3,10 @@ package com.tonapps.tonkeeper.core.signer
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import com.tonapps.log.L
 import androidx.activity.result.contract.ActivityResultContract
-import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.cell.Cell
-import org.ton.crypto.hex
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 class SingerResultContract : ActivityResultContract<SingerResultContract.Input, BitString?>() {
 

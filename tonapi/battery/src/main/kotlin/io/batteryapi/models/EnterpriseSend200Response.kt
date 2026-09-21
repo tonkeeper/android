@@ -17,7 +17,11 @@ import kotlinx.serialization.Contextual
 @Serializable
 data class EnterpriseSend200Response(
     @SerialName(value = "msg_id")
-    val msgId: String
+    val msgId: String,
+
+    /* base64 encoded external message (signed) that was sent to the network */
+    @SerialName(value = "external")
+    val `external`: String? = null
 ) {
 }
 

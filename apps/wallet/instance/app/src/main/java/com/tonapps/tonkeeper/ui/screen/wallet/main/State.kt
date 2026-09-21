@@ -1,24 +1,26 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main
 
 import android.content.Context
+import android.net.Uri
+import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.core.BalanceType
-import com.tonapps.legacy.enteties.AssetsEntity
-import com.tonapps.tonkeeper.core.sumOfVerifiedFiat
+import com.tonapps.legacy.assets.sumOfVerifiedFiat
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
-import com.tonapps.tonkeeper.view.BatteryView
+import uikit.widget.BatteryView
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.BannerEntity
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
-import com.tonapps.blockchain.model.legacy.TokenEntity
-import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
-import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.rates.entity.RatesEntity
@@ -93,10 +95,11 @@ sealed class State {
         val lt: Long?,
         val isOnline: Boolean,
         val apkStatus: APKManager.Status,
-        val tronUsdtEnabled: Boolean,
         val plugins: List<WalletPlugin>,
         val maxStakingApyFormatted: String? = null,
         val banners: List<BannerEntity> = emptyList(),
+        val collectibles: List<NftEntity> = emptyList(),
+        val allCollectiblesHidden: Boolean = false,
     ): State() {
 
         val totalBalanceFiat: Coins
@@ -108,13 +111,31 @@ sealed class State {
         private val balanceType: Int
             get() = assets.getBalanceType(wallet)
 
-        private fun uiItemsTokens(context: Context, hiddenBalance: Boolean): List<Item> {
+        private fun uiItemsTokens(
+            hiddenBalance: Boolean,
+            assetsExpanded: Boolean,
+        ): List<Item> {
             val currencyCode = assets.currency.code
             val uiItems = mutableListOf<Item>()
-            uiItems.add(Item.Space(true))
+            uiItems.add(Item.AssetsHeader(wallet))
 
-            for ((index, asset) in assets.list.withIndex()) {
-                val position = ListCell.getPosition(assets.list.size, index)
+            val loadedAssetsCount = assets.list.size
+            val hasMoreAssets = loadedAssetsCount > PREVIEW_ASSETS_LIMIT
+            val showMoreButton = hasMoreAssets && !assetsExpanded
+            val visibleAssetsCount = when {
+                assetsExpanded -> loadedAssetsCount
+                hasMoreAssets -> PREVIEW_ASSETS_LIMIT - 1
+                else -> loadedAssetsCount
+            }
+            val bundleSize = if (showMoreButton) {
+                visibleAssetsCount + 1
+            } else {
+                visibleAssetsCount
+            }
+
+            for (index in 0 until visibleAssetsCount) {
+                val asset = assets.list[index]
+                val position = ListCell.getPosition(bundleSize, index)
                 if (asset is AssetsEntity.Staked) {
                     val staked = asset.staked
                     val item = Item.Stake(
@@ -123,18 +144,18 @@ sealed class State {
                         poolName = staked.pool.name,
                         poolImplementation = staked.pool.implementation,
                         balance = staked.balance,
-                        balanceFormat = CurrencyFormatter.format(value = staked.balance),
+                        balanceFormat = CurrencyFormatter.format(value = staked.balance, compact = true),
                         message = null,
                         fiat = staked.fiatBalance,
-                        fiatFormat = CurrencyFormatter.formatFiat(currencyCode, staked.fiatBalance),
+                        fiatFormat = CurrencyFormatter.formatFiat(currencyCode, staked.fiatBalance, compact = true),
                         hiddenBalance = hiddenBalance,
                         wallet = wallet,
                         readyWithdraw = staked.readyWithdraw,
-                        readyWithdrawFormat = CurrencyFormatter.formatFiat("TON", staked.readyWithdraw),
+                        readyWithdrawFormat = CurrencyFormatter.formatFiat("TON", staked.readyWithdraw, compact = true),
                         pendingDeposit = staked.pendingDeposit,
-                        pendingDepositFormat = CurrencyFormatter.formatFiat("TON", staked.pendingDeposit),
+                        pendingDepositFormat = CurrencyFormatter.formatFiat("TON", staked.pendingDeposit, compact = true),
                         pendingWithdraw = staked.pendingWithdraw,
-                        pendingWithdrawFormat = CurrencyFormatter.formatFiat("TON", staked.pendingWithdraw),
+                        pendingWithdrawFormat = CurrencyFormatter.formatFiat("TON", staked.pendingWithdraw, compact = true),
                         cycleEnd = staked.cycleEnd,
                         apy = staked.pool.apy
                     )
@@ -147,15 +168,34 @@ sealed class State {
                         testnet = wallet.testnet,
                         currencyCode = currencyCode,
                         wallet = wallet,
-                        showNetwork = tronUsdtEnabled && (asset.token.isUsdt || asset.token.isTrc20),
-                        apyFormatted = if (asset.token.isTon) maxStakingApyFormatted else null,
+                        showNetwork = asset.token.isUsdt || asset.token.isTrc20,
+                        apyFormatted = maxStakingApyFormatted.takeIf { asset.token.isTon },
                     )
                     uiItems.add(item)
                 }
             }
+
+            if (showMoreButton) {
+                val previewIcons = buildList {
+                    val end = minOf(loadedAssetsCount, visibleAssetsCount + MORE_ASSETS_PREVIEW_ICONS)
+                    for (i in visibleAssetsCount until end) {
+                        assetIconUri(assets.list[i])?.let { add(it) }
+                    }
+                }
+                uiItems.add(Item.MoreAssets(
+                    position = ListCell.getPosition(bundleSize, bundleSize - 1),
+                    wallet = wallet,
+                    iconUris = previewIcons,
+                ))
+            }
+
             uiItems.add(Item.Space(true))
-            uiItems.add(Item.Manage(wallet))
             return uiItems.toList()
+        }
+
+        private fun assetIconUri(asset: AssetsEntity): Uri? = when (asset) {
+            is AssetsEntity.Token -> asset.token.imageUri
+            else -> null
         }
 
         private fun uiItemBalance(
@@ -174,7 +214,11 @@ sealed class State {
                 lastUpdatedFormat = lastUpdatedFormat,
                 batteryBalance = battery.balance,
                 showBattery = !battery.disabled,
-                batteryEmptyState = if (battery.viewed) BatteryView.EmptyState.SECONDARY else BatteryView.EmptyState.ACCENT,
+                batteryEmptyState = when {
+                    battery.balance.isNegative -> BatteryView.EmptyState.ACCENT_RED
+                    battery.viewed -> BatteryView.EmptyState.SECONDARY
+                    else -> BatteryView.EmptyState.ACCENT
+                },
                 prefixYourAddress = prefixYourAddress
             )
         }
@@ -186,7 +230,6 @@ sealed class State {
                 wallet = wallet,
                 token = TokenEntity.TON,
                 swapUri = config.swapUri,
-                tronEnabled = tronUsdtEnabled,
                 isSwapDisabled = config.flags.disableSwap,
                 isStakingDisabled = config.flags.disableStaking,
                 isExchangeDisabled = config.flags.disableExchangeMethods
@@ -303,6 +346,7 @@ sealed class State {
             lastUpdatedFormat: String,
             prefixYourAddress: Boolean,
             renewDomains: List<DnsExpiringEntity>,
+            assetsExpanded: Boolean,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             if (apkStatus != APKManager.Status.Default && apkStatus !is APKManager.Status.UpdateAvailable) {
@@ -344,8 +388,22 @@ sealed class State {
                 }
             }
 
-            uiItems.addAll(uiItemsTokens(context, hiddenBalance))
+            uiItems.addAll(uiItemsTokens(hiddenBalance, assetsExpanded))
+            if (collectibles.isNotEmpty() || allCollectiblesHidden) {
+                uiItems.add(
+                    Item.Collectibles(
+                        wallet = wallet,
+                        nfts = collectibles,
+                        allHidden = allCollectiblesHidden,
+                    )
+                )
+            }
             return uiItems.toList()
+        }
+
+        private companion object {
+            const val PREVIEW_ASSETS_LIMIT = 7
+            const val MORE_ASSETS_PREVIEW_ICONS = 2
         }
     }
 

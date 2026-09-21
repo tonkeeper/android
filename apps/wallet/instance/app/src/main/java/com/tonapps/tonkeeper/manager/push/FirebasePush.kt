@@ -4,7 +4,8 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.log.L
+import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -38,6 +39,10 @@ class FirebasePush: FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        if (BuildConfig.DEBUG) {
+            L.d("[PUSH_TOKEN] New push token generated: $token")
+        }
+
         settingsRepository.firebaseToken = token
         pushManager.newFirebaseToken()
     }

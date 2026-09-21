@@ -3,15 +3,16 @@ package com.tonapps.tonkeeper.worker
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -19,6 +20,8 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.helper.NotificationsHelper
+import com.tonapps.tonkeeper.manager.apk.APKManager
+import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.FileDownloader
 import com.tonapps.wallet.api.FileDownloader.DownloadStatus
@@ -58,6 +61,7 @@ class ApkDownloadWorker(
         L.d("SendViewLog", "download url: $downloadUrl")
 
         var lastUpdateTime = 0L
+        var failed = false
         fileDownloader.download(downloadUrl, targetFile).onEach { status ->
             if (status is DownloadStatus.Progress) {
                 setProgress(status.percent)
@@ -72,11 +76,16 @@ class ApkDownloadWorker(
                 setProgress(100)
                 showInstallNotification(targetFile)
             } else if (status is DownloadStatus.Error) {
+                L.d("SendViewLog", "download error: ${status.throwable.message}")
                 notificationManager.cancel(NOTIFICATION_ID)
-                setProgress(0)
+                failed = true
             }
         }.collect()
-        return Result.success()
+        return if (failed) {
+            Result.failure()
+        } else {
+            Result.success()
+        }
     }
 
     private suspend fun setProgress(value: Int) {
@@ -85,21 +94,25 @@ class ApkDownloadWorker(
 
     @SuppressLint("MissingPermission")
     private fun showInstallNotification(file: File) {
-        val installUri = "tonkeeper://install".toUri()
-            .buildUpon()
-            .appendQueryParameter("file", file.absolutePath)
-            .build()
+        val installIntent = Intent(context, RootActivity::class.java)
+            .setAction(RootActivity.ACTION_INSTALL_DOWNLOADED_APK)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra(RootActivity.EXTRA_APK_INSTALL_TOKEN, APKManager.saveInstallRequest(context, file))
 
         val builder = NotificationCompat.Builder(context, NAME)
             .setContentTitle(getString(Localization.download_completed))
             .setContentText(getString(Localization.tap_to_install))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setAutoCancel(true)
+            // Do NOT auto-cancel on tap: if the user still has to grant "install from unknown
+            // sources", the tap only opens Settings — keeping the notification lets them tap it
+            // again to launch the install once granted. It is dismissed explicitly in
+            // APKManager.install() when the installer is actually launched.
+            .setAutoCancel(false)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-            .setContentIntent(NotificationsHelper.getPendingIntent(context, installUri))
+            .setContentIntent(NotificationsHelper.getPendingIntent(context, installIntent))
         val notification = builder.build()
-        notificationManager.notify(4342, notification)
+        notificationManager.notify(INSTALL_NOTIFICATION_ID, notification)
     }
 
     @SuppressLint("MissingPermission")
@@ -152,6 +165,7 @@ class ApkDownloadWorker(
     companion object {
 
         private const val NOTIFICATION_ID = 9244
+        const val INSTALL_NOTIFICATION_ID = 4342
         private const val NAME = "apk_download"
 
         private const val ARG_URL = "url"
@@ -184,7 +198,17 @@ class ApkDownloadWorker(
 
         fun flowProgress(context: Context, id: UUID): Flow<Int> {
             return context.workManager.getWorkInfoByIdFlow(id).filterNotNull().map {
-                it.progress.getInt(ARG_PROGRESS, 0)
+                // WorkManager clears the progress Data once a job finishes, so reading
+                // ARG_PROGRESS on a terminal state yields 0. Map the terminal states to
+                // sentinels instead: 100 for success, -1 for failure/cancellation — otherwise
+                // download() would leave the UI stuck at Downloading(0).
+                if (it.state == WorkInfo.State.SUCCEEDED) {
+                    100
+                } else if (it.state.isFinished) {
+                    -1
+                } else {
+                    it.progress.getInt(ARG_PROGRESS, 0)
+                }
             }
         }
 

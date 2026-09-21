@@ -1,10 +1,10 @@
 package ui.components.moon.cell
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Text
@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ui.components.moon.MoonLoader
 import ui.theme.UIKit
 
 object MoonButtonCellDefaults {
@@ -61,33 +62,58 @@ object MoonButtonCellDefaults {
             disabledContentColor = UIKit.colorScheme.buttonOrange.primaryForeground,
         )
 
+    val ButtonColorsRed: ButtonColors
+        @Composable
+        get() = ButtonColors(
+            containerColor = UIKit.colorScheme.buttonRed.primaryBackground,
+            contentColor = UIKit.colorScheme.buttonRed.primaryForeground,
+            disabledContainerColor = UIKit.colorScheme.buttonRed.primaryBackgroundDisable,
+            disabledContentColor = UIKit.colorScheme.buttonRed.primaryForeground,
+        )
 }
+
+// TODO Merge with MoonButtonCell with Navigation Bar padding and fade gradient effect
+@Composable
+fun MoonBottomButtonCell(
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    loading: Boolean = false,
+    colors: ButtonColors = MoonButtonCellDefaults.ButtonColorsPrimary,
+    contentPadding: PaddingValues = remember { PaddingValues(16.dp) },
+    onClick: () -> Unit,
+) = MoonButtonCell(text, modifier, enabled, loading, colors, contentPadding, onClick)
 
 @Composable
 fun MoonButtonCell(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    loading: Boolean = false,
     colors: ButtonColors = MoonButtonCellDefaults.ButtonColorsPrimary,
-    contentPadding: PaddingValues = remember { PaddingValues(16.dp) },
+    contentPadding: PaddingValues = remember { PaddingValues(horizontal = 16.dp, vertical = 8.dp) },
     onClick: () -> Unit,
 ) {
     Button(
         modifier = modifier
             .fillMaxWidth()
-            .background(UIKit.colorScheme.background.transparent)
             .padding(contentPadding)
             .height(56.dp),
         onClick = onClick,
         elevation = null,
-        enabled = enabled,
+        enabled = enabled && !loading,
         colors = colors,
         shape = UIKit.shapes.large,
     ) {
-        Text(
-            text = text,
-            maxLines = 1,
-            style = UIKit.typography.label1,
-        )
+        if (loading) {
+            MoonLoader(Modifier.size(24.dp))
+        } else {
+            Text(
+                text = text,
+                maxLines = 1,
+                style = UIKit.typography.label1,
+            )
+        }
     }
 }
+

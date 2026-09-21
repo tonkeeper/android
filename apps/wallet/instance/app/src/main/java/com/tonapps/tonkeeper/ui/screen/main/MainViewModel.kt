@@ -12,11 +12,11 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.browser.BrowserRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class MainViewModel(
@@ -28,6 +28,7 @@ class MainViewModel(
     private val collectiblesRepository: CollectiblesRepository,
     private val eventsRepository: EventsRepository,
     private val environment: Environment,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
 ) : BaseWalletVM(app) {
 
     private var currentWallet: WalletEntity? = null
@@ -35,11 +36,7 @@ class MainViewModel(
     private val _childBottomScrolled = MutableEffectFlow<Boolean>()
     val childBottomScrolled = _childBottomScrolled.asSharedFlow()
 
-    val selectedWalletFlow = accountRepository.selectedWalletFlow
-
-    val disbleNftsFlow = combine(selectedWalletFlow, api.configFlow) { wallet, _ ->
-        api.getConfig(wallet.network).flags.disableNfts
-    }
+    val selectedWalletFlow = unifiedAccountRepository.selectedTonWalletFlow
 
     fun setBottomScrolled(value: Boolean) {
         _childBottomScrolled.tryEmit(value)
@@ -56,25 +53,23 @@ class MainViewModel(
 
     private fun prefetchTabs(wallet: WalletEntity, itemId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (itemId != R.id.activity) {
-                async { eventsRepository.get(wallet.accountId, wallet.network) }
-            }
+            async { eventsRepository.get(wallet.accountId, wallet.network) }
             if (itemId != R.id.browser) {
                 async { prefetchBrowser(wallet) }
             }
-            if (itemId != R.id.collectibles) {
-                async { collectiblesRepository.get(wallet.address, wallet.network) }
+            async {
+                val tonWallet = unifiedAccountRepository.getTonWalletById(wallet.id) ?: return@async
+                collectiblesRepository.get(tonWallet.address, tonWallet.network)
             }
         }
     }
 
     private suspend fun prefetchBrowser(wallet: WalletEntity) {
-        val country = environment.deviceCountry
-
         browserRepository.load(
-            country = country,
+            country = environment.deviceCountry,
             network = wallet.network,
-            locale = settingsRepository.getLocale()
+            locale = settingsRepository.getLocale(),
+            walletId = wallet.multichainWalletId,
         )
     }
 }

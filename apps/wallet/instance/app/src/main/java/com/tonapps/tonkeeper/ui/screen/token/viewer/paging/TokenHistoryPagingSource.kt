@@ -19,7 +19,6 @@ internal class TokenHistoryPagingSource(
     private val tokenAddress: String,
     private val blockchain: Blockchain,
     private val tronAddress: String?,
-    private val tronUsdtEnabled: Boolean,
     private val eventsRepository: EventsRepository,
     private val accountRepository: AccountRepository,
     private val historyHelper: HistoryHelper,
@@ -55,9 +54,8 @@ internal class TokenHistoryPagingSource(
         ) ?: return emptyList()
 
         val options = ActionOptions(
-            safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
+            safeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network),
             hiddenBalances = settingsRepository.hiddenBalances,
-            tronEnabled = tronUsdtEnabled,
         )
 
         return historyHelper.mapping(
@@ -69,13 +67,13 @@ internal class TokenHistoryPagingSource(
 
     private suspend fun loadTron(maxTimestamp: Long?): List<HistoryItem> {
         val address = tronAddress ?: return emptyList()
-        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return emptyList()
+
         val tronEvents = eventsRepository.loadTronEvents(
-            address, tonProofToken, maxTimestamp
+            address, wallet.id, maxTimestamp
         ) ?: return emptyList()
 
         val options = ActionOptions(
-            safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
+            safeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network),
             hiddenBalances = settingsRepository.hiddenBalances,
         )
 

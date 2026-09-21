@@ -1,0 +1,61 @@
+# TK-3277: asset details footer under "24h Trading activity" must name the
+# data source that the API returns in `info_source` (TON assets → dyor.io,
+# other networks → coinmarketcap.com).
+# Env: SYMBOL (core-token cell text), EXPECTED_SOURCE (dyor.io | coinmarketcap.com)
+# Opens SYMBOL from the Core tokens shelf, scrolls to the trading section,
+# asserts the note and that the other source is absent, then goes back.
+appId: com.ton_keeper.debug
+---
+- scrollUntilVisible:
+    element: "Core tokens"
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+
+- extendedWaitUntil:
+    visible: ${SYMBOL}
+    timeout: 30000
+- tapOn:
+    text: ${SYMBOL}
+    below: "Core tokens"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# "Your balance" is only rendered for a funded asset, so anchor on the chart
+# header ("Last day") which every asset page has, and drag from there: a
+# center-screen swipe lands on the chart and is eaten by it.
+- extendedWaitUntil:
+    visible: "Last day"
+    timeout: 15000
+- swipe:
+    from:
+      text: "Last day"
+    direction: UP
+    duration: 600
+
+# 30s ceilings (same as the other trade steps): an emulator needs ~5s per
+# scroll-and-check round trip on this page.
+- scrollUntilVisible:
+    element: "24h Trading activity"
+    direction: DOWN
+    timeout: 30000
+- scrollUntilVisible:
+    element: ".*trading activity are provided by.*"
+    direction: DOWN
+    timeout: 30000
+
+- takeScreenshot: "${SCREENSHOT_DIR}/tk3277_${SYMBOL}_source"
+
+- assertVisible:
+    text: "Price chart, overview and trading activity are provided by ${EXPECTED_SOURCE}\\.?"
+    label: "${SYMBOL}: data source note names ${EXPECTED_SOURCE}"
+- assertNotVisible:
+    text: ".*provided by ${EXPECTED_SOURCE === 'dyor.io' ? 'coinmarketcap\\.com' : 'dyor\\.io'}.*"
+    label: "${SYMBOL}: the other provider is not shown"
+
+- tapOn: Navigation
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: "Core tokens"
+    timeout: 15000

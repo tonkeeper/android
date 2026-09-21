@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.core.net.toUri
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
+import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappOpenAnalytics
 import uikit.base.BaseArgs
 
 data class DAppArgs(
@@ -13,6 +14,7 @@ data class DAppArgs(
     val source: String,
     val iconUrl: String,
     val forceConnect: Boolean,
+    val analytics: DappOpenAnalytics? = null,
 ): BaseArgs() {
 
     private companion object {
@@ -21,6 +23,7 @@ data class DAppArgs(
         private const val ARG_SOURCE = "source"
         private const val ARG_ICON_URL = "icon_url"
         private const val ARG_FORCE_CONNECT = "force_connect"
+        private const val ARG_ANALYTICS = "analytics"
     }
 
     constructor(bundle: Bundle) : this(
@@ -28,7 +31,8 @@ data class DAppArgs(
         url = bundle.getParcelableCompat<Uri>(ARG_URL)!!,
         source = bundle.getString(ARG_SOURCE) ?: "",
         iconUrl = bundle.getString(ARG_ICON_URL) ?: "",
-        forceConnect = bundle.getBoolean(ARG_FORCE_CONNECT)
+        forceConnect = bundle.getBoolean(ARG_FORCE_CONNECT),
+        analytics = bundle.getParcelableCompat<DappOpenAnalytics>(ARG_ANALYTICS)
     )
 
     override fun toBundle(): Bundle = Bundle().apply {
@@ -37,5 +41,6 @@ data class DAppArgs(
         putString(ARG_SOURCE, source)
         putString(ARG_ICON_URL, iconUrl)
         putBoolean(ARG_FORCE_CONNECT, forceConnect)
+        putParcelable(ARG_ANALYTICS, analytics)
     }
 }

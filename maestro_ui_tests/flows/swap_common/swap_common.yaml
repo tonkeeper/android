@@ -1,0 +1,29 @@
+# Thin sequencer: token picker search then BTC fiat-too-low. Nested
+# subflows/ are not matched by config.yaml `swap_common/*`. Each subflow
+# launches (stopApp + unlock). optional runFlow continues after a case
+# failure; evalScript runs only if that case succeeded. Final assertTrue
+# fails the Cloud row if any case failed and names them.
+name: "Multichain — swap"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.swap_picker_ok = false; output.swap_btc_fiat_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Multichain — swap token picker search"
+    commands:
+      - runFlow: subflows/swap_token_picker_search.yaml
+      - evalScript: ${output.swap_picker_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — BTC fiat amount too low"
+    commands:
+      - runFlow: subflows/btc_fiat_amount_too_low.yaml
+      - evalScript: ${output.swap_btc_fiat_ok = true}
+
+- evalScript: ${var f = []; if (output.swap_picker_ok !== true) f.push('token picker'); if (output.swap_btc_fiat_ok !== true) f.push('BTC fiat too low'); output.swap_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.swap_failed === ''}
+    label: "${output.swap_failed ? 'swap shard: failed ' + output.swap_failed : 'swap shard: all cases passed'}"

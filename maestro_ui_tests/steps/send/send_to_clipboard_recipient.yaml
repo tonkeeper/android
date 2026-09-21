@@ -1,0 +1,59 @@
+# Sends AMOUNT of an asset to the clipboard recipient (copied from Receive).
+# Env: SEARCH_QUERY, TOKEN_SYMBOL, AMOUNT, CHAIN_NAME (optional)
+appId: com.ton_keeper.debug
+env:
+  CHAIN_NAME: ""
+---
+- extendedWaitUntil:
+    visible: Send
+    timeout: 1500
+- tapOn: Send
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- runFlow:
+    when:
+      notVisible: Choose asset
+    commands:
+      - extendedWaitUntil:
+          visible: Amount
+          timeout: 1000
+      - tapOn: Amount
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+- extendedWaitUntil:
+    visible: Choose asset
+    timeout: 1500
+- runFlow:
+    file: ../token_picker/select_asset.yaml
+    env:
+      SEARCH_QUERY: ${SEARCH_QUERY}
+      TOKEN_SYMBOL: ${TOKEN_SYMBOL}
+      CHAIN_NAME: ${CHAIN_NAME}
+
+- extendedWaitUntil:
+    visible: Address
+    timeout: 15000
+- tapOn: Paste
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- tapOn: Amount
+- inputText: ${AMOUNT}
+
+- extendedWaitUntil:
+    visible:
+      text: Continue
+      enabled: true
+    timeout: 15000
+- tapOn: Continue
+
+- assertVisible: ${AMOUNT + "[ \u2009]" + TOKEN_SYMBOL}
+
+- runFlow: ../confirm/swipe_slide_to_confirm.yaml
+- runFlow: ../wallet/unlock_passcode_if_needed.yaml
+
+- extendedWaitUntil:
+    visible: "Done|History"
+    timeout: 180000

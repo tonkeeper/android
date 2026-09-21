@@ -9,6 +9,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import com.tonapps.core.components.sanitizeAmountInput
 import com.tonapps.icu.Coins
 
 @Stable
@@ -27,7 +28,7 @@ class SendAmountState internal constructor() {
     }
 
     fun onTextFieldValueChange(newValue: TextFieldValue) {
-        val sanitized = sanitizeAmount(newValue.text, decimals)
+        val sanitized = newValue.text.sanitizeAmountInput(decimals)
         val selection = if (sanitized.length != newValue.text.length) {
             TextRange(sanitized.length)
         } else {
@@ -60,35 +61,6 @@ class SendAmountState internal constructor() {
                 }
             },
         )
-
-        private fun sanitizeAmount(input: String, maxDecimals: Int): String {
-            val filtered = input.filter { it.isDigit() || it == '.' || it == ',' }
-            if (filtered.isEmpty()) return ""
-
-            val sb = StringBuilder()
-            var hasSeparator = false
-            var decimalCount = 0
-            for (c in filtered) {
-                if (c == '.' || c == ',') {
-                    if (!hasSeparator) {
-                        hasSeparator = true
-                        sb.append(c)
-                    }
-                } else {
-                    if (hasSeparator) {
-                        if (decimalCount >= maxDecimals) continue
-                        decimalCount++
-                    }
-                    sb.append(c)
-                }
-            }
-
-            if (sb.isNotEmpty() && (sb[0] == '.' || sb[0] == ',')) {
-                sb.insert(0, '0')
-            }
-
-            return sb.toString()
-        }
     }
 }
 

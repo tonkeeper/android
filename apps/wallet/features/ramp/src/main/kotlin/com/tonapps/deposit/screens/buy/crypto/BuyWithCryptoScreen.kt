@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,9 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -34,12 +30,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.legacy.WalletCurrency
-import com.tonapps.blockchain.model.legacy.WalletType
-import com.tonapps.core.helper.ClipboardManager
+import com.tonapps.deposit.common.QrDialog
 import com.tonapps.core.helper.rememberClipboardManager
-import com.tonapps.core.helper.rememberShareManager
 import com.tonapps.deposit.screens.method.RampAsset
-import com.tonapps.deposit.screens.qr.QrContent
 import com.tonapps.deposit.utils.formatDuration
 import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.uikit.icon.UIKitIcon
@@ -51,17 +44,14 @@ import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonLabel
 import ui.components.moon.MoonLabelDefault
-import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonBundleCell
-import ui.components.moon.cell.MoonButtonCell
+import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.cell.MoonButtonCellDefaults
 import ui.components.moon.cell.MoonDescriptionCell
-import ui.components.moon.cell.MoonInfoCell
+import ui.components.moon.cell.MoonWarningCell
 import ui.components.moon.cell.MoonPropertyCell
-import ui.components.moon.cell.MoonTextContentCell
 import ui.components.moon.container.MoonCutRow
 import ui.components.moon.container.MoonScaffold
-import ui.components.moon.container.MoonSurface
 import ui.painterResource
 import ui.text.toAnnotatedString
 import ui.text.withLink
@@ -107,8 +97,10 @@ private fun BuyWithCryptoContent(
 
     if (isQrShown && payinAddress.isNotEmpty()) {
         QrDialog(
+            title = stringResource(Localization.deposit_payment_qr_code),
+            description = stringResource(Localization.deposit_scan_qr_description),
             address = payinAddress,
-            tokenImage = from.iconUri ?: Uri.EMPTY,
+            assetImage = remember(from) { (from.iconUri ?: Uri.EMPTY).toString() },
             onClose = { isQrShown = false },
         )
     }
@@ -142,7 +134,7 @@ private fun BuyWithCryptoContent(
                     }
                 }
 
-                MoonInfoCell(text = text, maxLines = 4)
+                MoonWarningCell(text = text, maxLines = 4)
 
                 Spacer(Modifier.height(32.dp))
 
@@ -403,7 +395,7 @@ private fun BuyWithCryptoContent(
                 )
             }
 
-            MoonButtonCell(
+            MoonBottomButtonCell(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 text = stringResource(Localization.deposit_go_to_main),
                 colors = MoonButtonCellDefaults.ButtonColorsSecondary
@@ -486,56 +478,5 @@ private fun ExchangeCell(
             color = UIKit.colorScheme.text.secondary,
             style = UIKit.typography.body1
         )
-    }
-}
-
-@Composable
-private fun QrDialog(
-    address: String,
-    tokenImage: Uri,
-    onClose: () -> Unit = {},
-) {
-    val addressAnnotated = remember(address) { address.toAnnotatedString() }
-    val shareManager = rememberShareManager()
-    val clipboard = LocalClipboardManager.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onClose,
-        sheetState = sheetState,
-        dragHandle = null,
-    ) {
-        MoonSurface {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                MoonTopAppBarSimple(
-                    title = "",
-                    navigationIconRes = UIKitIcon.ic_chevron_down_16,
-                    onNavigationClick = onClose,
-                    backgroundColor = Color.Transparent
-                )
-
-                MoonTextContentCell(
-                    title = stringResource(Localization.deposit_payment_qr_code),
-                    description = stringResource(Localization.deposit_scan_qr_description)
-                )
-
-                Spacer(Modifier.height(32.dp))
-
-                QrContent(
-                    walletType = WalletType.Default,
-                    walletAddress = address,
-                    content = address,
-                    tokenImage = tokenImage,
-                    blockchainImage = null,
-                    onCopyClick = { clipboard.setText(addressAnnotated) },
-                    onShareClick = { shareManager.share(address) }
-                )
-            }
-        }
     }
 }

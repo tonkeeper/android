@@ -1,12 +1,13 @@
 name: Android Debug Build
 
 on:
-  push:
-    branches:
-      - 'dev'
-      - 'release/**'
   pull_request:
-    types: [ opened, synchronize ]
+    types: [ opened, synchronize, ready_for_review ]
+    paths-ignore:
+      - '**.md'
+  # Mon-Fri.
+  schedule:
+    - cron: '0 6,9,12,15 * * 1-5'
   workflow_dispatch:
 
 concurrency:
@@ -16,9 +17,13 @@ concurrency:
 jobs:
   debug-build:
     name: Build Debug APK
+    if: ${{ !github.event.pull_request.draft }}
     uses: ./.github/workflows/build-apk-reusable.yml
     with:
       gradle-task: :apps:wallet:instance:main:assembleDefaultDebug
       artifact-name-prefix: tonkeeper-debug
       apk-path-glob: apps/wallet/instance/main/build/outputs/apk/default/debug/*.apk
+      gradle-cache: true
+      artifact-retention-days: 7
+      inject-version-code: false
     secrets: inherit

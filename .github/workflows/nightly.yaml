@@ -26,10 +26,14 @@ jobs:
     needs: beta-build
     runs-on: ubuntu-latest
     steps:
+      # Pattern instead of `name: <job output>`: GitHub drops job outputs
+      # that look like they contain a secret, and download-artifact treats
+      # an empty name as "download every artifact of the run" — including
+      # the Maestro debug APK, which then trips the single-APK check below.
       - name: Download built APK artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          name: ${{ needs.beta-build.outputs.artifact-name }}
+          pattern: tonkeeper-nightly-beta-*
           path: dist/apk
 
       - name: Resolve beta APK path
@@ -61,8 +65,31 @@ jobs:
           file: ${{ steps.resolve_apk.outputs.app_file }}
           groups: internal
 
+  # Autotest build: the same one Maestro Tests runs on (assembleDefaultDebug,
+  # appId com.ton_keeper.debug). The beta build above cannot run autotests:
+  # different appId, minified, no debug boot overrides.
+  maestro-debug-build:
+    name: Build Debug APK For Maestro
+    if: github.repository != 'tonkeeper/android'
+    uses: ./.github/workflows/build-apk-reusable.yml
+    with:
+      gradle-task: :apps:wallet:instance:main:assembleDefaultDebug
+      artifact-name-prefix: tonkeeper-nightly-debug
+      apk-path-glob: apps/wallet/instance/main/build/outputs/apk/default/debug/*.apk
+    secrets: inherit
+
   maestro-tests:
     name: Maestro Tests
+    permissions:
+      actions: read
+      contents: read
     if: github.repository != 'tonkeeper/android'
+    needs: maestro-debug-build
     uses: ./.github/workflows/maestro-tests.yml
+    with:
+      # Static boolean, not the artifact name from job outputs: GitHub drops
+      # outputs that look like they contain a secret, and an empty artifact
+      # name makes download-artifact fetch the beta APK too.
+      apk_prebuilt: true
+      notify_slack: true
     secrets: inherit

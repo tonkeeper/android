@@ -1,17 +1,16 @@
 package com.tonapps.deposit.screens.method
 
 import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowSellAsset
-import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowBuyAsset
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.data.assetsOfType
 import com.tonapps.deposit.data.pairedCryptoNetworkInfos
 import com.tonapps.deposit.data.resolveAssetFromDeeplink
 import com.tonapps.deposit.screens.network.CryptoNetworkInfo
 import com.tonapps.deposit.screens.ramp.RampType
-import com.tonapps.deposit.toBuyAsset
-import com.tonapps.deposit.toSellAsset
 import com.tonapps.extensions.lazyUnsafe
 import com.tonapps.log.L
 import com.tonapps.mvi.MviFeature
@@ -77,6 +76,9 @@ sealed interface PaymentMethodState : MviState {
             get() = stablecoinAssets.isNotEmpty()
                     && (sectionFilter == PaymentMethodSectionFilter.All
                     || sectionFilter == PaymentMethodSectionFilter.StablecoinOnly)
+
+        val isEmpty: Boolean
+            get() = !showCashSection && !showCryptoSection && !showStablecoinSection
     }
 }
 
@@ -110,6 +112,7 @@ data class PaymentMethodFeatureData(
     val cm: String? = null,
     val sectionFilter: PaymentMethodSectionFilter = PaymentMethodSectionFilter.All,
     val preferredCurrency: String? = null,
+    val walletId: String? = null,
 )
 
 class PaymentMethodFeature(
@@ -148,7 +151,7 @@ class PaymentMethodFeature(
             is PaymentMethodAction.SelectCurrency -> applyCurrencySelection(action.currency)
             is PaymentMethodAction.CheckP2PMethod -> {
                 trackP2PView()
-                val wallet = accountRepository.getSelectedWallet() ?: return
+                val wallet = resolveWallet() ?: return
                 val shouldValidated =
                     settingsRepository.isPurchaseOpenConfirm(wallet.id, P2P_OPEN_CONFIRM_ID)
                 if (shouldValidated) {
@@ -170,7 +173,7 @@ class PaymentMethodFeature(
             }
 
             is PaymentMethodAction.AllowP2P -> {
-                val wallet = accountRepository.getSelectedWallet() ?: return
+                val wallet = resolveWallet() ?: return
                 if (action.isDontShowAgain) {
                     settingsRepository.disablePurchaseOpenConfirm(wallet.id, P2P_OPEN_CONFIRM_ID)
                 }
@@ -185,6 +188,11 @@ class PaymentMethodFeature(
         }
     }
 
+    private suspend fun resolveWallet(): WalletEntity? {
+        return data.walletId?.let { accountRepository.getWalletById(it) }
+            ?: accountRepository.getSelectedWallet()
+    }
+
     fun selectCurrency(currency: WalletCurrency) {
         sendAction(PaymentMethodAction.SelectCurrency(currency))
     }
@@ -192,11 +200,11 @@ class PaymentMethodFeature(
     private suspend fun loadData() {
         setState { PaymentMethodState.Loading }
         try {
-            val wallet = accountRepository.forceSelectedWallet()
+            val wallet = resolveWallet() ?: accountRepository.forceSelectedWallet()
             val preferredCode = data.preferredCurrency
             val fiatCode = settingsRepository.currency.code.uppercase()
             val currencies =
-                exchangeRepository.getCurrencies(wallet.network, settingsRepository.getLocale())
+                exchangeRepository.getCurrencies(wallet.network, settingsRepository.getLocale(), wallet.multichainWalletId)
 
             val preferredCurrency = if (preferredCode != null) {
                 currencies.find { it.code.equals(preferredCode, true) }
@@ -329,19 +337,15 @@ class PaymentMethodFeature(
         return Triple(crypto, grouped, networks)
     }
 
+    // The migrated WithdrawFlow schema has no P2P event, so only the onramp direction reports here.
     private fun trackP2PView() {
-        val events = AnalyticsHelper.Default.events
-        when (rampType) {
-            RampType.RampOn -> events.depositFlow.depositViewP2p(
-                buyAsset = asset.toCurrency.toBuyAsset(),
-                sellAsset = DepositFlowSellAsset.Fiat,
-            )
-
-            RampType.RampOff -> events.withdrawFlow.withdrawViewP2p(
-                sellAsset = asset.toCurrency.toSellAsset(),
-                buyAsset = WithdrawFlowBuyAsset.Fiat,
-            )
+        if (rampType != RampType.RampOn) {
+            return
         }
+        AnalyticsHelper.Default.events.depositFlow.depositViewP2pAlert(
+            from = DepositFlowFrom.WalletScreen,
+            addFundsOption = DepositFlowAddFundsOption.BuyWithP2pMarket,
+        )
     }
 
     companion object {

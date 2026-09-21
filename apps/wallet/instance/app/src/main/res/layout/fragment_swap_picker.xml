@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingHorizontal="@dimen/offsetMedium"
-            android:paddingBottom="@dimen/offsetMedium"/>
+            android:clipToPadding="false"/>
 
         <uikit.widget.LoaderView
             android:id="@+id/loader"

@@ -73,6 +73,48 @@ class CircleBadgeStrategy(
     }
 }
 
+// The badge sits fully outside the content, its inner corner touching the content's corner.
+@Immutable
+class CornerBadgeStrategy(
+    private val direction: BadgeDirection = BadgeDirection.EndTop
+) : BadgeStrategy {
+
+    override fun calculateOffset(parentSize: IntSize, badgeSize: IntSize): IntOffset {
+        val x = when (direction) {
+            BadgeDirection.EndTop, BadgeDirection.EndBottom -> parentSize.width
+            BadgeDirection.StartTop, BadgeDirection.StartBottom -> -badgeSize.width
+        }
+        val y = when (direction) {
+            BadgeDirection.StartTop, BadgeDirection.EndTop -> 0
+            BadgeDirection.EndBottom, BadgeDirection.StartBottom -> parentSize.height - badgeSize.height
+        }
+
+        return IntOffset(x = x, y = y)
+    }
+}
+
+@Immutable
+class SquareBadgeStrategy(
+    private val direction: BadgeDirection = BadgeDirection.EndTop
+) : BadgeStrategy {
+
+    override fun calculateOffset(parentSize: IntSize, badgeSize: IntSize): IntOffset {
+        val x = when (direction) {
+            BadgeDirection.EndTop, BadgeDirection.EndBottom -> parentSize.width
+            BadgeDirection.StartTop, BadgeDirection.StartBottom -> 0
+        }
+        val y = when (direction) {
+            BadgeDirection.StartTop, BadgeDirection.EndTop -> 0
+            BadgeDirection.EndBottom, BadgeDirection.StartBottom -> parentSize.height
+        }
+
+        return IntOffset(
+            x = (x - badgeSize.width / 2f).toInt(),
+            y = (y - badgeSize.height / 2f).toInt()
+        )
+    }
+}
+
 @Composable
 fun MoonBadgedBox(
     modifier: Modifier = Modifier,
@@ -172,7 +214,8 @@ fun MoonCutBadgedBox(
                     .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                     .drawWithContent {
                         drawContent()
-                        if (cutout.radius > 0f) {
+
+                        if (cutout.radius > 0f && badge != null) {
                             drawCircle(
                                 color = Color.Black,
                                 radius = cutout.radius,
@@ -182,6 +225,7 @@ fun MoonCutBadgedBox(
                         }
                     }
             ) { content() }
+
             Box { badge?.invoke() }
         }
     ) { measurables, constraints ->
@@ -293,9 +337,17 @@ private class CircleCutoutShape(
     private val radius: Float,
 ) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val overhangInflation = maxOf(size.width, size.height)
         val path = Path().apply {
             fillType = PathFillType.EvenOdd
-            addRect(Rect(0f, 0f, size.width, size.height))
+            addRect(
+                Rect(
+                    -overhangInflation,
+                    -overhangInflation,
+                    size.width + overhangInflation,
+                    size.height + overhangInflation,
+                )
+            )
             addOval(Rect(center.x - radius, center.y - radius, center.x + radius, center.y + radius))
         }
         return Outline.Generic(path)

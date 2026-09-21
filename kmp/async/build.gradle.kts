@@ -1,3 +1,6 @@
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     id("com.android.kotlin.multiplatform.library")
@@ -19,5 +22,11 @@ kotlin {
             implementation(projects.lib.log)
             implementation(libs.kotlinx.coroutines.android)
         }
+    }
+}
+
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexplicit-backing-fields")
     }
 }

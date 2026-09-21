@@ -3,8 +3,6 @@ package com.tonapps.wallet.data.browser.entities
 import android.graphics.Color
 import android.net.Uri
 import android.os.Parcelable
-import com.tonapps.log.L
-import androidx.core.net.toUri
 import com.tonapps.extensions.toUriOrNull
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
@@ -19,7 +17,10 @@ data class BrowserAppEntity(
     val poster: Uri?,
     val url: Uri,
     val textColor: Int,
+    val chains: List<String> = emptyList(),
     val button: Button? = null,
+    val id: String = "",
+    val bannerId: String? = null,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -55,13 +56,25 @@ data class BrowserAppEntity(
         poster = json.optString("poster")?.let { Uri.parse(it) },
         url = parseUrl(json.optString("url")),
         textColor = Color.parseColor(json.optString("textColor", "#ffffff")),
-        button = json.optJSONObject("button")?.let { Button(it) }
+        chains = parseChains(json),
+        button = json.optJSONObject("button")?.let { Button(it) },
+        id = json.optString("id"),
+        bannerId = json.optString("banner_id").takeIf { it.isNotEmpty() }
     )
 
     companion object {
 
         fun parse(array: JSONArray): List<BrowserAppEntity> {
             return (0 until array.length()).map { BrowserAppEntity(array.getJSONObject(it)) }
+        }
+
+        private fun parseChains(json: JSONObject): List<String> {
+            json.optJSONArray("chains")?.let { array ->
+                return (0 until array.length()).mapNotNull {
+                    array.optString(it).takeIf { value -> value.isNotEmpty() }
+                }
+            }
+            return json.optString("chain").takeIf { it.isNotEmpty() }?.let { listOf(it) } ?: emptyList()
         }
 
         private fun parseUrl(value: String?): Uri {
@@ -77,5 +90,12 @@ data class BrowserAppEntity(
             }
             return uri
         }
+    }
+}
+
+fun List<BrowserAppEntity>.filterByChain(chainId: String?): List<BrowserAppEntity> {
+    if (chainId == null) return this
+    return filter { app ->
+        app.chains.any { it.equals(chainId, ignoreCase = true) }
     }
 }

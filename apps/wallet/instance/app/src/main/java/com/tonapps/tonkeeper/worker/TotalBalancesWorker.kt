@@ -6,7 +6,7 @@ import androidx.work.Operation
 import androidx.work.WorkerParameters
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.tonkeeper.extensions.workManager
-import com.tonapps.tonkeeper.manager.assets.AssetsManager
+import com.tonapps.legacy.assets.AssetsManager
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 

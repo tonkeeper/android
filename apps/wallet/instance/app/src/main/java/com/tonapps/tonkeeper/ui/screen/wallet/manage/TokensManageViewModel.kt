@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.legacy.enteties.AssetsExtendedEntity
-import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -30,7 +29,7 @@ class TokensManageViewModel(
     private val api: API,
 ): BaseWalletVM(app) {
 
-    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(wallet.network)
+    private val safeMode: Boolean = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
 
     private val tokensFlow = settingsRepository.tokenPrefsChangedFlow.map { _ ->
         tokenRepository.mustGet(settingsRepository.currency, wallet.accountId, wallet.network).mapNotNull { token ->
@@ -42,7 +41,7 @@ class TokensManageViewModel(
                 prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
                 accountId = wallet.accountId,
             )
-        }.filter { !it.isTon && !it.isTrx }
+        }.filter { !it.isTon }
     }
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
@@ -88,23 +87,21 @@ class TokensManageViewModel(
         }.flowOn(Dispatchers.IO).onEach { _uiItemsFlow.value = it }.launchIn(viewModelScope)
     }
 
-    fun changeOrder(address: String, toIndex: Int) {
-        val uiItems = _uiItemsFlow.value.toMutableList()
-        val fromIndex = uiItems.indexOfFirst {
-            it is Item.Token && it.address == address
-        }
-        if (fromIndex == -1) {
+    fun saveOrder(items: List<Item>) {
+        val pinnedItems = items.filterIsInstance<Item.Token>()
+            .filter { it.pinned }
+
+        if (pinnedItems.isEmpty()) {
             return
         }
-        val item = uiItems.removeAt(fromIndex)
-        uiItems.add(toIndex, item)
 
-        val pinnedItems = uiItems.filterIsInstance<Item.Token>().filter { it.pinned }
         val newPinnedUiItems = pinnedItems.mapIndexed { index, pinnedItem ->
             pinnedItem.copy(position = ListCell.getPosition(pinnedItems.size, index))
-        }.toList()
+        }
+
+        val uiItems = items.toMutableList()
         uiItems.removeAll(pinnedItems)
-        uiItems.addAll(1, newPinnedUiItems)
+        uiItems.addAll(uiItems.indexOfFirst { it is Item.Title } + 1, newPinnedUiItems)
 
         _uiItemsFlow.value = uiItems
 

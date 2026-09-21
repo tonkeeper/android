@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.battery.refill.list
 
 import android.net.Uri
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.wallet.api.entity.IAPPackageId
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.uikit.list.BaseListItem
@@ -28,12 +29,14 @@ sealed class Item(type: Int) : BaseListItem(type) {
         val beta: Boolean,
         val changes: Int,
         val formattedChanges: CharSequence,
+        val isNegative: Boolean,
     ) : Item(TYPE_BATTERY)
 
     data class RechargeMethod(
         val position: ListCell.Position,
         val token: AccountTokenEntity,
         val wallet: WalletEntity,
+        val from: BatteryNativeFrom,
     ) : Item(TYPE_RECHARGE_METHOD) {
 
         val symbol: String
@@ -46,6 +49,7 @@ sealed class Item(type: Int) : BaseListItem(type) {
     data class Gift(
         val wallet: WalletEntity,
         val position: ListCell.Position,
+        val from: BatteryNativeFrom,
     ) : Item(TYPE_GIFT)
 
     data class Refund(

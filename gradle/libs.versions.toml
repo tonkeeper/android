@@ -10,6 +10,7 @@ android-sdk-target = "36"
 android-ndk = "29.0.13599879"
 ksp = "2.3.4"
 desugar_jdk_libs = "2.1.5"
+kotlin-bignum = "0.3.10"
 
 # KotlinX
 kotlinx-coroutines = "1.10.2"
@@ -39,6 +40,7 @@ androidx-biometric = "1.1.0"
 androidx-annotation = "1.9.1"
 androidx-splashscreen = "1.2.0"
 androidx-constraintlayout = "2.2.1"
+androidx-customview = "1.2.0"
 androidx-browser = "1.10.0"
 androidx-swiperefreshlayout = "1.2.0"
 androidx-profileinstaller = "1.4.1"
@@ -80,10 +82,13 @@ firebase-performance-plugin = "2.0.2"
 # Networking
 okhttp = "5.3.2"
 okio = "3.17.0"
+centrifuge = "0.7.0"
 coil = "3.4.0"
 
 # TON
-ton = "0.3.1"
+chainkit = "0.3.19"
+walletCoreKotlin = "4.6.0"
+ton = "0.5.0"
 ton-walletkit = "0.0.6"
 
 # DI
@@ -92,16 +97,16 @@ koin = "4.2.0"
 # UI
 material = "1.13.0"
 flexbox = "3.0.0"
-lottie = "6.6.6"
 
 # Crypto & Security
-bcprov = "1.83"
+bcprov = "1.80"
 web3j = "5.0.0"
 
 # Utilities
 zxing = "3.5.4"
 j2objc = "3.1"
 cbor = "0.9"
+lottie = "6.7.1"
 
 # Navigation
 nav3 = "1.0.1"
@@ -116,6 +121,7 @@ aptabase = "0.0.8"
 # Testing
 junit = "4.13.2"
 leakcanary = "2.14"
+mockk = "1.13.13"
 
 # Baseline Profile
 baselineprofile = "1.5.0-alpha03"
@@ -131,9 +137,13 @@ kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.
 # Android Core
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 
+# Kotlin BigNum
+kotlin-bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "kotlin-bignum" }
+
 # KotlinX Coroutines
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 # KotlinX Serialization
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
@@ -146,13 +156,24 @@ kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.re
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 
 # TON
-ton-tvm = { module = "org.ton:ton-kotlin-tvm", version.ref = "ton" }
-ton-crypto = { module = "org.ton:ton-kotlin-crypto", version.ref = "ton" }
-ton-tlb = { module = "org.ton:ton-kotlin-tlb", version.ref = "ton" }
-ton-blockTlb = { module = "org.ton:ton-kotlin-block-tlb", version.ref = "ton" }
-ton-tonapiTl = { module = "org.ton:ton-kotlin-tonapi-tl", version.ref = "ton" }
-ton-contract = { module = "org.ton:ton-kotlin-contract", version.ref = "ton" }
+chainkit-sdk = { module = "com.tonapps.chainkit:lib-sdk", version.ref = "chainkit" }
+chainkit-models = { module = "com.tonapps.chainkit:core-chain-model", version.ref = "chainkit" }
+chainkit-chain-ethereum = { module = "com.tonapps.chainkit:chain-ethereum", version.ref = "chainkit" }
+chainkit-chain-ton = { module = "com.tonapps.chainkit:chain-ton", version.ref = "chainkit" }
+chainkit-api = { module = "com.tonapps.chainkit:core-chain-api", version.ref = "chainkit" }
+chainkit-swap = { module = "com.tonapps.chainkit:features-swap", version.ref = "chainkit" }
+chainkit-mnemonic = { module = "com.tonapps.chainkit:core-mnemonic", version.ref = "chainkit" }
+chainkit-net-json = { module = "com.tonapps.chainkit:core-net-json-rpc", version.ref = "chainkit" }
+chainkit-net-provider = { module = "com.tonapps.chainkit:core-net-provider", version.ref = "chainkit" }
+walletcore = { module = "com.trustwallet:wallet-core-kotlin", version.ref = "walletCoreKotlin" }
+
 ton-walletkit = { module = "org.ton:walletkit", version.ref = "ton-walletkit" }
+ton-tvm = { module = "org.ton.kotlin:ton-kotlin-tvm", version.ref = "ton" }
+ton-crypto = { module = "org.ton.kotlin:ton-kotlin-crypto", version.ref = "ton" }
+ton-tlb = { module = "org.ton.kotlin:ton-kotlin-tlb", version.ref = "ton" }
+ton-blockTlb = { module = "org.ton.kotlin:ton-kotlin-block-tlb", version.ref = "ton" }
+ton-tonapiTl = { module = "org.ton.kotlin:ton-kotlin-tonapi-tl", version.ref = "ton" }
+ton-contract = { module = "org.ton.kotlin:ton-kotlin-contract", version.ref = "ton" }
 
 # Compose (AndroidX BOM)
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
@@ -193,6 +214,7 @@ androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", versi
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
 androidx-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidx-splashscreen" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidx-constraintlayout" }
+androidx-customview = { module = "androidx.customview:customview", version.ref = "androidx-customview" }
 androidx-browser = { module = "androidx.browser:browser", version.ref = "androidx-browser" }
 androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "androidx-swiperefreshlayout" }
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidx-profileinstaller" }
@@ -206,6 +228,10 @@ androidx-metrics-performance = { module = "androidx.metrics:metrics-performance"
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3" }
 androidx-navigation3-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "nav3ViewModel" }
+
+# Lottie
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
 
 # AndroidX Room
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
@@ -224,6 +250,7 @@ camerax-view = { module = "androidx.camera:camera-view", version.ref = "camerax"
 # AndroidX Testing
 androidx-test = { module = "androidx.test:core", version.ref = "androidx-test" }
 androidx-test-core = { module = "androidx.test.ext:junit", version.ref = "androidx-test-junit" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test" }
 androidx-test-espresso = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
 androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidx-test-uiautomator" }
 
@@ -247,6 +274,7 @@ firebase-performance = { module = "com.google.firebase:firebase-perf" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okhttp-sse = { module = "com.squareup.okhttp3:okhttp-sse", version.ref = "okhttp" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+centrifuge-java = { module = "io.github.centrifugal:centrifuge-java", version.ref = "centrifuge" }
 
 # Image Loading
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
@@ -261,11 +289,9 @@ koin-workmanager = { module = "io.insert-koin:koin-androidx-workmanager", versio
 # UI
 material = { module = "com.google.android.material:material", version.ref = "material" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbox" }
-lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
-lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
 
 # Crypto & Security
-bcprovjdk = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "bcprov" }
+bcprovjdk = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprov" }
 web3j = { module = "org.web3j:core", version.ref = "web3j" }
 
 # Utilities
@@ -282,6 +308,7 @@ aptabase = { module = "com.github.aptabase:aptabase-kotlin", version.ref = "apta
 # Testing
 junit = { module = "junit:junit", version.ref = "junit" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 
 
 [plugins]

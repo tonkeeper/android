@@ -43,7 +43,8 @@
                     android:textColor="?attr/textPrimaryColor"
                     android:textColorHint="?attr/textSecondaryColor"
                     android:textSize="40sp"
-                    android:fontFamily="@font/montserrat_semi_bold"
+                    android:fontFamily="@font/tt_firs_neue_medium"
+                    android:fontFeatureSettings="'ss09' on, 'ss17' on, 'ss18' on"
                     android:hint="0"/>
 
                 <androidx.appcompat.widget.AppCompatTextView

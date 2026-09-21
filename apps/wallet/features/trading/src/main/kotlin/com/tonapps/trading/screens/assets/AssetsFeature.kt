@@ -45,6 +45,8 @@ class AssetsFeature(
     initAction = AssetsAction.Init,
 ) {
 
+    private var requestGeneration = 0
+
     override fun createViewState(): AssetsViewState {
         return buildViewState {
             AssetsViewState(mviProperty { it })
@@ -63,13 +65,19 @@ class AssetsFeature(
     }
 
     private suspend fun load(query: String, tab: AssetsTab) {
+        val generation = ++requestGeneration
         setState { AssetsState.Loading }
         try {
             val currencyCode = environment.currency()
             val response = tradingRepository.getAssets(query, tab, cursor = null)
             setState {
+                if (generation != requestGeneration) {
+                    return@setState this
+                }
                 AssetsState.Data(
-                    items = response.items.map { it.toAssetItem(currencyCode) },
+                    items = response.items
+                        .map { it.toAssetItem(currencyCode) }
+                        .distinctBy { it.id },
                     nextCursor = response.nextCursor,
                     isLoadingMore = false,
                     query = query,
@@ -82,22 +90,39 @@ class AssetsFeature(
             )
         } catch (e: Throwable) {
             L.e(e)
-            setState { AssetsState.Error }
+            setState {
+                if (generation != requestGeneration) {
+                    return@setState this
+                }
+                AssetsState.Error
+            }
         }
     }
 
     private suspend fun loadMore() {
         val current = obtainSpecificState<AssetsState.Data>() ?: return
-        if (current.nextCursor == null || current.isLoadingMore) return
-        setState { current.copy(isLoadingMore = true) }
+        if (current.nextCursor == null || current.isLoadingMore) {
+            return
+        }
+        val generation = requestGeneration
+        setState {
+            val data = this as? AssetsState.Data ?: return@setState this
+            data.copy(isLoadingMore = true)
+        }
         try {
             val currencyCode = environment.currency()
             val response =
                 tradingRepository.getAssets(current.query, current.tab, current.nextCursor)
             setState {
+                if (generation != requestGeneration) {
+                    return@setState this
+                }
                 val data = this as? AssetsState.Data ?: return@setState this
+                val loadedAssetIds = data.items.mapTo(hashSetOf()) { it.id }
                 data.copy(
-                    items = data.items + response.items.map { it.toAssetItem(currencyCode) },
+                    items = data.items + response.items
+                        .filter { loadedAssetIds.add(it.asset.id) }
+                        .map { it.toAssetItem(currencyCode) },
                     nextCursor = response.nextCursor,
                     isLoadingMore = false,
                 )
@@ -105,6 +130,9 @@ class AssetsFeature(
         } catch (e: Throwable) {
             L.e(e)
             setState {
+                if (generation != requestGeneration) {
+                    return@setState this
+                }
                 val data = this as? AssetsState.Data ?: return@setState this
                 data.copy(isLoadingMore = false)
             }

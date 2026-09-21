@@ -23,7 +23,7 @@ import io.tonapi.models.MessageConsequences
 import io.tonapi.models.Risk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.ton.api.pk.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import java.math.BigDecimal
@@ -102,7 +102,7 @@ class EmulationUseCase(
         internalMessage: Boolean
     ): Cell {
         return message.createSignedBody(
-            privateKey = PrivateKeyEd25519(AndroidSecureRandom),
+            privateKey = PrivateKeyEd25519.random(AndroidSecureRandom),
             internalMessage = internalMessage
         )
     }
@@ -116,17 +116,13 @@ class EmulationUseCase(
         }
 
         val wallet = message.wallet
-        val tonProofToken = accountRepository.requestTonProofToken(wallet)
-            ?: throw IllegalStateException("Can't find TonProof token")
         val boc = createMessage(message, true)
 
         val result = batteryRepository.emulate(
-            tonProofToken = tonProofToken,
-            publicKey = wallet.publicKey,
-            network = wallet.network,
+            wallet = wallet,
             boc = boc,
             forceRelayer = forceRelayer,
-            safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.network)
+            safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
         ) ?: throw IllegalStateException("Failed to emulate battery")
 
         return parseEmulated(wallet, result.consequences, TransferType.Battery)
@@ -140,7 +136,7 @@ class EmulationUseCase(
         forwardAmount: Coins,
     ): Emulated {
         val signedBoc = wallet.sign(
-            privateKey = PrivateKeyEd25519(AndroidSecureRandom),
+            privateKey = PrivateKeyEd25519.random(AndroidSecureRandom),
             seqNo = seqNo,
             body = unsignedBody
         )
@@ -157,7 +153,7 @@ class EmulationUseCase(
         val consequences = api.emulate(
             cell = signedBoc,
             network = wallet.network,
-            safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.network)
+            safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
         ) ?: throw IllegalArgumentException("Emulation failed")
         return parseEmulated(wallet, consequences, TransferType.Default)
     }
@@ -174,8 +170,7 @@ class EmulationUseCase(
             val account = api.accounts(wallet.network).getAccount(wallet.accountId)
             val accountBalance = Coins.of(account.balance)
             val totalFee = contractExecution.computeFee(wallet, account, boc, message.getOutMsgs())
-            val totalAmount =
-                totalFee + message.transfers.sumOf { Coins.of(it.coins.coins.toString()) }
+            val totalAmount = totalFee + calculateTransferAmount(message.transfers)
             if (totalAmount > accountBalance) {
                 throw InsufficientBalanceError(accountBalance, totalAmount)
             }
@@ -187,13 +182,13 @@ class EmulationUseCase(
                 network = wallet.network,
                 address = wallet.address,
                 balance = ((Coins.ONE + Coins.ONE) + calculateTransferAmount(message.transfers)).toLong(),
-                safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.network)
+                safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
             )
         } else {
             api.emulate(
                 cell = boc,
                 network = wallet.network,
-                safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.network)
+                safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
             )
         }) ?: throw IllegalArgumentException("Emulation failed")
         return parseEmulated(wallet, consequences, TransferType.Default)
@@ -224,9 +219,9 @@ class EmulationUseCase(
         val balanceFiat = delegate.getTotalBalance(wallet, currency) ?: Coins.ZERO
         val ton = tokenRepository.getTON(currency, wallet.accountId, wallet.network, true)
         val tonValue = if (risk.transferAllRemainingBalance) {
-            ton?.balance?.value?.toLong() ?: risk.ton
+            ton?.balance?.value?.toLong() ?: risk.gram
         } else {
-            risk.ton
+            risk.gram
         }
         val tokens = getTokens(wallet, tonValue, risk.jettons)
         val rates = ratesRepository.getRates(wallet.network, currency, tokens.map { it.token.address })
@@ -290,9 +285,7 @@ class EmulationUseCase(
     }
 
     private suspend fun getBatteryCharges(wallet: WalletEntity): Int = withContext(Dispatchers.IO) {
-        accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.network)
-        } ?: 0
+        batteryRepository.getCharges(wallet)
     }
 
     suspend fun getTrc20TransferDefaultFees(

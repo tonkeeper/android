@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.MaterialTheme
@@ -22,27 +24,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import ui.components.moon.MoonChevronRight
 import ui.components.moon.MoonItemDivider
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonItemTitle
 import ui.theme.UIKit
+import ui.theme.modifiers.modifyIf
 
 enum class MoonBundlePosition {
     Default,
     Middle,
     Header,
     Footer,
-}
+    ;
 
-fun defaultBundleType(size: Int, index: Int): MoonBundlePosition {
-    return  when  {
-        size == 1 -> MoonBundlePosition.Default
-        index == 0 -> MoonBundlePosition.Header
-        index == size - 1 -> MoonBundlePosition.Footer
-        else -> MoonBundlePosition.Middle
+    companion object {
+        fun default(size: Int, index: Int): MoonBundlePosition {
+            return  when  {
+                size == 1 -> MoonBundlePosition.Default
+                index == 0 -> MoonBundlePosition.Header
+                index == size - 1 -> MoonBundlePosition.Footer
+                else -> MoonBundlePosition.Middle
+            }
+        }
     }
 }
+
+fun defaultBundleType(size: Int, index: Int): MoonBundlePosition = MoonBundlePosition.default(size, index)
 
 internal object ObjectAvoirBundleDefaults {
     val CornerHeader: CornerBasedShape
@@ -62,34 +72,47 @@ internal object ObjectAvoirBundleDefaults {
         }
 }
 
+
 @Composable
 fun MoonBundleTitleCell(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,
     onClick: (() -> Unit)? = null,
-    content: (@Composable () -> Unit)? = null
+    content: (@Composable () -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .fillMaxWidth()
+            .fillMaxWidth(),
     ) {
         Row(
-            Modifier.fillMaxWidth()
-                .run {
-                    if (onClick != null) {
-                        clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
-                            onClick()
-                        }
-                    } else {
-                        this
-                    }
-                },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            MoonItemTitle(text = title, modifier = Modifier.weight(1f))
+            Row(
+                modifier = Modifier
+                    .modifyIf {
+                        onClick?.let {
+                            clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = onClick
+                            )
+                        }
+                    },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MoonItemTitle(text = title)
+
+                if (onClick != null) {
+                    Spacer(modifier = Modifier.width(2.dp))
+                    MoonChevronRight()
+                }
+            }
+
             content?.invoke()
         }
 
@@ -99,6 +122,9 @@ fun MoonBundleTitleCell(
     }
 }
 
+object MoonBundleCellContent {
+    val Default = PaddingValues(16.dp)
+}
 
 @Composable
 fun MoonBundleCell(
@@ -106,13 +132,15 @@ fun MoonBundleCell(
     onClick: (() -> Unit)? = null,
     backgroundColor: Color = UIKit.colorScheme.background.content,
     position: MoonBundlePosition = MoonBundlePosition.Default,
-    contentPadding: PaddingValues = remember { PaddingValues(horizontal = 16.dp) },
+    contentPadding: PaddingValues? = null,
+    margins: PaddingValues = remember { PaddingValues(horizontal = 16.dp) },
+    dividerExtraStartInset: Dp? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
         modifier = Modifier
-            .padding(contentPadding)
             .fillMaxWidth()
+            .padding(margins)
             .clip(
                 when (position) {
                     MoonBundlePosition.Middle -> RectangleShape
@@ -122,6 +150,9 @@ fun MoonBundleCell(
                 }
             )
             .background(backgroundColor)
+            .modifyIf {
+                contentPadding?.let { padding(it) }
+            }
             .run {
                 if (onClick != null) {
                     clickable {
@@ -136,8 +167,13 @@ fun MoonBundleCell(
         content()
 
         when (position) {
-            MoonBundlePosition.Middle -> MoonItemDivider(modifier = Modifier.align(Alignment.BottomCenter))
-            MoonBundlePosition.Header -> MoonItemDivider(modifier = Modifier.align(Alignment.BottomCenter))
+            MoonBundlePosition.Middle,
+            MoonBundlePosition.Header -> MoonItemDivider(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .modifyIf { dividerExtraStartInset?.let { inset -> padding(start = inset) } },
+            )
+
             else -> Unit
         }
     }

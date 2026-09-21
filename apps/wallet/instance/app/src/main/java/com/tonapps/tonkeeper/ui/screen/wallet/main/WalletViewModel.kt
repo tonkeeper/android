@@ -5,18 +5,21 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.core.flags.RemoteConfig
+import com.tonapps.core.flags.AddMcWalletTooltipInteractor
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.log.L
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.DevSettings
-import com.tonapps.tonkeeper.core.sort
-import com.tonapps.tonkeeper.extensions.hasPushPermission
+import com.tonapps.legacy.assets.sort
+import com.tonapps.tonkeeper.extensions.with
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.manager.apk.APKManager
-import com.tonapps.tonkeeper.manager.assets.AssetsManager
+import com.tonapps.legacy.assets.AssetsManager
+import com.tonapps.portfolio.screens.wallet.WalletCollectiblesState
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item.Status
@@ -29,7 +32,9 @@ import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.plugins.PluginsRepository
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -43,6 +48,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
@@ -72,6 +78,8 @@ class WalletViewModel(
     private val pluginsRepository: PluginsRepository,
     private val stakingRepository: StakingRepository,
     private val bannerRepository: BannerRepository,
+    private val addMcWalletTooltip: AddMcWalletTooltipInteractor,
+    private val passcodeManager: PasscodeManager,
 ) : BaseWalletVM(app) {
 
     val installId: String
@@ -93,10 +101,15 @@ class WalletViewModel(
     private val _domainRenewFlow = MutableStateFlow<List<DnsExpiringEntity>>(emptyList())
     private val domainRenewFlow = _domainRenewFlow.asStateFlow().filterNotNull()
 
+    private val domainAndExpandFlow = combine(
+        domainRenewFlow,
+        AssetsExpandState.flow(wallet.id),
+    ) { renewDomains, assetsExpanded -> renewDomains to assetsExpanded }
+
     private val updateWalletSettings = combine(
         settingsRepository.tokenPrefsChangedFlow,
         settingsRepository.walletPrefsChangedFlow,
-        settingsRepository.safeModeStateFlow,
+        settingsRepository.safeModeChangedFlow,
     ) { _, _, _ -> }
 
     private val _stateSettingsFlow = combine(
@@ -189,6 +202,7 @@ class WalletViewModel(
                 val banners = getBanners(wallet)
                 val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network)
                 val maxStakingApy = getMaxStakingApy(wallet)
+                val collectibles = getCollectibles(refresh = false)
                 val state = State.Main(
                     wallet = wallet,
                     assets = localAssets,
@@ -202,10 +216,11 @@ class WalletViewModel(
                     lt = currentLt,
                     isOnline = currentIsOnline,
                     apkStatus = apkStatus,
-                    tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(wallet.id),
                     plugins = plugins,
                     maxStakingApyFormatted = maxStakingApy,
                     banners = banners,
+                    collectibles = collectibles.items,
+                    allCollectiblesHidden = collectibles.allHidden,
                 )
                 assetsManager.setCachedTotalBalance(
                     wallet,
@@ -223,6 +238,7 @@ class WalletViewModel(
                     val banners = getBanners(wallet, true)
                     val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network, true)
                     val maxStakingApy = getMaxStakingApy(wallet, ignoreCache = true)
+                    val collectibles = getCollectibles(refresh = true)
                     if (remoteAssets != null) {
                         val state = State.Main(
                             wallet,
@@ -237,10 +253,11 @@ class WalletViewModel(
                             lt = currentLt,
                             isOnline = currentIsOnline,
                             apkStatus = apkStatus,
-                            tronUsdtEnabled = settingsRepository.getTronUsdtEnabled(wallet.id),
                             plugins = plugins,
                             maxStakingApyFormatted = maxStakingApy,
                             banners = banners,
+                            collectibles = collectibles.items,
+                            allCollectiblesHidden = collectibles.allHidden,
                         )
                         _stateMainFlow.value = state
                         assetsManager.setCachedTotalBalance(
@@ -264,8 +281,8 @@ class WalletViewModel(
             alertNotificationsFlow,
             _stateSettingsFlow,
             updateWalletSettings,
-            domainRenewFlow,
-        ) { state, alerts, settings, _, renewDomains ->
+            domainAndExpandFlow,
+        ) { state, alerts, settings, _, (renewDomains, assetsExpanded) ->
             val status = settings.status /* if (settings.status == Status.NoInternet) {
                 settings.status
             } else if (settings.status != Status.SendingTransaction && settings.status != Status.TransactionConfirmed) {
@@ -275,13 +292,22 @@ class WalletViewModel(
             }*/
 
             val isSetupHidden = settingsRepository.isSetupHidden(state.wallet.id)
-            val uiSetup: State.Setup? = if (isSetupHidden) null else {
-                val walletPushEnabled = settingsRepository.getPushWallet(state.wallet.id)
+            val uiSetup: State.Setup? = if (isSetupHidden) {
+                null
+            } else {
                 val hasInitializedWallet = accountRepository.getInitializedWallets().isNotEmpty()
                 State.Setup(
-                    pushEnabled = !environment.isGooglePlayServicesAvailable || (context.hasPushPermission() && walletPushEnabled),
-                    biometryEnabled = if (wallet.hasPrivateKey) settingsRepository.biometric else true,
-                    hasBackup = if (wallet.hasPrivateKey) state.hasBackup else true,
+                    pushEnabled = !environment.isGooglePlayServicesAvailable || environment.areNotificationsEnabled,
+                    biometryEnabled = if (wallet.hasPrivateKey) {
+                        settingsRepository.biometric
+                    } else {
+                        true
+                    },
+                    hasBackup = if (wallet.hasPrivateKey) {
+                        state.hasBackup
+                    } else {
+                        true
+                    },
                     showTelegramChannel = false,
                     safeModeBlock = !api.getConfig(wallet.network).flags.safeModeEnabled && hasInitializedWallet && settingsRepository.showSafeModeSetup,
                     onboardingStoriesEnabled = wallet.hasPrivateKey && !wallet.testnet && remoteConfig.isOnboardingStoriesEnabled,
@@ -305,10 +331,13 @@ class WalletViewModel(
                 ),
                 prefixYourAddress = 3 > settingsRepository.addressCopyCount,
                 renewDomains = renewDomains,
+                assetsExpanded = assetsExpanded,
             )
             if (uiItems.isNotEmpty()) {
                 _uiItemsFlow.value = uiItems
-                setCached(state.wallet, uiItems)
+                if (!assetsExpanded) {
+                    setCached(state.wallet, uiItems)
+                }
             }
         }.launchIn(viewModelScope)
 
@@ -320,6 +349,12 @@ class WalletViewModel(
                 delay(2.minutes)
             }
         }
+    }
+
+    // The balloon is a PopupWindow, drawn above the in-activity lockscreen overlay.
+    suspend fun consumeAddMcTooltip(): Boolean {
+        passcodeManager.lockscreenHiddenFlow.first { it }
+        return addMcWalletTooltip.consume(AddMcWalletTooltipInteractor.Placement.MAIN)
     }
 
     private fun updateCuntryByIP() {
@@ -336,9 +371,46 @@ class WalletViewModel(
 
     private fun requestDnsExpiring() {
         viewModelScope.launch {
-            val period = if (DevSettings.dnsAll) 366 else 30
+            val period = if (DevSettings.dnsAll) {
+                366
+            } else {
+                30
+            }
             _domainRenewFlow.value =
                 collectiblesRepository.getDnsSoonExpiring(wallet.accountId, wallet.network, period)
+        }
+    }
+
+    private suspend fun getCollectibles(
+        refresh: Boolean
+    ): WalletCollectiblesState = withContext(Dispatchers.IO) {
+        if (api.getConfig(wallet.network).flags.disableNfts) {
+            return@withContext WalletCollectiblesState(emptyList())
+        }
+        val nfts = if (refresh) {
+            collectiblesRepository.getRemoteNftItems(wallet.address, wallet.network)
+                ?: collectiblesRepository.getLocalNftItems(wallet.address, wallet.network)
+        } else {
+            collectiblesRepository.getLocalNftItems(wallet.address, wallet.network)
+        }
+        mapCollectibles(nfts)
+    }
+
+    private suspend fun mapCollectibles(nfts: List<NftEntity>): WalletCollectiblesState {
+        if (nfts.isEmpty()) {
+            return WalletCollectiblesState(emptyList())
+        }
+        val visibleItems = nfts.mapNotNull { nft ->
+            val nftPref = settingsRepository.getTokenPrefs(wallet.id, nft.collectionAddressOrNFTAddress)
+            if (nftPref.isHidden) {
+                return@mapNotNull null
+            }
+            nft.with(nftPref)
+        }
+        return if (visibleItems.isNotEmpty()) {
+            WalletCollectiblesState(items = visibleItems)
+        } else {
+            WalletCollectiblesState(items = emptyList(), allHidden = true)
         }
     }
 
@@ -356,7 +428,7 @@ class WalletViewModel(
 
     private fun loadAlertNotifications() {
         viewModelScope.launch(Dispatchers.IO) {
-            alertNotificationsFlow.value = api.getAlertNotifications()
+            alertNotificationsFlow.value = api.getAlertNotifications(wallet.multichainWalletId)
         }
     }
 
@@ -366,6 +438,7 @@ class WalletViewModel(
     ): List<BannerEntity> = withContext(Dispatchers.IO) {
         bannerRepository.getBanners(
             walletId = wallet.id,
+            isMultichain = wallet.type == WalletType.Multichain,
             network = wallet.network,
             refresh = ignoreCache,
         )
@@ -375,7 +448,11 @@ class WalletViewModel(
         viewModelScope.launch {
             val wallets = accountRepository.getWallets()
             val index = wallets.indexOf(wallet)
-            val nextIndex = if (index == wallets.size - 1) 0 else index + 1
+            val nextIndex = if (index == wallets.size - 1) {
+                0
+            } else {
+                index + 1
+            }
             accountRepository.setSelectedWallet(wallets[nextIndex].id)
         }
     }
@@ -384,7 +461,11 @@ class WalletViewModel(
         viewModelScope.launch {
             val wallets = accountRepository.getWallets()
             val index = wallets.indexOf(wallet)
-            val prevIndex = if (index == 0) wallets.size - 1 else index - 1
+            val prevIndex = if (index == 0) {
+                wallets.size - 1
+            } else {
+                index - 1
+            }
             accountRepository.setSelectedWallet(wallets[prevIndex].id)
         }
     }
@@ -397,7 +478,9 @@ class WalletViewModel(
         wallet: WalletEntity,
         ignoreCache: Boolean = false,
     ): String? = withContext(Dispatchers.IO) {
-        if (wallet.testnet) return@withContext null
+        if (wallet.testnet) {
+            return@withContext null
+        }
         try {
             val staking = stakingRepository.get(
                 accountId = wallet.accountId,
@@ -408,7 +491,8 @@ class WalletViewModel(
             val enabledStaking = api.getConfig(wallet.network).enabledStaking
             val maxApy = staking.pools
                 .filter { enabledStaking.contains(it.implementation.title) }
-                .maxOfOrNull { it.apy } ?: return@withContext null
+                .maxOfOrNull { it.apy }
+                ?: return@withContext null
             CurrencyFormatter.formatPercent(maxApy).toString()
         } catch (e: Throwable) {
             null
@@ -420,12 +504,8 @@ class WalletViewModel(
         ignoreCache: Boolean = false
     ): Coins = withContext(Dispatchers.IO) {
         if (wallet.hasPrivateKey) {
-            val tonProofToken =
-                accountRepository.requestTonProofToken(wallet) ?: return@withContext Coins.ZERO
             val battery = batteryRepository.getBalance(
-                tonProofToken = tonProofToken,
-                publicKey = wallet.publicKey,
-                network = wallet.network,
+                wallet = wallet,
                 ignoreCache = ignoreCache
             )
             battery.balance
@@ -456,6 +536,7 @@ class WalletViewModel(
         super.onCleared()
         autoRefreshJob?.cancel()
         autoRefreshJob = null
+        AssetsExpandState.reset(wallet.id)
     }
 
     companion object {
@@ -465,7 +546,11 @@ class WalletViewModel(
             wallet: WalletEntity,
             currency: WalletCurrency
         ): WalletCurrency {
-            return if (wallet.testnet) WalletCurrency.TON else currency
+            return if (wallet.testnet) {
+                WalletCurrency.TON
+            } else {
+                currency
+            }
         }
 
         fun ScreenCacheSource.getWalletScreen(wallet: WalletEntity): List<Item>? {

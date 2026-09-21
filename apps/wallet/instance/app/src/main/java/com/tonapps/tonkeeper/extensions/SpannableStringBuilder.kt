@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.extensions
 import android.content.Context
 import android.text.SpannableStringBuilder
 import androidx.annotation.StringRes
+import uikit.extensions.badgeBlue
 import uikit.extensions.badgeDefault
 import uikit.extensions.badgeGreen
 import uikit.extensions.badgeOrange
@@ -24,6 +25,16 @@ fun SpannableStringBuilder.badgeGreen(
 ): SpannableStringBuilder {
     append(" ")
     return badgeGreen(context) {
+        append(context.getString(resId).uppercase())
+    }
+}
+
+fun SpannableStringBuilder.badgeBlue(
+    context: Context,
+    @StringRes resId: Int
+): SpannableStringBuilder {
+    append(" ")
+    return badgeBlue(context) {
         append(context.getString(resId).uppercase())
     }
 }

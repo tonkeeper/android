@@ -3,6 +3,7 @@ package com.tonapps.core.flags
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.core.content.edit
+import java.time.LocalDate
 
 @SuppressLint("StaticFieldLeak")
 object TooltipManager {
@@ -18,6 +19,8 @@ object TooltipManager {
         )
     }
 
+    private val shownInSession = mutableSetOf<String>()
+
     fun initialize(context: Context) {
         this.context = context
     }
@@ -29,6 +32,7 @@ object TooltipManager {
         if (state == TooltipState.NOT_SHOWN) {
             resetShowCount(tooltip)
             resetSession(tooltip)
+            resetDays(tooltip)
         }
     }
 
@@ -61,6 +65,56 @@ object TooltipManager {
         return true
     }
 
+    fun shouldShowToday(tooltip: TooltipKey, placement: String): Boolean {
+        when (getState(tooltip)) {
+            TooltipState.SHOWN -> return false
+            TooltipState.ALWAYS -> return true
+            else -> Unit
+        }
+
+        val today = LocalDate.now().toEpochDay()
+        if (prefs.getLong(placementDayKey(tooltip, placement), -1L) == today) {
+            return false
+        }
+
+        if (prefs.getLong(lastDayKey(tooltip), -1L) == today) {
+            return true
+        }
+
+        return getShowCount(tooltip) < tooltip.maxTimeToShow
+    }
+
+    fun markShownToday(tooltip: TooltipKey, placement: String) {
+        val today = LocalDate.now().toEpochDay()
+        if (prefs.getLong(lastDayKey(tooltip), -1L) != today) {
+            incrementShowCount(tooltip)
+            prefs.edit {
+                putLong(lastDayKey(tooltip), today)
+            }
+        }
+        prefs.edit {
+            putLong(placementDayKey(tooltip, placement), today)
+        }
+    }
+
+    private fun lastDayKey(tooltip: TooltipKey): String {
+        return "${tooltip.tooltipName}_last_day"
+    }
+
+    private fun placementDayKey(tooltip: TooltipKey, placement: String): String {
+        return "${tooltip.tooltipName}_day_$placement"
+    }
+
+    private fun resetDays(tooltip: TooltipKey) {
+        val placementPrefix = "${tooltip.tooltipName}_day_"
+        val keys = prefs.all.keys.filter { it.startsWith(placementPrefix) } + lastDayKey(tooltip)
+        prefs.edit {
+            for (key in keys) {
+                remove(key)
+            }
+        }
+    }
+
     fun getShowCount(tooltip: TooltipKey): Int {
         return prefs.getInt("${tooltip.tooltipName}_count", 0)
     }
@@ -76,8 +130,6 @@ object TooltipManager {
             remove("${tooltip.tooltipName}_count")
         }
     }
-
-    private val shownInSession = mutableSetOf<String>()
 
     fun wasShownInSession(tooltip: TooltipKey): Boolean {
         return tooltip.tooltipName in shownInSession

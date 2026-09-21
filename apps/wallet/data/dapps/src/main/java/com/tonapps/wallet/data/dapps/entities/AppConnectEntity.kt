@@ -20,8 +20,6 @@ data class AppConnectEntity(
     val type: Type,
     val appUrl: Uri,
     val keyPair: CryptoBox.KeyPair,
-    val proofSignature: String?,
-    val proofPayload: String?,
     val timestamp: Long = (System.currentTimeMillis() / 1000L),
     val pushEnabled: Boolean,
 ): Parcelable {

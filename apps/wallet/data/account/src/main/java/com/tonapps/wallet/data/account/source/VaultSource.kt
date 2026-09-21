@@ -5,6 +5,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.ton.extensions.decodePrivateKey
 import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.bus.core.IssueHelper
 import com.tonapps.extensions.putByteArray
 import com.tonapps.security.KeyHelperException
 import com.tonapps.security.Security
@@ -12,8 +13,9 @@ import com.tonapps.security.clear
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
+import org.ton.kotlin.crypto.mnemonic.Mnemonic
 
 internal class VaultSource(context: Context) {
 
@@ -56,8 +58,7 @@ internal class VaultSource(context: Context) {
 
             if (!success) {
                 throw KeyHelperException.AddMnemonic().also {
-                    FirebaseCrashlytics.getInstance()
-                        .recordException(it)
+                    IssueHelper.recordException(it)
                 }
             }
         } finally {
@@ -75,8 +76,7 @@ internal class VaultSource(context: Context) {
             val fromMnemonic = getPrivateKeyFromMnemonic(publicKey)
                 ?: run {
                     throw KeyHelperException.GetPkFromMnemonic().also {
-                        FirebaseCrashlytics.getInstance()
-                            .recordException(it)
+                        IssueHelper.recordException(it)
                     }
                 }
 
@@ -86,8 +86,7 @@ internal class VaultSource(context: Context) {
 
             if (!success) {
                 throw KeyHelperException.GetMnemonic().also {
-                    FirebaseCrashlytics.getInstance()
-                        .recordException(it)
+                    IssueHelper.recordException(it)
                 }
             }
 
@@ -99,7 +98,9 @@ internal class VaultSource(context: Context) {
 
     private fun getPrivateKeyFromMnemonic(publicKey: PublicKeyEd25519): PrivateKeyEd25519? {
         val mnemonic = getMnemonic(publicKey) ?: return null
-        val privateKey = MnemonicHelper.privateKey(mnemonic.toList())
+        val seed = Mnemonic(mnemonic.toList()).toSeed()
+        val privateKey = PrivateKeyEd25519(seed)
+        seed.clear()
         return privateKey
     }
 

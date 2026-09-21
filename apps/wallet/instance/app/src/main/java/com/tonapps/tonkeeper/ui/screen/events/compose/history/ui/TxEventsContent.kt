@@ -20,7 +20,7 @@ import com.tonapps.tonkeeper.ui.screen.events.compose.history.TxEventsAction
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filterIsInstance
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)

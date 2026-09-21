@@ -1,0 +1,156 @@
+# WalletConnect end to end from the in-app browser: open Aave, pick Keeper in
+# the dApp's wallet picker (ConnectKit "Other" → Reown "All Wallets" → search),
+# approve in the native "Connect to Aave?" sheet, check the dApp shows the
+# connected account, check Keeper's Connected tab lists Aave, then disconnect
+# from that tab so the next run (and browser_tabs_smoke) starts clean.
+#
+# WebView notes: dApp texts/ids are exposed to accessibility (cookie banner
+# ids too). The Reown search field is addressed relative to the header (see
+# below). The wallet tile is "Tonkeeper Tonkeeper" today and may
+# become "Keeper Keeper" after the TK-3495 rebrand reaches the WalletConnect
+# registry — the regex accepts both. `scroll` swipes the screen centre, which
+# is inside the ConnectKit grid — that reveals the "More" tile, which otherwise
+# sits under "Copy to Clipboard" and the tap lands on the button.
+#
+# Timing: the wc: pairing URI is minted when the dApp's picker opens and
+# expires 5 minutes later (Reown proposal TTL); approving after that fails
+# with ProposalDao getProposalByKey = null and the dApp never shows the
+# account. Every hierarchy read on the Aave page is slow (huge WebView tree),
+# so between "Connect wallet" on the dApp and "Connect wallet" in the native
+# sheet keep the command count minimal: tapOn waits for its element itself,
+# and the sheet is verified with a few key strings only.
+name: "Browser — WalletConnect Aave"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow: "../../../steps/browser/open_browser_tab.yaml"
+
+# The Browser remembers its last tab; Aave must be tapped on Explore, not in
+# the Connected list.
+- tapOn:
+    id: explore_tab
+- extendedWaitUntil:
+    visible:
+      text: Aave
+      id: name
+    timeout: 15000
+- tapOn:
+    text: Aave
+    id: name
+- extendedWaitUntil:
+    visible:
+      text: "app.aave.com"
+      id: host
+    timeout: 30000
+# Aave dashboard boot; cookie banner is optional.
+- extendedWaitUntil:
+    visible: "Connect wallet|avatar 0x.*"
+    timeout: 30000
+- tapOn:
+    id: rcc-decline-button
+    optional: true
+
+# Precondition: a leftover session from an aborted run — disconnect on the
+# dApp side first so the picker can be opened.
+- runFlow:
+    when:
+      visible: "avatar 0x.*"
+    commands:
+      - tapOn: "avatar 0x.*"
+      - extendedWaitUntil:
+          visible: "Disconnect"
+          timeout: 30000
+      - tapOn: "Disconnect"
+      - extendedWaitUntil:
+          visible: "Connect wallet"
+          timeout: 30000
+
+- tapOn: "Connect wallet"
+- tapOn: "^Other$"
+- waitForAnimationToEnd:
+    timeout: 3000
+- scroll
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "^More$"
+# The search field has no text, hint or id, and its placeholder is not exposed.
+# Box it in with the header instead: below the title, above the first wallet
+# tile ("<Name> <Name>"), right of the Back button and left of the centred
+# title. That excludes Back itself (the closest element below the title, which
+# is what Cloud tapped), the clear (×) button, the toggle and the QR icon.
+# Back/Close are matched by their accessibility labels.
+- tapOn:
+    below: "All Wallets"
+    above: "^(.+) \\1$"
+    rightOf: "^Back$"
+    leftOf: "All Wallets"
+- inputText: "keep"
+# Fail here, not on the tile, if the field never took focus.
+- extendedWaitUntil:
+    visible: "^keep$"
+    timeout: 10000
+# Search results come from the WalletConnect explorer API — give them time.
+# Tile text is "<Name> <Name>" today ("Tonkeeper Tonkeeper"); match any tile
+# whose name contains Keeper so the registry rename does not break it.
+- extendedWaitUntil:
+    visible:
+      text: ".*(Tonkeeper|Keeper).*"
+      below: "All Wallets"
+    timeout: 30000
+- tapOn:
+    text: ".*(Tonkeeper|Keeper).*"
+    below: "All Wallets"
+
+# Native Keeper sheet: title, requester, permissions. Networks is covered by
+# the tap anchor below.
+- extendedWaitUntil:
+    visible: "Connect to Aave?"
+    timeout: 30000
+- assertVisible: "app.aave.com is requesting access to your wallet:"
+- assertVisible: "View your wallet balance and activity"
+- assertVisible: "Request approval for transactions"
+- assertVisible: "This signature won't transfer your assets"
+# The dApp's own "Connect wallet" button is still in the hierarchy under the
+# sheet — pin the native one below Networks.
+- tapOn:
+    text: "Connect wallet"
+    below: "^Networks$"
+
+# dApp side: header shows the connected account, its modal shows the address.
+- extendedWaitUntil:
+    visible: "avatar 0x.*"
+    timeout: 30000
+- tapOn: "avatar 0x.*"
+- extendedWaitUntil:
+    visible: "Disconnect"
+    timeout: 30000
+- assertVisible:
+    text: "^Connected$"
+    below: "avatar 0x.*"
+- assertVisible: "^0x[0-9a-fA-F]{4}.{1,6}[0-9a-fA-F]{4}$"
+- assertVisible: "^[0-9.,]+ ETH$"
+
+# Keeper side: Connected tab lists the dApp.
+- tapOn:
+    id: "close"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    id: connected_tab
+- extendedWaitUntil:
+    visible:
+      text: Aave
+      id: name
+    timeout: 15000
+
+# Cleanup: long-press → "Disconnect Aave?" → empty Connected tab.
+- longPressOn:
+    text: Aave
+    id: name
+- extendedWaitUntil:
+    visible: "Disconnect Aave?"
+    timeout: 15000
+- tapOn: "^Disconnect$"
+- extendedWaitUntil:
+    visible: "Connected apps will be shown here"
+    timeout: 30000

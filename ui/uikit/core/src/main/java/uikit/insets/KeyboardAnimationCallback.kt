@@ -30,6 +30,7 @@ abstract class KeyboardAnimationCallback(
 
     private var lastOffset = 0
     private var isImeShown: Boolean = false
+    private var isImeAnimating = false
 
     init {
         view.doOnLayout {
@@ -46,6 +47,34 @@ abstract class KeyboardAnimationCallback(
             insets.bottomBarsOffset
         }
         keyboardOffsetChanged(offset, fraction)
+    }
+
+    override fun onPrepare(animation: WindowInsetsAnimationCompat) {
+        if (animation.typeMask and WindowInsetsCompat.Type.ime() != 0) {
+            isImeAnimating = true
+        }
+        super.onPrepare(animation)
+    }
+
+    override fun onEnd(animation: WindowInsetsAnimationCompat) {
+        super.onEnd(animation)
+        if (animation.typeMask and WindowInsetsCompat.Type.ime() != 0) {
+            isImeAnimating = false
+        }
+    }
+
+    fun applyWindowInsets(insets: WindowInsetsCompat) {
+        if (isImeAnimating) {
+            return
+        }
+        val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+        val offset = if (ignoreNavBar) imeBottom else insets.bottomBarsOffset
+        if (0 >= offset || offset == lastOffset) {
+            return
+        }
+        val isShowing = imeBottom > 0
+        lastOffset = offset
+        onKeyboardOffsetChanged(offset, if (isShowing) 1f else 0f, isShowing)
     }
 
     abstract fun onKeyboardOffsetChanged(offset: Int, progress: Float, isShowing: Boolean)

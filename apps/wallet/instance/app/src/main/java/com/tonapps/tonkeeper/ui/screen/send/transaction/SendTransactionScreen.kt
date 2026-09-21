@@ -24,7 +24,6 @@ import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.extensions.id
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
@@ -74,7 +73,16 @@ class SendTransactionScreen(wallet: WalletEntity) :
     }
 
     override val viewModel: SendTransactionViewModel by walletViewModel {
-        parametersOf(args.request, args.batteryTransactionType, args.forceRelayer, args.sendNativeFrom)
+        parametersOf(
+            args.request,
+            args.batteryTransactionType,
+            args.forceRelayer,
+            args.broadcastVia,
+            SendTransactionAnalyticsContext(
+                sendNativeFrom = args.sendNativeFrom,
+                transactionSentDetail = args.transactionSentDetail,
+            ),
+        )
     }
 
     private val feeMethodSelector: ActionSheet by lazy {
@@ -366,10 +374,21 @@ class SendTransactionScreen(wallet: WalletEntity) :
             request: SignRequestEntity,
             batteryTransactionType: BatteryTransaction = BatteryTransaction.UNKNOWN,
             forceRelayer: Boolean = false,
-            sendNativeFrom: Events.SendNative.SendNativeFrom? = null
+            broadcastVia: BroadcastVia = BroadcastVia.Default,
+            sendNativeFrom: Events.SendNative.SendNativeFrom? = null,
+            transactionSentDetail: Events.TransactionSent.TransactionSentCategoryDetail? = null,
         ): SendTransactionScreen {
             val screen = SendTransactionScreen(wallet)
-            screen.setArgs(SendTransactionArgs(request, batteryTransactionType, forceRelayer, sendNativeFrom))
+            screen.setArgs(
+                SendTransactionArgs(
+                    request = request,
+                    batteryTransactionType = batteryTransactionType,
+                    forceRelayer = forceRelayer,
+                    broadcastVia = broadcastVia,
+                    sendNativeFrom = sendNativeFrom,
+                    transactionSentDetail = transactionSentDetail,
+                )
+            )
             return screen
         }
 
@@ -379,14 +398,20 @@ class SendTransactionScreen(wallet: WalletEntity) :
             request: SignRequestEntity,
             batteryTxType: BatteryTransaction = BatteryTransaction.UNKNOWN,
             forceRelayer: Boolean = false,
+            broadcastVia: BroadcastVia = BroadcastVia.Default,
             sendNativeFrom: Events.SendNative.SendNativeFrom? = null,
+            transactionSentDetail: Events.TransactionSent.TransactionSentCategoryDetail? = null,
         ): String {
             val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
-            val fragment = newInstance(wallet, request, batteryTxType, forceRelayer, sendNativeFrom)
+            val fragment = newInstance(wallet, request, batteryTxType, forceRelayer, broadcastVia, sendNativeFrom, transactionSentDetail)
             val result = activity.addForResult(fragment)
             if (result.containsKey(ERROR)) {
-                val error = result.getParcelableCompat<BridgeError>(ERROR)!!
-                throw BridgeException(message = error.message)
+                // Type must stay in sync with `setErrorResult(BridgeException)` at line 216 —
+                // a previous mismatch (consumer read BridgeError, producer wrote BridgeException)
+                // made Bundle.getParcelable throw ClassCastException, which getParcelableCompat
+                // swallows to null and then `!!` blows up as an NPE downstream of the toast.
+                throw result.getParcelableCompat<BridgeException>(ERROR)
+                    ?: BridgeException(message = "Unknown bridge error")
             }
             val boc = result.getString(BOC)
             if (!boc.isNullOrBlank()) {

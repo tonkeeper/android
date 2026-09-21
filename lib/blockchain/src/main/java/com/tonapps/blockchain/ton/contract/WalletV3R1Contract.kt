@@ -1,15 +1,15 @@
 package com.tonapps.blockchain.ton.contract
 
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
-import org.ton.api.pub.PublicKeyEd25519
 import org.ton.bigint.BigInt
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.MessageRelaxed
-import org.ton.block.MsgAddress
+import org.ton.block.invoke
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.WalletTransfer
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.tlb.CellRef
 import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeRef
@@ -42,7 +42,7 @@ open class WalletV3R1Contract(
         validUntil: Long,
         seqNo: Int,
         internalMessage: Boolean,
-        queryId: BigInt?,
+        queryId: BigInteger?,
         vararg gifts: WalletTransfer
     ) = CellBuilder.createCell {
         if (gifts.size > maxMessages) {
@@ -57,7 +57,7 @@ open class WalletV3R1Contract(
             if (gift.sendMode > -1) {
                 sendMode = gift.sendMode
             }
-            val intMsg = CellRef(createIntMsg(gift))
+            val intMsg = CellRef(value = createIntMsg(gift), MessageRelaxed.tlbCodec(AnyTlbConstructor)) // TODO TONSDK
 
             storeUInt(sendMode, 8)
             storeRef(MessageRelaxed.tlbCodec(AnyTlbConstructor), intMsg)

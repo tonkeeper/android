@@ -39,6 +39,7 @@ class ChartHolder(
 
     init {
         chartView.onPointSelected = ::setPrice
+        chartView.emptyText = context.getString(Localization.no_price_data_available)
     }
 
     private fun setPrice(chart: ChartPoint?) {

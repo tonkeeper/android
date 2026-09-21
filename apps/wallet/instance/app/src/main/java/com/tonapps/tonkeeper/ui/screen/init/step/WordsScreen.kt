@@ -9,16 +9,18 @@ import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnLayout
+import androidx.core.view.doOnPreDraw
+import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.ton.TonMnemonic
+import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.tonkeeper.extensions.clipboardText
 import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.component.WordEditText
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
-import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.iconPrimaryColor
@@ -45,6 +47,7 @@ import uikit.widget.ColumnLayout
 import uikit.widget.LoaderView
 import uikit.widget.RowLayout
 import uikit.widget.TextHeaderView
+import uikit.widget.ToastView
 
 // TODO Need to refactor this screen
 class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
@@ -53,23 +56,31 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private val initViewModel: InitViewModel by viewModel(ownerProducer = { requireParentFragment() })
 
-    override val secure: Boolean = !BuildConfig.DEBUG
+    override val detectScreenCapture: Boolean = true
 
     private lateinit var scrollView: NestedScrollView
     private lateinit var contentView: ColumnLayout
     private lateinit var button: Button
     private lateinit var loaderView: LoaderView
     private lateinit var suggestionsView: RowLayout
+    private lateinit var pasteContainer: View
     private lateinit var words24View: AppCompatTextView
     private lateinit var words12View: AppCompatTextView
     private lateinit var titleView: TextHeaderView
 
     private var pendingScrollToBottom = false
+    private var keyboardOffset = 0
+    private var pasteBarHeight = 0
+    private var pasteBarVisible = false
 
     private val isVisibleSuggestions: Boolean
         get() = suggestionsView.visibility == View.VISIBLE && suggestionsView.alpha > 0f
 
     private lateinit var wordInputs: List<WordEditText>
+
+    override fun onScreenCaptured() {
+        navigation?.toast(Localization.screenshot_warning, ToastView.DURATION_LONG)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -105,7 +116,11 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         for ((index, wordInput) in wordInputs.withIndex()) {
             wordInput.doOnFocusChanged = { onFocusChange(index, it) }
             wordInput.doOnTextChanged = { onTextChanged(index, it) }
-            wordInput.imeOptions = if (isLastIndex(index)) EditorInfo.IME_ACTION_DONE else EditorInfo.IME_ACTION_NEXT
+            wordInput.imeOptions = if (isLastIndex(index)) {
+                EditorInfo.IME_ACTION_DONE
+            } else {
+                EditorInfo.IME_ACTION_NEXT
+            }
             wordInput.setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_NEXT && isVisibleSuggestions && suggestionsView.childCount == 1) {
                     autoSetWord(index)
@@ -128,14 +143,25 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             setColor(requireContext().backgroundContentTintColor)
         }
 
+        pasteContainer = view.findViewById(R.id.paste_container)
+        pasteBarVisible = pasteContainer.isVisible
+        pasteContainer.doOnLayout {
+            pasteBarHeight = it.height
+            it.post { applyBottomPadding() }
+        }
+        view.findViewById<View>(R.id.paste).setOnClickListener { paste() }
+        updatePasteVisibility()
+
         collectFlow(initViewModel.uiTopOffset) {
             contentView.updatePadding(top = it)
         }
 
         scrollView.doKeyboardAnimation { offset, progress, _ ->
-            scrollView.updatePadding(bottom = offset)
+            keyboardOffset = offset
+            applyBottomPadding()
             suggestionsView.translationY = -offset.toFloat()
             suggestionsView.alpha = progress
+            pasteContainer.translationY = -offset.toFloat()
             if (pendingScrollToBottom) {
                 if (progress >= 1f) {
                     pendingScrollToBottom = false
@@ -143,16 +169,49 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                 scrollView.post { scrollView.scrollDown(true) }
             }
         }
-        getCountFromClipboard()
+        setWordsCount(initViewModel.wordsCount)
     }
 
-    private fun getCountFromClipboard() {
-        val count = TonMnemonic.parseMnemonic(requireContext().clipboardText()).size
-        if (count == 12 || count == 24) {
-            setWordsCount(count)
-        } else {
-            setWordsCount(initViewModel.wordsCount)
+    private fun paste() {
+        val text = context?.clipboardText().orEmpty()
+        if (text.isBlank()) {
+            navigation?.toast(Localization.clipboard_empty)
+            return
         }
+        val words = MnemonicHelper.parseMnemonic(text)
+        if (words.size <= 1) {
+            return
+        }
+        applyWords(words)
+    }
+
+    private fun areWordInputsEmpty(): Boolean {
+        return wordInputs.none { it.isVisible && !it.text.isNullOrBlank() }
+    }
+
+    private fun updatePasteVisibility() {
+        val visible = areWordInputsEmpty()
+        if (pasteBarVisible == visible) {
+            return
+        }
+        pasteBarVisible = visible
+        applyBottomPadding()
+
+        pasteContainer.animate().cancel()
+        if (visible) {
+            pasteContainer.alpha = 0f
+            pasteContainer.isVisible = true
+        }
+        pasteContainer.animate()
+            .alpha(if (visible) 1f else 0f)
+            .setDuration(PASTE_FADE_DURATION)
+            .withEndAction { pasteContainer.isVisible = visible }
+            .start()
+    }
+
+    private fun applyBottomPadding() {
+        val pastePadding = if (pasteBarVisible) pasteBarHeight else 0
+        scrollView.updatePadding(bottom = keyboardOffset + pastePadding)
     }
 
     private fun isLastIndex(index: Int): Boolean {
@@ -180,7 +239,11 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private fun updateVisibleInputs() {
         for ((index, input) in wordInputs.withIndex()) {
-            input.visibility = if (index < initViewModel.wordsCount) View.VISIBLE else View.GONE
+            input.visibility = if (index < initViewModel.wordsCount) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         }
         checkWords()
     }
@@ -194,7 +257,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         val inputView = wordInputs.getOrNull(index) ?: return
         val text = inputView.text.toString()
         lifecycleScope.launch(Dispatchers.IO) {
-            val word = TonMnemonic.findWord(text)
+            val word = MnemonicHelper.findWord(text)
             if (!word.isNullOrBlank()) {
                 withContext(Dispatchers.Main) {
                     inputView.setText(word)
@@ -209,12 +272,21 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         lifecycleScope.launch {
             setLoading()
             val words = getMnemonic()
-            if (TonMnemonic.isValidTONKeychain(words)) {
-                navigation?.toast(Localization.multi_account_secret_wrong)
-            } else if (initViewModel.watchRecoveryAccountId != null && initViewModel.getRecoveryWatchWallet(words) == null) {
+            if (!initViewModel.isValidMnemonic(words)) {
+                initViewModel.trackImportInputError("invalid_mnemonic")
+                navigation?.toast(Localization.incorrect_phrase)
+                setDefault()
+                return@launch
+            }
+            if (initViewModel.watchRecoveryAccountId != null && initViewModel.getRecoveryWatchWallet(words) == null) {
+                initViewModel.trackImportInputError("recovery_mismatch")
                 navigation?.toast(Localization.mnemonic_match_error)
+            } else if (initViewModel.isWalletAlreadyImported(words)) {
+                initViewModel.trackImportInputError("already_imported")
+                navigation?.toast(Localization.wallet_already_imported)
             } else {
                 if (!initViewModel.setMnemonic(words)) {
+                    initViewModel.trackImportInputError("invalid_mnemonic")
                     navigation?.toast(Localization.incorrect_phrase)
                 }
             }
@@ -231,9 +303,9 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
     private fun setDefault() {
         button.setText(Localization.continue_action)
-        button.isEnabled = false
         loaderView.visibility = View.GONE
         wordInputs.forEach { it.isEnabled = true }
+        checkWords()
     }
 
     private fun onFocusChange(index: Int, hasFocus: Boolean) {
@@ -255,8 +327,9 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     }
 
     private fun onTextChanged(index: Int, editable: Editable) {
+        updatePasteVisibility()
         if (index == 0) {
-            val words = TonMnemonic.parseMnemonic(editable.toString())
+            val words = MnemonicHelper.parseMnemonic(editable.toString())
             postOnAnimation {
                 if (words.isNotEmpty()) {
                     applyWords(words)
@@ -277,7 +350,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             suggestionsView.visibility = View.GONE
         } else {
             lifecycleScope.launch(Dispatchers.IO) {
-                val words = TonMnemonic.findWords(text).take(3)
+                val words = MnemonicHelper.findWords(text).take(3)
                 if (words.size == 1 && words.first().equals(text, true)) {
                     setSuggestions(index, emptyList())
                 } else {
@@ -325,11 +398,31 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     }
 
     private fun applyWords(words: List<String>) {
-        if (words.size > 1) {
-            wordInputs.first().clear()
-            setWords(words)
-        } else {
+        if (words.size <= 1) {
             checkWords()
+            return
+        }
+
+        if (words.size == WORDS12 || words.size == WORDS24) {
+            // A pasted full phrase dictates the layout: switch the 12/24 toggle to match it.
+            setWordsCount(words.size)
+        }
+        wordInputs.first().clear()
+        setWords(words)
+
+        if (words.size != initViewModel.wordsCount) {
+            checkWords()
+            return
+        }
+
+        hideKeyboard()
+        scrollToBottomAfterRelayout()
+        checkWords(CHECK_WORDS_DELAY)
+    }
+
+    private fun scrollToBottomAfterRelayout() {
+        scrollView.doOnPreDraw {
+            scrollView.scrollDown(smooth = true)
         }
     }
 
@@ -342,14 +435,17 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         }
     }
 
-    private suspend fun getMnemonic(): List<String> = withContext(Dispatchers.IO) {
-        val words = wordInputs
-            .map { it.text?.toString() }
-            .filter { TonMnemonic.isValid(it) }
+    private suspend fun getMnemonic(): List<String> {
+        val (texts, visibleCount) = withContext(Dispatchers.Main.immediate) {
+            wordInputs.map { it.text?.toString() } to wordInputs.count { it.isVisible }
+        }
+
+        val words = texts
+            .filter { MnemonicHelper.isValid(it) } // TODO
             .filterNotNull()
             .take(initViewModel.wordsCount)
 
-        if (words.size == wordInputs.count { it.visibility == View.VISIBLE }) {
+        return if (words.size == visibleCount) {
             words
         } else {
             emptyList()
@@ -359,11 +455,6 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
     private fun setWords(list: List<String>) {
         for (i in list.indices) {
             wordInputs.getOrNull(i)?.setText(list[i])
-        }
-        if (list.size == initViewModel.wordsCount) {
-            hideKeyboard()
-            scrollView.scrollDown(true)
-            checkWords(500)
         }
     }
 
@@ -384,6 +475,8 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
 
         private const val WORDS24 = 24
         private const val WORDS12 = 12
+        private const val PASTE_FADE_DURATION = 120L
+        private const val CHECK_WORDS_DELAY = 500L
 
         private const val ARG_TESTNET = "testnet"
 

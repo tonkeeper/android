@@ -24,7 +24,7 @@ import ui.components.moon.MoonItemDivider
 import ui.components.moon.MoonLargeItemSubtitle
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonDescriptionCell
-import ui.components.moon.cell.MoonInfoCell
+import ui.components.moon.cell.MoonWarningCell
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.container.MoonScaffold
 import ui.components.moon.container.MoonSurface
@@ -72,7 +72,7 @@ private fun SelectNetworkContent(
         onClose = onClose,
         onBack = onBack,
     ) {
-        MoonInfoCell(
+        MoonWarningCell(
             text = stringResource(Localization.deposit_network_warning)
         )
 

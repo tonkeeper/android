@@ -30,7 +30,8 @@ internal class HintDrawable(private val context: Context): TextDrawable() {
         paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = context.textSecondaryColor
             textSize = 16f.sp
-            typeface = ResourcesCompat.getFont(context, uikit.R.font.montserrat_medium)
+            typeface = ResourcesCompat.getFont(context, uikit.R.font.tt_firs_neue_normal)
+            fontFeatureSettings = "'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"
         }
         singleLine = true
         gravity = Gravity.CENTER_VERTICAL

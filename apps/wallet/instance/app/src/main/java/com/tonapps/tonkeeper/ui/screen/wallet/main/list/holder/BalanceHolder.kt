@@ -13,6 +13,8 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.setPadding
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
 import com.tonapps.tonkeeper.core.BalanceType
@@ -24,7 +26,7 @@ import com.tonapps.tonkeeper.koin.settingsRepository
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
-import com.tonapps.tonkeeper.view.BatteryView
+import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.accentGreenColor
@@ -36,7 +38,6 @@ import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textSecondaryColor
-import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
@@ -80,10 +81,10 @@ class BalanceHolder(
 
     override fun onBind(item: Item.Balance) {
         batteryView.setOnClickListener {
-            Navigation.from(context)?.add(BatteryScreen.newInstance(item.wallet, from = "wallet"))
+            Navigation.from(context)?.add(BatteryScreen.newInstance(item.wallet, from = BatteryNativeFrom.Wallet))
         }
         backupIconContainerView.setOnClickListener {
-            Navigation.from(context)?.add(BackupScreen.newInstance(item.wallet))
+            Navigation.from(context)?.add(BackupScreen.newInstance(WalletFlowSource.WalletSetupSection))
         }
 
         if (item.hiddenBalance) {
@@ -166,7 +167,7 @@ class BalanceHolder(
             }
             else -> {
                 walletLoaderView.visibility = View.GONE
-                setWalletAddressWithType(wallet.address.shortAddress, wallet.type, wallet.version, showYourAddress)
+                setWalletAddressWithType(wallet.address, wallet.type, wallet.version, showYourAddress)
                 walletAddressView.setTextColor(context.textSecondaryColor)
                 walletAddressView.setOnClickListener {
                     val walletType = wallet.type
@@ -190,7 +191,11 @@ class BalanceHolder(
         var builder = SpannableStringBuilder()
 
         if (showYourAddress) {
-            val prefix = if (type == WalletType.Watch) getString(Localization.address_prefix) else getString(Localization.your_address)
+            val prefix = if (type == WalletType.Watch) {
+                getString(Localization.address_prefix)
+            } else {
+                getString(Localization.your_address)
+            }
             builder.append(prefix)
             builder.append(" ")
         }
@@ -216,6 +221,7 @@ class BalanceHolder(
             WalletType.Tetra -> builder.badgeOrange(context, Localization.tetra)
             WalletType.Default -> builder
             WalletType.Lockup -> builder
+            WalletType.Multichain -> builder
         }
 
         walletAddressView.text = builder

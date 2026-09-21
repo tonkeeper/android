@@ -15,6 +15,42 @@ plugins {
     alias(libs.plugins.ksp) apply false
 }
 
+//buildscript {
+//    buildscript.configurations.configureEach {
+//        resolutionStrategy.activateDependencyLocking()
+//    }
+//
+//    dependencyLocking {
+//        lockAllConfigurations()
+////        lockMode.set(LockMode.STRICT)
+//    }
+//}
+
+allprojects {
+    configurations.all {
+        exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
+        exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
+        resolutionStrategy {
+            force("org.bouncycastle:bcprov-jdk18on:1.80")
+            force("org.bouncycastle:bcpkix-jdk18on:1.80")
+            force("org.bouncycastle:bcutil-jdk18on:1.80")
+        }
+    }
+
+    tasks.register("resolveAllDependencies") {
+        notCompatibleWithConfigurationCache("Resolves configurations at execution time")
+        doLast {
+            configurations
+                .filter { it.isCanBeResolved }
+                .forEach {
+                    runCatching { it.resolve() }
+                        .onFailure { e -> logger.warn("Skip ${it.name}: ${e.message}") }
+                }
+        }
+    }
+}
+
+
 allprojects {
     pluginManager.withPlugin("android") {
         configure<ApplicationExtension> {

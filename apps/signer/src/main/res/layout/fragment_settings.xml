@@ -65,7 +65,8 @@
                     android:gravity="center"
                     android:textSize="14sp"
                     android:textColor="?attr/textPrimaryColor"
-                    android:fontFamily="@font/montserrat_semi_bold"/>
+                    android:fontFamily="@font/tt_firs_neue_medium"
+                    android:fontFeatureSettings="'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"/>
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/version"
@@ -76,7 +77,8 @@
                     android:gravity="center"
                     android:textSize="12sp"
                     android:textColor="?attr/textSecondaryColor"
-                    android:fontFamily="@font/montserrat_medium"/>
+                    android:fontFamily="@font/tt_firs_neue_normal"
+                    android:fontFeatureSettings="'ss07' on, 'ss09' on, 'ss17' on, 'ss18' on"/>
             </androidx.appcompat.widget.LinearLayoutCompat>
 
         </androidx.appcompat.widget.LinearLayoutCompat>

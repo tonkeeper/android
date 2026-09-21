@@ -14,9 +14,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Табы на экране Assets.
+ * Табы на экране Assets. Актуальные значения: all, tokens, perpetuals. all — все активы (perp-рынки только при show_perps=true); tokens — все активы кроме perp-рынков; perpetuals — только perp-рынки (lighter/...). stocks/etfs/commodities оставлены для обратной совместимости и работают как раньше; новые клиенты вместо них используют tab=all|tokens вместе с filter. 
  *
- * Values: all,tokens,stocks,etfs
+ * Values: all,tokens,stocks,etfs,commodities,perpetuals
  */
 @Serializable
 enum class AssetsTab(val value: String) {
@@ -27,7 +27,11 @@ enum class AssetsTab(val value: String) {
     @SerialName(value = "stocks")
     stocks("stocks"),
     @SerialName(value = "etfs")
-    etfs("etfs");
+    etfs("etfs"),
+    @SerialName(value = "commodities")
+    commodities("commodities"),
+    @SerialName(value = "perpetuals")
+    perpetuals("perpetuals");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

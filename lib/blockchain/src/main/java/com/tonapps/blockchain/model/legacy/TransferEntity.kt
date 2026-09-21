@@ -9,11 +9,12 @@ import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.asCellRef
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.toAccountId
+import com.tonapps.blockchain.ton.toBigInt
 import com.tonapps.extensions.toByteArray
 import com.tonapps.icu.Coins
 import io.ktor.util.hex
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.block.StateInit
 import org.ton.cell.Cell
@@ -21,7 +22,7 @@ import org.ton.cell.CellBuilder
 import org.ton.contract.wallet.MessageData
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.contract.wallet.WalletTransferBuilder
-import org.ton.crypto.SecureRandom
+import org.ton.kotlin.crypto.SecureRandom
 import org.ton.tlb.CellRef
 import java.math.BigInteger
 import java.nio.ByteOrder
@@ -47,7 +48,7 @@ data class TransferEntity(
         get() = wallet.contract
 
     val fakePrivateKey: PrivateKeyEd25519 by lazy {
-        if (commentEncrypted) PrivateKeyEd25519() else EmptyPrivateKeyEd25519.invoke()
+        EmptyPrivateKeyEd25519.invoke() // TODO TONSDK if (commentEncrypted) PrivateKeyEd25519() else
     }
 
     val isTon: Boolean
@@ -57,13 +58,7 @@ data class TransferEntity(
         get() = nftAddress != null
 
     val stateInitRef: CellRef<StateInit>?
-        get() {
-            return if (0 >= seqno) {
-                tokenPayload?.stateInit ?: contract.stateInitRef
-            } else {
-                tokenPayload?.stateInit
-            }
-        }
+        get() = tokenPayload?.stateInit
 
     val testnet: Boolean
         get() = wallet.testnet
@@ -84,7 +79,7 @@ data class TransferEntity(
 
     val coins: org.ton.block.Coins
         get() {
-            return org.ton.block.Coins.ofNano(amount.toBigInteger())
+            return org.ton.block.Coins.ofNano(amount.toBigInteger().toBigInt())
         }
 
     fun getCommentForwardPayload(privateKey: PrivateKeyEd25519? = null): Cell? {
@@ -126,7 +121,7 @@ data class TransferEntity(
             builder.coins = coins
             builder.destination = destination
         }
-        builder.messageData = MessageData.Raw(body, stateInitRef)
+        builder.messageData = MessageData.Raw(body, stateInitRef, null) // TODO TONSDK
         return builder.build()
     }
 
@@ -270,7 +265,7 @@ data class TransferEntity(
 
         val builder = WalletTransferBuilder()
         builder.bounceable = true
-        builder.messageData = MessageData.Raw(body, stateInitRef)
+        builder.messageData = MessageData.Raw(body, stateInitRef, null) // TODO TONSDK
         builder.coins = POINT_ONE_TON.toGrams()
         builder.destination = AddrStd.Companion.parse(token.walletAddress)
 
@@ -354,9 +349,9 @@ data class TransferEntity(
 
     companion object {
 
-        val BASE_FORWARD_AMOUNT = Coins.Companion.of(0.05, 9)
-        val ONE_TON = Coins.Companion.ONE
-        val POINT_ONE_TON = Coins.Companion.of(0.1, 9)
+        val BASE_FORWARD_AMOUNT = Coins.of(0.05, 9)
+        val ONE_TON = Coins.ONE
+        val POINT_ONE_TON = Coins.of(0.1, 9)
 
         fun newWalletQueryId(): BigInteger {
             return try {

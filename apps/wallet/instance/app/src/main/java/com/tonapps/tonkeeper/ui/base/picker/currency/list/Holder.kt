@@ -4,12 +4,10 @@ import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.tonkeeper.extensions.spannableCode
 import com.tonapps.tonkeeper.ui.component.CountryFlagView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListHolder
-import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 
@@ -28,11 +26,7 @@ class Holder(
         applyDrawableRes(item.drawableRes)
         applyImageUri(item.iconUri)
         symbolView.text = item.currency.spannableCode(context)
-        nameView.text = if (item.extra.isEmpty() && item.currency.code == WalletCurrency.GRAM_KEY) {
-            context.getString(Localization.toncoin)
-        } else {
-            item.name
-        }
+        nameView.text = item.name
         itemView.setOnClickListener { onClick(item) }
     }
 

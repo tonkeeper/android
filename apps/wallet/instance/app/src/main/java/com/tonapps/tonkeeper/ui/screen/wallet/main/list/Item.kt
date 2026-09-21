@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.wallet.main.list
 
-import android.content.Context
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
@@ -23,17 +22,19 @@ import com.tonapps.extensions.writeEnum
 import com.tonapps.extensions.writeNullableInt
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.lib.blockchain.R
 import com.tonapps.tonkeeper.manager.apk.APKManager
-import com.tonapps.tonkeeper.view.BatteryView
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.BannerEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
+import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import kotlinx.parcelize.IgnoredOnParcel
+import uikit.widget.BatteryView
 import java.math.BigDecimal
 import java.math.RoundingMode
 import com.tonapps.uikit.icon.UIKitIcon
@@ -48,8 +49,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         const val TYPE_SPACE = 3
         const val TYPE_SKELETON = 4
         const val TYPE_PUSH = 5
-        const val TYPE_TITLE = 6
-        const val TYPE_MANAGE = 7
         const val TYPE_ALERT = 8
         const val TYPE_SETUP_TITLE = 9
         const val TYPE_SETUP_SWITCH = 10
@@ -58,6 +57,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         const val TYPE_APK_STATUS = 13
         const val TYPE_RENEW_DOMAINS = 14
         const val TYPE_BANNERS = 15
+        const val TYPE_COLLECTIBLES = 16
+        const val TYPE_MORE_ASSETS = 17
+        const val TYPE_ASSETS_HEADER = 18
 
         fun createFromParcel(parcel: Parcel): Item {
             return when (parcel.readInt()) {
@@ -67,7 +69,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
                 TYPE_SPACE -> Space(parcel)
                 TYPE_SKELETON -> Skeleton(parcel)
                 TYPE_PUSH -> Push(parcel)
-                TYPE_MANAGE -> Manage(parcel)
                 TYPE_SETUP_TITLE -> SetupTitle(parcel)
                 TYPE_SETUP_SWITCH -> SetupSwitch(parcel)
                 TYPE_SETUP_LINK -> SetupLink(parcel)
@@ -75,6 +76,9 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
                 TYPE_APK_STATUS -> ApkStatus(parcel)
                 TYPE_RENEW_DOMAINS -> RenewDomains(parcel)
                 TYPE_BANNERS -> Banners(parcel)
+                TYPE_COLLECTIBLES -> Collectibles(parcel)
+                TYPE_MORE_ASSETS -> MoreAssets(parcel)
+                TYPE_ASSETS_HEADER -> AssetsHeader(parcel)
                 else -> throw IllegalArgumentException("Unknown type")
             }
         }
@@ -199,7 +203,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val wallet: WalletEntity,
         val token: TokenEntity,
         val swapUri: Uri,
-        val tronEnabled: Boolean,
         val isSwapDisabled: Boolean,
         val isStakingDisabled: Boolean,
         val isExchangeDisabled: Boolean
@@ -217,7 +220,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat(),
             parcel.readBooleanCompat()
         )
 
@@ -225,7 +227,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeParcelable(wallet, flags)
             dest.writeParcelable(token, flags)
             dest.writeParcelable(swapUri, flags)
-            dest.writeBooleanCompat(tronEnabled)
             dest.writeBooleanCompat(isSwapDisabled)
             dest.writeBooleanCompat(isStakingDisabled)
             dest.writeBooleanCompat(isExchangeDisabled)
@@ -257,6 +258,75 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             override fun createFromParcel(parcel: Parcel) = Banners(parcel)
 
             override fun newArray(size: Int): Array<Banners?> = arrayOfNulls(size)
+        }
+    }
+
+    data class Collectibles(
+        val wallet: WalletEntity,
+        val nfts: List<NftEntity>,
+        val allHidden: Boolean = false,
+    ): Item(TYPE_COLLECTIBLES) {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readParcelableCompat()!!,
+            parcel.readArrayCompat(NftEntity::class.java)?.toList() ?: emptyList(),
+            parcel.readBooleanCompat(),
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeParcelable(wallet, flags)
+            dest.writeArrayCompat(nfts.toTypedArray())
+            dest.writeBooleanCompat(allHidden)
+        }
+
+        companion object CREATOR : Parcelable.Creator<Collectibles> {
+            override fun createFromParcel(parcel: Parcel) = Collectibles(parcel)
+
+            override fun newArray(size: Int): Array<Collectibles?> = arrayOfNulls(size)
+        }
+    }
+
+    data class MoreAssets(
+        val position: ListCell.Position,
+        val wallet: WalletEntity,
+        val iconUris: List<Uri>
+    ): Item(TYPE_MORE_ASSETS) {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readEnum(ListCell.Position::class.java)!!,
+            parcel.readParcelableCompat()!!,
+            parcel.readArrayCompat(Uri::class.java)?.toList() ?: emptyList()
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeEnum(position)
+            dest.writeParcelable(wallet, flags)
+            dest.writeArrayCompat(iconUris.toTypedArray())
+        }
+
+        companion object CREATOR : Parcelable.Creator<MoreAssets> {
+            override fun createFromParcel(parcel: Parcel) = MoreAssets(parcel)
+
+            override fun newArray(size: Int): Array<MoreAssets?> = arrayOfNulls(size)
+        }
+    }
+
+    data class AssetsHeader(
+        val wallet: WalletEntity
+    ): Item(TYPE_ASSETS_HEADER) {
+
+        constructor(parcel: Parcel) : this(
+            parcel.readParcelableCompat<WalletEntity>()!!
+        )
+
+        override fun marshall(dest: Parcel, flags: Int) {
+            dest.writeParcelable(wallet, flags)
+        }
+
+        companion object CREATOR : Parcelable.Creator<AssetsHeader> {
+            override fun createFromParcel(parcel: Parcel) = AssetsHeader(parcel)
+
+            override fun newArray(size: Int): Array<AssetsHeader?> = arrayOfNulls(size)
         }
     }
 
@@ -389,17 +459,18 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             symbol = token.symbol,
             name = token.name,
             balance = token.balance.value,
-            balanceFormat = CurrencyFormatter.format(value = token.balance.uiBalance),
+            balanceFormat = CurrencyFormatter.format(value = token.balance.uiBalance, compact = true),
             fiat = token.fiat,
-            fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat),
+            fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat, compact = true),
             rate = if (token.isUsdt || token.isTrc20) {
                 CurrencyFormatter.formatFiat(
                     currency = currencyCode,
                     value = token.rateNow,
-                    roundingMode = RoundingMode.UP
+                    roundingMode = RoundingMode.UP,
+                    compact = true
                 )
             } else {
-                CurrencyFormatter.formatFiat(currencyCode, token.rateNow)
+                CurrencyFormatter.formatFiat(currencyCode, token.rateNow, compact = true)
             },
             rateDiff24h = token.rateDiff24h,
             verified = token.verified,
@@ -543,48 +614,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             override fun createFromParcel(parcel: Parcel) = Push(parcel)
 
             override fun newArray(size: Int): Array<Push?> = arrayOfNulls(size)
-        }
-    }
-
-    data class Title(
-        val title: CharSequence
-    ): Item(TYPE_TITLE) {
-
-        constructor(context: Context, resId: Int) : this(
-            context.getText(resId)
-        )
-
-        constructor(parcel: Parcel) : this(
-            parcel.readCharSequenceCompat()!!
-        )
-
-        override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeCharSequenceCompat(title)
-        }
-
-        companion object CREATOR : Parcelable.Creator<Title> {
-            override fun createFromParcel(parcel: Parcel) = Title(parcel)
-
-            override fun newArray(size: Int): Array<Title?> = arrayOfNulls(size)
-        }
-    }
-
-    data class Manage(
-        val wallet: WalletEntity
-    ): Item(TYPE_MANAGE) {
-
-        constructor(parcel: Parcel) : this(
-            parcel.readParcelableCompat<WalletEntity>()!!
-        )
-
-        override fun marshall(dest: Parcel, flags: Int) {
-            dest.writeParcelable(wallet, flags)
-        }
-
-        companion object CREATOR : Parcelable.Creator<Manage> {
-            override fun createFromParcel(parcel: Parcel) = Manage(parcel)
-
-            override fun newArray(size: Int): Array<Manage?> = arrayOfNulls(size)
         }
     }
 

@@ -19,6 +19,9 @@ data class BrowserCategoryEntity(
     )
 
     companion object {
+
+        val CHAIN_INDEPENDENT_IDS = setOf("digital_nomads", "ads")
+
         fun parse(array: JSONArray): List<BrowserCategoryEntity> {
             return (0 until array.length()).map { BrowserCategoryEntity(array.getJSONObject(it)) }
         }

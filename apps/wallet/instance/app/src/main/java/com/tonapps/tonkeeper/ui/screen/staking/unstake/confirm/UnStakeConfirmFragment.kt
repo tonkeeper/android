@@ -6,6 +6,7 @@ import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.extensions.short12
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
+import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
@@ -70,7 +71,13 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
             amountView.description = fiatFormat.withCustomSymbol(requireContext())
         }
 
-        collectFlow(primaryViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
+        collectFlow(primaryViewModel.requestFeeFormat().catch {
+            L.e(it)
+            feeView.setDefault()
+            feeView.value = "—"
+            feeView.description = null
+            button.isEnabled = true
+        }) { (feeFormat, feeFiatFormat) ->
             feeView.setDefault()
             feeView.value = "≈ " + feeFormat.withCustomSymbol(requireContext())
             feeView.description = "≈ " + feeFiatFormat.withCustomSymbol(requireContext())
@@ -87,7 +94,11 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
     private fun unStake() {
         setTaskState(ProcessTaskView.State.LOADING)
         primaryViewModel.unStake(requireContext()).catch { e ->
-            val state = if (e is CancellationException) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
+            val state = if (e is CancellationException) {
+                ProcessTaskView.State.DEFAULT
+            } else {
+                ProcessTaskView.State.FAILED
+            }
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)

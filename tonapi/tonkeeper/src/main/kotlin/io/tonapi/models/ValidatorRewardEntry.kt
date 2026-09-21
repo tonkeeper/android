@@ -24,7 +24,7 @@ data class ValidatorRewardEntry(
     @SerialName(value = "public_key")
     val publicKey: String,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "effective_stake")
     val effectiveStake: Long,
 
@@ -32,7 +32,7 @@ data class ValidatorRewardEntry(
     @SerialName(value = "weight")
     val weight: Double,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "reward")
     val reward: Long,
 
@@ -48,11 +48,11 @@ data class ValidatorRewardEntry(
     @SerialName(value = "validator_address")
     val validatorAddress: String? = null,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "validator_stake")
     val validatorStake: Long? = null,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "nominators_stake")
     val nominatorsStake: Long? = null,
 

@@ -37,7 +37,6 @@ fun TxDetailsComposable(
     TKModalScaffold(
         horizontalAlignment = Alignment.CenterHorizontally,
         onCloseClick = onCloseClick,
-        headerLeftButton = { TxActionsMenu(viewModel) },
         actionBar = {
             ContentCrossfade(
                 targetState = spam,

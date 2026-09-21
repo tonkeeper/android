@@ -5,10 +5,8 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.settings.list.Item
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
@@ -16,7 +14,6 @@ import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
@@ -28,9 +25,6 @@ class BatterySettingsViewModel(
     private val batteryRepository: BatteryRepository,
     private val api: API,
 ) : BaseWalletVM(app) {
-
-    val tronUsdtEnabled: Boolean
-        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
 
     val titleFlow = batteryRepository.balanceUpdatedFlow.map { _ ->
         val batteryBalance = getBatteryBalance(wallet)
@@ -55,11 +49,7 @@ class BatterySettingsViewModel(
 
         val types = BatteryTransaction.entries
 
-        val size = if (tronUsdtEnabled) {
-            types.size + 1
-        } else {
-            types.size
-        }
+        val size = types.size + 1
 
         for ((index, type) in types.withIndex()) {
             val position = ListCell.getPosition(size, index)
@@ -76,18 +66,16 @@ class BatterySettingsViewModel(
             uiItems.add(item)
         }
 
-        if (tronUsdtEnabled) {
-            uiItems.add(
-                Item.SupportedTransaction(
-                    wallet = wallet,
-                    position = ListCell.Position.LAST,
-                    supportedTransaction = BatteryTransaction.TRC20,
-                    enabled = true,
-                    showToggle = hasBalance,
-                    changes = batteryConfig.meanPrices.batteryMeanPriceTronUsdt ?: 0,
-                )
+        uiItems.add(
+            Item.SupportedTransaction(
+                wallet = wallet,
+                position = ListCell.Position.LAST,
+                supportedTransaction = BatteryTransaction.TRC20,
+                enabled = true,
+                showToggle = hasBalance,
+                changes = batteryConfig.meanPrices.batteryMeanPriceTronUsdt ?: 0,
             )
-        }
+        )
 
         uiItems.toList()
     }.flowOn(Dispatchers.IO)
@@ -95,13 +83,7 @@ class BatterySettingsViewModel(
     private suspend fun getBatteryBalance(
         wallet: WalletEntity
     ): BatteryBalanceEntity {
-        val tonProofToken =
-            accountRepository.requestTonProofToken(wallet) ?: return BatteryBalanceEntity.Empty
-        return batteryRepository.getBalance(
-            tonProofToken = tonProofToken,
-            publicKey = wallet.publicKey,
-            network = wallet.network
-        )
+        return batteryRepository.getBalance(wallet)
     }
 
     private suspend fun getBatteryConfig(

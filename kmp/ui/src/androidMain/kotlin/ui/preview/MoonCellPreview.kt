@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import ui.components.moon.MoonAccentButton
@@ -41,13 +42,13 @@ import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.MoonBundleTitleCell
-import ui.components.moon.cell.MoonButtonCell
+import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.cell.MoonButtonCellDefaults
 import ui.components.moon.cell.MoonCardCell
 import ui.components.moon.cell.MoonDescriptionCell
 import ui.components.moon.cell.MoonEmptyCell
 import ui.components.moon.cell.MoonErrorCell
-import ui.components.moon.cell.MoonInfoCell
+import ui.components.moon.cell.MoonWarningCell
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.MoonPropertyCell
 import ui.components.moon.cell.MoonRetryCell
@@ -78,8 +79,42 @@ private fun SliderPreview() {
     ThemedPreview {
         MoonSlideConfirmation(
             state = MoonSlideConfirmationState.Slider,
-            title = "Title",
+            title = "Confirm",
+            subtitle = "Swipe right",
+            buttonTitle = "Try Again",
             onConfirm = {},
+            onDone = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SliderRtlPreview() {
+    ThemedPreview(layoutDirection = LayoutDirection.Rtl) {
+        MoonSlideConfirmation(
+            state = MoonSlideConfirmationState.Slider,
+            title = "אישור",
+            subtitle = "החלק שמאלה",
+            buttonTitle = "נסה שוב",
+            onConfirm = {},
+            onDone = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SliderErrorPreview() {
+    ThemedPreview {
+        MoonSlideConfirmation(
+            state = MoonSlideConfirmationState.Slider,
+            title = "Confirm",
+            subtitle = "Swipe right",
+            error = "Transaction failed",
+            buttonTitle = "Try Again",
+            onConfirm = {},
+            onClick = {},
             onDone = {}
         )
     }
@@ -442,7 +477,7 @@ private fun MoonCardCellPreview() {
 @Composable
 private fun MoonInfoCellPreview() {
     ThemedPreview {
-        MoonInfoCell(text = "Minimum deposit amount is 0.01 TON")
+        MoonWarningCell(text = "Minimum deposit amount is 0.01 TON")
     }
 }
 
@@ -475,16 +510,16 @@ private fun MoonTextFieldCellPreview() {
 
 @Preview
 @Composable
-private fun MoonButtonCellPreview() {
+private fun MoonBottomButtonCellPreview() {
     ThemedPreview {
         Column {
-            MoonButtonCell(text = "Continue", onClick = {})
-            MoonButtonCell(
+            MoonBottomButtonCell(text = "Continue", onClick = {})
+            MoonBottomButtonCell(
                 text = "Secondary",
                 colors = MoonButtonCellDefaults.ButtonColorsSecondary,
                 onClick = {}
             )
-            MoonButtonCell(text = "Disabled", enabled = false, onClick = {})
+            MoonBottomButtonCell(text = "Disabled", enabled = false, onClick = {})
         }
     }
 }

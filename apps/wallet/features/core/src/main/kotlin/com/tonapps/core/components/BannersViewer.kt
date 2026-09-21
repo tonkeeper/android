@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,6 +48,10 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import androidx.core.net.toUri
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events.HomeBanner.HomeBannerAction
+import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.entity.BannerEntity
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +63,7 @@ import ui.theme.modifiers.modifyIf
 import kotlin.math.abs
 
 private val BannerHeight = 90.dp
+private val BannerImageSlotWidth = 134.dp
 private val BannerBackPeek = 16.dp
 private val BannerBottomMargin = 16.dp
 private val BannerSideMargin = 16.dp
@@ -77,12 +84,34 @@ fun BannersViewer(
 ) {
     val scope = rememberCoroutineScope()
     val state = remember(banners) { BannerCarouselState(banners, scope) }
+    val currentBannerId = state.current?.id
+    val clickedBannerIds = remember(currentBannerId) { mutableSetOf<String>() }
+
+    LaunchedEffect(currentBannerId) {
+        val banner = state.current ?: return@LaunchedEffect
+        AnalyticsHelper.Default.events.homeBanner.bannerView(banner.id)
+    }
+
+    val trackingClick: (BannerEntity, BannerEntity.Button) -> Unit = { banner, button ->
+        if (clickedBannerIds.add(banner.id)) {
+            AnalyticsHelper.Default.events.homeBanner.bannerClick(banner.id, bannerAction(button))
+        }
+        onClick(button)
+    }
     val widthPx = LocalWindowInfo.current.containerSize.width.toFloat()
     val peekHeight by animateDpAsState(
-        targetValue = if (state.size > 1) BannerBackPeek else 0.dp,
+        targetValue = if (state.size > 1) {
+            BannerBackPeek
+        } else {
+            0.dp
+        },
         label = "bannerPeekHeight",
     )
-    val collapseFraction = if (state.collapsing) state.fade.value else 0f
+    val collapseFraction = if (state.collapsing) {
+        state.fade.value
+    } else {
+        0f
+    }
     val containerHeight = if (state.items.isEmpty()) {
         0.dp
     } else {
@@ -96,7 +125,7 @@ fun BannersViewer(
             BackBanner(
                 banner = next,
                 promote = state.promote,
-                onClick = onClick,
+                onClick = { button -> trackingClick(next, button) },
             )
         }
 
@@ -105,7 +134,7 @@ fun BannersViewer(
             offsetX = state.offsetX,
             fade = state.fade.value,
             draggable = state.size > 1 && !state.isAnimating,
-            onClick = onClick,
+            onClick = { button -> trackingClick(current, button) },
             onHide = { state.hide(onHide) },
             onDrag = { delta -> state.drag(delta, widthPx) },
             onDragStopped = { state.dragStopped(widthPx) },
@@ -134,10 +163,18 @@ private class BannerCarouselState(
     val size: Int get() = items.size
 
     val current: BannerEntity?
-        get() = if (items.isEmpty()) null else items[index % items.size]
+        get() = if (items.isEmpty()) {
+            null
+        } else {
+            items[index % items.size]
+        }
 
     val next: BannerEntity?
-        get() = if (items.size > 1) items[(index + 1) % items.size] else null
+        get() = if (items.size > 1) {
+            items[(index + 1) % items.size]
+        } else {
+            null
+        }
 
     fun drag(delta: Float, widthPx: Float) {
         offsetX += delta
@@ -146,7 +183,12 @@ private class BannerCarouselState(
 
     fun dragStopped(widthPx: Float) {
         if (abs(offsetX) > widthPx * DismissThreshold) {
-            advance(if (offsetX > 0) 1f else -1f, widthPx)
+            val direction = if (offsetX > 0) {
+                1f
+            } else {
+                -1f
+            }
+            advance(direction, widthPx)
         } else {
             scope.launch {
                 launch { animateOffset(0f, ReturnDurationMs) }
@@ -204,7 +246,11 @@ private class BannerCarouselState(
         collapsing = next == null
         scope.launch {
             val fadeOut = launch { fade.animateTo(1f, tween(SlideDurationMs)) }
-            val rise = launch { if (size > 1) animatePromote(1f, SlideDurationMs) }
+            val rise = launch {
+                if (size > 1) {
+                    animatePromote(1f, SlideDurationMs)
+                }
+            }
             fadeOut.join()
             rise.join()
 
@@ -303,6 +349,14 @@ private fun BannerCard(
                 }
             }
     ) {
+        banner.image?.let { image ->
+            MoonAsyncImage(
+                image = image,
+                modifier = Modifier.matchParentSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.FillHeight,
+            )
+        }
         Row(
             modifier = Modifier.fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically,
@@ -331,6 +385,7 @@ private fun BannerCard(
                             style = UIKit.typography.body3,
                             color = foregroundColor,
                         )
+
                         Icon(
                             modifier = Modifier
                                 .padding(start = 2.dp)
@@ -343,14 +398,8 @@ private fun BannerCard(
                 }
             }
 
-            banner.image?.let { image ->
-                MoonAsyncImage(
-                    image = image,
-                    modifier = Modifier
-                        .width(134.dp)
-                        .height(BannerHeight),
-                    contentScale = ContentScale.Crop,
-                )
+            banner.image?.let {
+                Spacer(modifier = Modifier.width(BannerImageSlotWidth))
             }
         }
 
@@ -390,6 +439,26 @@ private fun BannerCard(
             )
         }
     }
+}
+
+private fun bannerAction(button: BannerEntity.Button): HomeBannerAction {
+    if (button.type != BannerEntity.Button.Type.DEEPLINK) {
+        return HomeBannerAction.Other
+    }
+    return runCatching {
+        when (DeepLinkRoute.resolve(button.payload.toUri())) {
+            is DeepLinkRoute.Deposit, DeepLinkRoute.Purchase -> HomeBannerAction.Deposit
+            is DeepLinkRoute.Withdraw -> HomeBannerAction.Withdraw
+            is DeepLinkRoute.Swap -> HomeBannerAction.Swap
+            DeepLinkRoute.Staking, is DeepLinkRoute.StakingPool -> HomeBannerAction.Staking
+            is DeepLinkRoute.Battery -> HomeBannerAction.Battery
+            is DeepLinkRoute.Send, is DeepLinkRoute.Transfer -> HomeBannerAction.Send
+            is DeepLinkRoute.Tabs.Trading, is DeepLinkRoute.Asset -> HomeBannerAction.Trade
+            is DeepLinkRoute.Exchange -> HomeBannerAction.Exchange
+            is DeepLinkRoute.DApp, is DeepLinkRoute.Tabs.Browser -> HomeBannerAction.Dapp
+            else -> HomeBannerAction.Other
+        }
+    }.getOrDefault(HomeBannerAction.Other)
 }
 
 @Composable

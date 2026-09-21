@@ -8,13 +8,19 @@ import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 data class BannerAppItem(
     val wallet: WalletEntity,
     val app: BrowserAppEntity,
-    val country: String
+    val country: String,
+    val multichain: Boolean
 ): BaseListItem(0) {
 
     companion object {
-        fun createApps(wallet: WalletEntity, apps: List<BrowserAppEntity>, country: String): List<BannerAppItem> {
+        fun createApps(
+            wallet: WalletEntity,
+            apps: List<BrowserAppEntity>,
+            country: String,
+            multichain: Boolean
+        ): List<BannerAppItem> {
             return apps.map {
-                BannerAppItem(wallet, it, country)
+                BannerAppItem(wallet, it, country, multichain)
             }
         }
     }

@@ -6,7 +6,7 @@ import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.getMultipleQuery
 import com.tonapps.signer.Key
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.cell.Cell
 
 data class SignRequestEntity(

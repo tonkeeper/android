@@ -6,6 +6,7 @@ import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.core.signer.SignerApp
 import com.tonapps.tonkeeper.extensions.toast
@@ -13,6 +14,7 @@ import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
+import com.tonapps.tonkeeper.ui.screen.init.WalletImportAnalytics
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.constantWhiteColor
 import com.tonapps.uikit.color.stateList
@@ -22,7 +24,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import org.ton.api.pub.PublicKeyEd25519
+import org.koin.android.ext.android.inject
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
@@ -34,6 +37,8 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
     override val fragmentName: String = "SignerAddScreen"
 
     override lateinit var cameraView: PreviewView
+
+    private val importAnalytics: WalletImportAnalytics by inject()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -72,11 +77,25 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
 
         readerFlow.map { Uri.parse(it) }.filter { it.host == "signer" }.catch {
             navigation?.toast(Localization.unknown_error)
+            trackImportError("signer_qr_scan_error", it.message)
         }.onEach { uri ->
-            val pk = uri.getQueryParameter("pk")?.publicKeyFromHex() ?: return@onEach
+            val pk = uri.getQueryParameter("pk")
+                ?.let { value -> runCatching { value.publicKeyFromHex() }.getOrNull() }
+                ?: run {
+                    trackImportError("signer_qr_invalid")
+                    return@onEach
+                }
             val name = uri.getQueryParameter("name") ?: ""
             addAccount(pk, name)
         }.launchIn(lifecycleScope)
+    }
+
+    private suspend fun trackImportError(errorType: String, errorMessage: String? = null) {
+        importAnalytics.trackError(
+            walletSource = WalletFlowWalletSource.Signer,
+            errorType = errorType,
+            errorMessage = errorMessage,
+        )
     }
 
     private fun addAccount(publicKey: PublicKeyEd25519, name: String) {

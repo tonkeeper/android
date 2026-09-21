@@ -1,0 +1,36 @@
+# Thin sequencer: Tonstakers smoke → deposit → withdraw (order required).
+# Nested subflows/ are not matched by config.yaml `staking/*`. Each subflow
+# launches (stopApp + unlock). optional runFlow continues after a case
+# failure; evalScript runs only if that case succeeded. Final assertTrue
+# fails the Cloud row if any case failed and names them.
+name: "Multichain — staking"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.staking_smoke_ok = false; output.staking_deposit_ok = false; output.staking_withdraw_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Multichain — Tonstakers stake screen"
+    commands:
+      - runFlow: subflows/tonstakers_stake_screen_smoke.yaml
+      - evalScript: ${output.staking_smoke_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — Tonstakers deposit 1 GRAM"
+    commands:
+      - runFlow: subflows/tonstakers_asset_list_deposit_one_ton.yaml
+      - evalScript: ${output.staking_deposit_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Multichain — Tonstakers withdraw 1 GRAM"
+    commands:
+      - runFlow: subflows/tonstakers_asset_list_withdraw_one_ton.yaml
+      - evalScript: ${output.staking_withdraw_ok = true}
+
+- evalScript: ${var f = []; if (output.staking_smoke_ok !== true) f.push('smoke'); if (output.staking_deposit_ok !== true) f.push('deposit'); if (output.staking_withdraw_ok !== true) f.push('withdraw'); output.staking_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.staking_failed === ''}
+    label: "${output.staking_failed ? 'staking shard: failed ' + output.staking_failed : 'staking shard: all cases passed'}"

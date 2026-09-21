@@ -24,6 +24,8 @@ data class JettonBalance(
     val jetton: JettonPreview,
     @SerialName(value = "price")
     val price: TokenRates? = null,
+    @SerialName(value = "defi_asset")
+    val defiAsset: JettonAssetInfo? = null,
     @SerialName(value = "extensions")
     val extensions: List<String>? = null,
     @SerialName(value = "lock")

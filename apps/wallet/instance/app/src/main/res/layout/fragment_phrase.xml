@@ -75,7 +75,7 @@
         style="@style/Widget.App.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/offsetLarge"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
         android:layout_marginTop="@dimen/offsetLarge"
         android:layout_marginBottom="@dimen/offsetMedium"
         android:text="@string/manual_backup_check"

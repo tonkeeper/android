@@ -1,7 +1,9 @@
 package com.tonapps.blockchain.ton.extensions
 
 import com.tonapps.blockchain.ton.TONOpCode
+import kotlinx.io.bytestring.decodeToString
 import org.ton.bigint.BigInt
+import org.ton.bigint.toBigInt
 import org.ton.block.Coins
 import org.ton.block.MsgAddress
 import org.ton.block.MsgAddressInt
@@ -25,8 +27,8 @@ fun CellSlice.loadMaybeRef(): Cell? {
 
 fun CellSlice.loadMaybeAddress(): MsgAddress? {
     return when (val type = preloadUInt(2)) {
-        BigInt.valueOf(2) -> loadAddress()
-        BigInt.valueOf(0) -> {
+        2.toBigInt() -> loadAddress()
+        0.toBigInt() -> {
             bitsPosition += 2
             null
         }

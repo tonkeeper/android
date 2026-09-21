@@ -35,7 +35,7 @@ data class ExchangeCalculateRequest(
     @Contextual @SerialName(value = "purchase_type")
     val purchaseType: ExchangeDirection,
 
-    /* Crypto network. Deprecated: use from_network and to_network instead. */
+    /* Crypto network. Deprecated: use from_network and to_network instead */
     @SerialName(value = "network")
     @Deprecated(message = "This property is deprecated.")
     val network: String? = null,
@@ -48,7 +48,7 @@ data class ExchangeCalculateRequest(
     @SerialName(value = "to_network")
     val toNetwork: String? = null,
 
-    /* User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead. */
+    /* User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead */
     @SerialName(value = "country")
     @Deprecated(message = "This property is deprecated.")
     val country: String? = null,

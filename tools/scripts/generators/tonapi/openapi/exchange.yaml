@@ -10,8 +10,16 @@ tags:
     description: DEX swap operations
   - name: exchange
     description: Fiat-to-crypto and crypto-to-crypto exchange operations
+  - name: onramp
+    description: Multi-chain fiat-to-crypto on-ramp
+  - name: offramp
+    description: Multi-chain crypto-to-fiat off-ramp
   - name: p2p
     description: P2P exchange operations
+  - name: crosschain
+    description: Cross-chain swap operations (multi-provider)
+  - name: system
+    description: Operational endpoints (probes, etc.)
 
 components:
   parameters:
@@ -50,7 +58,7 @@ components:
       name: country
       in: query
       deprecated: true
-      description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code instead."
+      description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code instead"
       schema:
         type: string
         pattern: ^[A-Z]{2}$
@@ -141,44 +149,261 @@ components:
       description: "Flow type: deposit (buy crypto) or withdraw (sell crypto)"
       schema:
         $ref: '#/components/schemas/ExchangeFlow'
+    CrossSwapRouteIDPath:
+      name: route_id
+      in: path
+      required: true
+      description: Route identifier
+      schema:
+        type: string
+    CrossSwapPayloadIDPath:
+      name: payload_id
+      in: path
+      required: true
+      description: Signing payload identifier
+      schema:
+        type: string
+    CrossSwapExecutionIDPath:
+      name: execution_id
+      in: path
+      required: true
+      description: Execution identifier
+      schema:
+        type: string
+    AssetSearchQuery:
+      name: q
+      in: query
+      required: false
+      description: Free-text query matched against Symbol and Name (case-insensitive). Whitespace is trimmed. Empty/missing returns the full list
+      schema:
+        type: string
+    AssetChainFilterQuery:
+      name: chain
+      in: query
+      required: false
+      description: Restrict results to a single chain
+      schema:
+        type: string
+    AssetSearchLimitQuery:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of results per page. When `q` is set the server applies an internal default of 50 if omitted; when listing the full snapshot, omitting `limit` returns everything. Hard-capped at 1000. Use together with `cursor` to page through results; a `next_cursor` is returned while more results remain
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+    CrossSwapAssetIDQuery:
+      name: asset_id
+      in: query
+      required: true
+      description: Internal asset_id, e.g. `ton/mainnet/coin` or `eth/mainnet/erc-20/0x...`
+      schema:
+        type: string
+    OfframpSourceChainQuery:
+      name: source_chain
+      in: query
+      required: false
+      description: Internal chain id, e.g. `eth/mainnet`
+      schema:
+        type: string
+    OfframpFiatQuery:
+      name: fiat
+      in: query
+      required: false
+      description: Target fiat (ISO 4217)
+      schema:
+        type: string
+    OfframpPayoutMethodQuery:
+      name: payout_method
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ExchangePaymentMethodType'
+    OfframpOrderIDPath:
+      name: order_id
+      in: path
+      required: true
+      schema:
+        type: string
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: UUID v4 for safe retry
+      schema:
+        type: string
+        format: uuid
+    IfNoneMatchHeader:
+      name: If-None-Match
+      in: header
+      required: false
+      description: ETag from a prior response
+      schema:
+        type: string
+    OnrampDestinationChainQuery:
+      name: destination_chain
+      in: query
+      required: false
+      description: Internal chain id, e.g. `eth/mainnet`
+      schema:
+        type: string
+    OnrampFiatQuery:
+      name: fiat
+      in: query
+      required: false
+      description: Source fiat (ISO 4217)
+      schema:
+        type: string
+    OnrampPaymentMethodQuery:
+      name: payment_method
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ExchangePaymentMethodType'
+    OnrampOrderIDPath:
+      name: order_id
+      in: path
+      required: true
+      schema:
+        type: string
+    PaginationCursorQuery:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor from a prior `next_cursor`. Omit for the first page.
+      schema:
+        type: string
+    PaginationLimitQuery:
+      name: limit
+      in: query
+      required: false
+      description: Max items per page. Default 20, max 200.
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        maximum: 200
+    FirebaseUserHeader:
+      name: F
+      in: header
+      required: false
+      description: "Firebase user id, sent by the mobile client. It decides which on-ramp providers the wallet is offered: a wallet that already bought through Mercuryo or Transak keeps them, a wallet we have not seen before is offered MoonPay. A request without it is left as it is today. Also recorded in the asset-search log."
+      schema:
+        type: string
+        maxLength: 256
+    SearchQuery:
+      name: q
+      in: query
+      required: false
+      description: Free-text search over `symbol`. Case-insensitive substring match.
+      schema:
+        type: string
+    CrossSwapFromAssetIDQuery:
+      name: from_asset_id
+      in: query
+      required: false
+      description: Asset identifier for from_asset
+      schema:
+        type: string
+    CrossSwapToAssetIDQuery:
+      name: to_asset_id
+      in: query
+      required: false
+      description: Asset identifier for to_asset
+      schema:
+        type: string
+    OnrampAssetIDQuery:
+      name: asset_id
+      in: query
+      required: true
+      description: Asset identifier in the same format as `OnrampAsset.asset_id`.
+      schema:
+        type: string
+    OfframpAssetIDQuery:
+      name: asset_id
+      in: query
+      required: true
+      description: Asset identifier in the same format as `OfframpAsset.asset_id`.
+      schema:
+        type: string
+    AssetIDsQuery:
+      name: asset_ids
+      in: query
+      required: true
+      description: Comma-separated list of asset IDs
+      style: form
+      explode: false
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 200
+        items:
+          type: string
+    WalletIdHeader:
+      name: X-Wallet-ID
+      in: header
+      required: false
+      description: "Stable wallet identifier, the same header multichain-backend uses. Only a multichain wallet has one, so sending it marks the request as coming from that wallet, which decides which on-ramp providers are offered."
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 64
+        pattern: "^([a-f0-9]{64}|[a-z2-7]{32}|[a-z2-7]{36})$"
+    WalletIdPath:
+      name: wallet_id
+      in: path
+      required: true
+      description: "Stable wallet identifier"
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 64
+        pattern: "^([a-f0-9]{64}|[a-z2-7]{32}|[a-z2-7]{36})$"
+    IsNewUserQuery:
+      name: is_new
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: false
 
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - request_id
+      properties:
+        error:
+          type: string
+          description: Human-readable message. Sanitised — never reveals internal details.
+        code:
+          type: string
+          description: |
+            Stable machine-readable error code. Optional on 5xx (server may not
+            know the cause). Mandatory on 4xx where the client can act.
+        request_id:
+          type: string
+          description: UUID v4 for correlating the response to server logs.
+    Ok:
+      type: object
+      required: [ ok ]
+      properties:
+        ok:
+          type: boolean
     Platform:
       type: string
       enum:
         - android
         - ios
         - desktop
+        - web
     Provider:
       type: string
       enum:
-        - dedust
         - stonfi
         - omni
-    DeDustTrade:
-      type: object
-      required:
-        - fromAsset
-        - toAsset
-        - fromAmount
-        - toAmount
-        - poolAddress
-      properties:
-        fromAsset:
-          type: string
-          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64}|[A-Za-z0-9_-]{48})$
-        toAsset:
-          type: string
-          pattern: ^(ton|(-1|0):[0-9a-fA-F]{64}|[A-Za-z0-9_-]{48})$
-        fromAmount:
-          type: string
-          pattern: ^\d+$
-        toAmount:
-          type: string
-          pattern: ^\d+$
-        poolAddress:
-          type: string
-          pattern: ^(-1|0):[0-9a-fA-F]{64}$
     StonFiTrade:
       type: object
       required:
@@ -238,10 +463,6 @@ components:
           pattern: ^(-1|0):[0-9a-fA-F]{64}$
         stonfiRawTrade:
           $ref: '#/components/schemas/StonFiTrade'
-        dedustRawTrade:
-          type: array
-          items:
-            $ref: '#/components/schemas/DeDustTrade'
     SwapCalculation:
       type: object
       required:
@@ -257,23 +478,9 @@ components:
     SwapGas:
       type: object
       required:
-        - dedust
         - stonfi
         - omniston
       properties:
-        dedust:
-          type: object
-          required:
-            - tonToJetton
-            - jettonToTon
-            - jettonToJetton
-          properties:
-            tonToJetton:
-              type: string
-            jettonToTon:
-              type: string
-            jettonToJetton:
-              type: string
         stonfi:
           type: object
           required:
@@ -324,19 +531,6 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/SwapAsset'
-    SwapEncode:
-      type: object
-      required:
-        - value
-        - to
-        - body
-      properties:
-        value:
-          type: string
-        to:
-          type: string
-        body:
-          type: string
     TonMessage:
       type: object
       required:
@@ -397,6 +591,11 @@ components:
           type: integer
         valueDifferenceBps:
           type: integer
+          description: |
+            USD value difference between input and output, in basis points
+            (1% = 100 bps, so -300 = -3%). Negative means the user receives
+            less USD than they pay. Omitted when |bps| < 300 or USD prices
+            are unavailable.
     ExchangeAssetType:
       type: string
       enum:
@@ -555,6 +754,7 @@ components:
         - pix
         - volt
         - p2p
+        - ach
     ExchangeCurrencies:
       type: object
       required:
@@ -714,7 +914,7 @@ components:
           description: Source crypto symbol (e.g. BTC, USDT)
         asset_id:
           type: string
-          description: "CAIP-19 asset identifier (e.g. ton:mainnet/slip44:607)"
+          description: "Internal asset identifier (e.g. `ton/mainnet/coin`, `eth/mainnet/erc20/0xdc03...`, `ton/mainnet/jetton/0:b113...`)"
         network:
           type: string
         network_name:
@@ -766,7 +966,7 @@ components:
           type: string
         asset_id:
           type: string
-          description: "CAIP-19 asset identifier (e.g. ton:mainnet/slip44:607)"
+          description: "Internal asset identifier (e.g. `ton/mainnet/coin`, `eth/mainnet/erc20/0xdc03...`, `ton/mainnet/jetton/0:b113...`)"
         network:
           type: string
         network_name:
@@ -826,6 +1026,31 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExchangeLayoutItem'
+    ExchangeLayoutCard:
+      type: object
+      required:
+        - title
+        - description
+        - image
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        preferred_currency:
+          type: string
+          description: ISO 4217 fiat code suggested to the user
+    ExchangeLayoutCards:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeLayoutCard'
     ExchangeResult:
       type: object
       required:
@@ -845,10 +1070,10 @@ components:
           type: string
         payin_extra_id:
           type: string
-          description: Memo / Destination Tag the user must include with the deposit transfer (when required by the source chain).
+          description: Memo / Destination Tag the user must include with the deposit transfer (when required by the source chain)
         extra_id_name:
           type: string
-          description: Human-readable name of the extra id required at the destination (e.g. "Destination Tag", "Memo"). Empty when not required.
+          description: Human-readable name of the extra id required at the destination (e.g. "Destination Tag", "Memo"). Empty when not required
         amount_expected_from:
           type: number
         amount_expected_to:
@@ -864,6 +1089,565 @@ components:
         estimated_duration:
           type: integer
           description: Estimated exchange duration in seconds
+    OnrampAsset:
+      type: object
+      description: |
+        Slim asset entry for the on-ramp configuration list.
+        Provider/method matrix lives at `GET /v2/onramp/asset?asset_id=...`.
+      required:
+        - asset_id
+        - symbol
+        - decimals
+        - stablecoin
+        - extra_id_required
+        - available_methods
+        - available_fiats
+      properties:
+        asset_id:
+          type: string
+          description: "`{chain}/{net}/coin` for natives, `{chain}/{net}/jetton|token/{addr}` for tokens"
+        symbol:
+          type: string
+        network_name:
+          type: string
+        network_image:
+          type: string
+        image:
+          type: string
+        decimals:
+          type: integer
+        stablecoin:
+          type: boolean
+        extra_id_required:
+          type: boolean
+          description: Destination chain needs a Memo / Destination Tag
+        extra_id_name:
+          type: string
+          description: Form label (e.g. "Memo", "Destination Tag")
+        available_methods:
+          type: array
+          description: Payment method types supported for this asset in the current country
+          items:
+            $ref: '#/components/schemas/ExchangePaymentMethodType'
+        available_fiats:
+          type: array
+          description: Fiat codes (ISO 4217) supported for this asset in the current country
+          items:
+            type: string
+    OnrampAssetDetail:
+      type: object
+      description: Full per-asset on-ramp configuration including payment methods, providers and limits
+      required:
+        - asset_id
+        - symbol
+        - decimals
+        - stablecoin
+        - extra_id_required
+        - payment_methods
+      properties:
+        asset_id:
+          type: string
+        symbol:
+          type: string
+        network_name:
+          type: string
+        network_image:
+          type: string
+        image:
+          type: string
+        decimals:
+          type: integer
+        stablecoin:
+          type: boolean
+        extra_id_required:
+          type: boolean
+        extra_id_name:
+          type: string
+        payment_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnrampPaymentMethod'
+    OnrampPaymentMethod:
+      type: object
+      description: One payment method (card, apple_pay, sepa, ...) with the providers offering it for this asset
+      required:
+        - type
+        - name
+        - image
+        - providers
+      properties:
+        type:
+          $ref: '#/components/schemas/ExchangePaymentMethodType'
+        name:
+          type: string
+          description: Display name (e.g. "Card", "Apple Pay")
+        image:
+          type: string
+          description: Image URL for the method
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnrampProvider'
+    OnrampProvider:
+      type: object
+      description: A merchant offering this payment method for a given fiat
+      required:
+        - merchant
+        - fiat
+      properties:
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        fiat:
+          type: string
+          description: ISO 4217
+        limits:
+          $ref: '#/components/schemas/ExchangeLimits'
+    OnrampConfiguration:
+      type: object
+      description: On-ramp configuration snapshot. Cacheable via ETag
+      required:
+        - assets
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnrampAsset'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Absent when there are no more pages.
+    OnrampChains:
+      type: object
+      description: Chains with at least one purchasable on-ramp asset. Cacheable via ETag
+      required:
+        - chains
+      properties:
+        chains:
+          type: array
+          items:
+            type: string
+            description: Internal chain id — the `asset_id` prefix (e.g. `eth`, `ton`)
+    OnrampQuoteResult:
+      type: object
+      description: Single merchant's on-ramp quote
+      required:
+        - merchant
+        - payment_method
+        - amount_in
+        - amount_out
+        - rate
+        - fees
+        - date_expire
+        - merchant_transaction_id
+      properties:
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        payment_method:
+          $ref: '#/components/schemas/ExchangePaymentMethodType'
+        amount_in:
+          type: string
+          description: Fiat the user pays
+        amount_out:
+          type: string
+          description: Crypto the user receives, net of fees
+        rate:
+          type: string
+          description: "`amount_out / amount_in`"
+        fees:
+          $ref: '#/components/schemas/RampFees'
+        min_amount:
+          type: string
+          description: Min amount, in the same currency as the requested `amount` (fiat, or crypto when `reverse=true`)
+        max_amount:
+          type: string
+          description: Max amount, in the same currency as the requested `amount` (fiat, or crypto when `reverse=true`)
+        date_expire:
+          type: string
+          format: date-time
+          description: Rate guarantee expiry
+        merchant_transaction_id:
+          type: string
+          description: Pass to POST /v2/onramp/orders to pin this rate
+    OnrampQuotes:
+      type: object
+      description: Multi-merchant quote. `items` sorted by `amount_out` desc
+      required:
+        - items
+        - suggested
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnrampQuoteResult'
+        suggested:
+          type: array
+          items:
+            $ref: '#/components/schemas/OnrampQuoteResult'
+        unavailable_reason:
+          $ref: '#/components/schemas/RampUnavailableReason'
+    OnrampOrderStatus:
+      type: string
+      description: |
+        Happy path: `created → awaiting_payment → payment_received → funds_sent → completed`.
+        Terminal: `completed`, `failed`, `cancelled`, `expired`, `refunded`.
+      enum:
+        - created
+        - awaiting_payment
+        - payment_received
+        - funds_sent
+        - completed
+        - failed
+        - cancelled
+        - expired
+        - refunded
+    OnrampOrder:
+      type: object
+      description: |
+        On-ramp order. Open `widget_url`; the merchant collects fiat and
+        sends `amount_out` to `destination_address`. Poll until terminal.
+      required:
+        - id
+        - merchant
+        - status
+        - widget_url
+        - destination_address
+        - amount_in
+        - amount_out
+        - rate
+        - fees
+        - date_create
+      properties:
+        id:
+          type: string
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        merchant_transaction_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/OnrampOrderStatus'
+        status_reason:
+          type: string
+          description: Provider detail for terminal states
+        widget_url:
+          type: string
+        destination_address:
+          type: string
+          description: Echo of the value supplied at create time
+        destination_extra_id:
+          type: string
+          description: Memo / Destination Tag for chains that require it
+        extra_id_name:
+          type: string
+        amount_in:
+          type: string
+        amount_out:
+          type: string
+        rate:
+          type: string
+        fees:
+          $ref: '#/components/schemas/RampFees'
+        destination_tx_hash:
+          type: string
+          description: Merchant payout tx, populated from `funds_sent`
+        provider_order_id:
+          type: string
+          description: Merchant's native order id
+        estimated_duration:
+          type: integer
+          description: Seconds (best-effort)
+        date_create:
+          type: string
+          format: date-time
+        date_update:
+          type: string
+          format: date-time
+    OfframpAsset:
+      type: object
+      description: |
+        Slim asset entry for the off-ramp configuration list.
+        Provider/method matrix lives at `GET /v2/offramp/asset?asset_id=...`.
+      required:
+        - asset_id
+        - symbol
+        - decimals
+        - stablecoin
+        - extra_id_required
+        - available_payout_methods
+        - available_fiats
+      properties:
+        asset_id:
+          type: string
+          description: "`{chain}/{net}/coin` for natives, `{chain}/{net}/jetton|token/{addr}` for tokens"
+        symbol:
+          type: string
+        network_name:
+          type: string
+        network_image:
+          type: string
+        image:
+          type: string
+        decimals:
+          type: integer
+        stablecoin:
+          type: boolean
+        extra_id_required:
+          type: boolean
+          description: Source chain needs a Memo / Destination Tag on the deposit
+        extra_id_name:
+          type: string
+          description: Form label (e.g. "Memo", "Destination Tag")
+        available_payout_methods:
+          type: array
+          description: Payout method types supported for this asset in the current country
+          items:
+            $ref: '#/components/schemas/ExchangePaymentMethodType'
+        available_fiats:
+          type: array
+          description: Fiat codes (ISO 4217) supported for this asset in the current country
+          items:
+            type: string
+    OfframpAssetDetail:
+      type: object
+      description: Full per-asset off-ramp configuration including payout methods, providers and limits
+      required:
+        - asset_id
+        - symbol
+        - decimals
+        - stablecoin
+        - extra_id_required
+        - payout_methods
+      properties:
+        asset_id:
+          type: string
+        symbol:
+          type: string
+        network_name:
+          type: string
+        network_image:
+          type: string
+        image:
+          type: string
+        decimals:
+          type: integer
+        stablecoin:
+          type: boolean
+        extra_id_required:
+          type: boolean
+        extra_id_name:
+          type: string
+        payout_methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfframpPayoutMethod'
+    OfframpPayoutMethod:
+      type: object
+      description: One payout method (card, sepa, ...) with the providers offering it for this asset
+      required:
+        - type
+        - name
+        - image
+        - providers
+      properties:
+        type:
+          $ref: '#/components/schemas/ExchangePaymentMethodType'
+        name:
+          type: string
+          description: Display name (e.g. "Card", "SEPA")
+        image:
+          type: string
+          description: Image URL for the method
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfframpProvider'
+    OfframpProvider:
+      type: object
+      description: A merchant offering this payout method for a given fiat
+      required:
+        - merchant
+        - fiat
+      properties:
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        fiat:
+          type: string
+          description: ISO 4217
+        limits:
+          $ref: '#/components/schemas/ExchangeLimits'
+    OfframpConfiguration:
+      type: object
+      description: Off-ramp configuration snapshot. Cacheable via ETag
+      required:
+        - assets
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfframpAsset'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Absent when there are no more pages.
+    RampUnavailableReason:
+      type: string
+      description: Set when `items` and `suggested` are both empty
+      enum:
+        - country_blocked
+        - amount_below_min
+        - amount_above_max
+        - no_merchant_supports_pair
+    RampFees:
+      type: object
+      description: Fee breakdown in fiat (decimal strings)
+      required:
+        - total
+      properties:
+        provider:
+          type: string
+          pattern: ^\d+(\.\d+)?$
+        network:
+          type: string
+          pattern: ^\d+(\.\d+)?$
+        total:
+          type: string
+          pattern: ^\d+(\.\d+)?$
+    OfframpQuoteResult:
+      type: object
+      description: Single merchant's off-ramp quote
+      required:
+        - merchant
+        - payout_method
+        - amount_in
+        - amount_out
+        - rate
+        - fees
+        - date_expire
+        - merchant_transaction_id
+      properties:
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        payout_method:
+          $ref: '#/components/schemas/ExchangePaymentMethodType'
+        amount_in:
+          type: string
+          description: Source crypto the user pays
+        amount_out:
+          type: string
+          description: Fiat the user receives, net of fees
+        rate:
+          type: string
+          description: "`amount_out / amount_in`"
+        fees:
+          $ref: '#/components/schemas/RampFees'
+        min_amount:
+          type: string
+          description: Min amount, in the same currency as the requested `amount` (crypto, or fiat when `reverse=true`)
+        max_amount:
+          type: string
+          description: Max amount, in the same currency as the requested `amount` (crypto, or fiat when `reverse=true`)
+        date_expire:
+          type: string
+          format: date-time
+          description: Rate guarantee expiry
+        merchant_transaction_id:
+          type: string
+          description: Pass to POST /v2/offramp/orders to pin this rate
+    OfframpQuotes:
+      type: object
+      description: Multi-merchant quote. `items` sorted by `amount_out` desc
+      required:
+        - items
+        - suggested
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfframpQuoteResult'
+        suggested:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfframpQuoteResult'
+        unavailable_reason:
+          $ref: '#/components/schemas/RampUnavailableReason'
+    OfframpOrderStatus:
+      type: string
+      description: |
+        Happy path: `created → awaiting_funds → funds_received → completed`.
+        Terminal: `completed`, `failed`, `cancelled`, `expired`, `refunded`.
+      enum:
+        - created
+        - awaiting_funds
+        - funds_received
+        - completed
+        - failed
+        - cancelled
+        - expired
+        - refunded
+    OfframpOrder:
+      type: object
+      description: |
+        Off-ramp order. Open `widget_url` to complete KYC; the wallet
+        then sends `amount_in` to `payin_address`. Poll until terminal.
+      required:
+        - id
+        - merchant
+        - status
+        - widget_url
+        - payin_address
+        - amount_in
+        - amount_out
+        - rate
+        - fees
+        - date_create
+      properties:
+        id:
+          type: string
+        merchant:
+          $ref: '#/components/schemas/ExchangeMerchantSlug'
+        merchant_transaction_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/OfframpOrderStatus'
+        status_reason:
+          type: string
+          description: Provider detail for terminal states
+        widget_url:
+          type: string
+        payin_address:
+          type: string
+          description: Provider deposit address. Prompt the user to send after status `awaiting_funds`
+        payin_extra_id:
+          type: string
+          description: Memo / Destination Tag for chains that require it
+        extra_id_name:
+          type: string
+        amount_in:
+          type: string
+        amount_out:
+          type: string
+        rate:
+          type: string
+        fees:
+          $ref: '#/components/schemas/RampFees'
+        deposit_tx_hash:
+          type: string
+          description: User's deposit tx, populated from `funds_received`
+        refund_tx_hash:
+          type: string
+          description: Merchant refund tx
+        refund_address:
+          type: string
+          description: Where the refund was sent
+        provider_order_id:
+          type: string
+          description: Merchant's native order id
+        estimated_duration:
+          type: integer
+          description: Seconds (best-effort)
+        date_create:
+          type: string
+          format: date-time
+        date_update:
+          type: string
+          format: date-time
     P2PSessionResult:
       type: object
       required:
@@ -874,6 +1658,814 @@ components:
           type: string
         date_expire:
           type: string
+    CrossSwapAsset:
+      type: object
+      required:
+        - asset_id
+        - symbol
+        - name
+        - decimals
+        - chain_family
+        - supported_aggregators
+      properties:
+        asset_id:
+          type: string
+          description: Internal asset identifier (`{chain}/{net}/coin` for natives, `{chain}/{net}/{type}/{address}` for tokens)
+        symbol:
+          type: string
+        name:
+          type: string
+        decimals:
+          type: integer
+          minimum: 0
+        image:
+          type: string
+          description: URL of the asset's logo, may be empty
+        chain_family:
+          $ref: '#/components/schemas/CrossSwapChainFamily'
+        stablecoin:
+          type: boolean
+          default: false
+        supported_aggregators:
+          type: array
+          description: |
+            Aggregators that list this asset. Every asset Omniston serves is
+            also reported under `swapsxyz`: Omniston is TON to TON only and
+            is out of the default fan-out for newer clients, while SwapsXYZ
+            routes the same TON pairs. The tag says the asset can be quoted,
+            not that SwapsXYZ bridges it off TON; `allowed_counterparts`
+            stays the authority for restricted assets.
+          items:
+            $ref: '#/components/schemas/CrossSwapAggregator'
+        allowed_counterparts:
+          type: array
+          description: |
+            Whitelist of asset_ids this asset may be paired with. Omitted when there
+            are no restrictions. Present for tokenized RWAs (e.g. Backed Finance
+            stocks) where issuer policy limits which counterparts are permitted.
+          items:
+            type: string
+        usd_price:
+          type: number
+          format: double
+        verified:
+          type: boolean
+          default: false
+        is_scam:
+          type: boolean
+          default: false
+        market_cap_usd:
+          type: number
+          format: double
+    CrossSwapAssets:
+      type: object
+      required:
+        - assets
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSwapAsset'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Absent when there are no more pages.
+    CrossSwapConfig:
+      type: object
+      required:
+        - slippages
+        - swap_pair
+      properties:
+        slippages:
+          type: object
+          description: |
+            Slippage options keyed by source-chain identifier (see `CrossSwapChain` enum,
+            e.g. `ton`, `eth`, `btc`). Chains absent from this map fall through to a
+            wallet-side default of 100 bps.
+          additionalProperties:
+            $ref: '#/components/schemas/CrossSwapSlippageOptions'
+        swap_pair:
+          $ref: '#/components/schemas/CrossSwapDefaultPair'
+    CrossSwapSlippage:
+      type: object
+      required:
+        - chains
+      properties:
+        chains:
+          type: object
+          description: |
+            Slippage options keyed by source-chain identifier (see `CrossSwapChain` enum,
+            e.g. `ton`, `eth`, `btc`). Chains absent from this map fall through to a
+            wallet-side default of 100 bps.
+          additionalProperties:
+            $ref: '#/components/schemas/CrossSwapSlippageOptions'
+        default_pair:
+          $ref: '#/components/schemas/CrossSwapDefaultPair'
+    CrossSwapDefaultPair:
+      type: object
+      description: |
+        Server-driven pair to pre-select in the cross-swap UI on cold open. Backend controls
+        this so we can rotate the default (A/B tests, promoted pairs) without a client
+        release. Clients should treat both asset_ids as opaque and pass them directly to
+        `/v2/crosschain/quotes`.
+      required:
+        - source_asset_id
+        - destination_asset_id
+        - source_asset
+        - destination_asset
+      properties:
+        source_asset_id:
+          deprecated: true
+          type: string
+          description: Asset id for the pre-selected source (sell) side.
+          example: "ton/mainnet/coin"
+        destination_asset_id:
+          deprecated: true
+          type: string
+          description: Asset id for the pre-selected destination (buy) side.
+          example: "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
+        source_asset:
+          $ref: '#/components/schemas/CrossSwapAsset'
+        destination_asset:
+          $ref: '#/components/schemas/CrossSwapAsset'
+    CrossSwapChain:
+      type: string
+      description: Source chain identifier used across cross-swap requests
+      enum:
+        - ton
+        - eth
+        - btc
+        - sol
+        - bsc
+        - arb
+        - op
+        - base
+        - polygon
+        - avax
+        - tron
+        - near
+        - ltc
+        - doge
+        - xrp
+        - ada
+    CrossSwapSlippageOptions:
+      type: object
+      required:
+        - options_bps
+        - default_bps
+      properties:
+        options_bps:
+          type: array
+          description: Slippage options the wallet should show, ascending. Values are in basis points (100 bps = 1%)
+          items:
+            type: integer
+            minimum: 0
+        default_bps:
+          type: integer
+          minimum: 0
+          description: Default selected option, in basis points
+    CrossSwapChainFamily:
+      type: string
+      description: Chain family group used to pick signing/broadcast handlers
+      enum:
+        - UTXO
+        - EVM
+        - SOLANA
+        - TON
+        - COSMOS
+        - TRON
+        - RIPPLE
+        - OTHER
+    CrossSwapAggregator:
+      type: string
+      description: |
+        Cross-chain aggregator that produced the route.
+        `omniston` serves TON to TON only. For clients reporting build
+        26.9.0 or newer on Android, or 26.9.1 or newer on iOS, it is out of
+        the default fan-out and is queried as a fallback, when the other
+        aggregators returned no route at all; older clients keep it in the
+        default fan-out.
+      enum:
+        - swapkit
+        - swapsxyz
+        - omniston
+    CrossSwapProtocol:
+      type: string
+      description: Underlying protocol or DEX that actually executes the swap (provider-driven, free-form).
+    CrossSwapRouteType:
+      type: string
+      enum:
+        - cross_chain_swap
+        - same_chain_swap
+        - bridge
+    CrossSwapLegType:
+      type: string
+      enum:
+        - approve
+        - deposit
+        - bridge
+        - swap
+        - transfer
+    CrossSwapRiskLevel:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+    CrossSwapRouteTag:
+      type: string
+      enum:
+        - fastest
+        - recommended
+        - cheapest
+    CrossSwapExactType:
+      type: string
+      description: |
+        Which side of the swap the client fixes.
+        `exact_input` (default): `source_amount` is what the user pays, routes
+        report `estimated_destination_amount`.
+        `exact_output`: `destination_amount` is what the user must receive,
+        routes report the `source_amount` the user is expected to pay and
+        `maximum_source_amount`, the cap including slippage. Only `swapsxyz`
+        can quote `exact_output`; other aggregators are skipped and reported
+        in `provider_errors`.
+      enum:
+        - exact_input
+        - exact_output
+    CrossSwapPayloadType:
+      type: string
+      description: Encoding of the payload to be signed by the wallet
+      enum:
+        - utxo_psbt
+        - utxo_pczt
+        - evm_tx
+        - evm_approval_tx
+        - solana_tx
+        - ton_boc
+        - cosmos_tx
+        - tron_tx
+        - ripple_tx
+        - alt_vm_deposit
+    CrossSwapCalldataPayloadType:
+      type: string
+      description: |
+        Whether the amount inside `payload` is fixed.
+        `exact` - the amount is part of the calldata and must be signed as
+        received. `flex` - the payload is a plain transfer, so the wallet may
+        change the amount before signing, which is what a max send needs.
+      enum:
+        - exact
+        - flex
+    CrossSwapPayloadKind:
+      type: string
+      enum:
+        - main
+        - approval
+    CrossSwapValidationStatus:
+      type: string
+      enum:
+        - validated
+        - pending
+        - rejected
+    CrossSwapBroadcastMode:
+      type: string
+      enum:
+        - backend
+        - client
+    CrossSwapExecutionStatus:
+      type: string
+      enum:
+        - not_started
+        - source_tx_pending
+        - source_tx_submitted
+        - source_tx_confirmed
+        - bridging
+        - streaming
+        - destination_pending
+        - destination_settled
+        - refunded
+        - failed
+        - expired
+        - unknown
+    CrossSwapFeeType:
+      type: string
+      description: Fee category emitted by the aggregator (provider-driven, free-form).
+    CrossSwapFee:
+      type: object
+      required:
+        - type
+        - asset
+        - amount
+      properties:
+        type:
+          $ref: '#/components/schemas/CrossSwapFeeType'
+        asset:
+          type: string
+          description: Asset the fee is denominated in (internal asset id)
+        chain_id:
+          type: string
+          pattern: ^[a-z0-9]+/[a-z0-9]+$
+          description: Chain on which the fee is paid, format `{chain}/{net}`
+        amount:
+          type: string
+          pattern: ^\d+$
+          description: Fee amount in minimal units
+        amount_usd:
+          type: string
+          description: Fee value in USD (decimal string), if known
+    CrossSwapTimeEstimate:
+      type: object
+      description: Per-stage time estimate breakdown. Stages may be 0 when not applicable (e.g. no inbound confirmation needed)
+      properties:
+        inbound_seconds:
+          type: integer
+          minimum: 0
+          description: Time to confirm the source-chain tx
+        swap_seconds:
+          type: integer
+          minimum: 0
+          description: Time spent inside the swap protocol
+        outbound_seconds:
+          type: integer
+          minimum: 0
+          description: Time to confirm the destination-chain tx
+        total_seconds:
+          type: integer
+          minimum: 0
+    CrossSwapLeg:
+      type: object
+      description: Informational description of one hop inside the route. Legs do not require separate user signatures
+      required:
+        - leg_index
+        - type
+        - chain_id
+        - chain_family
+      properties:
+        leg_index:
+          type: integer
+          minimum: 0
+        type:
+          $ref: '#/components/schemas/CrossSwapLegType'
+        chain_id:
+          type: string
+          pattern: ^[a-z0-9]+/[a-z0-9]+$
+          description: "Internal chain identifier, format `{chain}/{net}` (e.g. `eth/mainnet`)"
+        chain_family:
+          $ref: '#/components/schemas/CrossSwapChainFamily'
+        from_asset:
+          type: string
+        to_asset:
+          type: string
+        from_amount:
+          type: string
+          pattern: ^\d+$
+        estimated_to_amount:
+          type: string
+          pattern: ^\d+$
+        protocol:
+          $ref: '#/components/schemas/CrossSwapProtocol'
+    CrossSwapRoute:
+      type: object
+      required:
+        - route_id
+        - aggregator
+        - route_type
+        - estimated_destination_amount
+        - minimum_destination_amount
+        - legs
+        - date_expire
+        - risk_level
+      properties:
+        route_id:
+          type: string
+        provider_route_id:
+          type: string
+          description: |
+            The aggregator's own identifier for this route, passed through
+            verbatim: swapsxyz `txId`, swapkit `routeId`, omniston `quoteId`.
+            Interpret it together with `aggregator`. Omitted when the
+            provider does not expose one.
+        aggregator:
+          $ref: '#/components/schemas/CrossSwapAggregator'
+        protocol:
+          $ref: '#/components/schemas/CrossSwapProtocol'
+        route_type:
+          $ref: '#/components/schemas/CrossSwapRouteType'
+        source_amount:
+          type: string
+          pattern: ^\d+$
+          description: |
+            Raw base-units amount the user is paying. For `exact_input` it is
+            echoed back from the quote request; for `exact_output` it is the
+            provider's expected input, exclusive of slippage.
+        maximum_source_amount:
+          type: string
+          pattern: ^\d+$
+          description: |
+            Raw base-units cap on what the user may pay, inclusive of
+            slippage. Present only for `exact_output` quotes.
+        estimated_destination_amount:
+          type: string
+          pattern: ^\d+$
+          description: |
+            Raw base-units amount the user is expected to receive. For
+            `exact_output` it equals the requested `destination_amount`.
+        minimum_destination_amount:
+          type: string
+          pattern: ^\d+$
+        estimated_time:
+          $ref: '#/components/schemas/CrossSwapTimeEstimate'
+        total_slippage_bps:
+          type: integer
+          description: Aggregate slippage across all legs (bps)
+        value_difference_bps:
+          type: integer
+          description: |
+            USD value difference between input and output, in basis points
+            (1% = 100 bps, so -300 = -3%). Negative means the user receives
+            less USD than they pay. Omitted when |bps| < 300 or USD prices
+            are unavailable.
+        price_impact_bps:
+          type: integer
+          description: |
+            Provider-estimated price impact of the trade, in basis points
+            (1% = 100 bps). Higher = more slippage vs mid-market. Omitted
+            when the provider cannot estimate it (e.g. HTLC orders, low
+            liquidity paths).
+        source_usd_price:
+          type: number
+          format: double
+          description: USD price of one whole source-asset unit at quote time. Omitted when unknown
+        destination_usd_price:
+          type: number
+          format: double
+          description: USD price of one whole destination-asset unit at quote time. Omitted when unknown
+        tags:
+          type: array
+          description: Aggregator-assigned highlights (e.g. fastest, cheapest)
+          items:
+            $ref: '#/components/schemas/CrossSwapRouteTag'
+        warnings:
+          type: array
+          items:
+            type: string
+        fees:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSwapFee'
+        legs:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSwapLeg'
+        date_expire:
+          type: string
+          format: date-time
+        risk_level:
+          $ref: '#/components/schemas/CrossSwapRiskLevel'
+        payloads:
+          type: array
+          description: |
+            Signing payloads for this route, prepared inline. Present only
+            when the quote request had `include_payload: true` and the
+            provider's prepare step succeeded. When present the client can
+            sign and call `/v2/swap/payload/{payload_id}/submit` directly,
+            skipping the separate `/v2/swap/route/{route_id}/prepare`.
+          items:
+            $ref: '#/components/schemas/CrossSwapPayload'
+    CrossSwapProviderError:
+      type: object
+      description: Per-aggregator error explaining why a quote returned no route
+      required:
+        - aggregator
+        - code
+        - message
+      properties:
+        aggregator:
+          $ref: '#/components/schemas/CrossSwapAggregator'
+        protocol:
+          $ref: '#/components/schemas/CrossSwapProtocol'
+        code:
+          $ref: '#/components/schemas/CrossSwapProviderErrorCode'
+        message:
+          type: string
+    CrossSwapProviderErrorCode:
+      type: string
+      enum:
+        - no_route
+        - asset_not_supported
+        - min_amount_not_met
+        - country_blocked
+        - provider_unavailable
+        - provider_error
+    CrossSwapQuote:
+      type: object
+      required:
+        - quote_id
+        - routes
+      properties:
+        quote_id:
+          type: string
+          description: Identifier of this quote, used for telemetry and prepare correlation
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSwapRoute'
+        provider_errors:
+          type: array
+          description: Errors returned by aggregators that yielded no usable route
+          items:
+            $ref: '#/components/schemas/CrossSwapProviderError'
+    CrossSwapHumanSummary:
+      type: object
+      required:
+        - action
+        - spend_asset
+        - spend_amount
+        - receive_asset
+      properties:
+        action:
+          type: string
+        spend_asset:
+          type: string
+        spend_amount:
+          type: string
+        receive_asset:
+          type: string
+        receive_amount:
+          type: string
+        recipient_address:
+          type: string
+          description: Final destination of the swap (user's address on destination chain)
+        deposit_address:
+          type: string
+        memo:
+          type: string
+        protocol:
+          $ref: '#/components/schemas/CrossSwapProtocol'
+        approval_spender:
+          type: string
+          description: |
+            For payloads with `kind: approval`, the spender contract being
+            authorised. Backend decodes this from the approve calldata so the
+            wallet can verify before signing.
+        approval_amount:
+          type: string
+          pattern: ^\d+$
+          description: |
+            For payloads with `kind: approval`, the amount being approved (in
+            minimal units). Backend re-encodes the approve tx to enforce this
+            value — clients can trust it matches the calldata.
+        warnings:
+          type: array
+          items:
+            type: string
+    CrossSwapApprovalMode:
+      type: string
+      description: |
+        Controls how ERC-20 approve transactions are issued for prepare:
+        - exact: amount equals the swap source_amount (default; safest)
+        - max: amount is uint256 max — saves gas on subsequent swaps but
+          grants the router unlimited allowance until manually revoked
+      enum:
+        - exact
+        - max
+    CrossSwapPayload:
+      type: object
+      required:
+        - payload_id
+        - kind
+        - chain_id
+        - chain_family
+        - payload_type
+        - payload
+        - human_summary
+        - validation_status
+        - date_expire
+      properties:
+        payload_id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/CrossSwapPayloadKind'
+        chain_id:
+          type: string
+          pattern: ^[a-z0-9]+/[a-z0-9]+$
+          description: "Internal chain identifier, format `{chain}/{net}`"
+        chain_family:
+          $ref: '#/components/schemas/CrossSwapChainFamily'
+        payload_type:
+          $ref: '#/components/schemas/CrossSwapPayloadType'
+        calldata_payload_type:
+          $ref: '#/components/schemas/CrossSwapCalldataPayloadType'
+        payload:
+          type: string
+          description: |
+            Payload data. Encoding depends on `payload_type`:
+              * `ton_boc`: JSON-array string of TON Connect messages
+                `[{address, amount, payload: base64_boc, stateInit?}, ...]`
+                (not raw base64 — the outer envelope is JSON).
+              * `utxo_psbt`: base64-encoded PSBT bytes.
+              * `utxo_pczt`: base64-encoded PCZT bytes.
+              * `evm_tx`, `evm_approval_tx`: JSON-encoded EVM transaction
+                object (to, data, value, chainId, ...) as returned by the
+                aggregator.
+              * `solana_tx`, `cosmos_tx`, `tron_tx`, `ripple_tx`: chain-native
+                serialized transaction bytes (base64) or aggregator-specific
+                envelope; parse per `chain_id`.
+              * `alt_vm_deposit`: chain-specific deposit descriptor
+                (JSON or address+memo pair) — inspect `chain_id`.
+        human_summary:
+          $ref: '#/components/schemas/CrossSwapHumanSummary'
+        validation_status:
+          $ref: '#/components/schemas/CrossSwapValidationStatus'
+        date_expire:
+          type: string
+          format: date-time
+        requires_token_approval:
+          type: boolean
+          description: |
+            If true, the wallet MUST send an ERC-20 `approve` for the spender
+            (see `human_summary.approval_spender`) before broadcasting this
+            payload. If false, the calldata is a direct `transfer` and no
+            approve is needed. Set only for EVM payloads originating from
+            aggregators that surface this flag (currently swapsxyz).
+    CrossSwapPrepare:
+      type: object
+      required:
+        - route_id
+        - aggregator
+        - payloads
+      properties:
+        route_id:
+          type: string
+        aggregator:
+          $ref: '#/components/schemas/CrossSwapAggregator'
+        payloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossSwapPayload'
+    CrossSwapSubmit:
+      type: object
+      required:
+        - execution_id
+        - status
+      properties:
+        execution_id:
+          type: string
+        source_tx_hash:
+          type: string
+        status:
+          $ref: '#/components/schemas/CrossSwapExecutionStatus'
+    CrossSwapExecution:
+      type: object
+      required:
+        - execution_id
+        - status
+        - aggregator
+        - date_update
+      properties:
+        execution_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/CrossSwapExecutionStatus'
+        aggregator:
+          $ref: '#/components/schemas/CrossSwapAggregator'
+        protocol:
+          $ref: '#/components/schemas/CrossSwapProtocol'
+        provider_tracking_id:
+          type: string
+        source_tx_hash:
+          type: string
+        destination_tx_hash:
+          type: string
+        error_code:
+          type: string
+        error_message:
+          type: string
+        explorer_url:
+          type: string
+          format: uri
+        legs:
+          type: array
+          description: |
+            Per-leg progress for multi-hop swaps (THORChain, Mayachain, Chainflip,
+            Near Intents). Empty for single-leg swaps — `status` already covers them.
+          items:
+            $ref: '#/components/schemas/CrossSwapExecutionLeg'
+        date_update:
+          type: string
+          format: date-time
+    CrossSwapExecutionLeg:
+      type: object
+      required:
+        - leg_index
+        - chain_id
+        - status
+      properties:
+        leg_index:
+          type: integer
+          minimum: 0
+        chain_id:
+          type: string
+          description: Chain on which this leg executed (e.g. `eth/mainnet`)
+        status:
+          $ref: '#/components/schemas/CrossSwapExecutionStatus'
+        tx_hash:
+          type: string
+        from_asset:
+          type: string
+          description: Internal asset id consumed by this leg
+        to_asset:
+          type: string
+          description: Internal asset id produced by this leg
+        date_finish:
+          type: string
+          format: date-time
+          description: Set when the leg has reached a terminal state
+    AssetCapability:
+      type: string
+      description: Capability flag. Clients must tolerate unknown values added later
+      enum:
+        - onramp
+        - offramp
+        - swap
+        - p2p
+    AssetCapabilityMerchants:
+      type: object
+      properties:
+        merchants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExchangeMerchantSlug'
+    AssetCapabilityAggregators:
+      type: object
+      properties:
+        aggregators:
+          type: array
+          items:
+            type: string
+    AssetCapabilityP2PInfo:
+      type: object
+      properties:
+        symbol:
+          type: string
+          description: P2P symbol matched against this asset (e.g. `TON`, `USDT`)
+    AssetCapabilityDetails:
+      type: object
+      description: Per-capability extra info. Keys appear only when meaningful for the listed capability
+      properties:
+        onramp:
+          $ref: '#/components/schemas/AssetCapabilityMerchants'
+        offramp:
+          $ref: '#/components/schemas/AssetCapabilityMerchants'
+        swap:
+          $ref: '#/components/schemas/AssetCapabilityAggregators'
+        p2p:
+          $ref: '#/components/schemas/AssetCapabilityP2PInfo'
+    AssetCapabilities:
+      type: object
+      required:
+        - asset_id
+        - capabilities
+      properties:
+        asset_id:
+          type: string
+        symbol:
+          type: string
+          description: Short symbol (e.g. `TON`, `USDT`), best-effort
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetCapability'
+        details:
+          $ref: '#/components/schemas/AssetCapabilityDetails'
+    AssetCapabilitiesSnapshotAge:
+      type: object
+      description: Age in seconds of each subsystem's in-memory snapshot
+      properties:
+        onramp:
+          type: integer
+        offramp:
+          type: integer
+        swap:
+          type: integer
+        p2p:
+          type: integer
+    AssetCapabilitiesResponse:
+      type: object
+      required:
+        - assets
+        - unknown_asset_ids
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetCapabilities'
+        unknown_asset_ids:
+          type: array
+          description: Asset IDs from the request that we have no record of in any subsystem
+          items:
+            type: string
+        snapshot_age_seconds:
+          $ref: '#/components/schemas/AssetCapabilitiesSnapshotAge'
 
   requestBodies:
     CreateP2PSession:
@@ -885,61 +2477,34 @@ components:
             type: object
             required:
               - wallet
-              - network
-              - crypto_currency
               - fiat_currency
             properties:
               wallet:
                 type: string
                 description: Withdrawal wallet address
-              network:
+              asset_id:
                 type: string
-                description: Blockchain chain identifier
+                description: "Internal asset identifier, e.g. `ton/mainnet/coin` or `ton/mainnet/jetton/{raw_address}`. Preferred over the legacy `crypto_currency` + `network` pair"
               crypto_currency:
                 type: string
-                description: Crypto currency code
+                deprecated: true
+                description: "Crypto currency code. Deprecated: use asset_id instead"
+              network:
+                type: string
+                deprecated: true
+                description: "Blockchain network identifier. Deprecated: use asset_id instead"
               fiat_currency:
                 type: string
                 description: Fiat currency code
               amount:
                 type: number
                 description: Optional exchange amount
-    EncodeSwap:
-      description: Swap encoding parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              swap:
-                type: object
-                required:
-                  - provider
-                properties:
-                  provider:
-                    $ref: '#/components/schemas/Provider'
-                  dedustTrade:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/DeDustTrade'
-                  stonfiTrade:
-                    $ref: '#/components/schemas/StonFiTrade'
-              options:
-                type: object
-                required:
-                  - swap
-                  - options
-                properties:
-                  senderAddress:
-                    type: string
-                  slippage:
-                    type: string
-                    pattern: ^(\d+\.)?\d+$
-                  excessAddress:
-                    type: string
-                    pattern: ^(-1|0):[0-9a-fA-F]{64}$
     ExchangeCalculate:
-      description: Exchange rate calculation parameters
+      description: |
+        Exchange rate calculation parameters.
+        On `purchase_type: swap` the two sides must differ: the same currency
+        on the same network is refused with `validation_failed`. The same
+        currency on two networks is a bridge and is allowed.
       required: true
       content:
         application/json:
@@ -961,7 +2526,7 @@ components:
               network:
                 type: string
                 deprecated: true
-                description: "Crypto network. Deprecated: use from_network and to_network instead."
+                description: "Crypto network. Deprecated: use from_network and to_network instead"
               from_network:
                 type: string
                 description: Source crypto network (required for sell and swap)
@@ -979,7 +2544,7 @@ components:
               country:
                 type: string
                 deprecated: true
-                description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead."
+                description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead"
               payment_method:
                 $ref: '#/components/schemas/ExchangePaymentMethodType'
               reverse:
@@ -988,7 +2553,11 @@ components:
               flow:
                 $ref: '#/components/schemas/ExchangeFlow'
     CreateExchange:
-      description: Crypto-to-crypto exchange parameters
+      description: |
+        Crypto-to-crypto exchange parameters.
+        The two sides must differ: the same currency on the same network is
+        refused with `validation_failed`, since it would open a deposit
+        address for a swap into itself.
       required: true
       content:
         application/json:
@@ -1016,13 +2585,13 @@ components:
                 description: User wallet address
               extra_id:
                 type: string
-                description: Destination Tag / Memo for chains that require it on the destination address (XRP, XLM, EOS, BNB-Beacon, HBAR, etc.).
+                description: Destination Tag / Memo for chains that require it on the destination address (XRP, XLM, EOS, BNB-Beacon, HBAR, etc.)
               flow:
                 $ref: '#/components/schemas/ExchangeFlow'
               country:
                 type: string
                 deprecated: true
-                description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead."
+                description: "User country code (ISO 3166-1 alpha-2). Deprecated: use device_country_code and store_country_code query parameters instead"
     OmnistonSwap:
       description: Omniston swap parameters
       content:
@@ -1072,6 +2641,301 @@ components:
                 type: string
                 pattern: ^(ton|(-1|0):[0-9a-fA-F]{64}|[A-Za-z0-9_-]{48})$
                 description: Destination address (optional)
+    CrossSwapQuote:
+      description: Cross-chain swap quote request
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - source_asset
+              - destination_asset
+              - sender_address
+              - recipient_address
+            properties:
+              source_asset:
+                type: string
+                description: |
+                  Internal asset identifier (same format as onramp asset_id):
+                  - native coin: `{chain}/{net}/coin` — e.g. `eth/mainnet/coin`, `btc/mainnet/coin`, `ton/mainnet/coin`
+                  - TON jetton: `ton/mainnet/jetton/{raw_address}` — e.g. `ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe`
+                  - EVM/Tron/Solana/NEAR token: `{chain}/{net}/{standard}/{address}` (e.g. `erc20`, `bep20`, `trc20`, `spl`, `nep141`) — `eth/mainnet/erc20/0xdc035d45d973e3ec169d2276ddab16f1e407384f` (USDS)
+              source_amount:
+                type: string
+                pattern: ^\d+$
+                description: |
+                  Source amount in minimal units. Required when `exact_type`
+                  is `exact_input` (the default); ignored for `exact_output`.
+              destination_asset:
+                type: string
+                description: Internal asset identifier (see source_asset)
+              destination_amount:
+                type: string
+                pattern: ^\d+$
+                description: |
+                  Destination amount in minimal units the user must receive.
+                  Required when `exact_type` is `exact_output`; ignored for
+                  `exact_input`.
+              sender_address:
+                type: string
+                minLength: 1
+                description: Address signing the source tx
+              recipient_address:
+                type: string
+                minLength: 1
+                description: Address receiving funds on the destination chain
+              return_deposit_address:
+                type: boolean
+                description: |
+                  Forwarded to SwapsXYZ `/getAction?returnDepositAddress`. When
+                  true, upstream returns a deposit address in the response for
+                  deposit-based swap flows. Default false. Ignored by other
+                  aggregators.
+                  Ignored (forced to false) only when the source asset is on
+                  TON and the client reports build 26.9.0 or newer on Android,
+                  or 26.9.1 or newer on iOS, in its `Tonkeeper/<version>`
+                  User-Agent: a deposit address puts a TON source on a pricier
+                  upstream bridge route that those clients no longer need.
+                  Older clients, clients of an unknown platform below 26.9.1,
+                  and any non-TON source are honoured as sent.
+              use_multi_aggregator:
+                type: boolean
+                description: |
+                  Route the quote across several aggregators instead of the
+                  default one. Below `CROSSSWAP_MULTI_AGGREGATOR_BELOW_USD` the
+                  swap is quoted by SwapsXYZ and SwapKit together and both
+                  routes come back; SwapKit also answers when SwapsXYZ finds no
+                  route. Pairs with TON on either side stay on SwapsXYZ.
+                  Omitted, the service default applies; an explicit
+                  `aggregators` list wins over both.
+              is_max:
+                type: boolean
+                description: |
+                  True when `source_amount` is the entire balance of the
+                  source asset. Forwarded to SwapsXYZ `/getAction` as
+                  `isMax`; the other aggregators ignore it.
+              slippage_bps:
+                type: integer
+                minimum: 0
+                maximum: 10000
+              exact_type:
+                $ref: '#/components/schemas/CrossSwapExactType'
+              aggregators:
+                type: array
+                description: |
+                  Optional whitelist of aggregators to query. Pass a single
+                  entry to force one provider (e.g. `["swapkit"]`) — useful
+                  for testing fallback behaviour before flipping defaults.
+                  Naming aggregators also turns the fallback off: the list
+                  is queried as given and nothing else is tried.
+                  `swapkit` is not part of the default fan-out and is currently
+                  quoted only when named here. When the server enables the
+                  small-swap threshold (`CROSSSWAP_SWAPKIT_BELOW_USD`, off by
+                  default) it is also queried without this field: first, and
+                  alone, when the source side is worth less than the threshold,
+                  and otherwise as a fallback after the fan-out returned no
+                  route at all.
+                  `omniston` is dropped from the default fan-out for clients
+                  reporting build 26.9.0 or newer on Android, or 26.9.1 or
+                  newer on iOS, in their `Tonkeeper/<version>` User-Agent;
+                  older clients still get it. For the newer clients it is a fallback too, and only on
+                  a TON to TON pair, which is all it serves.
+                  A requested aggregator that is disabled on the server is
+                  reported in `provider_errors` with code
+                  `provider_unavailable`; if none of the requested
+                  aggregators are enabled the request fails with
+                  `no_aggregators`.
+                items:
+                  $ref: '#/components/schemas/CrossSwapAggregator'
+              protocols:
+                type: array
+                description: Optional whitelist of underlying protocols
+                items:
+                  $ref: '#/components/schemas/CrossSwapProtocol'
+              include_payload:
+                type: boolean
+                description: |
+                  If true, backend also runs `prepare` inline for each route
+                  and returns the signing payloads under
+                  `routes[].payloads`. Lets the wallet skip the separate
+                  `/v2/swap/route/{route_id}/prepare` call. For SwapsXYZ the
+                  tx is already returned by the upstream quote and this is
+                  effectively free; for other aggregators it adds a round-
+                  trip per route.
+    CrossSwapPrepare:
+      description: Optional flags controlling how the route is prepared
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              approval_mode:
+                $ref: '#/components/schemas/CrossSwapApprovalMode'
+              disable_build_tx:
+                type: boolean
+                default: true
+                description: |
+                  Skip building the transaction on the aggregator side and
+                  return a deposit descriptor instead. Send false to get the
+                  built transaction back.
+    CrossSwapSubmit:
+      description: Submit a signed payload for broadcasting
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - signed_payload
+              - broadcast_mode
+            properties:
+              signed_payload:
+                type: string
+                description: Signed payload (base64 or hex, format depends on payload_type)
+              broadcast_mode:
+                $ref: '#/components/schemas/CrossSwapBroadcastMode'
+    OnrampQuote:
+      description: On-ramp quote request
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - target_asset_id
+              - fiat
+              - amount
+            properties:
+              target_asset_id:
+                type: string
+              fiat:
+                type: string
+              amount:
+                type: string
+                pattern: ^\d+(\.\d+)?$
+                description: Fiat decimal. When `reverse=true`, target crypto
+              reverse:
+                type: boolean
+              payment_method:
+                $ref: '#/components/schemas/ExchangePaymentMethodType'
+              merchant:
+                $ref: '#/components/schemas/ExchangeMerchantSlug'
+    OnrampCreate:
+      description: Create on-ramp order. Use `Idempotency-Key` for safe retry
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - target_asset_id
+              - fiat
+              - amount
+              - destination_address
+              - payment_method
+              - merchant
+            properties:
+              target_asset_id:
+                type: string
+              fiat:
+                type: string
+              amount:
+                type: string
+                pattern: ^\d+(\.\d+)?$
+                description: Fiat decimal. When `reverse=true`, target crypto
+              reverse:
+                type: boolean
+              destination_address:
+                type: string
+                description: User's wallet on the target chain
+              extra_id:
+                type: string
+                description: Memo / Destination Tag if required by the chain
+              payment_method:
+                $ref: '#/components/schemas/ExchangePaymentMethodType'
+              merchant:
+                $ref: '#/components/schemas/ExchangeMerchantSlug'
+              merchant_transaction_id:
+                type: string
+                description: Pin quote from /v2/onramp/quote
+              redirect_url:
+                type: string
+                description: Wallet deep link; server appends `?ramp_order_id={id}`
+              language:
+                type: string
+                description: BCP-47 tag
+    OfframpQuote:
+      description: Off-ramp quote request
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - source_asset_id
+              - fiat
+              - amount
+            properties:
+              source_asset_id:
+                type: string
+              fiat:
+                type: string
+              amount:
+                type: string
+                pattern: ^\d+(\.\d+)?$
+                description: Source crypto decimal. When `reverse=true`, target fiat
+              reverse:
+                type: boolean
+              payout_method:
+                $ref: '#/components/schemas/ExchangePaymentMethodType'
+              merchant:
+                $ref: '#/components/schemas/ExchangeMerchantSlug'
+    OfframpCreate:
+      description: Create off-ramp order. Use `Idempotency-Key` for safe retry
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - source_asset_id
+              - fiat
+              - amount
+              - from_address
+              - payout_method
+              - merchant
+            properties:
+              source_asset_id:
+                type: string
+              fiat:
+                type: string
+              amount:
+                type: string
+                pattern: ^\d+(\.\d+)?$
+                description: Source crypto decimal. When `reverse=true`, target fiat
+              reverse:
+                type: boolean
+              from_address:
+                type: string
+                description: User's address on the source chain
+              extra_id:
+                type: string
+                description: Memo / Destination Tag if required by the chain
+              payout_method:
+                $ref: '#/components/schemas/ExchangePaymentMethodType'
+              merchant:
+                $ref: '#/components/schemas/ExchangeMerchantSlug'
+              merchant_transaction_id:
+                type: string
+                description: Pin quote from /v2/offramp/quote
+              redirect_url:
+                type: string
+                description: Wallet deep link; server appends `?ramp_order_id={id}`
+              language:
+                type: string
+                description: BCP-47 tag
 
   responses:
     InternalError:
@@ -1080,25 +2944,85 @@ components:
         application/json:
           schema:
             type: object
-            required: [ error ]
+            required: [ error, request_id ]
             properties:
               error:
                 type: string
+                description: Generic sanitised message, never reveals internal details
+              code:
+                type: string
+              request_id:
+                type: string
+                description: UUID v4 for correlating the response to server logs
     BadRequest:
       description: Invalid request
       content:
         application/json:
           schema:
             type: object
-            required: [ error ]
+            required: [ error, code, request_id ]
             properties:
               error:
                 type: string
+                description: Human-readable message, safe to show the user
+              code:
+                type: string
+                description: Stable machine-readable code — clients should branch on this
+              request_id:
+                type: string
+                description: UUID v4 for correlating the response to server logs
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ error, code, request_id ]
+            properties:
+              error:
+                type: string
+                description: Human-readable message, safe to show the user
+              code:
+                type: string
+                description: |
+                  Stable machine-readable code — clients should branch on this.
+                  `route_not_found` means the route id is gone, from this
+                  service or from the aggregator; ask for a fresh quote.
+              request_id:
+                type: string
+                description: UUID v4 for correlating the response to server logs
+    AssetCapabilities:
+      description: Capabilities for the requested assets
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AssetCapabilitiesResponse'
+
+  headers:
+    ETag:
+      schema:
+        type: string
 
 paths:
+  /v2/healthcheck:
+    get:
+      summary: Check server readiness
+      operationId: healthcheck
+      tags:
+        - system
+      responses:
+        '200':
+          description: "Server is ready"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /v2/swap/calculate:
     get:
       operationId: calculateSwap
+      deprecated: true
       summary: Calculate swap
       description: Get swap route with amounts and fees
       tags:
@@ -1119,29 +3043,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
-  /v2/swap/encode:
-    post:
-      operationId: encodeSwap
-      summary: Encode swap transaction
-      description: Get encoded transaction for swap execution
-      tags:
-        - swap
-      requestBody:
-        $ref: '#/components/requestBodies/EncodeSwap'
-      responses:
-        '200':
-          description: Encoded transaction
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SwapEncode'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalError'
   /v2/swap/gas:
     get:
       operationId: swapGas
+      deprecated: true
       summary: Get gas estimates
       description: Get gas estimates for different swap types
       tags:
@@ -1160,10 +3065,14 @@ paths:
   /v2/swap/assets:
     get:
       operationId: swapAssets
+      deprecated: true
       summary: Get swap assets
       description: Get list of available assets for swapping
       tags:
         - swap
+      parameters:
+        - $ref: '#/components/parameters/AssetSearchQuery'
+        - $ref: '#/components/parameters/AssetSearchLimitQuery'
       responses:
         '200':
           description: List of swap assets
@@ -1178,6 +3087,7 @@ paths:
   /v2/swap/omniston/build:
     post:
       operationId: buildOmnistonSwap
+      deprecated: true
       summary: Build Omniston swap
       description: Get unsigned messages for Omniston swap
       tags:
@@ -1199,11 +3109,13 @@ paths:
   /v2/onramp/currencies:
     get:
       operationId: getExchangeCurrencies
+      deprecated: true
       summary: Get currencies
       description: Get available currencies, merchants and trading pairs
       tags:
         - exchange
       parameters:
+        - $ref: '#/components/parameters/FirebaseUserHeader'
         - $ref: '#/components/parameters/CountryQuery'
         - $ref: '#/components/parameters/DeviceCountryCodeQuery'
         - $ref: '#/components/parameters/StoreCountryCodeQuery'
@@ -1227,11 +3139,14 @@ paths:
   /v2/onramp/calculate:
     post:
       operationId: exchangeCalculate
+      deprecated: true
       summary: Calculate exchange rates
       description: Get exchange rates from all available merchants
       tags:
         - exchange
       parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
         - $ref: '#/components/parameters/DeviceCountryCodeQuery'
         - $ref: '#/components/parameters/StoreCountryCodeQuery'
         - $ref: '#/components/parameters/SimCountryQuery'
@@ -1260,6 +3175,8 @@ paths:
       tags:
         - exchange
       parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
         - $ref: '#/components/parameters/CountryQuery'
         - $ref: '#/components/parameters/DeviceCountryCodeQuery'
         - $ref: '#/components/parameters/StoreCountryCodeQuery'
@@ -1290,6 +3207,8 @@ paths:
       tags:
         - exchange
       parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
         - $ref: '#/components/parameters/LangQuery'
         - $ref: '#/components/parameters/DeviceCountryCodeQuery'
         - $ref: '#/components/parameters/StoreCountryCodeQuery'
@@ -1342,11 +3261,14 @@ paths:
   /v2/onramp/pairs:
     get:
       operationId: getExchangePairs
+      deprecated: true
       summary: Get trading pairs
       description: Get available trading pairs with filtering
       tags:
         - exchange
       parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
         - $ref: '#/components/parameters/DeviceCountryCodeQuery'
         - $ref: '#/components/parameters/StoreCountryCodeQuery'
         - $ref: '#/components/parameters/SimCountryQuery'
@@ -1372,11 +3294,14 @@ paths:
   /v2/onramp/layout:
     get:
       operationId: getExchangeLayout
+      deprecated: true
       summary: Get deposit/withdraw assets and methods
       description: Get available crypto assets with cash and crypto methods for deposit or withdraw
       tags:
         - exchange
       parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
         - $ref: '#/components/parameters/FlowQuery'
         - $ref: '#/components/parameters/CurrencyQuery'
         - $ref: '#/components/parameters/LangQuery'
@@ -1393,6 +3318,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExchangeLayout'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/exchange/layout:
+    get:
+      operationId: getExchangeLayoutCards
+      summary: Slim layout cards for the deposit/withdraw chooser
+      tags:
+        - exchange
+      parameters:
+        - $ref: '#/components/parameters/FlowQuery'
+        - $ref: '#/components/parameters/CurrencyQuery'
+        - $ref: '#/components/parameters/LangQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+      responses:
+        '200':
+          description: Layout cards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeLayoutCards'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -1417,4 +3369,543 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
-        
+
+  /v2/crosschain/{wallet_id}/config:
+    get:
+      operationId: getCrossSwapConfig
+      summary: Config for crossswap
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/CrossSwapFromAssetIDQuery'
+        - $ref: '#/components/parameters/CrossSwapToAssetIDQuery'
+        - $ref: '#/components/parameters/WalletIdPath'
+      responses:
+        '200':
+          description: CrossChain swap config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapConfig'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/crosschain/assets:
+    get:
+      operationId: listCrossSwapAssets
+      summary: List supported cross-chain assets
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/AssetSearchQuery'
+        - $ref: '#/components/parameters/AssetSearchLimitQuery'
+        - $ref: '#/components/parameters/AssetChainFilterQuery'
+        - $ref: '#/components/parameters/PaginationCursorQuery'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+      responses:
+        '200':
+          description: Merged asset list from all registered aggregators
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapAssets'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/crosschain/asset:
+    get:
+      operationId: getCrossSwapAsset
+      summary: Look up a single cross-chain asset by AssetID
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/CrossSwapAssetIDQuery'
+      responses:
+        '200':
+          description: Matching cross-chain asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapAsset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/crosschain/slippage:
+    get:
+      deprecated: true
+      operationId: getCrossSwapSlippage
+      summary: Slippage options per source chain
+      tags:
+        - crosschain
+      responses:
+        '200':
+          description: Slippage options keyed by chain id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapSlippage'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /v2/crosschain/quotes:
+    post:
+      operationId: createCrossSwapQuote
+      summary: Create cross-chain swap quote
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/IsNewUserQuery'
+      requestBody:
+        $ref: '#/components/requestBodies/CrossSwapQuote'
+      responses:
+        '200':
+          description: Quote with available routes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapQuote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/crosschain/routes/{route_id}/prepare:
+    post:
+      operationId: prepareCrossSwapRoute
+      summary: Prepare selected route
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/CrossSwapRouteIDPath'
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/IsNewUserQuery'
+      requestBody:
+        $ref: '#/components/requestBodies/CrossSwapPrepare'
+      responses:
+        '200':
+          description: Prepared signing payloads
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapPrepare'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/crosschain/payloads/{payload_id}/submit:
+    post:
+      operationId: submitCrossSwapPayload
+      summary: Submit signed payload
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/CrossSwapPayloadIDPath'
+      requestBody:
+        $ref: '#/components/requestBodies/CrossSwapSubmit'
+      responses:
+        '200':
+          description: Submission accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapSubmit'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/crosschain/executions/{execution_id}:
+    get:
+      operationId: getCrossSwapExecution
+      summary: Get execution status
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/CrossSwapExecutionIDPath'
+      responses:
+        '200':
+          description: Execution status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapExecution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/configuration:
+    get:
+      operationId: getOnrampConfiguration
+      summary: List supported on-ramp assets (slim, paginated)
+      description: |
+        Returns asset metadata only. The provider/method matrix lives at
+        `GET /v2/onramp/asset?asset_id=...`.
+      tags:
+        - onramp
+      parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/OnrampDestinationChainQuery'
+        - $ref: '#/components/parameters/OnrampFiatQuery'
+        - $ref: '#/components/parameters/OnrampPaymentMethodQuery'
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/CountryQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/LangQuery'
+        - $ref: '#/components/parameters/PaginationCursorQuery'
+        - $ref: '#/components/parameters/PaginationLimitQuery'
+        - $ref: '#/components/parameters/IfNoneMatchHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+      responses:
+        '200':
+          description: Configuration
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnrampConfiguration'
+        '304':
+          description: Not modified
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/chains:
+    get:
+      operationId: getOnrampChains
+      summary: List chains with at least one purchasable on-ramp asset
+      description: |
+        Returns the chains the client should offer in the network picker,
+        ordered by display priority. Applies the same availability rules as
+        `GET /v2/onramp/configuration`, so every chain listed here returns a
+        non-empty asset list for the same `fiat` / `payment_method` filters.
+      tags:
+        - onramp
+      parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/OnrampFiatQuery'
+        - $ref: '#/components/parameters/OnrampPaymentMethodQuery'
+        - $ref: '#/components/parameters/CountryQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/LangQuery'
+        - $ref: '#/components/parameters/IfNoneMatchHeader'
+      responses:
+        '200':
+          description: Available chains
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnrampChains'
+        '304':
+          description: Not modified
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/asset:
+    get:
+      operationId: getOnrampAsset
+      summary: On-ramp configuration for a single asset
+      tags:
+        - onramp
+      parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/OnrampAssetIDQuery'
+        - $ref: '#/components/parameters/OnrampFiatQuery'
+        - $ref: '#/components/parameters/CountryQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/LangQuery'
+      responses:
+        '200':
+          description: Asset detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnrampAssetDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/quote:
+    post:
+      operationId: onrampQuote
+      summary: Multi-merchant on-ramp quote
+      tags:
+        - onramp
+      parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+      requestBody:
+        $ref: '#/components/requestBodies/OnrampQuote'
+      responses:
+        '200':
+          description: Quotes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnrampQuotes'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/orders:
+    post:
+      operationId: createOnrampOrder
+      summary: Create on-ramp order
+      tags:
+        - onramp
+      parameters:
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        $ref: '#/components/requestBodies/OnrampCreate'
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnrampOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/onramp/orders/{order_id}:
+    get:
+      operationId: getOnrampOrder
+      summary: Get on-ramp order status
+      tags:
+        - onramp
+      parameters:
+        - $ref: '#/components/parameters/OnrampOrderIDPath'
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnrampOrder'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/offramp/configuration:
+    get:
+      operationId: getOfframpConfiguration
+      summary: List supported off-ramp assets (slim, paginated)
+      description: |
+        Returns asset metadata only. The provider/method matrix lives at
+        `GET /v2/offramp/asset?asset_id=...`.
+      tags:
+        - offramp
+      parameters:
+        - $ref: '#/components/parameters/OfframpSourceChainQuery'
+        - $ref: '#/components/parameters/OfframpFiatQuery'
+        - $ref: '#/components/parameters/OfframpPayoutMethodQuery'
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/CountryQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/LangQuery'
+        - $ref: '#/components/parameters/PaginationCursorQuery'
+        - $ref: '#/components/parameters/PaginationLimitQuery'
+        - $ref: '#/components/parameters/IfNoneMatchHeader'
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+      responses:
+        '200':
+          description: Configuration
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfframpConfiguration'
+        '304':
+          description: Not modified
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/offramp/asset:
+    get:
+      operationId: getOfframpAsset
+      summary: Off-ramp configuration for a single asset
+      tags:
+        - offramp
+      parameters:
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/OfframpAssetIDQuery'
+        - $ref: '#/components/parameters/CountryQuery'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/LangQuery'
+      responses:
+        '200':
+          description: Asset detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfframpAssetDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/offramp/quote:
+    post:
+      operationId: offrampQuote
+      summary: Multi-merchant off-ramp quote
+      tags:
+        - offramp
+      parameters:
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+      requestBody:
+        $ref: '#/components/requestBodies/OfframpQuote'
+      responses:
+        '200':
+          description: Quotes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfframpQuotes'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/offramp/orders:
+    post:
+      operationId: createOfframpOrder
+      summary: Create off-ramp order
+      tags:
+        - offramp
+      parameters:
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/DeviceCountryCodeQuery'
+        - $ref: '#/components/parameters/StoreCountryCodeQuery'
+        - $ref: '#/components/parameters/SimCountryQuery'
+        - $ref: '#/components/parameters/TimezoneQuery'
+        - $ref: '#/components/parameters/IsVpnActiveQuery'
+        - $ref: '#/components/parameters/BuildQuery'
+        - $ref: '#/components/parameters/PlatformQuery'
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        $ref: '#/components/requestBodies/OfframpCreate'
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfframpOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/offramp/orders/{order_id}:
+    get:
+      operationId: getOfframpOrder
+      summary: Get off-ramp order status
+      tags:
+        - offramp
+      parameters:
+        - $ref: '#/components/parameters/OfframpOrderIDPath'
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfframpOrder'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /v2/assets/capabilities:
+    get:
+      operationId: getAssetCapabilities
+      summary: Capabilities of one or more assets across all subsystems
+      tags:
+        - assets
+      parameters:
+        - $ref: '#/components/parameters/FirebaseUserHeader'
+        - $ref: '#/components/parameters/AssetIDsQuery'
+      responses:
+        '200':
+          $ref: '#/components/responses/AssetCapabilities'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'

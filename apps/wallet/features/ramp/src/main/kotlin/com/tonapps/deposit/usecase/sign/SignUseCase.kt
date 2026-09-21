@@ -4,10 +4,11 @@ import android.content.Context
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.ledger.ton.Transaction
+import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
-import com.tonapps.deposit.usecase.sign.SignTransaction.Delegate
+import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.Dispatchers
@@ -18,12 +19,14 @@ import uikit.extensions.activity
 
 class SignUseCase(
     private val accountRepository: AccountRepository,
+    private val mcAccountRepository: McAccountRepository,
+    private val chainKitProvider: ChainKitProvider,
     private val passcodeManager: PasscodeManager,
     private val rnLegacy: RNLegacy,
 ) {
 
-    private val signTransaction = SignTransaction(accountRepository, passcodeManager, rnLegacy)
-    private val signProof = SignProof(accountRepository, passcodeManager, rnLegacy)
+    private val signTransaction = SignTransaction(accountRepository, mcAccountRepository, passcodeManager, rnLegacy)
+    private val signProof = SignProof(accountRepository, mcAccountRepository, chainKitProvider, passcodeManager, rnLegacy)
 
     suspend operator fun invoke(
         context: Context,
@@ -31,7 +34,11 @@ class SignUseCase(
         bytes: ByteArray
     ): ByteArray {
         val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
-        return signTransaction.default(activity, wallet, bytes)
+        return if (wallet.type == WalletType.Multichain) {
+            signTransaction.multichain(activity, wallet, bytes)
+        } else {
+            signTransaction.default(activity, wallet, bytes)
+        }
     }
 
     suspend operator fun invoke(
@@ -45,6 +52,8 @@ class SignUseCase(
             signProof.keystone(activity, wallet, payload, domain)
         } else if (wallet.type == WalletType.Ledger) {
             signProof.ledger(activity, wallet, payload, domain)
+        } else if (wallet.type == WalletType.Multichain) {
+            signProof.multichain(activity, wallet, payload, domain)
         } else if (wallet.hasPrivateKey) {
             signProof.default(activity, wallet, payload, domain)
         } else {
@@ -126,6 +135,20 @@ class SignUseCase(
             context.activity ?: throw IllegalArgumentException("Context must be an Activity")
 
         signTransaction.tron(activity, wallet, transaction)
+    }
+
+    /**
+     * Confirms passcode once, then runs [block] with an unlocked signer for multiple txs.
+     */
+    suspend fun <T> unlockAndSign(
+        context: Context,
+        wallet: WalletEntity,
+        block: suspend UnlockedWalletSigner.() -> T,
+    ): T = withContext(Dispatchers.Main) {
+        val activity =
+            context.activity ?: throw IllegalArgumentException("Context must be an Activity")
+        val signer = signTransaction.unlock(activity, wallet)
+        signer.block()
     }
 
 }

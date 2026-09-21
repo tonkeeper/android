@@ -1,8 +1,7 @@
 package com.tonapps.wallet.data.browser.source
 
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.log.L
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.bus.core.IssueHelper
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.browser.entities.BrowserDataEntity
 import kotlinx.coroutines.Dispatchers
@@ -13,11 +12,11 @@ internal class RemoteDataSource(
     private val api: API
 ) {
 
-    suspend fun load(network: TonNetwork, locale: Locale): BrowserDataEntity? = withContext(Dispatchers.IO) {
+    suspend fun load(network: TonNetwork, locale: Locale, walletId: String?): BrowserDataEntity? = withContext(Dispatchers.IO) {
         try {
-            BrowserDataEntity(api.getBrowserApps(network, locale))
+            BrowserDataEntity(api.getBrowserApps(network, locale, walletId))
         } catch (e: Throwable) {
-            FirebaseCrashlytics.getInstance().recordException(e)
+            IssueHelper.recordException(e)
             null
         }
     }

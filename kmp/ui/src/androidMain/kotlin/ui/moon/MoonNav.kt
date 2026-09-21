@@ -6,6 +6,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavEntryDecorator
@@ -18,6 +19,7 @@ private const val TransactionDuration = 100
 
 @Composable
 fun <T : Any> MoonNav(
+    modifier: Modifier = Modifier,
     backStack: List<T>,
     entryDecorators: List<NavEntryDecorator<T>> = listOf(
         rememberSaveableStateHolderNavEntryDecorator(),
@@ -27,6 +29,7 @@ fun <T : Any> MoonNav(
     entryProvider: (key: T) -> NavEntry<T>,
 ) {
     NavDisplay(
+        modifier = modifier,
         backStack = backStack,
         sceneStrategy = sceneStrategy,
         entryDecorators = entryDecorators,

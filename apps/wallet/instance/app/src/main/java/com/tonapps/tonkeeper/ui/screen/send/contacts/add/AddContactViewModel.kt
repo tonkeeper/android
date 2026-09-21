@@ -2,14 +2,13 @@ package com.tonapps.tonkeeper.ui.screen.send.contacts.add
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
-import com.tonapps.blockchain.ton.TonAddressTags
+import com.tonapps.bus.core.contract.TonAddressTags
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.extensions.bestMessage
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.api.API
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.contacts.ContactsRepository
-import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.Account
 import io.tonapi.models.AccountStatus
 import kotlinx.coroutines.FlowPreview
@@ -26,11 +25,7 @@ class AddContactViewModel(
     private val wallet: WalletEntity,
     private val api: API,
     private val contactsRepository: ContactsRepository,
-    private val settingsRepository: SettingsRepository,
 ) : BaseWalletVM(app) {
-
-    private val tronUsdtEnabled: Boolean
-        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
 
     data class UserInput(
         val name: String,
@@ -72,7 +67,7 @@ class AddContactViewModel(
                 _accountFlow.value = AddressAccount.Error
             } else if (tags.isTestnet == true && !wallet.testnet) {
                 _accountFlow.value = AddressAccount.Error
-            } else if (address.isValidTronAddress() && tronUsdtEnabled) {
+            } else if (address.isValidTronAddress()) {
                 _accountFlow.value = AddressAccount.TronAccount(address)
             } else {
                 _accountFlow.value = AddressAccount.Loading

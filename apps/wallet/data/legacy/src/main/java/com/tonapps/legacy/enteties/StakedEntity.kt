@@ -68,9 +68,9 @@ data class StakedEntity(
                     } else {
                         val rates = ratesRepository.getRates(wallet.network, WalletCurrency.TON, token.address)
                         val balance = rates.convert(token.address, token.balance.value)
-                        val readyWithdraw = rates.convert(token.address, staking.getReadyWithdraw(pool))
-                        val pendingDeposit = rates.convert(token.address, staking.getPendingDeposit(pool))
-                        val pendingWithdraw = rates.convert(token.address, staking.getPendingWithdraw(pool))
+                        val readyWithdraw = staking.getReadyWithdraw(pool)
+                        val pendingDeposit = staking.getPendingDeposit(pool)
+                        val pendingWithdraw = staking.getPendingWithdraw(pool)
                         list.add(StakedEntity(
                             pool = pool,
                             balance = balance,

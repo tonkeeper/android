@@ -201,12 +201,14 @@ internal class CurrencyFormat(val locale: Locale) {
         }
         if (compact) {
             val amount = formatCompactAmount(bigDecimal)
-            return format(
-                currency = currency,
-                value = amount,
-                replaceSymbol = replaceSymbol,
-                cutLongSymbol = cutLongSymbol,
-            )
+            if (amount != null) {
+                return format(
+                    currency = currency,
+                    value = amount,
+                    replaceSymbol = replaceSymbol,
+                    cutLongSymbol = cutLongSymbol,
+                )
+            }
         }
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(bigDecimal)
@@ -218,14 +220,14 @@ internal class CurrencyFormat(val locale: Locale) {
         )
     }
 
-    private fun formatCompactAmount(value: BigDecimal): String {
+    private fun formatCompactAmount(value: BigDecimal): String? {
         val d = value.toDouble()
         if (d.isNaN() || d.isInfinite()) {
-            return value.toPlainString()
+            return null
         }
         val absValue = abs(d)
         val match = compactSuffixes.firstOrNull { absValue >= it.first }
-            ?: return formatPlainCompact(d)
+            ?: return null
         val scaled = d / match.first
         return formatScaledCompact(scaled, match.second)
     }
@@ -238,15 +240,6 @@ internal class CurrencyFormat(val locale: Locale) {
             rounded.toString()
         }
         return "$str$suffix"
-    }
-
-    private fun formatPlainCompact(value: Double): String {
-        val rounded = (value * 100).toLong() / 100.0
-        return if (rounded % 1.0 == 0.0) {
-            rounded.toLong().toString()
-        } else {
-            rounded.toString()
-        }
     }
 
     private fun format(

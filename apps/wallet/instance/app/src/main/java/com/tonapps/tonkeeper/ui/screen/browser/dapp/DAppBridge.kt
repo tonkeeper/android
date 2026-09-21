@@ -32,7 +32,10 @@ class DAppBridge(
             "connect" -> connect(protocolVersion, ConnectRequest.parse(args.getJSONObject(1))).toString()
             "send" -> send(args.getJSONObject(0)).toString()
             "restoreConnection" -> restoreConnection().toString()
-            "disconnect" -> disconnect()
+            "disconnect" -> {
+                disconnect()
+                "{}"
+            }
             "tonapi.fetch" -> {
                 val response = tonapiFetch(args.getString(0), args.optString(1) ?: "")
                 webAPIResponse(response).toString()
@@ -42,7 +45,7 @@ class DAppBridge(
     }
 
     private fun webAPIResponse(response: Response): JSONObject {
-        val body = response.body?.string() ?: ""
+        val body = response.body.string() ?: ""
         val json = JSONObject()
         json.put("body", body)
         json.put("ok", response.isSuccessful)
@@ -98,7 +101,6 @@ class DAppBridge(
                     window.addEventListener('message', ({ data }) => {
                         try {
                             const message = data;
-                            console.log('message bridge', JSON.stringify(message));
                             if (message.type === '${BridgeMessage.Type.FunctionResponse.value}') {
                                 const promise = window.rnPromises[message.invocationId];
                                 

@@ -14,7 +14,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Values: android,ios,desktop
+ * Values: android,ios,desktop,web
  */
 @Serializable
 enum class Platform(val value: String) {
@@ -23,7 +23,9 @@ enum class Platform(val value: String) {
     @SerialName(value = "ios")
     ios("ios"),
     @SerialName(value = "desktop")
-    desktop("desktop");
+    desktop("desktop"),
+    @SerialName(value = "web")
+    web("web");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

@@ -7,7 +7,6 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
-import androidx.webkit.internal.ApiFeature.T
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.drawable
@@ -22,7 +21,7 @@ enum class LauncherIcon(
     Default(
         type = "Default",
         iconRes = R.mipmap.ic_default_launcher,
-        bgColorRes = R.color.ic_default_launcher_background,
+        bgDrawableRes = R.drawable.ic_default_launcher_background,
         fgRes = R.drawable.ic_default_launcher_foreground
     ),
 

@@ -7,7 +7,10 @@ import com.tonapps.uikit.color.accentRedColor
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 
-class DotDrawable(context: Context): BaseDrawable() {
+class DotDrawable(
+    context: Context,
+    dotColor: Int = context.accentRedColor,
+): BaseDrawable() {
 
     companion object {
         val size = 6.dp
@@ -16,7 +19,7 @@ class DotDrawable(context: Context): BaseDrawable() {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = context.accentRedColor
+        color = dotColor
     }
 
     override fun draw(canvas: Canvas) {

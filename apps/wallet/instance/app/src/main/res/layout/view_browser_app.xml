@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:paddingTop="8dp"
-    android:paddingBottom="12dp"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    
-    <uikit.widget.AsyncImageView
-        android:id="@+id/icon"
+    android:paddingBottom="12dp">
+
+    <FrameLayout
         android:layout_width="@dimen/barHeight"
         android:layout_height="@dimen/barHeight"
         android:layout_gravity="center_horizontal"
-        app:placeholderImage="@drawable/bg_content_tint_16"
-        app:roundedCornerRadius="@dimen/offsetMedium"/>
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/icon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:placeholderImage="@drawable/bg_content_tint_16"
+            app:roundedCornerRadius="@dimen/offsetMedium" />
+
+        <uikit.widget.AsyncImageView
+            android:id="@+id/network_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="end|bottom"
+            android:translationX="4dp"
+            android:translationY="4dp"
+            android:visibility="gone"
+            app:roundAsCircle="true"
+            app:roundingBorderColor="?attr/backgroundPageColor"
+            app:roundingBorderWidth="2dp" />
+    </FrameLayout>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/name"
@@ -22,6 +43,6 @@
         android:ellipsize="end"
         android:gravity="center_horizontal"
         android:textAppearance="@style/TextAppearance.Body3"
-        android:textColor="?attr/textSecondaryColor"/>
+        android:textColor="?attr/textSecondaryColor" />
 
 </uikit.widget.ColumnLayout>

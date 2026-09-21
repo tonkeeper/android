@@ -70,6 +70,12 @@ fun appColorSchemeLight() = AppColorScheme(
         primaryBackgroundHighlighted = Color(0xFFFFC25E),
         primaryForeground = Color(0xFFFFFFFF)
     ),
+    buttonRed = ButtonColorScheme(
+        primaryBackground = Color(0xFFFF3B30),
+        primaryBackgroundDisable = Color(0xFFC2364E),
+        primaryBackgroundHighlighted = Color(0xFFFF5E79),
+        primaryForeground = Color(0xFFFFFFFF)
+    ),
     field = FieldColorScheme(
         background = Color(0x1F818C99),
         activeBorder = Color(0xFF007AFF),

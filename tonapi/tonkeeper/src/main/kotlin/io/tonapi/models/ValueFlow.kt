@@ -18,10 +18,15 @@ import kotlinx.serialization.Contextual
 data class ValueFlow(
     @SerialName(value = "account")
     val account: AccountAddress,
-    @SerialName(value = "ton")
-    val ton: Long,
+    @SerialName(value = "gram")
+    val gram: Long,
     @SerialName(value = "fees")
     val fees: Long,
+
+    /* this field will gone after Sept. 2026, use gram instead */
+    @SerialName(value = "ton")
+    @Deprecated(message = "This property is deprecated.")
+    val ton: Long? = null,
     @SerialName(value = "jettons")
     val jettons: List<ValueFlowJettonsInner>? = null
 ) {

@@ -29,6 +29,10 @@ data class ActionSimplePreview(
     @SerialName(value = "value")
     val `value`: String? = null,
 
+    /* the value of this action expressed in the requested fiat currency. */
+    @SerialName(value = "fiat_value")
+    val fiatValue: String? = null,
+
     /* a link to an image that depicts this action's asset. */
     @SerialName(value = "value_image")
     val valueImage: String? = null

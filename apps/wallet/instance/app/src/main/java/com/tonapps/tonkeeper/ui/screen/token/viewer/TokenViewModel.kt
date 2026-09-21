@@ -13,7 +13,6 @@ import com.tonapps.icu.Formatter
 import com.tonapps.tonkeeper.core.history.ActionOptions
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.extensions.isSafeModeEnabled
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
@@ -77,9 +76,6 @@ class TokenViewModel(
     val installId: String
         get() = settingsRepository.installId
 
-    val tronUsdtEnabled: Boolean
-        get() = settingsRepository.getTronUsdtEnabled(wallet.id)
-
     var tronAddress: String? = null
         private set
 
@@ -131,7 +127,7 @@ class TokenViewModel(
                 token,
                 list,
                 chart,
-                tokenRepository.getEthena(wallet.accountId),
+                tokenRepository.getEthena(wallet.accountId, wallet.id),
                 trc20DefaultFees
             )
         }.launchIn(scope)
@@ -146,9 +142,9 @@ class TokenViewModel(
         val token = list.firstOrNull { it.address == tokenAddress } ?: return
 
         val ethena = if (!rawUsde && token.isUSDe && !usdeDisabled) {
-            tokenRepository.getEthena(wallet.accountId, true)
+            tokenRepository.getEthena(wallet.accountId, wallet.id, true)
         } else if (token.isTsUSDe && !usdeDisabled) {
-            tokenRepository.getEthena(wallet.accountId)
+            tokenRepository.getEthena(wallet.accountId, wallet.id)
         } else {
             null
         }
@@ -254,9 +250,10 @@ class TokenViewModel(
                     balance = token.balance.value,
                     balanceFormat = CurrencyFormatter.format(
                         value = token.balance.value,
+                        compact = true,
                     ),
-                    fiatFormat = CurrencyFormatter.format(currency, token.fiat),
-                    fiatRate = CurrencyFormatter.format(currency, token.rateNow),
+                    fiatFormat = CurrencyFormatter.format(currency, token.fiat, compact = true),
+                    fiatRate = CurrencyFormatter.format(currency, token.rateNow, compact = true),
                     rateDiff24h = rates.getDiff7d(token.address),
                     verified = token.token.verification == TokenEntity.Verification.whitelist,
                     hiddenBalance = settingsRepository.hiddenBalances,
@@ -279,8 +276,9 @@ class TokenViewModel(
                         balance = stonfiBalance,
                         balanceFormat = CurrencyFormatter.format(
                             value = stonfiBalance,
+                            compact = true,
                         ),
-                        fiatFormat = CurrencyFormatter.format(currency, stonfiFiat),
+                        fiatFormat = CurrencyFormatter.format(currency, stonfiFiat, compact = true),
                         hiddenBalance = settingsRepository.hiddenBalances,
                     )
                 )
@@ -307,7 +305,7 @@ class TokenViewModel(
                 fiat = CurrencyFormatter.format(currency, headerFiat),
                 iconUri = token.imageUri,
                 hiddenBalance = settingsRepository.hiddenBalances,
-                showNetwork = tronUsdtEnabled && (token.isUsdt || token.isTrc20),
+                showNetwork = token.isUsdt || token.isTrc20,
                 blockchain = token.token.blockchain,
                 wallet = wallet,
                 availableTransfers = if (token.isTrc20) totalAvailableTransfers else null
@@ -481,15 +479,14 @@ class TokenViewModel(
             return@withContext
         }
 
-        val tonProofToken = accountRepository.requestTonProofToken(wallet) ?: return@withContext
-        val tronEvents = eventsRepository.loadTronEvents(tronAddress!!, tonProofToken, beforeLt)
+        val tronEvents = eventsRepository.loadTronEvents(tronAddress!!, wallet.id, beforeLt)
             ?: return@withContext
         val walletEventItems = historyHelper.tronMapping(
             wallet = wallet,
             tronAddress = tronAddress!!,
             events = tronEvents,
             options = ActionOptions(
-                safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
+                safeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network),
                 hiddenBalances = settingsRepository.hiddenBalances,
             )
         )
@@ -516,9 +513,8 @@ class TokenViewModel(
     ): List<HistoryItem> {
         return historyHelper.mapping(
             wallet = wallet, events = events, options = ActionOptions(
-                safeMode = settingsRepository.isSafeModeEnabled(wallet.network),
+                safeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network),
                 hiddenBalances = settingsRepository.hiddenBalances,
-                tronEnabled = tronUsdtEnabled,
             )
         )
     }
@@ -600,8 +596,6 @@ class TokenViewModel(
     }
 
     private suspend fun getBatteryCharges(): Int = withContext(Dispatchers.IO) {
-        accountRepository.requestTonProofToken(wallet)?.let {
-            batteryRepository.getCharges(it, wallet.publicKey, wallet.network, true)
-        } ?: 0
+        batteryRepository.getCharges(wallet, true)
     }
 }

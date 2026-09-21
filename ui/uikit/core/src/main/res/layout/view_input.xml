@@ -9,7 +9,7 @@
         android:layout_height="@dimen/barHeight"
         android:layout_marginStart="@dimen/offsetMedium"
         android:gravity="center_vertical"
-        android:transformPivotX="0dp"
+        android:textAlignment="viewStart"
         android:transformPivotY="0dp"
         android:textAppearance="@style/TextAppearance.Body1"
         android:textColor="?attr/textSecondaryColor"/>

@@ -1,14 +1,12 @@
 package com.tonapps.blockchain.ton.extensions
 
-import com.tonapps.log.L
 import com.tonapps.base64.decodeBase64
 import com.tonapps.base64.encodeBase64
-import org.json.JSONObject
+import io.ktor.util.hex
 import org.ton.bitstring.BitString
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellSlice
-import org.ton.crypto.hex
 
 fun String.bocFromBase64(): BagOfCells {
     if (startsWith("{")) {
@@ -44,7 +42,7 @@ fun String.cellFromHex(): Cell {
 }
 
 fun Cell.toByteArray(): ByteArray {
-    return BagOfCells(this).toByteArray()
+    return toBoc()
 }
 
 fun Cell.base64(): String {

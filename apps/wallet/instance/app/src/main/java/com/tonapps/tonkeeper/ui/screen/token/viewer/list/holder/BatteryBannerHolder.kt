@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.token.viewer.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.tonkeeperx.R
@@ -24,7 +25,7 @@ class BatteryBannerHolder(parent: ViewGroup): Holder<Item.BatteryBanner>(parent,
         titleView.text = context.getString(Localization.battery_required_title, tokenName)
 
         buttonView.setOnClickListener {
-            Navigation.from(context)?.add(BatteryScreen.newInstance(wallet = item.wallet, from = "battery_banner"))
+            Navigation.from(context)?.add(BatteryScreen.newInstance(wallet = item.wallet, from = BatteryNativeFrom.BatteryBanner))
         }
     }
 

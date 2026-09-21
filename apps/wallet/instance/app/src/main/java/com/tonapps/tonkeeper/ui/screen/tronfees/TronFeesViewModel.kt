@@ -83,7 +83,8 @@ class TronFeesViewModel(
                     } else {
                         CurrencyFormatter.format(
                             TokenEntity.TON.symbol,
-                            fees.tonFee.amount
+                            fees.tonFee.amount,
+                            compact = true
                         )
                     },
                     balanceFormat = if (emulation != null) {
@@ -95,7 +96,8 @@ class TronFeesViewModel(
                     } else {
                         CurrencyFormatter.format(
                             TokenEntity.TON.symbol,
-                            fees.tonFee.balance
+                            fees.tonFee.balance,
+                            compact = true
                         )
                     },
                 )
@@ -109,11 +111,13 @@ class TronFeesViewModel(
                 token = TokenEntity.TRX,
                 amountFormat = CurrencyFormatter.format(
                     TokenEntity.TRX.symbol,
-                    fees.trxFee.amount
+                    fees.trxFee.amount,
+                    compact = true
                 ),
                 balanceFormat = CurrencyFormatter.format(
                     TokenEntity.TRX.symbol,
-                    fees.trxFee.balance
+                    fees.trxFee.balance,
+                    compact = true
                 ),
                 transfersCount = if (disableBattery) fees.trxFee.availableTransfers else null
             )

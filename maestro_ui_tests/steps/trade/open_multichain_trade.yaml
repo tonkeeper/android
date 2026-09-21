@@ -1,0 +1,12 @@
+# Opens Trade from wallet home. Caller must already have launched via
+# launch_app_ensure_multichain_wallet.yaml.
+# Tab bar uses id:title for Wallet / Trade / Browser. Do not tap bare "Trade":
+# that string can match elsewhere, and after resume we may already be on Trade.
+appId: com.ton_keeper.debug
+---
+- tapOn:
+    id: title
+    text: Trade
+- extendedWaitUntil:
+    visible: "Search by ticker or name"
+    timeout: 10000

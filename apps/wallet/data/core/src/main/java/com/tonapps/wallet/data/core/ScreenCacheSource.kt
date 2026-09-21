@@ -38,7 +38,7 @@ class ScreenCacheSource(
     ): ByteArray {
         try {
             val file = getFile(name, walletId)
-            if (!file.exists() || file.length() == 0L || !file.canRead()) {
+            if (file == null || !file.exists() || file.length() == 0L || !file.canRead()) {
                 return byteArrayOf()
             }
             return file.readBytes()
@@ -53,7 +53,7 @@ class ScreenCacheSource(
         walletId: String,
         list: List<Parcelable>
     ) {
-        val file = getFile(name, walletId)
+        val file = getFile(name, walletId) ?: return
         if (list.isEmpty()) {
             file.delete()
         } else {
@@ -68,7 +68,7 @@ class ScreenCacheSource(
         return rootFolder.folder(name)
     }
 
-    private fun getFile(name: String, walletId: String): File {
+    private fun getFile(name: String, walletId: String): File? {
         val folder = getFolder(name)
         val filename = "$walletId.dat"
         return folder.file(filename)

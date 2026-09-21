@@ -1,0 +1,41 @@
+# Multichain Swap: BTC send in fiat mode with amount below provider minimum.
+name: "Multichain — BTC fiat amount too low"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow: "../../../steps/swap/open_swap.yaml"
+
+- extendedWaitUntil:
+    visible: MAX
+    timeout: 30000
+- tapOn:
+    text: GRAM
+    above: MAX
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: Choose asset
+    timeout: 30000
+- runFlow:
+    file: "../../../steps/token_picker/select_asset.yaml"
+    env:
+      SEARCH_QUERY: "BTC"
+      TOKEN_SYMBOL: "BTC"
+
+- extendedWaitUntil:
+    visible: BTC
+    timeout: 15000
+- tapOn: "0"
+- eraseText
+- inputText: "0.000001"
+
+# Do not tap the converted "… BTC" row: that opens the token picker (home
+# labels sit under the sheet). Wait for the provider error; Continue stays
+# disabled and must not be tapped first.
+- extendedWaitUntil:
+    visible: "Couldn’t get a quote. Change amount"
+    timeout: 30000
+- assertVisible: "Couldn’t get a quote. Change amount"
+
+

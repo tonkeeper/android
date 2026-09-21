@@ -20,7 +20,7 @@ data class RewardsStats(
     @SerialName(value = "apy")
     val apy: List<List<Double>>,
 
-    /* Time series of total stake in TON as [timestamp_ms, stake] pairs */
+    /* Time series of total stake in Gram as [timestamp_ms, stake] pairs */
     @SerialName(value = "total_stake")
     val totalStake: List<List<Double>>
 ) {

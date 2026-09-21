@@ -38,8 +38,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
+            android:maxWidth="232dp"
             android:textAppearance="@style/TextAppearance.Label2"
-            android:textColor="?attr/textPrimaryColor" />
+            android:textColor="@color/constantWhite" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

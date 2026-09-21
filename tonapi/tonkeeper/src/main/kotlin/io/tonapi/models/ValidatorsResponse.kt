@@ -28,15 +28,15 @@ data class ValidatorsResponse(
     @SerialName(value = "election_id")
     val electionId: Long,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "elector_balance")
     val electorBalance: Long,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "total_stake")
     val totalStake: Long,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "reward_per_block")
     val rewardPerBlock: Long,
     @SerialName(value = "validators")

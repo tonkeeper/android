@@ -1,11 +1,81 @@
+# =============================================================================
+# Maestro Tests
+# =============================================================================
+#
+# build-apk     — macos-latest-xlarge (skipped when the caller passes an APK)
+# maestro-tests — ubuntu-latest, runs on real devices in Maestro Cloud (mobile.dev)
+#                 Video/logs for every flow live in the app.maestro.dev console
+#                 (link in the job summary).
+#
+# SECRETS (Settings → Secrets and variables → Actions):
+#   MAESTRO_CLOUD_ACCESS_KEY — API key from the Maestro Cloud dashboard
+#   SLACK_BOT_TOKEN          — Slack bot token (xoxb-…); optional: without it
+#                              the Slack step is skipped
+#   SLACK_AUTOTESTS_CHANNEL  — channel for reports (channel ID or name without #)
+#   (project-id is not secret, hardcoded in env below)
+#
+# NOTE: Android Cloud concurrency is 1 → all flows run sequentially
+# (do not request sharding or extra devices).
+#
+# APK SOURCE (by priority):
+#   1. reuse_apk_artifact — artifact ID/URL from a past run (build SKIPPED)
+#   2. apk_prebuilt=true  — the calling run (nightly.yaml) already uploaded a
+#      tonkeeper-nightly-debug-* artifact (build SKIPPED)
+#   3. otherwise          — fresh assembleDefaultDebug build
+# The debug APK is always downloaded by the tonkeeper-nightly-debug-* name
+# pattern — never by a job-output name: GitHub silently drops job outputs
+# that look like they contain a secret, and an empty download name means
+# "download all artifacts", which also pulls in the nightly beta APK.
+#
+# REPORT: maestro cloud --format junit → build/maestro-cloud-report.xml
+# (per-flow status, failure reason, cloud.runUrl). The GitHub summary and the
+# Slack report (maestro_ui_tests/ci/slack_bot/…) are built from it.
+#
+# =============================================================================
+
 name: Maestro Tests
+
+permissions:
+  actions: read
+  contents: read
 
 on:
   workflow_dispatch:
+    inputs:
+      reuse_apk_artifact:
+        description: |
+          [optional] APK artifact ID or full URL from a past build run.
+          Empty = build fresh APK. Example ID: 7468190537
+        type: string
+        default: ''
+      notify_slack:
+        description: Post results to Slack (manual runs are quiet by default)
+        type: boolean
+        default: false
   workflow_call:
+    inputs:
+      reuse_apk_artifact:
+        description: Artifact ID or URL; empty = build fresh APK
+        type: string
+        default: ''
+      apk_prebuilt:
+        description: >-
+          The calling run has already uploaded a tonkeeper-nightly-debug-*
+          artifact (nightly's Build Debug APK For Maestro job); skip the
+          build here. A static boolean on purpose: job outputs of the
+          reusable build job arrive EMPTY when GitHub decides they may
+          contain a secret (Skip output warning), so an artifact name must
+          never be passed between workflows dynamically.
+        type: boolean
+        default: false
+      notify_slack:
+        description: Post results to Slack
+        type: boolean
+        default: true
 
 jobs:
   build-apk:
+    if: ${{ inputs.reuse_apk_artifact == '' && !inputs.apk_prebuilt }}
     name: Build Debug APK For Maestro
     uses: ./.github/workflows/build-apk-reusable.yml
     with:
@@ -14,170 +84,202 @@ jobs:
       apk-path-glob: apps/wallet/instance/main/build/outputs/apk/default/debug/*.apk
     secrets: inherit
 
-  discover-flow-groups:
-    name: Resolve Maestro flow shards from config
-    runs-on: ubuntu-latest
-    outputs:
-      flow_groups: ${{ steps.set.outputs.flow_groups }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - id: set
-        run: |
-          set -euo pipefail
-          cfg="maestro_ui_tests/config.yaml"
-          if [[ ! -f "$cfg" ]]; then
-            echo "::error::maestro_ui_tests/config.yaml not found"
-            exit 1
-          fi
-          # Lines like: - flows/browser_screen/*  or  - "flows/testnet/*"
-          mapfile -t groups < <(
-            sed -n 's/^[[:space:]]*-[[:space:]]*["'\'']*flows\/\([^/"*[:space:]]*\)\/.*/\1/p' "$cfg" | sort -u
-          )
-          if [[ ${#groups[@]} -eq 0 ]]; then
-            echo "::error::No flow shard folders under 'flows:' in maestro_ui_tests/config.yaml (expected '  - flows/<folder>/*')"
-            exit 1
-          fi
-          for g in "${groups[@]}"; do
-            if [[ ! -d "maestro_ui_tests/flows/${g}" ]]; then
-              echo "::error::Flow folder from config missing on disk: maestro_ui_tests/flows/${g}"
-              exit 1
-            fi
-          done
-          json="$(printf '%s\n' "${groups[@]}" | jq -R . | jq -s -c .)"
-          echo "flow_groups=$json" >> "$GITHUB_OUTPUT"
-
   maestro-tests:
-    name: Maestro — ${{ matrix.flow_group }}
-    needs: [build-apk, discover-flow-groups]
-    runs-on: linux-x64-16
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        flow_group: ${{ fromJson(needs.discover-flow-groups.outputs.flow_groups) }}
+    name: Maestro — all flows
+    needs: [build-apk]
+    if: >-
+      ${{
+        always()
+        && (
+          inputs.reuse_apk_artifact != ''
+          || inputs.apk_prebuilt
+          || needs.build-apk.result == 'success'
+        )
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
     env:
+      MAESTRO_CLOUD_PROJECT_ID: proj_01kxjv22w7fhe87wv9x578agkm
       MAESTRO_AUTH: ${{ secrets.MAESTRO_AUTH }}
-      MAESTRO_MNEMONIC_PHRASE: ${{ secrets.MAESTRO_MNEMONIC_PHRASE }}
-      MAESTRO_TESTNET_MNEM: ${{ secrets.MAESTRO_TESTNET_MNEM }}
       MAESTRO_RECIEVE_WALLET: ${{ secrets.MAESTRO_RECIEVE_WALLET }}
       MAESTRO_WALLET_WITH_MONEY: ${{ secrets.MAESTRO_WALLET_WITH_MONEY }}
       MAESTRO_WALLET_WITH_MONEY_ADDR: ${{ secrets.MAESTRO_WALLET_WITH_MONEY_ADDR }}
+      MAESTRO_REPORT_FILE: build/maestro-cloud-report.xml
 
     steps:
       - name: Checkout to git repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          java-version: '21'
-          distribution: 'temurin'
+      - name: APK source mode
+        shell: bash
+        run: |
+          if [[ -n "${{ inputs.reuse_apk_artifact }}" ]]; then
+            apk_source="reuse artifact: ${{ inputs.reuse_apk_artifact }}"
+            echo "::notice::Maestro mode: REUSE APK artifact → ${{ inputs.reuse_apk_artifact }}"
+          elif [[ "${{ inputs.apk_prebuilt }}" == "true" ]]; then
+            apk_source="prebuilt by calling workflow (tonkeeper-nightly-debug-*)"
+            echo "::notice::Maestro mode: PREBUILT APK from calling workflow"
+          else
+            apk_source="fresh build (tonkeeper-nightly-debug-*)"
+            echo "::notice::Maestro mode: FRESH BUILD"
+          fi
+          echo "APK_SOURCE=${apk_source}" >> "$GITHUB_ENV"
 
-      - name: Download built APK artifact
-        uses: actions/download-artifact@v7
+      # Download by name PATTERN, not by `name: <job output>`: the reusable
+      # build job's outputs arrive empty when GitHub's secret masking drops
+      # them, and download-artifact treats an empty `name` as "download every
+      # artifact of the run" — which pulls the nightly beta APK in as well.
+      # Exactly one tonkeeper-nightly-debug-* artifact exists per run
+      # (built either here or by nightly's Build Debug APK For Maestro job).
+      - name: Download APK (debug build from this run)
+        if: ${{ inputs.reuse_apk_artifact == '' }}
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          name: ${{ needs.build-apk.outputs.artifact-name }}
+          pattern: tonkeeper-nightly-debug-*
           path: dist/apk
+
+      - name: Download APK (reuse artifact by ID or URL)
+        if: ${{ inputs.reuse_apk_artifact != '' }}
+        id: reuse_apk
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          log_file="${RUNNER_TEMP}/reuse-apk.log"
+          set +e
+          bash tools/ci/download-reuse-apk-artifact.sh "${{ inputs.reuse_apk_artifact }}" dist/apk | tee "$log_file"
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [[ "$rc" -ne 0 ]]; then
+            echo "::error::Download reuse APK failed (exit ${rc})"
+            exit "$rc"
+          fi
+          tag="$(awk -F= '/^artifact_tag=/{print $2}' "$log_file")"
+          artifact_id="$(awk -F= '/^artifact_id=/{print $2}' "$log_file")"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=${artifact_id}" >> "$GITHUB_OUTPUT"
 
       - name: Resolve debug APK path
         id: resolve_apk
         shell: bash
         run: |
           set -euo pipefail
-          # upload-artifact preserves path segments; APK is under dist/apk/apps/... not dist/apk/*.apk
-          mapfile -t apks < <(find dist/apk -type f -name '*.apk' 2>/dev/null | sort)
-
-          if [ ${#apks[@]} -eq 0 ]; then
-            echo "No debug APK found under dist/apk (recursive):"
+          apk="$(find dist/apk -type f -name '*.apk' 2>/dev/null | sort | head -1)"
+          if [[ -z "$apk" ]]; then
+            echo "No debug APK under dist/apk:"
             find dist/apk -type f 2>/dev/null || true
             exit 1
           fi
-
-          if [ ${#apks[@]} -gt 1 ]; then
-            echo "Multiple debug APKs found, expected exactly one:"
-            printf ' - %s\n' "${apks[@]}"
+          apk_count="$(find dist/apk -type f -name '*.apk' 2>/dev/null | wc -l | tr -d ' ')"
+          if [[ "$apk_count" -gt 1 ]]; then
+            echo "Multiple APKs, expected one:"
+            find dist/apk -type f -name '*.apk' 2>/dev/null
             exit 1
           fi
+          echo "app_file=${apk}" >> "$GITHUB_OUTPUT"
+          echo "Using APK: ${apk} ($(wc -c <"${apk}" | tr -d ' ') bytes)"
 
-          echo "app_file=${apks[0]}" >> "$GITHUB_OUTPUT"
-
-      - name: Validate Maestro secrets
+      - name: Validate secrets
         shell: bash
+        env:
+          MAESTRO_CLOUD_ACCESS_KEY: ${{ secrets.MAESTRO_CLOUD_ACCESS_KEY }}
         run: |
           for secret_name in \
+            MAESTRO_CLOUD_ACCESS_KEY \
             MAESTRO_AUTH \
-            MAESTRO_MNEMONIC_PHRASE \
             MAESTRO_RECIEVE_WALLET \
-            MAESTRO_WALLET_WITH_MONEY; do
+            MAESTRO_WALLET_WITH_MONEY \
+            MAESTRO_WALLET_WITH_MONEY_ADDR; do
             if [ -z "${!secret_name}" ]; then
               echo "::error::Missing secret: ${secret_name}"
               exit 1
             fi
           done
 
+      - name: Test Maestro CI tooling
+        shell: bash
+        run: python3 -m unittest discover -s maestro_ui_tests/ci/slack_bot -p 'test_*.py'
+
       - name: Install Maestro CLI
         shell: bash
         run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          curl -Ls --retry 3 --retry-all-errors "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Run Maestro (${{ matrix.flow_group }}) — emulator (1/2)
-        id: maestro_shard_attempt1
+      - name: Run Maestro — Cloud
+        id: maestro_run
         continue-on-error: true
-        uses: reactivecircus/android-emulator-runner@v2.37.0
-        with:
-          api-level: 34
-          arch: x86_64
-          cores: 4
-          ram-size: 8192M
-          heap-size: 1024M
-          disk-size: 8192M
-          target: google_apis
-          profile: pixel_3
-          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
-          disable-animations: true
-          script: APK_PATH="${{ steps.resolve_apk.outputs.app_file }}" MAESTRO_FLOW_GROUP="${{ matrix.flow_group }}" bash "$GITHUB_WORKSPACE/tools/ci/run-maestro-on-emulator.sh"
+        shell: bash
+        env:
+          MAESTRO_CLOUD_ACCESS_KEY: ${{ secrets.MAESTRO_CLOUD_ACCESS_KEY }}
+          APP_FILE: ${{ steps.resolve_apk.outputs.app_file }}
+          UPLOAD_NAME: maestro-${{ github.run_id }}
+          # Highest version available in Cloud (Android 16), matches targetSdk 36.
+          # Version list: maestro list-cloud-devices
+          DEVICE_OS: android-36
+          TIMEOUT_MIN: '90'
+          EXCLUDE_TAGS: exclude
+          WORKSPACE: maestro_ui_tests
+          REPORT_FILE: ${{ env.MAESTRO_REPORT_FILE }}
+          MAESTRO_FLOW_ENV: |
+            PASSWORD_KEY=5
+            WALLET_WITH_MONEY=${{ secrets.MAESTRO_WALLET_WITH_MONEY }}
+            WALLET_WITH_MONEY_ADDR=${{ secrets.MAESTRO_WALLET_WITH_MONEY_ADDR }}
+            auth=${{ secrets.MAESTRO_AUTH }}
+            RECIEVE_WALLET=${{ secrets.MAESTRO_RECIEVE_WALLET }}
+        run: bash tools/ci/run-maestro-cloud.sh
 
-      - name: Run Maestro (${{ matrix.flow_group }}) — emulator (2/2, retry)
-        id: maestro_shard_attempt2
-        if: steps.maestro_shard_attempt1.outcome == 'failure'
-        continue-on-error: true
-        uses: reactivecircus/android-emulator-runner@v2.37.0
-        with:
-          api-level: 34
-          arch: x86_64
-          cores: 4
-          ram-size: 8192M
-          heap-size: 1024M
-          disk-size: 8192M
-          target: google_apis
-          profile: pixel_3
-          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
-          disable-animations: true
-          script: APK_PATH="${{ steps.resolve_apk.outputs.app_file }}" MAESTRO_FLOW_GROUP="${{ matrix.flow_group }}" bash "$GITHUB_WORKSPACE/tools/ci/run-maestro-on-emulator.sh"
-
-      - name: Maestro shard outcome (fail if both attempts failed)
+      - name: Write Maestro CI summary
         if: always()
+        shell: bash
+        env:
+          CONSOLE_URL: ${{ steps.maestro_run.outputs.console_url }}
         run: |
-          a1="${{ steps.maestro_shard_attempt1.outcome }}"
-          a2="${{ steps.maestro_shard_attempt2.outcome }}"
-          if [ "$a1" = "success" ]; then exit 0; fi
-          if [ "$a1" = "failure" ] && [ "$a2" = "success" ]; then exit 0; fi
-          echo "::error::Maestro shard ${{ matrix.flow_group }} failed (1st: ${a1}, 2nd: ${a2})"
-          exit 1
+          python3 maestro_ui_tests/ci/slack_bot/post_maestro_cloud_slack.py summarize \
+            --report "$MAESTRO_REPORT_FILE" \
+            --console-url "${CONSOLE_URL:-}" \
+            --apk-source "${APK_SOURCE:-}" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload Maestro artifacts
+      - name: Upload Maestro Cloud report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: maestro-${{ matrix.flow_group }}-${{ needs.build-apk.outputs.version-code }}
-          path: build/maestro-results
+          name: maestro-cloud-report-${{ github.run_id }}
+          path: ${{ env.MAESTRO_REPORT_FILE }}
+          retention-days: 14
           if-no-files-found: warn
-          retention-days: 7
+
+      - name: Post results to Slack
+        if: ${{ always() && inputs.notify_slack }}
+        continue-on-error: true
+        shell: bash
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_AUTOTESTS_CHANNEL }}
+          CONSOLE_URL: ${{ steps.maestro_run.outputs.console_url }}
+        run: |
+          if [[ -z "${SLACK_BOT_TOKEN:-}" ]]; then
+            echo "::warning::SLACK_BOT_TOKEN is not set; skipping Slack notification."
+            exit 0
+          fi
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          python3 maestro_ui_tests/ci/slack_bot/post_maestro_cloud_slack.py post \
+            --report "$MAESTRO_REPORT_FILE" \
+            --run-url "$RUN_URL" \
+            --console-url "${CONSOLE_URL:-}" \
+            --apk-source "${APK_SOURCE:-}" \
+            --platform "Android" \
+            --channel "${SLACK_CHANNEL:-tk-autotests-status}"
+
+      - name: Maestro outcome
+        if: always()
+        shell: bash
+        env:
+          EXIT_CODE: ${{ steps.maestro_run.outputs.exit_code }}
+        run: |
+          if [[ "${{ steps.maestro_run.outcome }}" == "success" ]]; then
+            exit 0
+          fi
+          echo "::error::Maestro Cloud run failed (CLI exit code: ${EXIT_CODE:-unknown})"
+          exit 1

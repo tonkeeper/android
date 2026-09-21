@@ -6,10 +6,11 @@ import androidx.annotation.StringRes
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation
+import uikit.widget.ToastView
 
-fun Navigation.toast(@StringRes resId: Int) {
+fun Navigation.toast(@StringRes resId: Int, duration: Long = ToastView.DURATION_DEFAULT) {
     val context = this as? Context ?: return
-    toast(context.getString(resId), false, context.backgroundContentTintColor)
+    toast(context.getString(resId), false, context.backgroundContentTintColor, duration)
 }
 
 fun Navigation.toast(message: String, @ColorInt color: Int) {

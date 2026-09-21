@@ -1,0 +1,18 @@
+# Multichain Send: BNB on BSC to self (address from Receive).
+# Starts with launch_app_ensure (stopApp + unlock; no clearState).
+name: "Multichain — send BNB to self"
+appId: com.ton_keeper.debug
+---
+- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
+- runFlow:
+    file: "../../../steps/recieve_modal/copy_network_address.yaml"
+    env:
+      NETWORK_NAME: "BSC"
+      PREV_NETWORK: "Base"
+      ADDRESS_TITLE: "Your BSC address"
+- runFlow:
+    file: "../../../steps/send/send_to_clipboard_recipient.yaml"
+    env:
+      SEARCH_QUERY: "BNB"
+      TOKEN_SYMBOL: "BNB"
+      AMOUNT: "0.001"

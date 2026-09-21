@@ -15,7 +15,8 @@ data class StoryEntity(
     @Parcelize
     data class Stories(
         val id: String,
-        val list: List<StoryEntity>
+        val list: List<StoryEntity>,
+        val isAutoShow: Boolean = false
     ): Parcelable
 
     @Parcelize

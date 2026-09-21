@@ -1,0 +1,6 @@
+appId: com.ton_keeper.debug
+---
+- runFlow:
+    when:
+      visible: Enter passcode
+    file: ../password/enter_password.yaml

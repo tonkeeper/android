@@ -44,8 +44,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import okio.IOException
-import ui.components.events.EventItemClickPart
-import ui.components.events.UiEvent
+import com.tonapps.wallet.features.events.components.legacy.EventItemClickPart
+import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -236,7 +236,7 @@ class TxEventsViewModel(
     }
 
     private suspend fun openNft(nftItem: NftEntity) {
-        openScreen(NftScreen.newInstance(wallet, nftItem))
+        openScreen(NftScreen.newInstance(nftItem))
     }
 
     private suspend fun openDetails(tx: TxEvent, actionIndex: Int) {
@@ -259,7 +259,6 @@ class TxEventsViewModel(
         wallet = wallet,
         accountRepository = accountRepository,
         eventsRepository = eventsRepository,
-        settingsRepository = settingsRepository,
         txEventUiMapper = txEventUiMapper
     )
 

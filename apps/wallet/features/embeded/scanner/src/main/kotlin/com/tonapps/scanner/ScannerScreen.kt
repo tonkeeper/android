@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -76,6 +77,7 @@ import java.util.concurrent.Executors
 fun ScannerScreen(
     onResult: (String) -> Unit,
     onClose: () -> Unit,
+    isFullScreen: Boolean = false,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -196,6 +198,13 @@ fun ScannerScreen(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopStart)
+                    .run {
+                        if (isFullScreen) {
+                            statusBarsPadding()
+                        } else {
+                            this
+                        }
+                    }
                     .padding(start = 16.dp, top = 16.dp)
                     .size(32.dp)
                     .clip(CircleShape)

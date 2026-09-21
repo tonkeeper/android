@@ -1,3 +1,6 @@
+import java.util.Properties
+import kotlin.apply
+
 pluginManagement {
     includeBuild("buildLogic")
     repositories {
@@ -9,9 +12,61 @@ pluginManagement {
     }
 }
 
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootDir.resolve("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.inputStream())
+    }
+}
+
+fun getProperty(key: String): String {
+    return localProperties.getProperty(key)
+        ?: throw GradleException("Key `$key` is undefine, Please add it to local.properties!",)
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        exclusiveContent {
+            forRepository {
+                maven {
+                    url = uri("https://maven.pkg.github.com/trustwallet/wallet-core")
+                    credentials {
+                        username = getProperty("GITHUB_USER")
+                        password = getProperty("GITHUB_TOKEN")
+                    }
+                }
+            }
+
+            filter {
+                includeGroup("com.trustwallet")
+            }
+        }
+
+        exclusiveContent {
+            forRepository {
+                maven {
+                    setUrl(file(rootDir.resolve("mavenLocal/publish")))
+                }
+            }
+
+            forRepository {
+                maven {
+                    url = uri("https://maven.pkg.github.com/tonkeeper/chainkit-publishing")
+                    credentials {
+                        username = runCatching { getProperty("CHAINKIT_GITHUB_USER") }.getOrNull()
+                            ?: getProperty("GITHUB_USER")
+                        password = runCatching { getProperty("CHAINKIT_GITHUB_TOKEN") }.getOrNull()
+                            ?: getProperty("GITHUB_TOKEN")
+                    }
+                }
+            }
+
+            filter {
+                includeGroup("com.tonapps.chainkit")
+            }
+        }
+
         google()
         mavenCentral()
         gradlePluginPortal()
@@ -44,6 +99,9 @@ include(
     ":tonapi:battery",
     ":tonapi:exchange",
     ":tonapi:trading",
+    ":tonapi:perps",
+    ":tonapi:kandelabr",
+    ":tonapi:wallet",
     ":tonapi:legacy",
 
     ":ui:shimmer",
@@ -68,6 +126,8 @@ include(
     ":lib:base64",
     ":lib:bus",
     ":lib:wallet-kit",
+    ":lib:wallet",
+    ":lib:wc",
     ":lib:features",
 
     ":apps:wallet:instance:app",
@@ -84,6 +144,7 @@ include(
     ":apps:wallet:data:collectibles",
     ":apps:wallet:data:browser",
     ":apps:wallet:data:banner",
+    ":apps:wallet:data:raffle",
     ":apps:wallet:data:backup",
     ":apps:wallet:data:tx",
     ":apps:wallet:data:rn",
@@ -96,12 +157,21 @@ include(
     ":apps:wallet:data:swap",
     ":apps:wallet:data:plugins",
     ":apps:wallet:data:features",
+    ":apps:wallet:data:cache",
+
+    ":apps:wallet:data:multichain:wallet",
+    ":apps:wallet:data:multichain:exchange",
 
     ":apps:wallet:features:core",
     ":apps:wallet:features:dapp",
+    ":apps:wallet:features:onboarding",
     ":apps:wallet:features:ramp",
     ":apps:wallet:features:settings",
     ":apps:wallet:features:trading",
+    ":apps:wallet:features:swap",
+    ":apps:wallet:features:portfolio",
+    ":apps:wallet:features:migration",
+    ":apps:wallet:features:perps",
     ":apps:wallet:features:events",
     ":apps:wallet:features:embeded:scanner",
 
@@ -109,4 +179,5 @@ include(
     ":kmp:ui",
     ":kmp:async",
     ":kmp:mvi",
+    ":kmp:chart",
 )

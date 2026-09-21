@@ -2,18 +2,20 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    id("com.android.kotlin.multiplatform.library")
     alias(libs.plugins.kotlin.compose)
+    id("com.android.kotlin.multiplatform.library")
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "com.tonapps.kmp.mvi"
         compileSdk = libs.versions.android.sdk.compile.get().toInt()
 
 //        buildFeatures {
 //            compose = true
 //        }
+
+        withHostTestBuilder {}
     }
 
     applyDefaultHierarchyTemplate()
@@ -28,11 +30,16 @@ kotlin {
             implementation(libs.compose.multiplatform.viewmodel)
             implementation(libs.androidx.annotation)
         }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.addAll("-Xcontext-parameters", "-Xexplicit-backing-fields")
     }
 }

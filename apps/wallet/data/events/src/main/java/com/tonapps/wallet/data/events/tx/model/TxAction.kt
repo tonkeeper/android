@@ -42,6 +42,9 @@ data class TxAction(
             account?.title
         }
 
+    val description: String?
+        get() = body.description?.ifBlank { null }
+
     val incomingFormatted: CharSequence?
         get() = body.amount.incomingFormatted
 
@@ -71,6 +74,9 @@ data class TxAction(
 
     val isOut: Boolean
         get() = body.isOut
+
+    val isFeeOnly: Boolean
+        get() = body.isFeeOnly
 
     val currencies: List<WalletCurrency>
         get() = body.currencies

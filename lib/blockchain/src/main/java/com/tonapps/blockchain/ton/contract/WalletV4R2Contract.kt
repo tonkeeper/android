@@ -1,9 +1,8 @@
 package com.tonapps.blockchain.ton.contract
 
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
-import org.ton.api.pub.PublicKeyEd25519
 import org.ton.cell.Cell
-import kotlin.jvm.JvmField
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 class WalletV4R2Contract(
     workchain: Int = DEFAULT_WORKCHAIN,

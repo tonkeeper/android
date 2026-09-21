@@ -1,0 +1,5 @@
+appId: com.ton_keeper.debug
+---
+- tapOn: Browser
+- waitForAnimationToEnd:
+    timeout: 5000

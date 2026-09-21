@@ -3,7 +3,9 @@ package com.tonapps.tonkeeper.ui.screen.ledger.pair
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.ui.screen.init.WalletImportAnalytics
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionType
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
@@ -12,6 +14,7 @@ import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -28,6 +31,8 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private val connectionViewModel: LedgerConnectionViewModel by viewModel()
+
+    private val importAnalytics: WalletImportAnalytics by inject()
 
     private val ledgerConnectionFragment: LedgerConnectionFragment by lazy {
         LedgerConnectionFragment.newInstance()
@@ -91,6 +96,7 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
             }
 
             is LedgerEvent.Error -> {
+                trackImportError(event.message)
                 navigation?.toast(event.message)
             }
 
@@ -100,6 +106,16 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
             }
 
             else -> {}
+        }
+    }
+
+    private fun trackImportError(message: String) {
+        lifecycleScope.launch {
+            importAnalytics.trackError(
+                walletSource = WalletFlowWalletSource.Ledger,
+                errorType = "ledger_connect_error",
+                errorMessage = message,
+            )
         }
     }
 

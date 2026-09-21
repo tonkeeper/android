@@ -9,7 +9,7 @@ import com.tonapps.ur.registry.TonSignRequest
 import com.tonapps.ur.registry.pathcomponent.IndexPathComponent
 import com.tonapps.ur.registry.pathcomponent.PathComponent
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import org.ton.crypto.hex
+import com.tonapps.security.hex
 import uikit.base.BaseArgs
 
 data class KeystoneSignArgs(
@@ -52,14 +52,14 @@ data class KeystoneSignArgs(
 
     val ur: UR by lazy {
         val pathList = buildPathList(keystone.path)
-        val sourceFingerprint = hex(keystone.xfp)
+        val sourceFingerprint = keystone.xfp.hex()
         val isEmpty = 4 > sourceFingerprint.size
         val path = if (isEmpty) {
             null
         } else {
             CryptoKeypath(pathList, sourceFingerprint)
         }
-        val request = TonSignRequest(requestId.toByteArray(), hex(unsignedBody), if (isTransaction) 1 else 2, path, address, "Tonkeeper")
+        val request = TonSignRequest(requestId.toByteArray(), unsignedBody.hex(), if (isTransaction) 1 else 2, path, address, "Tonkeeper")
         request.toUR()
     }
 

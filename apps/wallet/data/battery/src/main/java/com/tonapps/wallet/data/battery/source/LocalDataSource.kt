@@ -6,10 +6,11 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.prefs
 import com.tonapps.security.Security
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.core.BlobDataSource
-import org.ton.api.pub.PublicKeyEd25519
 
 internal class LocalDataSource(
     context: Context
@@ -36,16 +37,22 @@ internal class LocalDataSource(
         return network.name.lowercase()
     }
 
-    fun setBalance(publicKey: PublicKeyEd25519, network: TonNetwork, entity: BatteryBalanceEntity) {
-        balance.setCache(balanceCacheKey(publicKey, network), entity)
+    fun setBalance(wallet: WalletEntity, entity: BatteryBalanceEntity) {
+        balance.setCache(balanceCacheKey(wallet), entity)
     }
 
-    fun getBalance(publicKey: PublicKeyEd25519, network: TonNetwork): BatteryBalanceEntity? {
-        return balance.getCache(balanceCacheKey(publicKey, network))
+    fun getBalance(wallet: WalletEntity): BatteryBalanceEntity? {
+        return balance.getCache(balanceCacheKey(wallet))
     }
 
-    private fun balanceCacheKey(publicKey: PublicKeyEd25519, network: TonNetwork): String {
-        return "${network.name.lowercase()}:${publicKey.hex()}"
+    // Multichain wallets are keyed by wallet id, the same identity their battery authorization uses.
+    // Their publicKey is unreliable here: an entity that wasn't resolved through
+    // UnifiedAccountRepository carries the empty key, which would collide across every MC wallet.
+    private fun balanceCacheKey(wallet: WalletEntity): String {
+        if (wallet.type == WalletType.Multichain) {
+            return "wallet:${wallet.id}"
+        }
+        return "${wallet.network.name.lowercase()}:${wallet.publicKey.hex()}"
     }
 
     fun getAppliedPromo(network: TonNetwork): String? {

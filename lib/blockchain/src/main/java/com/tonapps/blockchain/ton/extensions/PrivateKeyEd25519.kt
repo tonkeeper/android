@@ -1,22 +1,24 @@
 package com.tonapps.blockchain.ton.extensions
 
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.api.pub.PublicKeyEd25519
+import kotlinx.io.bytestring.ByteString
 import org.ton.bitstring.BitString
-import org.ton.crypto.Ed25519
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 object EmptyPrivateKeyEd25519 {
 
+    private const val KEY_SIZE_BYTES = 32
+
     operator fun invoke(): PrivateKeyEd25519 {
-        return PrivateKeyEd25519(ByteArray(Ed25519.KEY_SIZE_BYTES))
+        return PrivateKeyEd25519(ByteArray(KEY_SIZE_BYTES))
     }
 
     fun publicKey(): PublicKeyEd25519 {
-        return PublicKeyEd25519(ByteArray(Ed25519.KEY_SIZE_BYTES))
+        return PublicKeyEd25519(ByteString(ByteArray(KEY_SIZE_BYTES)))
     }
 
     fun sign(data: ByteArray): ByteArray {
-        return invoke().sign(data)
+        return invoke().signToByteArray(data)
     }
 
     fun sign(data: BitString): ByteArray {
@@ -24,6 +26,6 @@ object EmptyPrivateKeyEd25519 {
     }
 
     fun PrivateKeyEd25519.sign(message: BitString): ByteArray {
-        return sign(message.toByteArray())
+        return signToByteArray(message.toByteArray())
     }
 }

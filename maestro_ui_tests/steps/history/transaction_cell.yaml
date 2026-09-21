@@ -1,11 +1,12 @@
 appId: com.ton_keeper.debug
 ---
 - assertVisible: Sent
-- assertVisible: − 0.001 TON
+- assertVisible: ".*0\\.001[ \u2009]GRAM.*"
 - runScript:
     file: ../../scripts/utils/short_addr_android.js
     env:
       addr: ${RECIEVE_WALLET}
+      separator: "…"
 - assertVisible: ${output.shortAddrRecieve}
 
 - runFlow: ../../service/history/find_last_ton_transaction.yaml

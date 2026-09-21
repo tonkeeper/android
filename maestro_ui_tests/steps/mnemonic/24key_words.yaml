@@ -2,20 +2,80 @@ appId: com.ton_keeper.debug
 ---
 - assertVisible: Enter recovery phrase
 
-- runScript:
-    file: ../../scripts/parse_mnemonic.js
-    env:
-      phrase: ${mnemonica}
+# Maestro inputText is real per-char typing (not a paste), so the app does NOT
+# auto-distribute the phrase. We fill each field individually, word by word.
+# Phrase length drives the 12/24 toggle. App default is 12 words.
+- evalScript: ${output.words = phrase.trim().split(/\s+/); output.i = 0}
 
-- evalScript: ${output.i = 1}
+# A missing env var arrives as the literal string "undefined", so without this
+# guard the loop types "undefined" into word_1 and the run dies much later on a
+# disabled Continue (or on a missing Send) with no hint about the real cause.
+- assertTrue:
+    condition: ${output.words.length == 12 || output.words.length == 24}
+    label: "Recovery phrase must be 12 or 24 words, got ${output.words.length} — is WALLET_WITH_MONEY set?"
+
+- runFlow:
+    when:
+      true: ${output.words.length == 12}
+    commands:
+      - tapOn:
+          id: "words_12$"
+- runFlow:
+    when:
+      true: ${output.words.length == 24}
+    commands:
+      - tapOn:
+          id: "words_24$"
+      - waitForAnimationToEnd:
+          timeout: 1500
+
+# id is matched as a regex, so anchor with $ — otherwise "word_1" also matches
+# word_10..word_19, and "word_2" matches word_20..word_24.
 - repeat:
     while:
-      true: ${output.i <= 24}
+      true: ${output.i < output.words.length}
     commands:
-      - evalScript: ${output.wordId = 'word_' + output.i}
+      - scrollUntilVisible:
+          element:
+            id: "word_${output.i + 1}$"
+          direction: DOWN
+          timeout: 15000
+          visibilityPercentage: 40
+          centerElement: true
       - tapOn:
-          id: ${output.wordId}
-      - evalScript: ${output.currentWord = output.word[output.i]}
-      - inputText: ${output.currentWord}
-      - pressKey: enter
-      - evalScript: ${output.i++}
+          id: "word_${output.i + 1}$"
+          waitToSettleTimeoutMs: 0
+      - inputText: ${output.words[output.i]}
+      - evalScript: ${output.i = output.i + 1}
+
+# Submit the phrase. Primary path: keyboard Enter -> IME_ACTION_DONE -> next().
+# This works only when the device IME maps Enter to Done (true on some images,
+# not on others), so it's wrapped in a fallback below.
+- pressKey: Enter
+
+# Phrase submit can land on Create passcode, Choose wallet, or Choose wallet version.
+- extendedWaitUntil:
+    visible: "Create passcode|Choose wallet"
+    timeout: 15000
+    optional: true
+
+# Enter is not IME Done on every image — tap Continue on the words screen.
+# Do not hideKeyboard: Android treats it as Back and leaves the flow.
+- runFlow:
+    when:
+      notVisible: "Create passcode|Choose wallet"
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: "Continue"
+          direction: DOWN
+          timeout: 10000
+      - extendedWaitUntil:
+          visible:
+            text: "Continue"
+            enabled: true
+          timeout: 15000
+      - tapOn:
+          text: "Continue"
+          enabled: true
+

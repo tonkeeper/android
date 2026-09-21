@@ -7,7 +7,11 @@ import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonDomain
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.blockchain.tron.isValidTronAddress
+import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.chainkit.core.chain.model.account.Network
+import com.tonapps.core.components.tokenAssetId
 import com.tonapps.extensions.currentTimeSeconds
+import com.tonapps.extensions.fullPathOrNull
 import com.tonapps.extensions.hasUnsupportedQuery
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.pathOrNull
@@ -15,9 +19,13 @@ import com.tonapps.extensions.query
 import com.tonapps.extensions.queryBoolean
 import com.tonapps.extensions.queryLong
 import com.tonapps.extensions.toUriOrNull
-import org.ton.api.pub.PublicKeyEd25519
+import com.tonapps.wallet.data.multichain.account.jettonAssetId
+import com.tonapps.wallet.data.multichain.account.tonCoinAssetId
 import org.ton.cell.Cell
-import java.io.File
+import org.ton.kotlin.crypto.PublicKeyEd25519
+import java.math.BigInteger
+
+private const val MYSTERY_RAFFLE_SLUG = "mystery_raffle"
 
 sealed class DeepLinkRoute {
 
@@ -36,14 +44,18 @@ sealed class DeepLinkRoute {
         data class Browser(
             override val from: String,
             val category: String?,
-        ): Tabs(buildBrowserUri(category), from) {
+            val network: String?,
+        ): Tabs(buildBrowserUri(category, network), from) {
 
             private companion object {
 
-                private fun buildBrowserUri(category: String?): String {
+                private fun buildBrowserUri(category: String?, network: String?): String {
                     val builder = "tonkeeper://browser".toUri().buildUpon()
                     if (!category.isNullOrBlank()) {
                         builder.appendQueryParameter("category", category)
+                    }
+                    if (!network.isNullOrBlank()) {
+                        builder.appendQueryParameter("network", network)
                     }
                     return builder.build().toString()
                 }
@@ -77,7 +89,10 @@ sealed class DeepLinkRoute {
     data object Backups: Internal()
     data object Staking: DeepLinkRoute()
     data object Purchase: DeepLinkRoute()
-    data object Send: DeepLinkRoute()
+    data class Send(val address: String?): DeepLinkRoute() {
+        constructor(uri: Uri) : this(address = uri.query("address"))
+    }
+    data class Migrate(val from: String): DeepLinkRoute()
 
     data class Deposit(
         val fromToken: String?,
@@ -136,20 +151,15 @@ sealed class DeepLinkRoute {
         val to: String?
     ): DeepLinkRoute() {
 
+        val fromAssetId: String?
+            get() = from.takeIf { it.contains('/') }
+
+        val toAssetId: String?
+            get() = to?.takeIf { it.contains('/') }
+
         constructor(uri: Uri) : this(
             from = uri.query("ft") ?: "TON",
             to = uri.query("tt")
-        )
-    }
-
-    data class Install(
-        val file: File
-    ): DeepLinkRoute() {
-
-        constructor(uri: Uri) : this(
-            file = uri.query("file")?.let {
-                File(it)
-            } ?: throw IllegalArgumentException("\"file\" query parameter is required")
         )
     }
 
@@ -160,14 +170,11 @@ sealed class DeepLinkRoute {
         val address: String,
         val amount: Long?,
         val text: String?,
+        val assetId: String?,
         val jettonAddress: String?,
         val bin: Cell?,
         val initStateBase64: String?
     ): DeepLinkRoute() {
-
-        companion object {
-            const val MAX_EXP = 10 * 60L
-        }
 
         val isExpired: Boolean
             get() {
@@ -192,11 +199,12 @@ sealed class DeepLinkRoute {
             address = uri.pathOrNull ?: throw IllegalArgumentException("Address is required"),
             amount = uri.queryLong("amount"),
             text = uri.query("text"),
+            assetId = uri.query("asset_id")?.takeIf { it.contains('/') },
             jettonAddress = uri.query("jettonAddress") ?: uri.query("jetton"),
             bin = uri.query("bin")?.cellFromBase64(),
             initStateBase64 = uri.query("init")
         ) {
-            if (uri.hasUnsupportedQuery(true, "exp", "amount", "text", "jettonAddress", "jetton", "bin", "init")) {
+            if (uri.hasUnsupportedQuery(true, "exp", "amount", "text", "asset_id", "jettonAddress", "jetton", "bin", "init")) {
                 throw IllegalArgumentException("Unsupported query parameters")
             }
 
@@ -222,6 +230,50 @@ sealed class DeepLinkRoute {
                 throw IllegalArgumentException("Amount is required for bin or init")
             }
         }
+
+        fun targetAssetId(testnet: Boolean): String? {
+            if (assetId != null) {
+                return assetId
+            }
+            val isTonRecipient = address.isValidTonAddress() || address.isValidTonDomain()
+            if (!isTonRecipient) {
+                return null
+            }
+            if (jettonAddress.isNullOrBlank()) {
+                return tonCoinAssetId(testnet)
+            }
+            if (jettonAddress.isValidTonAddress()) {
+                return jettonAssetId(jettonAddress, testnet)
+            }
+            return null
+        }
+
+        fun jettonMaster(): String? {
+            if (assetId != null) {
+                return assetId.takeIf { it.contains("/jetton/") }?.substringAfterLast('/')
+            }
+            return jettonAddress
+        }
+
+        companion object {
+            const val MAX_EXP = 10 * 60L
+        }
+    }
+
+    data class EvmTransfer(
+        val recipient: String,
+        val contract: String?,
+        val chain: Chain.Evm?,
+        val amount: BigInteger?,
+    ): DeepLinkRoute() {
+
+        fun assetId(chain: Chain.Evm): String {
+            return if (contract == null) {
+                chain.coinAssetId
+            } else {
+                chain.tokenAssetId(contract)
+            }
+        }
     }
 
     data class PickWallet(val walletId: String): DeepLinkRoute() {
@@ -242,12 +294,31 @@ sealed class DeepLinkRoute {
         )
     }
 
+    data class Raffle(val id: String?, val source: String? = null): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            id = uri.pathOrNull?.takeIf { it != MYSTERY_RAFFLE_SLUG },
+            source = uri.query("source"),
+        )
+    }
+
     data class Story(val id: String): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
             id = uri.pathOrNull ?: throw IllegalArgumentException("Story id is required")
         )
 
+    }
+
+    data class AddWallet(val raffleSourceWalletId: String? = null): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            raffleSourceWalletId = uri.query(RAFFLE_SOURCE_WALLET_ID_QUERY),
+        )
+
+        companion object {
+            const val RAFFLE_SOURCE_WALLET_ID_QUERY = "raffle_source_wallet_id"
+        }
     }
 
     data class AccountEvent(
@@ -270,6 +341,10 @@ sealed class DeepLinkRoute {
 
     data class DApp(val url: String): DeepLinkRoute() {
 
+        constructor(uri: Uri) : this(
+            url = parseLink(uri)
+        )
+
         private companion object {
 
             private fun parseLink(uri: Uri): String {
@@ -286,10 +361,6 @@ sealed class DeepLinkRoute {
                 } ?: throw IllegalArgumentException("DApp url is required")
             }
         }
-
-        constructor(uri: Uri) : this(
-            url = parseLink(uri)
-        )
     }
 
     data class Signer(
@@ -307,6 +378,8 @@ sealed class DeepLinkRoute {
 
     data class TonConnect(val uri: Uri): DeepLinkRoute()
 
+    data class WalletConnect(val uri: Uri): DeepLinkRoute()
+
     data class Jetton(val address: String): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
@@ -317,8 +390,8 @@ sealed class DeepLinkRoute {
     data class Asset(val assetId: String): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
-            assetId = uri.lastPathSegment
-                ?: uri.pathOrNull
+            assetId = uri.fullPathOrNull
+                ?: uri.query("asset_id")
                 ?: uri.query("id")
                 ?: throw IllegalArgumentException("Asset id is required")
         )
@@ -329,6 +402,12 @@ sealed class DeepLinkRoute {
         private const val PREFIX = "tonkeeper://"
 
         fun resolve(input: Uri): DeepLinkRoute {
+            if (input.scheme.equals("wc", ignoreCase = true)) {
+                return WalletConnect(input)
+            }
+
+            EthereumTransferLink.parse(input.toString())?.let { return it }
+
             val uri = normalize(input)
             val from = input.query("from") ?: "deep-link"
             val domain = uri.hostOrNull ?: return Unknown(uri)
@@ -341,11 +420,16 @@ sealed class DeepLinkRoute {
                     "staking" -> Staking
                     "buy-ton" -> Purchase
                     "deposit" -> Deposit(uri)
-                    "send" -> Send
+                    "send" -> Send(uri)
+                    "migrate", "migration" -> Migrate(from)
                     "withdraw" -> Withdraw(uri)
                     "wallet", "main" -> Tabs.Main(from)
                     "activity", "history" -> Tabs.Activity(from)
-                    "browser" -> Tabs.Browser(from, uri.query("category") ?: uri.lastPathSegment)
+                    "browser" -> Tabs.Browser(
+                        from = from,
+                        category = uri.query("category") ?: uri.lastPathSegment,
+                        network = normalizeNetwork(uri.query("network")),
+                    )
                     "collectibles" -> Tabs.Collectibles(from)
                     "trading" -> Tabs.Trading(from, uri.query("shelf") ?: uri.lastPathSegment)
                     "settings" -> Settings
@@ -362,6 +446,7 @@ sealed class DeepLinkRoute {
                     }
                     "dapp" -> DApp(uri)
                     "ton-connect" -> TonConnect(uri)
+                    "wc" -> WalletConnect(uri)
                     "signer" -> Signer(uri)
                     "security" -> SettingsSecurity
                     "currency" -> SettingsCurrency
@@ -376,7 +461,9 @@ sealed class DeepLinkRoute {
                     "jetton", "token" -> Jetton(uri)
                     "asset", "assets" -> Asset(uri)
                     "story", "stories" -> Story(uri)
-                    "install" -> Install(uri)
+                    "raffle", "raffles" -> Raffle(uri)
+                    "migrate" -> Migrate(from)
+                    "add-wallet" -> AddWallet(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {
@@ -396,7 +483,20 @@ sealed class DeepLinkRoute {
         }
 
         fun isAppLink(url: String): Boolean {
-            return url.startsWith(PREFIX) || url.startsWith("ton://") || url.startsWith("https://app.tonkeeper.com")
+            return url.startsWith(PREFIX) ||
+                url.startsWith("ton://") ||
+                url.startsWith("wc:") ||
+                url.startsWith("https://app.tonkeeper.com")
+        }
+
+        private fun normalizeNetwork(value: String?): String? {
+            val normalized = value?.trim()?.lowercase() ?: return null
+            val canonical = if (normalized == "trx") {
+                "tron"
+            } else {
+                normalized
+            }
+            return Network.Type.find(canonical)?.id
         }
     }
 }

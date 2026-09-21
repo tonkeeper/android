@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.tonapps.lib.log.BuildConfig
 import com.tonapps.log.targets.console.ConsoleLogTarget
+import com.tonapps.log.targets.crash.CrashLogTarget
 import com.tonapps.log.targets.file.FileLogTarget
 import com.tonapps.log.targets.file.engine.CustomFileWritable
 import com.tonapps.log.targets.file.engine.LogcatFileWritable
@@ -40,6 +41,9 @@ object L {
     @Volatile
     private lateinit var targets: List<LogTarget>
 
+    @Volatile
+    private var crashTarget: LogTarget? = null
+
     private val isInit = AtomicBoolean(false)
 
     private val lock = ReentrantReadWriteLock()
@@ -48,12 +52,18 @@ object L {
         StringBuilder()
     }
 
-    fun initialize(config: LoggerConfig, targets: List<LogTarget>) {
+    fun initialize(
+        config: LoggerConfig,
+        targets: List<LogTarget>,
+        crashTarget: LogTarget? = null,
+    ) {
         lock.write {
             if (isInit.compareAndSet(false, true)) {
                 this.config = config
                 this.targets = targets
+                this.crashTarget = crashTarget
 
+                crashTarget?.prepare(config)
                 targets.forEach { it.prepare(config) }
             }
         }
@@ -86,9 +96,7 @@ object L {
             return false
         }
 
-        return targets.map { it.files() }
-            .flatten()
-            .isNotEmpty()
+        return allFiles().isNotEmpty()
     }
 
     fun capture(onComplete: (File?) -> Unit) {
@@ -98,8 +106,7 @@ object L {
 
         config.executor.execute {
             lock.write {
-                val files = targets.map { it.files() }
-                    .flatten()
+                val files = allFiles()
 
                 val pubKey = config.pubKeyProvider.invoke()
                 val outputPub = config.outputPublicArchive()
@@ -124,14 +131,32 @@ object L {
         }
     }
 
-    fun defaultTargets(context: Context, isLogsEnabled: Boolean): List<LogTarget> {
+    private fun allFiles(): List<File> {
+        val files = targets.map { it.files() }
+            .flatten()
+
+        return files + (crashTarget?.files() ?: emptyList())
+    }
+
+    fun defaultCrashTarget(context: Context): LogTarget {
+        return CrashLogTarget(context)
+    }
+
+    fun defaultTargets(
+        context: Context,
+        appLogsEnabled: Boolean,
+        logcatEnabled: Boolean,
+    ): List<LogTarget> {
         return buildList {
             if (BuildConfig.DEBUG) {
                 add(ConsoleLogTarget())
             }
 
-            if (isLogsEnabled) {
+            if (appLogsEnabled) {
                 add(FileLogTarget(CustomFileWritable(LogHeaderBuilder.Default(context))))
+            }
+
+            if (logcatEnabled) {
                 add(FileLogTarget(LogcatFileWritable(LogcatSettings())))
             }
         }

@@ -24,15 +24,15 @@ data class NominatorRewardEntry(
     @SerialName(value = "weight")
     val weight: Double,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "reward")
     val reward: Long,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "effective_stake")
     val effectiveStake: Long,
 
-    /* amount in nanotons */
+    /* amount in nanograms */
     @SerialName(value = "stake")
     val stake: Long
 ) {

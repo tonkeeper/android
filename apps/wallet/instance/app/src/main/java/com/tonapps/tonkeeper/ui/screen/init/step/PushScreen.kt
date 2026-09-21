@@ -39,16 +39,14 @@ class PushScreen: BaseFragment(R.layout.fragment_notifications_enable) {
         button.setOnClickListener { requestPermission() }
 
         val offsetMedium = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
-        val offsetLarge = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetLarge)
 
+        // The screen lives inside a bottom sheet that already starts below the status bar, so the
+        // skip button keeps its XML margin to stay within the top bar row; only the bottom button
+        // still needs the navigation-bar inset.
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
-            val systemBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars() + WindowInsetsCompat.Type.navigationBars())
-            laterView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = systemBarInsets.top + offsetMedium
-            }
-
+            val navBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             button.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = systemBarInsets.bottom + offsetLarge
+                bottomMargin = navBottom + offsetMedium
             }
             insets
         }
@@ -56,6 +54,7 @@ class PushScreen: BaseFragment(R.layout.fragment_notifications_enable) {
 
     private fun requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
+            initViewModel.onPushPermissionRequested()
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             enablePush()

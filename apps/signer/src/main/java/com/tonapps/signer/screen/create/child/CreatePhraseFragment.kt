@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.getViewModel
-import org.ton.mnemonic.Mnemonic
+import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
@@ -37,7 +37,7 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
         requireParentFragment().getViewModel()
     }
 
-    private val mnemonicWords = Mnemonic.mnemonicWords()
+    private val mnemonicWords = Mnemonic.bip39English()
 
     private lateinit var scrollView: NestedScrollView
     private lateinit var wordFormView: WordFormView
@@ -91,7 +91,7 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
         lifecycleScope.launch(Dispatchers.Main) {
             val words = wordFormView.getWords()
             val isValid = withContext(Dispatchers.IO) {
-                Mnemonic.isValid(words)
+                Mnemonic(words).isValid()
             }
             nextButton.isEnabled = isValid
         }

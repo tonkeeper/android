@@ -14,18 +14,22 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Предвыбранные фильтры (переходы из полок).
+ * Фильтр по типу актива внутри таба. all — без фильтра (по умолчанию); tokens — только крипто-токены (type=crypto); stocks — токенизированные акции; etfs — токенизированные ETF; commodities — активы с type=commodities (perp-рынки на золото, нефть и т.п.) плюс pin-лист секции commodities (спотовые токены на золото, серебро, нефть). Тип perp-рынков берётся из tokenlist Lighter, так что фильтры работают и на tab=perpetuals. 
  *
- * Values: gainers,losers,most_traded
+ * Values: all,tokens,stocks,etfs,commodities
  */
 @Serializable
 enum class AssetsFilter(val value: String) {
-    @SerialName(value = "gainers")
-    gainers("gainers"),
-    @SerialName(value = "losers")
-    losers("losers"),
-    @SerialName(value = "most_traded")
-    most_traded("most_traded");
+    @SerialName(value = "all")
+    all("all"),
+    @SerialName(value = "tokens")
+    tokens("tokens"),
+    @SerialName(value = "stocks")
+    stocks("stocks"),
+    @SerialName(value = "etfs")
+    etfs("etfs"),
+    @SerialName(value = "commodities")
+    commodities("commodities");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

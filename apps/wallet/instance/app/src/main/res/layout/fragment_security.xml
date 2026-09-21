@@ -22,12 +22,22 @@
             android:padding="@dimen/offsetMedium"
             android:orientation="vertical">
 
+            <uikit.widget.item.ItemIconView
+                android:id="@+id/change_passcode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:position="first"
+                android:text="@string/change_passcode"
+                android:icon="@drawable/ic_lock_28"/>
+
             <uikit.widget.item.ItemSwitchView
                 android:id="@+id/biometric"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                android:text="@string/use_biometric"/>
+                android:text="@string/use_biometric"
+                app:position="last"/>
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/biometric_description"
@@ -39,19 +49,21 @@
                 android:textColor="?attr/textTertiaryColor"
                 android:text="@string/biometric_description"/>
 
-            <uikit.widget.item.ItemSwitchView
-                android:id="@+id/lock_screen"
+            <uikit.widget.item.ItemIconView
+                android:id="@+id/set_passcode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/offsetMedium"
-                android:text="@string/lock_screen"/>
+                android:visibility="gone"
+                app:position="single"
+                android:text="@string/passcode_create"
+                android:icon="@drawable/ic_lock_28"/>
 
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/lock_screen_description"
+                android:id="@+id/set_passcode_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:layout_marginVertical="@dimen/offsetMedium"
-                android:layout_marginBottom="@dimen/offsetMedium"
                 android:textAppearance="@style/TextAppearance.Body2"
                 android:textColor="?attr/textTertiaryColor"
                 android:text="@string/lock_screen_description"/>
@@ -81,14 +93,6 @@
                 android:layout_marginBottom="@dimen/offsetMedium"
                 android:textAppearance="@style/TextAppearance.Body2"
                 android:textColor="?attr/textTertiaryColor"/>
-
-            <uikit.widget.item.ItemIconView
-                android:id="@+id/change_passcode"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:position="single"
-                android:text="@string/change_passcode"
-                android:icon="@drawable/ic_lock_28"/>
 
         </uikit.widget.ColumnLayout>
 

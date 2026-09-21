@@ -26,7 +26,6 @@ import ui.theme.UIKit
 private data class ProgressIndicatorConfig(
     val box: Float,
     val stroke: Float,
-    val borderColor: Color,
     val backgroundColor: Color,
     val trackColor: Color,
 ) {
@@ -52,10 +51,9 @@ private data class ProgressIndicatorConfig(
 fun UIKitProgressIndicator(
     modifier: Modifier = Modifier,
     size: Dp = 18.dp,
-    borderColor: Color = UIKit.colorScheme.background.content,
-    backgroundColor: Color = UIKit.colorScheme.icon.tertiary,
+    backgroundColor: Color = UIKit.colorScheme.background.contentTint,
     trackSize: Dp = 2.dp,
-    trackColor: Color = UIKit.colorScheme.icon.primary,
+    trackColor: Color = UIKit.colorScheme.icon.secondary,
 ) {
     val angle = produceState(0f) {
         val durationMillis = 900
@@ -70,11 +68,10 @@ fun UIKitProgressIndicator(
     val box = with(density) { size.toPx() }
     val stroke = with(density) { trackSize.toPx() }
 
-    val config = remember(box, stroke, borderColor, backgroundColor, trackColor) {
+    val config = remember(box, stroke, backgroundColor, trackColor) {
         ProgressIndicatorConfig(
             box = box,
             stroke = stroke,
-            borderColor = borderColor,
             backgroundColor = backgroundColor,
             trackColor = trackColor,
         )
@@ -98,12 +95,6 @@ private fun DrawScope.drawBg(config: ProgressIndicatorConfig) {
     drawRoundRect(
         color = config.backgroundColor,
         cornerRadius = config.cornerRadius
-    )
-
-    drawRoundRect(
-        color = config.borderColor,
-        cornerRadius = config.cornerRadius,
-        style = Stroke(width = config.stroke)
     )
 
     drawArc(

@@ -18,8 +18,9 @@ import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
+import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.WalletRedMetadata
-import com.tonapps.core.flags.WalletFeature
+import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.deposit.usecase.emulation.Emulated.Companion.buildFee
 import com.tonapps.deposit.usecase.emulation.EmulationUseCase
@@ -30,6 +31,7 @@ import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.mapList
 import com.tonapps.icu.Coins
+import com.tonapps.icu.Coins.Companion.sumOf
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.tonkeeper.extensions.getTransfers
@@ -37,7 +39,7 @@ import com.tonapps.tonkeeper.extensions.method
 import com.tonapps.tonkeeper.helper.BatteryHelper
 import com.tonapps.tonkeeper.helper.TwinInput
 import com.tonapps.tonkeeper.helper.TwinInput.Companion.opposite
-import com.tonapps.tonkeeper.manager.assets.AssetsManager
+import com.tonapps.legacy.assets.AssetsManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText.Companion.asString2
 import com.tonapps.tonkeeper.ui.screen.swap.omniston.state.OmnistonStep
@@ -129,9 +131,6 @@ class OmnistonViewModel(
     }
 
     private suspend fun isTokenizedSwapAsset(currency: WalletCurrency): Boolean {
-        if (!WalletFeature.TradingTab.isEnabled) {
-            return false
-        }
         val key = currency.address
         tokenizedCatalogCache[key]?.let { return it }
         val id = runCatching { currency.toAssetId(wallet.testnet) }.getOrNull()
@@ -139,7 +138,9 @@ class OmnistonViewModel(
             tokenizedCatalogCache[key] = false
             return false
         }
-        val type = runCatching { tradingRepository.getAssetDetails(id).asset.assetType }.getOrNull()
+        val type = runCatching {
+            tradingRepository.getAssetDetails(id, isMultichainWallet = false).asset.assetType
+        }.getOrNull()
         val result = type == AssetType.stocks || type == AssetType.etfs
         tokenizedCatalogCache[key] = result
         return result
@@ -150,11 +151,17 @@ class OmnistonViewModel(
         val receive = twinInput.state.receiveCurrency
         val sendToken = isTokenizedSwapAsset(send)
         val receiveToken = isTokenizedSwapAsset(receive)
-        if (sendToken == receiveToken) return
+        if (sendToken == receiveToken) {
+            return
+        }
 
         val spyx = send.address.equalsRawAddress(TokenEntity.TON_SPYX) ||
             receive.address.equalsRawAddress(TokenEntity.TON_SPYX)
-        val replacement = if (spyx) WalletCurrency.TON else WalletCurrency.USDT_TON
+        val replacement = if (spyx) {
+            WalletCurrency.TON
+        } else {
+            WalletCurrency.USDT_TON
+        }
 
         fun legOk(c: WalletCurrency) =
             c.address.equalsRawAddress(WalletCurrency.USDT_TON_ADDRESS) ||
@@ -282,7 +289,11 @@ class OmnistonViewModel(
         twinInput.stateFlow.map { it.receive }.distinctUntilChanged(),
     ) { send, receive ->
         val focus = twinInput.state.focus
-        val amount = if (focus == TwinInput.Type.Send) send.coins else receive.coins
+        val amount = if (focus == TwinInput.Type.Send) {
+            send.coins
+        } else {
+            receive.coins
+        }
         SwapRequest(focus, amount, send.currency, receive.currency)
     }.distinctUntilChanged()
 
@@ -313,7 +324,11 @@ class OmnistonViewModel(
             .map { st ->
                 val a = st.sendCurrency.address
                 val b = st.receiveCurrency.address
-                if (a <= b) a to b else b to a
+                if (a <= b) {
+                    a to b
+                } else {
+                    b to a
+                }
             }
             .distinctUntilChanged()
             .collectFlow {
@@ -520,7 +535,9 @@ class OmnistonViewModel(
                 currencies = pickerCurrencies,
             )
         }.getOrElse { e ->
-            if (e is CancellationException) throw e
+            if (e is CancellationException) {
+                throw e
+            }
             return@launch
         }
         if (picked == twinInput.state.getCurrency(forType)) {
@@ -584,7 +601,11 @@ class OmnistonViewModel(
                     currency = fromCurrency,
                     required = bidUnits,
                     available = stateToken.balance,
-                    type = if (stateToken.isTon) InsufficientBalanceType.InsufficientTONBalance else InsufficientBalanceType.InsufficientJettonBalance,
+                    type = if (stateToken.isTon) {
+                        InsufficientBalanceType.InsufficientTONBalance
+                    } else {
+                        InsufficientBalanceType.InsufficientJettonBalance
+                    },
                     withRechargeBattery = false,
                     singleWallet = isSingleWallet()
                 )
@@ -596,30 +617,28 @@ class OmnistonViewModel(
             val gasBudget = Coins.ofNano(stateMessages.gasBudget)
             val estimatedGasConsumption = Coins.ofNano(stateMessages.estimatedGasConsumption)
             val totalTonFee = tx.tonEmulated?.totalFees ?: Coins.ZERO
-            val maxRequiredFee = listOf(gasBudget, estimatedGasConsumption, totalTonFee).max()
-            if (fromCurrency == WalletCurrency.TON && !isMaxTon && (bidUnits + maxRequiredFee) > tonBalance.balance.value) {
-                val requiredTONBalance = bidUnits + maxRequiredFee
-                if (requiredTONBalance >= tonBalance.balance.value) {
-                    throw InsufficientFundsException(
-                        currency = WalletCurrency.TON,
-                        required = requiredTONBalance,
-                        available = tonBalance.balance.value,
-                        type = InsufficientBalanceType.InsufficientBalanceForFee,
-                        withRechargeBattery = false,
-                        singleWallet = isSingleWallet()
-                    )
-                }
+            val attachedTon = stateMessages.messages.sumOf { Coins.ofNano(it.sendAmount) }
+            val requiredTon = attachedTon + totalTonFee
+            if (fromCurrency == WalletCurrency.TON && !isMaxTon && requiredTon > tonBalance.balance.value) {
+                throw InsufficientFundsException(
+                    currency = WalletCurrency.TON,
+                    required = requiredTon,
+                    available = tonBalance.balance.value,
+                    type = InsufficientBalanceType.InsufficientBalanceForFee,
+                    withRechargeBattery = false,
+                    singleWallet = isSingleWallet()
+                )
             } else if (fromCurrency != WalletCurrency.TON) {
-                if (tx.batteryEmulated == null && maxRequiredFee > tonBalance.balance.value) {
+                if (tx.batteryEmulated == null && requiredTon > tonBalance.balance.value) {
                     throw InsufficientFundsException(
                         currency = WalletCurrency.TON,
-                        required = maxRequiredFee,
+                        required = requiredTon,
                         available = tonBalance.balance.value,
                         type = InsufficientBalanceType.InsufficientBalanceForFee,
                         withRechargeBattery = true,
                         singleWallet = isSingleWallet()
                     )
-                } else if (maxRequiredFee > tonBalance.balance.value) {
+                } else if (requiredTon > tonBalance.balance.value) {
                     preferredFeeMethod = PreferredFeeMethod.BATTERY
                     canEditFeeMethod = false
                 }
@@ -720,7 +739,7 @@ class OmnistonViewModel(
             )
             try {
                 val isBattery = state.isPreferredFeeMethodBattery
-                val transfers = transfers(signRequest, false, isBattery)
+                val transfers = transfers(signRequest, withBattery = isBattery)
                 val validUntil = accountRepository.getValidUntil(wallet.network)
                 val message = accountRepository.messageBody(wallet, validUntil, transfers)
                 val unsignedBody = message.createUnsignedBody(isBattery)
@@ -759,6 +778,21 @@ class OmnistonViewModel(
                         confirmationTime = confirmationTimeMillis / 1000.0
                     )
                 }
+
+                TransactionSentAnalytics.transactionSent(
+                    wallet = wallet,
+                    category = Events.TransactionSent.TransactionSentCategory.Swap,
+                    categoryDetail = Events.TransactionSent.TransactionSentCategoryDetail.Onchain,
+                    asset = state.fromCurrency.analyticsAssetId(),
+                    amount = state.fromUnits.value.toDouble(),
+                    feeAsset = if (isBattery) {
+                        Events.TransactionSent.TransactionSentFeeAsset.BatteryCharges
+                    } else {
+                        Events.TransactionSent.TransactionSentFeeAsset.Coin
+                    },
+                    initiatedBy = Events.TransactionSent.TransactionSentInitiatedBy.User,
+                    toAsset = state.toCurrency.analyticsAssetId(),
+                )
 
                 val finishedAtMs = currentTimeMillis()
                 AnalyticsHelper.Default.events.redOperations.opTerminal(
@@ -852,10 +886,9 @@ class OmnistonViewModel(
 
     private suspend fun transfers(
         request: SignRequestEntity,
-        forEmulation: Boolean,
-        batteryEnabled: Boolean
+        withBattery: Boolean,
     ): List<WalletTransfer> {
-        val excessesAddress = if (false) { // !forEmulation && batteryEnabled
+        val excessesAddress = if (withBattery) {
             batteryRepository.getConfig(wallet.network).excessesAddress
         } else {
             null
@@ -864,7 +897,7 @@ class OmnistonViewModel(
         return request.getTransfers(
             wallet = wallet,
             api = api,
-            batteryEnabled = batteryEnabled,
+            batteryEnabled = withBattery,
             compressedTokens = emptyList(),
             excessesAddress = excessesAddress,
             tonBalance = getTonBalance()
@@ -880,7 +913,7 @@ class OmnistonViewModel(
             wallet = wallet,
             seqNo = getSeqNo(),
             validUntil = validUntil,
-            transfers = transfers(signRequest, true, batteryEnabled)
+            transfers = transfers(signRequest, withBattery = false)
         )
 
         val tonDeferred = async {
@@ -894,7 +927,7 @@ class OmnistonViewModel(
 
         val batteryDeferred = async {
             if (batteryEnabled) {
-                batteryEmulated(messageBody)
+                batteryEmulated(messageBody.copy(transfers = transfers(signRequest, withBattery = true)))
             } else {
                 null
             }

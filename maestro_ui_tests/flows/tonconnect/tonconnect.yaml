@@ -1,0 +1,30 @@
+# Thin sequencer: STON.fi first (needs empty connected-apps after Cloud
+# wipe), then tc deeplink. Nested subflows/ are not matched by config.yaml
+# `tonconnect/*`. Each subflow launches (stopApp + unlock). optional
+# runFlow continues after a case failure; evalScript runs only if that
+# case succeeded. Final assertTrue fails the Cloud row if any case failed
+# and names them.
+name: "TonConnect"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.tonconnect_stonfi_ok = false; output.tonconnect_tc_deeplink_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "TonConnect — STON.fi browser swap"
+    commands:
+      - runFlow: subflows/work_via_service.yaml
+      - evalScript: ${output.tonconnect_stonfi_ok = true}
+
+- runFlow:
+    optional: true
+    label: "TonConnect — tc deeplink connect sheet"
+    commands:
+      - runFlow: subflows/tonconnect_tc_deeplink_connect_sheet.yaml
+      - evalScript: ${output.tonconnect_tc_deeplink_ok = true}
+
+- evalScript: ${var f = []; if (output.tonconnect_stonfi_ok !== true) f.push('STON.fi'); if (output.tonconnect_tc_deeplink_ok !== true) f.push('tc deeplink'); output.tonconnect_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.tonconnect_failed === ''}
+    label: "${output.tonconnect_failed ? 'tonconnect shard: failed ' + output.tonconnect_failed : 'tonconnect shard: all cases passed'}"

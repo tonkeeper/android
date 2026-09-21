@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -20,7 +21,13 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
 
     override val fragmentName: String = "BatteryRefillScreen"
 
-    override val viewModel: BatteryRefillViewModel by walletViewModel()
+    private val from: BatteryNativeFrom by lazy {
+        BatteryNativeFrom.valueOf(requireArguments().getString(ARG_FROM)!!)
+    }
+
+    override val viewModel: BatteryRefillViewModel by walletViewModel {
+        parametersOf(from)
+    }
 
     private val adapter = Adapter(
         openSettings = { primaryViewModel.routeToSettings() },
@@ -46,12 +53,16 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
 
     companion object {
         private const val ARG_PROMO = "promo"
+        private const val ARG_FROM = "from"
 
-        fun newInstance(wallet: WalletEntity) = BatteryRefillScreen(wallet)
-
-        fun newInstance(wallet: WalletEntity, promo: String?): BatteryRefillScreen {
+        fun newInstance(
+            wallet: WalletEntity,
+            promo: String?,
+            from: BatteryNativeFrom,
+        ): BatteryRefillScreen {
             val fragment = BatteryRefillScreen(wallet)
             fragment.putStringArg(ARG_PROMO, promo)
+            fragment.putStringArg(ARG_FROM, from.name)
             return fragment
         }
     }

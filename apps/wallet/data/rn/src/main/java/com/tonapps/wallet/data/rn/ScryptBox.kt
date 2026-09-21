@@ -53,10 +53,10 @@ internal object ScryptBox {
     }
 
     private fun decrypt2(passcode: String, state: SeedState): ByteArray? {
-        val salt = org.ton.crypto.hex(state.salt)
+        val salt = state.salt.hex()
         val passcodeHash = passcodeHash(passcode, salt)
         val nonce = salt.copyOfRange(0, 24)
-        val clearText = org.ton.crypto.hex(state.ciphertext)
+        val clearText = state.ciphertext.hex()
         return cryptoSecretBoxOpen(clearText, nonce, passcodeHash)
     }
 

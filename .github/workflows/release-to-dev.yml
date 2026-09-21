@@ -1,0 +1,59 @@
+name: Release → dev
+
+on:
+#  push:
+#    branches:
+#      - release/**
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create / update back-merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE=dev
+          HEAD=${{ github.ref_name }}
+
+          # only back-merge from release branches
+          case "$HEAD" in
+            release/*) ;;
+            *)
+              echo "::error::Refusing to back-merge from '$HEAD'; expected a release/** branch."
+              exit 1
+              ;;
+          esac
+
+          # nothing to merge? (no release commits missing from dev)
+          if [ "$(git rev-list --count origin/$BASE..origin/$HEAD)" -eq 0 ]; then
+            echo "dev already contains $HEAD, nothing to do."
+            exit 0
+          fi
+
+          TEMP="backmerge/${HEAD//\//-}"
+
+          # reuse existing open PR if present
+          PR=$(gh pr list --base $BASE --head $TEMP --state open --json number -q '.[0].number')
+          if [ -z "$PR" ]; then
+            # (re)create the temp branch from the current release tip and push it
+            git push --force origin "origin/$HEAD:refs/heads/$TEMP"
+
+            PR=$(gh pr create --base $BASE --head $TEMP \
+              --title "Back-merge $HEAD → $BASE" \
+              --body "Automated back-merge of \`$HEAD\` into \`$BASE\` via temporary branch \`$TEMP\`. Resolve any conflicts by merging \`$BASE\` into \`$TEMP\`.")
+            PR=$(gh pr view "$PR" --json number -q .number)
+          fi
+
+          # enable auto-merge; GitHub merges it once checks pass and it's conflict-free
+          gh pr merge $PR --merge --auto || \
+            echo "Could not enable auto-merge (likely a conflict). Needs manual resolution."

@@ -2,9 +2,9 @@ package com.tonapps.bus.core
 
 import android.net.Uri
 import androidx.annotation.UiThread
-import com.tonapps.blockchain.ton.TonAddressTags
 import com.tonapps.bus.core.contract.EventDelegate
 import com.tonapps.bus.core.contract.EventExecutor
+import com.tonapps.bus.core.contract.TonAddressTags
 import com.tonapps.extensions.hostOrNull
 import com.tonapps.extensions.toUriOrNull
 
@@ -12,16 +12,8 @@ class DefaultEventDelegate(
     private val eventExecutor: EventExecutor,
 ) : EventDelegate {
 
-    private val regexPrivateData: Regex by lazy {
-        Regex("[a-f0-9]{64}|0:[a-f0-9]{64}")
-    }
-
     private fun trackEvent(name: String, params: Map<String, Any>) {
         eventExecutor.trackEvent(name, params)
-    }
-
-    private fun removePrivateDataFromUrl(url: String): String {
-        return url.replace(regexPrivateData, "X")
     }
 
     private fun getAddressType(address: String): String {
@@ -154,23 +146,6 @@ class DefaultEventDelegate(
     }
 
     @UiThread
-    override fun batterySuccess(
-        type: String,
-        promo: String,
-        token: String,
-        size: String?
-    ) {
-        trackEvent(
-            "battery_success", hashMapOf(
-                "type" to type,
-                "promo" to promo,
-                "jetton" to token,
-                "size" to (size ?: "null")
-            )
-        )
-    }
-
-    @UiThread
     override fun onRampOpen(source: String) {
         trackEvent(
             "onramp_open", hashMapOf(
@@ -205,7 +180,6 @@ class DefaultEventDelegate(
         providerName: String,
         providerDomain: String
     ) {
-
         fun fixPaymentMethodName(value: String): String {
             return when (value) {
                 "card" -> "Credit Card"
@@ -243,16 +217,6 @@ class DefaultEventDelegate(
                 "location" to location,
                 "name" to name,
                 "url" to url
-            )
-        )
-    }
-
-    @UiThread
-    override fun trackPushClick(pushId: String, payload: String) {
-        trackEvent(
-            "push_click", hashMapOf(
-                "push_id" to pushId,
-                "payload" to removePrivateDataFromUrl(payload)
             )
         )
     }

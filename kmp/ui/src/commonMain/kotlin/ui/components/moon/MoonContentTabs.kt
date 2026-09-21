@@ -35,7 +35,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import ui.preview.ThemedPreview
 import ui.theme.Dimens
-import ui.theme.Shapes
 import ui.theme.UIKit
 
 private const val TAB_PILL_ANIMATION_MS = 200
@@ -59,7 +58,7 @@ fun MoonContentTabs(
                 .fillMaxWidth()
                 .height(40.dp)
                 .background(
-                    shape = UIKit.shapes.large,
+                    shape = UIKit.shapes.extraLarge,
                     color = UIKit.colorScheme.background.page
                 )
         )
@@ -76,7 +75,7 @@ fun MoonContentTabs(
             .fillMaxWidth()
             .height(40.dp)
             .background(
-                shape = UIKit.shapes.large,
+                shape = UIKit.shapes.extraLarge,
                 color = UIKit.colorScheme.background.page
             )
             .padding(4.dp)
@@ -96,7 +95,7 @@ fun MoonContentTabs(
                 .fillMaxHeight()
                 .width(tabWidth)
                 .offset(x = pillOffset)
-                .clip(UIKit.shapes.medium)
+                .clip(UIKit.shapes.large)
                 .background(UIKit.colorScheme.background.content)
         )
 

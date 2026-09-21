@@ -111,27 +111,35 @@ class TokenRepository(
         val cached = localDataSource.getCache(cacheKey(accountId, network)) ?: return
         val entities = cached.toMutableList()
 
-        run {
+        if (tronUsdtBalance != null) {
             val index = entities.indexOfFirst {
                 it.token.address.equalsAddress(TokenEntity.TRON_USDT.address)
             }
 
-            if (index != -1) {
-                entities[index] = tronUsdtBalance
-            } else if (!api.getConfig(network).flags.disableTron) {
-                entities.add(tronUsdtBalance)
+            if (tronUsdtBalance.value.isPositive) {
+                if (index != -1) {
+                    entities[index] = tronUsdtBalance
+                } else if (!api.getConfig(network).flags.disableTron) {
+                    entities.add(tronUsdtBalance)
+                }
+            } else if (index != -1) {
+                entities.removeAt(index)
             }
         }
 
-        run {
+        if (tronTrxBalance != null) {
             val index = entities.indexOfFirst {
                 it.token.address.equalsAddress(TokenEntity.TRX.address)
             }
 
-            if (index != -1) {
-                entities[index] = tronTrxBalance
-            } else if (!api.getConfig(network).flags.disableTron) {
-                entities.add(tronTrxBalance)
+            if (tronTrxBalance.value.isPositive) {
+                if (index != -1) {
+                    entities[index] = tronTrxBalance
+                } else if (!api.getConfig(network).flags.disableTron) {
+                    entities.add(tronTrxBalance)
+                }
+            } else if (index != -1) {
+                entities.removeAt(index)
             }
         }
 
@@ -297,10 +305,17 @@ class TokenRepository(
         }
 
         val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
-        val jettons = jettonsDeferred.await()?.toMutableList() ?: mutableListOf()
+        val jettons = jettonsDeferred.await()?.toMutableList() ?: return@withContext null
 
-        val tronUsdt = tronUsdtDeferred.await()
-        val tronTrx = tronTrxDeferred.await()
+        var tronTrx = tronTrxDeferred.await()
+        var tronUsdt = tronUsdtDeferred.await()
+        if (tronTrx == null || tronUsdt == null) {
+            val cachedTron = cache(accountId, network)
+            tronTrx = tronTrx
+                ?: cachedTron?.firstOrNull { it.token.address.equalsAddress(TokenEntity.TRX.address) }
+            tronUsdt = tronUsdt
+                ?: cachedTron?.firstOrNull { it.token.address.equalsAddress(TokenEntity.TRON_USDT.address) }
+        }
 
         val usdtIndex = jettons.indexOfFirst {
             it.token.address == TokenEntity.USDT.address
@@ -317,11 +332,11 @@ class TokenRepository(
         val entities = mutableListOf<BalanceEntity>()
         entities.add(tonBalance)
 
-        if (tronTrx != null && (!api.getConfig(network).flags.disableTron || tronTrx.value.isPositive)) {
+        if (tronTrx != null && tronTrx.value.isPositive) {
             entities.add(tronTrx)
         }
 
-        if (tronUsdt != null && (!api.getConfig(network).flags.disableTron || tronUsdt.value.isPositive)) {
+        if (tronUsdt != null && tronUsdt.value.isPositive) {
             entities.add(tronUsdt)
         }
 
@@ -385,16 +400,23 @@ class TokenRepository(
         ratesRepository.insertRates(network, currency, rates)
     }
 
-    suspend fun getEthena(accountId: String, refresh: Boolean = false): EthenaEntity? {
+    suspend fun getEthena(
+        accountId: String,
+        walletId: String?,
+        refresh: Boolean = false,
+    ): EthenaEntity? {
         if (refresh) {
-            return getEthenaRemote(accountId)
+            return getEthenaRemote(accountId, walletId)
         }
         val cached = ethenaCache.getCache(accountId)
-        return cached ?: getEthenaRemote(accountId)
+        return cached ?: getEthenaRemote(accountId, walletId)
     }
 
-    suspend fun getEthenaRemote(accountId: String): EthenaEntity? = withContext(Dispatchers.IO) {
-        val data = api.getEthena(accountId)
+    suspend fun getEthenaRemote(
+        accountId: String,
+        walletId: String?,
+    ): EthenaEntity? = withContext(Dispatchers.IO) {
+        val data = api.getEthena(accountId, walletId)
         data?.let {
             ethenaCache.setCache(accountId, data)
         }

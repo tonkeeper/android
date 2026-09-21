@@ -14,6 +14,8 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
         const val TYPE_BANNERS = 3
         const val TYPE_SPACE = 4
         const val TYPE_ADS = 5
+        const val TYPE_CHAIN_FILTER = 6
+        const val TYPE_CHAIN_EMPTY = 7
     }
 
     data class Title(
@@ -25,6 +27,7 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
         val app: BrowserAppEntity,
         val wallet: WalletEntity,
         val country: String,
+        val multichain: Boolean,
     ): ExploreItem(TYPE_ADS) {
 
         val button: BrowserAppEntity.Button
@@ -38,7 +41,8 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
         val app: BrowserAppEntity,
         val wallet: WalletEntity,
         val singleLine: Boolean,
-        val country: String
+        val country: String,
+        val multichain: Boolean
     ): ExploreItem(TYPE_APP) {
 
         val icon: Uri
@@ -61,7 +65,14 @@ sealed class ExploreItem(type: Int): BaseListItem(type) {
         val apps: List<BrowserAppEntity>,
         val interval: Int,
         val wallet: WalletEntity,
-        val country: String
+        val country: String,
+        val multichain: Boolean
     ): ExploreItem(TYPE_BANNERS)
+
+    data object ChainFilter : ExploreItem(TYPE_CHAIN_FILTER)
+
+    data object Space : ExploreItem(TYPE_SPACE)
+
+    data object ChainEmpty : ExploreItem(TYPE_CHAIN_EMPTY)
 
 }

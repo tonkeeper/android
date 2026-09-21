@@ -1,6 +1,7 @@
 package ui.components.popup
 
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -14,15 +15,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 
+enum class ActionMenuHorizontalAlignment {
+    Start,
+    Center,
+}
+
 @Composable
 fun ActionMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     items: List<ComposeActionItem>,
-    onItemClick: (ComposeActionItem) -> Unit,
-    properties: PopupProperties = PopupProperties(),
+    onItemClick: (ComposeActionItem, Int) -> Unit,
+    properties: PopupProperties = PopupProperties(focusable = true),
     offset: DpOffset = DpOffset(0.dp, 12.dp),
+    horizontalAlignment: ActionMenuHorizontalAlignment = ActionMenuHorizontalAlignment.Start,
     width: Dp = 240.dp,
 ) {
     ActionMenuPopupFrame(
@@ -30,6 +37,7 @@ fun ActionMenu(
         onDismissRequest = onDismissRequest,
         properties = properties,
         offset = offset,
+        horizontalAlignment = horizontalAlignment,
     ) { expandedState, transformOriginState ->
         ActionMenuContent(
             modifier = modifier,
@@ -46,8 +54,9 @@ fun ActionMenu(
 fun ActionMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
-    properties: PopupProperties = PopupProperties(),
+    properties: PopupProperties = PopupProperties(focusable = true),
     offset: DpOffset = DpOffset(0.dp, 12.dp),
+    horizontalAlignment: ActionMenuHorizontalAlignment = ActionMenuHorizontalAlignment.Start,
     width: Dp = 240.dp,
     content: @Composable () -> Unit,
 ) {
@@ -56,13 +65,17 @@ fun ActionMenu(
         onDismissRequest = onDismissRequest,
         properties = properties,
         offset = offset,
+        horizontalAlignment = horizontalAlignment,
     ) { expandedState, transformOriginState ->
         ActionMenuAnimatedSurface(
             expandedState = expandedState,
             transformOriginState = transformOriginState,
             width = width,
-            content = content,
-        )
+        ) {
+            Column {
+                content()
+            }
+        }
     }
 }
 
@@ -72,6 +85,7 @@ private fun ActionMenuPopupFrame(
     onDismissRequest: () -> Unit,
     properties: PopupProperties,
     offset: DpOffset,
+    horizontalAlignment: ActionMenuHorizontalAlignment,
     content: @Composable (
         expandedState: MutableTransitionState<Boolean>,
         transformOriginState: MutableState<TransformOrigin>,
@@ -85,7 +99,8 @@ private fun ActionMenuPopupFrame(
 
         val popupPositionProvider = ActionMenuPositionProvider(
             contentOffset = offset,
-            density = density
+            density = density,
+            horizontalAlignment = horizontalAlignment,
         ) { parentBounds, menuBounds ->
             transformOriginState.value = calculateTransformOrigin(parentBounds, menuBounds)
         }

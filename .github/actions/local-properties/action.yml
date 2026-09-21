@@ -1,0 +1,40 @@
+name: Create local.properties
+description: Writes the GitHub Packages credentials that settings.gradle.kts requires into local.properties
+
+inputs:
+  github-token:
+    description: Token for maven.pkg.github.com (wallet-core, and chainkit when no dedicated token is set)
+    required: true
+  github-user:
+    description: User for maven.pkg.github.com; defaults to the triggering actor
+    required: false
+    default: ''
+  chainkit-user:
+    description: Dedicated user for the chainkit-publishing package repo
+    required: false
+    default: ''
+  chainkit-token:
+    description: Dedicated token for the chainkit-publishing package repo
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        PACKAGES_USER: ${{ inputs.github-user || github.actor }}
+        PACKAGES_TOKEN: ${{ inputs.github-token }}
+        CHAINKIT_USER: ${{ inputs.chainkit-user }}
+        CHAINKIT_TOKEN: ${{ inputs.chainkit-token }}
+      run: |
+        {
+          echo "GITHUB_USER=$PACKAGES_USER"
+          echo "GITHUB_TOKEN=$PACKAGES_TOKEN"
+          if [ -n "$CHAINKIT_USER" ]; then
+            echo "CHAINKIT_GITHUB_USER=$CHAINKIT_USER"
+          fi
+          if [ -n "$CHAINKIT_TOKEN" ]; then
+            echo "CHAINKIT_GITHUB_TOKEN=$CHAINKIT_TOKEN"
+          fi
+        } >> local.properties

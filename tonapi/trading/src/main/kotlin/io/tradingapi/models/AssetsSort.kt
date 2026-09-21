@@ -14,9 +14,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * По чему сортировать каталог.
+ * По чему сортировать каталог. По умолчанию market_cap. open_interest_usd доступен только при tab=perpetuals, иначе 400.
  *
- * Values: volume_24h,market_cap,price_24h
+ * Values: volume_24h,market_cap,price_24h,volume,open_interest_usd
  */
 @Serializable
 enum class AssetsSort(val value: String) {
@@ -25,7 +25,11 @@ enum class AssetsSort(val value: String) {
     @SerialName(value = "market_cap")
     market_cap("market_cap"),
     @SerialName(value = "price_24h")
-    price_24h("price_24h");
+    price_24h("price_24h"),
+    @SerialName(value = "volume")
+    volume("volume"),
+    @SerialName(value = "open_interest_usd")
+    open_interest_usd("open_interest_usd");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

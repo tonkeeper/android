@@ -16,6 +16,7 @@ import okhttp3.HttpUrl
 
 import io.exchangeapi.models.CalculateSwap400Response
 import io.exchangeapi.models.CreateP2PSessionRequest
+import io.exchangeapi.models.Healthcheck500Response
 import io.exchangeapi.models.P2PSessionResult
 
 import kotlinx.serialization.SerialName

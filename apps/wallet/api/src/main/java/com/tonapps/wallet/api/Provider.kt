@@ -31,6 +31,8 @@ internal class Provider(
 
     val liteServer = SourceAPI(main.liteServer, test.liteServer, tetra.liteServer)
 
+    val migration = SourceAPI(main.migration, test.migration, tetra.migration)
+
     val nft = SourceAPI(main.nft, test.nft, tetra.nft)
 
     val rates = SourceAPI(main.rates, test.rates, tetra.rates)

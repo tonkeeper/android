@@ -1,15 +1,12 @@
 package com.tonapps.tonkeeper.ui.screen.staking.unstake.amount
 
 import android.os.Bundle
-import com.tonapps.log.L
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.model.legacy.TokenEntity
-import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.component.coin.CoinEditText
-import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeperx.R
@@ -53,9 +50,6 @@ class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen,
         collectFlow(primaryViewModel.availableUiStateFlow, ::applyAvailableState)
         collectFlow(primaryViewModel.cycleEndFormatFlow) { date ->
             cycleView.text = getString(Localization.staking_unstake_cycle, date)
-        }
-        collectFlow(primaryViewModel.analyticsFlow) {props ->
-            context?.analytics?.simpleTrackEvent("staking_minus_input", props)
         }
     }
 

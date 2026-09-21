@@ -3,13 +3,16 @@ package ui.components.moon.cell
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import ui.components.moon.ButtonColorsSecondary
 import ui.components.moon.MoonAccentButton
 import ui.theme.Dimens
@@ -47,9 +50,10 @@ fun MoonEmptyCell(
         }
 
         if (firstButtonText != null || secondButtonText != null) {
+            Spacer(Modifier.height(16.dp))
+
             Row(
-                modifier = Modifier.padding(top = Dimens.offsetMedium),
-                horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (firstButtonText != null) {
@@ -62,7 +66,6 @@ fun MoonEmptyCell(
 
                 if (secondButtonText != null) {
                     MoonAccentButton(
-                        modifier = Modifier.padding(start = Dimens.offsetMedium),
                         text = secondButtonText,
                         onClick = onSecondClick,
                         buttonColors = ButtonColorsSecondary,

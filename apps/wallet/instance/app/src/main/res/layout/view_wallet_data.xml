@@ -24,7 +24,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:fontFamily="@font/montserrat_semi_bold"
+                android:fontFamily="@font/tt_firs_neue_medium"
+                android:fontFeatureSettings="'ss09' on, 'ss17' on, 'ss18' on"
                 android:gravity="center"
                 android:singleLine="true"
                 android:textColor="?attr/textPrimaryColor"
@@ -47,7 +48,7 @@
 
             </FrameLayout>
 
-            <com.tonapps.tonkeeper.view.BatteryView
+            <uikit.widget.BatteryView
                 style="@style/Battery.Medium"
                 android:id="@+id/wallet_battery"
                 android:layout_gravity="center"

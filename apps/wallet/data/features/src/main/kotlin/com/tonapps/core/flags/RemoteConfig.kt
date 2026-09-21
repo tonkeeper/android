@@ -16,16 +16,27 @@ class RemoteConfig : RemoteConfigProvider {
         ONBOARDING_STORIES_ENABLED("onboarding_stories_enabled");
     }
 
-    //
     init {
         val configSettings = FirebaseRemoteConfigSettings.Builder()
-            .setMinimumFetchIntervalInSeconds(0)
+            .setMinimumFetchIntervalInSeconds(600)
             .build()
 
         remoteConfig.setConfigSettingsAsync(configSettings)
 
         val defaults = mapOf(
             FeatureFlag.ONBOARDING_STORIES_ENABLED.key to true,
+            WalletFeatureKey.IS_MULTICHAIN_ENABLED.featureKey to true,
+            WalletFeatureKey.IS_IMPORT_MULTICHAIN_WALLET.featureKey to true,
+            WalletFeatureKey.IS_SWAPKIT_HARD_SWITCH_ENABLED.featureKey to false,
+            WalletFeatureKey.IS_SWAP_EXACT_OUTPUT_ENABLED.featureKey to false,
+            WalletFeatureKey.IS_WALLETKIT_ENABLED.featureKey to false,
+            WalletFeatureKey.IS_MIGRATION_ENABLED.featureKey to true,
+            WalletFeatureKey.IS_MIGRATION_BATTERY_ENABLED.featureKey to false,
+            WalletFeatureKey.IS_RAFFLES_ENABLED.featureKey to false,
+            WalletFeatureKey.IS_PERPS_ENABLED.featureKey to false,
+            WalletFeatureKey.IS_REALTIME_ENABLED.featureKey to true,
+            WalletFeatureKey.LOG_DEFAULT_ON.featureKey to false,
+            WalletFeatureKey.IS_IN_APP_REVIEW_ENABLED.featureKey to false,
         )
 
         remoteConfig.setDefaultsAsync(defaults)

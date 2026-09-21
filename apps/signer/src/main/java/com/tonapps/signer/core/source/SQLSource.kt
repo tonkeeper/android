@@ -13,7 +13,7 @@ import com.tonapps.signer.extensions.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 class SQLSource(
     private val context: Context

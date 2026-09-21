@@ -1,7 +1,7 @@
 package com.tonapps.ledger.ton
 
 import android.os.Parcelable
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.block.AddrStd
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue

@@ -109,6 +109,40 @@ patch_wallet_bulk_header() {
     ' "$spec_path" > "$temp_path" && mv "$temp_path" "$spec_path"
 }
 
+# Marks every parameter naming the wallet the request acts on — `wallet_id` in the path, or
+# battery's `X-Wallet-ID` header — so the api template can lift it into RequestConfig.walletId,
+# which is what tags the request for the Wallet-Authorization header.
+patch_wallet_id_parameters() {
+    local spec_path="$1"
+    local temp_path="${spec_path}.tmp"
+
+    if grep -q '^[[:space:]]*x-wallet-id:' "$spec_path"; then
+        return 0
+    fi
+
+    if ! grep -qE '^[[:space:]]*name: (wallet_id|X-Wallet-ID)[[:space:]]*$' "$spec_path"; then
+        echo "⚠️  No wallet id parameter found in schema, skipping walletId patch."
+        return 0
+    fi
+
+    awk '
+        # securitySchemes entries carry a `name:` too, but they are credentials rather than
+        # parameters: stamping one makes the api template synthesize a second wallet id on top
+        # of the parameter it already lifts, and the operation ends up declaring it twice.
+        /^  securitySchemes:[[:space:]]*$/ { in_schemes = 1; print; next }
+        in_schemes && /^  [^ ]/ { in_schemes = 0 }
+
+        !in_schemes && /^[[:space:]]*name: (wallet_id|X-Wallet-ID)[[:space:]]*$/ {
+            print
+            match($0, /^[[:space:]]*/)
+            printf "%sx-wallet-id: true\n", substr($0, 1, RLENGTH)
+            next
+        }
+
+        { print }
+    ' "$spec_path" > "$temp_path" && mv "$temp_path" "$spec_path"
+}
+
 if [ -z "$OPENAPI_URL" ] || [ -z "$PACKAGE_NAME" ] || [ -z "$TARGET_MODULE" ]; then
     echo "Usage: $0 <openapi-url> <package-name> <target-module>"
     echo "Example: $0 'https://...' 'tonapi' 'tonapi:tonkeeper'"
@@ -144,6 +178,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+patch_wallet_id_parameters "$LOCAL_OPENAPI_SPEC"
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to patch OpenAPI spec."
+    rm -rf "$TEMP_DIR"
+    exit 1
+fi
+
 openapi-generator generate \
   -i "$LOCAL_OPENAPI_SPEC" \
   -g kotlin \
@@ -162,11 +203,19 @@ fi
 
 # Post-process generated files
 echo "Post-processing generated files..."
+# Parameter and argument lists are emitted with a trailing separator so that credentials declared
+# as security schemes can be appended without knowing whether the operation declares any
+# parameters of its own. Kotlin accepts the trailing comma; drop it anyway for readability.
+find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/, )/)/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin.collections.Map<kotlin.String, kotlin.Any>/kotlin.collections.Map<kotlin.String, io.JsonAny>/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/@SerialName(value = "unknown_default_open_api")/@SerialName(value = "unknown")/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/unknown_default_open_api("unknown_default_open_api")/unknown("unknown")/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/.unknown_default_open_api/.unknown/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/values()/entries/g'
+find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 perl -0pi -e 's/(\@Serializable\n)\n+/$1/g'
+# openapi-generator 7.24 qualifies an enum-ref default with its type and the api template prefixes
+# the type again, so `Network.mainnet` is emitted as `Network.Network.mainnet`.
+find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 perl -i -pe 's/= (\w+)\.\1\./= $1./g'
 
 # Remove unnecessary kotlin. prefixes
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.collections\.List</List</g'
@@ -177,6 +226,12 @@ find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Lo
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Boolean/Boolean/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Double/Double/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Float/Float/g'
+
+# X-Wallet-ID names the wallet a request is authorized for, which on wallet-scoped routes is the
+# same wallet the path already addresses. Default the header parameter to that path parameter so
+# callers pass it explicitly only when the two genuinely differ.
+find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 perl -i -pe \
+    's/^(\s*fun \w+\(.*\bwalletId: String.*?)\bxWalletId: String\? = null/$1xWalletId: String? = walletId/'
 
 # Remove same-package imports
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | while IFS= read -r -d '' file; do
@@ -285,7 +340,7 @@ fi
 
 # Remove infrastructure if not core module
 if [[ "$TARGET_MODULE" != "tonapi:core" ]]; then
-    INFRA_DIR="$TARGET_SRC_DIR/io/infrastructure"
+    INFRA_DIR="$TARGET_SRC_DIR/io/${PACKAGE_NAME}/infrastructure"
     if [ -d "$INFRA_DIR" ]; then
         echo "Removing infrastructure directory (not core module)..."
         rm -rf "$INFRA_DIR"

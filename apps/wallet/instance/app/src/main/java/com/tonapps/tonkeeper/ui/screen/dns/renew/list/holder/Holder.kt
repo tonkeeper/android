@@ -43,7 +43,7 @@ class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_doma
     }
 
     private fun openNft(wallet: WalletEntity, nft: NftEntity) {
-        navigation?.add(NftScreen.newInstance(wallet, nft))
+        navigation?.add(NftScreen.newInstance(nft))
     }
 
 }

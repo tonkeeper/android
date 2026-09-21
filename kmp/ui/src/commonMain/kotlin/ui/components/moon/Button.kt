@@ -38,7 +38,7 @@ val ButtonSizeLarge: ButtonSize
     get() = ButtonSize(
         height = 56.dp,
         textStyle = UIKit.typography.label1,
-        shape = Shapes.medium
+        shape = Shapes.medium,
     )
 
 val ButtonColorsPrimary: ButtonColors
@@ -85,3 +85,14 @@ val ButtonColorsOrange: ButtonColors
         disabledContainerColor = UIKit.colorScheme.buttonOrange.primaryBackgroundDisable,
         disabledContentColor = UIKit.colorScheme.buttonOrange.primaryForeground,
     )
+
+
+val ButtonColorsRed: ButtonColors
+    @Composable
+    get() = ButtonColors(
+        containerColor = UIKit.colorScheme.buttonRed.primaryBackground,
+        contentColor = UIKit.colorScheme.buttonRed.primaryForeground,
+        disabledContainerColor = UIKit.colorScheme.buttonRed.primaryBackgroundDisable,
+        disabledContentColor = UIKit.colorScheme.buttonRed.primaryForeground,
+    )
+

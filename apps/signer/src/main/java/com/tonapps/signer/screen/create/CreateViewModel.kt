@@ -21,8 +21,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.mnemonic.Mnemonic
+import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import com.tonapps.security.tryCallGC
 import com.tonapps.signer.extensions.authorizationRequiredError
 import kotlinx.coroutines.channels.BufferOverflow
@@ -155,7 +155,7 @@ class CreateViewModel(
         secret: SecretKey,
         name: String
     ) = withContext(Dispatchers.IO) {
-        val mnemonic = Mnemonic.generate()
+        val mnemonic = Mnemonic.generate().words.toList()
         addNewKey(secret, name, mnemonic)
     }
 
@@ -164,7 +164,7 @@ class CreateViewModel(
         name: String,
         mnemonic: List<String>
     ) = withContext(Dispatchers.IO) {
-        val seed = Mnemonic.toSeed(mnemonic)
+        val seed = Mnemonic(mnemonic).toSeed()
         val publicKey = PrivateKeyEd25519(seed).publicKey()
 
         val entity = keyRepository.addKey(name, publicKey)

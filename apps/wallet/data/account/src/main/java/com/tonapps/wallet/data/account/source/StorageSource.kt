@@ -6,7 +6,7 @@ import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.prefs
 import com.tonapps.extensions.string
 import com.tonapps.security.Security
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 internal class StorageSource(context: Context) {
 

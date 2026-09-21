@@ -38,7 +38,7 @@ data class NftTransfer(
     }
 }
 
-private object NftTransferTlbConstructor : TlbConstructor<NftTransfer>(
+internal object NftTransferTlbConstructor : TlbConstructor<NftTransfer>(
     schema = "", id = null
 ) {
 

@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.battery
 import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeScreen
@@ -19,6 +20,7 @@ class BatteryViewModel(
     app: Application,
     private val wallet: WalletEntity,
     jetton: String,
+    private val from: BatteryNativeFrom,
     private val settingsRepository: SettingsRepository,
     private val batteryRepository: BatteryRepository,
     private val tokenRepository: TokenRepository,
@@ -48,7 +50,7 @@ class BatteryViewModel(
                     ?: return@launch
             val token =
                 tokens.firstOrNull { it.address.equalsAddress(rechargeToken) } ?: return@launch
-            openScreen(BatteryRechargeScreen.newInstance(wallet, token))
+            openScreen(BatteryRechargeScreen.newInstance(wallet, from, token))
         }
     }
 
@@ -64,12 +66,8 @@ class BatteryViewModel(
         if (!settingsRepository.batteryViewed) {
             viewModelScope.launch {
                 settingsRepository.batteryViewed = true
-                val tonProofToken =
-                    accountRepository.requestTonProofToken(wallet) ?: return@launch
                 batteryRepository.getBalance(
-                    tonProofToken = tonProofToken,
-                    publicKey = wallet.publicKey,
-                    network = wallet.network,
+                    wallet = wallet,
                     ignoreCache = true
                 )
             }

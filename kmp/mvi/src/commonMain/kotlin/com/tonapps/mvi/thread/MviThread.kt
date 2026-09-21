@@ -2,6 +2,7 @@ package com.tonapps.mvi.thread
 
 import androidx.annotation.AnyThread
 import com.tonapps.async.Async
+import com.tonapps.async.ThreadChecker
 import com.tonapps.log.L
 import com.tonapps.mvi.Mvi
 
@@ -33,11 +34,7 @@ internal enum class MviThread {
 
     @AnyThread
     fun finish() {
-        // TODO make platform specific
-//        handler.postDelayed(
-//            { exitProcess(1) },
-//            1000L
-//        )
+        ThreadChecker.finishProcess()
     }
 }
 

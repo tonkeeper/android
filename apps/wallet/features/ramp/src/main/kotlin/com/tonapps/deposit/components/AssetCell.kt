@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.core.extensions.iconExternalUrl
 import com.tonapps.uikit.icon.UIKitIcon
+import ui.components.moon.MoonChevronRight
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonItemSubtitle
@@ -109,7 +110,7 @@ fun AssetCell(
             content = when {
                 isExpanded -> {
                     {
-                        MoonItemIcon(painter = painterResource(UIKitIcon.ic_chevron_right_16))
+                        MoonChevronRight()
                     }
                 }
 

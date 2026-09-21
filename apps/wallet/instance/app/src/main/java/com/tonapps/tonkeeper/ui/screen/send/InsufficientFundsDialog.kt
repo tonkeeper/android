@@ -20,9 +20,10 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.koin.api
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
-import com.tonapps.tonkeeper.view.BatteryView
+import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
@@ -73,7 +74,7 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
         }
 
         batteryButton.setOnClickListener {
-            navigation?.add(BatteryScreen.newInstance(wallet, from = "insufficient_funds"))
+            navigation?.add(BatteryScreen.newInstance(wallet, from = BatteryNativeFrom.InsufficientFunds))
             dismiss()
         }
     }
@@ -118,7 +119,7 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
         }
 
         batteryButton.setOnClickListener {
-            navigation?.add(BatteryScreen.newInstance(wallet, from = "insufficient_funds"))
+            navigation?.add(BatteryScreen.newInstance(wallet, from = BatteryNativeFrom.InsufficientFunds))
             dismiss()
         }
     }

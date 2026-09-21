@@ -10,11 +10,13 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.tonkeeper.extensions.flagEmoji
-import com.tonapps.tonkeeper.koin.remoteConfig
+import com.airbnb.lottie.LottieAnimationView
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events.DappBrowser.DappBrowserType
+import com.tonapps.dapp.screens.sessions.DisconnectDappFragment
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
-import com.tonapps.tonkeeper.ui.component.CountryFlagView
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseScreen
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.connected.ConnectedAdapter
@@ -22,17 +24,14 @@ import com.tonapps.tonkeeper.ui.screen.browser.main.list.connected.ConnectedItem
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreAdapter
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreItem
 import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
-import com.tonapps.tonkeeper.ui.screen.country.CountryPickerScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.wallet.data.dapps.entities.AppEntity
-import com.tonapps.wallet.localization.Localization
-import kotlinx.coroutines.flow.map
-import uikit.dialog.alert.AlertDialog
+import kotlinx.coroutines.flow.filterNotNull
+import org.koin.android.ext.android.inject
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.isMaxScrollReached
+import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.SlideBetweenView
 
@@ -50,12 +49,36 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     override val viewModel: BrowserMainViewModel by walletViewModel()
 
-    private val connectedAdapter = ConnectedAdapter { app ->
-        viewModel.showDisconnect(app)
+    private val environment: Environment by inject()
+
+    private val connectedAdapter = ConnectedAdapter { item ->
+        navigation?.addForResult(
+            DisconnectDappFragment.newInstance(
+                name = item.name,
+                iconUrl = item.app.iconUrl,
+            )
+        ) { bundle ->
+            if (bundle.getBoolean(DisconnectDappFragment.RESULT_CONFIRMED)) {
+                viewModel.disconnect(item)
+            }
+        }
     }
 
-    private val exploreAdapter = ExploreAdapter { id ->
-        baseFragment?.addFragment(BrowserMoreScreen.newInstance(screenContext.wallet, id))
+    private val exploreAdapter by lazy {
+        ExploreAdapter(
+            onMoreClick = { id ->
+                baseFragment?.addFragment(
+                    BrowserMoreScreen.newInstance(
+                        screenContext.wallet,
+                        id,
+                        viewModel.selectedChain.value?.id,
+                    )
+                )
+            },
+            selectedChain = viewModel.selectedChain,
+            onChainSelected = viewModel::onChainSelected,
+            environment = environment,
+        )
     }
 
     private val scrollListener = object : RecyclerVerticalScrollListener() {
@@ -73,11 +96,15 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     private lateinit var exploreTabView: AppCompatTextView
     private lateinit var connectedTabView: AppCompatTextView
     private lateinit var connectedPlaceholder: View
+    private lateinit var connectedPlaceholderLottie: LottieAnimationView
     private lateinit var connectedListView: RecyclerView
     private lateinit var exploreListView: RecyclerView
 
     private val activeListView: RecyclerView
         get() = if (exploreTabView.background != null) exploreListView else connectedListView
+
+    private val isConnectedTabActive: Boolean
+        get() = connectedTabView.background != null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -86,14 +113,17 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         headerView.background = headerDrawable
 
         exploreTabView = view.findViewById(R.id.explore_tab)
-        exploreTabView.setOnClickListener { clickTab(it as AppCompatTextView) }
+        exploreTabView.setOnClickListener { clickTab(it as AppCompatTextView, userInitiated = true) }
 
         connectedTabView = view.findViewById(R.id.connected_tab)
-        connectedTabView.setOnClickListener { clickTab(it as AppCompatTextView) }
+        connectedTabView.setOnClickListener { clickTab(it as AppCompatTextView, userInitiated = true) }
 
         slideView = view.findViewById(R.id.slide)
 
         connectedPlaceholder = view.findViewById(R.id.connected_placeholder)
+        connectedPlaceholderLottie = view.findViewById(R.id.connected_placeholder_lottie)
+        connectedPlaceholderLottie.setAnimation(CONNECTED_APPS_LOTTIE)
+        connectedPlaceholderLottie.repeatCount = 0
 
         connectedListView = view.findViewById(R.id.connected_list)
         connectedListView.adapter = connectedAdapter
@@ -109,7 +139,13 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
                 spanSizeLookup = object : SpanSizeLookup() {
                     override fun getSpanSize(position: Int): Int {
                         return when (exploreAdapter.getItemViewType(position)) {
-                            ExploreItem.TYPE_TITLE, ExploreItem.TYPE_BANNERS, ExploreItem.TYPE_ADS -> 4
+                            ExploreItem.TYPE_TITLE,
+                            ExploreItem.TYPE_BANNERS,
+                            ExploreItem.TYPE_ADS,
+                            ExploreItem.TYPE_CHAIN_FILTER,
+                            ExploreItem.TYPE_SPACE,
+                            ExploreItem.TYPE_CHAIN_EMPTY,
+                            -> 4
                             else -> 1
                         }
                     }
@@ -159,6 +195,17 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
             collectFlow(insets, ::onApplyWindowInsets)
         }
 
+        baseViewModel?.let { baseVM ->
+            collectFlow(baseVM.pendingChainFlow.filterNotNull()) { network ->
+                viewModel.applyChainFromDeepLink(network) { applied ->
+                    baseVM.consumePendingChain()
+                    if (applied && getView() != null) {
+                        clickTab(exploreTabView)
+                    }
+                }
+            }
+        }
+
         exploreTabView.isVisible = !viewModel.isDappsDisabled
 
         clickTab(if (viewModel.isDappsDisabled) connectedTabView else exploreTabView, animated = false)
@@ -187,6 +234,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     override fun onResume() {
         super.onResume()
         attachScrollHandler()
+        playAppsLottieIfNeeded()
     }
 
     override fun onPause() {
@@ -207,6 +255,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         if (items.isEmpty()) {
             connectedListView.visibility = View.GONE
             connectedPlaceholder.visibility = View.VISIBLE
+            playAppsLottieIfNeeded()
         } else {
             connectedListView.visibility = View.VISIBLE
             connectedPlaceholder.visibility = View.GONE
@@ -214,28 +263,52 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         }
     }
 
-    private fun clickTab(view: AppCompatTextView, animated: Boolean = true) {
+    private fun playAppsLottieIfNeeded() {
+        if (!connectedPlaceholder.isVisible || !isConnectedTabActive) {
+            return
+        }
+        connectedPlaceholderLottie.cancelAnimation()
+        connectedPlaceholderLottie.progress = 0f
+        connectedPlaceholderLottie.playAnimation()
+    }
+
+    private fun clickTab(
+        view: AppCompatTextView,
+        animated: Boolean = true,
+        userInitiated: Boolean = false
+    ) {
         val isActive = view.background != null
         if (isActive) {
             return
         }
 
+        val type: DappBrowserType
         if (view.id == R.id.connected_tab) {
             slideView.next(animated)
             connectedTabView.setBackgroundResource(uikit.R.drawable.bg_button_secondary)
             exploreTabView.background = null
+            playAppsLottieIfNeeded()
+            type = DappBrowserType.Connected
         } else if (view.id == R.id.explore_tab) {
             slideView.prev(animated)
             exploreTabView.setBackgroundResource(uikit.R.drawable.bg_button_secondary)
             connectedTabView.background = null
+            type = DappBrowserType.Explore
+        } else {
+            type = DappBrowserType.Explore
+        }
+
+        if (userInitiated) {
+            baseViewModel?.trackTabClick(type)
+        } else {
+            baseViewModel?.setActiveTab(type)
         }
 
         updateScrollHandler()
     }
 
     companion object {
-
-        private const val COUNTRY_REQUEST_KEY = "country_request"
+        private const val CONNECTED_APPS_LOTTIE = "ic_apps_28_opt.json"
 
         fun newInstance(wallet: WalletEntity) = BrowserMainScreen(wallet)
     }

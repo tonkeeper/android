@@ -10,7 +10,7 @@ import com.tonapps.extensions.putEnum
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import org.ton.api.pub.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import uikit.base.BaseArgs
 
 data class InitArgs(
@@ -21,21 +21,25 @@ data class InitArgs(
     val accounts: List<AccountItem>?,
     val keystone: WalletEntity.Keystone?,
     val watchRecoveryAccountId: String? = null,
+    val withNew: Boolean = true,
+    val raffleSourceWalletId: String? = null,
 ) : BaseArgs() {
 
     enum class Type {
-        New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone, Tetra
+        // AddWallet opens the flow on the type selector; the concrete type is picked there.
+        AddWallet, New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone, Tetra
     }
 
     private companion object {
         private const val ARG_TYPE = "type"
         private const val ARG_PUBLIC_KEY = "pk"
         private const val ARG_NAME = "name"
-        private const val ARG_WALLET_SOURCE = "wallet_source"
         private const val ARG_LEDGER_CONNECT_DATA = "ledger_connect_data"
         private const val ARG_ACCOUNTS = "accounts"
         private const val ARG_KEYSTONE = "keystone"
         private const val ARG_WATCH_RECOVERY_ACCOUNT_ID = "watch_recovery_account_id"
+        private const val ARG_WITH_NEW = "with_new"
+        private const val ARG_RAFFLE_SOURCE_WALLET_ID = "raffle_source_wallet_id"
     }
 
     private val ledgerAccountName: String?
@@ -58,6 +62,8 @@ data class InitArgs(
         ledgerConnectData = bundle.getParcelableCompat<LedgerConnectData>(ARG_LEDGER_CONNECT_DATA),
         keystone = bundle.getParcelableCompat(ARG_KEYSTONE),
         watchRecoveryAccountId = bundle.getString(ARG_WATCH_RECOVERY_ACCOUNT_ID),
+        withNew = bundle.getBoolean(ARG_WITH_NEW, true),
+        raffleSourceWalletId = bundle.getString(ARG_RAFFLE_SOURCE_WALLET_ID),
     )
 
     override fun toBundle(): Bundle = Bundle().apply {
@@ -68,6 +74,8 @@ data class InitArgs(
         ledgerConnectData?.let { putParcelable(ARG_LEDGER_CONNECT_DATA, it) }
         keystone?.let { putParcelable(ARG_KEYSTONE, it) }
         watchRecoveryAccountId?.let { putString(ARG_WATCH_RECOVERY_ACCOUNT_ID, it) }
+        putBoolean(ARG_WITH_NEW, withNew)
+        raffleSourceWalletId?.let { putString(ARG_RAFFLE_SOURCE_WALLET_ID, it) }
     }
 
 }

@@ -19,7 +19,7 @@ data class ShelfConfigSeeAll(
     @SerialName(value = "enabled")
     val enabled: Boolean = true,
 
-    @SerialName(value = "route")
+    @Contextual @SerialName(value = "route")
     val route: AssetsTab
 ) {
 }

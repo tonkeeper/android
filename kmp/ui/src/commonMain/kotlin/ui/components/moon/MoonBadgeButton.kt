@@ -3,6 +3,7 @@ package ui.components.moon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
@@ -21,14 +22,16 @@ fun MoonBadgeButton(
     text: String,
     prefixContent: (@Composable () -> Unit)? = null,
     suffixContent: (@Composable () -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp, horizontal = 16.dp),
     onClick: (() -> Unit)? = null,
 ) {
     MoonBadgeButton(
         content = {
             prefixContent?.invoke()
-            MoonItemTitle(text = text)
+            MoonSmallItemTitle(text = text)
             suffixContent?.invoke()
         },
+        contentPadding = contentPadding,
         onClick = onClick,
     )
 }
@@ -37,16 +40,17 @@ fun MoonBadgeButton(
 fun MoonBadgeButton(
     content: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp, horizontal = 16.dp),
     onClick: (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
             .clip(CircleShape)
             .background(UIKit.colorScheme.background.contentTint)
-            .padding(8.dp)
             .modifyIf {
                 onClick?.let { clickable(onClick = onClick) }
-            },
+            }
+            .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {

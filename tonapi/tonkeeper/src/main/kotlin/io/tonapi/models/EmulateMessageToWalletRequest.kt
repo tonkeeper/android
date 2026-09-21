@@ -19,6 +19,10 @@ data class EmulateMessageToWalletRequest(
     @SerialName(value = "boc")
     val boc: String,
 
+    /* Override the destination wallet address extracted from the BoC. Useful when the BoC was signed with a throwaway key and the real wallet address must be emulated against. */
+    @SerialName(value = "address_override")
+    val addressOverride: String? = null,
+
     /* additional per account configuration */
     @SerialName(value = "params")
     val params: List<EmulateMessageToWalletRequestParamsInner>? = null

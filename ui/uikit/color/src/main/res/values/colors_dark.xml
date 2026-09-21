@@ -3,7 +3,7 @@
     <color name="textPrimaryDark">#D9D9D9</color>
     <color name="textSecondaryDark">#8D8D93</color>
     <color name="textTertiaryDark">#4E4E52</color>
-    <color name="textAccentDark">#45AEF5</color>
+    <color name="textAccentDark">#3C95FA</color>
     <color name="textPrimaryAlternateDark">#000000</color>
 
     <color name="backgroundPageDark">#000000</color>
@@ -21,9 +21,9 @@
     <color name="iconTertiaryDark">#4E4E52</color>
     <color name="iconPrimaryAlternateDark">#000000</color>
 
-    <color name="buttonPrimaryBackgroundDark">#45AEF5</color>
-    <color name="buttonPrimaryBackgroundDisabledDark">#378AC3</color>
-    <color name="buttonPrimaryBackgroundHighlightedDark">#5BB8F6</color>
+    <color name="buttonPrimaryBackgroundDark">#3C95FA</color>
+    <color name="buttonPrimaryBackgroundDisabledDark">#387BC7</color>
+    <color name="buttonPrimaryBackgroundHighlightedDark">#55A2FA</color>
     <color name="buttonPrimaryForegroundDark">#FFFFFF</color>
 
     <color name="buttonSecondaryBackgroundDark">#17171A</color>
@@ -45,17 +45,17 @@
     <color name="buttonOrangeBackgroundHighlightedDark">#FFC25E</color>
 
     <color name="fieldBackgroundDark">#17171A</color>
-    <color name="fieldActiveBorderDark">#45AEF5</color>
+    <color name="fieldActiveBorderDark">#3C95FA</color>
     <color name="fieldErrorBorderDark">#FF4766</color>
     <color name="fieldErrorBackgroundDark">#14FF4766</color>
 
-    <color name="accentBlueDark">#45AEF5</color>
+    <color name="accentBlueDark">#3C95FA</color>
     <color name="accentGreenDark">#39CC83</color>
     <color name="accentRedDark">#FF4766</color>
     <color name="accentOrangeDark">#F5A73B</color>
     <color name="accentPurpleDark">#7665E5</color>
 
-    <color name="tabBarActiveIconDark">#45AEF5</color>
+    <color name="tabBarActiveIconDark">#3C95FA</color>
     <color name="tabBarInactiveIconDark">#8D8D93</color>
 
     <color name="separatorCommonDark">#14FFFFFF</color>

@@ -4,9 +4,9 @@ import com.tonapps.blockchain.model.legacy.BlockchainAddress
 
 data class TxTronParams(
     val address: BlockchainAddress? = null,
-    val tonProofToken: String? = null
+    val walletId: String? = null
 ) {
 
     val isEmtpy: Boolean
-        get() = address == null && tonProofToken == null
+        get() = address == null && walletId == null
 }

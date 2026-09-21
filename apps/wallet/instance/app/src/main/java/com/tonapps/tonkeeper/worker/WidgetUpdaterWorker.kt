@@ -19,18 +19,19 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.extensions.circle
 import com.tonapps.extensions.isLocal
-import com.tonapps.extensions.short12
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.loadDrawable
 import com.tonapps.tonkeeper.extensions.setOnClickIntent
-import com.tonapps.tonkeeper.manager.assets.AssetsManager
 import com.tonapps.tonkeeper.manager.widget.WidgetEntity
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.manager.widget.WidgetParams
+import com.tonapps.portfolio.domain.WalletFiatBalanceInteractor
+import com.tonapps.portfolio.wallet.WalletLookup
 import com.tonapps.tonkeeperx.R
 import com.tonapps.blockchain.model.legacy.TokenEntity
-import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.blockchain.model.legacy.Wallet
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.rates.RatesRepository
@@ -52,11 +53,12 @@ import java.util.concurrent.TimeUnit
 class WidgetUpdaterWorker(
     private val context: Context,
     private val workParam: WorkerParameters,
-    private val accountRepository: AccountRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
     private val settingsRepository: SettingsRepository,
     private val ratesRepository: RatesRepository,
     private val tokenRepository: TokenRepository,
-    private val assetsManager: AssetsManager,
+    private val walletLookup: WalletLookup,
+    private val balanceInteractor: WalletFiatBalanceInteractor,
 ): CoroutineWorker(context, workParam) {
 
     private val appWidgetManager: AppWidgetManager by lazy {
@@ -145,16 +147,20 @@ class WidgetUpdaterWorker(
 
     private suspend fun updateBalanceWidget(widget: WidgetEntity) {
         val params = widget.params as WidgetParams.Balance
-        val wallet = getWallet(params.walletId) ?: throw IllegalStateException("Wallet not found params=${params}")
-        val balance = assetsManager.requestTotalBalance(wallet, currency, sorted = true, refresh = true) ?: throw IllegalStateException("Balance not found params=${params}; wallet=${wallet}")
-        val balanceFormat = CurrencyFormatter.formatFiat(currency.code, balance)
-        val drawable = context.drawable(R.drawable.ic_widget_logo_24, wallet.label.color)
+        val wallet = walletLookup.findById(params.walletId)
+            ?: walletLookup.getSelectedWallet()
+            ?: throw IllegalStateException("Wallet not found params=${params}")
+        val balance = balanceInteractor.fetchBalance(wallet, refresh = true)
+            ?: throw IllegalStateException("Balance not found params=${params}; wallet=${wallet.id}")
+        val label = Wallet.Label(wallet.name, wallet.emoji, wallet.color).title?.toString()
+            ?: context.getString(Localization.wallet)
+        val drawable = context.drawable(R.drawable.ic_widget_logo_24, wallet.color)
 
         updateBalanceWidget(
             widgetId = widget.id,
             walletId = wallet.id,
-            label = wallet.label.title?.toString() ?: wallet.address.short12,
-            balance = balanceFormat,
+            label = label,
+            balance = balance,
             icon = drawable.toBitmap(24.dp, 24.dp)
         )
     }
@@ -182,7 +188,7 @@ class WidgetUpdaterWorker(
     }
 
     private suspend fun getWallet(id: String): WalletEntity? {
-        return accountRepository.getWalletById(id) ?: accountRepository.getSelectedWallet()
+        return unifiedAccountRepository.getTonWalletById(id) ?: unifiedAccountRepository.getSelectedWallet()
     }
 
     companion object {

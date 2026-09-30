@@ -2,7 +2,7 @@
 # Android & Kotlin Core
 cronetOkhttp = "0.1.1"
 kotlin = "2.3.20"
-android-plugin = "9.1.0"
+android-plugin = "9.2.1"
 android-sdk-tools = "36.0.0"
 android-sdk-min = "26"
 android-sdk-compile = "36"

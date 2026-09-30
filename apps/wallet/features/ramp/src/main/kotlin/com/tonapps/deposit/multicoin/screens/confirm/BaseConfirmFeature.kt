@@ -335,7 +335,7 @@ abstract class BaseConfirmFeature(
             amount = transfer.amount,
             to = Address.force(transfer.to, account.value.asset.chain),
             isMax = transfer.isMax ?: false,
-            meta = transfer.meta,
+            memo = transfer.meta,
             energy = energy,
         )
 
@@ -384,7 +384,7 @@ abstract class BaseConfirmFeature(
                 walletId = walletId,
                 amount = adjustedTransaction.amount,
                 to = adjustedTransaction.to.display,
-                comment = adjustedTransaction.meta,
+                comment = adjustedTransaction.memo,
                 estimated = feeResult.value,
             )
         }.copy(error = chainKitError)
@@ -763,6 +763,7 @@ abstract class BaseConfirmFeature(
         is NodeError.NoAvailableNodes -> ConfirmationError.NoAvailableNodes
         is NodeError.Unauthorized -> ConfirmationError.Unauthorized
         is NodeError.Unknown -> ConfirmationError.Unknown
+        else -> ConfirmationError.Unknown
     }
 
     protected fun parseChainError(error: ChainError): ConfirmationError = when (error) {
@@ -774,5 +775,6 @@ abstract class BaseConfirmFeature(
         is ChainError.InternalError -> ConfirmationError.InternalError
         is ChainError.Unknown -> ConfirmationError.Unknown
         is ChainError.UtxoError -> ConfirmationError.UtxoError
+        else -> ConfirmationError.Unknown
     }
 }

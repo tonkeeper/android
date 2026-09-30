@@ -18,5 +18,6 @@ val SupportedLanguages = listOf(
     Language("zh-CN"),
     Language("bg-BG"),
     Language("iw"),
-    Language("fa-IR")
+    Language("fa-IR"),
+    Language("ar")
 )

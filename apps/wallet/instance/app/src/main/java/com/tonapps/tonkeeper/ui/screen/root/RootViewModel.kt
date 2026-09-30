@@ -527,7 +527,21 @@ class RootViewModel(
 
     private fun observeTonConnectSignData() {
         tonConnectBridge.signDataRequestFlow.collectFlow { event ->
-            val wallet = accountRepository.getWalletByAccountId(event.connection.accountId) ?: return@collectFlow
+            val wallet = unifiedAccountRepository
+                .getTonWalletByAccountId(event.connection.accountId, event.connection.network)
+                ?.takeIf { it.isTonConnectSupported }
+            if (wallet == null) {
+                DevSettings.tonConnectLog(
+                    "Wallet not found for sign data connection ${event.connection.accountId} (${event.connection.network})",
+                    error = true
+                )
+                tonConnectBridge.sendBridgeError(
+                    event.connection,
+                    BridgeError.unknown("Wallet not found for connected account"),
+                    event.message.id
+                )
+                return@collectFlow
+            }
             val params = event.message.params.firstOrNull() ?: return@collectFlow
             val payload = SignDataRequestPayload.parse(params) ?: return@collectFlow
             signData(wallet, event.connection, payload, event.message.id)
@@ -806,17 +820,21 @@ class RootViewModel(
             return
         }
 
-        val wallets = accountRepository.getWalletsByAccountId(
-            accountId = connection.accountId,
-            network = connection.network
-        ).filter {
-            it.isTonConnectSupported
-        }
-        if (wallets.isEmpty()) {
-            tonConnectBridge.sendBridgeError(connection, BridgeError.unknown(""), eventId)
+        val wallet = unifiedAccountRepository
+            .getTonWalletByAccountId(connection.accountId, connection.network)
+            ?.takeIf { it.isTonConnectSupported }
+        if (wallet == null) {
+            DevSettings.tonConnectLog(
+                "Wallet not found for connection ${connection.accountId} (${connection.network})",
+                error = true
+            )
+            tonConnectBridge.sendBridgeError(
+                connection,
+                BridgeError.unknown("Wallet not found for connected account"),
+                eventId
+            )
             return
         }
-        val wallet = wallets.find { it.hasPrivateKey } ?: wallets.first()
         try {
             val boc = SendTransactionScreen.run(
                 context, wallet, signRequest,

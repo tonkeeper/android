@@ -5,16 +5,12 @@ import android.os.Bundle
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.legacy.assets.WalletBalanceEntity
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.AddHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.SkeletonHolder
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.WalletHolder
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.localization.Localization
 import java.util.Collections
 
@@ -45,12 +41,24 @@ class Adapter(
             val newItem = newList[newItemPosition]
             if (oldItem is Item.Wallet && newItem is Item.Wallet) {
                 return Bundle().apply {
-                    if (oldItem.balance != newItem.balance) putCharSequence("balance", newItem.balance)
-                    if (oldItem.selected != newItem.selected) putBoolean("selected", newItem.selected)
-                    if (oldItem.hiddenBalance != newItem.hiddenBalance) putBoolean("hiddenBalance", newItem.hiddenBalance)
-                    if (oldItem.editMode != newItem.editMode) putBoolean("editMode", newItem.editMode)
-                    if (oldItem.position != newItem.position) putInt("position", newItem.position.value)
-                    if (oldItem.focusAnimation != newItem.focusAnimation) putBoolean("focusAnimation", newItem.focusAnimation)
+                    if (oldItem.balance != newItem.balance) {
+                        putCharSequence("balance", newItem.balance)
+                    }
+                    if (oldItem.selected != newItem.selected) {
+                        putBoolean("selected", newItem.selected)
+                    }
+                    if (oldItem.hiddenBalance != newItem.hiddenBalance) {
+                        putBoolean("hiddenBalance", newItem.hiddenBalance)
+                    }
+                    if (oldItem.editMode != newItem.editMode) {
+                        putBoolean("editMode", newItem.editMode)
+                    }
+                    if (oldItem.position != newItem.position) {
+                        putInt("position", newItem.position.value)
+                    }
+                    if (oldItem.focusAnimation != newItem.focusAnimation) {
+                        putBoolean("focusAnimation", newItem.focusAnimation)
+                    }
                 }
             }
             return null
@@ -158,29 +166,17 @@ class Adapter(
         fun map(
             context: Context,
             wallets: List<WalletEntity>,
-            activeWallet: WalletEntity,
-            currency: WalletCurrency,
-            balances: List<WalletBalanceEntity>,
+            activeWalletId: String,
+            balances: Map<String, CharSequence>,
             hiddenBalance: Boolean = false,
             walletIdFocus: String = "",
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             for ((index, wallet) in wallets.withIndex()) {
-                val balance = balances.find {
-                    it.accountId.equalsAddress(wallet.accountId) && it.testnet == wallet.testnet
-                }
-
-                val balanceFormat = balance?.balance?.let {
-                    CurrencyFormatter.formatFiat(
-                        currency = if (wallet.testnet) WalletCurrency.TON.code else currency.code,
-                        value = it
-                    )
-                } ?: context.getString(Localization.loading)
-
                 val item = Item.Wallet(
-                    selected = wallet.id == activeWallet.id,
+                    selected = wallet.id == activeWalletId,
                     position = ListCell.getPosition(wallets.size, index),
-                    balance = balanceFormat,
+                    balance = balances[wallet.id] ?: context.getString(Localization.loading),
                     hiddenBalance = hiddenBalance,
                     wallet = wallet.copy(),
                     focusAnimation = walletIdFocus == wallet.id

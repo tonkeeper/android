@@ -2,12 +2,12 @@ package com.tonapps.tonkeeper.manager.walletkit
 
 import com.tonapps.log.L
 import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.security.CryptoBox
 import com.tonapps.security.hex
 import com.tonapps.tonkeeper.extensions.webViewProfileName
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
-import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import io.ton.walletkit.api.generated.TONDAppInfo
 import io.ton.walletkit.model.TONUserFriendlyAddress
@@ -51,7 +51,11 @@ class TonkeeperSessionManager(
             accountId = wallet.accountId,
             network = wallet.network,
             clientId = sessionId,
-            type = if (isJsBridge) AppConnectEntity.Type.Internal else AppConnectEntity.Type.External,
+            type = if (isJsBridge) {
+                AppConnectEntity.Type.Internal
+            } else {
+                AppConnectEntity.Type.External
+            },
             appUrl = appUrl,
             keyPair = keyPair,
             pushEnabled = false
@@ -88,19 +92,23 @@ class TonkeeperSessionManager(
 
         return allConnections.mapNotNull { connection ->
             val wallet = wallets.find {
-                it.accountId == connection.accountId && it.network == connection.network
+                (filter?.walletId == null || it.id == filter.walletId) &&
+                    it.network == connection.network &&
+                    it.accountId.equalsAddress(connection.accountId)
             } ?: return@mapNotNull null
-
-            if (filter?.walletId != null && filter.walletId != wallet.id) return@mapNotNull null //
 
             if (filterDomainHost != null) {
                 val connDomain = normalizedHost(connection.appUrl.toString())
-                if (connDomain != filterDomainHost) return@mapNotNull null
+                if (connDomain != filterDomainHost) {
+                    return@mapNotNull null
+                }
             }
 
             if (filter?.isJsBridge != null) {
                 val connectionIsJsBridge = connection.type == AppConnectEntity.Type.Internal
-                if (connectionIsJsBridge != filter.isJsBridge) return@mapNotNull null
+                if (connectionIsJsBridge != filter.isJsBridge) {
+                    return@mapNotNull null
+                }
             }
 
             runCatching {

@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.ledger.steps
 import android.Manifest
 import android.animation.ObjectAnimator
 import android.bluetooth.BluetoothAdapter
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -16,8 +15,10 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Adapter
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
@@ -102,19 +103,25 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
     }
 
     private fun openInstallTonApp() {
-        val ledgerLiveUrl = "ledgerlive://myledger?installApp=TON"
-        val ledgerLiveStoreUrl = "https://play.google.com/store/apps/details?id=com.ledger.live"
+        if (startActivitySafe(Intent(Intent.ACTION_VIEW, LEDGER_LIVE_DEEPLINK.toUri()))) {
+            return
+        }
+        val marketIntent = Intent(Intent.ACTION_VIEW, LEDGER_LIVE_MARKET_URL.toUri()).apply {
+            setPackage(PLAY_STORE_PACKAGE)
+        }
+        if (startActivitySafe(marketIntent)) {
+            return
+        }
+        BrowserHelper.open(requireActivity(), LEDGER_LIVE_STORE_URL.toUri())
+    }
 
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(ledgerLiveUrl)).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
+    private fun startActivitySafe(intent: Intent): Boolean {
+        return try {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
-        } catch (e: ActivityNotFoundException) {
-            val storeIntent = Intent(Intent.ACTION_VIEW, Uri.parse(ledgerLiveStoreUrl)).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            startActivity(storeIntent)
+            true
+        } catch (e: Throwable) {
+            false
         }
     }
 
@@ -241,6 +248,12 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
     }
 
     companion object {
+
+        private const val LEDGER_LIVE_PACKAGE = "com.ledger.live"
+        private const val PLAY_STORE_PACKAGE = "com.android.vending"
+        private const val LEDGER_LIVE_DEEPLINK = "ledgerlive://myledger?installApp=TON"
+        private const val LEDGER_LIVE_MARKET_URL = "market://details?id=$LEDGER_LIVE_PACKAGE"
+        private const val LEDGER_LIVE_STORE_URL = "https://play.google.com/store/apps/details?id=$LEDGER_LIVE_PACKAGE"
 
         private val blePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(

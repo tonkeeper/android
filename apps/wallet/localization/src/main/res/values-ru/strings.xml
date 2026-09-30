@@ -153,7 +153,7 @@
     <string name="customize_wallet_title">Кастомизируйте свой кошелёк</string>
     <string name="customize_wallet_subtitle">Имя и иконка кошелька хранятся локально на вашем устройстве.</string>
     <string name="send">Отправить</string>
-    <string name="swap">Обменять</string>
+    <string name="swap">Обмен</string>
     <string name="copied">Скопировано</string>
     <string name="new_wallet">Новый кошелёк</string>
     <string name="done">Готово</string>

@@ -84,7 +84,7 @@ fun PendingTransaction.comment(): String? {
     return when (signing) {
         is Signing.Msg -> null
         is Signing.Tx -> when (val tx = signing.value) {
-            is Transaction.Transfer -> tx.meta
+            is Transaction.Transfer -> tx.memo
             else -> null
         }
     }

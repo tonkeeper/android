@@ -10,16 +10,16 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.extensions.workManager
 import com.tonapps.tonkeeper.manager.push.PushManager
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.dapps.DAppsRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class DAppPushToggleWorker(
     context: Context,
     workParam: WorkerParameters,
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
     private val dAppsRepository: DAppsRepository,
     private val pushManager: PushManager
 ): CoroutineWorker(context, workParam) {
@@ -43,7 +43,7 @@ class DAppPushToggleWorker(
 
     private suspend fun getWallet(): WalletEntity? {
         val walletId = inputData.getString(ARG_WALLET_ID) ?: return null
-        return accountRepository.getWalletById(walletId)
+        return accountRepository.getTonWalletById(walletId)
     }
 
     private fun getAppUrl(): Uri? {

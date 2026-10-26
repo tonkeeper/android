@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsRawAddress
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.legacy.assets.sortedByHomeOrder
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.swap.picker.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -56,7 +57,7 @@ class SwapPickerViewModel(
             for ((index, token) in tokens.withIndex()) {
                 val currency = currencies.find { it.address.equalsRawAddress(token.address) }!!
                 val item = Item.Token(
-                    position = ListCell.getPosition(currencies.size, index),
+                    position = ListCell.getPosition(tokens.size, index),
                     currency = currency,
                     selected = currency == args.selectedCurrency,
                     fiatFormatted = CurrencyFormatter.formatFiat(userCurrency.code, token.fiat)
@@ -85,5 +86,5 @@ class SwapPickerViewModel(
         currency = settingsRepository.currency,
         accountId = wallet.accountId,
         network = wallet.network
-    ) ?: emptyList()
+    )?.sortedByHomeOrder(wallet, settingsRepository) ?: emptyList()
 }

@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.drawable
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class SearchHolder(
     parent: ViewGroup,
@@ -17,7 +18,7 @@ class SearchHolder(
 
     override fun onBind(item: Item.Search) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
         titleView.text = item.query
     }
 }

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.tonapps.portfolio.screens.wallet.WalletCollectiblesState
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.RStr
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
@@ -46,6 +47,7 @@ import ui.components.moon.cell.MoonBundleTitleCell
 import ui.painterResource
 import ui.theme.Shapes
 import ui.theme.UIKit
+import uikit.widget.image.hiddenBalanceBlur
 
 private val SectionHorizontalPadding = 16.dp
 private val ItemSpacing = 8.dp
@@ -147,6 +149,7 @@ private fun CollectiblesRow(
         ) { _, nft ->
             NftPreviewCard(
                 nft = nft,
+                hiddenBalance = state.hiddenBalance,
                 cardWidth = nftCardWidth,
                 onClick = { onNftClick(nft) },
             )
@@ -165,6 +168,7 @@ private fun CollectiblesRow(
 @Composable
 private fun NftPreviewCard(
     nft: NftEntity,
+    hiddenBalance: Boolean,
     cardWidth: Dp,
     onClick: () -> Unit,
 ) {
@@ -182,6 +186,13 @@ private fun NftPreviewCard(
                     .fillMaxWidth()
                     .aspectRatio(1f),
                 contentScale = ContentScale.Crop,
+                builder = {
+                    if (hiddenBalance) {
+                        hiddenBalanceBlur()
+                    } else {
+                        this
+                    }
+                },
             )
             if (nft.inSale) {
                 Image(
@@ -196,14 +207,22 @@ private fun NftPreviewCard(
         }
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             Text(
-                text = nft.name,
+                text = if (hiddenBalance) {
+                    HIDDEN_BALANCE
+                } else {
+                    nft.name
+                },
                 style = UIKit.typography.label2,
                 color = UIKit.colorScheme.text.primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = nft.collectionName,
+                text = if (hiddenBalance) {
+                    HIDDEN_BALANCE
+                } else {
+                    nft.collectionName
+                },
                 style = UIKit.typography.body3,
                 color = UIKit.colorScheme.text.secondary,
                 maxLines = 1,

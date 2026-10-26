@@ -8,6 +8,8 @@ import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
+import com.tonapps.tonkeeper.ui.screen.staking.StakingInsufficientFundsDialog
+import com.tonapps.tonkeeper.ui.screen.staking.applyStakingReserve
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerScreen
@@ -25,6 +27,7 @@ import uikit.widget.AsyncImageView
 import uikit.widget.HeaderView
 import uikit.widget.ProcessTaskView
 import java.util.concurrent.CancellationException
+import uikit.extensions.setMoonOnClickListener
 
 class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_confirm) {
 
@@ -35,6 +38,7 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
     private lateinit var amountView: TransactionDetailView
     private lateinit var feeView: TransactionDetailView
     private lateinit var reviewApyView: TransactionDetailView
+    private lateinit var reviewReserveView: TransactionDetailView
     private lateinit var button: Button
     private lateinit var taskView: ProcessTaskView
 
@@ -55,15 +59,16 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
         feeView.setLoading()
 
         reviewApyView = view.findViewById(R.id.review_apy)
+        reviewReserveView = view.findViewById(R.id.review_reserve)
 
         button = view.findViewById(R.id.button)
         taskView = view.findViewById(R.id.task)
 
-        button.setOnClickListener { stake() }
+        button.setMoonOnClickListener { stake() }
 
         walletView.value = primaryFragment.screenContext.wallet.label.getTitle(requireContext(), walletView.valueView, 12)
 
-        collectFlow(primaryViewModel.fiatFormatFlow) { fiatFormat ->
+        collectFlow(primaryViewModel.confirmFiatFormatFlow) { fiatFormat ->
             amountView.description = fiatFormat.withCustomSymbol(requireContext())
         }
 
@@ -72,6 +77,8 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
         }
 
         collectFlow(primaryViewModel.selectedPoolFlow, ::applyPool)
+
+        collectFlow(primaryViewModel.reserveUiStateFlow, reviewReserveView::applyStakingReserve)
 
         collectFlow(primaryViewModel.requestFeeFormat()) { (feeFormat, feeFiatFormat) ->
             feeView.setDefault()
@@ -83,6 +90,21 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
 
     private fun stake() {
         setTaskState(ProcessTaskView.State.LOADING)
+        lifecycleScope.launch {
+            val insufficientFunds = primaryViewModel.checkInsufficientFunds()
+            if (insufficientFunds != null) {
+                setTaskState(ProcessTaskView.State.DEFAULT)
+                StakingInsufficientFundsDialog(
+                    context = requireContext(),
+                    walletId = primaryFragment.screenContext.wallet.id,
+                ).show(insufficientFunds)
+            } else {
+                sendStake()
+            }
+        }
+    }
+
+    private fun sendStake() {
         primaryViewModel.stake(requireContext()).catch { e ->
             val state = if (e is CancellationException) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
             setTaskState(state)

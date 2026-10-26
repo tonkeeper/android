@@ -15,6 +15,7 @@ import com.tonapps.wallet.localization.Plurals
 import uikit.extensions.drawable
 import uikit.extensions.setRightDrawable
 import uikit.extensions.getDrawable
+import uikit.extensions.setMoonOnClickListener
 
 class IAPPackHolder(
     parent: ViewGroup,
@@ -33,11 +34,11 @@ class IAPPackHolder(
         itemView.background = item.position.drawable(context)
 
         amountView.text = item.formattedPrice
-        amountView.setOnClickListener { onPackSelect(item.productId) }
+        amountView.setMoonOnClickListener { onPackSelect(item.productId) }
         amountView.isEnabled = item.isEnabled
-        amountContainerView.setOnClickListener { onPackSelect(item.productId) }
+        amountContainerView.setMoonOnClickListener { onPackSelect(item.productId) }
         amountContainerView.isEnabled = item.isEnabled
-        batteryContainerView.setOnClickListener { onPackSelect(item.productId) }
+        batteryContainerView.setMoonOnClickListener { onPackSelect(item.productId) }
         batteryContainerView.isEnabled = item.isEnabled
 
         titleView.text = getPackName(item.packType)
@@ -46,7 +47,7 @@ class IAPPackHolder(
             Plurals.battery_charges, item.charges, item.charges
         )
         subtitleView.setRightDrawable(itemView.getDrawable(UIKitIcon.ic_information_circle_16))
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             detailsView.visibility = if (detailsView.visibility == View.VISIBLE) {
                 View.GONE
             } else {

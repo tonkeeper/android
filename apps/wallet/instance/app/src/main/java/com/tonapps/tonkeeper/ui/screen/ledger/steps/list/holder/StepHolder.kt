@@ -11,6 +11,7 @@ import com.tonapps.uikit.color.textPrimaryColor
 import uikit.extensions.dp
 import uikit.extensions.expandTouchArea
 import uikit.widget.LoaderView
+import uikit.extensions.setMoonOnClickListener
 
 
 class StepHolder(
@@ -25,7 +26,7 @@ class StepHolder(
     private val doneView = findViewById<AppCompatImageView>(R.id.done_icon)
 
     init {
-        installTonAppView.setOnClickListener { onInstallTonAppClick() }
+        installTonAppView.setMoonOnClickListener { onInstallTonAppClick() }
         installTonAppView.expandTouchArea(16.dp)
     }
 

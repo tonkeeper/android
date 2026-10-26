@@ -2,7 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.battery.refill
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -15,7 +17,6 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.R
 import uikit.extensions.collectFlow
-import uikit.extensions.getDimensionPixelSize
 
 class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildListScreen<ScreenContext.Wallet, BatteryScreen, BatteryViewModel>(ScreenContext.Wallet(wallet)) {
 
@@ -25,8 +26,12 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
         BatteryNativeFrom.valueOf(requireArguments().getString(ARG_FROM)!!)
     }
 
+    private val utm: UtmParameters by lazy {
+        requireArguments().getParcelableCompat<UtmParameters>(ARG_UTM) ?: UtmParameters.Empty
+    }
+
     override val viewModel: BatteryRefillViewModel by walletViewModel {
-        parametersOf(from)
+        parametersOf(from, utm)
     }
 
     private val adapter = Adapter(
@@ -54,15 +59,18 @@ class BatteryRefillScreen(wallet: WalletEntity) : BaseHolderWalletScreen.ChildLi
     companion object {
         private const val ARG_PROMO = "promo"
         private const val ARG_FROM = "from"
+        private const val ARG_UTM = "utm"
 
         fun newInstance(
             wallet: WalletEntity,
             promo: String?,
             from: BatteryNativeFrom,
+            utm: UtmParameters = UtmParameters.Empty,
         ): BatteryRefillScreen {
             val fragment = BatteryRefillScreen(wallet)
             fragment.putStringArg(ARG_PROMO, promo)
             fragment.putStringArg(ARG_FROM, from.name)
+            fragment.putParcelableArg(ARG_UTM, utm)
             return fragment
         }
     }

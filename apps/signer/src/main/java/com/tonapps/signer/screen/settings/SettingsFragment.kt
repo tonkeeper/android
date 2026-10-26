@@ -14,6 +14,7 @@ import com.tonapps.signer.screen.legal.LegalFragment
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class SettingsFragment: BaseFragment(R.layout.fragment_settings), BaseFragment.SwipeBack {
 
@@ -36,19 +37,19 @@ class SettingsFragment: BaseFragment(R.layout.fragment_settings), BaseFragment.S
         scrollView = view.findViewById(R.id.scroll)
 
         changeView = view.findViewById(R.id.change)
-        changeView.setOnClickListener { navigation?.add(ChangeFragment.newInstance()) }
+        changeView.setMoonOnClickListener { navigation?.add(ChangeFragment.newInstance()) }
 
         supportView = view.findViewById(R.id.support)
-        supportView.setOnClickListener { openSupport() }
+        supportView.setMoonOnClickListener { openSupport() }
 
         legalView = view.findViewById(R.id.legal)
-        legalView.setOnClickListener {
+        legalView.setMoonOnClickListener {
             navigation?.add(LegalFragment.newInstance())
         }
 
         versionView = view.findViewById(R.id.version)
         versionView.text = getString(R.string.version, BuildConfig.VERSION_NAME)
-        versionView.setOnClickListener {
+        versionView.setMoonOnClickListener {
             navigation?.add(DebugFragment.newInstance())
         }
     }

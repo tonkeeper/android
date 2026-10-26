@@ -7,6 +7,7 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.multichain.asset.perpsMarketIndexOrNull
 import io.tradingapi.models.AssetRef
 import io.tradingapi.models.AssetType
 import io.tradingapi.models.LinkType
@@ -141,6 +142,12 @@ private fun assetTokenEntity(
 
 fun AssetRef.isTokenized(): Boolean =
     assetType == AssetType.stocks || assetType == AssetType.etfs
+
+data class AssetPerpMarket(val marketIndex: Int, val symbol: String, val maxLeverage: Int?)
+
+fun AssetRef.perpMarket(): AssetPerpMarket? = perpMarkets.orEmpty().firstNotNullOfOrNull { link ->
+    perpsMarketIndexOrNull(link.id)?.let { AssetPerpMarket(it, link.symbol, link.maxLeverage) }
+}
 
 fun AssetRef.omnistonBuyTokens(): Pair<String, String> {
     val target = asTokenEntity.asCurrency

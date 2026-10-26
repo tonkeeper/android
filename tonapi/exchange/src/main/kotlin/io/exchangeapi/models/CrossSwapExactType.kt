@@ -14,7 +14,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Which side of the swap the client fixes. `exact_input` (default): `source_amount` is what the user pays, routes report `estimated_destination_amount`. `exact_output`: `destination_amount` is what the user must receive, routes report the `source_amount` the user is expected to pay and `maximum_source_amount`, the cap including slippage. Only `swapsxyz` can quote `exact_output`; other aggregators are skipped and reported in `provider_errors`. 
+ * Which side of the swap the client fixes. `exact_input` (default): `source_amount` is what the user pays, routes report `estimated_destination_amount`. `exact_output`: `destination_amount` is what the user must receive, routes report the `source_amount` the user is expected to pay and `maximum_source_amount`, the cap including slippage. Off TON only `swapsxyz` can quote `exact_output`; other aggregators are skipped and reported in `provider_errors`. Within TON (both assets on TON) only `omniston` and `swapsxyz` answer it, each quoted exact-input for the smallest source amount found whose estimate reaches `destination_amount`: the route is an ordinary exact-input swap of that amount, so `maximum_source_amount` equals `source_amount`, `estimated_destination_amount` is at least `destination_amount` (within 0.15%), and slippage lands on the destination side as `minimum_destination_amount`. Both assets must have a USD price; a pair without one, or a route found that way which loses more than 1% of its USD value, is reported in `provider_errors` with code `no_route` instead. 
  *
  * Values: exact_input,exact_output
  */

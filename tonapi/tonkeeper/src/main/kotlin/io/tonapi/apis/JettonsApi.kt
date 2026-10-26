@@ -47,10 +47,27 @@ class JettonsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         }
     }
 
+    /**
+     * enum for parameter sortBy
+     */
+     enum class SortByGetJettonHolders(val value: String) {
+         @SerialName(value = "balance") balance("balance"),
+         @SerialName(value = "address") address("address");
+
+        /**
+         * Override [toString()] to avoid using the enum variable name as the value, and instead use
+         * the actual value defined in the API spec file.
+         *
+         * This solves a problem when the variable name and its value are different, and ensures that
+         * the client sends the correct enum values to the server always.
+         */
+        override fun toString(): String = "$value"
+     }
+
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getJettonHolders(accountId: String, limit: Int? = 1000, offset: Int? = 0): JettonHolders {
-        val localVarResponse = getJettonHoldersWithHttpInfo(accountId = accountId, limit = limit, offset = offset)
+    fun getJettonHolders(accountId: String, limit: Int? = 1000, offset: Int? = 0, sortBy: SortByGetJettonHolders? = SortByGetJettonHolders.balance, lastAccountId: String? = null): JettonHolders {
+        val localVarResponse = getJettonHoldersWithHttpInfo(accountId = accountId, limit = limit, offset = offset, sortBy = sortBy, lastAccountId = lastAccountId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as JettonHolders
@@ -69,15 +86,15 @@ class JettonsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getJettonHoldersWithHttpInfo(accountId: String, limit: Int?, offset: Int?): ApiResponse<JettonHolders?> {
-        val localVariableConfig = getJettonHoldersRequestConfig(accountId = accountId, limit = limit, offset = offset)
+    fun getJettonHoldersWithHttpInfo(accountId: String, limit: Int?, offset: Int?, sortBy: SortByGetJettonHolders?, lastAccountId: String?): ApiResponse<JettonHolders?> {
+        val localVariableConfig = getJettonHoldersRequestConfig(accountId = accountId, limit = limit, offset = offset, sortBy = sortBy, lastAccountId = lastAccountId)
 
         return request<Unit, JettonHolders>(
             localVariableConfig
         )
     }
 
-    fun getJettonHoldersRequestConfig(accountId: String, limit: Int?, offset: Int?): RequestConfig<Unit> {
+    fun getJettonHoldersRequestConfig(accountId: String, limit: Int?, offset: Int?, sortBy: SortByGetJettonHolders?, lastAccountId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -86,6 +103,12 @@ class JettonsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
                 if (offset != null) {
                     put("offset", listOf(offset.toString()))
+                }
+                if (sortBy != null) {
+                    put("sort_by", listOf(sortBy.value))
+                }
+                if (lastAccountId != null) {
+                    put("last_account_id", listOf(lastAccountId.toString()))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()

@@ -40,15 +40,31 @@ data class CreateCrossSwapQuoteRequest(
     @SerialName(value = "destination_amount")
     val destinationAmount: String? = null,
 
-    /* Forwarded to SwapsXYZ `/getAction?returnDepositAddress`. When true, upstream returns a deposit address in the response for deposit-based swap flows. Default false. Ignored by other aggregators. Ignored (forced to false) only when the source asset is on TON and the client reports build 26.9.0 or newer on Android, or 26.9.1 or newer on iOS, in its `Tonkeeper/<version>` User-Agent: a deposit address puts a TON source on a pricier upstream bridge route that those clients no longer need. Older clients, clients of an unknown platform below 26.9.1, and any non-TON source are honoured as sent.  */
+    /* Forwarded to SwapsXYZ as `returnDepositAddress`, on `/getQuote` when pricing and on `/getAction` when the route is prepared. When true, upstream prices and builds a deposit-based swap flow and returns a deposit address with the transaction. Default false. Ignored by other aggregators. Ignored (forced to false) only when the source asset is on TON and the client reports build 26.9.0 or newer on Android, or 26.9.1 or newer on iOS, in its `Tonkeeper/<version>` User-Agent: a deposit address puts a TON source on a pricier upstream bridge route that those clients no longer need. Older clients, clients of an unknown platform below 26.9.1, and any non-TON source are honoured as sent. Also forced to false, for every client regardless of build, when both assets are on TON: a swap that stays on TON bridges nothing, so a deposit address only buys the bridge fee.  */
     @SerialName(value = "return_deposit_address")
     val returnDepositAddress: Boolean? = null,
 
-    /* Route the quote across several aggregators instead of the default one. Below `CROSSSWAP_MULTI_AGGREGATOR_BELOW_USD` the swap is quoted by SwapsXYZ and SwapKit together and both routes come back; SwapKit also answers when SwapsXYZ finds no route. Pairs with TON on either side stay on SwapsXYZ. Omitted, the service default applies; an explicit `aggregators` list wins over both.  */
+    /* Turns the quote into a deposit: the destination asset is delivered into this contract for `recipient_address`. Only aggregators that can call a contract on the destination are asked (`relay` today), and the swap routing -- small-swap companion, fallback -- does not apply. `source_amount` is a budget: the payloads never move more than it, and the route's `estimated_destination_amount` equals `minimum_destination_amount` -- the deposit is exact, and the slippage allowed for is on the source side. `exact_type` must be `exact_input`. `source_asset` may equal `destination_asset`. With `include_payload: true` each route also carries `execution_id`, which `/v2/crosschain/executions/{execution_id}` answers from the moment of the quote: the aggregator follows the deposit by the id it quoted, so no submit is needed for a wallet that broadcasts on its own.  */
+    @Contextual @SerialName(value = "destination_target")
+    val destinationTarget: CrossSwapDestinationTarget? = null,
+
+    /* Turns the quote into a withdrawal: the source asset is taken out of this balance, for the account `sender_address` names, and delivered to `recipient_address` as `destination_asset`. Only aggregators that take from it are asked (`relay` today), and the swap routing does not apply. As with a `destination_target`, `source_amount` is a budget -- the payload never moves more than it, fees of the balance itself included -- and `exact_type` must be `exact_input`. Cannot be combined with `destination_target`. With `include_payload: true` each route carries `execution_id`, answered from the moment of the quote.  */
+    @Contextual @SerialName(value = "source_target")
+    val sourceTarget: CrossSwapSourceTarget? = null,
+
+    /* Register a Lighter L2 signing key alongside the deposit. Only with `destination_target: lighter`, and only on a relay-filled route; a source that is already USDC on Ethereum is sent by the wallet itself, which can call `changePubKey` directly.  */
+    @SerialName(value = "change_pub_key")
+    val changePubKey: CrossSwapChangePubKey? = null,
+
+    /* The wallet can send an EIP-7702 (type-4) transaction, and asks for a token source's approval and payment as one: an `evm_7702_batch_tx` payload in their place. Only `relay`, only with `destination_target: lighter`, and only on an Ethereum source whose sender is an EOA: a plain account, one delegated to the service's delegate already, or one delegated to any other -- whose delegation the authorization then replaces. For a contract sender, anywhere else, and on a route with no approval to fold, the payloads are what they would be without it. Default false.  */
+    @SerialName(value = "eip7702_batch")
+    val eip7702Batch: Boolean? = null,
+
+    /* Route the quote across several aggregators instead of the default one. Below `CROSSSWAP_MULTI_AGGREGATOR_BELOW_USD` the swap is quoted by SwapsXYZ and SwapKit together and both routes come back; SwapKit also answers when SwapsXYZ finds no route. Pairs with TON on either side stay on SwapsXYZ. Omitted, it is on for clients reporting build 26.9.2 or newer in their `Tonkeeper/<version>` User-Agent, and the service default applies to every older or unrecognised client; an explicit `aggregators` list wins over both.  */
     @SerialName(value = "use_multi_aggregator")
     val useMultiAggregator: Boolean? = null,
 
-    /* True when `source_amount` is the entire balance of the source asset. Forwarded to SwapsXYZ `/getAction` as `isMax`; the other aggregators ignore it.  */
+    /* True when `source_amount` is the entire balance of the source asset. Forwarded to SwapsXYZ `/getAction` as `isMax` when the route is prepared; the other aggregators ignore it.  */
     @SerialName(value = "is_max")
     val isMax: Boolean? = null,
     @SerialName(value = "slippage_bps")
@@ -57,7 +73,7 @@ data class CreateCrossSwapQuoteRequest(
     @Contextual @SerialName(value = "exact_type")
     val exactType: CrossSwapExactType? = null,
 
-    /* Optional whitelist of aggregators to query. Pass a single entry to force one provider (e.g. `[\"swapkit\"]`) — useful for testing fallback behaviour before flipping defaults. Naming aggregators also turns the fallback off: the list is queried as given and nothing else is tried. `swapkit` is not part of the default fan-out and is currently quoted only when named here. When the server enables the small-swap threshold (`CROSSSWAP_SWAPKIT_BELOW_USD`, off by default) it is also queried without this field: first, and alone, when the source side is worth less than the threshold, and otherwise as a fallback after the fan-out returned no route at all. `omniston` is dropped from the default fan-out for clients reporting build 26.9.0 or newer on Android, or 26.9.1 or newer on iOS, in their `Tonkeeper/<version>` User-Agent; older clients still get it. For the newer clients it is a fallback too, and only on a TON to TON pair, which is all it serves. A requested aggregator that is disabled on the server is reported in `provider_errors` with code `provider_unavailable`; if none of the requested aggregators are enabled the request fails with `no_aggregators`.  */
+    /* Optional whitelist of aggregators to query. Pass a single entry to force one provider (e.g. `[\"swapkit\"]`) — useful for testing fallback behaviour before flipping defaults. Naming aggregators also turns the fallback off: the list is queried as given and nothing else is tried. `swapkit` is not part of the default fan-out and is currently quoted only when named here. When the server enables the small-swap threshold (`CROSSSWAP_SWAPKIT_BELOW_USD`, off by default) it is also queried without this field: first, and alone, when the source side is worth less than the threshold, and otherwise as a fallback after the fan-out returned no route at all. `omniston` serves TON to TON, and this field does not decide that pair while the server runs with `CROSSSWAP_FORCE_OMNISTON_TON` on, which is the default: the swap is quoted from Omniston alone however the list reads, and the aggregators named here are tried only if Omniston returns no route. With the switch off the list wins, and the pair otherwise defaults to Omniston only for clients below Android 26.9.0 / iOS 26.9.1. `exact_output` follows the same rules, answered by an exact-input search. Off a TON to TON pair Omniston is quoted only when named here. A requested aggregator that is disabled on the server is reported in `provider_errors` with code `provider_unavailable`; if none of the requested aggregators are enabled the request fails with `no_aggregators`.  */
     @SerialName(value = "aggregators")
     val aggregators: List<@Contextual CrossSwapAggregator>? = null,
 
@@ -65,7 +81,7 @@ data class CreateCrossSwapQuoteRequest(
     @SerialName(value = "protocols")
     val protocols: List<String>? = null,
 
-    /* If true, backend also runs `prepare` inline for each route and returns the signing payloads under `routes[].payloads`. Lets the wallet skip the separate `/v2/swap/route/{route_id}/prepare` call. For SwapsXYZ the tx is already returned by the upstream quote and this is effectively free; for other aggregators it adds a round- trip per route.  */
+    /* If true, backend also runs `prepare` inline for each route and returns the signing payloads under `routes[].payloads`. Lets the wallet skip the separate `/v2/crosschain/routes/{route_id}/prepare` call. It adds an upstream round-trip per route: for SwapsXYZ that is the `/getAction` call that builds the transaction, which the quote itself no longer makes — about three seconds.  **Ignored from build 26.13.0**, which calls prepare itself once the user has picked a route. Older builds still get the inline payloads, because they have no second call to fall back on. Note the route only lives as long as `routes[].date_expire` says — 60 seconds for SwapsXYZ and for TON-to-TON — so a prepare that comes later is answered `400 route_expired` and the quote has to be repeated.  */
     @SerialName(value = "include_payload")
     val includePayload: Boolean? = null
 ) {

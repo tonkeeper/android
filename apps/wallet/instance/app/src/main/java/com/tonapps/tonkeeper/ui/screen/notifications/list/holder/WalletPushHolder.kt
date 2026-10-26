@@ -7,6 +7,8 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.extensions.drawable
 import uikit.widget.SwitchView
+import uikit.extensions.MoonHaptic
+import uikit.extensions.setMoonOnClickListener
 
 class WalletPushHolder(
     parent: ViewGroup,
@@ -17,7 +19,7 @@ class WalletPushHolder(
 
     init {
         itemView.background = ListCell.Position.SINGLE.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener(haptic = MoonHaptic.None) {
             switchView.toggle(true)
         }
     }

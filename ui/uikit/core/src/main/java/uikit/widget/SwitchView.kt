@@ -16,6 +16,7 @@ import com.tonapps.uikit.color.buttonTertiaryBackgroundColor
 import com.tonapps.uikit.color.constantWhiteColor
 import uikit.ArgbEvaluator
 import uikit.extensions.dp
+import uikit.extensions.hapticToggle
 import uikit.extensions.range
 import androidx.core.graphics.toColorInt
 
@@ -76,6 +77,9 @@ class SwitchView @JvmOverloads constructor(
             return
         }
         checked = newChecked
+        if (byUser) {
+            hapticToggle()
+        }
         doCheckedChanged?.invoke(checked, byUser)
         applyState(checked)
     }

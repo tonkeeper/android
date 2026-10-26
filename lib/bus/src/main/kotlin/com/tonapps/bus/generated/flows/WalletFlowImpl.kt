@@ -3,7 +3,9 @@ package com.tonapps.bus.generated.flows
 import androidx.annotation.AnyThread
 import com.tonapps.bus.core.contract.EventExecutor
 import com.tonapps.bus.generated.Events
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowBalanceBucket
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowFrom
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowLedgerModel
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletMode
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
@@ -136,6 +138,109 @@ class WalletFlowImpl(
     }
 
     /**
+     * wallet_import_mnemonic_accepted
+     *
+     * Recovery phrase passed validation and the import continued. An invalid phrase is wallet_import_error, not this event. A phrase that belongs to a wallet already in the app does not emit it.
+
+     */
+    @AnyThread
+    override fun walletImportMnemonicAccepted(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom
+    ) {
+        val props = hashMapOf(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key
+        )
+        trackEvent("wallet_import_mnemonic_accepted", props)
+    }
+
+    /**
+     * wallet_import_signer_scanned
+     *
+     * Signer link QR was scanned and produced a public key. Opening Signer from a deeplink does not emit this event.
+
+     */
+    @AnyThread
+    override fun walletImportSignerScanned(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom
+    ) {
+        val props = hashMapOf(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key
+        )
+        trackEvent("wallet_import_signer_scanned", props)
+    }
+
+    /**
+     * wallet_import_keystone_scanned
+     *
+     * Keystone QR was scanned and produced a public key.
+     */
+    @AnyThread
+    override fun walletImportKeystoneScanned(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom
+    ) {
+        val props = hashMapOf(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key
+        )
+        trackEvent("wallet_import_keystone_scanned", props)
+    }
+
+    /**
+     * wallet_import_ledger_bluetooth_connected
+     *
+     * Ledger device connected over Bluetooth during import. Emitted again only after a disconnect, when the device connects once more.
+
+     */
+    @AnyThread
+    override fun walletImportLedgerBluetoothConnected(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        ledgerModel: WalletFlowLedgerModel?
+    ) {
+        val props = hashMapOf<String, Any>(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key
+        )
+        ledgerModel?.let { props["ledger_model"] = it.key }
+        trackEvent("wallet_import_ledger_bluetooth_connected", props)
+    }
+
+    /**
+     * wallet_import_ledger_app_opened
+     *
+     * TON app on the connected Ledger reported itself open during import.
+
+     */
+    @AnyThread
+    override fun walletImportLedgerAppOpened(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        ledgerModel: WalletFlowLedgerModel?
+    ) {
+        val props = hashMapOf<String, Any>(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key
+        )
+        ledgerModel?.let { props["ledger_model"] = it.key }
+        trackEvent("wallet_import_ledger_app_opened", props)
+    }
+
+    /**
      * wallet_import_error
      *
      * Wallet import attempt failed (e.g. invalid recovery phrase). Error fields use the same type/code/message shape as op_terminal for consistent grouping.
@@ -148,7 +253,8 @@ class WalletFlowImpl(
         from: WalletFlowFrom,
         errorType: String?,
         errorCode: Int?,
-        errorMessage: String?
+        errorMessage: String?,
+        ledgerModel: WalletFlowLedgerModel?
     ) {
         val props = hashMapOf<String, Any>(
             "wallet_mode" to walletMode.key,
@@ -158,6 +264,7 @@ class WalletFlowImpl(
         errorType?.let { props["error_type"] = it }
         errorCode?.let { props["error_code"] = it }
         errorMessage?.let { props["error_message"] = it }
+        ledgerModel?.let { props["ledger_model"] = it.key }
         trackEvent("wallet_import_error", props)
     }
 
@@ -170,13 +277,37 @@ class WalletFlowImpl(
     override fun walletImportSuccess(
         walletMode: WalletFlowWalletMode,
         walletSource: WalletFlowWalletSource,
-        from: WalletFlowFrom
+        from: WalletFlowFrom,
+        ledgerModel: WalletFlowLedgerModel?
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "wallet_mode" to walletMode.key,
             "wallet_source" to walletSource.key,
             "from" to from.key
         )
+        ledgerModel?.let { props["ledger_model"] = it.key }
         trackEvent("wallet_import_success", props)
+    }
+
+    /**
+     * wallet_import_balance
+     *
+     * What the imported wallet already held, as a range in US dollars (balance_bucket): the money a user brought to Tonkeeper without a deposit. The balance counts verified assets only (dust included) at import time; several versions of one recovery phrase share one TRON account, which is counted once. Sent once per import, after wallet_import_success, as soon as the balance of the imported wallet loads (a multichain wallet's once it has finished syncing); when one import adds several wallets (several versions of the same recovery phrase), balance_bucket is the range of their sum. Not sent for a watch-only import, whose money stays with keys outside the app, for a testnet import, or when the balance could not be loaded (including a multichain wallet that failed to sync or did not sync within two minutes). Android only for now; iOS does not send it yet.
+
+     */
+    @AnyThread
+    override fun walletImportBalance(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        balanceBucket: WalletFlowBalanceBucket
+    ) {
+        val props = hashMapOf(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key,
+            "balance_bucket" to balanceBucket.key
+        )
+        trackEvent("wallet_import_balance", props)
     }
 }

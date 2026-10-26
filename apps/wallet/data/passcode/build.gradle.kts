@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.koin.core)
+    implementation(libs.chainkit.models)
 
     implementation(projects.ui.uikit.core)
     implementation(projects.apps.wallet.localization)
@@ -16,4 +17,12 @@ dependencies {
     implementation(projects.lib.extensions)
     implementation(projects.lib.security)
     implementation(projects.lib.bus)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+}
+
+tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+    enabled = true
 }

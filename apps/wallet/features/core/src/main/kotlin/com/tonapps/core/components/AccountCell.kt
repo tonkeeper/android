@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.data.multichain.asset.AssetWithDetails
@@ -132,9 +133,14 @@ fun AccountCell(
     position: MoonBundlePosition = MoonBundlePosition.Default,
     onClick: () -> Unit = {},
     label: String? = null,
+    hiddenBalance: Boolean,
 ) {
-    val formattedBalance = remember(account.displayBalance) {
-        Formatter.formatShort(value = account.displayBalance)
+    val formattedBalance = remember(account.displayBalance, hiddenBalance) {
+        if (hiddenBalance) {
+            HIDDEN_BALANCE
+        } else {
+            Formatter.formatShort(value = account.displayBalance)
+        }
     }
 
     val formattedPrice = remember(account.rate) {
@@ -146,12 +152,16 @@ fun AccountCell(
         }
     }
 
-    val formattedFiat = remember(account.displayBalance, account.rate) {
+    val formattedFiat = remember(account.displayBalance, account.rate, hiddenBalance) {
         account.rate?.let {
-            Formatter.formatFiat(
-                value = account.displayBalance,
-                rate = it.value
-            )
+            if (hiddenBalance) {
+                HIDDEN_BALANCE
+            } else {
+                Formatter.formatFiat(
+                    value = account.displayBalance,
+                    rate = it.value
+                )
+            }
         }
     }
 
@@ -201,22 +211,19 @@ fun AccountCell(
     account: AccountWithDetails,
     position: MoonBundlePosition = MoonBundlePosition.Default,
     showVerification: Boolean = false,
+    hiddenBalance: Boolean,
     onClick: () -> Unit,
     content: (@Composable () -> Unit),
 ) {
-    val formattedBalance = remember(account.displayBalance) {
-        Formatter.formatShort(value = account.displayBalance)
-    }
-
-    val formattedFiat = remember(account.displayBalance, account.rate) {
-        account.rate?.let {
+    val subtitle = remember(account.displayBalance, account.asset.symbol, account.rate, hiddenBalance) {
+        if (hiddenBalance) {
+            return@remember HIDDEN_BALANCE
+        }
+        val formattedFiat = account.rate?.let {
             Formatter.formatFiat(value = account.displayBalance, rate = it.value)
         }
-    }
-
-    val subtitle = remember(formattedBalance, account.asset.symbol, formattedFiat) {
         buildString {
-            append(formattedBalance)
+            append(Formatter.formatShort(value = account.displayBalance))
             append(" ")
             append(account.asset.symbol)
             if (formattedFiat != null) {

@@ -12,20 +12,27 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Time-in-force policy for an order.
  *
- * Values: ioc,gtt,post_only
+ * Values: ioc,gtt,post_only,unknown
  */
-@Serializable
+@Serializable(with = TimeInForceSerializer::class)
 enum class TimeInForce(val value: String) {
     @SerialName(value = "ioc")
     ioc("ioc"),
     @SerialName(value = "gtt")
     gtt("gtt"),
     @SerialName(value = "post_only")
-    post_only("post_only");
+    post_only("post_only"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -51,6 +58,20 @@ enum class TimeInForce(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object TimeInForceSerializer : KSerializer<TimeInForce> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): TimeInForce {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return TimeInForce.entries.firstOrNull { it.value == value }
+            ?: TimeInForce.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: TimeInForce) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

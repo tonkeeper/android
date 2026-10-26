@@ -100,16 +100,6 @@ class DefaultEventDelegate(
     }
 
     @UiThread
-    override fun dappSharingCopy(name: String, from: String, url: String) {
-        val props = hashMapOf(
-            "name" to name,
-            "from" to from,
-            "url" to url
-        )
-        trackEvent("dapp_sharing_copy", props)
-    }
-
-    @UiThread
     override fun tcConnect(url: String, pushEnabled: Boolean) {
         val props = hashMapOf(
             "dapp_url" to url,
@@ -256,23 +246,6 @@ class DefaultEventDelegate(
             "story_open", hashMapOf(
                 "story_id" to storiesId,
                 "from" to from
-            )
-        )
-    }
-
-    @UiThread
-    override fun dappClick(
-        url: String,
-        name: String,
-        source: String,
-        country: String,
-    ) {
-        trackEvent(
-            "click_dapp", hashMapOf(
-                "url" to url,
-                "name" to name,
-                "from" to source,
-                "location" to country
             )
         )
     }

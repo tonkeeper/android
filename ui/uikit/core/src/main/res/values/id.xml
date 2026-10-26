@@ -2,4 +2,5 @@
 <resources>
     <item name="root_container" type="id"/>
     <item name="sheet_container" type="id"/>
+    <item name="press_scale_attached" type="id"/>
 </resources>

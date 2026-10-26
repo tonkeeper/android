@@ -6,51 +6,46 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.text.SpannableStringBuilder
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.setPadding
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
-import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
-import com.tonapps.tonkeeper.core.BalanceType
 import com.tonapps.tonkeeper.extensions.badgeGreen
 import com.tonapps.tonkeeper.extensions.badgeOrange
 import com.tonapps.tonkeeper.extensions.badgePurple
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.settingsRepository
-import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
+import com.tonapps.wallet.data.battery.BatteryMapper
 import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.UIKitColor
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentOrangeColor
-import com.tonapps.uikit.color.accentPurpleColor
-import com.tonapps.uikit.color.accentRedColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import com.tonapps.uikit.color.resolveColor
-import com.tonapps.uikit.color.stateList
-import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
-import uikit.HapticHelper
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
 import uikit.extensions.expandTouchArea
+import uikit.extensions.setMoonOnClickListener
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation
 import uikit.widget.LoaderView
+import uikit.widget.ShimmerTextView
 
 class BalanceHolder(
     parent: ViewGroup
@@ -60,19 +55,16 @@ class BalanceHolder(
         context.settingsRepository
     }
 
-    private val balanceView = itemView.findViewById<AppCompatTextView>(R.id.wallet_balance)
+    private val balanceView = itemView.findViewById<ShimmerTextView>(R.id.wallet_balance)
     private val batteryView = itemView.findViewById<BatteryView>(R.id.wallet_battery)
     private val walletAddressView = itemView.findViewById<AppCompatTextView>(R.id.wallet_address)
     private val walletLoaderView = itemView.findViewById<LoaderView>(R.id.wallet_loader)
-    private val backupIconContainerView = itemView.findViewById<View>(R.id.backup_icon_container)
-    private val backupIconView = itemView.findViewById<AppCompatImageView>(R.id.backup_icon)
 
     init {
-        balanceView.setOnClickListener {
+        balanceView.setMoonOnClickListener {
             settingsRepository?.let {
                 it.hiddenBalances = !it.hiddenBalances
             }
-            HapticHelper.impactLight(context)
         }
         walletLoaderView.setColor(context.iconSecondaryColor)
         walletLoaderView.setTrackColor(context.iconSecondaryColor.withAlpha(.32f))
@@ -80,46 +72,35 @@ class BalanceHolder(
     }
 
     override fun onBind(item: Item.Balance) {
-        batteryView.setOnClickListener {
+        batteryView.setMoonOnClickListener {
             Navigation.from(context)?.add(BatteryScreen.newInstance(item.wallet, from = BatteryNativeFrom.Wallet))
-        }
-        backupIconContainerView.setOnClickListener {
-            Navigation.from(context)?.add(BackupScreen.newInstance(WalletFlowSource.WalletSetupSection))
         }
 
         if (item.hiddenBalance) {
+            balanceView.shimmerActive = false
+            balanceView.cancelTextSwap()
             balanceView.text = HIDDEN_BALANCE
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
             balanceView.background = HiddenBalanceDrawable(context)
             balanceView.setPaddingHorizontal(12.dp)
             balanceView.translationY = 6f.dp
         } else {
-            balanceView.text = item.balance.withCustomSymbol(context)
+            val balance = item.balance.withCustomSymbol(context)
+            if (TextUtils.equals(balanceView.text, HIDDEN_BALANCE)) {
+                balanceView.text = balance
+            } else {
+                balanceView.setTextWithBlur(balance)
+            }
+            balanceView.shimmerActive = item.stale
             balanceView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44f)
             balanceView.background = null
             balanceView.setPadding(0)
             balanceView.translationY = 0f
         }
 
-        val requestBackup =
-            (item.walletType == WalletType.Default || item.walletType == WalletType.Lockup) && !item.hasBackup
-
-        if (requestBackup && item.balanceType == BalanceType.Huge) {
-            balanceView.setTextColor(context.accentRedColor)
-            backupIconView.imageTintList = context.accentRedColor.stateList
-            backupIconContainerView.visibility = View.VISIBLE
-        } else if (requestBackup && item.balanceType == BalanceType.Positive) {
-            balanceView.setTextColor(context.accentOrangeColor)
-            backupIconView.imageTintList = context.accentOrangeColor.stateList
-            backupIconContainerView.visibility = View.VISIBLE
-        } else {
-            balanceView.setTextColor(context.textPrimaryColor)
-            backupIconContainerView.visibility = View.GONE
-        }
-
         if (item.showBattery) {
             batteryView.visibility = View.VISIBLE
-            batteryView.setBatteryLevel(item.batteryBalance.value.toFloat())
+            batteryView.setBatteryLevel(BatteryMapper.convertToBatteryLevel(item.batteryBalance))
             batteryView.emptyState = item.batteryEmptyState
         } else {
             batteryView.visibility = View.GONE
@@ -169,13 +150,8 @@ class BalanceHolder(
                 walletLoaderView.visibility = View.GONE
                 setWalletAddressWithType(wallet.address, wallet.type, wallet.version, showYourAddress)
                 walletAddressView.setTextColor(context.textSecondaryColor)
-                walletAddressView.setOnClickListener {
-                    val walletType = wallet.type
-                    if (walletType == WalletType.Testnet || walletType == WalletType.Watch) {
-                        context.copyWithToast(wallet.address, getTypeColor(walletType))
-                    } else {
-                        context.copyWithToast(wallet.address)
-                    }
+                walletAddressView.setMoonOnClickListener {
+                    context.copyWithToast(wallet.address)
                     settingsRepository?.incrementCopyCount()
                 }
             }
@@ -218,21 +194,12 @@ class BalanceHolder(
             WalletType.Testnet -> builder.badgeOrange(context, Localization.testnet)
             WalletType.Watch -> builder.badgeOrange(context, Localization.watch_only)
             WalletType.Keystone -> builder.badgePurple(context, Localization.keystone)
-            WalletType.Tetra -> builder.badgeOrange(context, Localization.tetra)
             WalletType.Default -> builder
             WalletType.Lockup -> builder
             WalletType.Multichain -> builder
         }
 
         walletAddressView.text = builder
-    }
-
-    private fun getTypeColor(type: WalletType): Int {
-        return when (type) {
-            WalletType.Ledger -> context.accentGreenColor
-            WalletType.Signer, WalletType.SignerQR -> context.accentPurpleColor
-            else -> context.accentOrangeColor
-        }
     }
 
     private class HiddenBalanceDrawable(context: Context) : BaseDrawable() {

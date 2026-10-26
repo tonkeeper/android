@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import androidx.annotation.ChecksSdkIntAtLeast
 import com.tonapps.log.L
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -47,6 +48,10 @@ class SessionKeyCipher(context: Context) {
 
     private val isDeviceLocked: Boolean
         get() = keyguardManager?.isDeviceLocked == true
+
+    @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.P)
+    val isSupported: Boolean
+        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
     fun seal(sessionKey: ByteArray): ByteArray? {
         val key = getOrCreateKey() ?: return null
@@ -122,7 +127,7 @@ class SessionKeyCipher(context: Context) {
     // Without setUnlockedDeviceRequired the cache would be readable by the process whenever it
     // runs, locked screen included, so pre-P installs get no key at all and stay on the PIN path.
     private fun getOrCreateKey(): SecretKey? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        if (!isSupported) {
             return null
         }
 

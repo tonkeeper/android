@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import com.tonapps.wallet.data.multichain.account.displayOrder
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -52,11 +53,14 @@ import com.tonapps.core.components.FiltersSheet
 import com.tonapps.core.components.chainImageResourceUrl
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.account.toApiChain
+import com.tonapps.wallet.data.multichain.asset.perpsMarketIndexOrNull
 import com.tonapps.wallet.features.events.components.ActivityEventCell
 import com.tonapps.wallet.features.events.components.ActivityHeaderCell
-import com.tonapps.wallet.features.events.data.HistoryEventEntity
+import com.tonapps.wallet.features.events.data.EncryptedCommentEntity
 import com.tonapps.wallet.features.events.data.HistoryNft
 import com.tonapps.wallet.features.events.data.nftFor
+import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsAction
+import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsFeature
 import com.tonapps.wallet.features.events.screens.details.EventDetailsModal
 import com.tonapps.wallet.localization.Localization
 import kotlinx.collections.immutable.toPersistentList
@@ -83,18 +87,30 @@ private const val LOADING_MORE_KEY = 3
 fun EventsScreen(
     assetId: String?,
     onBack: () -> Unit,
+    mode: EventsScreenMode = EventsScreenMode.General,
+    awaitsFundingActivity: Boolean = false,
     onOpenDeposit: () -> Unit = {},
     onOpenNft: (address: String) -> Unit = {},
 ) {
-    val feature = koinViewModel<EventsFeature> { parametersOf(assetId) }
+    val feature = koinViewModel<EventsFeature> { parametersOf(assetId, mode, awaitsFundingActivity) }
+    val isPerpsHistory = mode == EventsScreenMode.Perps
+    val showsTypeMenu = !isPerpsHistory && perpsMarketIndexOrNull(assetId) == null
+    val showsFilters = !isPerpsHistory && assetId == null
     val pagingItems = feature.activitiesFlow.collectAsLazyPagingItems()
     val typeSelector by feature.typeSelector.collectAsState()
     val hasAnyActivity by feature.hasAnyActivity.collectAsState()
     val chainFilter by feature.chainFilter.collectAsState()
     val resolvedNfts by feature.resolvedNfts.collectAsState()
+    val resolvedPerpsMarkets by feature.resolvedPerpsMarkets.collectAsState()
     val wallet by feature.wallet.collectAsState(initial = null)
     val isOnline by feature.isOnline.collectAsState()
     val hideDust by feature.hideDust.collectAsState()
+    val comments = koinViewModel<EncryptedCommentsFeature>()
+    val decryptedComments by comments.decrypted.collectAsState()
+    val context = LocalContext.current
+    val onDecrypt: (EncryptedCommentEntity) -> Unit = { c ->
+        wallet?.id?.let { comments.sendAction(EncryptedCommentsAction.Decrypt(context, it, c)) }
+    }
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val isLoading = pagingItems.loadState.refresh is LoadState.Loading ||
@@ -104,7 +120,7 @@ fun EventsScreen(
         (pagingItems.loadState.refresh is LoadState.Error ||
             pagingItems.loadState.append is LoadState.Error)
     val isEmpty = !isLoading && !isNoConnection && !isError && pagingItems.itemCount == 0
-    var selectedActivity by remember { mutableStateOf<HistoryEventEntity?>(null) }
+    var selectedActivity by remember { mutableStateOf<WalletActivityListItem.Entry?>(null) }
     val pullToRefreshState = rememberPullToRefreshState()
     var userPullRefresh by remember { mutableStateOf(false) }
     val lifecycle = LocalLifecycleOwner.current
@@ -142,8 +158,13 @@ fun EventsScreen(
     }
 
     val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+    val typeMenuReserve = if (showsTypeMenu) {
+        80.dp
+    } else {
+        0.dp
+    }
     val contentPadding = PaddingValues(
-        bottom = navBarPadding.calculateBottomPadding() + 80.dp,
+        bottom = navBarPadding.calculateBottomPadding() + typeMenuReserve,
     )
 
     MoonScaffold(
@@ -152,13 +173,17 @@ fun EventsScreen(
             .statusBarsPadding(),
         topBar = {
             MoonTopAppBar(
-                title = stringResource(Localization.history),
+                title = if (isPerpsHistory) {
+                    stringResource(Localization.perps_history)
+                } else {
+                    stringResource(Localization.history)
+                },
                 navigationIconRes = UIKitIcon.ic_chevron_left_16,
                 onNavigationClick = onBack,
                 // Design puts the Filters entry on the main History only. The pref stays
                 // global, so a token's history is filtered too — same as the assets toggle
                 // governing the wallet list from Manage crypto.
-                actionIconRes = if (assetId == null) {
+                actionIconRes = if (showsFilters) {
                     UIKitIcon.ic_sliders_16
                 } else {
                     null
@@ -170,7 +195,7 @@ fun EventsScreen(
             )
         },
     ) {
-        if (assetId == null) {
+        if (showsFilters) {
             ChainFiltersCell(
                 chainFilter = chainFilter,
                 onChainSelected = feature::onChainSelected,
@@ -213,8 +238,14 @@ fun EventsScreen(
                     onButtonClick = pagingItems::retry,
                 )
             } else if (isEmpty) {
-                if (assetId == null && typeSelector.selected == EventsTypeFilter.All && !hideDust) {
-                    MoonEmptyScreen(
+                when {
+                    isPerpsHistory -> MoonEmptyScreen(
+                        text = stringResource(Localization.empty_history_title),
+                        description = stringResource(Localization.empty_history_subtitle),
+                        type = MoonEmptyScreenType.EmptyActivity,
+                    )
+
+                    assetId == null && typeSelector.selected == EventsTypeFilter.All && !hideDust -> MoonEmptyScreen(
                         text = stringResource(Localization.empty_history_title),
                         description = stringResource(Localization.empty_history_subtitle),
                         type = MoonEmptyScreenType.EmptyActivity,
@@ -222,9 +253,10 @@ fun EventsScreen(
                         buttonIconRes = null,
                         onButtonClick = onOpenDeposit,
                     )
-                } else {
-                    MoonEmptyScreen(
-                        text = stringResource(Localization.cant_find_anything),
+
+                    else -> MoonEmptyScreen(
+                        text = stringResource(Localization.not_found),
+                        description = stringResource(Localization.no_results),
                         type = MoonEmptyScreenType.EmptyActivity,
                     )
                 }
@@ -235,15 +267,19 @@ fun EventsScreen(
                     resolvedNfts = resolvedNfts,
                     contentPadding = contentPadding,
                     state = listState,
+                    decryptedComments = decryptedComments,
+                    labelsPerpsBalanceChanges = typeSelector.selected != EventsTypeFilter.Perps,
                     onActivityClick = { selectedActivity = it },
                     onNftClick = onOpenNft,
+                    onDecrypt = onDecrypt,
                 )
             }
 
-            if (!isEmpty ||
-                typeSelector.selected != EventsTypeFilter.All ||
-                hasAnyActivity == true ||
-                hideDust
+            if (showsTypeMenu &&
+                (!isEmpty ||
+                    typeSelector.selected != EventsTypeFilter.All ||
+                    hasAnyActivity == true ||
+                    hideDust)
             ) {
                 ActivityTypeFilterMenu(
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -267,11 +303,17 @@ fun EventsScreen(
         )
     }
 
-    selectedActivity?.let { activity ->
+    val selected = selectedActivity
+    if (selected != null) {
+        val activity = selected.activity
         EventDetailsModal(
             event = activity,
+            hiddenBalance = selected.hiddenBalance,
             wallet = wallet,
             nft = resolvedNfts.nftFor(activity),
+            perpsMarket = activity.perps?.marketIndex?.let(resolvedPerpsMarkets::get),
+            decryptedComment = activity.encryptedComment?.let { decryptedComments[it.cipherText] },
+            onDecryptComment = activity.encryptedComment?.let { c -> { onDecrypt(c) } },
             onDismiss = { selectedActivity = null },
         )
     }
@@ -313,8 +355,11 @@ private fun ActivityList(
     resolvedNfts: Map<String, HistoryNft>,
     contentPadding: PaddingValues,
     state: LazyListState,
-    onActivityClick: (HistoryEventEntity) -> Unit,
+    decryptedComments: Map<String, String>,
+    labelsPerpsBalanceChanges: Boolean,
+    onActivityClick: (WalletActivityListItem.Entry) -> Unit,
     onNftClick: (address: String) -> Unit,
+    onDecrypt: (EncryptedCommentEntity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -370,12 +415,16 @@ private fun ActivityList(
                     }
                     ActivityEventCell(
                         activity = activity,
+                        hiddenBalance = row.hiddenBalance,
                         nft = nft,
                         position = position,
-                        onClick = { onActivityClick(activity) },
+                        labelsPerpsBalanceChanges = labelsPerpsBalanceChanges,
+                        onClick = { onActivityClick(row) },
                         onNftClick = nft?.let { resolved ->
                             { onNftClick(resolved.address) }
                         },
+                        decryptedComment = activity.encryptedComment?.let { decryptedComments[it.cipherText] },
+                        onDecryptComment = activity.encryptedComment?.let { c -> { onDecrypt(c) } },
                     )
                 }
 
@@ -409,7 +458,7 @@ private fun ChainFiltersCell(
     val context = LocalContext.current
     val allStr = stringResource(Localization.all)
     val mainnetChains = remember {
-        Chain.all.filter {
+        Chain.displayOrder.filter {
             it.network.mode == Network.Mode.Mainnet && it.toApiChain() != null
         }
     }

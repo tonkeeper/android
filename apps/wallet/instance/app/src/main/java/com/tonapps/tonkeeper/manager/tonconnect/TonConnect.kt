@@ -2,13 +2,10 @@ package com.tonapps.tonkeeper.manager.tonconnect
 
 import android.net.Uri
 import android.os.Parcelable
-import com.tonapps.log.L
 import androidx.core.net.toUri
-import com.tonapps.extensions.getMultipleQuery
 import com.tonapps.security.Security
 import com.tonapps.security.hex
 import kotlinx.parcelize.Parcelize
-import org.json.JSONObject
 
 @Parcelize
 data class TonConnect(

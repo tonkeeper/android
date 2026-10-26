@@ -3,10 +3,8 @@ package uikit.widget
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
-import com.tonapps.log.L
 import android.view.MotionEvent
 import android.view.View
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
 import androidx.core.animation.doOnEnd
@@ -15,11 +13,7 @@ import androidx.core.math.MathUtils.clamp
 import androidx.core.view.doOnLayout
 import androidx.customview.widget.ViewDragHelper
 import uikit.R
-import uikit.base.BaseFragment
 import uikit.extensions.dp
-import uikit.extensions.getCurrentFocus
-import uikit.extensions.getCurrentFocusEditText
-import uikit.extensions.hideKeyboard
 import uikit.extensions.setView
 import kotlin.math.abs
 
@@ -30,10 +24,8 @@ class SwipeBackLayout @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyle),
     ValueAnimator.AnimatorUpdateListener {
 
-    private companion object {
-        private val animationOffsetX = 60f.dp
-        private val interpolator = PathInterpolator(.42f, 0f, .58f, 1f)
-    }
+    private var edgeTouch = false
+    private var isHiding = false
 
     private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = 225
@@ -83,8 +75,18 @@ class SwipeBackLayout @JvmOverloads constructor(
                 super.onViewDragStateChanged(state)
                 when(state) {
                     ViewDragHelper.STATE_IDLE -> {
-                        if (bgView.alpha == 0.0f) {
+                        if (bgView.alpha == 0.0f || contentContainer.left >= measuredWidth) {
                             doOnCloseScreen?.invoke()
+                        } else if (contentContainer.left != 0) {
+                            // Self-heal: an interrupted settle (touch race, swallowed drag
+                            // exception) can leave the content parked mid-way; snap it home.
+                            if (dragHelper?.smoothSlideViewTo(contentContainer, 0, contentContainer.top) == true) {
+                                postInvalidateOnAnimation()
+                            } else {
+                                contentContainer.offsetLeftAndRight(-contentContainer.left)
+                                bgView.alpha = 1f
+                                shadowView.x = -shadowView.width.toFloat()
+                            }
                         }
                     }
                 }
@@ -142,16 +144,38 @@ class SwipeBackLayout @JvmOverloads constructor(
             dragHelper!!.processTouchEvent(event)
             true
         } catch (e: Throwable) {
+            // A swallowed ViewDragHelper error on the final event would leave the drag
+            // hanging mid-gesture with no settle; abort() forces STATE_IDLE, where
+            // onViewDragStateChanged snaps the content back into place.
+            if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {
+                try {
+                    dragHelper?.abort()
+                } catch (_: Throwable) {
+                }
+            }
             false
         }
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            edgeTouch = ev.x <= edgeSwipeWidth
+        }
         return try {
             dragHelper!!.shouldInterceptTouchEvent(ev)
         } catch (e: Throwable) {
             false
         }
+    }
+
+    // Children that grab horizontal gestures (chart scrubbing, web views) disallow parent
+    // interception and silently kill the swipe-back. A drag that starts at the left edge is a
+    // navigation gesture, so the edge keeps interception rights no matter what the child wants.
+    override fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
+        if (disallowIntercept && edgeTouch) {
+            return
+        }
+        super.requestDisallowInterceptTouchEvent(disallowIntercept)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -171,9 +195,10 @@ class SwipeBackLayout @JvmOverloads constructor(
     }
 
     fun startHideAnimation() {
-        if (animation.isRunning) {
+        if (isHiding) {
             return
         }
+        isHiding = true
 
         animation.doOnEnd { doOnCloseScreen?.invoke() }
         animation.reverse()
@@ -187,4 +212,10 @@ class SwipeBackLayout @JvmOverloads constructor(
     }
 
     override fun hasOverlappingRendering() = false
+
+    private companion object {
+        private val animationOffsetX = 60f.dp
+        private val interpolator = PathInterpolator(.42f, 0f, .58f, 1f)
+        private val edgeSwipeWidth = 32f.dp
+    }
 }

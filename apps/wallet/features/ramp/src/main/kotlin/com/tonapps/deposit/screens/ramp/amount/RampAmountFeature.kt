@@ -2,7 +2,7 @@ package com.tonapps.deposit.screens.ramp.amount
 
 import com.tonapps.blockchain.model.legacy.BalanceEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.data.assetsOfType
@@ -23,7 +23,6 @@ import com.tonapps.mvi.contract.MviState
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.props.MviProperty
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import io.exchangeapi.models.ExchangeCalculateRequest
 import io.exchangeapi.models.ExchangeCalculation
@@ -45,10 +44,10 @@ private val ExchangeDirection?.isSell get() = this == ExchangeDirection.sell
 
 sealed interface DepositAmountAction : MviAction {
     object Init : DepositAmountAction
+
     // object ToggleInputCurrency : DepositAmountAction
     class SelectProvider(val providerId: String) : DepositAmountAction
     class CheckProvider(val provider: ProviderWithQuote) : DepositAmountAction
-    class AllowProvider(val provider: ProviderWithQuote, val isDontShowAgain: Boolean) : DepositAmountAction
 }
 
 sealed interface DepositAmountState : MviState {
@@ -76,15 +75,22 @@ sealed interface DepositAmountState : MviState {
 
         // buy = input fiat, sell = input crypto
         val inputCurrencyCode: String
-            get() = if (purchaseType.isBuy) fiatCode else currencyCode
+            get() = if (purchaseType.isBuy) {
+                fiatCode
+            } else {
+                currencyCode
+            }
 
         val receiveCurrencyCode: String
-            get() = if (purchaseType.isBuy) currencyCode else fiatCode
+            get() = if (purchaseType.isBuy) {
+                currencyCode
+            } else {
+                fiatCode
+            }
     }
 }
 
 sealed interface DepositAmountEvent {
-    data object ShowConfirmation : DepositAmountEvent
     class Continue(val providerUrl: String) : DepositAmountEvent
 }
 
@@ -96,7 +102,6 @@ class DepositAmountViewState(
 class DepositAmountFeature(
     val data: RampAmountData,
     private val onRampRepository: ExchangeRepository,
-    private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
     private val tokenRepository: TokenRepository,
 ) : MviFeature<DepositAmountAction, DepositAmountState, DepositAmountViewState>(
@@ -109,7 +114,7 @@ class DepositAmountFeature(
 
     private val amountSubject = MviSubject<String>()
 
-    private val analytics = RampAnalytics.of(data.rampType, DepositFlowFrom.WalletScreen)
+    private val analytics = RampAnalytics.of(data.rampType, data.analyticsFrom, DepositFlowWalletMode.Single, data.utm)
     private val analyticsCryptoAsset = data.cryptoAsset.toCurrency.analyticsAssetId()
     private val analyticsFiatCode = data.fiatAsset.toCurrency.code
     private val viewTracked = AtomicBoolean(false)
@@ -133,25 +138,7 @@ class DepositAmountFeature(
             is DepositAmountAction.Init -> loadData()
             // is DepositAmountAction.ToggleInputCurrency -> toggleInputCurrency()
             is DepositAmountAction.SelectProvider -> selectProvider(action.providerId)
-            is DepositAmountAction.CheckProvider -> {
-                val wallet = resolveWallet() ?: return
-                val shouldValidated = settingsRepository.isPurchaseOpenConfirm(wallet.id, action.provider.info.id)
-                if (shouldValidated) {
-                    trackViewRampAlert(action.provider)
-                    relay.emit(DepositAmountEvent.ShowConfirmation)
-                } else {
-                    onContinue(action.provider)
-                }
-            }
-
-            is DepositAmountAction.AllowProvider -> {
-                val wallet = resolveWallet() ?: return
-                if (action.isDontShowAgain) {
-                    settingsRepository.disablePurchaseOpenConfirm(wallet.id, action.provider.info.id)
-                }
-
-                onContinue(action.provider)
-            }
+            is DepositAmountAction.CheckProvider -> onContinue(action.provider)
         }
     }
 
@@ -180,19 +167,6 @@ class DepositAmountFeature(
         }
 
         relay.emit(DepositAmountEvent.Continue(url))
-    }
-
-    private fun trackViewRampAlert(provider: ProviderWithQuote) {
-        val quote = provider.quote ?: return
-        runCatching {
-            analytics.viewRampAlert(
-                cryptoAsset = analyticsCryptoAsset,
-                fiatCode = analyticsFiatCode,
-                paymentMethod = data.paymentMethodType,
-                providerName = provider.info.title,
-                amount = quote.amount.value.toDouble(),
-            )
-        }
     }
 
     private fun trackViewRampInsertAmount(provider: ProviderWithQuote?) {
@@ -237,7 +211,11 @@ class DepositAmountFeature(
 
             val fromCurrency = data.assetFrom.toCurrency
             val balance = if (data.purchaseType.isSell) {
-                val tronAddress = if (fromCurrency.isTronChain) accountRepository.getTronAddress(wallet.id) else null
+                val tronAddress = if (fromCurrency.isTronChain) {
+                    accountRepository.getTronAddress(wallet.id)
+                } else {
+                    null
+                }
                 tokenRepository.get(fromCurrency, wallet.accountId, wallet.network, tronAddress = tronAddress)
                     ?.firstOrNull { it.address.equals(fromCurrency.address, ignoreCase = true) && it.balance.isTransferable }
                     ?.balance
@@ -254,12 +232,15 @@ class DepositAmountFeature(
                         title = merchant.title,
                         imageUrl = merchant.image,
                         isBest = false,
-                        buttons = merchant.buttons,
                     )
                 )
             }
 
-            val initialAmountStr = if (data.purchaseType.isSell) null else minValue?.toString()
+            val initialAmountStr = if (data.purchaseType.isSell) {
+                null
+            } else {
+                minValue?.toString()
+            }
 
             setState {
                 DepositAmountState.Data(
@@ -269,7 +250,11 @@ class DepositAmountFeature(
                     fiatCode = fiatCode,
                     purchaseType = data.purchaseType,
                     providers = providerItems,
-                    defaultAmount = defaultAmount(if (data.purchaseType.isBuy) cryptoCode else fiatCode),
+                    defaultAmount = defaultAmount(if (data.purchaseType.isBuy) {
+                        cryptoCode
+                    } else {
+                        fiatCode
+                    }),
                     initialAmount = initialAmountStr,
                     balance = balance,
                 )
@@ -288,7 +273,11 @@ class DepositAmountFeature(
                     fiatCode = fiatCode,
                     purchaseType = data.purchaseType,
                     providers = emptyList(),
-                    defaultAmount = defaultAmount(if (data.purchaseType.isBuy) cryptoCode else fiatCode),
+                    defaultAmount = defaultAmount(if (data.purchaseType.isBuy) {
+                        cryptoCode
+                    } else {
+                        fiatCode
+                    }),
                 )
             }
         }
@@ -297,7 +286,11 @@ class DepositAmountFeature(
     private suspend fun onAmountChanged(amountText: String) {
         val amount = try {
             val coins = Coins.of(amountText)
-            if (coins.isPositive) coins else null
+            if (coins.isPositive) {
+                coins
+            } else {
+                null
+            }
         } catch (_: Throwable) {
             null
         }
@@ -347,7 +340,11 @@ class DepositAmountFeature(
                     fromNetwork = data.fromNetwork,
                     toNetwork = data.toNetwork,
                     paymentMethod = paymentMethodType,
-                    flow = if (data.purchaseType.isSell) ExchangeFlow.withdraw else ExchangeFlow.deposit
+                    flow = if (data.purchaseType.isSell) {
+                        ExchangeFlow.withdraw
+                    } else {
+                        ExchangeFlow.deposit
+                    }
                 )
             )
 
@@ -381,7 +378,11 @@ class DepositAmountFeature(
                                     else -> min ?: max ?: amount
                                 }
                             }
-                            val ratePerUnit = if (rateBase.isPositive) receiveCoins / rateBase else Coins.ZERO
+                            val ratePerUnit = if (rateBase.isPositive) {
+                                receiveCoins / rateBase
+                            } else {
+                                Coins.ZERO
+                            }
                             ProviderRate(
                                 rateFormatted = formatRate(ratePerUnit),
                             )
@@ -473,9 +474,17 @@ class DepositAmountFeature(
 
     private fun formatRate(ratePerUnit: Coins): String {
         val fromCode =
-            if (data.purchaseType.isBuy) data.fiatCode else data.cryptoCode
+            if (data.purchaseType.isBuy) {
+                data.fiatCode
+            } else {
+                data.cryptoCode
+            }
         val toCode =
-            if (data.purchaseType.isBuy) data.cryptoCode else data.fiatCode
+            if (data.purchaseType.isBuy) {
+                data.cryptoCode
+            } else {
+                data.fiatCode
+            }
         return "1 $fromCode ≈ ${defaultAmount(toCode, ratePerUnit)}"
     }
 

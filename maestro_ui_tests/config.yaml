@@ -18,6 +18,7 @@ flows:
   - flows/transactions/*
   - flows/tonconnect/*
   - flows/deeplinks/*
+  - flows/perps/*
   - flows/portfolio/*
   - flows/send/*
   - flows/staking/*

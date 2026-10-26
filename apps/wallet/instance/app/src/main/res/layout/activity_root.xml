@@ -21,21 +21,6 @@
         android:visibility="gone"
         android:background="?attr/backgroundPageColor">
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/lock_sign_out"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/offsetMedium"
-            android:layout_gravity="end"
-            android:textAppearance="@style/TextAppearance.Label2"
-            android:textColor="?attr/buttonSecondaryForegroundColor"
-            android:background="@drawable/bg_button_secondary"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:text="@string/sign_out"/>
-
         <com.tonapps.wallet.data.passcode.ui.PasscodeView
             android:id="@+id/lock_passcode"
             android:layout_width="match_parent"
@@ -43,6 +28,13 @@
             android:layout_marginTop="@dimen/offsetLarge"/>
 
     </uikit.widget.ColumnLayout>
+
+    <!-- The new networks screen, part of the lock screen: see LockScreen.State.NewChains. -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/new_networks"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     <uikit.widget.ToastView
         android:id="@+id/toast"

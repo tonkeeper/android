@@ -1,9 +1,12 @@
 package com.tonapps.deposit.multicoin.screens.picker
 
+import kotlinx.coroutines.flow.map
+import androidx.paging.map
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.deposit.multicoin.analytics.WithdrawAnalytics
@@ -22,8 +25,14 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import java.util.concurrent.atomic.AtomicBoolean
 
+data class AssetPickerAccount(
+    val account: AccountWithDetails,
+    val hiddenBalance: Boolean,
+)
+
 class AssetPickerFeature(
     private val analyticsFrom: WithdrawFlowFrom,
+    private val utm: UtmParameters,
     private val oldAccount: AccountRepository,
     private val accountRepo: McAccountRepository,
     private val settingsRepository: SettingsRepository,
@@ -32,7 +41,7 @@ class AssetPickerFeature(
     val selectedFilter: StateFlow<Network.Type?> field = MutableStateFlow(null)
     val queryFilter: StateFlow<String?> field = MutableStateFlow(null)
 
-    val analytics = WithdrawAnalytics(analyticsFrom)
+    val analytics = WithdrawAnalytics(analyticsFrom, utm = utm)
 
     // The pager is rebuilt on every search/chain filter change; the screen is only "viewed" once.
     private val viewTracked = AtomicBoolean(false)
@@ -63,7 +72,10 @@ class AssetPickerFeature(
                         onFirstPageLoaded = ::trackView,
                     )
                 },
-            ).flow
+            ).flow.map { pagingData ->
+                val hiddenBalance = settingsRepository.hiddenBalances
+                pagingData.map { AssetPickerAccount(account = it, hiddenBalance = hiddenBalance) }
+            }
         }
         .cachedIn(viewModelScope)
 

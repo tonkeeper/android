@@ -27,6 +27,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.math.abs
@@ -43,6 +44,8 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
 
     /** Null when the crosshair leaves the chart or the finger is lifted. */
     var onCrosshairMove: ((CrosshairEvent?) -> Unit)? = null
+
+    var onVisibleLogicalRangeChange: ((from: Double, to: Double, leftmostIndex: Int, rightmostIndex: Int) -> Unit)? = null
 
     /** JS-side failures, reported as "where: message" — wire to logging. */
     var onChartError: ((String) -> Unit)? = null
@@ -63,6 +66,7 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
     private var pluginCounter = 0
     private var downX = 0f
     private var downY = 0f
+    private var isCrosshairActive = false
 
     init {
         webView.settings.javaScriptEnabled = true
@@ -132,9 +136,14 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
         submit("window.AndroidChart.resetTimeScale();")
     }
 
+    fun setVisibleLogicalRange(from: Double, to: Double) {
+        submit("window.AndroidChart.setVisibleLogicalRange($from, $to);")
+    }
+
     /** Releases the WebView; the view is unusable afterwards. */
     fun destroy() {
         onCrosshairMove = null
+        onVisibleLogicalRangeChange = null
         onChartError = null
         pendingScripts.clear()
         removeView(webView)
@@ -155,8 +164,8 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
         return id
     }
 
-    // A vertical drag belongs to the native scroll container; horizontal pan
-    // and pinch stay on the chart.
+    // A vertical drag goes to the scroll container unless the crosshair is
+    // active; horizontal pan and pinch stay on the chart.
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -168,7 +177,7 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
             MotionEvent.ACTION_POINTER_DOWN -> parent?.requestDisallowInterceptTouchEvent(true)
 
             MotionEvent.ACTION_MOVE -> {
-                if (event.pointerCount == 1) {
+                if (!isCrosshairActive && event.pointerCount == 1) {
                     val dx = abs(event.x - downX)
                     val dy = abs(event.y - downY)
                     if (dy > touchSlop && dy > dx) {
@@ -221,6 +230,14 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
 
             "crosshairMove" -> dispatchCrosshairMove(message)
 
+            "visibleLogicalRange" -> {
+                val from = message["from"]?.jsonPrimitive?.doubleOrNull ?: return
+                val to = message["to"]?.jsonPrimitive?.doubleOrNull ?: return
+                val leftmostIndex = message["leftmostIndex"]?.jsonPrimitive?.intOrNull ?: return
+                val rightmostIndex = message["rightmostIndex"]?.jsonPrimitive?.intOrNull ?: return
+                onVisibleLogicalRangeChange?.invoke(from, to, leftmostIndex, rightmostIndex)
+            }
+
             "layout" -> Log.d(LOG_TAG, "layout: $payload")
 
             "error" -> {
@@ -233,9 +250,13 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
     }
 
     private fun dispatchCrosshairMove(message: JsonObject) {
-        val listener = onCrosshairMove ?: return
         val time = (message["time"] as? JsonPrimitive)?.doubleOrNull?.toLong()
         val point = message["point"] as? JsonObject
+        isCrosshairActive = point != null
+        if (isCrosshairActive) {
+            parent?.requestDisallowInterceptTouchEvent(true)
+        }
+        val listener = onCrosshairMove ?: return
         if (time == null || point == null) {
             listener(null)
             return
@@ -248,6 +269,7 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
                 time = time,
                 point = CrosshairPoint(x = x.toFloat(), y = y.toFloat()),
                 seriesData = seriesData ?: JsonObject(emptyMap()),
+                leftmostIndex = (message["leftmostIndex"] as? JsonPrimitive)?.intOrNull,
             )
         )
     }

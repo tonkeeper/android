@@ -36,6 +36,7 @@ dependencies {
     implementation(projects.apps.wallet.data.features)
 
     implementation(projects.apps.wallet.features.ramp)
+    implementation(projects.apps.wallet.features.confirm)
 
     implementation(projects.apps.wallet.features.events)
 

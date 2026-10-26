@@ -1,5 +1,7 @@
 package com.tonapps.deposit.screens.ramp.amount
 
+import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.screens.method.RampAsset
 import com.tonapps.deposit.screens.ramp.RampType
 import io.exchangeapi.models.ExchangeDirection
@@ -9,6 +11,8 @@ data class RampAmountData(
     val assetTo: RampAsset,
     val paymentMethodType: String,
     val walletId: String? = null,
+    val analyticsFrom: DepositFlowFrom,
+    val utm: UtmParameters = UtmParameters.Empty,
 ) {
     val fromNetwork: String? = assetFrom.network
     val toNetwork: String? = assetTo.network
@@ -25,8 +29,16 @@ data class RampAmountData(
         else -> throw IllegalStateException("Can't be so!")
     }
 
-    val cryptoAsset: RampAsset = if (fromNetwork != null) assetFrom else assetTo
-    val fiatAsset: RampAsset = if (fromNetwork != null) assetTo else assetFrom
+    val cryptoAsset: RampAsset = if (fromNetwork != null) {
+        assetFrom
+    } else {
+        assetTo
+    }
+    val fiatAsset: RampAsset = if (fromNetwork != null) {
+        assetTo
+    } else {
+        assetFrom
+    }
     val cryptoCode: String = cryptoAsset.currencyCode
     val fiatCode: String = fiatAsset.currencyCode
 }

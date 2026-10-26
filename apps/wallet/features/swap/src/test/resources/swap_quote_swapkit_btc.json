@@ -1,0 +1,184 @@
+{
+  "quote_id": "11ddb6bc-2d6e-4c81-b800-be1e96f79275",
+  "routes": [
+    {
+      "route_id": "b28de5ea-c631-4a72-a33c-83425a48ad14",
+      "provider_route_id": "4ab7b13c-de4b-4e60-b235-3b9fc4cc9c87",
+      "aggregator": "swapkit",
+      "protocol": "near_intents",
+      "route_type": "cross_chain_swap",
+      "source_amount": "100000",
+      "estimated_destination_amount": "31741961683165520",
+      "minimum_destination_amount": "31424542066333865",
+      "estimated_time": {
+        "inbound_seconds": 1200,
+        "swap_seconds": 807,
+        "outbound_seconds": 12,
+        "total_seconds": 2020
+      },
+      "total_slippage_bps": -17,
+      "source_usd_price": 79845,
+      "destination_usd_price": 2511.12,
+      "tags": [
+        "recommended"
+      ],
+      "warnings": [],
+      "fees": [
+        {
+          "type": "affiliate",
+          "asset": "btc/mainnet/coin",
+          "amount": "0"
+        },
+        {
+          "type": "service",
+          "asset": "btc/mainnet/coin",
+          "amount": "150"
+        },
+        {
+          "type": "outbound",
+          "asset": "eth/mainnet/coin",
+          "amount": "35000000000000"
+        },
+        {
+          "type": "inbound",
+          "asset": "btc/mainnet/coin",
+          "amount": "400"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "btc/mainnet",
+          "chain_family": "UTXO",
+          "from_asset": "btc/mainnet/coin",
+          "to_asset": "eth/mainnet/coin",
+          "protocol": "near_intents"
+        }
+      ],
+      "date_expire": "2026-09-07T06:44:40Z",
+      "risk_level": "medium"
+    },
+    {
+      "route_id": "f9fac574-7a2b-4b25-9ea1-18b9db2866db",
+      "provider_route_id": "74c27be1-3bd5-4425-ac11-14e2c6885747",
+      "aggregator": "swapkit",
+      "protocol": "flashnet",
+      "route_type": "cross_chain_swap",
+      "source_amount": "100000",
+      "estimated_destination_amount": "31668875735660058",
+      "minimum_destination_amount": "31352186978303457",
+      "estimated_time": {
+        "inbound_seconds": 600,
+        "swap_seconds": 30,
+        "outbound_seconds": 12,
+        "total_seconds": 642
+      },
+      "total_slippage_bps": -40,
+      "source_usd_price": 79845,
+      "destination_usd_price": 2511.12,
+      "tags": [
+        "fastest"
+      ],
+      "warnings": [],
+      "fees": [
+        {
+          "type": "liquidity",
+          "asset": "sol/mainnet/spl/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "amount": "87656"
+        },
+        {
+          "type": "service",
+          "asset": "sol/mainnet/spl/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "amount": "119399"
+        },
+        {
+          "type": "inbound",
+          "asset": "btc/mainnet/coin",
+          "amount": "400"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "btc/mainnet",
+          "chain_family": "UTXO",
+          "from_asset": "btc/mainnet/coin",
+          "to_asset": "eth/mainnet/coin",
+          "protocol": "flashnet"
+        }
+      ],
+      "date_expire": "2026-09-07T05:59:41Z",
+      "risk_level": "medium"
+    },
+    {
+      "route_id": "7f74fbc6-f68b-48db-aa5b-7e8ff4ca0e85",
+      "provider_route_id": "beb9f317-1626-4abf-b03a-cad7928144f0",
+      "aggregator": "swapkit",
+      "protocol": "chainflip",
+      "route_type": "cross_chain_swap",
+      "source_amount": "100000",
+      "estimated_destination_amount": "31525826467539951",
+      "minimum_destination_amount": "31210568202864551",
+      "estimated_time": {
+        "inbound_seconds": 600,
+        "swap_seconds": 48,
+        "outbound_seconds": 96,
+        "total_seconds": 744
+      },
+      "total_slippage_bps": -85,
+      "source_usd_price": 79845,
+      "destination_usd_price": 2511.12,
+      "warnings": [],
+      "fees": [
+        {
+          "type": "inbound",
+          "asset": "btc/mainnet/coin",
+          "amount": "556"
+        },
+        {
+          "type": "liquidity",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "500000"
+        },
+        {
+          "type": "affiliate",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "0"
+        },
+        {
+          "type": "service",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "118926"
+        },
+        {
+          "type": "outbound",
+          "asset": "eth/mainnet/coin",
+          "amount": "11623865610000"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "btc/mainnet",
+          "chain_family": "UTXO",
+          "from_asset": "btc/mainnet/coin",
+          "to_asset": "eth/mainnet/coin",
+          "protocol": "chainflip"
+        }
+      ],
+      "date_expire": "2026-09-07T06:44:40Z",
+      "risk_level": "medium"
+    }
+  ],
+  "provider_errors": [
+    {
+      "aggregator": "swapkit",
+      "protocol": "chainflip_streaming",
+      "code": "min_amount_not_met",
+      "message": "sellAssetAmountTooSmall: Sell asset amount too small for provider CHAINFLIP_STREAMING."
+    }
+  ]
+}

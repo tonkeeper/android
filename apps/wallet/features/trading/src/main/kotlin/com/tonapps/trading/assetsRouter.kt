@@ -45,10 +45,12 @@ fun AssetsRouter(
     onOpenReceive: (assetId: String, token: TokenEntity) -> Unit,
     onOpenTxDetails: (tx: TxEvent, actionIndex: Int) -> Unit,
     onOpenStaking: () -> Unit,
+    onOpenEarnVault: (network: String, vaultId: String) -> Unit,
     onOpenUnverifiedInfo: () -> Unit,
     onSellToCard: (assetId: String) -> Unit,
     onBuyWithCard: (assetId: String) -> Unit,
     onOpenAssetHistory: (assetId: String) -> Unit,
+    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
     onClose: () -> Unit,
 ) {
     val backStack = rememberNestedNavBackStack(initial, onClose)
@@ -88,10 +90,12 @@ fun AssetsRouter(
                     onOpenReceive = onOpenReceive,
                     onOpenTxDetails = onOpenTxDetails,
                     onOpenStaking = onOpenStaking,
+                    onOpenEarnVault = onOpenEarnVault,
                     onOpenUnverifiedInfo = onOpenUnverifiedInfo,
                     onSellToCard = onSellToCard,
                     onBuyWithCard = onBuyWithCard,
                     onSeeAllActivities = { onOpenAssetHistory(key.assetId) },
+                    onOpenPerpMarket = onOpenPerpMarket,
                     onBack = { backStack.safeRemoveLastOrNull(key) },
                 )
             }

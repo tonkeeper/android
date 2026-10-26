@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class ActivityItem(
@@ -41,7 +46,7 @@ data class ActivityItem(
     @SerialName(value = "price")
     val price: String? = null,
 
-    /* Quote amount for funding/deposit/withdrawal items. */
+    /* Quote amount for deposit/withdrawal items. */
     @SerialName(value = "amount")
     val amount: String? = null,
     @SerialName(value = "realized_pnl")
@@ -50,6 +55,10 @@ data class ActivityItem(
     val fee: String? = null,
     @SerialName(value = "tx_hash")
     val txHash: String? = null,
+
+    /* The position's total funding from its opening up to this fill, signed: positive was received, negative was paid. Set only on the fill or liquidation that closed the position or flipped its side; null on every other item, a partial close among them, since the position is still open and its funding is on it. Also null when this service has no record of the position. Summed from this service's own record of the settlements, so one it never received is missing from it. */
+    @SerialName(value = "funding")
+    val funding: String? = null,
 
     /* Free-form status label appropriate to the item type. For a deposit it is this service's own pending or credited while it is the only record of it, and Lighter's own word for the deposit once Lighter has it. The two vocabularies are deliberately not merged -- Lighter does not document the set of values it uses, and mapping them by guess would report a state nobody established. */
     @SerialName(value = "status")

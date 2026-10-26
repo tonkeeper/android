@@ -82,7 +82,7 @@
     <string name="google_pay" translatable="false">Google Pay</string>
     <string name="revolut" translatable="false">Revolut</string>
     <string name="paypal" translatable="false">Paypal</string>
-    <string name="staking_ready_withdraw">%1$s ready. Tap co collect.</string>
+    <string name="staking_ready_withdraw">%1$s ready. Tap to collect.</string>
     <string name="staking_pending_deposit">%1$s will be deposited in %2$s</string>
     <string name="staking_pending_withdraw">%1$s will be withdrawn in %2$s</string>
     <string name="burn">Burn</string>
@@ -91,6 +91,8 @@
     <string name="staking_pending_withdraw_liquid">%1$s will be unstaked after the end of the cycle</string>
     <string name="staking_pending_unstake">Pending Unstake</string>
     <string name="staking_after_end_of_cycle">after the end of the cycle</string>
+    <string name="staking_unstake_ready">Unstake ready</string>
+    <string name="staking_tap_to_collect">Tap to collect</string>
     <string name="expired_link">Expired link</string>
     <string name="payment_method_not_found">Payment method not available</string>
     <string name="no_available_provider">No available providers</string>
@@ -172,6 +174,7 @@
     <string name="setup_finish_backup_wallet">Back up the wallet recovery phrase</string>
     <string name="setup_finish_backup_title">Back up your\nrecovery phrase</string>
     <string name="setup_finish_backup_subtitle">Without this phrase you may lose access to your funds if you delete the app or change device.</string>
+    <string name="setup_finish_backup_onboarding_subtitle">Without it, you won’t be able to access your wallet.</string>
     <string name="setup_finish_telegram">Join Keeper channel</string>
     <string name="setup_onboarding">Learn how to use your wallet</string>
     <string name="contacts">Address Book</string>
@@ -226,7 +229,12 @@
     <string name="min_amount_label">Min. amount</string>
     <string name="stake_ethena_description">The tsUSDe token represents USDe held through Ethena, a decentralized staking service. tsUSDe automatically accrues staking rewards, with minimal lock up.</string>
     <string name="stake_ethena_disclaimer">This is the estimated annual return based on the past week’s average protocol rewards and the average amount of staked USDe. The return is annualized with weekly compounding. <annotation colorAttr="textSecondaryColor">Past performance does not guarantee future results.</annotation>\n\nStaking services and related rewards are provided by Ethena, an independent third-party service. Subject to their <annotation colorAttr="textAccentColor">terms of service</annotation>.</string>
-    <string name="stake_tonstakers_description">When you stake GRAM in a Tonstakers pool, you receive a token called tsTON that represents your share in the pool. As the pool accumulates profits, your tsTON represents larger amount of GRAM.</string>
+    <string name="stake_tonstakers_description">Your staked GRAM is represented by tsTON. As the pool earns rewards, each tsTON represents more GRAM.</string>
+    <string name="staking_current_rewards">Current rewards</string>
+    <string name="staking_rewards_monthly">Monthly</string>
+    <string name="staking_rewards_yearly">Yearly</string>
+    <string name="staking_details">Details</string>
+    <string name="staking_rewards_hint">The reward is an estimate and may change depending on the APY.</string>
     <string name="edit">Edit</string>
     <string name="pinned">Pinned</string>
     <string name="all_assets">All Assets</string>
@@ -243,15 +251,19 @@
     <string name="links">Links</string>
     <string name="staking_choose">Choose</string>
     <string name="staking_confirm">Confirm and Stake</string>
+    <string name="staking_temporary_reserve">Temporary reserve</string>
+    <string name="staking_max_reserve_hint">Max is your balance minus a %1$s reserve, which will be returned after staking.</string>
+    <string name="staking_leave_reserve_hint">You need to leave a %1$s reserve, which will be returned after staking.</string>
+    <string name="staking_reserve_returned_hint">%1$s will be reserved and returned after staking.</string>
+    <string name="staking_insufficient_required">Required for action: %1$s.</string>
+    <string name="staking_insufficient_wallet_balance">Your wallet balance: %1$s.</string>
+    <string name="staking_deposit_wallet">Deposit Wallet</string>
     <string name="unstake_confirm">Confirm and Unstake</string>
     <string name="domain_link_button">Link domain</string>
     <string name="domain_renew_button">Renew domain</string>
     <string name="staked">Staked</string>
     <string name="all">All</string>
     <string name="all_types">All Types</string>
-    <string name="report_encrypted_comment_title">Attention</string>
-<string name="report_encrypted_comment">Comment from this transaction will be sent with report in decrypted form.</string>
-    <string name="report_encrypted_comment_button">Report Spam Anyway</string>
 
     <string name="manual">Manual</string>
     <string name="manual_description">Back up your wallet manually by writing down the recovery phrase.</string>
@@ -302,11 +314,8 @@
 
     <string name="sign_out">Sign out</string>
     <string name="delete_account_alert">Delete account?</string>
-    <string name="backup_alert_message">Your balance is %1$s, and it\'s only protected by a recovery phrase you haven\'t written down yet. Backup the phrase to avoid losing funds in case of device issues.</string>
     <string name="delete">Delete</string>
     <string name="delete_watch_account">Delete watch account</string>
-    <string name="sign_out_all_title">🚧 🚨🚨🚨 🚧\nSign Out of All Wallets?</string>
-    <string name="sign_out_all_description">This will erase keys to all wallets. Make sure you have backed up your recovery phrases.</string>
 
     <string name="sign_out_title">🚧 🚨 Sign Out? 🚨 🚧</string>
     <string name="sign_out_description">This will erase key to your wallet. Make sure you have backed up your recovery phrase.</string>
@@ -393,7 +402,6 @@
     <string name="buy_ton">Buy %1$s</string>
     <string name="buy_or_sell_dot">Buy &amp; Sell Crypto</string>
     <string name="buy_or_sell">Buy or sell</string>
-    <string name="fiat_open_description">You are opening an external app not operated by Keeper.</string>
     <string name="buy">Buy</string>
     <string name="sell">Sell</string>
     <string name="sell_to_card">Sell to card</string>
@@ -560,6 +568,7 @@
 
     <string name="send">Send</string>
     <string name="swap">Swap</string>
+    <string name="swap_event">Swap</string>
     <string name="manage">Manage</string>
     <string name="save_changes">Save Changes</string>
     <string name="manage_wallets">Manage wallets</string>
@@ -589,37 +598,6 @@
     <string name="rename">Rename</string>
     <string name="wallet_name">Wallet Name</string>
     <string name="primary_currency">Primary currency</string>
-    <string name="currency_usd_name">United States Dollar</string>
-    <string name="currency_eur_name">Euro</string>
-    <string name="currency_rub_name">Russian Ruble</string>
-    <string name="currency_aed_name">United Arab Emirates Dirham</string>
-    <string name="currency_uah_name">Ukrainian Hryvnia</string>
-    <string name="currency_kzt_name">Kazakhstani Tenge</string>
-    <string name="currency_uzs_name">Uzbekistani sum</string>
-    <string name="currency_gbp_name">Great Britain Pound</string>
-    <string name="currency_chf_name">Swiss Franc</string>
-    <string name="currency_cny_name">China Yuan</string>
-    <string name="currency_krw_name">South Korean Won</string>
-    <string name="currency_idr_name">Indonesian Rupiah</string>
-    <string name="currency_inr_name">Indian Rupee</string>
-    <string name="currency_jpy_name">Japanese Yen</string>
-    <string name="currency_cad_name">Canadian Dollar</string>
-    <string name="currency_ars_name">Argentine Peso</string>
-    <string name="currency_byn_name">Belarusian Ruble</string>
-    <string name="currency_cop_name">Colombian Peso</string>
-    <string name="currency_etb_name">Ethiopian Birr</string>
-    <string name="currency_ils_name">Israeli Shekel</string>
-    <string name="currency_kes_name">Kenyan Shilling</string>
-    <string name="currency_ngn_name">Nigerian Naira</string>
-    <string name="currency_ugx_name">Ugandan Shilling</string>
-    <string name="currency_ves_name">Venezuelan Bolivar</string>
-    <string name="currency_zar_name">South African Rand</string>
-    <string name="currency_try_name">Turkish Lira</string>
-    <string name="currency_thb_name">Thai Baht</string>
-    <string name="currency_vnd_name">Vietnamese Dong</string>
-    <string name="currency_brl_name">Brazilian Real</string>
-    <string name="currency_gel_name">Georgian Lari</string>
-    <string name="currency_bdt_name">Bangladeshi Taka</string>
 
     <string name="later">Later</string>
     <string name="done">Done</string>
@@ -646,6 +624,10 @@
     <string name="biometric_description">You can always unlock your wallet with a passcode.</string>
     <string name="lock_screen">Lock screen</string>
     <string name="lock_screen_description">Require passcode to view wallet contents.</string>
+    <string name="lock_screen_turn_off_title">Turn off screen lock?</string>
+    <string name="lock_screen_turn_off_description">This makes your wallet less secure.</string>
+    <string name="lock_screen_turn_off_anyway">Turn off anyway</string>
+    <string name="lock_screen_keep_on">Keep it on</string>
     <string name="change_passcode">Change passcode</string>
     <string name="reset_passcode">Reset passcode</string>
     <string name="recovery_phrase">Show recovery phrase</string>
@@ -710,6 +692,9 @@
     <string name="signer_about">About Signer</string>
     <string name="signer_open">Open Signer on this device</string>
     <string name="signer" translatable="false">Signer</string>
+    <string name="signer_not_installed_title">Signer is not installed</string>
+    <string name="signer_not_installed_message">This wallet signs transactions with Signer on this device. Install Signer to continue.</string>
+    <string name="signer_install">Install Signer</string>
     <string name="choose_wallet_title">Choose wallets</string>
     <string name="choose_wallet_subtitle">This seed phrase contains multiple wallets. Choose the ones you want to add.</string>
     <string name="choose_wallet_already_added">Already added</string>
@@ -762,6 +747,9 @@
     <string name="battery">Battery</string>
     <string name="battery_refill_title">Keeper Battery</string>
     <string name="battery_refill_subtitle">Swap and send GRAM tokens and pay less in TRC-20 fees</string>
+    <string name="battery_empty_caption_multichain">Pay network fees with charges on TON, TRON and EVM networks</string>
+    <string name="battery_settings_caption_multichain">Pay network fees with charges on TON, TRON and EVM networks</string>
+    <string name="battery_supported_networks">Works on %1$s</string>
     <string name="battery_refill_negative_balance">Your battery ran out due to refunded purchases. Top up your charges to keep going.</string>
     <plurals name="battery_charges">
         <item quantity="one">%1$s charge</item>
@@ -787,6 +775,18 @@
         <item quantity="few">≈ %1$s charges per %2$s</item>
         <item quantity="many">≈ %1$s charges per %2$s</item>
         <item quantity="other">≈ %1$s charges per %2$s</item>
+    </plurals>
+    <plurals name="battery_charges_per_transfer_in_ton">
+        <item quantity="one">≈ %1$s charge per transfer in TON, depends on the network</item>
+        <item quantity="few">≈ %1$s charges per transfer in TON, depends on the network</item>
+        <item quantity="many">≈ %1$s charges per transfer in TON, depends on the network</item>
+        <item quantity="other">≈ %1$s charges per transfer in TON, depends on the network</item>
+    </plurals>
+    <plurals name="battery_charges_per_swap_in_ton">
+        <item quantity="one">≈ %1$s charge per swap in TON, depends on the network</item>
+        <item quantity="few">≈ %1$s charges per swap in TON, depends on the network</item>
+        <item quantity="many">≈ %1$s charges per swap in TON, depends on the network</item>
+        <item quantity="other">≈ %1$s charges per swap in TON, depends on the network</item>
     </plurals>
     <plurals name="battery_nft">
         <item quantity="one">≈ %1$s NFT transfer</item>
@@ -926,11 +926,7 @@
     <string name="blockchain_fees_desc">Keeper Battery is the easiest way to pay blockchain fees. You can also top up balance with GRAM and TRX coins directly.</string>
     <string name="required_prefix">Required: %1$s</string>
     <string name="tron_fees_learn_more">Fees change in real time based on market conditions and other factors. <annotation colorAttr="textAccentColor">Learn more</annotation></string>
-    <string name="tetra" translatable="false">TETRA</string>
-    <string name="tetra_title" translatable="false">Tetra L2</string>
-    <string name="tetra_subtitle">Connect Tetra L2 network</string>
     <string name="other_options">Other options</string>
-    <string name="for_developers">For developers</string>
     <string name="choose_asset">Choose asset</string>
     <string name="trade">Trade</string>
     <string name="search_by_ticker">Search by ticker or name</string>
@@ -975,34 +971,51 @@
     <string name="volume">Volume</string>
     <string name="volume_tooltip">The total volume of all transactions over the past 24 hours.</string>
     <string name="perp_position">Perp position</string>
-    <string name="trade_ton_perps">Trade TON perps</string>
-    <string name="trade_ton_perps_subtitle">Trade with leverage up to 10x</string>
+    <string name="perps_asset_trade_title">Trade %1$s perps</string>
+    <string name="perps_asset_leverage_caption">Trade with leverage up to %1$s</string>
     <string name="perps_title">Perpetuals</string>
+    <string name="perps_history">Perps History</string>
     <string name="perps_learn_basics">Learn Basics</string>
     <string name="perps_balance">Perps balance</string>
     <string name="perps_deposit">Deposit</string>
     <string name="perps_explore">Explore Perps</string>
     <string name="perps_trending">Trending Perpetuals</string>
     <string name="perps_volume">Volume</string>
+    <string name="perps_volume_pattern">%1$s vol</string>
     <string name="perps_price_change">Price Change</string>
     <string name="perps_open_interest">Open Interest</string>
     <string name="perps_search_hint">Search by ticker or name</string>
     <string name="perps_perpetual">Perpetual</string>
     <string name="perps_info">Info</string>
     <string name="perps_volume_24h">24h Volume</string>
-    <string name="perps_volume_24h_tooltip">Total value traded over the last 24 hours</string>
-    <string name="perps_open_interest_tooltip">Total value of all open positions in this market</string>
+    <string name="perps_volume_24h_tooltip">The total value of trades completed in this market over the last 24 hours. It shows how actively this market is being traded.</string>
+    <string name="perps_open_interest_tooltip">The total value of positions currently open in this market. It rises as new positions open and falls as existing positions close.</string>
     <string name="perps_funding">Funding</string>
-    <string name="perps_funding_tooltip">Rate periodically paid between long and short positions</string>
+    <string name="perps_funding_tooltip">An hourly rate for payments between longs and shorts that helps keep the perpetual price in line with the market. It’s not our fee: positive means longs pay shorts; negative means shorts pay longs.</string>
     <string name="perps_about">About</string>
     <string name="perps_about_placeholder">Trade %1$s price movements against the US dollar with leverage. You don’t need to own %1$s directly — you’re trading a contract that tracks its price.</string>
     <string name="perps_more">More</string>
     <string name="perps_long">Long</string>
     <string name="perps_short">Short</string>
     <string name="perps_open_positions">Open positions</string>
+    <string name="perps_limit_orders">Limit orders</string>
+    <string name="perps_limit_price">Limit price</string>
+    <string name="perps_limit_price_expires">Limit price · Expires %1$s</string>
+    <string name="perps_limit_order_subtitle">Limit %1$s</string>
+    <string name="perps_limit_order_cancel">Cancel order</string>
+    <string name="perps_limit_order_gone">This order is no longer on the book</string>
+    <string name="perps_limit_order_filled_before_cancel">Order filled before it could be cancelled</string>
+    <string name="perps_limit_order_too_small">The remaining size is below the market minimum</string>
+    <string name="perps_limit_order_too_large">The order is larger than the open position</string>
+    <string name="perps_limit_price_title">Set Limit Price</string>
+    <string name="perps_limit_price_set">Set</string>
+    <string name="perps_limit_quick_mid" translatable="false">MID</string>
+    <string name="perps_limit_price_warning_below">The Limit price must be at or below the current price.</string>
+    <string name="perps_limit_price_warning_above">The Limit price must be at or above the current price.</string>
     <string name="perps_total_amount">Total amount</string>
     <string name="perps_coming_soon">This feature is coming soon.</string>
     <string name="perps_load_failed">Couldn’t load market</string>
+    <string name="perps_trading_load_failed">Couldn’t load trading data</string>
     <string name="perps_markets_load_failed">Couldn’t load markets</string>
     <string name="perps_retry">Retry</string>
     <string name="perps_chart_empty">No chart data</string>
@@ -1012,12 +1025,22 @@
     <string name="perps_chart_high">High</string>
     <string name="perps_chart_low">Low</string>
     <string name="perps_chart_volume">Vol</string>
+    <string name="perps_chart_marker_entry">Entry</string>
+    <string name="perps_chart_marker_liquidation">Liq</string>
+    <string name="perps_chart_timeframe_1m">1M</string>
+    <string name="perps_chart_timeframe_5m">5M</string>
+    <string name="perps_chart_timeframe_15m">15M</string>
+    <string name="perps_chart_timeframe_1h">1H</string>
+    <string name="perps_chart_timeframe_4h">4H</string>
+    <string name="perps_chart_timeframe_12h">12H</string>
+    <string name="perps_chart_timeframe_1d">1D</string>
     <string name="perps_service_unavailable">The service is temporarily unavailable. Try again shortly.</string>
     <string name="perps_filter_all">All</string>
     <string name="perps_filter_tokens">Tokens</string>
     <string name="perps_filter_commodities">Commodities</string>
     <string name="perps_filter_stocks">Stocks</string>
     <string name="perps_filter_etfs">ETFs</string>
+    <string name="perps_service_perps">Perps</string>
     <string name="perps_your_position">Your position</string>
     <string name="perps_share">Share</string>
     <string name="perps_size">Size</string>
@@ -1025,6 +1048,10 @@
     <string name="perps_liquidation_distance">%1$s from current price</string>
     <string name="perps_mark_price">Mark price</string>
     <string name="perps_entry_price">Entry price</string>
+    <string name="perps_size_tooltip">What you\'re actually trading with — the money you put in × leverage. PnL and fees are calculated on this full amount, not just your deposit.</string>
+    <string name="perps_liquidation_price_tooltip">The price at which your position is force-closed and you lose your deposit. Higher leverage brings this price closer to the current price.</string>
+    <string name="perps_mark_price_tooltip">The reference price used to calculate your PnL and liquidation — not the last traded price, but a smoothed price sourced across the market to prevent unfair liquidations from short-term spikes.</string>
+    <string name="perps_entry_price_tooltip">The price your position opened at. If it opened in several parts, this is the average of them.</string>
     <string name="perps_adjust_margin">Adjust Margin</string>
     <string name="perps_set_auto_close">Set Auto Close</string>
     <string name="perps_set_take_profit">Set Take Profit</string>
@@ -1032,15 +1059,226 @@
     <string name="perps_edit">Edit</string>
     <string name="perps_cash_out">Cash Out</string>
     <string name="perps_orders">Orders</string>
-    <string name="perps_buy">Buy</string>
-    <string name="perps_sell">Sell</string>
-    <string name="perps_order_price">Price %1$s</string>
+    <string name="perps_close_long">Close long</string>
+    <string name="perps_close_short">Close short</string>
     <string name="perps_position_load_failed">Couldn’t load position</string>
+    <string name="perps_order_price">Price %1$s</string>
+    <string name="perps_order_leverage">Leverage</string>
+    <string name="perps_order_auto_close">Auto Close</string>
+    <string name="perps_order_set">Set</string>
+    <string name="perps_order_review">Review</string>
+    <string name="perps_order_insufficient_liquidity">Insufficient liquidity</string>
+    <string name="perps_order_insufficient_balance">Insufficient funds</string>
+    <string name="perps_order_margin">Margin: %1$s</string>
+    <string name="perps_order_size">Size: %1$s</string>
+    <string name="perps_order_min_margin">Minimum margin %1$s</string>
+    <string name="perps_order_max_margin">Maximum margin %1$s</string>
+    <string name="perps_order_min_size">Minimum size: %1$s</string>
+    <string name="perps_order_trading_disabled">Trading is unavailable</string>
+    <string name="perps_order_type_title">Order type</string>
+    <string name="perps_order_type_market">Market</string>
+    <string name="perps_order_type_market_description">Long or short at the best available current market price</string>
+    <string name="perps_order_type_limit">Limit</string>
+    <string name="perps_order_type_limit_description">Long or short at a specific price or better</string>
+    <string name="perps_leverage_title">Leverage</string>
+    <string name="perps_leverage_min">Min</string>
+    <string name="perps_leverage_warning">Setting a higher leverage increases the risk of liquidation.</string>
+    <string name="perps_leverage_apply">Apply</string>
+    <string name="perps_auto_close_title">Auto close</string>
+    <string name="perps_auto_close_take_profit_when">Take profit when</string>
+    <string name="perps_auto_close_stop_loss_when">Stop loss when</string>
+    <string name="perps_auto_close_profit_percent_hint">+ Profit %</string>
+    <string name="perps_auto_close_loss_percent_hint">− Loss %</string>
+    <string name="perps_auto_close_price_hint">$ Price</string>
+    <string name="perps_auto_close_profit_empty">Set a target to see your profit</string>
+    <string name="perps_auto_close_loss_empty">Set a level to see your loss</string>
+    <string name="perps_auto_close_expected_profit">Expected profit %1$s</string>
+    <string name="perps_auto_close_expected_loss">Expected loss %1$s</string>
+    <string name="perps_auto_close_sl_below_current">The Stop Loss value must be below the current price.</string>
+    <string name="perps_auto_close_sl_above_current">The Stop Loss value must be above the current price.</string>
+    <string name="perps_auto_close_sl_above_liquidation">The Stop Loss value must be above the liquidation price (%1$s).</string>
+    <string name="perps_auto_close_sl_below_liquidation">The Stop Loss value must be below the liquidation price (%1$s).</string>
+    <string name="perps_auto_close_sl_near_liquidation">The Stop Loss value is close to the liquidation price (%1$s) and may not execute.</string>
+    <string name="perps_auto_close_unavailable">Auto Close can’t be changed right now.</string>
+    <string name="perps_review_confirm_action">Confirm Action</string>
+    <string name="perps_review_you_pay">You pay</string>
+    <string name="perps_review_entry_price">Entry price</string>
+    <string name="perps_review_liquidation">Liquidation</string>
+    <string name="perps_review_fee">Fee</string>
+    <string name="perps_review_confirm">Confirm</string>
+    <string name="perps_review_swipe_hint">Swipe right</string>
+    <string name="perps_review_price_updated">Price updated</string>
+    <string name="perps_review_failed">Couldn’t prepare the order</string>
+    <string name="perps_review_wrong_device_time">Wrong device time. Fix the date and time in Settings and try again.</string>
+    <string name="perps_review_conflicting_position">You already have a position in this market</string>
+    <string name="perps_review_order_not_placed_title">Order not placed</string>
+    <string name="perps_review_order_not_placed_text">Price moved more than %1$s while confirming. Nothing was charged.</string>
+    <string name="perps_review_try_again">Try again</string>
+    <string name="perps_review_tp_update_title">Take Profit needs an update</string>
+    <string name="perps_review_tp_update_text_long">The Take Profit value must be above the current price.</string>
+    <string name="perps_review_tp_update_text_short">The Take Profit value must be below the current price.</string>
+    <string name="perps_review_update_tp">Update Take Profit</string>
+    <string name="perps_review_sl_update_title">Stop Loss needs an update</string>
+    <string name="perps_review_sl_update_text_long">The Stop Loss value must be below the current price and above the liquidation price.</string>
+    <string name="perps_review_sl_update_text_short">The Stop Loss value must be above the current price and below the liquidation price.</string>
+    <string name="perps_review_update_sl">Update Stop Loss</string>
+    <string name="perps_review_open_title">Open %1$s %2$s</string>
+    <string name="perps_review_close_title">Close %1$s %2$s</string>
+    <string name="perps_review_reduce_title">Reduce %1$s %2$s</string>
+    <string name="perps_review_add_title">Add to %1$s %2$s</string>
+    <string name="perps_review_margin_add_title">Add margin to %1$s %2$s</string>
+    <string name="perps_review_margin_remove_title">Reduce margin for %1$s %2$s</string>
+    <string name="perps_review_auto_close_title">Auto close</string>
+    <string name="perps_review_position">Position</string>
+    <string name="perps_review_pnl">P&amp;L</string>
+    <string name="perps_review_you_receive">You receive</string>
+    <string name="perps_review_you_close">You close</string>
+    <string name="perps_review_take_profit">Take Profit</string>
+    <string name="perps_review_stop_loss">Stop Loss</string>
+    <string name="perps_review_no_position">The position is no longer open</string>
+    <string name="perps_review_position_changed">The position changed, review again</string>
+    <string name="perps_review_exceeds_margin">The amount exceeds the position margin</string>
+    <string name="perps_review_invalid_amount">This amount can’t be placed at the current size</string>
+    <string name="perps_review_auto_close_invalid">Auto Close levels can’t be placed at the current price</string>
+    <string name="perps_margin_reduce_risk">This amount would put the position at risk of immediate liquidation.</string>
+    <string name="perps_edit_position_title">Edit position</string>
+    <string name="perps_edit_add_title">Add to position</string>
+    <string name="perps_edit_add_description">Increase your current %1$s exposure</string>
+    <string name="perps_edit_reduce_title">Reduce position</string>
+    <string name="perps_edit_reduce_description">Lower your exposure by closing part of your position</string>
+    <string name="perps_order_current_price">Current price %1$s</string>
+    <string name="perps_auto_close_limit_price">Limit price %1$s</string>
+    <string name="perps_available">Available: %1$s</string>
+    <string name="perps_reduce_exceeds_margin">The amount must be below the position margin (%1$s).</string>
+    <string name="perps_reduce_only_full">This position is too small to reduce. Use Cash Out.</string>
+    <string name="perps_adjust_margin_title">Adjust margin</string>
+    <string name="perps_add_margin">Add margin</string>
+    <string name="perps_add_margin_description">Add margin to make your position safer and lower the risk of liquidation</string>
+    <string name="perps_reduce_margin">Reduce margin</string>
+    <string name="perps_reduce_margin_description">Pull back margin when your position looks strong</string>
+    <string name="perps_margin_max_remove">You can remove at most %1$s</string>
+    <string name="perps_share_position_title">Share position</string>
+    <string name="perps_share_entry">Entry</string>
+    <string name="perps_share_current">Current</string>
+    <string name="perps_share_date">Date</string>
+    <string name="perps_share_failed">Couldn’t create image</string>
+    <string name="perps_operation_opening_pattern">Opening %1$s %2$s: %3$s · %4$s</string>
+    <string name="perps_operation_opened_pattern">Opened %1$s %2$s: %3$s · %4$s</string>
+    <string name="perps_operation_placing_pattern">Placing %1$s %2$s: %3$s · %4$s</string>
+    <string name="perps_operation_placed_pattern">Order placed %1$s %2$s: %3$s · %4$s</string>
+    <string name="perps_operation_order_cancelling">Cancelling order</string>
+    <string name="perps_operation_order_cancelled">Order cancelled</string>
+    <string name="perps_operation_order_updating">Updating order</string>
+    <string name="perps_operation_order_updated">Order updated</string>
+    <string name="perps_operation_pending">Pending</string>
+    <string name="perps_operation_in_progress">Another order is already in progress</string>
+    <string name="perps_operation_status_unknown_toast">Order status unknown</string>
+    <string name="perps_operation_price_changed_toast">The price changed, review the order again</string>
+    <string name="perps_operation_failed_toast">Couldn’t open the position</string>
+    <string name="perps_operation_rejected_toast">The order was rejected. Try again.</string>
+    <string name="perps_operation_place_failed_toast">Couldn’t place the order</string>
+    <string name="perps_operation_cancel_failed_toast">Couldn’t cancel the order</string>
+    <string name="perps_operation_update_failed_toast">Couldn’t update the order</string>
+    <string name="perps_operation_closing_pattern">Closing %1$s %2$s%3$s</string>
+    <string name="perps_operation_closed_pattern">Closed %1$s %2$s%3$s</string>
+    <string name="perps_operation_increasing_pattern">Increasing %1$s %2$s%3$s</string>
+    <string name="perps_operation_increased_pattern">Increased %1$s %2$s%3$s</string>
+    <string name="perps_operation_reducing_pattern">Reducing %1$s %2$s%3$s</string>
+    <string name="perps_operation_reduced_pattern">Reduced %1$s %2$s%3$s</string>
+    <string name="perps_operation_margin_adding_pattern">Adding %1$s margin</string>
+    <string name="perps_operation_margin_added_pattern">Added %1$s margin</string>
+    <string name="perps_operation_margin_reducing_pattern">Reducing margin by %1$s</string>
+    <string name="perps_operation_margin_reduced_pattern">Reduced margin by %1$s</string>
+    <string name="perps_operation_auto_close_updating">Updating Auto Close</string>
+    <string name="perps_operation_auto_close_updated">Auto Close updated</string>
+    <string name="perps_operation_close_failed_toast">Couldn’t close the position</string>
+    <string name="perps_operation_adjust_failed_toast">Couldn’t update the position</string>
     <string name="perps_leverage_pattern" translatable="false">%1$dX</string>
+    <string name="perps_leverage_value_pattern" translatable="false">%1$dx</string>
+    <string name="perps_order_separator" translatable="false">·</string>
     <string name="perps_take_profit_short" translatable="false">TP</string>
     <string name="perps_stop_loss_short" translatable="false">SL</string>
-    <string name="perps_order_share_pattern" translatable="false">%1$s %2$s%%</string>
     <string name="perps_order_amount_pattern" translatable="false">%1$s %2$s</string>
+    <string name="perps_chart_change_pattern" translatable="false">%1$s (%2$s)</string>
+    <string name="perps_order_side_title" translatable="false">%1$s %2$s</string>
+    <string name="perps_order_price_market" translatable="false">%1$s · %2$s</string>
+    <string name="perps_auto_close_tp_value" translatable="false">TP %1$s</string>
+    <string name="perps_auto_close_sl_value" translatable="false">SL %1$s</string>
+    <string name="perps_auto_close_legs_separator" translatable="false">" / "</string>
+    <string name="perps_auto_close_profit_percent_preset" translatable="false">+%1$d%%</string>
+    <string name="perps_auto_close_loss_percent_preset" translatable="false">−%1$d%%</string>
+    <string name="perps_review_title_pattern" translatable="false">%1$s %2$s</string>
+    <string name="perps_review_quote_pattern" translatable="false">≈ %1$s USDC</string>
+    <string name="perps_review_base_pattern" translatable="false">≈ %1$s %2$s</string>
+    <string name="perps_operation_leverage_suffix" translatable="false">" · %1$s"</string>
+    <string name="perps_size_change_arrow_pattern" translatable="false">%1$s → %2$s</string>
+    <string name="perps_review_size_added_pattern" translatable="false">+%1$s %2$s</string>
+    <string name="perps_review_size_removed_pattern" translatable="false">−%1$s %2$s</string>
+    <string name="perps_deposit_title">Deposit Perps balance</string>
+    <string name="perps_deposit_review">Review</string>
+    <string name="perps_deposit_best_value">BEST VALUE</string>
+    <string name="perps_deposit_converted_note">Will be converted to USDC</string>
+    <string name="perps_deposit_confirm_title">Deposit %1$s</string>
+    <string name="perps_deposit_arrival_time">Arrival time</string>
+    <string name="perps_deposit_processing_note">Funds are held while the deposit is processed and appear on your Perps balance once credited.</string>
+    <string name="perps_deposit_min_amount">Minimum deposit is 1 USDC after fees</string>
+    <string name="perps_deposit_min_amount_usd">Minimum deposit is %1$s</string>
+    <string name="perps_deposit_insufficient_network_fee">Insufficient %1$s to pay the network fee</string>
+    <string name="perps_deposit_quote_failed">Couldn’t price the deposit. Try again.</string>
+    <string name="perps_deposit_quote_expired">Quote expired. Review the updated amounts and try again.</string>
+    <string name="perps_deposit_payment_in_flight">Wait for the previous deposit to finish before starting a new one.</string>
+    <string name="perps_deposit_no_sources">No supported assets to deposit from</string>
+    <string name="perps_deposit_sources_failed">Couldn’t load your assets</string>
+    <string name="perps_deposit_failed">Deposit failed</string>
+    <string name="perps_deposit_refunded">Deposit refunded</string>
+    <string name="perps_deposit_confirm_pending">Confirm deposit</string>
+    <string name="perps_deposit_source_pattern" translatable="false">%1$s · %2$s</string>
+    <string name="perps_withdraw_title">Withdraw Perps balance</string>
+    <string name="perps_withdraw_review">Review</string>
+    <string name="perps_withdraw_confirm_title">Withdraw %1$s</string>
+    <string name="perps_withdraw_you_withdraw">You withdraw</string>
+    <string name="perps_withdraw_you_receive">You receive</string>
+    <string name="perps_withdraw_fee_free">Free</string>
+    <string name="perps_withdraw_method_fee">0% fee</string>
+    <string name="perps_withdraw_method_fee_from">Fee from %1$s</string>
+    <string name="perps_withdraw_fee_estimate" translatable="false">≈ %1$s</string>
+    <string name="perps_withdraw_arrival_value">Up to %1$d min</string>
+    <string name="perps_withdraw_min_amount">Minimum withdrawal is %1$s USDC</string>
+    <string name="perps_withdraw_in_flight">Wait for the previous withdrawal to finish before starting a new one.</string>
+    <string name="perps_withdraw_account_unavailable">Your Perps account isn’t ready for withdrawals yet</string>
+    <string name="perps_withdraw_prepare_failed">Couldn’t prepare the withdrawal. Try again.</string>
+    <string name="perps_withdraw_amount_too_low">The amount is too low to cover the fees</string>
+    <string name="perps_funding_high_fee">The network fee is about %1$d%% of this amount. Increase the amount to reduce the fee percentage.</string>
+    <string name="perps_withdraw_refused">The withdrawal was rejected. Try again.</string>
+    <string name="perps_withdraw_failed">Withdrawal failed</string>
+    <string name="perps_withdraw_available_failed">Couldn’t load your Perps balance</string>
+    <string name="history_perps_opened_long">Long opened</string>
+    <string name="history_perps_opened_short">Short opened</string>
+    <string name="history_perps_opened">Position opened</string>
+    <string name="history_perps_closed_long">Long closed</string>
+    <string name="history_perps_closed_short">Short closed</string>
+    <string name="history_perps_closed">Position closed</string>
+    <string name="history_perps_increased_long">Long increased</string>
+    <string name="history_perps_increased_short">Short increased</string>
+    <string name="history_perps_increased">Position increased</string>
+    <string name="history_perps_reduced_long">Long reduced</string>
+    <string name="history_perps_reduced_short">Short reduced</string>
+    <string name="history_perps_reduced">Position reduced</string>
+    <string name="history_perps_liquidated_long">Long Liquidated</string>
+    <string name="history_perps_liquidated_short">Short Liquidated</string>
+    <string name="history_perps_liquidated">Liquidated</string>
+    <string name="history_perps_tp_executed">TP executed</string>
+    <string name="history_perps_sl_executed">SL executed</string>
+    <string name="history_perps_to_perps">To Perps</string>
+    <string name="history_perps_from_perps">From Perps</string>
+    <string name="perps_close_price">Close price</string>
+    <string name="perps_profit">Profit</string>
+    <string name="perps_loss">Loss</string>
+    <string name="perps_share_close">Close</string>
+    <string name="history_perps_event_on">%1$s on %2$s</string>
+    <string name="history_perps_take_profit_executed">Take Profit executed</string>
+    <string name="history_perps_stop_loss_executed">Stop Loss executed</string>
+    <string name="history_perps_subtitle">%1$s Perps</string>
     <string name="volume_short_pattern" translatable="false">%1$s vol</string>
     <string name="badge_new">NEW</string>
     <string name="tooltip_add_multichain_wallet">Add a wallet for new blockchains</string>
@@ -1052,6 +1290,10 @@
     <string name="not_found">Not Found</string>
     <string name="search_no_result">There were no results for ‘%1$s’.</string>
     <string name="earn_apy">Earn %1$s APY</string>
+    <string name="earn_title">Earn &amp; Borrow</string>
+    <string name="earn_positions_title">Earn</string>
+    <string name="earn_up_to_apy">Earn up to %1$s APY</string>
+    <string name="earn_vault_apy">%1$s APY</string>
     <string name="p2p_error">Couldn’t create a P2P session. Please try again.</string>
     <string name="wallets_list">Wallets list</string>
     <string name="migration">Migration</string>
@@ -1131,9 +1373,15 @@
     <string name="wc_error_multichain_only">Only multichain wallets support WalletConnect</string>
     <string name="wc_error_failed_to_approve">Failed to approve</string>
     <string name="wc_error_failed_to_reject">Failed to reject</string>
-    <string name="swap_error_quote_not_found">Couldn’t get a quote. Change amount</string>
     <string name="swap_no_quote">No Quote</string>
+    <string name="swap_error_quote_failed">Couldn’t get a quote. Please try again.</string>
+    <string name="swap_error_pair_unavailable">This pair isn’t available for swaps</string>
+    <string name="swap_error_asset_unavailable">This token isn’t available for swaps</string>
+    <string name="swap_error_amount_too_small">Amount is too small for a swap. Try a larger amount.</string>
+    <string name="swap_error_region_unavailable">Swaps aren’t available in your region.</string>
+    <string name="swap_error_provider_unavailable">Swap provider is temporarily unavailable. Please try again.</string>
     <string name="swap_error_prepare_failed">Prepare failed</string>
+    <string name="swap_error_max_below_reserve">Please enter amount greater than %1$s GRAM</string>
     <string name="confirmation_error_invalid_address">Recipient address is invalid</string>
     <string name="confirmation_error_unsupported_transaction">This transaction type is not supported</string>
     <string name="confirmation_error_unsupported_asset">This asset is not supported</string>
@@ -1198,4 +1446,21 @@
         <item quantity="many">%1$d wallets left</item>
         <item quantity="other">%1$d wallets left</item>
     </plurals>
+    <string name="new_networks_loading_title">Adding new networks</string>
+    <string name="new_networks_loading_subtitle">It takes a few seconds. Your recovery phrase stays the same.</string>
+    <string name="new_networks_added_title">New networks added</string>
+    <string name="new_networks_added_subtitle_one">%1$s is now in your wallet.</string>
+    <string name="new_networks_added_subtitle_many">%1$s are now in your wallet.</string>
+    <string name="new_networks_list_last">%1$s and %2$s</string>
+    <string name="new_networks_error_title">Couldn’t add new networks</string>
+    <string name="new_networks_error_subtitle">The server didn’t respond. Your funds and existing networks aren’t affected.</string>
+    <string name="new_networks_open_wallet">Open wallet</string>
+    <string name="dev_menu_warning">Developer settings. Careless use may lead to losing your wallet.</string>
+    <string name="signed">Signed</string>
+    <string name="sign_message_not_sent_warning">Keeper won’t send this transaction. %1$s will send it now or later and pay the network fee.</string>
+    <string name="sign_message_error_not_supported">This wallet can’t sign this request</string>
+    <string name="sign_message_error_invalid_request">Invalid request</string>
+    <string name="sign_message_error_expired">The request has expired</string>
+    <string name="sign_message_error_network_mismatch">The request is for a different network</string>
+    <string name="sign_message_error_address_mismatch">The request is for a different wallet</string>
 </resources>

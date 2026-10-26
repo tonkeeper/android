@@ -22,8 +22,13 @@ object NotificationsHelper {
         return getPendingIntent(context, intent)
     }
 
-    fun getPendingIntent(context: Context, intent: Intent): PendingIntent {
-        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    fun getPendingIntent(context: Context, intent: Intent, requestCode: Int = 0): PendingIntent {
+        return PendingIntent.getActivity(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     fun getOrCreateChannel(context: Context, id: String): NotificationChannelCompat {
@@ -33,6 +38,19 @@ object NotificationsHelper {
             val builder = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_LOW)
             builder.setName(context.getString(Localization.notification_channel_updates_title))
             builder.setDescription(context.getString(Localization.notification_channel_updates_description))
+            val newChannel = builder.build()
+            manager.createNotificationChannel(newChannel)
+            return newChannel
+        }
+        return channel
+    }
+
+    fun getOrCreatePushChannel(context: Context, id: String): NotificationChannelCompat {
+        val manager = createNotificationManager(context)
+        val channel = manager.getNotificationChannelCompat(id)
+        if (channel == null) {
+            val builder = NotificationChannelCompat.Builder(id, NotificationManagerCompat.IMPORTANCE_DEFAULT)
+            builder.setName(context.getString(Localization.notifications))
             val newChannel = builder.build()
             manager.createNotificationChannel(newChannel)
             return newChannel

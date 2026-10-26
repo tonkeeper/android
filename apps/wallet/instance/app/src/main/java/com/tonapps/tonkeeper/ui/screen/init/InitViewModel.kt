@@ -7,13 +7,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.async.Async
 import com.tonapps.blockchain.MnemonicHelper
+import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletColor
+import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
-import com.tonapps.blockchain.ton.AndroidSecureRandom
-import com.tonapps.blockchain.ton.EntropyHelper
 import com.tonapps.blockchain.ton.MnemonicType
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
@@ -24,23 +24,28 @@ import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.balanceBucketOf
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowFrom
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowLedgerModel
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletMode
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
 import com.tonapps.chainkit.core.secure.mnemonic.Mnemonic
-import com.tonapps.core.flags.WalletFeature
 import com.tonapps.emoji.Emoji
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.logError
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.bus.generated.Events.Migration.MigrationFrom
+import com.tonapps.legacy.assets.AssetsManager
+import com.tonapps.legacy.assets.sumOfVerifiedFiat
+import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.log.L
 import com.tonapps.migration.MigrationFragment
 import com.tonapps.migration.data.MigrationRepository
+import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.extensions.fixW5Title
 import com.tonapps.tonkeeper.manager.push.PushManager
@@ -50,6 +55,7 @@ import com.tonapps.onboading.screens.selector.WalletKindItem
 import com.tonapps.onboading.screens.selector.WalletVersionItem
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
+import com.tonapps.tonkeeper.ui.screen.ledger.toWalletFlowLedgerModel
 import com.tonapps.tonkeeper.ui.screen.watchonly.WatchInfoScreen
 import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.tonkeeper.worker.TotalBalancesWorker
@@ -61,6 +67,7 @@ import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.wallet.data.multichain.account.WALLET_ASSETS_PAGE_SIZE
 import com.tonapps.wallet.data.multichain.account.WalletRegistrationException
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeBiometric
@@ -71,6 +78,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import io.tonapi.models.AccountStatus
 import io.tonapi.models.TokenRates
+import io.walletapi.models.SyncStatus
 import java.math.BigDecimal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -87,18 +95,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.ton.block.AddrStd
 import org.ton.kotlin.crypto.PublicKeyEd25519
-import org.ton.kotlin.crypto.mnemonic.Mnemonic as TonMnemonicGenerator
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 private const val MIGRATABLE_WALLETS_CHECK_TIMEOUT_MS = 15_000L
+private const val IMPORT_BALANCE_SYNC_CHECKS = 20
+private const val IMPORT_BALANCE_SYNC_POLL_MS = 6_000L
 
 @Suppress("LargeClass")
 @OptIn(FlowPreview::class)
@@ -111,9 +123,11 @@ class InitViewModel(
     private val settingsRepository: SettingsRepository,
     private val backupRepository: BackupRepository,
     private val api: API,
+    private val networkMonitor: NetworkMonitor,
     private val rnLegacy: RNLegacy,
     private val migrationRepository: MigrationRepository,
     private val tonWalletVersionInteractor: TonWalletVersionInteractor,
+    private val assetsManager: AssetsManager,
 
     private val mcAccountRepository: McAccountRepository,
     private val unifiedAccountRepository: UnifiedAccountRepository,
@@ -124,10 +138,6 @@ class InitViewModel(
     savedStateHandle: SavedStateHandle
 ) : BaseWalletVM(app) {
 
-    private val entropyHelper: EntropyHelper by lazy {
-        EntropyHelper(context)
-    }
-
     val installId: String
         get() = settingsRepository.installId
 
@@ -136,32 +146,23 @@ class InitViewModel(
     private var type = args.type
     private val testnet: Boolean
         get() = type == InitArgs.Type.Testnet
-    private val tetra: Boolean
-        get() = type == InitArgs.Type.Tetra
     private val walletsCount = AtomicInteger(-1)
     private var migrationAvailable = false
     private var existingWalletLabels: List<String>? = null
     val watchRecoveryAccountId = args.watchRecoveryAccountId
     private val raffleSourceWalletId = args.raffleSourceWalletId
+    private val importStartedTracked = args.importStartedTracked
 
     private val walletLabelHelper: WalletLabelHelper by lazy {
         WalletLabelHelper(context)
     }
 
     private val tonNetwork: TonNetwork
-        get() = when {
-            testnet -> TonNetwork.TESTNET
-            tetra -> TonNetwork.TETRA
-            else -> TonNetwork.MAINNET
+        get() = if (testnet) {
+            TonNetwork.TESTNET
+        } else {
+            TonNetwork.MAINNET
         }
-
-    private val isMultichainEnabled: Boolean
-        get() = WalletFeature.Multichain.isEnabled
-                && (api.getConfig(TonNetwork.MAINNET).flags.multichainEnabled || WalletFeature.Multichain.isOverridden)
-
-    private val isImportMultichainEnabled: Boolean
-        get() = WalletFeature.ImportMultichainWallet.isEnabled
-                && (api.getConfig(TonNetwork.MAINNET).flags.multichainEnabled || WalletFeature.ImportMultichainWallet.isOverridden)
 
     private val _uiTopOffset = MutableStateFlow(0)
     val uiTopOffset = _uiTopOffset.asStateFlow()
@@ -221,15 +222,21 @@ class InitViewModel(
 
     private val isPinSet = AtomicBoolean(false)
 
+    private val offlineToastShown = AtomicBoolean(false)
+
+    private val generateNewWalletMutex = Mutex()
+
+    val newWalletPhraseReady = savedState.hasMnemonicFlow
+
     private var enterPasscodeJob: Job? = null
 
     private var reEnterPopJob: Job? = null
 
     private val requestSetPinCode: Boolean
-        get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || type == InitArgs.Type.Tetra) && !isPinSet.get()
+        get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && !isPinSet.get()
 
     private val requestEnterPinCode: Boolean
-        get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || type == InitArgs.Type.Tetra) && isPinSet.get()
+        get() = (type == InitArgs.Type.New || type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) && isPinSet.get()
 
     private val isOnboarding: Boolean
         get() = walletsCount.get() == 0
@@ -247,39 +254,28 @@ class InitViewModel(
             WalletFlowFrom.Main
         }
 
-    private val createWalletMode: WalletFlowWalletMode
-        get() = if (isMultichainEnabled) {
-            WalletFlowWalletMode.Multi
-        } else {
-            WalletFlowWalletMode.Single
-        }
-
-    private val importWalletMode: WalletFlowWalletMode
-        get() = if (!isImportMultichainEnabled) {
-            WalletFlowWalletMode.Single
-        } else {
-            WalletFlowWalletMode.Multi
-        }
-
     private val importedWalletMode: WalletFlowWalletMode
         get() = when (type) {
-            InitArgs.Type.Import, InitArgs.Type.Testnet, InitArgs.Type.Tetra -> when (effectiveMnemonicType()) {
+            InitArgs.Type.Import, InitArgs.Type.Testnet -> when (effectiveMnemonicType()) {
                 MnemonicType.Ton -> WalletFlowWalletMode.Single
                 MnemonicType.Bip39, MnemonicType.Both -> WalletFlowWalletMode.Multi
-                null -> importWalletMode
+                null -> WalletFlowWalletMode.Multi
             }
             else -> WalletFlowWalletMode.Single
         }
 
     private val importWalletSource: WalletFlowWalletSource?
         get() = when (type) {
-            InitArgs.Type.Import, InitArgs.Type.Testnet, InitArgs.Type.Tetra -> WalletFlowWalletSource.Mnemonic
+            InitArgs.Type.Import, InitArgs.Type.Testnet -> WalletFlowWalletSource.Mnemonic
             InitArgs.Type.Signer, InitArgs.Type.SignerQR -> WalletFlowWalletSource.Signer
             InitArgs.Type.Ledger -> WalletFlowWalletSource.Ledger
             InitArgs.Type.Keystone -> WalletFlowWalletSource.Keystone
             InitArgs.Type.Watch -> WalletFlowWalletSource.Watchonly
             InitArgs.Type.New, InitArgs.Type.AddWallet -> null
         }
+
+    private val importLedgerModel: WalletFlowLedgerModel?
+        get() = savedState.ledgerConnectData?.model?.id?.toWalletFlowLedgerModel()
 
     var wordsCount: Int
         get() = savedState.wordsCount
@@ -300,12 +296,6 @@ class InitViewModel(
 
             args.labelName?.let(::setInitName)
 
-            if (type == InitArgs.Type.New) {
-                withContext(Dispatchers.Main) {
-                    entropyHelper.start()
-                }
-            }
-
             start()
         }
     }
@@ -322,7 +312,7 @@ class InitViewModel(
         when (type) {
             InitArgs.Type.AddWallet -> routeTo(InitRoute.SelectType)
             InitArgs.Type.Watch -> routeTo(InitRoute.WatchAccount)
-            InitArgs.Type.Import, InitArgs.Type.Testnet, InitArgs.Type.Tetra -> routeTo(InitRoute.ImportWords)
+            InitArgs.Type.Import, InitArgs.Type.Testnet -> routeTo(InitRoute.ImportWords)
             InitArgs.Type.Signer, InitArgs.Type.SignerQR -> resolveWallets(savedState.publicKey!!)
             InitArgs.Type.Ledger -> routeTo(InitRoute.SelectAccount)
             InitArgs.Type.Keystone -> {
@@ -341,7 +331,7 @@ class InitViewModel(
                 } else if (requestEnterPinCode) {
                     routeTo(InitRoute.EnterPasscode)
                 } else {
-                    routeTo(InitRoute.BackupStart)
+                    routeToBackupStart()
                 }
             }
         }
@@ -358,13 +348,15 @@ class InitViewModel(
         when (type) {
             InitArgs.Type.AddWallet -> analytics.events.walletFlow.addWalletMenuView(from = analyticsFrom)
             InitArgs.Type.New -> analytics.events.walletFlow.walletCreateStarted(
-                walletMode = createWalletMode,
+                walletMode = WalletFlowWalletMode.Multi,
                 from = analyticsFrom,
             )
-            InitArgs.Type.Import, InitArgs.Type.Testnet, InitArgs.Type.Tetra,
+            InitArgs.Type.Import, InitArgs.Type.Testnet,
             InitArgs.Type.Signer, InitArgs.Type.SignerQR,
             InitArgs.Type.Ledger, InitArgs.Type.Keystone,
-            InitArgs.Type.Watch -> trackImportStarted()
+            InitArgs.Type.Watch -> if (!importStartedTracked) {
+                trackImportStarted()
+            }
         }
     }
 
@@ -376,12 +368,31 @@ class InitViewModel(
         )
     }
 
+    fun trackPairingStarted(walletSource: WalletFlowWalletSource) {
+        analytics.events.walletFlow.walletImportStarted(
+            walletMode = WalletFlowWalletMode.Single,
+            walletSource = walletSource,
+            from = analyticsFrom,
+        )
+    }
+
+    fun trackMnemonicAccepted() {
+        analytics.events.walletFlow.walletImportMnemonicAccepted(
+            walletMode = importedWalletMode,
+            walletSource = importWalletSource ?: return,
+            from = analyticsFrom,
+        )
+    }
+
     private fun trackRoute(route: InitRoute) {
         when (route) {
             InitRoute.BackupStart -> analytics.events.walletFlow.walletBackupStarted(
-                walletMode = createWalletMode,
+                walletMode = WalletFlowWalletMode.Multi,
                 source = WalletFlowSource.Onboarding,
             )
+            InitRoute.Push -> if (type == InitArgs.Type.New && isOnboarding) {
+                analytics.events.onboardingFlow.onboardingViewNotifications()
+            }
             InitRoute.LabelAccount -> if (type == InitArgs.Type.New && isOnboarding) {
                 analytics.events.onboardingFlow.onboardingViewCustomize()
             }
@@ -394,7 +405,96 @@ class InitViewModel(
             walletMode = importedWalletMode,
             walletSource = importWalletSource ?: return,
             from = analyticsFrom,
+            ledgerModel = importLedgerModel,
         )
+    }
+
+    private fun trackMultichainImportBalance(walletId: String) {
+        if (type == InitArgs.Type.Testnet) {
+            return
+        }
+        val walletSource = importWalletSource ?: return
+        val walletMode = importedWalletMode
+        val from = analyticsFrom
+        Async.globalScope().launch {
+            if (!isWalletSynced(walletId)) {
+                return@launch
+            }
+            val total = try {
+                mcAccountRepository.fetchAccounts(
+                    walletId = walletId,
+                    limit = WALLET_ASSETS_PAGE_SIZE,
+                    currency = WalletCurrency.USD.code,
+                    verifiedOnly = true,
+                    hideDust = false,
+                ).total
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                L.e(e)
+                return@launch
+            }
+            analytics.events.walletFlow.walletImportBalance(
+                walletMode = walletMode,
+                walletSource = walletSource,
+                from = from,
+                balanceBucket = balanceBucketOf(total.doubleValue(exactRequired = false)),
+            )
+        }
+    }
+
+    private fun trackLegacyImportBalance(wallets: List<WalletEntity>) {
+        if (type == InitArgs.Type.Watch || wallets.isEmpty() || wallets.any { it.testnet }) {
+            return
+        }
+        val walletSource = importWalletSource ?: return
+        val walletMode = importedWalletMode
+        val from = analyticsFrom
+        Async.globalScope().launch {
+            var total = Coins.ZERO
+            var isTronCounted = false
+            for (wallet in wallets) {
+                val assets = try {
+                    assetsManager.getAssets(wallet, WalletCurrency.USD, refresh = false)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    L.e(e)
+                    null
+                } ?: return@launch
+                val (tronAssets, walletAssets) = assets.partition { it.isTron }
+                total += walletAssets.sumOfVerifiedFiat()
+                if (!isTronCounted && tronAssets.isNotEmpty()) {
+                    total += tronAssets.sumOfVerifiedFiat()
+                    isTronCounted = true
+                }
+            }
+            analytics.events.walletFlow.walletImportBalance(
+                walletMode = walletMode,
+                walletSource = walletSource,
+                from = from,
+                balanceBucket = balanceBucketOf(total.value.toDouble()),
+            )
+        }
+    }
+
+    private suspend fun isWalletSynced(walletId: String): Boolean {
+        repeat(IMPORT_BALANCE_SYNC_CHECKS) {
+            val status = try {
+                mcAccountRepository.getWalletSyncStatus(walletId).status
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                L.e(e)
+                null
+            }
+            when (status) {
+                SyncStatus.Status.ready -> return true
+                SyncStatus.Status.failed -> return false
+                SyncStatus.Status.in_progress, SyncStatus.Status.unknown, null -> delay(IMPORT_BALANCE_SYNC_POLL_MS)
+            }
+        }
+        return false
     }
 
     private fun trackImportError(e: Throwable) {
@@ -405,6 +505,7 @@ class InitViewModel(
             errorType = e.javaClass.simpleName,
             errorCode = null,
             errorMessage = e.message,
+            ledgerModel = importLedgerModel,
         )
     }
 
@@ -416,6 +517,7 @@ class InitViewModel(
             errorType = errorType,
             errorCode = null,
             errorMessage = null,
+            ledgerModel = null,
         )
     }
 
@@ -432,12 +534,6 @@ class InitViewModel(
             }
             type = newType
 
-            if (newType == InitArgs.Type.New) {
-                withContext(Dispatchers.Main) {
-                    entropyHelper.start()
-                }
-            }
-
             start()
         }
     }
@@ -445,10 +541,9 @@ class InitViewModel(
     // Whether this run creates a multichain wallet — those use the new lottie loader (create + sync)
     // instead of the legacy gear loader.
     private fun isMultichainCreation(): Boolean = when (type) {
-        InitArgs.Type.New -> isMultichainEnabled
+        InitArgs.Type.New -> true
         InitArgs.Type.Import,
-        InitArgs.Type.Testnet,
-        InitArgs.Type.Tetra -> {
+        InitArgs.Type.Testnet -> {
             val effectiveType = effectiveMnemonicType() ?: return false
             effectiveType != MnemonicType.Ton
         }
@@ -505,10 +600,20 @@ class InitViewModel(
         _loaderState.value = InitLoaderState.Done(walletId)
     }
 
-    private suspend fun hasMigratableWallets(): Boolean {
-        if (!WalletFeature.Migration.isEnabled) {
-            return false
+    private suspend fun isOffline(): Boolean = !networkMonitor.isOnlineFlow.first()
+
+    private suspend fun showOfflineToastIfNeeded() {
+        if (!isOffline()) {
+            return
         }
+        // Both success paths reach this, and the loader dialog may still deliver its done callback
+        // after the non-multichain path already toasted: a repeat would dismiss the visible toast.
+        if (offlineToastShown.compareAndSet(false, true)) {
+            warningToast(Localization.no_internet_connection)
+        }
+    }
+
+    private suspend fun hasMigratableWallets(): Boolean {
         return try {
             withTimeoutOrNull(MIGRATABLE_WALLETS_CHECK_TIMEOUT_MS) {
                 migrationRepository.migratableWalletsCount() > 0
@@ -530,10 +635,12 @@ class InitViewModel(
                 migrationAvailable = false
                 openScreen(
                     MigrationFragment.newInstance(
-                        from = MigrationFrom.Deeplink,
+                        from = MigrationFrom.Onboarding,
                         onboarding = true,
                     ),
                 )
+            } else {
+                showOfflineToastIfNeeded()
             }
             finish()
         }
@@ -555,10 +662,7 @@ class InitViewModel(
     }
 
     fun navigateToBackupPhrase() {
-        viewModelScope.launch {
-            generateNewWallet()
-            routeTo(InitRoute.BackupPhrase)
-        }
+        routeTo(InitRoute.BackupPhrase)
     }
 
     fun navigateToBackupCheck() {
@@ -568,7 +672,7 @@ class InitViewModel(
     fun completeBackup(done: Boolean = true) {
         if (done) {
             analytics.events.walletFlow.walletBackupSuccess(
-                walletMode = createWalletMode,
+                walletMode = WalletFlowWalletMode.Multi,
                 source = WalletFlowSource.Onboarding,
             )
         }
@@ -578,7 +682,7 @@ class InitViewModel(
 
     fun trackBackupError() {
         analytics.events.walletFlow.walletBackupError(
-            walletMode = createWalletMode,
+            walletMode = WalletFlowWalletMode.Multi,
             source = WalletFlowSource.Onboarding,
             errorType = "backup_check_mismatch",
             errorCode = null,
@@ -588,13 +692,15 @@ class InitViewModel(
 
     fun skipBackup() {
         analytics.events.walletFlow.walletBackupSkip(
-            walletMode = createWalletMode,
+            walletMode = WalletFlowWalletMode.Multi,
             source = WalletFlowSource.Onboarding,
         )
-        viewModelScope.launch {
-            generateNewWallet()
-            completeBackup(done = false)
-        }
+        completeBackup(done = false)
+    }
+
+    private fun routeToBackupStart() {
+        routeTo(InitRoute.BackupStart)
+        viewModelScope.launch { generateNewWallet() }
     }
 
     fun enablePush(enable: Boolean) {
@@ -702,7 +808,7 @@ class InitViewModel(
         if (watchRecoveryAccountId != null) {
             execute(context)
         } else if (type == InitArgs.Type.New) {
-            routeTo(InitRoute.BackupStart)
+            routeToBackupStart()
         } else {
             routeToPushOrLabelAccount()
         }
@@ -737,17 +843,6 @@ class InitViewModel(
     suspend fun setMnemonic(words: List<String>): Boolean {
         // Any previously stored choice belongs to a different seed; clear it before resolving this one.
         savedState.mnemonicType = null
-
-        // With multichain import disabled, every seed is imported the legacy way, as a plain TON
-        // mnemonic. The type is forced so the downstream import takes the legacy path too.
-        if (!isImportMultichainEnabled) {
-            if (resolveWallets(words)) {
-                savedState.mnemonicType = MnemonicType.Ton
-                savedState.mnemonic = Mnemonic.fromWords(words.toTypedArray())
-                return true
-            }
-            return false
-        }
 
         val type = MnemonicHelper.mnemonicType(words)
         when (type) {
@@ -886,7 +981,7 @@ class InitViewModel(
 //                val alreadyWalletCount = accountRepository.getWallets()
 //                if (alreadyWalletCount.isEmpty() && api.getConfig(TonNetwork.MAINNET).flags.safeModeEnabled) {
 //                    settingsRepository.setSafeModeState(SafeModeState.Enabled)
-//                    if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || type == InitArgs.Type.Tetra) {
+//                    if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet) {
 //                        settingsRepository.showSafeModeSetup = true
 //                    }
 //                }
@@ -897,13 +992,14 @@ class InitViewModel(
                     InitArgs.Type.Watch -> {
                         wallets.add(saveWatchWallet())
                     }
-                    InitArgs.Type.Import, InitArgs.Type.Testnet, InitArgs.Type.Tetra -> {
+                    InitArgs.Type.Import, InitArgs.Type.Testnet -> {
                         when (val wallet = newImportWallet()) {
                             is ImportedWallet.Multicoin-> {
                                 trackImportSuccess()
                                 reportRaffleImport(wallet.wallet.id)
                                 applyMultichainPush(wallet.wallet.id)
                                 awaitSyncThenDone(wallet.wallet.id)
+                                trackMultichainImportBalance(wallet.wallet.id)
                                 return@launch
                             }
                             is ImportedWallet.Legacy -> {
@@ -918,23 +1014,19 @@ class InitViewModel(
                     InitArgs.Type.Keystone -> wallets.addAll(keystoneWallet())
 
                     InitArgs.Type.New -> {
-                        if (isMultichainEnabled) {
-                            val wallet = setupMultichainCoin(true)
-                            analytics.events.walletFlow.walletCreateSuccess(
-                                walletMode = WalletFlowWalletMode.Multi,
-                                backedUp = savedState.backupDone,
-                                from = analyticsFrom,
-                            )
-                            applyMultichainPush(wallet.id)
-                            awaitSyncThenDone(wallet.id)
-                            return@launch
-                        } else {
-                            wallets.add(newWallet(context))
-                        }
+                        val wallet = setupMultichainCoin(true)
+                        analytics.events.walletFlow.walletCreateSuccess(
+                            walletMode = WalletFlowWalletMode.Multi,
+                            backedUp = savedState.backupDone,
+                            from = analyticsFrom,
+                        )
+                        applyMultichainPush(wallet.id)
+                        awaitSyncThenDone(wallet.id)
+                        return@launch
                     }
                 }
 
-                if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || type == InitArgs.Type.Tetra || savedState.backupDone) {
+                if (type == InitArgs.Type.Import || type == InitArgs.Type.Testnet || savedState.backupDone) {
                     backupRepository.addBackups(wallets.map { it.id })
                 }
 
@@ -951,40 +1043,41 @@ class InitViewModel(
                 val selectedWallet = wallets.minByOrNull { it.version }!!
                 accountRepository.setSelectedWallet(selectedWallet.id)
 
-                if (type == InitArgs.Type.New) {
-                    analytics.events.walletFlow.walletCreateSuccess(
-                        walletMode = WalletFlowWalletMode.Single,
-                        backedUp = savedState.backupDone,
-                        from = analyticsFrom,
-                    )
-                } else {
-                    trackImportSuccess()
-                }
+                trackImportSuccess()
+                trackLegacyImportBalance(wallets)
 
                 if (type == InitArgs.Type.Watch) {
                     openScreen(WatchInfoScreen.newInstance(selectedWallet))
                 } else {
                     _loaderState.value = InitLoaderState.Done(selectedWallet.id)
+                    showOfflineToastIfNeeded()
                 }
 
                 // The screen is a bottom sheet now, so nothing removes it from the outside anymore:
                 // the primary-fragment replace only touches the root container. Close it explicitly,
                 // revealing the main screen that was swapped in behind the sheet.
                 finish()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: WalletRegistrationException) {
-                // Backend registration failed — hide the loader, surface an error and step back so the
-                // user can retry.
+                // A multichain wallet exists only once the backend has registered it, so there is
+                // nothing to open the main screen with. Hide the loader and keep the user on the
+                // current step, where Continue retries the registration.
                 trackImportError(e)
                 context.logError(e)
                 _loaderState.value = null
                 setLoading(false)
-                toast(Localization.unknown_error)
-                routePopBackStack()
+                if (isOffline()) {
+                    warningToast(Localization.no_internet_connection)
+                } else {
+                    toast(Localization.unknown_error)
+                }
             } catch (e: Throwable) {
                 trackImportError(e)
                 context.logError(e)
                 _loaderState.value = null
                 setLoading(false)
+                toast(Localization.unknown_error)
             }
         }
     }
@@ -1244,12 +1337,7 @@ class InitViewModel(
             }
 
             if (accounts.count { it.walletVersion == WalletVersion.V5R1 } == 0) {
-                val network = if (tonNetwork.isTetra) {
-                    TonNetwork.TETRA
-                } else {
-                    tonNetwork
-                }
-                val contract = WalletV5R1Contract(publicKey.publicKey, network)
+                val contract = WalletV5R1Contract(publicKey.publicKey, tonNetwork)
                 val query = contract.address.toAccountId()
                 if (publicKey.new) {
                     accounts.add(
@@ -1415,15 +1503,6 @@ class InitViewModel(
         return buildNewLabel(listOf(account))
     }
 
-    private suspend fun newWallet(context: Context): WalletEntity {
-        val mnemonic = savedState.mnemonic ?: throw IllegalStateException("Mnemonic is not set")
-        val mnemonicList = mnemonic.toWordsUnsafeList()
-        val walletId = AccountRepository.newWalletId()
-        saveMnemonic(context, listOf(walletId), mnemonicList)
-        val label = buildNewLabel(SimpleAccount(version = WalletVersion.V5R1))
-        return accountRepository.addNewWallet(walletId, label, mnemonicList)
-    }
-
     private suspend fun importWallet(context: Context): List<WalletEntity> {
         return withContext(Dispatchers.IO) {
             val accounts = getSelectedAccounts()
@@ -1455,10 +1534,10 @@ class InitViewModel(
                 )
             })
 
-            val type = when {
-                testnet -> WalletType.Testnet
-                tetra -> WalletType.Tetra
-                else -> WalletType.Default
+            val type = if (testnet) {
+                WalletType.Testnet
+            } else {
+                WalletType.Default
             }
 
             val wallets = accountRepository.importWallet(
@@ -1476,7 +1555,7 @@ class InitViewModel(
                 unifiedAccountRepository.deleteWallet(it.id)
             }
 
-            if (!testnet && !tetra) {
+            if (!testnet) {
                 checkTronBalance(wallets)
             }
 
@@ -1493,14 +1572,6 @@ class InitViewModel(
             wallets.forEach {
                 settingsRepository.setTokenHidden(it.id, TokenEntity.TRON_USDT.address, false)
                 settingsRepository.setTokenPinned(it.id, TokenEntity.TRON_USDT.address, true)
-                settingsRepository.setTokensSort(
-                    wallet.id,
-                    listOf(
-                        TokenEntity.USDT.address,
-                        TokenEntity.TRON_USDT.address,
-                        TokenEntity.USDE.address
-                    )
-                )
             }
         }
     }
@@ -1620,16 +1691,12 @@ class InitViewModel(
     }
 
     private suspend fun generateNewWallet() = withContext(Dispatchers.IO) {
-        if (savedState.hasMnemonic) {
-            return@withContext
-        }
+        generateNewWalletMutex.withLock {
+            if (savedState.hasMnemonic) {
+                return@withLock
+            }
 
-        savedState.mnemonic = if (isMultichainEnabled) {
-            mcAccountRepository.createMnemonic()
-        } else {
-            AndroidSecureRandom.seed(entropyHelper.getSeed(512))
-            val words = TonMnemonicGenerator.generate(random = AndroidSecureRandom).words.toTypedArray()
-            Mnemonic.from(MnemonicHelper.indexes(words.toList())).also { words.fill("") }
+            savedState.mnemonic = mcAccountRepository.createMnemonic()
         }
     }
 
@@ -1723,17 +1790,15 @@ class InitViewModel(
             }
         }
     }
-
-    override fun onCleared() {
-        super.onCleared()
-        entropyHelper.stop()
-    }
 }
 
 sealed interface ImportedWallet {
     class Legacy(val wallets: List<WalletEntity>): ImportedWallet
     class Multicoin(val wallet: McWalletEntity): ImportedWallet
 }
+
+private val AssetsEntity.isTron: Boolean
+    get() = this is AssetsEntity.Token && blockchain == Blockchain.TRON
 
 private fun TokenRates.fiatPrice(currency: String): BigDecimal? =
     prices?.get(currency)?.toBigDecimalOrNull()

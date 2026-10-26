@@ -14,7 +14,7 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
-import io.walletapi.models.ActivityType
+import io.walletapi.models.ActivityTypeFilter
 import io.walletapi.models.Asset
 import io.walletapi.models.Chain
 import io.walletapi.models.GetWalletActivities200Response
@@ -207,8 +207,8 @@ class WalletsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getWalletActivities(walletId: String, limit: Int? = 25, cursor: String? = null, chain: Chain? = null, network: Network? = Network.mainnet, activityType: ActivityType? = null, assetId: String? = null, isSpam: Boolean? = null, currencies: List<String>? = null, hideDust: Boolean? = false, xWalletId: String? = walletId): GetWalletActivities200Response {
-        val localVarResponse = getWalletActivitiesWithHttpInfo(walletId = walletId, limit = limit, cursor = cursor, chain = chain, network = network, activityType = activityType, assetId = assetId, isSpam = isSpam, currencies = currencies, hideDust = hideDust, xWalletId = xWalletId)
+    fun getWalletActivities(walletId: String, limit: Int? = 25, cursor: String? = null, chain: Chain? = null, network: Network? = Network.mainnet, activityType: ActivityTypeFilter? = null, assetId: String? = null, isSpam: Boolean? = null, currencies: List<String>? = null, hideDust: Boolean? = false, showPerps: Boolean? = false, market: Int? = null, xWalletId: String? = walletId): GetWalletActivities200Response {
+        val localVarResponse = getWalletActivitiesWithHttpInfo(walletId = walletId, limit = limit, cursor = cursor, chain = chain, network = network, activityType = activityType, assetId = assetId, isSpam = isSpam, currencies = currencies, hideDust = hideDust, showPerps = showPerps, market = market, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GetWalletActivities200Response
@@ -227,15 +227,15 @@ class WalletsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getWalletActivitiesWithHttpInfo(walletId: String, limit: Int?, cursor: String?, chain: Chain?, network: Network?, activityType: ActivityType?, assetId: String?, isSpam: Boolean?, currencies: List<String>?, hideDust: Boolean?, xWalletId: String?): ApiResponse<GetWalletActivities200Response?> {
-        val localVariableConfig = getWalletActivitiesRequestConfig(walletId = walletId, limit = limit, cursor = cursor, chain = chain, network = network, activityType = activityType, assetId = assetId, isSpam = isSpam, currencies = currencies, hideDust = hideDust, xWalletId = xWalletId)
+    fun getWalletActivitiesWithHttpInfo(walletId: String, limit: Int?, cursor: String?, chain: Chain?, network: Network?, activityType: ActivityTypeFilter?, assetId: String?, isSpam: Boolean?, currencies: List<String>?, hideDust: Boolean?, showPerps: Boolean?, market: Int?, xWalletId: String?): ApiResponse<GetWalletActivities200Response?> {
+        val localVariableConfig = getWalletActivitiesRequestConfig(walletId = walletId, limit = limit, cursor = cursor, chain = chain, network = network, activityType = activityType, assetId = assetId, isSpam = isSpam, currencies = currencies, hideDust = hideDust, showPerps = showPerps, market = market, xWalletId = xWalletId)
 
         return request<Unit, GetWalletActivities200Response>(
             localVariableConfig
         )
     }
 
-    fun getWalletActivitiesRequestConfig(walletId: String, limit: Int?, cursor: String?, chain: Chain?, network: Network?, activityType: ActivityType?, assetId: String?, isSpam: Boolean?, currencies: List<String>?, hideDust: Boolean?, xWalletId: String?): RequestConfig<Unit> {
+    fun getWalletActivitiesRequestConfig(walletId: String, limit: Int?, cursor: String?, chain: Chain?, network: Network?, activityType: ActivityTypeFilter?, assetId: String?, isSpam: Boolean?, currencies: List<String>?, hideDust: Boolean?, showPerps: Boolean?, market: Int?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -265,6 +265,12 @@ class WalletsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
                 if (hideDust != null) {
                     put("hide_dust", listOf(hideDust.toString()))
+                }
+                if (showPerps != null) {
+                    put("show_perps", listOf(showPerps.toString()))
+                }
+                if (market != null) {
+                    put("market", listOf(market.toString()))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
@@ -346,7 +352,9 @@ class WalletsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
          @SerialName(value = "swap") swap("swap"),
          @SerialName(value = "onramp") onramp("onramp"),
          @SerialName(value = "offramp") offramp("offramp"),
-         @SerialName(value = "p2p") p2p("p2p");
+         @SerialName(value = "p2p") p2p("p2p"),
+         @SerialName(value = "perp_deposit") perp_deposit("perp_deposit"),
+         @SerialName(value = "unknown") unknown("unknown");
 
         /**
          * Override [toString()] to avoid using the enum variable name as the value, and instead use

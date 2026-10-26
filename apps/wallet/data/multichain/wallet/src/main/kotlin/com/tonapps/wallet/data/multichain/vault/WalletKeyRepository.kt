@@ -4,6 +4,7 @@ import com.tonapps.log.L
 import com.tonapps.security.multichain.SessionKeyStore
 import com.tonapps.wallet.data.multichain.wallet.CredentialDao
 import com.tonapps.wallet.data.multichain.wallet.CredentialEntity
+import com.tonapps.wallet.data.multichain.wallet.CredentialIds
 
 /**
  * Per-wallet "app" private keys (the wallet auth key behind wallet_id / register proofs), sealed
@@ -15,10 +16,8 @@ class WalletKeyRepository(
     private val sessionKeyStore: SessionKeyStore,
 ) {
 
-    fun credentialId(walletId: String): String = KEY_PREFIX + walletId
-
     fun hasAppKey(walletId: String): Boolean {
-        return dao.credentialExists(credentialId(walletId))
+        return dao.credentialExists(CredentialIds.appKey(walletId))
     }
 
     fun sealedEntity(walletId: String, appPrivateKey: ByteArray): CredentialEntity? {
@@ -28,7 +27,7 @@ class WalletKeyRepository(
             } else {
                 CredentialEntity(
                     data = sessionKeyStore.encrypt(appPrivateKey),
-                    id = KEY_PREFIX + walletId,
+                    id = CredentialIds.appKey(walletId),
                 )
             }
         } catch (e: Throwable) {
@@ -69,23 +68,19 @@ class WalletKeyRepository(
     }
 
     private fun readAppPrivateKey(walletId: String): ByteArray? {
-        val encrypted = dao.getData(KEY_PREFIX + walletId)
+        val encrypted = dao.getData(CredentialIds.appKey(walletId))
             ?: return null
 
         return try {
             sessionKeyStore.decrypt(encrypted)
         } catch (e: Throwable) {
             L.e(e)
-            dao.deleteCredential(KEY_PREFIX + walletId)
+            dao.deleteCredential(CredentialIds.appKey(walletId))
             null
         }
     }
 
     fun delete(walletId: String) {
-        dao.deleteCredential(KEY_PREFIX + walletId)
-    }
-
-    private companion object {
-        const val KEY_PREFIX = "app_key:"
+        dao.deleteCredential(CredentialIds.appKey(walletId))
     }
 }

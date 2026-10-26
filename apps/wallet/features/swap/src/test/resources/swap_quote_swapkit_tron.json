@@ -1,0 +1,80 @@
+{
+    "quote_id": "fd1a0437-4236-4ed0-b710-bf205e8a9455",
+    "routes": [
+        {
+            "route_id": "360e13c4-b921-4fdc-b448-b1c226cb259b",
+            "provider_route_id": "4d5fd04d-e3ee-4c9e-887f-8644bd07839a",
+            "aggregator": "swapkit",
+            "protocol": "near_intents",
+            "route_type": "cross_chain_swap",
+            "source_amount": "3000000000",
+            "estimated_destination_amount": "401919404644540736",
+            "minimum_destination_amount": "397900210598095329",
+            "estimated_time": {
+                "inbound_seconds": 6,
+                "swap_seconds": 80,
+                "outbound_seconds": 12,
+                "total_seconds": 99
+            },
+            "total_slippage_bps": -5,
+            "source_usd_price": 0.335277,
+            "destination_usd_price": 2501.23,
+            "warnings": [],
+            "fees": [
+                {
+                    "type": "affiliate",
+                    "asset": "tron/mainnet/coin",
+                    "amount": "0"
+                },
+                {
+                    "type": "service",
+                    "asset": "tron/mainnet/coin",
+                    "amount": "4500000"
+                },
+                {
+                    "type": "outbound",
+                    "asset": "eth/mainnet/coin",
+                    "amount": "35000000000000"
+                },
+                {
+                    "type": "inbound",
+                    "asset": "tron/mainnet/coin",
+                    "amount": "1100000"
+                }
+            ],
+            "legs": [
+                {
+                    "leg_index": 0,
+                    "type": "swap",
+                    "chain_id": "tron/mainnet",
+                    "chain_family": "TRON",
+                    "from_asset": "tron/mainnet/coin",
+                    "to_asset": "eth/mainnet/coin",
+                    "protocol": "near_intents"
+                }
+            ],
+            "date_expire": "2026-09-07T14:59:56Z",
+            "risk_level": "medium"
+        }
+    ],
+    "provider_errors": [
+        {
+            "aggregator": "swapkit",
+            "protocol": "chainflip",
+            "code": "provider_error",
+            "message": "insufficientLiquidity: Insufficient liquidity for trade"
+        },
+        {
+            "aggregator": "swapkit",
+            "protocol": "chainflip_streaming",
+            "code": "provider_error",
+            "message": "insufficientLiquidity: Insufficient liquidity for trade"
+        },
+        {
+            "aggregator": "swapkit",
+            "protocol": "flashnet",
+            "code": "provider_error",
+            "message": "quoteError: rate_limited"
+        }
+    ]
+}

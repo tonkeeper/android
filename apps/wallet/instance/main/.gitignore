@@ -3,3 +3,6 @@
 /release/*.aab
 /release/*.json
 /benchmarkRelease
+/default
+/site
+/uk

@@ -57,15 +57,22 @@ internal class RemoteDataSource(
             api.staking(network).getStakingPools(accountId, includeUnverified = false)
         } ?: return emptyList()
 
-        val maxApyImplementation = response.pools.maxByOrNull { it.apy }?.implementation
+        val supportedPools = response.pools.filter {
+            StakingPool.implementation(it.implementation) != null
+        }
+        val maxApyImplementation = supportedPools.maxByOrNull { it.apy }?.implementation
 
-        val pools = response.pools.map {
-            PoolEntity(it, maxApyImplementation == it.implementation)
+        val pools = supportedPools.mapNotNull {
+            PoolEntity.of(it, maxApyImplementation == it.implementation)
         }.map {
             if (it.implementation != StakingPool.Implementation.Whales) {
                 it
             } else {
-                val cycleStart = if (it.cycleEnd > 0L) it.cycleEnd - 36 * 3600 else 0
+                val cycleStart = if (it.cycleEnd > 0L) {
+                    it.cycleEnd - 36 * 3600
+                } else {
+                    0
+                }
                 it.copy(cycleStart = cycleStart)
             }
         }
@@ -94,14 +101,26 @@ internal class RemoteDataSource(
             }
 
             if (a.isOwnPool && b.isOwnPool) {
-                return@sortWith if (a.name.contains("#1")) -1 else 1
+                return@sortWith if (a.name.contains("#1")) {
+                    -1
+                } else {
+                    1
+                }
             }
 
             if (a.apy == b.apy) {
-                return@sortWith if (a.cycleStart > b.cycleStart) 1 else -1
+                return@sortWith if (a.cycleStart > b.cycleStart) {
+                    1
+                } else {
+                    -1
+                }
             }
 
-            return@sortWith if (a.apy > b.apy) 1 else -1
+            return@sortWith if (a.apy > b.apy) {
+                1
+            } else {
+                -1
+            }
         }
 
         return list.reversed()

@@ -17,6 +17,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class EthenaBalanceHolder(parent: ViewGroup) :
     Holder<Item.EthenaBalance>(parent, R.layout.view_ethena_balance) {
@@ -54,7 +55,7 @@ class EthenaBalanceHolder(parent: ViewGroup) :
             }
         }
 
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             if (item.staked) {
                 item.methodType?.let {
                     context.navigation?.add(

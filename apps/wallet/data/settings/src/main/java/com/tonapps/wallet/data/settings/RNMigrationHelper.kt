@@ -48,7 +48,7 @@ internal class RNMigrationHelper(
     }
 
     fun getLegacyCurrency(): WalletCurrency {
-        val value = getTonPrice().optString("currency") ?: WalletCurrency.FIAT.first()
+        val value = getTonPrice().optString("currency") ?: WalletCurrency.DEFAULT.code
         return WalletCurrency.ofOrDefault(value.uppercase())
     }
 

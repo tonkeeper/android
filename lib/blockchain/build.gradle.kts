@@ -16,6 +16,7 @@ dependencies {
     api(libs.ton.tonapiTl)
     api(libs.ton.contract)
     api(libs.chainkit.models)
+    api(libs.chainkit.op)
     api(libs.kotlin.bignum)
     api(libs.kotlinx.io.core)
     implementation(libs.kotlinx.serialization.core)
@@ -29,12 +30,14 @@ dependencies {
     implementation(projects.apps.wallet.localization) // TODO
     implementation(projects.lib.extensions)
     implementation(projects.lib.base64)
+    implementation(projects.lib.bus)
     implementation(projects.lib.icu)
     implementation(projects.lib.security)
     implementation(projects.ui.uikit.flag)
     implementation(projects.ui.uikit.icon)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.serialization.json)
 }
 
 tasks.withType<Test>().configureEach {

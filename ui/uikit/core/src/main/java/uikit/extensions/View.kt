@@ -262,21 +262,35 @@ fun ViewPager2.findViewHolderForAdapterPosition(position: Int): RecyclerView.Vie
 
 fun View.hapticConfirm() {
     post {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-        } else {
-            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        }
+        performHapticFeedbackWithFallback(HapticFeedbackConstants.CONFIRM)
     }
 }
 
 fun View.hapticReject() {
     post {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            performHapticFeedback(HapticFeedbackConstants.REJECT)
-        } else {
-            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-        }
+        performHapticFeedbackWithFallback(HapticFeedbackConstants.REJECT)
+    }
+}
+
+private fun View.performHapticFeedbackWithFallback(constant: Int) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && performHapticFeedback(constant)) {
+        return
+    }
+    performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+}
+
+// Light tick — selection changes and the light tap on primary CTAs.
+fun View.hapticTick() {
+    post {
+        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+    }
+}
+
+// Switch/toggle flipped. TOGGLE_ON/OFF is silent on many devices, so use a plain tick that is
+// always felt in both directions.
+fun View.hapticToggle() {
+    post {
+        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
 }
 
@@ -404,10 +418,6 @@ fun View.roundBottom(@IdRes id: Int, radius: Int) {
     findViewById<View>(id).roundBottom(radius)
 }
 
-fun View.setOnClickListener(@IdRes id: Int, block: () -> Unit) {
-    findViewById<View>(id).setOnClickListener { block() }
-}
-
 fun View.setBackgroundColor(@IdRes id: Int, color: Int) {
     findViewById<View>(id).setBackgroundColor(color)
 }
@@ -442,7 +452,11 @@ fun View.findViewByClass(clazz: Class<out View>): View? {
 }
 
 fun View.hideKeyboard(ignoreFocus: Boolean = true) {
-    val editText = if (this is EditText) this else findViewByClass<EditText>() ?: return
+    val editText = if (this is EditText) {
+        this
+    } else {
+        findViewByClass<EditText>() ?: return
+    }
     val controller = editText.getInsetsControllerCompat() ?: return
     if (ignoreFocus || editText.hasFocus()) {
         editText.clearFocus()

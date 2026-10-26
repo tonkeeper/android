@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class SaveWalletAssetsFiltersRequestChangesInner(
@@ -22,11 +27,26 @@ data class SaveWalletAssetsFiltersRequestChangesInner(
     val action: Action
 ) {
     /**
-     * Values: show,hide
+     * Values: show,hide,unknown
      */
-    @Serializable
+    @Serializable(with = ActionSerializer::class)
     enum class Action(val value: String) {
         @SerialName(value = "show") show("show"),
-        @SerialName(value = "hide") hide("hide");
+        @SerialName(value = "hide") hide("hide"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object ActionSerializer : KSerializer<Action> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Action {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Action.entries.firstOrNull { it.value == value }
+                ?: Action.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Action) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

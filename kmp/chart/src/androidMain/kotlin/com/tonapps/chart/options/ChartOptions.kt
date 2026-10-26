@@ -1,5 +1,6 @@
 package com.tonapps.chart.options
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -65,7 +66,15 @@ data class TimeScaleOptions(
     val visible: Boolean? = null,
     val timeVisible: Boolean? = null,
     val secondsVisible: Boolean? = null,
+    val allowBoldLabels: Boolean? = null,
+    val tickMarkFormatter: TickMarkFormatter? = null,
 )
+
+@Serializable
+enum class TickMarkFormatter {
+    @SerialName("dayMarksAsTime")
+    DayMarksAsTime,
+}
 
 @Serializable
 data class CrosshairOptions(

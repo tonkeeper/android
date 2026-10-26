@@ -34,14 +34,6 @@ object DevSettings {
             }
         }
 
-    var tetraEnabled: Boolean = prefs.getBoolean("tetra_enabled", false)
-        set(value) {
-            if (field != value) {
-                field = value
-                prefs.putBoolean("tetra_enabled", value)
-            }
-        }
-
     var country: String? = prefs.getString("country", null)
         set(value) {
             if (field != value) {

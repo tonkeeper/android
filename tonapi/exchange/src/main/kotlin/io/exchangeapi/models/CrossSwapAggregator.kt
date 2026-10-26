@@ -14,9 +14,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Cross-chain aggregator that produced the route. `omniston` serves TON to TON only. For clients reporting build 26.9.0 or newer on Android, or 26.9.1 or newer on iOS, it is out of the default fan-out and is queried as a fallback, when the other aggregators returned no route at all; older clients keep it in the default fan-out. 
+ * Cross-chain aggregator that produced the route. `omniston` serves TON to TON, and swaps leaving TON for an EVM chain (`eth`, `bsc`, `arb`, `base`, `polygon`, `avax`) when both sides are stablecoins. Those it settles through an escrow, so the route is one TON message and the swap completes minutes later; it is not quoted into TON, and not above roughly $1000.  A swap out of TON worth less than `CROSSSWAP_OMNISTON_CROSSCHAIN_BELOW_USD` is quoted from Omniston alone, because its spread there is flat rather than proportional. An `aggregators` list or an exclusion naming `omniston` overrides that.  How the TON to TON pair is routed is a server switch, `CROSSSWAP_FORCE_OMNISTON_TON`.  While it is on, which is the default, a swap that stays on TON is quoted from Omniston alone — whatever `aggregators` names, whatever it excludes, whatever build the client reports. The other aggregators are tried only if Omniston returns no route.  While it is off, the pair follows the ordinary rules: clients below Android 26.9.0 / iOS 26.9.1 still get Omniston alone, newer ones are fanned out, and an explicit `aggregators` list wins for either.  `exact_output` follows the same switch: within TON it is answered by searching Omniston's exact-input quotes (and swaps.xyz's, which route through Omniston) for the source amount that yields `destination_amount`. Off a TON to TON pair Omniston is quoted only when `aggregators` names it. `relay` serves Lighter deposits and withdrawals only: it is quoted when the request names a `destination_target` or a `source_target`, and never in the swap fan-out. 
  *
- * Values: swapkit,swapsxyz,omniston
+ * Values: swapkit,swapsxyz,omniston,relay
  */
 @Serializable
 enum class CrossSwapAggregator(val value: String) {
@@ -25,7 +25,9 @@ enum class CrossSwapAggregator(val value: String) {
     @SerialName(value = "swapsxyz")
     swapsxyz("swapsxyz"),
     @SerialName(value = "omniston")
-    omniston("omniston");
+    omniston("omniston"),
+    @SerialName(value = "relay")
+    relay("relay");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

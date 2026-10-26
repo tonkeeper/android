@@ -7,6 +7,7 @@ import com.tonapps.signer.R
 import com.tonapps.signer.screen.create.CreateFragment
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setMoonOnClickListener
 
 class AddFragment: BaseFragment(R.layout.fragment_add_key), BaseFragment.Modal {
 
@@ -21,13 +22,13 @@ class AddFragment: BaseFragment(R.layout.fragment_add_key), BaseFragment.Modal {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         closeButton = view.findViewById(R.id.close)
-        closeButton.setOnClickListener { finish() }
+        closeButton.setMoonOnClickListener { finish() }
 
         createButton = view.findViewById(R.id.create)
-        createButton.setOnClickListener { openCreate(false) }
+        createButton.setMoonOnClickListener { openCreate(false) }
 
         importButton = view.findViewById(R.id.imprt)
-        importButton.setOnClickListener { openCreate(true) }
+        importButton.setMoonOnClickListener { openCreate(true) }
     }
 
     private fun openCreate(import: Boolean) {

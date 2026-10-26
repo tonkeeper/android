@@ -70,7 +70,4 @@ class EmptyEventDelegate : EventDelegate {
 
     override fun trackStoryView(storiesId: String, index: Int) = Unit
     override fun trackStoryOpen(storiesId: String, from: String) = Unit
-
-    override fun dappClick(url: String, name: String, source: String, country: String) = Unit
-    override fun dappSharingCopy(name: String, from: String, url: String) = Unit
 }

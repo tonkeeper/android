@@ -46,7 +46,7 @@ class BackupScreen : BaseListWalletScreen<ScreenContext.None>(ScreenContext.None
             is Item.RecoveryPhrase -> showAttention {
                 openRecoveryPhrase()
             }
-            is Item.ManualBackup, Item.ManualAccentBackup -> showAttention {
+            is Item.ManualBackup -> showAttention {
                 openRecoveryPhrase(backup = true)
             }
             is Item.Backup -> showAttention {

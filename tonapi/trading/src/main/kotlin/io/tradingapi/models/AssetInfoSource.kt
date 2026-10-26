@@ -13,6 +13,11 @@ package io.tradingapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class AssetInfoSource(
@@ -21,8 +26,8 @@ data class AssetInfoSource(
     val displayedName: String,
 
     /* Ссылка на страницу . */
-    @SerialName(value = "url")
-    val url: String
+    @Contextual @SerialName(value = "url")
+    val url: java.net.URI
 ) {
 }
 

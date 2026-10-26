@@ -20,6 +20,7 @@ import uikit.extensions.bottomBarsOffset
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class QRFragment: BaseFragment(R.layout.fragment_qr), BaseFragment.Modal {
 
@@ -59,7 +60,7 @@ class QRFragment: BaseFragment(R.layout.fragment_qr), BaseFragment.Modal {
         labelView = view.findViewById(R.id.label)
 
         doneButton = view.findViewById(R.id.done)
-        doneButton.setOnClickListener { finish() }
+        doneButton.setMoonOnClickListener { finish() }
 
         collectFlow(keyRepository.getKey(id).filterNotNull(), ::setKeyEntity)
     }

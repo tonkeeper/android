@@ -155,10 +155,10 @@ change(old, new):
 legacy native VaultSource: untouched — its data never depended on the PIN
 ```
 
-### Reset / sign out
+### Reset
 
 ```
-callers wipe MC wallets first (deleteAllWallets)
+only caller: the "PIN exists, no wallets" branch in RootViewModel
 reset():
    settings flags ← false ──► ESP cleared (PIN + marker) ──► RN mnemonics cleared
    ──► vault.deleteAll() ──► setPin(DEFAULT_PIN)           invariant 1 holds immediately

@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class ChainSyncStatus(
@@ -43,36 +48,81 @@ data class ChainSyncStatus(
     /**
      * Whether this chain has a renderable snapshot, is still fetching, or failed.
      *
-     * Values: ready,in_progress,failed
+     * Values: ready,in_progress,failed,unknown
      */
-    @Serializable
+    @Serializable(with = StatusSerializer::class)
     enum class Status(val value: String) {
         @SerialName(value = "ready") ready("ready"),
         @SerialName(value = "in_progress") in_progress("in_progress"),
-        @SerialName(value = "failed") failed("failed");
+        @SerialName(value = "failed") failed("failed"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object StatusSerializer : KSerializer<Status> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Status {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Status.entries.firstOrNull { it.value == value }
+                ?: Status.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Status) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
     /**
      * Deep-history catch-up state; clients poll until `complete`.
      *
-     * Values: complete,in_progress,queued
+     * Values: complete,in_progress,queued,unknown
      */
-    @Serializable
+    @Serializable(with = BackfillSerializer::class)
     enum class Backfill(val value: String) {
         @SerialName(value = "complete") complete("complete"),
         @SerialName(value = "in_progress") in_progress("in_progress"),
-        @SerialName(value = "queued") queued("queued");
+        @SerialName(value = "queued") queued("queued"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object BackfillSerializer : KSerializer<Backfill> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Backfill {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Backfill.entries.firstOrNull { it.value == value }
+                ?: Backfill.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Backfill) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
     /**
      * Present when the most recent fetch failed, regardless of the top-level `status`.
      *
-     * Values: provider_timeout,provider_5xx,rate_limited,circuit_open,capability_not_supported
+     * Values: provider_timeout,provider_5xx,rate_limited,circuit_open,capability_not_supported,unknown
      */
-    @Serializable
+    @Serializable(with = ReasonSerializer::class)
     enum class Reason(val value: String) {
         @SerialName(value = "provider_timeout") provider_timeout("provider_timeout"),
         @SerialName(value = "provider_5xx") provider_5xx("provider_5xx"),
         @SerialName(value = "rate_limited") rate_limited("rate_limited"),
         @SerialName(value = "circuit_open") circuit_open("circuit_open"),
-        @SerialName(value = "capability_not_supported") capability_not_supported("capability_not_supported");
+        @SerialName(value = "capability_not_supported") capability_not_supported("capability_not_supported"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object ReasonSerializer : KSerializer<Reason> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Reason {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Reason.entries.firstOrNull { it.value == value }
+                ?: Reason.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Reason) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

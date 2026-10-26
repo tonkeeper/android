@@ -1,13 +1,18 @@
 package com.tonapps.deposit.screens.buy.crypto
 
+import com.tonapps.async.Async
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.data.ExchangeRepository
+import com.tonapps.deposit.data.cryptoMethodAssetId
 import com.tonapps.deposit.screens.method.RampAsset
+import com.tonapps.deposit.screens.ramp.RampType
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.log.L
@@ -20,6 +25,8 @@ import com.tonapps.wallet.data.account.AccountRepository
 import io.exchangeapi.infrastructure.ApiResult
 import io.exchangeapi.models.CreateExchangeRequest
 import io.exchangeapi.models.ExchangeFlow
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 sealed interface BuyWithCryptoAction : MviAction {
     data object Init : BuyWithCryptoAction
@@ -53,6 +60,8 @@ data class BuyWithCryptoData(
     val from: WalletCurrency,
     val to: RampAsset,
     val walletId: String? = null,
+    val analyticsFrom: DepositFlowFrom,
+    val utm: UtmParameters = UtmParameters.Empty,
 )
 
 class BuyWithCryptoFeature(
@@ -71,17 +80,33 @@ class BuyWithCryptoFeature(
         get() = data.to
 
     init {
+        Async.globalScope().launch { trackViewSendAsset() }
+    }
+
+    private suspend fun trackViewSendAsset() {
         val addFundsOption = if (to.isTon) {
             DepositFlowAddFundsOption.BuyTonWithCrypto
         } else {
             DepositFlowAddFundsOption.BuyWithStablecoins
         }
-        AnalyticsHelper.Default.events.depositFlow.depositViewSendAsset(
-            from = DepositFlowFrom.WalletScreen,
+        AnalyticsHelper.Default.eventsTaggedWith(data.utm).depositFlow.depositViewSendAsset(
+            from = data.analyticsFrom,
+            walletMode = DepositFlowWalletMode.Single,
             addFundsOption = addFundsOption,
-            sellAsset = from.analyticsAssetId(),
+            sellAsset = resolveSellAssetId() ?: from.analyticsAssetId(),
             buyAsset = to.toCurrency.analyticsAssetId(),
         )
+    }
+
+    private suspend fun resolveSellAssetId(): String? {
+        return try {
+            onRampRepository.getLayout(RampType.RampOn).cryptoMethodAssetId(from)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            L.e(e)
+            null
+        }
     }
 
     override fun createViewState(): BuyWithCryptoViewState {

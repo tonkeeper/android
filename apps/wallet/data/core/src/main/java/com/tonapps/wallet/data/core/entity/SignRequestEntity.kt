@@ -23,7 +23,9 @@ data class SignRequestEntity private constructor(
     val network: TonNetwork,
     val messagesVariants: MessagesVariantsEntity? = null,
     val seqNo: Int? = null,
-    val ignoreInsufficientBalance: Boolean = false
+    val ignoreInsufficientBalance: Boolean = false,
+    /** Raw `network` of the request, null when the dApp did not send one; [network] falls back to mainnet. */
+    val requestedNetworkValue: Int? = null,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -111,7 +113,8 @@ data class SignRequestEntity private constructor(
                 network = parseNetwork(json.opt("network")),
                 messagesVariants = json.optJSONObject("messagesVariants")?.let {
                     MessagesVariantsEntity(it)
-                }
+                },
+                requestedNetworkValue = parseRequestedNetworkValue(json.opt("network")),
             )
         }
 
@@ -141,6 +144,15 @@ data class SignRequestEntity private constructor(
                 return validUnit
             }
             return 0
+        }
+
+        private fun parseRequestedNetworkValue(value: Any?): Int? {
+            return when (value) {
+                null -> null
+                is Int -> value
+                is Long -> value.toInt()
+                else -> value.toString().toIntOrNull()
+            }
         }
 
         private fun parseNetwork(value: Any?): TonNetwork {

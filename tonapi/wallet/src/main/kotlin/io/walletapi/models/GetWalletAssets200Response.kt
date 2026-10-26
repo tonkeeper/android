@@ -13,17 +13,24 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class GetWalletAssets200Response(
     @SerialName(value = "assets")
     val assets: List<Asset>,
 
-    /* Current price per currency, e.g. {\"USD\": \"0.999\", \"TON\": \"0.789\"} */
+    /* Wallet total per currency, perps included, e.g. {\"USD\": \"0.999\", \"TON\": \"0.789\"} */
     @SerialName(value = "fiat_price")
     val fiatPrice: Map<String, String>,
     @SerialName(value = "next_cursor")
-    val nextCursor: String
+    val nextCursor: String,
+    @SerialName(value = "perps")
+    val perps: WalletPerps? = null
 ) {
 }
 

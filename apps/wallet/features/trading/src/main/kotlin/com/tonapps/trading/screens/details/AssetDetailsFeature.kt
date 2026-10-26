@@ -4,6 +4,7 @@ import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.CoinType
@@ -12,6 +13,9 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenButton
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenFrom
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenWalletMode
+import com.tonapps.core.flags.WalletFeature
+import com.tonapps.core.helper.EarnAnalytics
+import com.tonapps.extensions.AppLifecycleProvider
 import com.tonapps.log.L
 import com.tonapps.mvi.MviFeature
 import com.tonapps.mvi.MviRelay
@@ -19,8 +23,14 @@ import com.tonapps.mvi.contract.MviAction
 import com.tonapps.mvi.contract.MviState
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.props.MviProperty
+import com.tonapps.perps.data.PerpsPortfolioSnapshot
+import com.tonapps.perps.data.PerpsPortfolioStore
+import com.tonapps.perps.screens.portfolio.PerpsPositionUi
+import com.tonapps.perps.screens.portfolio.toUi
+import com.tonapps.trading.AssetPerpMarket
 import com.tonapps.trading.asTokenEntity
 import com.tonapps.trading.isTonOrTronChain
+import com.tonapps.trading.perpMarket
 import com.tonapps.trading.data.TradingRepository
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
@@ -29,10 +39,13 @@ import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.wallet.data.multichain.legacy.LegacySwapAccounts
+import com.tonapps.wallet.data.multichain.legacy.LegacySwapAssets
 import com.tonapps.wallet.data.multichain.realtime.McWalletRealtimeProvider
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.earn.EarnRepository
 import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -42,9 +55,20 @@ import com.tonapps.wallet.features.events.data.McEventsRepository
 import io.tradingapi.models.AssetCapability
 import io.tradingapi.models.AssetDetailsResponse
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import uikit.chart.ChartPeriod
 import uikit.chart.ChartPoint
@@ -54,15 +78,27 @@ sealed interface AssetDetailsAction : MviAction {
     data object Init : AssetDetailsAction
     data object RefreshBalanceAndHistory : AssetDetailsAction
     data object RealtimeUpdate : AssetDetailsAction
+    data object ConfirmBalance : AssetDetailsAction
     data object PullToRefresh : AssetDetailsAction
     data class SetChartPeriod(val period: ChartPeriod) : AssetDetailsAction
     data object OpenTokenExplorer : AssetDetailsAction
     data object ToggleVisibility : AssetDetailsAction
     data object ToggleFavorite : AssetDetailsAction
+    data object Shown : AssetDetailsAction
+    data object Hidden : AssetDetailsAction
+    data class SetResumed(val resumed: Boolean) : AssetDetailsAction
+    data object PerpsChanged : AssetDetailsAction
 }
 
 sealed interface AssetDetailsEvent {
     data class OpenUrl(val url: String) : AssetDetailsEvent
+}
+
+sealed interface AssetPerpsState {
+    data object Hidden : AssetPerpsState
+    data object Loading : AssetPerpsState
+    data class Banner(val market: AssetPerpMarket) : AssetPerpsState
+    data class Position(val market: AssetPerpMarket, val position: PerpsPositionUi) : AssetPerpsState
 }
 
 sealed interface AssetDetailsState : MviState {
@@ -77,18 +113,22 @@ sealed interface AssetDetailsState : MviState {
         val isChartLoading: Boolean = false,
         val isChartError: Boolean = false,
         val hiddenBalances: Boolean = false,
-        val maxStakingApyFormatted: String? = null,
+        val apyBadge: AssetApyBadge? = null,
         val isMultichainWallet: Boolean = false,
         val isHidden: Boolean? = null,
         val isFavorite: Boolean = false,
         val isRefreshing: Boolean = false,
+        val isBalanceStale: Boolean = false,
+        val perps: AssetPerpsState = AssetPerpsState.Hidden,
+        // A TRON asset of a legacy wallet the multichain swap cannot trade for it.
+        val isSwapUnavailable: Boolean = false,
     ) : AssetDetailsState {
 
         private val capabilities: List<AssetCapability>
             get() = details.capabilities?.capabilities.orEmpty()
 
         val tradeAvailable: Boolean
-            get() = capabilities.contains(AssetCapability.swap)
+            get() = capabilities.contains(AssetCapability.swap) && !isSwapUnavailable
 
         val sellToCardAvailable: Boolean
             get() = capabilities.contains(AssetCapability.offramp)
@@ -96,6 +136,20 @@ sealed interface AssetDetailsState : MviState {
         val buyWithCardAvailable: Boolean
             get() = capabilities.contains(AssetCapability.onramp)
     }
+}
+
+sealed interface AssetApyBadge {
+
+    data class Earn(
+        val assetId: String,
+        val apyFormatted: String,
+        val network: String,
+        val vaultId: String,
+    ) : AssetApyBadge
+
+    data class Staking(
+        val apyFormatted: String,
+    ) : AssetApyBadge
 }
 
 class AssetDetailsViewState(
@@ -113,10 +167,14 @@ class AssetDetailsFeature(
     private val eventsRepository: EventsRepository,
     private val mcEventsRepository: McEventsRepository,
     private val stakingRepository: StakingRepository,
+    private val earnRepository: EarnRepository,
     private val txEventUiMapper: TxEventUiMapper,
     private val transactionManager: TransactionManager,
     private val realtimeProvider: McWalletRealtimeProvider,
+    private val appLifecycle: AppLifecycleProvider,
     private val api: API,
+    private val perpsPortfolioStore: PerpsPortfolioStore,
+    private val legacySwapAccounts: LegacySwapAccounts,
     val assetId: String,
     private val from: AssetScreenFrom,
 ) : MviFeature<AssetDetailsAction, AssetDetailsState, AssetDetailsViewState>(
@@ -126,6 +184,36 @@ class AssetDetailsFeature(
 
     private val relay = MviRelay<AssetDetailsEvent>()
     val events: Flow<AssetDetailsEvent> = relay.events
+
+    private val perpLink = MutableStateFlow<AssetPerpMarket?>(null)
+    private val resumed = MutableStateFlow(false)
+    private val perpsLive = perpsPortfolioStore.liveSubscription()
+
+    private val perpsGate: StateFlow<PerpsGate?> = combine(
+        perpLink,
+        unifiedAccountRepository.selectedTonWalletFlow,
+    ) { market, wallet ->
+        if (market != null && wallet?.type == WalletType.Multichain && WalletFeature.Perps.isEnabled) {
+            PerpsGate(market, wallet.id)
+        } else {
+            null
+        }
+    }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private val perpsState: StateFlow<AssetPerpsState> = perpsGate
+        .flatMapLatest { gate ->
+            if (gate != null) {
+                combine(perpsPortfolioStore.snapshot, settingsRepository.hiddenBalancesFlow) { snapshot, _ ->
+                    resolvePerps(gate, snapshot)
+                }
+            } else {
+                flowOf(AssetPerpsState.Hidden)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AssetPerpsState.Hidden)
+
+    private var apyViewPending = false
 
     init {
         viewModelScope.launch {
@@ -160,6 +248,18 @@ class AssetDetailsFeature(
                 sendAction(AssetDetailsAction.RealtimeUpdate)
             }
         }
+        collectFlow(appLifecycle.observeWithoutGrace.drop(1).filter { it }) {
+            sendAction(AssetDetailsAction.ConfirmBalance)
+        }
+        collectFlow(unifiedAccountRepository.selectedTonWalletFlow.map { it?.id }.distinctUntilChanged().drop(1)) {
+            sendAction(AssetDetailsAction.RefreshBalanceAndHistory)
+        }
+        collectFlow(perpsState) {
+            sendAction(AssetDetailsAction.PerpsChanged)
+        }
+        collectFlow(combine(resumed, perpsGate) { isResumed, gate -> isResumed && gate != null }) {
+            perpsLive.set(it)
+        }
     }
 
     fun trackButtonClick(button: AssetScreenButton) {
@@ -183,6 +283,7 @@ class AssetDetailsFeature(
                 mcEventsRepository.invalidateFirstPageCache()
                 refreshBalanceAndHistory(forceRefresh = true)
             }
+            AssetDetailsAction.ConfirmBalance -> refreshStaleBalance()
             AssetDetailsAction.PullToRefresh -> refresh()
             is AssetDetailsAction.SetChartPeriod -> {
                 val data = obtainSpecificState<AssetDetailsState.Data>() ?: return
@@ -199,6 +300,29 @@ class AssetDetailsFeature(
 
             AssetDetailsAction.ToggleVisibility -> toggleVisibility()
             AssetDetailsAction.ToggleFavorite -> toggleFavorite()
+            AssetDetailsAction.Shown -> {
+                apyViewPending = true
+                reportApyView()
+            }
+            AssetDetailsAction.Hidden -> apyViewPending = false
+            is AssetDetailsAction.SetResumed -> {
+                resumed.value = action.resumed
+                if (action.resumed && perpsGate.value != null) {
+                    perpsPortfolioStore.refresh()
+                }
+            }
+            AssetDetailsAction.PerpsChanged -> setState<AssetDetailsState.Data> {
+                copy(perps = perpsState.value)
+            }
+        }
+    }
+
+    // Once per appearance of the page: a badge that loads after the page showed up still counts.
+    private fun reportApyView() {
+        val badge = obtainSpecificState<AssetDetailsState.Data>()?.apyBadge as? AssetApyBadge.Earn ?: return
+        if (apyViewPending) {
+            apyViewPending = false
+            EarnAnalytics.apyView(badge.assetId)
         }
     }
 
@@ -246,9 +370,11 @@ class AssetDetailsFeature(
             } else {
                 null
             }
-            val maxStakingApyFormatted = loadMaxStakingApy(details)
+            val apyBadge = buildApyBadge(details, isMultichainWallet)
             val isHidden = resolveAssetHidden(details, accountToken, account)
             val isFavorite = tradingRepository.isFavoriteAsset(assetId)
+            val hasBalance = isMultichainWallet || details.asset.isTonOrTronChain()
+            val isSwapUnavailable = !isMultichainWallet && isLegacyTronSwapUnavailable(walletId)
             val sections = AssetDetailsSections.build(
                 details = details,
                 currencyCode = currencyCode,
@@ -259,6 +385,7 @@ class AssetDetailsFeature(
                 recentActivities = recentActivities,
                 recentActivitiesWallet = recentActivitiesWallet,
             )
+            perpLink.value = details.asset.perpMarket()
             setState {
                 AssetDetailsState.Data(
                     details = details,
@@ -266,11 +393,18 @@ class AssetDetailsFeature(
                     sections = sections,
                     chartPeriod = InitialChartPeriod,
                     isChartLoading = true,
-                    maxStakingApyFormatted = maxStakingApyFormatted,
+                    apyBadge = apyBadge,
                     isHidden = isHidden,
                     isFavorite = isFavorite,
                     isMultichainWallet = isMultichainWallet,
+                    isBalanceStale = hasBalance,
+                    perps = perpsState.value,
+                    isSwapUnavailable = isSwapUnavailable,
                 )
+            }
+            reportApyView()
+            if (hasBalance) {
+                sendAction(AssetDetailsAction.ConfirmBalance)
             }
             loadChart(details, InitialChartPeriod)
         } catch (e: Throwable) {
@@ -287,6 +421,9 @@ class AssetDetailsFeature(
         setState<AssetDetailsState.Data> { copy(isRefreshing = true) }
         try {
             fetchDetails()
+            if (perpsGate.value != null) {
+                perpsPortfolioStore.refresh()
+            }
             try {
                 refreshBalanceAndHistory(forceRefresh = true)
             } catch (e: Throwable) {
@@ -297,14 +434,22 @@ class AssetDetailsFeature(
         }
     }
 
+    private suspend fun refreshStaleBalance() {
+        obtainSpecificState<AssetDetailsState.Data>() ?: return
+        setState<AssetDetailsState.Data> { copy(isBalanceStale = true) }
+        refreshBalanceAndHistory(forceRefresh = true)
+    }
+
     private suspend fun fetchDetails() {
         try {
             val isMultichainWallet = isMultichainWallet(accountRepoLegacy.getSelectedWalletId())
             val details = tradingRepository.getAssetDetails(assetId, isMultichainWallet)
-            val refreshedApy = loadMaxStakingApy(details)
+            val refreshedBadge = buildApyBadge(details, isMultichainWallet)
+            perpLink.value = details.asset.perpMarket()
             setState<AssetDetailsState.Data> {
-                copy(details = details, maxStakingApyFormatted = refreshedApy ?: maxStakingApyFormatted)
+                copy(details = details, apyBadge = refreshedBadge ?: apyBadge as? AssetApyBadge.Staking)
             }
+            reportApyView()
         } catch (e: Throwable) {
             L.e(e)
         }
@@ -332,18 +477,12 @@ class AssetDetailsFeature(
             null
         }
         val accountToken = tokens?.let { findAccountToken(details, it) }
-        val account = if (isMultichainWallet) {
-            walletId?.let {
-                accountRepo.findAccount(
-                    walletId = walletId,
-                    assetId = assetId,
-                    currencyOverride = currencyCode,
-                    forceRefresh = forceRefresh,
-                )
-            }
+        val accountLoad = if (isMultichainWallet && walletId != null) {
+            loadAccount(walletId, currencyCode, forceRefresh)
         } else {
             null
         }
+        val account = accountLoad?.account
         val recentEvents = if (isMultichainWallet) {
             null
         } else {
@@ -381,6 +520,11 @@ class AssetDetailsFeature(
                 return@setState this
             }
             val fetchFailed = tokensRequested && tokens == null
+            val balanceConfirmed = when {
+                accountLoad != null -> accountLoad.fromNetwork
+                tokensRequested -> !fetchFailed
+                else -> true
+            }
             copy(
                 currencyCode = currencyCode,
                 sections = if (fetchFailed) {
@@ -394,9 +538,75 @@ class AssetDetailsFeature(
                     isHidden
                 },
                 isMultichainWallet = isMultichainWallet,
+                isBalanceStale = isBalanceStale && !balanceConfirmed,
             )
         }
     }
+
+    // One asset never has both: vaults.fyi covers EVM networks and staking covers TON. The order
+    // below is only a tie-break, and it follows iOS, which routes TON to staking and the rest to a
+    // vault.
+    // Earn vaults live on EVM networks, so only a multichain wallet can use them; staking stays for TON.
+    private suspend fun buildApyBadge(details: AssetDetailsResponse, isMultichainWallet: Boolean): AssetApyBadge? {
+        if (isMultichainWallet && WalletFeature.Earn.isEnabled) {
+            val offer = earnRepository.assetOffer(details.asset.id)
+            if (offer != null) {
+                return AssetApyBadge.Earn(
+                    assetId = details.asset.id,
+                    apyFormatted = CurrencyFormatter.formatPercent(offer.apy).toString(),
+                    network = offer.network,
+                    vaultId = offer.vaultId,
+                )
+            }
+        }
+        val stakingApyFormatted = loadMaxStakingApy(details) ?: return null
+        return AssetApyBadge.Staking(stakingApyFormatted)
+    }
+
+    private suspend fun loadAccount(walletId: String, currencyCode: String, forceRefresh: Boolean): AccountLoad {
+        if (forceRefresh) {
+            try {
+                return AccountLoad(
+                    account = accountRepo.fetchAccount(walletId = walletId, assetId = assetId, currencyOverride = currencyCode),
+                    fromNetwork = true,
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                L.e(e)
+            }
+        }
+        return AccountLoad(
+            account = accountRepo.findAccount(walletId = walletId, assetId = assetId, currencyOverride = currencyCode),
+            fromNetwork = false,
+        )
+    }
+
+    private fun resolvePerps(gate: PerpsGate, snapshot: PerpsPortfolioSnapshot?): AssetPerpsState {
+        val market = gate.market
+        val portfolio = snapshot
+            ?.takeIf { it.walletId == gate.walletId }
+            ?.displayPortfolio()
+            ?: return AssetPerpsState.Loading
+        val position = portfolio.positions.firstOrNull { it.marketIndex == market.marketIndex }
+        return if (position != null) {
+            AssetPerpsState.Position(market, position.toUi(settingsRepository.hiddenBalances))
+        } else {
+            AssetPerpsState.Banner(market)
+        }
+    }
+
+    override fun onCleared() {
+        perpsLive.close()
+        super.onCleared()
+    }
+
+    private data class PerpsGate(val market: AssetPerpMarket, val walletId: String)
+
+    private class AccountLoad(
+        val account: AccountWithDetails?,
+        val fromNetwork: Boolean,
+    )
 
     private suspend fun loadMaxStakingApy(details: AssetDetailsResponse): String? {
         return try {
@@ -602,6 +812,21 @@ class AssetDetailsFeature(
             L.e(e)
             return null
         }
+    }
+
+    // A legacy wallet swaps TRON assets only through the multichain swap, as on iOS: USDT TRC20 when
+    // that swap can sign for the wallet, TRX never. A lookup that fails offers no swap.
+    private suspend fun isLegacyTronSwapUnavailable(walletId: String?): Boolean = when (assetId) {
+        LegacySwapAssets.TRX_ASSET_ID -> true
+        LegacySwapAssets.USDT_TRC20_ASSET_ID -> walletId == null || try {
+            legacySwapAccounts.find(walletId) == null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            L.e(e)
+            true
+        }
+        else -> false
     }
 
     private suspend fun isMultichainWallet(walletId: String?): Boolean {

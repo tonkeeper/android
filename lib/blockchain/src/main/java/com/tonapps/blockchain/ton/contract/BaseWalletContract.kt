@@ -1,6 +1,5 @@
 package com.tonapps.blockchain.ton.contract
 
-import com.tonapps.blockchain.ton.SignatureDomain
 import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.equalsAddress
@@ -14,6 +13,7 @@ import org.ton.block.AddrNone
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.CommonMsgInfoRelaxed
+import org.ton.block.CurrencyCollection
 import org.ton.block.Either
 import org.ton.block.ExtInMsgInfo
 import org.ton.block.Maybe
@@ -40,12 +40,6 @@ abstract class BaseWalletContract(
     val publicKey: PublicKeyEd25519
 ) {
 
-    /**
-     * When non-null, signatures are prefixed with the L2 domain hash before signing
-     * (see [SignatureDomain]). Null means standard mainnet/testnet behaviour.
-     */
-    var signatureGlobalId: Int? = null
-
     companion object {
         const val DEFAULT_WORKCHAIN = 0
         const val DEFAULT_WALLET_ID: Int = 698983191
@@ -53,10 +47,9 @@ abstract class BaseWalletContract(
         fun create(
             publicKey: PublicKeyEd25519,
             v: String,
-            networkGlobalId: Int,
-            signatureGlobalId: Int? = null
+            networkGlobalId: Int
         ): BaseWalletContract {
-            val contract = when (v.lowercase()) {
+            return when (v.lowercase()) {
                 "v3r1" -> WalletV3R1Contract(publicKey = publicKey)
                 "v3r2" -> WalletV3R2Contract(publicKey = publicKey)
                 "v4r1" -> WalletV4R1Contract(publicKey = publicKey)
@@ -71,8 +64,6 @@ abstract class BaseWalletContract(
                 )
                 else -> throw IllegalArgumentException("Unsupported contract version: $v")
             }
-            contract.signatureGlobalId = signatureGlobalId
-            return contract
         }
 
         fun resolveVersion(
@@ -127,14 +118,12 @@ abstract class BaseWalletContract(
         fun create(
             publicKey: PublicKeyEd25519,
             v: String,
-            network: TonNetwork,
-            signatureNetwork: TonNetwork? = null
+            network: TonNetwork
         ): BaseWalletContract {
             return create(
                 publicKey = publicKey,
                 v = v,
-                networkGlobalId = network.value,
-                signatureGlobalId = signatureNetwork?.value
+                networkGlobalId = network.value
             )
         }
 
@@ -243,8 +232,7 @@ abstract class BaseWalletContract(
         unsignedBody: Cell,
     ): Cell {
         val hash = unsignedBody.hash().toByteArray()
-        val dataToSign = signatureGlobalId?.let { SignatureDomain.prefixedHash(it, hash) } ?: hash
-        val signature = BitString(privateKey.signToByteArray(dataToSign))
+        val signature = BitString(privateKey.signToByteArray(hash))
         return signedBody(signature, unsignedBody)
     }
 
@@ -349,6 +337,55 @@ abstract class BaseWalletContract(
             storeTlb(Message.tlbCodec(AnyTlbConstructor), message)
         }
         return cell
+    }
+
+    /**
+     * Wraps an already signed `internal_signed` body into an internal message addressed to this
+     * wallet, the shape a relayer re-wraps into its own external message (TON Connect `signMessage`).
+     * The state init rides along only while the wallet is undeployed, as for an external transfer.
+     */
+    fun createSignedInternalMessage(
+        seqno: Int,
+        signedBody: Cell
+    ): MessageRelaxed<Cell> {
+        val info = CommonMsgInfoRelaxed.IntMsgInfoRelaxed(
+            ihrDisabled = true,
+            bounce = false,
+            bounced = false,
+            src = AddrNone,
+            dest = address,
+            value = CurrencyCollection.ZERO,
+            ihrFee = Coins(),
+            fwdFee = Coins(),
+            createdLt = 0u,
+            createdAt = 0u
+        )
+
+        val init = if (seqno == 0) {
+            stateInit
+        } else {
+            null
+        }
+
+        val maybeStateInit =
+            Maybe.of(init?.let { Either.of<StateInit, CellRef<StateInit>>(null, CellRef(value = it, StateInit)) })
+
+        val body = Either.of<Cell, CellRef<Cell>>(null, CellRef(cell = signedBody, AnyTlbConstructor))
+        return MessageRelaxed(
+            info = info,
+            init = maybeStateInit,
+            body = body
+        )
+    }
+
+    fun createSignedInternalMessageCell(
+        seqno: Int,
+        signedBody: Cell
+    ): Cell {
+        val message = createSignedInternalMessage(seqno, signedBody)
+        return buildCell {
+            storeTlb(MessageRelaxed.tlbCodec(AnyTlbConstructor), message)
+        }
     }
 
     fun createBatteryBody(

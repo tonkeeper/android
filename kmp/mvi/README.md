@@ -483,7 +483,7 @@ stale enabled-state", "typing can't drop characters".
 
 | Operator | Purpose |
 |---|---|
-| `withLatestFrom(other) { a, b -> }` | Sample a `StateFlow` without being driven by it |
+| `withLatestFrom(other) { a, b -> }` | Sample a `StateFlow` without being driven by it; overloads take two or three |
 | `countdown(total, running = …)` | TTL timer per upstream value; pausable; `finished` closes back edges |
 | `transformFirst { }` | Drop upstream values while a transform is in flight |
 | `noneOfFlows(vararg)` / `anyOfFlows(vararg)` | Combine boolean nodes |

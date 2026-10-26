@@ -1,0 +1,41 @@
+# Thin sequencer for the Perps chart cases (M3, TK-2142). Nested subflows/ are
+# not matched by config.yaml `perps/*`. Each subflow launches with the
+# android_is_perps_enabled extra (stopApp + unlock, no clearState). optional
+# runFlow continues after a case failure; the final assertTrue fails the Cloud
+# row and names the failed cases.
+#
+# Only live-data, text-assertable cases live here. Chart states that need a
+# mocked backend (empty / failed / slow candles, position markers, crosshair
+# readout) run locally from the tk-qa-verify pack packs/perps-chart, because
+# Maestro Cloud cannot reach a local proxy.
+name: "Multichain — perps chart"
+appId: com.ton_keeper.debug
+---
+- evalScript: ${output.perps_smoke_ok = false; output.perps_timeframes_ok = false; output.perps_markets_ok = false;}
+
+- runFlow:
+    optional: true
+    label: "Perps — chart smoke"
+    commands:
+      - runFlow: subflows/chart_smoke.yaml
+      - evalScript: ${output.perps_smoke_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Perps — chart timeframes"
+    commands:
+      - runFlow: subflows/chart_timeframes.yaml
+      - evalScript: ${output.perps_timeframes_ok = true}
+
+- runFlow:
+    optional: true
+    label: "Perps — chart on several markets"
+    commands:
+      - runFlow: subflows/chart_markets.yaml
+      - evalScript: ${output.perps_markets_ok = true}
+
+- evalScript: ${var f = []; if (output.perps_smoke_ok !== true) f.push('chart smoke'); if (output.perps_timeframes_ok !== true) f.push('timeframes'); if (output.perps_markets_ok !== true) f.push('markets'); output.perps_failed = f.join(', ');}
+
+- assertTrue:
+    condition: ${output.perps_failed === ''}
+    label: "${output.perps_failed ? 'perps shard: failed ' + output.perps_failed : 'perps shard: all cases passed'}"

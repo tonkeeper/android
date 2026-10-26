@@ -29,7 +29,7 @@ val ActionType.nameRes: Int
         ActionType.Received, ActionType.NftReceived, ActionType.JettonMint -> Localization.received
         ActionType.Send, ActionType.NftSend -> Localization.sent
         ActionType.CallContract -> Localization.call_contract
-        ActionType.Swap -> Localization.swap
+        ActionType.Swap -> Localization.swap_event
         ActionType.DeployContract -> Localization.wallet_initialized
         ActionType.DepositStake -> Localization.stake
         ActionType.AuctionBid -> Localization.bid

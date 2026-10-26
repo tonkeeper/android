@@ -114,7 +114,6 @@ data class RaffleEntity(
         val ticketsTotal: Int,
         val history: List<HistoryItem>,
         val winningPrize: WinningPrize? = null,
-        val prizeDeliveryDays: Int? = null,
         val zeroFeeEndsAt: OffsetDateTime? = null,
     )
 

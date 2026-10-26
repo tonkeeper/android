@@ -26,6 +26,7 @@ import uikit.extensions.setPaddingBottom
 import uikit.extensions.setPaddingTop
 import uikit.extensions.withAnimation
 import uikit.widget.WordFormView
+import uikit.extensions.setMoonOnClickListener
 
 class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
 
@@ -68,10 +69,10 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
         }
 
         nextButton = view.findViewById(R.id.next)
-        nextButton.setOnClickListener { saveMnemonic() }
+        nextButton.setMoonOnClickListener { saveMnemonic() }
 
         pasteButton = view.findViewById(R.id.paste)
-        pasteButton.setOnClickListener { paste() }
+        pasteButton.setMoonOnClickListener { paste() }
 
         collectFlow(createViewModel.page(PageType.Phrase)) {
             wordFormView.focus()

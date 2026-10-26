@@ -1,12 +1,13 @@
 package com.tonapps.wallet.data.staking.entities
 
 import android.os.Parcelable
+import com.tonapps.blockchain.ton.extensions.equalsRawAddress
+import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.staking.StakingPool
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 @Parcelize
 data class PoolInfoEntity(
@@ -29,4 +30,9 @@ data class PoolInfoEntity(
 
     val cycleStart: Long
         get() = pools.minOfOrNull { it.cycleStart } ?: 0
+}
+
+fun List<PoolInfoEntity>.findPoolByAddress(address: String): PoolEntity? {
+    val rawAddress = address.toRawAddress()
+    return flatMap { it.pools }.find { it.address.equalsRawAddress(rawAddress) }
 }

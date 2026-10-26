@@ -17,6 +17,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
 import uikit.extensions.setPaddingTop
 import uikit.widget.password.PasswordInputView
+import uikit.extensions.setMoonOnClickListener
 
 class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
 
@@ -66,7 +67,7 @@ class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
         }
 
         doneButton = view.findViewById(R.id.done)
-        doneButton.setOnClickListener { sendPassword() }
+        doneButton.setMoonOnClickListener { sendPassword() }
         doneButton.pinToBottomInsets()
 
         passwordInput.doAfterValueChanged {

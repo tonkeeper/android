@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/offsetMedium">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/close"
+        android:layout_width="@dimen/actionSize"
+        android:layout_height="@dimen/actionSize"
+        android:layout_gravity="end|center"
+        android:background="@drawable/bg_oval_button_secondary"
+        android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_close_16"
+        android:tint="?attr/buttonSecondaryForegroundColor" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_exclamationmark_circle_84"
+        android:tint="?attr/iconSecondaryColor" />
+
+    <uikit.widget.TextHeaderView
+        android:id="@+id/text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:title="@string/insufficient_balance_title" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetExtraSmall"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="?attr/textTertiaryColor" />
+
+    <Button
+        android:id="@+id/deposit"
+        style="@style/Widget.App.Button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetMedium"
+        android:text="@string/staking_deposit_wallet"
+        android:textAppearance="@style/TextAppearance.Label1" />
+
+</uikit.widget.ColumnLayout>

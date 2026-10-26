@@ -27,6 +27,10 @@ data class CrossSwapHumanSummary(
     @SerialName(value = "receive_amount")
     val receiveAmount: String? = null,
 
+    /* Least amount of `receive_asset` the built transaction lets through, as the aggregator reported it when building, in minimal units. It can be below the route's `minimum_destination_amount`: the aggregator may reprice between quote and build. Omitted when the aggregator reports none at build time; then only the route's `minimum_destination_amount` is known.  */
+    @SerialName(value = "minimum_receive_amount")
+    val minimumReceiveAmount: String? = null,
+
     /* Final destination of the swap (user's address on destination chain) */
     @SerialName(value = "recipient_address")
     val recipientAddress: String? = null,

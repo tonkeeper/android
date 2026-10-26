@@ -1,0 +1,19 @@
+# Cold start -> Trade -> one perps market's asset page, in one step.
+#
+# This three-line sequence (launch with the perps flag, open Trade, open the
+# market) opened every chart flow in the pack and in the committed shard — seven
+# copies that had to be kept in step by hand.
+#
+# Requires: SYMBOL (e.g. BTC). Everything else is the shared steps' own contract.
+appId: com.ton_keeper.debug
+---
+- assertTrue:
+    condition: ${SYMBOL != null && SYMBOL != ''}
+    label: "SYMBOL is required (-e SYMBOL=BTC)"
+
+- runFlow: "../wallet/launch_app_ensure_perps.yaml"
+- runFlow: "../trade/open_multichain_trade.yaml"
+- runFlow:
+    file: "open_perp_market.yaml"
+    env:
+      SYMBOL: "${SYMBOL}"

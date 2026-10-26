@@ -1,0 +1,29 @@
+# Fill the "Enter recovery phrase" screen from the clipboard instead of typing.
+# The phrase must already be on the device clipboard — locally:
+#   maestro_ui_tests/tools/setclip.sh <serial> "<phrase>"
+# The screen has its own Paste button (id: paste) and distributes the pasted
+# phrase across all fields, so this is 2 taps instead of ~24 taps plus typing
+# (measured: ~6 s against ~90 s for steps/mnemonic/24key_words.yaml).
+# Env: WORDS (12 or 24, defaults to 24 via the caller — do not default here,
+# a flow-level env: would override the -e value in Maestro 2.4).
+appId: com.ton_keeper.debug
+---
+- assertVisible: Enter recovery phrase
+- tapOn:
+    id: "words_${WORDS}$"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    id: paste
+    label: "Paste button present — the phrase is on the clipboard"
+- tapOn:
+    id: paste
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible:
+    id: button
+    text: Continue
+    label: "Continue enabled — the pasted phrase filled every field"
+- tapOn:
+    id: button
+    text: Continue

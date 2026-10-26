@@ -41,6 +41,7 @@ import uikit.extensions.getRootWindowInsetsCompat
 import uikit.extensions.getViews
 import uikit.extensions.scrollDown
 import uikit.extensions.scrollView
+import uikit.extensions.setMoonOnClickListener
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ColumnLayout
@@ -87,14 +88,14 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         titleView = view.findViewById(R.id.header_title)
 
         words24View = view.findViewById(R.id.words_24)
-        words24View.setOnClickListener {
+        words24View.setMoonOnClickListener {
             if (initViewModel.wordsCount != WORDS24) {
                 setWordsCount(WORDS24)
             }
         }
 
         words12View = view.findViewById(R.id.words_12)
-        words12View.setOnClickListener {
+        words12View.setMoonOnClickListener {
             if (initViewModel.wordsCount != WORDS12) {
                 setWordsCount(WORDS12)
             }
@@ -107,7 +108,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
         wordInputs = contentView.findViewById<ColumnLayout>(R.id.inputs).getViews().filterIsInstance<WordEditText>()
 
         button = view.findViewById(R.id.button)
-        button.setOnClickListener { next() }
+        button.setMoonOnClickListener { next() }
 
         loaderView = view.findViewById(R.id.loader)
         loaderView.setTrackColor(requireContext().iconPrimaryColor.withAlpha(.32f))
@@ -149,7 +150,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             pasteBarHeight = it.height
             it.post { applyBottomPadding() }
         }
-        view.findViewById<View>(R.id.paste).setOnClickListener { paste() }
+        view.findViewById<View>(R.id.paste).setMoonOnClickListener { paste() }
         updatePasteVisibility()
 
         collectFlow(initViewModel.uiTopOffset) {
@@ -203,14 +204,14 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
             pasteContainer.isVisible = true
         }
         pasteContainer.animate()
-            .alpha(if (visible) 1f else 0f)
+            .alpha(if (visible) { 1f } else { 0f })
             .setDuration(PASTE_FADE_DURATION)
             .withEndAction { pasteContainer.isVisible = visible }
             .start()
     }
 
     private fun applyBottomPadding() {
-        val pastePadding = if (pasteBarVisible) pasteBarHeight else 0
+        val pastePadding = if (pasteBarVisible) { pasteBarHeight } else { 0 }
         scrollView.updatePadding(bottom = keyboardOffset + pastePadding)
     }
 
@@ -285,7 +286,9 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                 initViewModel.trackImportInputError("already_imported")
                 navigation?.toast(Localization.wallet_already_imported)
             } else {
-                if (!initViewModel.setMnemonic(words)) {
+                if (initViewModel.setMnemonic(words)) {
+                    initViewModel.trackMnemonicAccepted()
+                } else {
                     initViewModel.trackImportInputError("invalid_mnemonic")
                     navigation?.toast(Localization.incorrect_phrase)
                 }
@@ -374,7 +377,7 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                     setTextColor(requireContext().textPrimaryColor)
                     text = word
                     gravity = Gravity.CENTER
-                    setOnClickListener { setWord(index, word) }
+                    setMoonOnClickListener { setWord(index, word) }
                 }
                 suggestionsView.addView(textView, LinearLayoutCompat.LayoutParams(LinearLayoutCompat.LayoutParams.MATCH_PARENT, LinearLayoutCompat.LayoutParams.MATCH_PARENT, 1f))
             }

@@ -4,7 +4,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.deposit.multicoin.analytics.RampAnalytics
@@ -13,6 +15,8 @@ import com.tonapps.deposit.multicoin.data.RampRepository
 import com.tonapps.deposit.screens.ramp.RampType
 import com.tonapps.log.L
 import com.tonapps.mvi.AsyncViewModel
+import com.tonapps.wallet.data.multichain.account.displayOrder
+import com.tonapps.wallet.data.multichain.account.sortedByChainDisplayOrder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +33,7 @@ data class AssetsExtendedFeatureData(
     val rampType: RampType,
     val analyticsFrom: DepositFlowFrom,
     val preferredCurrency: String? = null,
+    val utm: UtmParameters = UtmParameters.Empty,
 )
 
 class AssetsExtendedFeature(
@@ -40,17 +45,20 @@ class AssetsExtendedFeature(
     val queryFilter: StateFlow<String?> field = MutableStateFlow(null)
 
     val chainFilters: StateFlow<List<Chain>> = when (data.rampType) {
-        RampType.RampOn -> flow { emit(rampRepository.getOnrampChains(fiat = data.preferredCurrency)) }
+        RampType.RampOn -> flow {
+            val chains = rampRepository.getOnrampChains(fiat = data.preferredCurrency)
+            emit(chains.sortedByChainDisplayOrder { it })
+        }
             .catch { e ->
                 L.e(e, "Failed to load onramp chains")
-                emit(Chain.all.toList())
+                emit(Chain.displayOrder)
             }
             .cacheState(initialValue = emptyList())
 
-        RampType.RampOff -> MutableStateFlow(Chain.all.toList())
+        RampType.RampOff -> MutableStateFlow(Chain.displayOrder)
     }
 
-    private val analytics = RampAnalytics.of(data.rampType, data.analyticsFrom)
+    private val analytics = RampAnalytics.of(data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm)
 
     // The pager is rebuilt on every search/chain filter change; the screen is only "viewed" once.
     private val viewTracked = AtomicBoolean(false)

@@ -6,13 +6,14 @@ import android.widget.Button
 import com.tonapps.signer.R
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class NoFoundFragment: BaseFragment(R.layout.fragment_notfound), BaseFragment.Modal {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<HeaderView>(R.id.header).doOnActionClick = { finish() }
-        view.findViewById<Button>(R.id.ok).setOnClickListener { finish() }
+        view.findViewById<Button>(R.id.ok).setMoonOnClickListener { finish() }
     }
 
     companion object {

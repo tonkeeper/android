@@ -7,7 +7,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.blockchain.model.ConfirmRequest
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.MysteryRaffle.MysteryRaffleSource
 import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.core.deeplink.withRaffleSource
@@ -15,6 +17,7 @@ import com.tonapps.core.navigation.LocalResultStore
 import com.tonapps.core.navigation.rememberResultStore
 import com.tonapps.swap.screens.picker.SwapAssetPickerFeature
 import com.tonapps.swap.screens.picker.SwapAssetPickerScreen
+import com.tonapps.swap.screens.swap.SwapAction
 import com.tonapps.swap.screens.swap.SwapFeature
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
@@ -28,6 +31,8 @@ sealed interface SwapRoutes : NavKey {
     data class Swap(
         val sellAssetId: String? = null,
         val buyAssetId: String? = null,
+        val initiator: ConfirmInitiator = ConfirmInitiator.User,
+        val utm: UtmParameters = UtmParameters.Empty,
     ) : SwapRoutes
 
     @Serializable
@@ -41,6 +46,7 @@ fun SwapRouter(
     initial: SwapRoutes = SwapRoutes.Swap(),
     onBack: () -> Unit,
     onContinue: (ConfirmRequest) -> Unit = {},
+    onSwapCompleted: () -> Unit = {},
     onOpenLink: (String) -> Unit = {},
 ) {
     val backStack = rememberNestedNavBackStack(initial, onBack)
@@ -66,6 +72,7 @@ fun SwapRouter(
                             backStack.add(SwapRoutes.SelectAsset(SwapRoutes.SelectAsset.Side.Receive))
                         },
                         onContinue = onContinue,
+                        onSwapCompleted = onSwapCompleted,
                         onOpenRaffle = { raffleId ->
                             onOpenLink(DeepLinkBuilder.raffle(raffleId).withRaffleSource(MysteryRaffleSource.SwapPromo.key))
                         },
@@ -83,8 +90,8 @@ fun SwapRouter(
                         onBack = { backStack.safeRemoveLastOrNull(key) },
                         onAssetSelected = { asset ->
                             when (key.side) {
-                                SwapRoutes.SelectAsset.Side.Send -> swapFeature.selectSellAsset(asset)
-                                SwapRoutes.SelectAsset.Side.Receive -> swapFeature.selectBuyAsset(asset)
+                                SwapRoutes.SelectAsset.Side.Send -> swapFeature.sendAction(SwapAction.Asset.SelectSell(asset))
+                                SwapRoutes.SelectAsset.Side.Receive -> swapFeature.sendAction(SwapAction.Asset.SelectBuy(asset))
                             }
                             backStack.safeRemoveLastOrNull(key)
                         },

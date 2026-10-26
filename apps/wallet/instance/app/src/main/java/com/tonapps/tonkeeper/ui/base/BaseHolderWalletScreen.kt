@@ -171,6 +171,9 @@ abstract class BaseHolderWalletScreen<C: ScreenContext>(
         childFragmentManager.popBackStack(name, flags)
     }
 
+    override val predictiveBackPreviewEnabled: Boolean
+        get() = childFragmentManager.backStackEntryCount <= 1
+
     override fun onBackPressed(): Boolean {
         if (childFragmentManager.backStackEntryCount > 1) {
             childFragmentManager.popBackStack()

@@ -12,16 +12,23 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Asset details payload discriminator. More values can be added as asset details expands beyond perps.
  *
- * Values: perps
+ * Values: AssetDetailsTypePerps,unknown
  */
-@Serializable
+@Serializable(with = AssetDetailsTypeSerializer::class)
 enum class AssetDetailsType(val value: String) {
     @SerialName(value = "perps")
-    perps("perps");
+    AssetDetailsTypePerps("perps"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -47,6 +54,20 @@ enum class AssetDetailsType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AssetDetailsTypeSerializer : KSerializer<AssetDetailsType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AssetDetailsType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AssetDetailsType.entries.firstOrNull { it.value == value }
+            ?: AssetDetailsType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AssetDetailsType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

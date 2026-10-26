@@ -1,5 +1,0 @@
-# Optional: allow live web search without prompts.
-web_search = "live"
-
-[sandbox_workspace_write]
-network_access = true

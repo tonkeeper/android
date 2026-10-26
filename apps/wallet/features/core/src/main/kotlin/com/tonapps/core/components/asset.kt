@@ -17,12 +17,9 @@ import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.chainkit.core.chain.model.account.TokenType
 import com.tonapps.chainkit.core.chain.model.account.TokenType.Bep20
 import com.tonapps.chainkit.core.chain.model.account.TokenType.Brc20
-import com.tonapps.chainkit.core.chain.model.account.TokenType.Erc1155
 import com.tonapps.chainkit.core.chain.model.account.TokenType.Erc20
-import com.tonapps.chainkit.core.chain.model.account.TokenType.Erc721
 import com.tonapps.chainkit.core.chain.model.account.TokenType.Jetton
 import com.tonapps.chainkit.core.chain.model.account.TokenType.SPL
-import com.tonapps.chainkit.core.chain.model.account.TokenType.Trc10
 import com.tonapps.chainkit.core.chain.model.account.TokenType.Trc20
 import com.tonapps.chainkit.core.chain.model.num.BaseUnit
 import com.tonapps.chainkit.core.chain.model.num.CoinValue
@@ -115,6 +112,7 @@ fun Asset.tokenChainImageUrl(): String? {
         }
 
         is Asset.Token -> coin.chainImageResourceUrl(context)
+        is Asset.Battery -> null
     }
 }
 
@@ -146,29 +144,22 @@ fun Chain.toAssetEntity(): AssetEntity = AssetEntity(
 @Composable
 fun Asset.tokenDisplayName(): String? {
     val token = this as? Asset.Token ?: return null
-
-    return when (token.type) {
-        Jetton -> "Jetton"
-        Trc10 -> "TRC10"
-        Trc20 -> "TRC20"
-        Erc20 -> "ERC20"
-        Erc721 -> "ERC721"
-        Erc1155 -> "ERC1155"
-        Bep20 -> "BEP20"
-        SPL -> "SPL"
-        Brc20 -> "BRC10"
-    }
+    return token.type.id.uppercase()
 }
 
 val Chain.mainTokenType: TokenType
     get() = when (network.type) {
         Network.Type.Ethereum,
         Network.Type.Arbitrum,
+        Network.Type.Robinhood,
+        Network.Type.Avalanche,
+        Network.Type.Polygon,
         Network.Type.Base -> Erc20
         Network.Type.Smartchain -> Bep20
         Network.Type.Tron -> Trc20
         Network.Type.Ton -> Jetton
         Network.Type.Bitcoin -> Brc20
+        Network.Type.Solana -> SPL
     }
 
 fun Chain.tokenAssetId(contract: String): String {
@@ -184,18 +175,17 @@ private fun CoinType.chainImageResource(): Int {
         CoinType.Smartchain -> UIKitIcon.ic_bsc
         CoinType.Gram -> UIKitIcon.ic_ton
         CoinType.Tron -> UIKitIcon.ic_tron
+        CoinType.Robinhood -> UIKitIcon.ic_rbh
+        CoinType.Avalanche -> UIKitIcon.ic_avax
+        CoinType.Polygon -> UIKitIcon.ic_pol
+        CoinType.Solana -> UIKitIcon.ic_sol
     }
 }
 
 private fun CoinType.coinImageResource(): Int {
     return when (this) {
-        CoinType.Arbitrum -> UIKitIcon.ic_arb
-        CoinType.Base -> UIKitIcon.ic_base
-        CoinType.Bitcoin -> UIKitIcon.ic_btc
-        CoinType.Ethereum -> UIKitIcon.ic_eth
-        CoinType.Smartchain -> UIKitIcon.ic_bsc
         CoinType.Gram -> UIKitIcon.ic_gram_with_bg
-        CoinType.Tron -> UIKitIcon.ic_tron
+        else -> chainImageResource()
     }
 }
 

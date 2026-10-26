@@ -23,10 +23,10 @@ import com.tonapps.log.L
 import com.tonapps.security.Security
 import com.tonapps.settings.dev.DevSettingsFragment
 import com.tonapps.settings.dev.ROUTE_FEATURE_FLAGS
-import com.tonapps.settings.dev.ROUTE_RAFFLE_DEBUG
 import com.tonapps.settings.dev.ROUTE_TOOLTIPS
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.copyToClipboard
+import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.manager.push.FirebasePush
@@ -46,6 +46,7 @@ import uikit.extensions.collectFlow
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemSwitchView
 import uikit.widget.item.ItemTextView
+import uikit.extensions.setMoonOnClickListener
 
 class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, ScreenContext.None), BaseFragment.BottomSheet {
 
@@ -54,7 +55,6 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
     override val viewModel: DevViewModel by viewModel()
 
     private lateinit var iconsView: RecyclerView
-    private lateinit var tetraView: ItemSwitchView
     private lateinit var blurView: ItemSwitchView
     private lateinit var tonConnectLogsView: ItemSwitchView
     private lateinit var logs: ItemSwitchView
@@ -78,7 +78,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         super.onViewCreated(view, savedInstanceState)
         val headerView = view.findViewById<HeaderView>(R.id.header)
         headerView.doOnCloseClick = { finish() }
-        headerView.titleView.setOnClickListener { onTitleTap() }
+        headerView.titleView.setMoonOnClickListener { onTitleTap() }
 
         val deviceView = view.findViewById<AppCompatTextView>(R.id.device)
         deviceView.text = getDeviceLines().joinToString("\n")
@@ -87,15 +87,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         iconsView.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL)
         iconsView.adapter = LauncherAdapter()
 
-        tetraView = view.findViewById(R.id.tetra)
-        tetraView.setChecked(DevSettings.tetraEnabled, false)
-        tetraView.doOnCheckedChanged = { isChecked, byUser ->
-            if (byUser) {
-                DevSettings.tetraEnabled = isChecked
-            }
-        }
-
-        view.findViewById<View>(R.id.import_testnet_wallet).setOnClickListener {
+        view.findViewById<View>(R.id.import_testnet_wallet).setMoonOnClickListener {
             navigation?.add(InitScreen.newInstance(InitArgs.Type.Testnet))
             finish()
         }
@@ -146,10 +138,10 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         }
 
         shareLogs = view.findViewById(R.id.share_logs)
-        shareLogs.setOnClickListener {
+        shareLogs.setMoonOnClickListener {
             if (!L.hasLogs()) {
                 navigation?.toast("No logs found!")
-                return@setOnClickListener
+                return@setMoonOnClickListener
             }
 
             L.capture { file ->
@@ -182,14 +174,16 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
 
 
         importMnemonicAgainView = view.findViewById(R.id.import_mnemonic_again)
-        importMnemonicAgainView.setOnClickListener { importMnemonicAgain(false) }
+        importMnemonicAgainView.setMoonOnClickListener { importMnemonicAgain(false) }
         importMnemonicAgainView.setOnLongClickListener { importMnemonicAgain(true); true }
 
         importPasscodeView = view.findViewById(R.id.import_passcode)
-        importPasscodeView.setOnClickListener { importPasscode() }
+        importPasscodeView.setMoonOnClickListener { importPasscode() }
 
         importDAppsView = view.findViewById(R.id.import_dapps)
-        importDAppsView.setOnClickListener { importDApps() }
+        importDAppsView.setMoonOnClickListener { importDApps() }
+
+        view.findViewById<View>(R.id.remove_new_networks).setMoonOnClickListener { removeNewNetworks() }
 
         logView = view.findViewById(R.id.log)
         logDataView = view.findViewById(R.id.log_data)
@@ -222,7 +216,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             }
         }
 
-        view.findViewById<Button>(R.id.log_close).setOnClickListener {
+        view.findViewById<Button>(R.id.log_close).setMoonOnClickListener {
             logView.visibility = View.GONE
         }
 
@@ -236,13 +230,20 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             true
         }
 
-        view.findViewById<View>(R.id.copy_firebase_push).setOnClickListener {
+        view.findViewById<View>(R.id.copy_firebase_push).setMoonOnClickListener {
             copyFirebasePushToken()
         }
 
-        view.findViewById<View>(R.id.copy_install_id).setOnClickListener {
-            requireContext().copyToClipboard(viewModel.installId, true)
-            navigation?.toast("Install ID copied to clipboard")
+        view.findViewById<View>(R.id.copy_install_id).setMoonOnClickListener {
+            requireContext().copyWithToast(
+                text = viewModel.installId,
+                message = "Install ID copied to clipboard",
+                sensitive = true
+            )
+        }
+
+        view.findViewById<View>(R.id.copy_wallet_id).setMoonOnClickListener {
+            copySelectedWalletId()
         }
 
         logCopy = view.findViewById(R.id.log_copy)
@@ -251,24 +252,15 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             if (!BuildConfig.DEBUG) {
                 visibility = View.GONE
             }
-            setOnClickListener { openFeatureFlags() }
+            setMoonOnClickListener { openFeatureFlags() }
         }
 
         view.findViewById<View>(R.id.tooltips).apply {
             if (!BuildConfig.DEBUG || WalletTooltipKey.entries.isEmpty()) {
                 visibility = View.GONE
             }
-            setOnClickListener {
+            setMoonOnClickListener {
                 navigation?.add(DevSettingsFragment.newInstance(ROUTE_TOOLTIPS))
-            }
-        }
-
-        view.findViewById<View>(R.id.raffle_qa).apply {
-            if (!BuildConfig.DEBUG) {
-                visibility = View.GONE
-            }
-            setOnClickListener {
-                navigation?.add(DevSettingsFragment.newInstance(ROUTE_RAFFLE_DEBUG))
             }
         }
     }
@@ -297,9 +289,25 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             if (token.isNullOrBlank()) {
                 navigation?.toast("Failed to get Firebase push token", requireContext().accentRedColor)
             } else {
-                requireContext().copyToClipboard(token, true)
-                navigation?.toast("Firebase push token copied to clipboard")
+                requireContext().copyWithToast(
+                    text = token,
+                    message = "Firebase push token copied to clipboard",
+                    sensitive = true
+                )
             }
+        }
+    }
+
+    private fun copySelectedWalletId() {
+        val walletId = viewModel.selectedWalletId
+        if (walletId.isNullOrBlank()) {
+            navigation?.toast("No selected wallet", requireContext().accentRedColor)
+        } else {
+            requireContext().copyWithToast(
+                text = walletId,
+                message = "Wallet ID copied to clipboard",
+                sensitive = true
+            )
         }
     }
 
@@ -323,6 +331,14 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         }
     }
 
+    private fun removeNewNetworks() {
+        navigation?.migrationLoader(true)
+        viewModel.removeNewNetworks {
+            navigation?.migrationLoader(false)
+            navigation?.toast(it)
+        }
+    }
+
     private fun importPasscode() {
         navigation?.migrationLoader(true)
         viewModel.importPasscode {
@@ -342,7 +358,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
         logView.visibility = View.VISIBLE
         logDataView.setText(message)
 
-        logCopy.setOnClickListener {
+        logCopy.setMoonOnClickListener {
             requireContext().copyToClipboard(message, true)
         }
     }

@@ -4,7 +4,7 @@ Open source secure android app for cold managing [TON crypto](https://ton.org/) 
 
 ## Features
 
-- Operates offline, compatible with [Tonkeeper](https://tonkeeper.com/).
+- Operates offline, compatible with [Keeper](https://keeperwallet.com).
 - Supports multiple keys.
 - Enables transaction signing directly within safe area in SignerApp.
 - Encrypts keys using your personal password for maximum security.

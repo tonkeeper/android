@@ -15,6 +15,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.iconPrimaryColor
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class LogoHolder(
     parent: ViewGroup,
@@ -25,7 +26,7 @@ class LogoHolder(
     private val versionView = findViewById<AppCompatTextView>(R.id.version)
 
     init {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             Navigation.from(context)?.add(DevScreen.newInstance())
         }
         val color = context.iconPrimaryColor

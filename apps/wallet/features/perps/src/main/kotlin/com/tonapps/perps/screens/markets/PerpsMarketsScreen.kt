@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -91,7 +90,6 @@ fun PerpsMarketsScreen(
 ) {
     val pagingItems = feature.markets.collectAsLazyPagingItems()
     val filter by feature.filter.collectAsStateWorkaround()
-    val debouncedQuery by feature.debouncedQuery.collectAsStateWorkaround()
     val sort by feature.sort.collectAsStateWorkaround()
     val livePrices by feature.livePrices.collectAsStateWorkaround()
 
@@ -105,7 +103,6 @@ fun PerpsMarketsScreen(
     PerpsMarketsContent(
         pagingItems = pagingItems,
         filter = filter,
-        debouncedQuery = debouncedQuery,
         sort = sort,
         livePrices = livePrices,
         onQueryChange = { feature.sendAction(PerpsMarketsAction.SetQuery(it)) },
@@ -123,7 +120,6 @@ fun PerpsMarketsScreen(
 private fun PerpsMarketsContent(
     pagingItems: LazyPagingItems<PerpMarket>,
     filter: PerpsMarketFilter,
-    debouncedQuery: String,
     sort: PerpsSort,
     livePrices: Map<String, BigDecimal>,
     onQueryChange: (String) -> Unit,
@@ -153,6 +149,7 @@ private fun PerpsMarketsContent(
             searchText = searchText,
             onChanged = onQueryChange,
         )
+        Spacer(modifier = Modifier.height(8.dp))
 
         val chips = listOf(
             MoonItem(
@@ -179,6 +176,7 @@ private fun PerpsMarketsContent(
         MoonChipBarCell(
             filters = chips,
             selectedId = filter.ordinal,
+            scrollToSelected = true,
             onSelect = { onFilterChange(PerpsMarketFilter.entries[it.id]) },
         )
 
@@ -190,7 +188,7 @@ private fun PerpsMarketsContent(
             val failure = refresh as? LoadState.Error
                 ?: (append as? LoadState.Error)?.takeIf { pagingItems.itemCount == 0 }
             when {
-                isLoading && pagingItems.itemCount == 0 -> {
+                isLoading -> {
                     MoonLoaderCell(height = 240.dp)
                 }
 
@@ -205,9 +203,6 @@ private fun PerpsMarketsContent(
 
                 else -> PerpsMarketsList(
                     pagingItems = pagingItems,
-                    filter = filter,
-                    sort = sort,
-                    query = debouncedQuery,
                     livePrices = livePrices,
                     onOpenMarket = onOpenMarket,
                     onRowVisible = onRowVisible,
@@ -255,34 +250,13 @@ private fun PerpsMarketsEmpty(query: String) {
 @Composable
 private fun PerpsMarketsList(
     pagingItems: LazyPagingItems<PerpMarket>,
-    filter: PerpsMarketFilter,
-    sort: PerpsSort,
-    query: String,
     livePrices: Map<String, BigDecimal>,
     onOpenMarket: (marketIndex: Int, symbol: String) -> Unit,
     onRowVisible: (symbol: String, visible: Boolean) -> Unit,
 ) {
-    val listState = rememberLazyListState()
-    var scrollToTopPending by remember { mutableStateOf(false) }
-    var filtersSeen by remember { mutableStateOf(false) }
-    LaunchedEffect(sort, query, filter) {
-        if (filtersSeen) {
-            scrollToTopPending = true
-        } else {
-            filtersSeen = true
-        }
-    }
-    val refresh = pagingItems.loadState.refresh
-    LaunchedEffect(refresh, scrollToTopPending) {
-        if (scrollToTopPending && refresh is LoadState.NotLoading) {
-            listState.scrollToItem(0)
-            scrollToTopPending = false
-        }
-    }
     val navBottom = WindowInsets.navigationBars.asPaddingValues()
         .calculateBottomPadding()
     LazyColumn(
-        state = listState,
         contentPadding = PaddingValues(bottom = navBottom + Dimens.heightBar),
     ) {
         items(
@@ -427,10 +401,10 @@ private fun PerpMarketRowContent(market: PerpMarket, currencyCode: String) {
             if (volume != null) {
                 Text(
                     text = stringResource(
-                        Localization.volume_short_pattern,
+                        Localization.perps_volume_pattern,
                         formatCompactPrice(volume, currencyCode),
                     ),
-                    style = UIKit.typography.body3,
+                    style = UIKit.typography.body2,
                     color = UIKit.colorScheme.text.secondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -439,7 +413,7 @@ private fun PerpMarketRowContent(market: PerpMarket, currencyCode: String) {
                 market.name?.let { name ->
                     Text(
                         text = name,
-                        style = UIKit.typography.body3,
+                        style = UIKit.typography.body2,
                         color = UIKit.colorScheme.text.secondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -459,7 +433,7 @@ private fun PerpMarketRowContent(market: PerpMarket, currencyCode: String) {
                 text = market.priceChange24hPercent
                     ?.let { formatSignedPercent(it) }
                     ?: PERPS_EMPTY_VALUE,
-                style = UIKit.typography.body3,
+                style = UIKit.typography.body2,
                 color = perpsChangeColor(market.priceChange24hPercent),
                 maxLines = 1,
             )
@@ -524,7 +498,7 @@ fun PerpsAssetIcon(
 }
 
 @Composable
-internal fun PerpsSideLabel(side: PerpsPositionSide) {
+fun PerpsSideLabel(side: PerpsPositionSide) {
     if (side == PerpsPositionSide.LONG) {
         MoonLabel(
             text = stringResource(Localization.perps_long),

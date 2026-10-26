@@ -1,8 +1,12 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     id("target.android.library")
     id("kotlin-parcelize")
+}
+
+android {
+    defaultConfig {
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
 }
 
 dependencies {
@@ -18,4 +22,8 @@ dependencies {
     implementation(projects.lib.icu)
     implementation(projects.lib.log)
     implementation(projects.kmp.async)
+
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
 }

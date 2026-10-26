@@ -1,0 +1,56 @@
+# The chart renders on markets with different price precision, and leaving the
+# asset page and coming back re-renders it. US100 is an index market (different
+# price_decimals from crypto), HYPE a low-priced one.
+name: "Perps — chart on several markets"
+appId: com.ton_keeper.debug
+---
+- runFlow:
+    file: "../../../steps/perps/open_asset_page.yaml"
+    env:
+      SYMBOL: "US100"
+# The two texts below belong to terminal states; neither is on screen while the
+# chart is still loading, so asserting them immediately is a race that always
+# wins. Settle first, then assert. What the pair proves is that the section did
+# not end empty or failed — not that candles were drawn: the chart is a canvas
+# in a WebView and nothing inside it reaches the hierarchy.
+- runFlow: "../../../steps/perps/settle_chart.yaml"
+- assertNotVisible: "No chart data"
+- assertNotVisible: "Couldn’t load chart"
+- assertVisible: "24h Volume"
+
+- pressKey: back
+- extendedWaitUntil:
+    visible: "Trending Perpetuals"
+    timeout: 15000
+
+- runFlow:
+    file: "../../../steps/perps/open_perp_market.yaml"
+    env:
+      SYMBOL: "HYPE"
+# The two texts below belong to terminal states; neither is on screen while the
+# chart is still loading, so asserting them immediately is a race that always
+# wins. Settle first, then assert. What the pair proves is that the section did
+# not end empty or failed — not that candles were drawn: the chart is a canvas
+# in a WebView and nothing inside it reaches the hierarchy.
+- runFlow: "../../../steps/perps/settle_chart.yaml"
+- assertNotVisible: "No chart data"
+- assertNotVisible: "Couldn’t load chart"
+- assertVisible: "24h Volume"
+
+# Back out and in again: the chart must come back, not stay blank.
+- pressKey: back
+- extendedWaitUntil:
+    visible: "Trending Perpetuals"
+    timeout: 15000
+- runFlow:
+    file: "../../../steps/perps/open_perp_market.yaml"
+    env:
+      SYMBOL: "HYPE"
+# Settle before asserting, exactly as above. Without it this check was empty:
+# "No chart data" is the text of the empty state and is not on screen while the
+# chart is still loading, so the assert passed while the chart had not even
+# finished re-rendering — which is precisely what this leg is meant to catch.
+- runFlow: "../../../steps/perps/settle_chart.yaml"
+- assertNotVisible: "No chart data"
+- assertNotVisible: "Couldn’t load chart"
+- assertVisible: "24h Volume"

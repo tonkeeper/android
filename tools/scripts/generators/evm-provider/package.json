@@ -1,0 +1,12 @@
+{
+  "name": "tonkeeper-evm-provider",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "events": "^3.3.0"
+  }
+}

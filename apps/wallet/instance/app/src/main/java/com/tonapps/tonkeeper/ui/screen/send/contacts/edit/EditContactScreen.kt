@@ -18,6 +18,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.InputView
 import uikit.widget.ModalHeader
+import uikit.extensions.setMoonOnClickListener
 
 class EditContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_contact_edit, wallet), BaseFragment.Modal {
 
@@ -46,13 +47,13 @@ class EditContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         addressView.isEnabled = false
 
         val saveButton = view.findViewById<Button>(R.id.save)
-        saveButton.setOnClickListener { save() }
+        saveButton.setMoonOnClickListener { save() }
 
         nameView.doOnTextChange = {
             saveButton.isEnabled = it.isNotEmpty()
         }
 
-        view.findViewById<Button>(R.id.delete).setOnClickListener { delete() }
+        view.findViewById<Button>(R.id.delete).setMoonOnClickListener { delete() }
 
         view.pinToBottomInsets()
     }

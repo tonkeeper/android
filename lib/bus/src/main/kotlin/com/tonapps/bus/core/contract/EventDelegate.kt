@@ -29,9 +29,6 @@ interface EventDelegate {
         native: Boolean
     )
 
-    fun dappSharingCopy(name: String, from: String, url: String)
-    fun dappClick(url: String, name: String, source: String, country: String)
-
     fun tcRequest(url: String)
     fun tcConnect(url: String, pushEnabled: Boolean)
     fun tcViewConfirm(url: String, address: String)

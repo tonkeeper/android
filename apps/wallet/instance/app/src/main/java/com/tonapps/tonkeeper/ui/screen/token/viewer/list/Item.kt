@@ -50,7 +50,8 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Actions(
         val wallet: WalletEntity,
         val swapUri: Uri,
-        val tronSwapUrl: String?,
+        // USDT TRC20 swaps GRAM through the multichain swap, which signs only for some legacy wallets.
+        val legacyTronSwap: Boolean,
         val swapDisabled: Boolean,
         val tronTransfersDisabled: Boolean,
         val token: TokenEntity,
@@ -73,7 +74,7 @@ sealed class Item(type: Int): BaseListItem(type) {
 
         val swap: Boolean
             get() = if (token.isUsdtTrc20) {
-                !swapDisabled && wallet.hasPrivateKey && tronSwapUrl != null
+                !swapDisabled && legacyTronSwap
             } else {
                 !swapDisabled && token.verified && !wallet.isWatchOnly
             }

@@ -50,6 +50,7 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.AsyncImageView
 import uikit.widget.LoaderView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class HistoryActionHolder(
     parent: ViewGroup,
@@ -94,7 +95,7 @@ class HistoryActionHolder(
         }
 
         if (!disableOpenAction) {
-            itemView.setOnClickListener { context.navigation?.add(TransactionScreen.newInstance(item)) }
+            itemView.setMoonOnClickListener { context.navigation?.add(TransactionScreen.newInstance(item)) }
         }
 
         itemView.background = item.position.drawable(context)
@@ -105,7 +106,12 @@ class HistoryActionHolder(
             titleView.text = item.tokenCode
             subtitleView.setTextColor(context.textSecondaryColor)
         } else {
-            titleView.setText(item.action.nameRes)
+            val actionTitle = item.actionTitle
+            if (actionTitle != null) {
+                titleView.text = actionTitle
+            } else {
+                titleView.setText(item.action.nameRes)
+            }
             subtitleView.setTextColor(context.textSecondaryColor)
         }
 
@@ -121,7 +127,7 @@ class HistoryActionHolder(
             spannable.setSpan(span, spannable.length - 1, spannable.length, Spannable.SPAN_INCLUSIVE_EXCLUSIVE)
 
             subtitleView.text = spannable
-            itemView.setOnClickListener {
+            itemView.setMoonOnClickListener {
                 showFeeMethods(item.sendFee, itemView)
             }
         }
@@ -203,11 +209,11 @@ class HistoryActionHolder(
         if (comment.isEncrypted) {
             commentView.text = context.getString(Localization.encrypted_comment)
             commentView.setLeftDrawable(lockDrawable)
-            commentView.setOnClickListener { requestDecryptComment(comment, txId, senderAddress) }
+            commentView.setMoonOnClickListener { requestDecryptComment(comment, txId, senderAddress) }
         } else {
             commentView.text = comment.body.max24
             commentView.setLeftDrawable(null)
-            commentView.setOnClickListener {
+            commentView.setMoonOnClickListener {
                 context.navigation?.add(
                     TransactionScreen.newInstance(
                         item!!
@@ -242,7 +248,7 @@ class HistoryActionHolder(
 
         val nft = item.nft!!
         nftView.visibility = View.VISIBLE
-        nftView.setOnClickListener {
+        nftView.setMoonOnClickListener {
             Navigation.from(context)?.add(NftScreen.newInstance(nft))
         }
         loadNftImage(nft.mediumUri, item.hiddenBalance)

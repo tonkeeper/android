@@ -2,40 +2,34 @@ package com.tonapps.wallet
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.chainkit.CryptoKitClient
+import com.tonapps.chainkit.core.chain.api.models.ChainError
 import com.tonapps.chainkit.core.chain.api.models.ChainRes
 import com.tonapps.chainkit.core.chain.api.models.NodeRes
 import com.tonapps.chainkit.core.chain.api.models.SignRes
+import com.tonapps.chainkit.core.chain.api.models.TxRes
 import com.tonapps.chainkit.core.chain.model.MessageType
 import com.tonapps.chainkit.core.chain.model.account.Account
 import com.tonapps.chainkit.core.chain.model.account.AccountBalance
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.PubKey
 import com.tonapps.chainkit.core.chain.model.account.WalletAuth
 import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
 import com.tonapps.chainkit.core.chain.model.signing.SigSet
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
+import com.tonapps.chainkit.core.chain.model.transaction.TransactionInfo
+import com.tonapps.chainkit.core.op.Payload
+import com.tonapps.chainkit.core.op.SignedPayload
+import com.tonapps.chainkit.transaction.ApprovalTransactions
 import com.tonapps.chainkit.transaction.GasReservePolicy
 import com.tonapps.chainkit.transaction.GasReserveResult
 import com.tonapps.extensions.fromHex
 import com.trustwallet.core.PublicKey
 import com.trustwallet.core.PublicKeyType
 import com.trustwallet.core.TONWallet
-
-class ApprovalTransaction(
-    val txExact: Transaction.Call,
-    val txMax: Transaction.Call,
-    val fee: Fee,
-    val isUnlimited: Boolean,
-) {
-    fun signableTx(unlimited: Boolean): Transaction.Call {
-        return if (unlimited) {
-            txMax
-        } else {
-            txExact
-        }
-    }
-}
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class ChainKitProvider(
     private val client: CryptoKitClient,
@@ -46,6 +40,67 @@ class ChainKitProvider(
         val network = transaction.account.chain.network.type
         val mediator = client.blockchain.getMediator(network)
         return mediator.fee.calculateFee(transaction)
+    }
+
+    suspend fun estimateFee(
+        payload: Payload,
+        account: Account,
+        priority: Fee.Priority = Fee.Priority.Standard,
+    ): ChainRes<Fee> {
+        val mediator = client.blockchain.getMediator(payload.chain.network.type)
+        return mediator.operation.calculateFee(payload, account, priority)
+    }
+
+    suspend fun signPayload(
+        payload: Payload,
+        account: Account,
+        fee: Fee,
+        nonce: BigInteger,
+        wallet: CryptoWallet,
+    ): SignRes<SignedPayload> {
+        val mediator = client.blockchain.getMediator(payload.chain.network.type)
+        return mediator.operation.sign(payload, account, fee, nonce, wallet)
+    }
+
+    suspend fun reportPayloadSent(
+        walletId: String,
+        account: Account,
+        payload: Payload,
+        txHash: String,
+        swap: PendingSwap? = null,
+    ) {
+        txReporter.onPayloadSent(walletId, account, payload, txHash, swap)
+    }
+
+    suspend fun sendRawTransaction(account: Account, transaction: String): NodeRes<String> {
+        val mediator = client.blockchain.getMediator(account.chain.network.type)
+        return mediator.transaction.sendRawTransaction(account, transaction)
+    }
+
+    suspend fun broadcastPayload(payload: SignedPayload, account: Account): NodeRes<String> {
+        val mediator = client.blockchain.getMediator(account.chain.network.type)
+        return mediator.broadcastAndReconcile(payload, account)
+    }
+
+    suspend fun transactionHash(payload: SignedPayload): String? {
+        val mediator = client.blockchain.getMediator(payload.chain.network.type)
+        return mediator.operation.transactionHash(payload).getOrNull()
+    }
+
+    suspend fun findTransaction(account: Account, hash: String): TxRes<TransactionInfo> {
+        val mediator = client.blockchain.getMediator(account.chain.network.type)
+        return mediator.transaction.findTransaction(account, hash)
+    }
+
+    suspend fun estimateBatchFee(batch: List<Transaction.Swap>): ChainRes<Fee> {
+        val largest = batch.maxByOrNull { it.data?.length ?: 0 }
+            ?: return ChainRes.err(ChainError.InternalError("Empty batch"))
+        val result = estimateFee(largest)
+        val fee = result.value
+        if (batch.size == 1 || fee == null) {
+            return result
+        }
+        return ChainRes.ok(Fee.Value(asset = fee.asset, amount = fee.amount * BigInteger.fromInt(batch.size)))
     }
 
     suspend fun getBalance(account: Account): NodeRes<AccountBalance> {
@@ -75,11 +130,28 @@ class ChainKitProvider(
         )
     }
 
+    suspend fun tonEmulationPayload(
+        memoByteSize: Int,
+        account: Account,
+        recipientPublicKey: PubKey,
+    ): SignRes<String> = withContext(Dispatchers.Default) {
+        client.tonMessageEncryptor.emulationPayload(memoByteSize, account, recipientPublicKey)
+    }
+
+    suspend fun encryptTonMemo(
+        memo: String,
+        account: Account,
+        recipientPublicKey: PubKey,
+        wallet: SigningWallet,
+    ): SignRes<String> = withContext(Dispatchers.Default) {
+        client.tonMessageEncryptor.encrypt(memo, account, recipientPublicKey, wallet.getPrivateKey(account.chain))
+    }
+
     suspend fun signTransaction(
         tx: Transaction,
         fee: Fee,
         nonce: BigInteger,
-        wallet: CryptoWallet,
+        wallet: SigningWallet,
     ): SignRes<SigSet<ByteArray>> {
         val network = tx.account.chain.network.type
         val mediator = client.blockchain.getMediator(network)
@@ -89,7 +161,7 @@ class ChainKitProvider(
                 transaction = tx,
                 fee = fee,
                 nonce = nonce,
-                wallet = wallet,
+                wallet = wallet.requireHd(),
             )
             else -> mediator.sign.transaction.signAndEncode(
                 transaction = tx,
@@ -102,8 +174,29 @@ class ChainKitProvider(
         return signingResult
     }
 
+    /**
+     * Signs [batch] as one transaction under one [fee] and [nonce]. On EVM an account not yet
+     * delegated to Hermes is delegated by the same (type-4) transaction.
+     */
+    suspend fun signBatch(
+        batch: List<Transaction>,
+        fee: Fee,
+        nonce: BigInteger,
+        wallet: SigningWallet,
+    ): SignRes<SigSet<ByteArray>> {
+        val chain = batch.first().account.chain
+        val mediator = client.blockchain.getMediator(chain.network.type)
+        return mediator.sign.transaction.signAndEncode(
+            batch = batch,
+            fee = fee,
+            nonce = nonce,
+            privateKey = wallet.getPrivateKey(chain),
+        )
+    }
+
+    /** [walletId] is the registered multichain wallet the send is reported for; null sends without a report. */
     suspend fun sendTransaction(
-        walletId: String,
+        walletId: String?,
         tx: Transaction,
         data: ByteArray,
         service: String? = null,
@@ -115,7 +208,8 @@ class ChainKitProvider(
         val mediator = client.blockchain.getMediator(network)
         val result = mediator.transaction.sendEncodedTransaction(tx.account, data)
 
-        result.getOrNull()?.let { txHash ->
+        val txHash = result.getOrNull()
+        if (txHash != null && walletId != null) {
             txReporter.onTransactionSent(walletId, tx, txHash, service, routeId, serviceTxId, sellBaseAmount)
         }
 
@@ -169,20 +263,9 @@ class ChainKitProvider(
         return client.tx.calculateGasReserve(account, energy, amount, isMax, fee, policy)
     }
 
-    fun buildApproval(
-        tx: Transaction.Swap,
-        approvalData: String,
-        approvalFee: Fee,
-    ): ApprovalTransaction? {
-        val result = client.tx.buildApproval(tx, approvalData)
-            ?: return null
-
-        return ApprovalTransaction(
-            txExact = result.txExact,
-            txMax = result.txMax,
-            fee = approvalFee,
-            isUnlimited = false,
-        )
+    /** The approve [approvalData] makes for [tx], as an exact and as an unlimited allowance. */
+    fun buildApproval(tx: Transaction.Swap, approvalData: String): ApprovalTransactions? {
+        return client.tx.buildApproval(tx, approvalData)
     }
 
     companion object {

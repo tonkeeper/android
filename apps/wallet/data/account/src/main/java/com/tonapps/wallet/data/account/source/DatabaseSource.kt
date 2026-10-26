@@ -6,7 +6,6 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.getStringOrNull
-import androidx.core.database.sqlite.transaction
 import com.tonapps.blockchain.ton.contract.walletVersion
 import com.tonapps.extensions.closeSafe
 import com.tonapps.extensions.isNullOrEmpty
@@ -25,56 +24,6 @@ internal class DatabaseSource(
     context: Context,
     private val scope: CoroutineScope
 ): SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
-
-    private companion object {
-        private const val DATABASE_NAME = "account"
-        private const val DATABASE_VERSION = 4
-
-        private const val WALLET_TABLE_NAME = "wallet"
-        private const val WALLET_TABLE_ID_COLUMN = "id"
-        private const val WALLET_TABLE_ID_PUBLIC_KEY_COLUMN = "public_key"
-        private const val WALLET_TABLE_TYPE_COLUMN = "type"
-        private const val WALLET_TABLE_VERSION_COLUMN = "version"
-        private const val WALLET_TABLE_LABEL_COLUMN = "label"
-        private const val WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN = "ledger_device_id"
-        private const val WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN = "ledger_account_index"
-
-        private const val WALLET_TABLE_KEYSTONE_XFP_COLUMN = "keystone_xfp"
-        private const val WALLET_TABLE_KEYSTONE_PATH_COLUMN = "keystone_path"
-        private const val WALLET_TABLE_INITIALIZED_COLUMN = "initialized"
-
-        private val walletFields = arrayOf(
-            WALLET_TABLE_ID_COLUMN,
-            WALLET_TABLE_ID_PUBLIC_KEY_COLUMN,
-            WALLET_TABLE_TYPE_COLUMN,
-            WALLET_TABLE_VERSION_COLUMN,
-            WALLET_TABLE_LABEL_COLUMN,
-            WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN,
-            WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN,
-            WALLET_TABLE_KEYSTONE_XFP_COLUMN,
-            WALLET_TABLE_KEYSTONE_PATH_COLUMN,
-            WALLET_TABLE_INITIALIZED_COLUMN
-        ).joinToString(",")
-
-        private fun WalletEntity.toValues(): ContentValues {
-            val values = ContentValues()
-            values.put(WALLET_TABLE_ID_COLUMN, id)
-            values.put(WALLET_TABLE_ID_PUBLIC_KEY_COLUMN, publicKey.key.toByteArray())
-            values.put(WALLET_TABLE_TYPE_COLUMN, type.id)
-            values.put(WALLET_TABLE_VERSION_COLUMN, version.id)
-            values.put(WALLET_TABLE_LABEL_COLUMN, label.toByteArray())
-            ledger?.let {
-                values.put(WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN, it.deviceId)
-                values.put(WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN, it.accountIndex)
-            }
-            keystone?.let {
-                values.put(WALLET_TABLE_KEYSTONE_XFP_COLUMN, it.xfp)
-                values.put(WALLET_TABLE_KEYSTONE_PATH_COLUMN, it.path)
-            }
-            values.put(WALLET_TABLE_INITIALIZED_COLUMN, initialized)
-            return values
-        }
-    }
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE $WALLET_TABLE_NAME (" +
@@ -112,13 +61,16 @@ internal class DatabaseSource(
         }
     }
 
-    suspend fun clearAccounts() = withContext(scope.coroutineContext) {
-        writableDatabase.delete(WALLET_TABLE_NAME, null, null)
-    }
-
     suspend fun setInitialized(id: String, initialized: Boolean) = withContext(scope.coroutineContext) {
         val values = ContentValues()
-        values.put(WALLET_TABLE_INITIALIZED_COLUMN, if (initialized) 1 else 0)
+        values.put(
+            WALLET_TABLE_INITIALIZED_COLUMN,
+            if (initialized) {
+                1
+            } else {
+                0
+            },
+        )
         val count = writableDatabase.update(WALLET_TABLE_NAME, values, "$WALLET_TABLE_ID_COLUMN = ?", arrayOf(id))
         if (count == 0) {
             throw IllegalStateException("Account with id $id not found")
@@ -241,5 +193,55 @@ internal class DatabaseSource(
         }
         cursor.closeSafe()
         return accounts
+    }
+
+    private companion object {
+        private const val DATABASE_NAME = "account"
+        private const val DATABASE_VERSION = 4
+
+        private const val WALLET_TABLE_NAME = "wallet"
+        private const val WALLET_TABLE_ID_COLUMN = "id"
+        private const val WALLET_TABLE_ID_PUBLIC_KEY_COLUMN = "public_key"
+        private const val WALLET_TABLE_TYPE_COLUMN = "type"
+        private const val WALLET_TABLE_VERSION_COLUMN = "version"
+        private const val WALLET_TABLE_LABEL_COLUMN = "label"
+        private const val WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN = "ledger_device_id"
+        private const val WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN = "ledger_account_index"
+
+        private const val WALLET_TABLE_KEYSTONE_XFP_COLUMN = "keystone_xfp"
+        private const val WALLET_TABLE_KEYSTONE_PATH_COLUMN = "keystone_path"
+        private const val WALLET_TABLE_INITIALIZED_COLUMN = "initialized"
+
+        private val walletFields = arrayOf(
+            WALLET_TABLE_ID_COLUMN,
+            WALLET_TABLE_ID_PUBLIC_KEY_COLUMN,
+            WALLET_TABLE_TYPE_COLUMN,
+            WALLET_TABLE_VERSION_COLUMN,
+            WALLET_TABLE_LABEL_COLUMN,
+            WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN,
+            WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN,
+            WALLET_TABLE_KEYSTONE_XFP_COLUMN,
+            WALLET_TABLE_KEYSTONE_PATH_COLUMN,
+            WALLET_TABLE_INITIALIZED_COLUMN
+        ).joinToString(",")
+
+        private fun WalletEntity.toValues(): ContentValues {
+            val values = ContentValues()
+            values.put(WALLET_TABLE_ID_COLUMN, id)
+            values.put(WALLET_TABLE_ID_PUBLIC_KEY_COLUMN, publicKey.key.toByteArray())
+            values.put(WALLET_TABLE_TYPE_COLUMN, type.id)
+            values.put(WALLET_TABLE_VERSION_COLUMN, version.id)
+            values.put(WALLET_TABLE_LABEL_COLUMN, label.toByteArray())
+            ledger?.let {
+                values.put(WALLET_TABLE_LEDGER_DEVICE_ID_COLUMN, it.deviceId)
+                values.put(WALLET_TABLE_LEDGER_ACCOUNT_INDEX_COLUMN, it.accountIndex)
+            }
+            keystone?.let {
+                values.put(WALLET_TABLE_KEYSTONE_XFP_COLUMN, it.xfp)
+                values.put(WALLET_TABLE_KEYSTONE_PATH_COLUMN, it.path)
+            }
+            values.put(WALLET_TABLE_INITIALIZED_COLUMN, initialized)
+            return values
+        }
     }
 }

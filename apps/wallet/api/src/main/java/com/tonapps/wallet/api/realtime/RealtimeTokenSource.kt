@@ -22,15 +22,15 @@ sealed interface RealtimeTokenResult {
 }
 
 class RealtimeTokenSource(
-    private val multichain: MultichainAPI,
+    private val multichain: () -> MultichainAPI,
 ) {
 
     suspend fun connectionToken(): RealtimeTokenResult = request {
-        multichain.wallets.getRealtimeConnectionTokenWithHttpInfo()
+        multichain().wallets.getRealtimeConnectionTokenWithHttpInfo()
     }
 
     suspend fun subscriptionToken(walletId: String): RealtimeTokenResult = request {
-        multichain.wallets.getWalletRealtimeTokenWithHttpInfo(walletId = walletId, xWalletId = walletId)
+        multichain().wallets.getWalletRealtimeTokenWithHttpInfo(walletId = walletId, xWalletId = walletId)
     }
 
     private suspend fun request(

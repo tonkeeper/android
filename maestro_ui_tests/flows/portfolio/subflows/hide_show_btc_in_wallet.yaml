@@ -15,56 +15,14 @@
 name: "Multichain — hide and show BTC"
 appId: com.ton_keeper.debug
 ---
-- runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
-
-# Precondition: BTC is in the list (possibly below the fold / behind More assets).
-# 30 s: ~5 s per scroll round trip on an emulator.
-- runFlow: "../../../steps/wallet/expand_home_assets.yaml"
-- scrollUntilVisible:
-    element:
-      text: "^BTC$"
-    direction: DOWN
-    timeout: 30000
+# Precondition: BTC is in the list (possibly below the fold / behind More
+# assets). A run that died between Hide and Show left it hidden for the whole
+# wallet, so turn it back on instead of failing on someone else's leftover.
+- runFlow: "../../../steps/wallet/ensure_btc_shown.yaml"
 
 # Hide.
 - runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
-- tapOn:
-    text: Manage
-    rightOf: Crypto
-- waitForAnimationToEnd:
-    timeout: 3000
-- extendedWaitUntil:
-    visible: "Search by ticker or name"
-    timeout: 30000
-- tapOn: Search by ticker or name
-- inputText: BTC
-# Enter drops the IME, which otherwise covers the bottom-anchored Save Changes.
-- pressKey: Enter
-- waitForAnimationToEnd:
-    timeout: 2000
-- tapOn:
-    text: "^All$"
-- waitForAnimationToEnd:
-    timeout: 1000
-- extendedWaitUntil:
-    visible: "^BTC$"
-    timeout: 30000
-# The search field itself now reads "BTC" and home still has BTC under the
-# sheet, so anchor on the filter chips row: the first "^BTC$" below "All" is
-# the result row. Do not anchor on neighbouring rows (WBTC, BTCR…) — the
-# result set depends on the wallet's asset list.
-- tapOn:
-    text: "^BTC$"
-    below: "^All$"
-- waitForAnimationToEnd:
-    timeout: 2000
-- extendedWaitUntil:
-    visible: Save Changes
-    timeout: 30000
-- tapOn: Save Changes
-- extendedWaitUntil:
-    notVisible: Save Changes
-    timeout: 30000
+- runFlow: "../../../steps/wallet/toggle_btc_in_manage.yaml"
 
 # Hidden: fresh home, the row is gone from the expanded list. LazyColumn only
 # exposes composed rows, so check the first screen and one scroll further down.
@@ -82,39 +40,7 @@ appId: com.ton_keeper.debug
 
 # Show again.
 - runFlow: "../../../steps/wallet/launch_app_ensure_multichain_wallet.yaml"
-- tapOn:
-    text: Manage
-    rightOf: Crypto
-- waitForAnimationToEnd:
-    timeout: 3000
-- extendedWaitUntil:
-    visible: "Search by ticker or name"
-    timeout: 30000
-- tapOn: Search by ticker or name
-- inputText: BTC
-# Enter drops the IME, which otherwise covers the bottom-anchored Save Changes.
-- pressKey: Enter
-- waitForAnimationToEnd:
-    timeout: 2000
-- tapOn:
-    text: "^All$"
-- waitForAnimationToEnd:
-    timeout: 1000
-- extendedWaitUntil:
-    visible: "^BTC$"
-    timeout: 30000
-- tapOn:
-    text: "^BTC$"
-    below: "^All$"
-- waitForAnimationToEnd:
-    timeout: 2000
-- extendedWaitUntil:
-    visible: Save Changes
-    timeout: 30000
-- tapOn: Save Changes
-- extendedWaitUntil:
-    notVisible: Save Changes
-    timeout: 30000
+- runFlow: "../../../steps/wallet/toggle_btc_in_manage.yaml"
 
 # Shown: fresh home, expand, scroll to the row, open it. centerElement keeps
 # the row away from the bottom tab bar, otherwise the tap can land on Trade.

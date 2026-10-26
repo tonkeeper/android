@@ -6,6 +6,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.TokensManageScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.trading.AssetsFragment
+import uikit.extensions.setMoonOnClickListener
 
 class AssetsHeaderHolder(parent: ViewGroup): Holder<Item.AssetsHeader>(parent, R.layout.view_wallet_assets_header) {
 
@@ -13,10 +14,10 @@ class AssetsHeaderHolder(parent: ViewGroup): Holder<Item.AssetsHeader>(parent, R
     private val manageView = findViewById<View>(R.id.manage)
 
     override fun onBind(item: Item.AssetsHeader) {
-        cryptoView.setOnClickListener {
+        cryptoView.setMoonOnClickListener {
             navigation?.add(AssetsFragment.newInstance())
         }
-        manageView.setOnClickListener {
+        manageView.setMoonOnClickListener {
             navigation?.add(TokensManageScreen.newInstance(item.wallet))
         }
     }

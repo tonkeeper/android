@@ -6,8 +6,10 @@ import android.os.Process
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.crashlytics.setCustomKeys
 import com.tonapps.bus.core.contract.EventDelegate
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.core.tracer.AnalyticException
 import com.tonapps.bus.generated.DefaultEvents
+import com.tonapps.core.flags.FeatureKey
 import java.util.concurrent.CancellationException
 import kotlin.concurrent.atomics.AtomicReference
 
@@ -28,18 +30,36 @@ class AnalyticsHelper private constructor(
 
     private val config = AtomicReference<Config?>(null)
 
+    fun start(context: Context, persistentCacheFeature: FeatureKey) {
+        executor.start(context, persistentCacheFeature)
+    }
+
     fun setConfig(context: Context, initConfig: Config) {
         if (config.compareAndSet(null, initConfig)) {
-            executor.init(
-                context = context,
-                appKey = initConfig.aptabaseAppKey,
-                host = initConfig.aptabaseEndpoint,
-                installId = initConfig.installId,
-                deviceId = initConfig.deviceId,
-                storeCountryCode = initConfig.storeCountryCode,
-                deviceCountryCode = initConfig.deviceCountryCode
-            )
+            executor.setConfig(context, initConfig)
         }
+    }
+
+    fun eventsTaggedWith(utm: UtmParameters): DefaultEvents {
+        if (utm.isEmpty) {
+            return events
+        }
+        return DefaultEvents(UtmEventExecutor(executor, utm))
+    }
+
+    fun eventDelegateTaggedWith(utm: UtmParameters): EventDelegate {
+        if (utm.isEmpty) {
+            return delegate
+        }
+        return DefaultEventDelegate(UtmEventExecutor(executor, utm))
+    }
+
+    fun onAppForeground() {
+        executor.onAppForeground()
+    }
+
+    fun onAppBackground() {
+        executor.onAppBackground()
     }
 
     @Deprecated("Use `delegate` instead")

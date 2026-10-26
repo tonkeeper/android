@@ -8,6 +8,7 @@ import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.view.View
+import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnNextLayout
 import androidx.core.view.isVisible
@@ -15,7 +16,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.deposit.multicoin.analytics.asDepositFlowFrom
 import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
@@ -50,7 +54,6 @@ import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.isMaxScrollReached
-import uikit.extensions.setOnClickListener
 import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
 import uikit.extensions.withAlpha
@@ -59,6 +62,7 @@ import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 import java.util.concurrent.CancellationException
+import uikit.extensions.setMoonOnClickListener
 
 class SendTransactionScreen(wallet: WalletEntity) :
     WalletContextScreen(R.layout.fragment_send_transaction, wallet), BaseFragment.Modal,
@@ -69,7 +73,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
     private val args: SendTransactionArgs by lazy { SendTransactionArgs(requireArguments()) }
 
     private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
-        InsufficientFundsDialog(this)
+        InsufficientFundsDialog(this, topUpFrom())
     }
 
     override val viewModel: SendTransactionViewModel by walletViewModel {
@@ -81,7 +85,9 @@ class SendTransactionScreen(wallet: WalletEntity) :
             SendTransactionAnalyticsContext(
                 sendNativeFrom = args.sendNativeFrom,
                 transactionSentDetail = args.transactionSentDetail,
+                utm = args.utm,
             ),
+            args.mode,
         )
     }
 
@@ -122,6 +128,8 @@ class SendTransactionScreen(wallet: WalletEntity) :
     private lateinit var taskView: ProcessTaskView
     private lateinit var bodyView: View
     private lateinit var warningView: View
+    private lateinit var signMessageNoticeView: View
+    private lateinit var signMessageNoticeTextView: AppCompatTextView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -129,7 +137,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
         headerView.background = headerDrawable
 
         walletView = view.findViewById(R.id.wallet)
-        view.setOnClickListener(R.id.close) { finish() }
+        view.setMoonOnClickListener(R.id.close) { finish() }
 
         emulatedView = view.findViewById(R.id.emulated)
 
@@ -144,7 +152,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
 
         slideView = view.findViewById(R.id.slide)
         slideView.isEnabled = false
-        slideView.setText(buildConfirmText())
+        slideView.setText(buildConfirmText(confirmTitleRes()))
 
         bodyView = view.findViewById(R.id.body)
         taskView = view.findViewById(R.id.task)
@@ -154,6 +162,10 @@ class SendTransactionScreen(wallet: WalletEntity) :
         warningView = view.findViewById(R.id.warning)
         warningView.background.setTint(requireContext().accentOrangeColor.withAlpha(0.24f))
 
+        signMessageNoticeView = view.findViewById(R.id.sign_message_notice)
+        signMessageNoticeTextView = view.findViewById(R.id.sign_message_notice_text)
+        applyMode()
+
         applyWallet()
 
         collectFlow(viewModel.stateFlow, ::applyState)
@@ -161,6 +173,39 @@ class SendTransactionScreen(wallet: WalletEntity) :
         collectFlow(listView.bottomScrolled) {
             footerDrawable.setDivider(it)
             checkSlideButton()
+        }
+    }
+
+    private fun topUpFrom(): DepositFlowFrom {
+        val sendNativeFrom = args.sendNativeFrom
+        return when {
+            sendNativeFrom != null -> sendNativeFrom.asDepositFlowFrom()
+            args.batteryTransactionType == BatteryTransaction.SWAP -> DepositFlowFrom.WalletScreen
+            else -> DepositFlowFrom.Other
+        }
+    }
+
+    private fun applyMode() {
+        val mode = args.mode
+        if (mode is SendTransactionMode.SignMessage) {
+            signMessageNoticeTextView.text = getString(Localization.sign_message_not_sent_warning, mode.appName)
+            signMessageNoticeView.visibility = View.VISIBLE
+            taskView.setSuccessLabel(getString(Localization.signed))
+        }
+    }
+
+    @StringRes
+    private fun confirmTitleRes(): Int {
+        return when (args.mode) {
+            is SendTransactionMode.SendTransaction -> Localization.confirm
+            is SendTransactionMode.SignMessage -> Localization.sign
+        }
+    }
+
+    private fun confirm() {
+        when (args.mode) {
+            is SendTransactionMode.SendTransaction -> send()
+            is SendTransactionMode.SignMessage -> signMessage()
         }
     }
 
@@ -179,10 +224,23 @@ class SendTransactionScreen(wallet: WalletEntity) :
         }.launchIn(lifecycleScope)
     }
 
-    private fun buildConfirmText(): SpannableStringBuilder {
+    private fun signMessage() {
+        setProgressTask()
+        viewModel.signMessage().catch {
+            if (it is CancellationException) {
+                setDefaultTask()
+            } else {
+                setErrorTask(BridgeException(cause = it))
+            }
+        }.onEach { internalBoc ->
+            setSuccessTask(internalBoc)
+        }.launchIn(lifecycleScope)
+    }
+
+    private fun buildConfirmText(@StringRes titleRes: Int): SpannableStringBuilder {
         val secondLineText = getString(Localization.swipe_right)
         val slideTextBuilder = SpannableStringBuilder()
-        slideTextBuilder.append(getString(Localization.confirm))
+        slideTextBuilder.append(getString(titleRes))
         slideTextBuilder.append("\n")
         slideTextBuilder.append(SpannableString(secondLineText).apply {
             setSpan(
@@ -289,7 +347,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
         warningView.visibility = View.VISIBLE
 
         slideView.isEnabled = true
-        slideView.doOnDone = { send() }
+        slideView.doOnDone = { confirm() }
     }
 
     private fun checkScrollable() {
@@ -299,7 +357,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
                 scrollAllView.visibility = View.VISIBLE
             } else {
                 slideView.isEnabled = true
-                slideView.doOnDone = { send() }
+                slideView.doOnDone = { confirm() }
             }
         }
     }
@@ -310,7 +368,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
         } else if (scrollAllView.isVisible && listView.isMaxScrollReached) {
             scrollAllView.visibility = View.GONE
             slideView.isEnabled = true
-            slideView.doOnDone = { send() }
+            slideView.doOnDone = { confirm() }
         }
     }
 
@@ -326,7 +384,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
         totalView.visibility = View.VISIBLE
         totalView.setTextColor(color)
         totalView.setRightDrawable(drawable)
-        totalView.setOnClickListener { showTotalDialog(state) }
+        totalView.setMoonOnClickListener { showTotalDialog(state) }
     }
 
     private fun showTotalDialog(state: SendTransactionState.Details) {
@@ -377,6 +435,8 @@ class SendTransactionScreen(wallet: WalletEntity) :
             broadcastVia: BroadcastVia = BroadcastVia.Default,
             sendNativeFrom: Events.SendNative.SendNativeFrom? = null,
             transactionSentDetail: Events.TransactionSent.TransactionSentCategoryDetail? = null,
+            utm: UtmParameters = UtmParameters.Empty,
+            mode: SendTransactionMode = SendTransactionMode.SendTransaction,
         ): SendTransactionScreen {
             val screen = SendTransactionScreen(wallet)
             screen.setArgs(
@@ -387,9 +447,30 @@ class SendTransactionScreen(wallet: WalletEntity) :
                     broadcastVia = broadcastVia,
                     sendNativeFrom = sendNativeFrom,
                     transactionSentDetail = transactionSentDetail,
+                    utm = utm,
+                    mode = mode,
                 )
             )
             return screen
+        }
+
+        /**
+         * TON Connect `signMessage`: shows the request as a transaction preview, signs it as an
+         * internal message for the relayer behind [appName] and returns that message's base64 BOC
+         * without broadcasting anything. Throws [CancellationException] when the user declines.
+         */
+        suspend fun runSignMessage(
+            context: Context,
+            wallet: WalletEntity,
+            request: SignRequestEntity,
+            appName: String,
+        ): String {
+            return run(
+                context = context,
+                wallet = wallet,
+                request = request,
+                mode = SendTransactionMode.SignMessage(appName),
+            )
         }
 
         suspend fun run(
@@ -401,9 +482,21 @@ class SendTransactionScreen(wallet: WalletEntity) :
             broadcastVia: BroadcastVia = BroadcastVia.Default,
             sendNativeFrom: Events.SendNative.SendNativeFrom? = null,
             transactionSentDetail: Events.TransactionSent.TransactionSentCategoryDetail? = null,
+            utm: UtmParameters = UtmParameters.Empty,
+            mode: SendTransactionMode = SendTransactionMode.SendTransaction,
         ): String {
             val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
-            val fragment = newInstance(wallet, request, batteryTxType, forceRelayer, broadcastVia, sendNativeFrom, transactionSentDetail)
+            val fragment = newInstance(
+                wallet,
+                request,
+                batteryTxType,
+                forceRelayer,
+                broadcastVia,
+                sendNativeFrom,
+                transactionSentDetail,
+                utm,
+                mode,
+            )
             val result = activity.addForResult(fragment)
             if (result.containsKey(ERROR)) {
                 // Type must stay in sync with `setErrorResult(BridgeException)` at line 216 —

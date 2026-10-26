@@ -26,13 +26,14 @@ sealed interface SwapPayloadInfo {
         override val calldataType: CrossSwapCalldataPayloadType,
         override val mode: Int? = null,
         override val fee: Fee? = null,
+        val memo: String? = null,
     ) : SwapPayloadInfo
 
     data class Approve(
         override val to: String,
         override val amount: BigInteger,
         override val data: String,
-        override val fee: Fee,
+        override val fee: Fee? = null,
         override val calldataType: CrossSwapCalldataPayloadType,
         override val mode: Int? = null,
     ) : SwapPayloadInfo

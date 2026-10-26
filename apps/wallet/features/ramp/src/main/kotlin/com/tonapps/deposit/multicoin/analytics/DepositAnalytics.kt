@@ -1,10 +1,12 @@
 package com.tonapps.deposit.multicoin.analytics
 
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowNetwork
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.deposit.screens.ramp.RampType
 
@@ -13,6 +15,8 @@ import com.tonapps.deposit.screens.ramp.RampType
 class DepositAnalytics(
     private val rampType: RampType,
     private val from: DepositFlowFrom,
+    private val walletMode: DepositFlowWalletMode,
+    private val utm: UtmParameters = UtmParameters.Empty,
 ) : RampAnalytics {
 
     private val events: Events.DepositFlow?
@@ -20,23 +24,25 @@ class DepositAnalytics(
             if (rampType != RampType.RampOn) {
                 return null
             }
-            return AnalyticsHelper.Default.events.depositFlow
+            return AnalyticsHelper.Default.eventsTaggedWith(utm).depositFlow
         }
 
     fun started(availableOptions: List<DepositFlowAddFundsOption>) {
         events?.depositStarted(
             from = from,
-            availableOptions = availableOptions.joinToString(separator = ",") { it.key },
+            walletMode = walletMode,
+            availableOptions = availableOptions.toAnalyticsOptions { it.key },
         )
     }
 
     fun optionClick(addFundsOption: DepositFlowAddFundsOption) {
-        events?.depositOptionClick(from = from, addFundsOption = addFundsOption)
+        events?.depositOptionClick(from = from, walletMode = walletMode, addFundsOption = addFundsOption)
     }
 
     fun viewReceiveTokens(network: DepositFlowNetwork) {
         events?.depositViewReceiveTokens(
             from = from,
+            walletMode = walletMode,
             addFundsOption = DepositFlowAddFundsOption.ReceiveTokens,
             network = network,
         )
@@ -46,7 +52,7 @@ class DepositAnalytics(
         events?.depositViewFiatChooseAsset(
             from = from,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
-            availableOptions = availableOptions.joinToString(separator = ","),
+            availableOptions = availableOptions.toAnalyticsOptions(),
         )
     }
 
@@ -68,7 +74,7 @@ class DepositAnalytics(
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
             buyAsset = cryptoAsset,
             sellAsset = fiatCode,
-            availableOptions = availableOptions.joinToString(separator = ","),
+            availableOptions = availableOptions.toAnalyticsOptions(),
         )
     }
 
@@ -86,16 +92,10 @@ class DepositAnalytics(
         )
     }
 
-    fun viewP2pAlert() {
-        events?.depositViewP2pAlert(
-            from = from,
-            addFundsOption = DepositFlowAddFundsOption.BuyWithP2pMarket,
-        )
-    }
-
     fun continueToP2pMarket() {
         events?.depositContinueToP2pMarket(
             from = from,
+            walletMode = walletMode,
             addFundsOption = DepositFlowAddFundsOption.BuyWithP2pMarket,
         )
     }
@@ -134,24 +134,6 @@ class DepositAnalytics(
         )
     }
 
-    override fun viewRampAlert(
-        cryptoAsset: String,
-        fiatCode: String,
-        paymentMethod: String,
-        providerName: String,
-        amount: Double,
-    ) {
-        events?.depositViewRampAlert(
-            from = from,
-            addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
-            buyAsset = cryptoAsset,
-            sellAsset = fiatCode,
-            paymentMethod = paymentMethod,
-            providerName = providerName,
-            amount = amount,
-        )
-    }
-
     override fun continueToRampProvider(
         cryptoAsset: String,
         fiatCode: String,
@@ -162,6 +144,7 @@ class DepositAnalytics(
     ) {
         events?.depositContinueToRampProvider(
             from = from,
+            walletMode = walletMode,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
             buyAsset = cryptoAsset,
             sellAsset = fiatCode,

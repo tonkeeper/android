@@ -1,0 +1,57 @@
+{
+  "quote_id": "d3f5fbb3-a914-4339-a33d-518d43311890",
+  "routes": [
+    {
+      "route_id": "576453c7-9e09-4288-a2dd-ab1058ed5d72",
+      "provider_route_id": "0x1e06fed3dbcf41ee56fa8167704a7793fb7d0bd0c7eaa58f2a5f49a6e5419857",
+      "aggregator": "swapsxyz",
+      "route_type": "cross_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "7922811535025828",
+      "minimum_destination_amount": "7843583419675569",
+      "total_slippage_bps": 100,
+      "source_usd_price": 0.99989,
+      "destination_usd_price": 2500.55,
+      "fees": [
+        {
+          "type": "protocol",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "1",
+          "amount": "53198",
+          "amount_usd": "0.05"
+        },
+        {
+          "type": "application",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "1",
+          "amount": "140000",
+          "amount_usd": "0.14"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-09-07T06:53:33Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "1fad3931-1b61-4159-b5f8-583cdfb3cab0",
+          "kind": "main",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "payload_type": "evm_tx",
+          "calldata_payload_type": "flex",
+          "payload": "{\"to\":\"0x9FaBcc78972791EB99EE5DcE7Aec22C25e5ABf45\",\"value\":\"20000000\",\"chainId\":1,\"chainKey\":\"ethereum\"}",
+          "human_summary": {
+            "action": "Swap USDT for ETH",
+            "spend_asset": "eth/mainnet/erc20/0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            "spend_amount": "20000000",
+            "receive_asset": "eth/mainnet/coin",
+            "receive_amount": "7922811535025828"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-07T06:53:33Z",
+          "requires_token_approval": true
+        }
+      ]
+    }
+  ]
+}

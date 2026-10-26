@@ -2,26 +2,25 @@ package com.tonapps.deposit.screens.ramp
 
 import com.tonapps.async.Async
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
-import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowWithdrawOption
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.data.toWalletCurrency
+import com.tonapps.deposit.multicoin.analytics.asWithdrawFlowFrom
+import com.tonapps.deposit.multicoin.analytics.toAnalyticsOptions
 import com.tonapps.deposit.screens.method.RampAsset
 import com.tonapps.log.L
 import com.tonapps.mvi.MviFeature
-import com.tonapps.mvi.MviRelay
 import com.tonapps.mvi.contract.MviAction
 import com.tonapps.mvi.contract.MviState
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.props.MviProperty
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.settings.SettingsRepository
-import io.exchangeapi.models.CreateP2PSessionRequest
 import io.exchangeapi.models.ExchangeLayoutItem
 import io.exchangeapi.models.ExchangeLayoutItemType
-import io.exchangeapi.models.ExchangeMerchantInfo
 import kotlinx.coroutines.launch
 
 sealed interface RampAction : MviAction {
@@ -49,6 +48,8 @@ class RampViewState(
 
 class RampFeature(
     private val rampType: RampType,
+    private val analyticsFrom: DepositFlowFrom,
+    private val utm: UtmParameters,
     private val onRampRepository: ExchangeRepository,
     private val accountRepository: AccountRepository,
 ) : MviFeature<RampAction, RampState, RampViewState>(
@@ -73,7 +74,7 @@ class RampFeature(
         hasCrypto: Boolean = false,
         hasStablecoin: Boolean = false,
     ) {
-        val events = AnalyticsHelper.Default.events
+        val events = AnalyticsHelper.Default.eventsTaggedWith(utm)
         when (rampType) {
             RampType.RampOn -> {
                 val options = buildList {
@@ -89,8 +90,9 @@ class RampFeature(
                     }
                 }
                 events.depositFlow.depositStarted(
-                    from = DepositFlowFrom.WalletScreen,
-                    availableOptions = options.joinToString(separator = ",") { it.key },
+                    from = analyticsFrom,
+                    walletMode = DepositFlowWalletMode.Single,
+                    availableOptions = options.toAnalyticsOptions { it.key },
                 )
             }
 
@@ -107,8 +109,8 @@ class RampFeature(
                     }
                 }
                 events.withdrawFlow.withdrawStarted(
-                    from = WithdrawFlowFrom.WalletScreen,
-                    availableOptions = options.joinToString(separator = ",") { it.key },
+                    from = analyticsFrom.asWithdrawFlowFrom(),
+                    availableOptions = options.toAnalyticsOptions { it.key },
                 )
             }
         }

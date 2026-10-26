@@ -8,6 +8,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListHolder
 import uikit.widget.AsyncImageView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.layout.view_browser_app_banner) {
 
@@ -16,9 +17,12 @@ class BannerHolder(parent: ViewGroup): BaseListHolder<BannerAppItem>(parent, R.l
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
     private val descriptionView = findViewById<AppCompatTextView>(R.id.description)
 
+    init {
+    }
+
     override fun onBind(item: BannerAppItem) {
-        itemView.setOnClickListener {
-            item.app.openDApp(context, item.wallet, "banner", item.country, item.multichain)
+        itemView.setMoonOnClickListener {
+            item.app.openDApp(context, item.wallet, "banner", item.multichain)
         }
 
         bgView.doOnLayout {

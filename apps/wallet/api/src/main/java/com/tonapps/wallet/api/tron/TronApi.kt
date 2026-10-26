@@ -4,7 +4,9 @@ import android.net.Uri
 import androidx.collection.arrayMapOf
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.base64
+import com.tonapps.blockchain.tron.TronTransactionRequest
 import com.tonapps.blockchain.tron.TronTransaction
+import com.tonapps.blockchain.tron.TronTransactionMismatchException
 import com.tonapps.blockchain.tron.TronTransfer
 import com.tonapps.blockchain.tron.encodeTronAddress
 import com.tonapps.blockchain.tron.toEvmHex
@@ -18,6 +20,7 @@ import com.tonapps.network.get
 import com.tonapps.network.postJSON
 import com.tonapps.network.backoff.ExponentialBackoff
 import com.tonapps.blockchain.model.legacy.BalanceEntity
+import com.tonapps.bus.core.IssueHelper
 import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.blockchain.model.legacy.TokenEntity
@@ -591,14 +594,20 @@ class TronApi(
         to: String,
         amountSun: Long,
     ): TronTransaction {
+        val request = TronTransactionRequest.Trx(
+            from = from,
+            to = to,
+            amountSun = amountSun,
+        )
+
         val url = config.tronApiUrl.toUri().buildUpon()
             .appendEncodedPath("wallet/createtransaction")
             .build()
 
         val requestBody = buildJsonObject {
-            put("owner_address", from)
-            put("to_address", to)
-            put("amount", amountSun)
+            put("owner_address", request.from)
+            put("to_address", request.to)
+            put("amount", request.amountSun)
             put("visible", true)
         }
 
@@ -612,7 +621,9 @@ class TronApi(
             throw Exception(message)
         }
 
-        return TronTransaction(json = json)
+        return reportMismatch {
+            TronTransaction.fromNodeResponse(json = json, request = request)
+        }
     }
 
     fun getTransactionInfo(txId: String): JSONObject? {
@@ -748,6 +759,11 @@ class TronApi(
     }
 
     fun buildSmartContractTransaction(transfer: TronTransfer): TronTransaction {
+        val request = TronTransactionRequest.Trc20(
+            transfer = transfer,
+            feeLimit = TRC20_FEE_LIMIT,
+        )
+
         val builder = config.tronApiUrl.toUri().buildUpon()
             .appendEncodedPath("wallet/triggersmartcontract")
         val url = builder.build()
@@ -757,15 +773,29 @@ class TronApi(
             put("owner_address", transfer.from.tronHex())
             put("function_selector", transfer.function)
             put("parameter", transfer.data)
-            put("call_value", 0)
-            put("fee_limit", 150000000)
+            put("call_value", request.callValue)
+            put("fee_limit", request.feeLimit)
         }
 
         val response = post(url, requestBody)
         val body = response.readBody()
         val json = JSONObject(body)
 
-        return TronTransaction(json = json.getJSONObject("transaction"))
+        return reportMismatch {
+            TronTransaction.fromNodeResponse(
+                json = json.getJSONObject("transaction"),
+                request = request,
+            )
+        }
+    }
+
+    private fun <R> reportMismatch(block: () -> R): R {
+        try {
+            return block()
+        } catch (e: TronTransactionMismatchException) {
+            IssueHelper.recordException(e)
+            throw e
+        }
     }
 
     private fun <R> tronRetry(retryBlock: () -> R) = withRetry(
@@ -776,6 +806,7 @@ class TronApi(
     }
 
     companion object {
+        private const val TRC20_FEE_LIMIT = 150_000_000L
         private const val DATA_HEX_PROTOBUF_EXTRA = 9
         private const val MAX_RESULT_SIZE_IN_TX = 64
         private const val A_SIGNATURE = 67

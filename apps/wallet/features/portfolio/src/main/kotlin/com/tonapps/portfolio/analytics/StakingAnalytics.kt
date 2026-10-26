@@ -1,6 +1,7 @@
 package com.tonapps.portfolio.analytics
 
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 
 object StakingAnalytics {
@@ -11,15 +12,16 @@ object StakingAnalytics {
         val providerDomain: String,
     )
 
-    private val events: Events.StakingNative
-        get() = AnalyticsHelper.Default.events.stakingNative
-
-    fun open(from: String) {
-        events.stakingOpen(from)
+    private fun events(utm: UtmParameters): Events.StakingNative {
+        return AnalyticsHelper.Default.eventsTaggedWith(utm).stakingNative
     }
 
-    fun stakeInput(from: String, props: Props) {
-        events.stakingPlusInput(
+    fun open(from: String, utm: UtmParameters) {
+        events(utm).stakingOpen(from)
+    }
+
+    fun stakeInput(from: String, props: Props, utm: UtmParameters) {
+        events(utm).stakingPlusInput(
             from = from,
             jettonSymbol = props.jettonSymbol,
             providerName = props.providerName,
@@ -27,24 +29,24 @@ object StakingAnalytics {
         )
     }
 
-    fun stakeConfirm(props: Props) {
-        events.stakingPlusConfirm(
+    fun stakeConfirm(props: Props, utm: UtmParameters) {
+        events(utm).stakingPlusConfirm(
             jettonSymbol = props.jettonSymbol,
             providerName = props.providerName,
             providerDomain = props.providerDomain,
         )
     }
 
-    fun stakeSuccess(props: Props) {
-        events.stakingPlusSuccess(
+    fun stakeSuccess(props: Props, utm: UtmParameters) {
+        events(utm).stakingPlusSuccess(
             jettonSymbol = props.jettonSymbol,
             providerName = props.providerName,
             providerDomain = props.providerDomain,
         )
     }
 
-    fun unstakeInput(from: String, props: Props) {
-        events.stakingMinusInput(
+    fun unstakeInput(from: String, props: Props, utm: UtmParameters) {
+        events(utm).stakingMinusInput(
             from = from,
             jettonSymbol = props.jettonSymbol,
             providerName = props.providerName,
@@ -52,16 +54,16 @@ object StakingAnalytics {
         )
     }
 
-    fun unstakeConfirm(props: Props) {
-        events.stakingMinusConfirm(
+    fun unstakeConfirm(props: Props, utm: UtmParameters) {
+        events(utm).stakingMinusConfirm(
             jettonSymbol = props.jettonSymbol,
             providerName = props.providerName,
             providerDomain = props.providerDomain,
         )
     }
 
-    fun unstakeSuccess(props: Props) {
-        events.stakingMinusSuccess(
+    fun unstakeSuccess(props: Props, utm: UtmParameters) {
+        events(utm).stakingMinusSuccess(
             jettonSymbol = props.jettonSymbol,
             providerName = props.providerName,
             providerDomain = props.providerDomain,

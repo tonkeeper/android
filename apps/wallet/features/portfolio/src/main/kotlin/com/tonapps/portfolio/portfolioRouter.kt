@@ -1,14 +1,20 @@
 package com.tonapps.portfolio
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.tonapps.bus.generated.Events.EarnFlow.EarnEntryViewFrom
+import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.portfolio.screens.wallet.WalletAction
 import com.tonapps.portfolio.screens.wallet.WalletFeature
 import com.tonapps.portfolio.screens.wallet.WalletScreen
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 import ui.moon.MoonNav
@@ -42,10 +48,22 @@ fun PortfolioRouter(
     onOpenNft: (NftEntity) -> Unit = {},
     onOpenLink: (String) -> Unit = {},
     onOpenRaffle: (walletId: String, raffleId: String) -> Unit = { _, _ -> },
+    scrollToTop: Flow<Unit> = emptyFlow(),
     onOpenBattery: () -> Unit = {},
     onOpenReceivingAddress: () -> Unit = {},
+    onOpenPerps: (entryPoint: PerpsEntryPoint) -> Unit = {},
+    onOpenPerpMarket: (marketIndex: Int, symbol: String, entryPoint: PerpsEntryPoint) -> Unit = { _, _, _ -> },
+    onOpenEarn: (from: EarnEntryViewFrom) -> Unit = {},
+    onOpenEarnVault: (network: String, vaultId: String, from: EarnEntryViewFrom) -> Unit = { _, _, _ -> },
 ) {
     val backStack = rememberNavBackStack(PortfolioRoutes.Wallet)
+
+    val walletListState = rememberLazyListState()
+    LaunchedEffect(scrollToTop) {
+        scrollToTop.collect {
+            walletListState.animateScrollToItem(0)
+        }
+    }
 
     MoonNav(backStack = backStack) { key ->
         when (key) {
@@ -78,8 +96,13 @@ fun PortfolioRouter(
                     onOpenNft = onOpenNft,
                     onOpenLink = onOpenLink,
                     onOpenRaffle = onOpenRaffle,
+                    listState = walletListState,
                     onOpenBattery = onOpenBattery,
                     onAddressClick = onOpenReceivingAddress,
+                    onOpenPerps = onOpenPerps,
+                    onOpenPerpMarket = onOpenPerpMarket,
+                    onOpenEarn = onOpenEarn,
+                    onOpenEarnVault = onOpenEarnVault,
                 )
             }
 

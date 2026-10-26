@@ -24,6 +24,10 @@ class SwapFragment : ComposableFragment(), BaseFragment.BottomSheet {
                 onContinue = { request ->
                     context?.navigationDelegate?.onOpenConfirm(request)
                 },
+                onSwapCompleted = {
+                    context?.navigationDelegate?.onOpenHistory()
+                    finish()
+                },
                 onOpenLink = { url ->
                     context?.navigationDelegate?.onOpenLink(url)
                 },

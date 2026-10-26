@@ -27,15 +27,5 @@ object BootConfigOverrides {
         }
     }
 
-    fun applyTo(config: ConfigEntity): ConfigEntity {
-        val flags = overlay ?: return config
-        if (!flags.has("multichain_enabled")) {
-            return config
-        }
-        return config.copy(
-            flags = config.flags.copy(
-                multichainEnabled = flags.optBoolean("multichain_enabled"),
-            ),
-        )
-    }
+    fun applyTo(config: ConfigEntity): ConfigEntity = config
 }

@@ -24,7 +24,6 @@ import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.R
-import uikit.HapticHelper
 import uikit.extensions.dp
 import uikit.extensions.getDimension
 import uikit.extensions.getDimensionPixelSize
@@ -175,7 +174,6 @@ class SlideActionView @JvmOverloads constructor(
     }
 
     private fun done() {
-        HapticHelper.success(context)
         icon = checkIcon
         doOnDone?.invoke()
         isDone = true

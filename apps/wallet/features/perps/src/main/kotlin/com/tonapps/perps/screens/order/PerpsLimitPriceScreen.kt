@@ -1,13 +1,13 @@
 package com.tonapps.perps.screens.order
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -30,10 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -42,16 +40,18 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tonapps.perps.data.formatPlainAmount
-import com.tonapps.perps.data.formatUsdPrice
-import com.tonapps.perps.data.sanitizeAmount
+import com.tonapps.paging.collectAsStateWorkaround
+import com.tonapps.perps.data.PERPS_EMPTY_VALUE
+import com.tonapps.perps.data.formatOffsetPercent
+import com.tonapps.perps.data.formatUsd
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.localization.Localization
 import com.wallet.crypto.trustapp.common.ui.components.MoonEditText
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemSubtitle
@@ -60,36 +60,41 @@ import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.container.MoonScaffold
 import ui.painterResource
-import ui.preview.ThemedPreview
 import ui.theme.UIKit
 import ui.theme.outlineStoke
-import java.text.DecimalFormat
-
-private const val MARK_PRICE = 66141.70
-private const val MIN_PRICE = MARK_PRICE * 0.2
-private const val MAX_PRICE = MARK_PRICE * 5.0
+import java.math.BigDecimal
 
 @Composable
 fun PerpsLimitPriceScreen(
+    feature: PerpsLimitPriceFeature,
     onClose: () -> Unit,
     onBack: () -> Unit,
-    onSet: (price: Double) -> Unit,
+    onSet: (price: BigDecimal) -> Unit,
 ) {
-    var price by rememberSaveable { mutableStateOf("") }
+    val referencePrice by feature.referencePrice.collectAsStateWorkaround()
+    val input by feature.input.collectAsStateWorkaround()
+    val limitPrice by feature.limitPrice.collectAsStateWorkaround()
+    val chipText by feature.chipText.collectAsStateWorkaround()
+    val warning by feature.warning.collectAsStateWorkaround()
+    val canSet by feature.canSet.collectAsStateWorkaround()
 
-    val parsed = price.toDoubleOrNull() ?: 0.0
-    val percent = if (parsed > 0.0) (parsed - MARK_PRICE) / MARK_PRICE * 100.0 else 0.0
-    val error = when {
-        parsed > MAX_PRICE -> "Max price ${formatUsdPrice(MAX_PRICE)}"
-        parsed > 0.0 && parsed < MIN_PRICE -> "Min price ${formatUsdPrice(MIN_PRICE)}"
-        else -> null
+    val referenceText = referencePrice
+        ?.let { formatUsd(it) }
+        ?: PERPS_EMPTY_VALUE
+    val submit: () -> Unit = {
+        limitPrice?.let(onSet)
     }
-    val canSet = parsed > 0.0 && error == null
 
     MoonScaffold(
-        modifier = Modifier.windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars)),
-        title = "Set Limit Price",
-        subtitle = "Price ${formatMarkPrice()}",
+        modifier = Modifier.windowInsetsPadding(
+            WindowInsets.ime.union(WindowInsets.navigationBars).union(WindowInsets.statusBars),
+        ),
+        title = stringResource(Localization.perps_limit_price_title),
+        subtitle = stringResource(
+            Localization.perps_order_price_market,
+            stringResource(Localization.perps_order_current_price, referenceText),
+            stringResource(Localization.perps_order_type_limit),
+        ),
         onClose = onClose,
         onBack = onBack,
     ) {
@@ -103,13 +108,15 @@ fun PerpsLimitPriceScreen(
                 Spacer(Modifier.height(8.dp))
                 
                 LimitPriceInputCell(
-                    price = price,
-                    percentText = formatPercent(percent),
-                    error = error,
-                    onPriceChange = { price = sanitizeAmount(it) },
+                    value = input.text,
+                    inPercent = input.inPercent,
+                    chipText = chipText,
+                    warning = warning,
+                    onValueChange = { feature.sendAction(PerpsLimitPriceAction.SetInput(it)) },
+                    onToggleMode = { feature.sendAction(PerpsLimitPriceAction.ToggleInputMode) },
                     onDone = {
                         if (canSet) {
-                            onSet(parsed)
+                            submit()
                         }
                     },
                 )
@@ -121,37 +128,51 @@ fun PerpsLimitPriceScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    QuickButton("MID") { price = formatPlainAmount(MARK_PRICE) }
-                    QuickButton("-1%") { price = formatPlainAmount(MARK_PRICE * 0.99) }
-                    QuickButton("-2%") { price = formatPlainAmount(MARK_PRICE * 0.98) }
-                    QuickButton("-5%") { price = formatPlainAmount(MARK_PRICE * 0.95) }
+                    feature.quickFills.forEach { percent ->
+                        MoonOutlineChip(
+                            text = if (percent.signum() == 0) {
+                                stringResource(Localization.perps_limit_quick_mid)
+                            } else {
+                                formatOffsetPercent(percent)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .alpha(
+                                    if (referencePrice != null) {
+                                        1f
+                                    } else {
+                                        DISABLED_ALPHA
+                                    }
+                                ),
+                            isSelected = percent == input.quickFill,
+                            onClick = {
+                                if (referencePrice != null) {
+                                    feature.sendAction(PerpsLimitPriceAction.SelectQuickFill(percent))
+                                }
+                            },
+                        )
+                    }
                 }
             }
 
             MoonBottomButtonCell(
-                text = "Set",
+                text = stringResource(Localization.perps_limit_price_set),
                 enabled = canSet,
             ) {
-                onSet(parsed)
+                submit()
             }
         }
     }
 }
 
 @Composable
-private fun RowScope.QuickButton(
-    text: String,
-    onClick: () -> Unit,
-) {
-    MoonOutlineChip(text = text, modifier = Modifier.weight(1f), isSelected = false, onClick = onClick)
-}
-
-@Composable
 private fun LimitPriceInputCell(
-    price: String,
-    percentText: String,
-    error: String?,
-    onPriceChange: (String) -> Unit,
+    value: String,
+    inPercent: Boolean,
+    chipText: String,
+    warning: Int?,
+    onValueChange: (String) -> Unit,
+    onToggleMode: () -> Unit,
     onDone: () -> Unit,
 ) {
     MoonBundleCell {
@@ -170,15 +191,17 @@ private fun LimitPriceInputCell(
                 val scrollState = rememberScrollState()
                 val style = remember { TextStyle(fontSize = 40.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp) }
 
-                LaunchedEffect(price) {
+                LaunchedEffect(value) {
                     scrollState.animateScrollTo(scrollState.maxValue)
                 }
 
-                Text(
-                    text = "$",
-                    style = style,
-                    color = UIKit.colorScheme.text.secondary,
-                )
+                if (!inPercent) {
+                    Text(
+                        text = "$",
+                        style = style,
+                        color = UIKit.colorScheme.text.secondary,
+                    )
+                }
 
                 MoonEditText(
                     paddingValues = PaddingValues(),
@@ -188,13 +211,21 @@ private fun LimitPriceInputCell(
                         .horizontalScroll(scrollState)
                         .width(IntrinsicSize.Min)
                         .defaultMinSize(minWidth = 24.dp),
-                    value = price,
-                    onValueChange = onPriceChange,
+                    value = value,
+                    onValueChange = onValueChange,
                     textStyle = style,
                     keyboardActions = remember { KeyboardActions(onDone = { onDone() }) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     placeholder = { Text(text = "0", style = style, color = UIKit.colorScheme.text.tertiary) },
                 )
+
+                if (inPercent) {
+                    Text(
+                        text = "%",
+                        style = style,
+                        color = UIKit.colorScheme.text.secondary,
+                    )
+                }
 
                 DisposableEffect(Unit) {
                     focusRequester.requestFocus()
@@ -209,12 +240,13 @@ private fun LimitPriceInputCell(
                     .padding(4.dp)
                     .clip(CircleShape)
                     .border(border = outlineStoke(), shape = CircleShape)
+                    .clickable(onClick = onToggleMode)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
-                    text = percentText,
+                    text = chipText,
                     color = UIKit.colorScheme.text.secondary,
                     style = UIKit.typography.body1,
                 )
@@ -229,9 +261,15 @@ private fun LimitPriceInputCell(
 
             MoonItemSubtitle(
                 modifier = Modifier
-                    .alpha(if (error != null) 1f else 0f)
+                    .alpha(
+                        if (warning != null) {
+                            1f
+                        } else {
+                            0f
+                        }
+                    )
                     .padding(horizontal = 6.dp),
-                text = error ?: "",
+                text = warning?.let { stringResource(it) } ?: "",
                 color = UIKit.colorScheme.accent.red,
             )
 
@@ -240,28 +278,4 @@ private fun LimitPriceInputCell(
     }
 }
 
-private fun formatMarkPrice(): String {
-    val symbols = java.text.DecimalFormatSymbols().apply {
-        groupingSeparator = ' '
-        decimalSeparator = '.'
-    }
-    return "$" + DecimalFormat("#,##0.00", symbols).format(MARK_PRICE)
-}
-
-private fun formatPercent(percent: Double): String {
-    val rounded = DecimalFormat("#.##").format(percent)
-    val prefix = if (percent > 0.0) "+" else ""
-    return "$prefix$rounded%"
-}
-
-@Preview
-@Composable
-private fun PerpsLimitPriceScreenPreview() {
-    ThemedPreview(isDarkOnly = true) {
-        PerpsLimitPriceScreen(
-            onClose = {},
-            onBack = {},
-            onSet = {},
-        )
-    }
-}
+private const val DISABLED_ALPHA = 0.4f

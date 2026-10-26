@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
+import com.tonapps.wallet.data.multichain.account.displayOrder
 import com.tonapps.wallet.localization.Localization
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -24,7 +25,7 @@ fun rememberChainFilters(): ImmutableList<MoonItem> {
     val allStr = stringResource(Localization.all)
     return remember(allStr) {
         (listOf(MoonItem(id = ALL_CHAINS_FILTER_ID, title = allStr)) +
-            Chain.all.map {
+            Chain.displayOrder.map {
                 MoonItem(
                     id = it.network.type.ordinal,
                     title = it.coin.name,

@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.navigation.Navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class PushHolder(parent: ViewGroup): Holder<Item.Push>(parent, R.layout.view_wallet_push) {
 
@@ -19,7 +20,7 @@ class PushHolder(parent: ViewGroup): Holder<Item.Push>(parent, R.layout.view_wal
     private val textView = findViewById<AppCompatTextView>(R.id.text)
 
     init {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             Navigation.from(context)?.openURL("tonkeeper://activity?from=push")
         }
     }

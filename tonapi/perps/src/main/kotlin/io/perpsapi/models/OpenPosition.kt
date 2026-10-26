@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class OpenPosition(
@@ -61,6 +66,8 @@ data class OpenPosition(
     /* Margin plus the unrealized result -- what the position is worth to the holder right now. Derived here so every client shows the same number. */
     @SerialName(value = "equity")
     val equity: String? = null,
+
+    /* Lighter's own, at the mark price, except on RWA markets. There it is counted here at the mid of the book, (entry - mid) x size for a short and the other way round for a long, as Lighter shows it: an RWA mark can sit away from the book. When the book is unavailable an RWA position falls back to Lighter's figure. */
     @SerialName(value = "unrealized_pnl")
     val unrealizedPnl: String? = null,
 
@@ -68,7 +75,7 @@ data class OpenPosition(
     @SerialName(value = "realized_pnl")
     val realizedPnl: String? = null,
 
-    /* The result so far against the margin invested, in percentage points. Funding is not in the numerator: Lighter has already folded it into the margin balance. Empty when there is no margin to divide by. */
+    /* unrealized_pnl against the margin at entry, size x avg_entry_price / leverage, in percentage points cut toward zero to two decimals, as Lighter shows it. Not against margin: that one moves with the mark price. Funding is not in the numerator: Lighter has already folded it into the margin balance. Empty when the leverage cannot be derived. */
     @SerialName(value = "roi_pct")
     val roiPct: String? = null,
 
@@ -79,7 +86,7 @@ data class OpenPosition(
     @Contextual @SerialName(value = "margin_mode")
     val marginMode: MarginMode? = null,
 
-    /* Funding accumulated over the life of the position. Negative means paid out. */
+    /* Funding accumulated over the life of the position, signed -- positive was received, negative was paid. Summed from this service's own record of the settlements, so one it never received is missing from it; null when there is no record of the position at all. */
     @SerialName(value = "funding_paid")
     val fundingPaid: String? = null,
 

@@ -159,12 +159,18 @@ internal class CurrencyFormat(val locale: Locale) {
         }
     }
 
-    private var format = NumberFormat.getCurrencyInstance(locale) as DecimalFormat
+    private val format = NumberFormat.getCurrencyInstance(locale) as DecimalFormat
     private val pattern = format.toPattern().replace(CURRENCY_SIGN, "").trim()
     private val cache = ConcurrentHashMap<String, DecimalFormat>(symbols.size, 1.0f, 2)
     private val monetarySymbolFirstPosition = format.toPattern().startsWith(CURRENCY_SIGN)
+    private val decimalFormatSymbols = format.decimalFormatSymbols
 
-    internal val monetaryDecimalSeparator = format.decimalFormatSymbols.monetaryDecimalSeparator.toString()
+    /**
+     * Deliberately not the monetary variants: [createFormat] strips [CURRENCY_SIGN] from the
+     * pattern, so these are the glyphs the formatted output actually carries.
+     */
+    internal val decimalSeparator = decimalFormatSymbols.decimalSeparator.toString()
+    internal val groupingSeparator = decimalFormatSymbols.groupingSeparator.toString()
 
     fun formatFull(
         currency: String,
@@ -172,7 +178,11 @@ internal class CurrencyFormat(val locale: Locale) {
         customScale: Int,
     ): CharSequence {
         val targetScale = getScaleFull(value.abs())
-        val scale = if (targetScale > customScale) targetScale else customScale
+        val scale = if (targetScale > customScale) {
+            targetScale
+        } else {
+            customScale
+        }
         val bigDecimal = value.stripTrailingZeros().setScale(scale, RoundingMode.HALF_EVEN).stripTrailingZeros()
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(bigDecimal)
@@ -248,7 +258,11 @@ internal class CurrencyFormat(val locale: Locale) {
         replaceSymbol: Boolean,
         cutLongSymbol: Boolean,
     ): CharSequence {
-        val symbol = if (replaceSymbol) symbols[currency] else fixSymbol(currency, cutLongSymbol)
+        val symbol = if (replaceSymbol) {
+            symbols[currency]
+        } else {
+            fixSymbol(currency, cutLongSymbol)
+        }
         val builder = StringBuilder()
         if (symbol != null) {
             if (replaceSymbol && monetarySymbolFirstPosition && isFiat(currency)) {

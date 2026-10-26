@@ -34,8 +34,8 @@ appId: com.ton_keeper.debug
 # labels sit under the sheet). Wait for the provider error; Continue stays
 # disabled and must not be tapped first.
 - extendedWaitUntil:
-    visible: "Couldn’t get a quote. Change amount"
+    visible: "Amount is too small for a swap. Try a larger amount."
     timeout: 30000
-- assertVisible: "Couldn’t get a quote. Change amount"
+- assertVisible: "Amount is too small for a swap. Try a larger amount."
 
 

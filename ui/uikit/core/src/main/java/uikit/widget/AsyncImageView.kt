@@ -29,7 +29,7 @@ import coil3.transform.Transformation
 import coil3.util.CoilUtils
 import uikit.R
 import uikit.extensions.useAttributes
-import uikit.widget.image.BlurTransformation
+import uikit.widget.image.hiddenBalanceBlurTransformation
 import uikit.widget.image.BorderTransformation
 
 data class ResizeOptions(val width: Int, val height: Int) {
@@ -45,33 +45,6 @@ class AsyncImageView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
 ) : AppCompatImageView(context, attrs, defStyle) {
-
-    companion object {
-
-        @Volatile
-        private var instance: ImageLoader? = null
-
-        fun get(context: Context): ImageLoader =
-            instance ?: synchronized(this) {
-                instance ?: ImageLoader.Builder(context.applicationContext)
-                    .crossfade(true)
-                    .build()
-                    .also { instance = it }
-            }
-
-        suspend fun loadSquareBitmap(context: Context, url: Uri, size: Int = 0): Bitmap? {
-            val loader = ImageLoader(context)
-
-            val request = ImageRequest.Builder(context)
-                .data(url)
-                .size(coil3.size.Size(size, size))
-                .scale(Scale.FILL)
-                .build()
-
-            val result = loader.execute(request)
-            return (result as? SuccessResult)?.image?.toBitmap()
-        }
-    }
 
     data class Border(
         val color: Int = 0,
@@ -237,7 +210,7 @@ class AsyncImageView @JvmOverloads constructor(
     private fun load(data: Any?) {
         val transformations = mutableListOf<Transformation>()
         if (blur) {
-            transformations.add(BlurTransformation(20f))
+            transformations.add(hiddenBalanceBlurTransformation())
         }
         if (roundAsCircle) {
             transformations.add(CircleCropTransformation())
@@ -270,8 +243,16 @@ class AsyncImageView @JvmOverloads constructor(
         builder.placeholder(placeholderDrawable)
 
         resizeOptions?.let { ro ->
-            val w = if (ro.width > 0) ro.width else coil3.size.Size.ORIGINAL.width.pxOrElse { 0 }
-            val h = if (ro.height > 0) ro.height else coil3.size.Size.ORIGINAL.height.pxOrElse { 0 }
+            val w = if (ro.width > 0) {
+                ro.width
+            } else {
+                coil3.size.Size.ORIGINAL.width.pxOrElse { 0 }
+            }
+            val h = if (ro.height > 0) {
+                ro.height
+            } else {
+                coil3.size.Size.ORIGINAL.height.pxOrElse { 0 }
+            }
             builder.size(coil3.size.Size(w, h))
             builder.precision(Precision.EXACT)
             if (coilScale == Scale.FIT) {
@@ -305,6 +286,33 @@ class AsyncImageView @JvmOverloads constructor(
                 val height = (width / viewAspectRatio).toInt()
                 setMeasuredDimension(width, height)
             }
+        }
+    }
+
+    companion object {
+
+        @Volatile
+        private var instance: ImageLoader? = null
+
+        fun get(context: Context): ImageLoader =
+            instance ?: synchronized(this) {
+                instance ?: ImageLoader.Builder(context.applicationContext)
+                    .crossfade(true)
+                    .build()
+                    .also { instance = it }
+            }
+
+        suspend fun loadSquareBitmap(context: Context, url: Uri, size: Int = 0): Bitmap? {
+            val loader = ImageLoader(context)
+
+            val request = ImageRequest.Builder(context)
+                .data(url)
+                .size(coil3.size.Size(size, size))
+                .scale(Scale.FILL)
+                .build()
+
+            val result = loader.execute(request)
+            return (result as? SuccessResult)?.image?.toBitmap()
         }
     }
 }

@@ -1,0 +1,25 @@
+{
+  "route_id": "86875f1b-1b02-4bd6-9c5d-5be347da186c",
+  "aggregator": "swapsxyz",
+  "payloads": [
+    {
+      "payload_id": "390002c0-d18c-4b0b-9a44-203d5cf47814",
+      "kind": "main",
+      "chain_id": "ton/mainnet",
+      "chain_family": "TON",
+      "payload_type": "alt_vm_deposit",
+      "calldata_payload_type": "exact",
+      "payload": "[{\"to\":\"UQC2vhmRy16iZhswlryXwXNFIqa595cYDGKU9ueODcfblszH\",\"toExtra\":null,\"value\":\"1000000000\",\"chainId\":999000337,\"chainKey\":\"ton\"}]",
+      "human_summary": {
+        "action": "Swap GRAM for USDT",
+        "spend_asset": "ton/mainnet/coin",
+        "spend_amount": "1000000000",
+        "receive_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+        "receive_amount": "1292471",
+        "protocol": "alt-vm-1"
+      },
+      "validation_status": "validated",
+      "date_expire": "2026-09-07T07:41:57Z"
+    }
+  ]
+}

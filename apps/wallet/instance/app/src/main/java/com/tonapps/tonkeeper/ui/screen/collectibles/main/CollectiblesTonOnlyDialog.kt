@@ -7,6 +7,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
 import uikit.dialog.modal.ModalDialog
 import uikit.widget.TextHeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class CollectiblesTonOnlyDialog(
     fragment: BaseFragment,
@@ -15,8 +16,8 @@ class CollectiblesTonOnlyDialog(
     private val textView = findViewById<TextHeaderView>(R.id.text)!!
 
     init {
-        findViewById<View>(R.id.close)!!.setOnClickListener { dismiss() }
-        findViewById<Button>(R.id.ok)!!.setOnClickListener { dismiss() }
+        findViewById<View>(R.id.close)!!.setMoonOnClickListener { dismiss() }
+        findViewById<Button>(R.id.ok)!!.setMoonOnClickListener { dismiss() }
         textView.titleView.setText(Localization.collectibles_ton_only_dialog_title)
         textView.descriptionView.setText(Localization.collectibles_ton_only_dialog_message)
     }

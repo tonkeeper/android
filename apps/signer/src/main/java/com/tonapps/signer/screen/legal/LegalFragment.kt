@@ -6,6 +6,7 @@ import com.tonapps.signer.R
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class LegalFragment: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBack {
 
@@ -15,12 +16,12 @@ class LegalFragment: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBa
         header.doOnCloseClick = { finish() }
 
         val termsView = view.findViewById<View>(R.id.terms)
-        termsView.setOnClickListener {
+        termsView.setMoonOnClickListener {
             navigation?.openURL("https://tonkeeper.com/terms")
         }
 
         val privacyView = view.findViewById<View>(R.id.privacy)
-        privacyView.setOnClickListener {
+        privacyView.setMoonOnClickListener {
             navigation?.openURL("https://tonkeeper.com/privacy")
         }
     }

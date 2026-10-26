@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.Button
 import com.tonapps.tonkeeper.ui.screen.send.boc.RemoveExtensionScreen
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setMoonOnClickListener
 
 class PluginHolder(
     parent: ViewGroup,
@@ -20,6 +21,9 @@ class PluginHolder(
     private val subtitleView = findViewById<AppCompatTextView>(R.id.subtitle)
     private val disableButton = findViewById<Button>(R.id.disable)
 
+    init {
+    }
+
     override fun onBind(item: Item.Plugin) {
         itemView.background = item.position.drawable(context)
         titleView.text = item.plugin.type
@@ -27,7 +31,7 @@ class PluginHolder(
             item.plugin.address.toUserFriendly(wallet = false, testnet = item.wallet.testnet).short8
         val isLegacySubscription = item.plugin.type == "subscription_v1"
         disableButton.visibility = if (isLegacySubscription) View.VISIBLE else View.GONE
-        disableButton.setOnClickListener {
+        disableButton.setMoonOnClickListener {
             context.navigation?.add(
                 RemoveExtensionScreen.newInstance(
                     item.wallet,

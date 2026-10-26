@@ -29,30 +29,44 @@ appId: com.ton_keeper.debug
 - assertVisible:
     text: ".*\\.\\.\\..*"
     below: TON
+    childOf:
+      id: "sheet_content"
 - assertVisible: TRON
 - assertVisible:
     text: ".*\\.\\.\\..*"
     below: TRON
+    childOf:
+      id: "sheet_content"
 - assertVisible: Ethereum
 - assertVisible:
     text: ".*\\.\\.\\..*"
     below: Ethereum
+    childOf:
+      id: "sheet_content"
 - assertVisible: Bitcoin
 - assertVisible:
     text: ".*\\.\\.\\..*"
     below: Bitcoin
+    childOf:
+      id: "sheet_content"
 - assertVisible: Base
 - assertVisible:
     text: ".*\\.\\.\\..*"
     below: Base
+    childOf:
+      id: "sheet_content"
 - assertVisible: BSC
 - assertVisible:
     text: ".*\\.\\.\\..*"
     below: BSC
+    childOf:
+      id: "sheet_content"
 - assertVisible: Arbitrum
 - assertVisible:
     text: ".*\\.\\.\\..*"
     below: Arbitrum
+    childOf:
+      id: "sheet_content"
 
 - runFlow:
     file: "../../../steps/recieve_modal/assert_multichain_network.yaml"

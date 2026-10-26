@@ -9,6 +9,7 @@ import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.core.components.isNativeTon
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
@@ -48,6 +49,7 @@ class StakeViewerViewModel(
     private val wallet: WalletEntity,
     private val poolAddress: String,
     private val ethenaType: String,
+    private val utm: UtmParameters,
     private val stakingRepository: StakingRepository,
     private val ratesRepository: RatesRepository,
     private val settingsRepository: SettingsRepository,
@@ -61,7 +63,11 @@ class StakeViewerViewModel(
         get() = api.getConfig(wallet.network).flags.disableUsde
 
     private val ethenaMethodType: EthenaEntity.Method.Type? =
-        if (ethenaType.isNotEmpty()) EthenaEntity.Method.Type.fromId(ethenaType) else null
+        if (ethenaType.isNotEmpty()) {
+            EthenaEntity.Method.Type.fromId(ethenaType)
+        } else {
+            null
+        }
 
     private val currency = settingsRepository.currency
     private val _poolFlow = MutableStateFlow<Pair<StakedEntity, PoolDetailsEntity>?>(null)
@@ -88,7 +94,7 @@ class StakeViewerViewModel(
         )
 
         if (method == null || tokenUsde == null) {
-            return@combine uiItems
+            return@combine StakeViewerUiState(uiItems)
         }
 
         val rates = ratesRepository.getRates(
@@ -119,15 +125,18 @@ class StakeViewerViewModel(
             )
         )
 
-        if (!usdeDisabled || balance.isPositive) {
-            uiItems.add(
-                Item.Actions(
-                    wallet = wallet,
-                    ethenaMethod = method,
-                    unstakeDisabled = balance.isZero,
-                    stakeDisabled = usdeDisabled,
-                )
+        val actions = if (!usdeDisabled || balance.isPositive) {
+            StakeViewerActions(
+                wallet = wallet,
+                ethenaMethod = method,
+                unstakeDisabled = balance.isZero,
+                stakeDisabled = usdeDisabled,
             )
+        } else {
+            null
+        }
+
+        if (actions != null) {
             uiItems.add(Item.Space)
             uiItems.add(
                 Item.EthenaDetails(
@@ -182,8 +191,7 @@ class StakeViewerViewModel(
             uiItems.add(Item.Links(method.links))
         }
 
-
-        uiItems
+        StakeViewerUiState(uiItems, actions)
     }.flowOn(Dispatchers.IO)
 
     val stakingItemsFlow = combine(poolFlow, _mcLiquidTokenFlow) { (staked, details), mcLiquid ->
@@ -219,22 +227,23 @@ class StakeViewerViewModel(
         val config = api.getConfig(wallet.network)
         val stakingDisabled = !config.enabledStaking.contains(staked.pool.implementation.title) || config.flags.disableStaking
 
-        if (!stakingDisabled || amount.isPositive) {
-            uiItems.add(
-                Item.Actions(
-                    wallet = wallet,
-                    poolAddress = poolAddress,
-                    unstakeDisabled = amount.isZero,
-                    stakeDisabled = stakingDisabled,
-                )
+        val actions = if (!stakingDisabled || amount.isPositive) {
+            StakeViewerActions(
+                wallet = wallet,
+                poolAddress = poolAddress,
+                unstakeDisabled = amount.isZero,
+                stakeDisabled = stakingDisabled,
+                utm = utm,
             )
+        } else {
+            null
         }
 
         if (staked.pendingWithdraw.isPositive) {
             val pendingFiat = rates.convert(TokenEntity.TON.symbol, staked.pendingWithdraw)
             uiItems.add(Item.Space)
             uiItems.add(
-                Item.PendingUnstake(
+                Item.StakeStatus(
                     balance = staked.pendingWithdraw,
                     balanceFormat = CurrencyFormatter.format(currencyCode, staked.pendingWithdraw, compact = true),
                     fiat = pendingFiat,
@@ -246,12 +255,28 @@ class StakeViewerViewModel(
             )
         }
 
+        if (staked.readyWithdraw.isPositive && staked.pool.implementation != StakingPool.Implementation.LiquidTF) {
+            val readyFiat = rates.convert(TokenEntity.TON.symbol, staked.readyWithdraw)
+            uiItems.add(Item.Space)
+            uiItems.add(
+                Item.StakeStatus(
+                    balance = staked.readyWithdraw,
+                    balanceFormat = CurrencyFormatter.format(currencyCode, staked.readyWithdraw, compact = true),
+                    fiat = readyFiat,
+                    fiatFormat = CurrencyFormatter.formatFiat(currency.code, readyFiat, compact = true),
+                    hiddenBalance = settingsRepository.hiddenBalances,
+                    titleRes = Localization.staking_unstake_ready,
+                    subtitleRes = Localization.staking_tap_to_collect,
+                    collectTarget = Item.CollectTarget(wallet, poolAddress),
+                )
+            )
+        }
+
         when {
             mcLiquid != null -> {
                 uiItems.add(Item.Space)
                 uiItems.add(mcLiquid.toTokenItem())
                 uiItems.add(Item.Description(getString(Localization.stake_tonstakers_description)))
-                uiItems.add(Item.Space)
             }
             liquidToken != null -> {
                 uiItems.add(Item.Space)
@@ -282,28 +307,29 @@ class StakeViewerViewModel(
                     )
                 )
                 uiItems.add(Item.Description(getString(Localization.stake_tonstakers_description)))
-                uiItems.add(Item.Space)
             }
         }
 
         uiItems.add(Item.Space)
+        uiItems.add(Item.Title(Localization.staking_details))
         uiItems.add(
             Item.Details(
                 apyFormat = "≈ $apyFormat",
-                minDepositFormat = if (staked.pool.minStake == Coins.ZERO) "" else CurrencyFormatter.format(
-                    currencyCode,
-                    staked.pool.minStake
-                ),
+                minDepositFormat = if (staked.pool.minStake == Coins.ZERO) {
+                    ""
+                } else {
+                    CurrencyFormatter.format(currencyCode, staked.pool.minStake)
+                },
                 maxApy = staked.maxApy
             )
         )
         uiItems.add(Item.Description(getString(Localization.staking_details_description)))
         uiItems.add(Item.Space)
         uiItems.add(Item.Links(details.getLinks(poolAddress)))
-        uiItems
+        StakeViewerUiState(uiItems, actions)
     }.flowOn(Dispatchers.IO)
 
-    val uiItemsFlow = if (ethenaMethodType != null) {
+    val uiStateFlow = if (ethenaMethodType != null) {
         ethenaItemsFlow
     } else {
         stakingItemsFlow
@@ -360,7 +386,7 @@ class StakeViewerViewModel(
         val readyWithdraw = staking.getReadyWithdraw(pool)
 
         if (pool.implementation == StakingPool.Implementation.LiquidTF) {
-            val liquidAccount = loadLiquidAccount(pool)
+            val liquidAccount = loadLiquidAccount(pool, refresh)
             val liquidToken = liquidAccount?.toAccountTokenEntity(currency)
             _tokensFlow.value = listOfNotNull(liquidToken)
             _mcLiquidTokenFlow.value = if (liquidAccount != null && liquidToken != null) {
@@ -369,7 +395,7 @@ class StakeViewerViewModel(
                 null
             }
 
-            val tonBalance = liquidAccount?.toTonBalance() ?: Coins.ZERO
+            val tonBalance = liquidAccount?.toTonBalance(refresh) ?: Coins.ZERO
             _poolFlow.value = Pair(
                 StakedEntity(
                     pool = pool,
@@ -410,41 +436,21 @@ class StakeViewerViewModel(
         )
     }
 
-    private suspend fun loadLiquidAccount(pool: PoolEntity): AccountWithDetails? {
+    private suspend fun loadLiquidAccount(pool: PoolEntity, forceRefresh: Boolean): AccountWithDetails? {
         val master = pool.liquidJettonMaster ?: return null
-        if (pool.implementation != StakingPool.Implementation.LiquidTF) return null
+        if (pool.implementation != StakingPool.Implementation.LiquidTF) {
+            return null
+        }
         val assetId = jettonAssetId(master, wallet.testnet)
-        val currencyCode = currency.code
-        val cached = runCatching {
-            mcAccountRepository.getCachedAccounts(
-                walletId = wallet.id,
-                currency = currencyCode,
-                hideDust = settingsRepository.hideDustAssets,
-            )
-        }.getOrNull()?.accounts?.firstOrNull { it.matchesJettonMaster(master) }
-
-        return cached
-            ?: runCatching {
-                mcAccountRepository.findAccount(wallet.id, assetId, currencyCode)
-            }.getOrNull()
+        return resolveMcAccount(forceRefresh, { it.matchesJettonMaster(master) }, assetId)
     }
 
-    private suspend fun AccountWithDetails.toTonBalance(): Coins {
-        val currencyCode = currency.code
-        val tonAccount = runCatching {
-            mcAccountRepository.getCachedAccounts(
-                walletId = wallet.id,
-                currency = currencyCode,
-                hideDust = settingsRepository.hideDustAssets,
-            )
-        }.getOrNull()?.accounts?.firstOrNull { it.asset.isNativeTon() }
-            ?: runCatching {
-                mcAccountRepository.findAccount(
-                    wallet.id,
-                    tonCoinAssetId(wallet.testnet),
-                    currencyCode,
-                )
-            }.getOrNull()
+    private suspend fun AccountWithDetails.toTonBalance(forceRefresh: Boolean): Coins {
+        val tonAccount = resolveMcAccount(
+            forceRefresh = forceRefresh,
+            match = { it.asset.isNativeTon() },
+            assetId = tonCoinAssetId(wallet.testnet),
+        )
 
         val jettonPrice = rate?.value?.value?.takeIf { it > BigDecimal.ZERO }
         val tonPrice = tonAccount?.rate?.value?.value?.takeIf { it > BigDecimal.ZERO }
@@ -453,6 +459,25 @@ class StakeViewerViewModel(
         }
         val tonAmount = jettonToTon(displayBalance.value, jettonPrice, tonPrice)
         return Coins.of(java.math.BigDecimal(tonAmount.toPlainString()))
+    }
+
+    private suspend fun resolveMcAccount(
+        forceRefresh: Boolean,
+        match: (AccountWithDetails) -> Boolean,
+        assetId: String,
+    ): AccountWithDetails? {
+        val currencyCode = currency.code
+        val cached = if (forceRefresh) {
+            null
+        } else {
+            runCatching {
+                mcAccountRepository.getCachedAccounts(wallet.id)
+            }.getOrNull()?.accounts?.firstOrNull(match)
+        }
+        return cached
+            ?: runCatching {
+                mcAccountRepository.findAccount(wallet.id, assetId, currencyCode, forceRefresh = forceRefresh)
+            }.getOrNull()
     }
 
     private fun McLiquidToken.toTokenItem(): Item.Token {

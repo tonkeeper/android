@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.dapp.screens.sessions.TonConnectDisconnectInteractor
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.extensions.appVersionName
@@ -35,7 +36,6 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.manager.tonconnect.exceptions.ManifestException
 import com.tonapps.tonkeeper.ui.component.SnackBarView
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppBridge
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectResponse
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectSafeModeDialog
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectScreen
@@ -51,6 +51,7 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -79,7 +80,7 @@ class TonConnectManager(
     private val pushManager: PushManager,
     private val safeModeClient: SafeModeClient,
     private val settingsRepository: SettingsRepository,
-) : ITonConnectBridge {
+) : TonConnectDisconnectInteractor {
 
     private val bridge: Bridge = Bridge(api)
     private var bridgeJob: Job? = null
@@ -95,7 +96,7 @@ class TonConnectManager(
         event
     }.shareIn(scope, SharingStarted.Eagerly, 1)
 
-    override val transactionRequestFlow = eventsFlow.mapNotNull { event ->
+    val transactionRequestFlow = eventsFlow.mapNotNull { event ->
         if (event.method == BridgeMethod.SEND_TRANSACTION) {
             val connectTime = recentlyConnectedClients[event.connection.clientId] ?: 0L
             val timeSinceConnect = System.currentTimeMillis() - connectTime
@@ -106,21 +107,25 @@ class TonConnectManager(
         } else {
             if (event.method == BridgeMethod.DISCONNECT) {
                 deleteConnection(event.connection, event.message.id)
-            } else if (event.method != BridgeMethod.SIGN_DATA) {
+            } else if (event.method != BridgeMethod.SIGN_DATA && event.method != BridgeMethod.SIGN_MESSAGE) {
                 sendBridgeError(event.connection, BridgeError.methodNotSupported("Method \"${event.method}\" not supported"), event.message.id)
             }
             null
         }
     }.flowOn(Dispatchers.IO).shareIn(scope, SharingStarted.Eagerly, 0)
 
-    override val signDataRequestFlow = eventsFlow
+    val signDataRequestFlow = eventsFlow
         .filter { it.method == BridgeMethod.SIGN_DATA }
         .map { it }
         .shareIn(scope, SharingStarted.Eagerly, 0)
 
+    val signMessageRequestFlow = eventsFlow
+        .filter { it.method == BridgeMethod.SIGN_MESSAGE }
+        .shareIn(scope, SharingStarted.Eagerly, 0)
+
     private val mutex = ReentrantLock()
 
-    override fun connectBridge() {
+    fun connectBridge() {
         mutex.withLock {
             if (bridgeJob?.isActive == true) {
                 return
@@ -130,14 +135,14 @@ class TonConnectManager(
         }
     }
 
-    override fun disconnectBridge() {
+    fun disconnectBridge() {
         mutex.withLock {
             bridgeJob?.cancel()
             bridgeJob = null
         }
     }
 
-    override fun reconnectBridge() {
+    private fun reconnectBridge() {
         mutex.withLock {
             if (bridgeJob != null) {
                 bridgeJob?.cancel()
@@ -163,17 +168,17 @@ class TonConnectManager(
         }
     }
 
-    override fun walletConnectionsFlow(wallet: WalletEntity) = accountConnectionsFlow(wallet.accountId, wallet.network)
+    fun walletConnectionsFlow(wallet: WalletEntity) = accountConnectionsFlow(wallet.accountId, wallet.network)
 
     fun accountConnectionsFlow(accountId: String, network: TonNetwork = TonNetwork.MAINNET) = dAppsRepository.connectionsFlow.filterList { connection ->
         connection.network == network && connection.accountId.equalsAddress(accountId)
     }
 
-    override fun setLastAppRequestId(clientId: String, messageId: Long) {
+    fun setLastAppRequestId(clientId: String, messageId: Long) {
         dAppsRepository.setLastAppRequestId(clientId, messageId)
     }
 
-    override fun walletAppsFlow(wallet: WalletEntity) = walletConnectionsFlow(wallet).mapList { it.appUrl }.map { it.distinct() }.map { urls ->
+    fun walletAppsFlow(wallet: WalletEntity) = walletConnectionsFlow(wallet).mapList { it.appUrl }.map { it.distinct() }.map { urls ->
         dAppsRepository.getApps(urls)
     }.flowOn(Dispatchers.IO)
 
@@ -190,7 +195,7 @@ class TonConnectManager(
         }
     }
 
-    override suspend fun getConnection(
+    suspend fun getConnection(
         accountId: String,
         network: TonNetwork,
         appUrl: Uri,
@@ -211,25 +216,39 @@ class TonConnectManager(
         return null
     }
 
-    override fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type?) {
+    fun disconnect(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type? = null) {
         scope.launch(Dispatchers.IO) {
-            val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.network, appUrl, type)
-            if (connections.isNotEmpty()) {
-                for (connection in connections) {
-                    bridge.sendDisconnect(connection)
-                }
-                pushManager.dAppUnsubscribe(wallet, connections)
-            }
-
-            dAppsRepository.cleanupDisconnectedOrigin(wallet, appUrl)
-
-            withContext(Dispatchers.Main.immediate) {
-                reconnectBridge()
-            }
+            disconnectAndNotify(wallet, appUrl, type)
         }
     }
 
-    override suspend fun clear(wallet: WalletEntity) {
+    override suspend fun disconnectApp(wallet: WalletEntity, appUrl: Uri, type: AppConnectEntity.Type) {
+        scope.async(Dispatchers.IO) {
+            disconnectAndNotify(wallet, appUrl, type)
+        }.await()
+    }
+
+    private suspend fun disconnectAndNotify(
+        wallet: WalletEntity,
+        appUrl: Uri,
+        type: AppConnectEntity.Type?,
+    ) {
+        val connections = dAppsRepository.deleteApp(wallet.accountId, wallet.network, appUrl, type)
+        if (connections.isNotEmpty()) {
+            for (connection in connections) {
+                bridge.sendDisconnect(connection)
+            }
+            pushManager.dAppUnsubscribe(wallet, connections)
+        }
+
+        dAppsRepository.cleanupDisconnectedOrigin(wallet, appUrl)
+
+        withContext(Dispatchers.Main.immediate) {
+            reconnectBridge()
+        }
+    }
+
+    suspend fun clear(wallet: WalletEntity) {
         withContext(Dispatchers.IO) {
             val connections = dAppsRepository.deleteApps(wallet.accountId, wallet.network)
             for (connection in connections) {
@@ -239,22 +258,27 @@ class TonConnectManager(
         }
     }
 
-    override suspend fun sendBridgeError(connection: AppConnectEntity, error: BridgeError, id: Long) {
+    suspend fun sendBridgeError(connection: AppConnectEntity, error: BridgeError, id: Long) {
         bridge.sendError(connection, error, id)
         setLastAppRequestId(connection.clientId, id)
     }
 
-    override suspend fun sendTransactionResponseSuccess(connection: AppConnectEntity, boc: String, id: Long) {
+    suspend fun sendTransactionResponseSuccess(connection: AppConnectEntity, boc: String, id: Long) {
         bridge.sendTransactionResponseSuccess(connection, boc, id)
         setLastAppRequestId(connection.clientId, id)
     }
 
-    override suspend fun sendSignDataResponseSuccess(connection: AppConnectEntity, proof: TONProof.Result, address: String, payload: SignDataRequestPayload, id: Long) {
+    suspend fun sendSignDataResponseSuccess(connection: AppConnectEntity, proof: TONProof.Result, address: String, payload: SignDataRequestPayload, id: Long) {
         bridge.sendSignDataResponseSuccess(connection, proof, address, payload, id)
         setLastAppRequestId(connection.clientId, id)
     }
 
-    override fun isPushEnabled(wallet: WalletEntity, appUrl: Uri): Boolean {
+    suspend fun sendSignMessageResponseSuccess(connection: AppConnectEntity, internalBoc: String, id: Long) {
+        bridge.sendSignMessageResponseSuccess(connection, internalBoc, id)
+        setLastAppRequestId(connection.clientId, id)
+    }
+
+    fun isPushEnabled(wallet: WalletEntity, appUrl: Uri): Boolean {
         return dAppsRepository.isPushEnabled(wallet.accountId, wallet.network, appUrl)
     }
 
@@ -284,7 +308,7 @@ class TonConnectManager(
         connection
     }
 
-    override fun processDeeplink(
+    fun processDeeplink(
         context: Context,
         uri: Uri,
         fromQR: Boolean,
@@ -304,7 +328,7 @@ class TonConnectManager(
             )
 
             scope.launch {
-                if (!isScam(context, WalletEntity.EMPTY, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
+                if (!isScam(context, null, uri, normalizedUri, tonConnect.manifestUrl.toUri())) {
                     connectRemoteApp(activity, tonConnect)
                 }
             }
@@ -325,12 +349,12 @@ class TonConnectManager(
         bridge.send(tonConnect.clientId, keyPair, message.toString())
     }
 
-    override suspend fun launchConnectFlow(
+    suspend fun launchConnectFlow(
         activity: NavigationActivity,
         tonConnect: TonConnect,
-        keyPair: CryptoBox.KeyPair,
+        keyPair: CryptoBox.KeyPair = CryptoBox.keyPair(),
         wallet: WalletEntity?,
-        forceConnect: Boolean
+        forceConnect: Boolean = false
     ): JSONObject = withContext(Dispatchers.IO) {
         if (tonConnect.request.items.isEmpty()) {
             return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("Empty value provided in required field \"items\""))
@@ -339,7 +363,7 @@ class TonConnectManager(
         val clientId = tonConnect.clientId
         try {
             val app = readManifest(tonConnect.manifestUrl)
-            if (isScam(activity, wallet ?: WalletEntity.EMPTY, app.iconUrl.toUri(), app.url)) {
+            if (isScam(activity, wallet, app.iconUrl.toUri(), app.url)) {
                 return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
             }
 
@@ -353,6 +377,7 @@ class TonConnectManager(
             } else {
                 val screen = TonConnectScreen.newInstance(
                     app = app,
+                    manifestUrl = tonConnect.manifestUrl,
                     proofPayload = tonConnect.proofPayload,
                     returnUri = tonConnect.returnUri,
                     wallet = wallet,
@@ -362,6 +387,10 @@ class TonConnectManager(
                 screen.contract.parseResult(bundle)
             }
 
+            if (isScam(activity, response.wallet, tonConnect.manifestUrl.toUri(), app.iconUrl.toUri(), app.url)) {
+                return@withContext JsonBuilder.connectEventError(BridgeError.badRequest("client error"))
+            }
+
             newConnect(
                 wallet = response.wallet,
                 keyPair = keyPair,
@@ -369,7 +398,11 @@ class TonConnectManager(
                 appUrl = app.url,
                 proof = response.proof,
                 pushEnabled = response.notifications,
-                type = if (tonConnect.jsInject) AppConnectEntity.Type.Internal else AppConnectEntity.Type.External
+                type = if (tonConnect.jsInject) {
+                    AppConnectEntity.Type.Internal
+                } else {
+                    AppConnectEntity.Type.External
+                }
             )
 
             recentlyConnectedClients[clientId] = System.currentTimeMillis()
@@ -395,7 +428,11 @@ class TonConnectManager(
             JsonBuilder.connectEventError(BridgeError.userDeclinedTransaction())
         } catch (e: ManifestException) {
             FirebaseHelper.manifestFetchFailed(
-                kind = if (e is ManifestException.NotFound) "not_found" else "content_error",
+                kind = if (e is ManifestException.NotFound) {
+                    "not_found"
+                } else {
+                    "content_error"
+                },
                 url = tonConnect.manifestUrl,
             )
             withContext(Dispatchers.Main) { activity.showToast(Localization.dapp_manifest_error) }
@@ -410,11 +447,11 @@ class TonConnectManager(
         }
     }
 
-    override suspend fun showLogoutAppBar(
+    suspend fun showLogoutAppBar(
         wallet: WalletEntity,
         context: Context,
         url: Uri,
-        type: AppConnectEntity.Type?
+        type: AppConnectEntity.Type? = null
     ) = withContext(Dispatchers.Main.immediate) {
         val host = url.host ?: return@withContext
 
@@ -431,10 +468,14 @@ class TonConnectManager(
         }
     }
 
-    override suspend fun isScam(context: Context, wallet: WalletEntity, vararg uris: Uri): Boolean {
-        if (settingsRepository.isSafeModeEnabled(wallet.id, wallet.network) && safeModeClient.isHasScamUris(*uris)) {
+    suspend fun isScam(context: Context, wallet: WalletEntity?, vararg uris: Uri): Boolean {
+        val safeModeWallet = wallet ?: accountRepository.getSelectedWallet()
+        val safeModeEnabled = (safeModeWallet ?: WalletEntity.EMPTY).let {
+            settingsRepository.isSafeModeEnabled(it.id, it.network)
+        }
+        if (safeModeEnabled && safeModeClient.isHasScamUris(*uris)) {
             withContext(Dispatchers.Main) {
-                TonConnectSafeModeDialog(context).show(wallet)
+                TonConnectSafeModeDialog(context).show(safeModeWallet)
             }
             return true
         }
@@ -446,11 +487,10 @@ class TonConnectManager(
     }
 
     /**
-     * Shared http path with [fetchManifest], also used by the WalletKit `fetchManifest` callback.
      * Fetches the manifest directly; on failure retries once via the c.tonapi.io proxy. If the
      * proxy retry also fails the [ManifestException] propagates and the manifest-error toast shows.
      */
-    suspend fun fetchManifestRaw(url: String): String {
+    private suspend fun fetchManifestRaw(url: String): String {
         val headers = ArrayMap<String, String>().apply {
             set("Connection", "close")
         }
@@ -463,25 +503,29 @@ class TonConnectManager(
     }
 
     // `.simple()` throws OkHttpError on any non-2xx; translate to ManifestException so the
-    // manifest-error catch in launchConnectFlow (and the wallet-kit callback) shows the toast.
+    // manifest-error catch in launchConnectFlow shows the toast.
     private suspend fun httpGetManifest(url: String, headers: ArrayMap<String, String>): String {
         val response = try {
             api.defaultHttpClient.simple(url, headers)
         } catch (e: OkHttpError) {
             throw ManifestException.NotFound(e.statusCode)
         }
-        if (response.code != 200) {
-            throw ManifestException.NotFound(response.code)
+        return response.use {
+            if (it.code != 200) {
+                throw ManifestException.NotFound(it.code)
+            }
+            it.readBody()
         }
-        return response.readBody()
     }
 
     private suspend fun fetchManifest(url: String): AppEntity {
         val body = fetchManifestRaw(url)
         try {
-            val app = AppEntity(body)
+            val app = AppEntity.fromManifest(body)
             dAppsRepository.insertApp(app)
             return app
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             throw ManifestException.FailedParse(e)
         }
@@ -494,17 +538,17 @@ class TonConnectManager(
         return "https://c.tonapi.io/json?url=$encoded&no-cache=true"
     }
 
-    override fun createInjector(
-        bridge: DAppBridge,
-        wallet: WalletEntity?
-    ): ITonConnectWebViewInjector = TonConnectWebViewInjector(bridge)
-
     companion object {
         private const val THROTTLE_DELAY_MS = 5000L
 
         private const val TONCONNECT_PREFIX = "tonkeeper://ton-connect"
 
-        private val othersPrefix = listOf("tc://", "https://app.tonkeeper.com/ton-connect")
+        private val othersPrefix = listOf(
+            "tc://",
+            "keeper://ton-connect",
+            "https://app.tonkeeper.com/ton-connect",
+            "https://app.keeperwallet.com/ton-connect",
+        )
 
         fun isTonConnectDeepLink(
             uri: Uri

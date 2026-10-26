@@ -22,6 +22,7 @@ import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.tron.TronTransfer
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.core.helper.nftAnalyticsAssetId
@@ -29,7 +30,7 @@ import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.bus.generated.opTerminal
 import com.tonapps.core.flags.InAppReviewManager
-import com.tonapps.core.helper.WalletRedMetadata
+import com.tonapps.deposit.multicoin.analytics.asDepositFlowFrom
 import com.tonapps.deposit.screens.qr.QrAssetFragment
 import com.tonapps.deposit.screens.send.SendException
 import com.tonapps.deposit.screens.send.state.SendAmountState
@@ -145,8 +146,12 @@ class SendViewModel(
     val isBatteryDisabled: Boolean
         get() = api.getConfig(wallet.network).flags.disableBattery
 
-    private var analyticsFrom: Events.SendNative.SendNativeFrom =
+    var analyticsFrom: Events.SendNative.SendNativeFrom =
         Events.SendNative.SendNativeFrom.WalletScreen
+        private set
+
+    var analyticsUtm: UtmParameters = UtmParameters.Empty
+        private set
 
     val currentToken: TokenEntity
         get() = selectedTokenFlow.value.token
@@ -521,9 +526,18 @@ class SendViewModel(
 
     fun initializeBus(
         from: Events.SendNative.SendNativeFrom,
+        utm: UtmParameters,
+    ) {
+        restoreBus(from, utm)
+        AnalyticsHelper.Default.eventsTaggedWith(utm).sendNative.sendOpen(from = from)
+    }
+
+    fun restoreBus(
+        from: Events.SendNative.SendNativeFrom,
+        utm: UtmParameters,
     ) {
         analyticsFrom = from
-        AnalyticsHelper.Default.events.sendNative.sendOpen(from = from)
+        analyticsUtm = utm
     }
 
     fun initializeTokenAndAmount(
@@ -951,7 +965,7 @@ class SendViewModel(
                 operation = Events.RedOperations.RedOperationsOperation.Emulate,
                 attemptSource = null,
                 startedAtMs = currentTimeSecondsInt(),
-                otherMetadata = WalletRedMetadata.walletKit(),
+                otherMetadata = null,
             )
             try {
                 if (selectedTokenFlow.value.blockchain == Blockchain.TRON) {
@@ -968,7 +982,6 @@ class SendViewModel(
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
                     finishedAtMs = currentTimeSecondsInt(),
                     error = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
                 )
             } catch (e: Throwable) {
                 L.e("SendViewModelLog", "next error", e)
@@ -980,7 +993,6 @@ class SendViewModel(
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
                     finishedAtMs = currentTimeSecondsInt(),
                     error = e,
-                    otherMetadata = WalletRedMetadata.walletKit(),
                 )
                 delay(100)
                 _uiEventFlow.tryEmit(SendEvent.Failed(e))
@@ -1375,12 +1387,12 @@ class SendViewModel(
     fun setFeeMethod(fee: SendFee) {
         if (fee is SendFee.TronTrx && !fee.enoughBalance) {
             viewModelScope.launch {
-                openScreen(QrAssetFragment.newInstance(TokenEntity.TRX))
+                openScreen(QrAssetFragment.newInstance(TokenEntity.TRX, analyticsFrom = analyticsFrom.asDepositFlowFrom()))
             }
         } else if (fee is SendFee.TronTon && !fee.enoughBalance) {
             viewModelScope.launch {
                 openScreen(
-                    QrAssetFragment.newInstance(TokenEntity.TON, true)
+                    QrAssetFragment.newInstance(TokenEntity.TON, true, analyticsFrom = analyticsFrom.asDepositFlowFrom())
                 )
             }
         } else if (fee is SendFee.Battery && !fee.enoughCharges) {
@@ -1532,7 +1544,7 @@ class SendViewModel(
                 operation = Events.RedOperations.RedOperationsOperation.Send,
                 attemptSource = null,
                 startedAtMs = currentTimeSecondsInt(),
-                otherMetadata = WalletRedMetadata.walletKit(),
+                otherMetadata = null,
             )
             try {
                 if (selectedTokenFlow.value.blockchain == Blockchain.TRON) {
@@ -1548,9 +1560,8 @@ class SendViewModel(
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
                     finishedAtMs = currentTimeSecondsInt(),
                     error = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
                 )
-                analytics.events.sendNative.sendSuccess(
+                analytics.eventsTaggedWith(analyticsUtm).sendNative.sendSuccess(
                     from = analyticsFrom,
                     asset = currentToken.analyticsAssetId(),
                     amount = currentAmountDouble,
@@ -1582,6 +1593,7 @@ class SendViewModel(
                     } else {
                         lastTransferEntity?.max
                     },
+                    utm = analyticsUtm,
                 )
                 InAppReviewManager.onTransactionSent()
                 _uiEventFlow.tryEmit(SendEvent.Success)
@@ -1595,12 +1607,11 @@ class SendViewModel(
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
                     finishedAtMs = currentTimeSecondsInt(),
                     error = e,
-                    otherMetadata = WalletRedMetadata.walletKit(),
                 )
                 if (e is CancellationException) {
                     _uiEventFlow.tryEmit(SendEvent.Canceled)
                 } else {
-                    analytics.events.sendNative.sendFailed(
+                    analytics.eventsTaggedWith(analyticsUtm).sendNative.sendFailed(
                         from = analyticsFrom,
                         asset = currentToken.analyticsAssetId(),
                         amount = currentAmountDouble,

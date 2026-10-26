@@ -1,11 +1,15 @@
 package com.tonapps.wallet.features.events.screens.details
 
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import uikit.widget.image.hiddenBalanceBlur
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -36,6 +41,7 @@ import com.tonapps.core.components.tokenChainImageUrl
 import com.tonapps.core.components.tokenDisplayName
 import com.tonapps.core.helper.rememberClipboardManager
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.perps.data.PerpMarket
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
@@ -43,10 +49,14 @@ import com.tonapps.wallet.data.multichain.wallet.McWalletType
 import com.tonapps.wallet.features.events.components.NftCollectionRow
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import com.tonapps.wallet.features.events.data.HistoryNft
+import com.tonapps.wallet.features.events.perpsFeeText
+import com.tonapps.wallet.features.events.perpsResultText
+import com.tonapps.wallet.features.events.perpsSubtitle
 import com.tonapps.wallet.features.events.protocolDisplayName
 import com.tonapps.wallet.features.events.statusTitle
 import com.tonapps.wallet.features.events.title
 import com.tonapps.wallet.localization.Localization
+import com.tonapps.wallet.localization.Plurals
 import io.walletapi.models.ActivityDirection
 import io.walletapi.models.ActivityStatus
 import io.walletapi.models.ActivityType
@@ -59,8 +69,11 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import ui.components.base.UIKitProgressIndicator
 import ui.components.moon.MoonItemDivider
+import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonItemTitle
+import ui.components.moon.MoonLargeItemSubtitle
+import ui.components.moon.MoonSpoiler
 import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonPropertyBigCell
@@ -81,13 +94,28 @@ import uikit.navigation.Navigation
 fun EventDetailsModal(
     event: HistoryEventEntity,
     wallet: McWalletEntity?,
+    hiddenBalance: Boolean,
     nft: HistoryNft? = null,
+    perpsMarket: PerpMarket? = null,
+    decryptedComment: String? = null,
+    onDecryptComment: (() -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
+    if (event.isPerpsPositionEvent) {
+        PerpsPositionDetailsModal(
+            event = event,
+            market = perpsMarket,
+            hiddenBalance = hiddenBalance,
+            onDismiss = onDismiss,
+        )
+        return
+    }
+
     val navigator = rememberDialogNavigator(onClose = onDismiss)
     val clipboard = rememberClipboardManager()
     val context = LocalContext.current
     val isNft = event.isNftTransfer
+    val comment = event.comment?.takeIf { it.isNotBlank() } ?: decryptedComment
 
     MoonModalDialog(navigator = navigator) {
         MoonTopAppBarSimple(
@@ -100,6 +128,7 @@ fun EventDetailsModal(
         TxDetailsHeader(
             event = event,
             nft = nft,
+            hiddenBalance = hiddenBalance,
         )
 
         Spacer(Modifier.height(32.dp))
@@ -107,6 +136,7 @@ fun EventDetailsModal(
         val explorerTxId = remember(event) { event.explorerTransactionId() }
         MoonBundleCell {
             Column {
+                var hasRow = false
                 val addressTitleRes: Int
                 val address: String?
                 if (event.activityType == ActivityType.swap) {
@@ -130,93 +160,175 @@ fun EventDetailsModal(
                         Localization.recipient_address
                     }
                 }
-                if (address != null) {
+                if (!event.isPerps && address != null) {
                     CopyableValueCell(
                         title = stringResource(addressTitleRes),
                         value = address,
                         onCopy = { clipboard.copy(address) },
                     )
-                    MoonItemDivider()
+                    hasRow = true
                 }
 
-                if (isNft && !event.comment.isNullOrBlank()) {
+                if (isNft && comment != null) {
+                    if (hasRow) {
+                        MoonItemDivider()
+                    }
                     MoonPropertyBigCell(
                         title = stringResource(Localization.comment),
-                        value = event.comment,
+                        value = comment,
                         valueDescription = null,
-                        onClick = { clipboard.copy(event.comment) },
+                        onClick = { clipboard.copy(comment) },
                     )
-                    MoonItemDivider()
+                    hasRow = true
+                } else if (isNft && event.encryptedComment != null) {
+                    if (hasRow) {
+                        MoonItemDivider()
+                    }
+                    EncryptedCommentRow(onClick = onDecryptComment)
+                    hasRow = true
                 }
 
                 val networkAsset = event.displayAsset()?.valueOrNull
+                val networkChain = event.networkChain()
                 val isCrossChainSwap = event.isExchangeLike() &&
+                    event.fromChain != null && event.toChain != null &&
                     event.fromChain != event.toChain
-                MoonPropertyBigCell(
-                    title = stringResource(Localization.network),
-                    value = if (isCrossChainSwap) {
-                        "${event.fromChain.displayName()} → ${event.toChain.displayName()}"
-                    } else {
-                        networkAsset?.chain?.coin?.name
-                            ?: event.networkChain().displayName()
-                    },
-                    valueDescription = if (isCrossChainSwap) {
-                        "${event.fromChain.shortName()} → ${event.toChain.shortName()}"
-                    } else if (isNft) {
-                        event.networkChain().shortName()
-                    } else {
-                        networkAsset?.tokenDisplayName()
-                    },
-                )
-
-                val tronResourceTexts = event.tronResourceFeeTexts()
-                val feeText = event.feeText()
-                when {
-                    tronResourceTexts != null -> {
+                if (!event.isPerps && (networkAsset != null || networkChain != null || isCrossChainSwap)) {
+                    if (hasRow) {
                         MoonItemDivider()
+                    }
+                    MoonPropertyBigCell(
+                        title = stringResource(Localization.network),
+                        value = if (isCrossChainSwap) {
+                            "${event.fromChain?.displayName().orEmpty()} → " +
+                                event.toChain?.displayName().orEmpty()
+                        } else {
+                            networkAsset?.chain?.coin?.name
+                                ?: networkChain?.displayName().orEmpty()
+                        },
+                        valueDescription = if (isCrossChainSwap) {
+                            "${event.fromChain?.shortName().orEmpty()} → " +
+                                event.toChain?.shortName().orEmpty()
+                        } else if (isNft) {
+                            networkChain?.shortName()
+                        } else {
+                            networkAsset?.tokenDisplayName()
+                        },
+                    )
+                    hasRow = true
+                }
+
+                val batteryFeeText = event.batteryFeeText()
+                val tronResourceTexts = event.tronResourceFeeTexts()
+                val feeText = if (event.isPerps) {
+                    null
+                } else {
+                    event.feeText()
+                }
+                val perpsFeeText = event.perpsFeeText()
+                when {
+                    batteryFeeText != null -> {
+                        if (hasRow) {
+                            MoonItemDivider()
+                        }
+                        MoonPropertyBigCell(
+                            title = stringResource(Localization.network_fee),
+                            value = if (hiddenBalance) {
+                                HIDDEN_BALANCE
+                            } else {
+                                batteryFeeText
+                            },
+                            valueDescription = null,
+                        )
+                        hasRow = true
+                    }
+                    tronResourceTexts != null -> {
+                        if (hasRow) {
+                            MoonItemDivider()
+                        }
                         MoonPropertyBigCell(
                             title = stringResource(Localization.network_fee),
                             value = tronResourceTexts.first,
                             valueDescription = tronResourceTexts.second,
                         )
+                        hasRow = true
                     }
                     feeText != null -> {
-                        MoonItemDivider()
+                        if (hasRow) {
+                            MoonItemDivider()
+                        }
                         MoonPropertyBigCell(
                             title = stringResource(Localization.network_fee),
-                            value = feeText,
-                            valueDescription = event.feeFiatText(),
+                            value = if (hiddenBalance) {
+                                HIDDEN_BALANCE
+                            } else {
+                                feeText
+                            },
+                            valueDescription = if (hiddenBalance) {
+                                null
+                            } else {
+                                event.feeFiatText()
+                            },
                         )
+                        hasRow = true
+                    }
+                    perpsFeeText != null -> {
+                        if (hasRow) {
+                            MoonItemDivider()
+                        }
+                        MoonPropertyBigCell(
+                            title = stringResource(Localization.network_fee),
+                            value = if (hiddenBalance) {
+                                HIDDEN_BALANCE
+                            } else {
+                                perpsFeeText
+                            },
+                            valueDescription = null,
+                        )
+                        hasRow = true
                     }
                 }
 
                 if (explorerTxId != null) {
-                    MoonItemDivider()
+                    if (hasRow) {
+                        MoonItemDivider()
+                    }
                     CopyableValueCell(
                         title = stringResource(Localization.tx_hash),
                         value = explorerTxId,
                         onCopy = { clipboard.copy(explorerTxId) },
                     )
+                    hasRow = true
                 }
 
                 val protocolName = protocolDisplayName(event.protocol)
                 if (protocolName != null && !event.isDomainRenew) {
-                    MoonItemDivider()
+                    if (hasRow) {
+                        MoonItemDivider()
+                    }
                     MoonPropertyBigCell(
                         title = stringResource(Localization.protocol),
                         value = protocolName,
                         valueDescription = null,
                     )
+                    hasRow = true
                 }
 
-                if (!isNft && !event.comment.isNullOrBlank()) {
-                    MoonItemDivider()
+                if (!isNft && comment != null) {
+                    if (hasRow) {
+                        MoonItemDivider()
+                    }
                     MoonPropertyBigCell(
                         title = stringResource(Localization.comment),
-                        value = event.comment,
+                        value = comment,
                         valueDescription = null,
-                        onClick = { clipboard.copy(event.comment) },
+                        onClick = { clipboard.copy(comment) },
                     )
+                } else if (!isNft && event.encryptedComment != null) {
+                    if (hasRow) {
+                        MoonItemDivider()
+                    }
+                    EncryptedCommentRow(onClick = onDecryptComment)
                 }
             }
         }
@@ -238,6 +350,36 @@ fun EventDetailsModal(
     }
 }
 
+@Composable
+private fun EncryptedCommentRow(onClick: (() -> Unit)?) {
+    MoonPropertyBigCell(
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                MoonLargeItemSubtitle(text = stringResource(Localization.comment))
+                MoonItemIcon(painterResource(UIKitIcon.ic_lock_16), color = UIKit.colorScheme.accent.green)
+            }
+        },
+        content = {
+            Box(
+                Modifier
+                    .height(20.dp)
+                    .fillMaxWidth(0.7f),
+            ) {
+                MoonSpoiler(
+                    Modifier.fillMaxSize(),
+                    particleCount = 1200,
+                    edgeFeather = 4.dp,
+                    color = UIKit.colorScheme.text.primary,
+                )
+            }
+        },
+        onClick = onClick,
+    )
+}
+
 // TODO to MoonChip
 @Composable
 private fun TxExplorerChip(
@@ -247,9 +389,9 @@ private fun TxExplorerChip(
 ) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
             .combinedClickable(onClick = onOpen, onLongClick = onCopy)
             .height(36.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(UIKit.colorScheme.buttonSecondary.primaryBackground)
             .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -284,20 +426,22 @@ private fun HistoryEventEntity.explorerTransactionId(): String? {
         return null
     }
 
-    val sourceChainId = fromChain.value
-    val fromSourceChain = txIds.firstNotNullOfOrNull { txId ->
-        val separator = txId.indexOf(':')
-        if (separator <= 0) {
-            return@firstNotNullOfOrNull null
+    val chainId = (fromChain ?: toChain)?.value
+    val onChain = chainId?.let {
+        txIds.firstNotNullOfOrNull { txId ->
+            val separator = txId.indexOf(':')
+            if (separator <= 0) {
+                return@firstNotNullOfOrNull null
+            }
+            val chain = txId.substring(0, separator)
+            if (!chain.equals(chainId, ignoreCase = true)) {
+                return@firstNotNullOfOrNull null
+            }
+            txId.substring(separator + 1).trim().takeIf { it.isNotEmpty() }
         }
-        val chain = txId.substring(0, separator)
-        if (!chain.equals(sourceChainId, ignoreCase = true)) {
-            return@firstNotNullOfOrNull null
-        }
-        txId.substring(separator + 1).trim().takeIf { it.isNotEmpty() }
     }
-    if (fromSourceChain != null) {
-        return fromSourceChain
+    if (onChain != null) {
+        return onChain
     }
 
     return txIds.firstNotNullOfOrNull { txId ->
@@ -314,13 +458,14 @@ private fun HistoryEventEntity.explorerTransactionId(): String? {
 private fun TxDetailsHeader(
     event: HistoryEventEntity,
     nft: HistoryNft?,
+    hiddenBalance: Boolean,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when {
-            nft != null -> NftHeaderImage(imageUrl = nft.imageUrl)
+            nft != null -> NftHeaderImage(imageUrl = nft.imageUrl, hiddenBalance = hiddenBalance)
             event.isExchangeLike() -> SwapHeaderImage(
                 inAsset = event.inAsset.takeIfDisplayable(),
                 outAsset = event.outAsset.takeIfDisplayable(),
@@ -338,25 +483,34 @@ private fun TxDetailsHeader(
         when {
             nft != null -> {
                 Text(
-                    text = nft.name,
+                    text = if (hiddenBalance) {
+                        HIDDEN_BALANCE
+                    } else {
+                        nft.name
+                    },
                     style = UIKit.typography.h2,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(4.dp))
                 NftCollectionRow(
                     nft = nft,
+                    hiddenBalance = hiddenBalance,
                     textStyle = UIKit.typography.body1,
                     verifiedIconTint = UIKit.colorScheme.icon.secondary,
                     textAlign = TextAlign.Center,
                 )
             }
             event.isExchangeLike() -> {
-                SwapAmountLines(event)
+                SwapAmountLines(event = event, hiddenBalance = hiddenBalance)
                 val fiat = event.swapFiatText()
                 if (fiat != null) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = fiat,
+                        text = if (hiddenBalance) {
+                            HIDDEN_BALANCE
+                        } else {
+                            fiat
+                        },
                         style = UIKit.typography.body1,
                         color = UIKit.colorScheme.text.secondary,
                         textAlign = TextAlign.Center,
@@ -365,12 +519,12 @@ private fun TxDetailsHeader(
             }
             else -> {
                 Text(
-                    text = headerTitle(event),
+                    text = headerTitle(event = event, hiddenBalance = hiddenBalance),
                     style = UIKit.typography.h2,
                     textAlign = TextAlign.Center,
                 )
 
-                val secondary = headerSubtitle(event)
+                val secondary = headerSubtitle(event = event, hiddenBalance = hiddenBalance)
                 if (secondary != null) {
                     Spacer(Modifier.height(4.dp))
                     Text(
@@ -420,25 +574,42 @@ private fun TxDetailsHeader(
 }
 
 @Composable
-private fun NftHeaderImage(imageUrl: String) {
+private fun NftHeaderImage(
+    imageUrl: String,
+    hiddenBalance: Boolean,
+) {
     MoonItemImage(
         image = imageUrl,
         size = 96.dp,
         shape = Shapes.medium12,
+        builder = {
+            if (hiddenBalance) {
+                hiddenBalanceBlur()
+            } else {
+                this
+            }
+        },
     )
 }
 
 @Composable
-private fun SwapAmountLines(event: HistoryEventEntity) {
+private fun SwapAmountLines(
+    event: HistoryEventEntity,
+    hiddenBalance: Boolean,
+) {
     val out = event.outAmount(asset = event.outAsset)
     val into = event.inAmount(asset = event.inAsset)
     if (out != null) {
         Text(
-            text = amountLine(
-                amount = out,
-                sign = "– ",
-                chain = event.outAsset?.chainLabel(),
-            ),
+            text = if (hiddenBalance) {
+                AnnotatedString(HIDDEN_BALANCE)
+            } else {
+                amountLine(
+                    amount = out,
+                    sign = "– ",
+                    chain = event.outAsset?.chainLabel(),
+                )
+            },
             style = UIKit.typography.h2,
             textAlign = TextAlign.Center,
             maxLines = 1,
@@ -446,11 +617,15 @@ private fun SwapAmountLines(event: HistoryEventEntity) {
     }
     if (into != null) {
         Text(
-            text = amountLine(
-                amount = into,
-                sign = "+ ",
-                chain = event.inAsset?.chainLabel(),
-            ),
+            text = if (hiddenBalance) {
+                AnnotatedString(HIDDEN_BALANCE)
+            } else {
+                amountLine(
+                    amount = into,
+                    sign = "+ ",
+                    chain = event.inAsset?.chainLabel(),
+                )
+            },
             style = UIKit.typography.h2,
             textAlign = TextAlign.Center,
             maxLines = 1,
@@ -483,6 +658,9 @@ private fun amountLine(
 @Composable
 private fun headerDate(event: HistoryEventEntity): String {
     val date = event.blockTime.formatFullDateTime()
+    if (event.isPerps) {
+        return date
+    }
     if (event.isExchangeLike()) {
         return if (event.isPending) {
             date
@@ -572,6 +750,7 @@ private fun HistoryEventEntity.isExchangeLike(): Boolean = when (activityType) {
 }
 
 private fun HistoryEventEntity.displayAsset(): AssetEntity? = when {
+    isPerps -> perpsResultAsset
     activityType == ActivityType.swap -> outAsset ?: inAsset
     isDomainRenew -> outAsset ?: inAsset ?: feeAsset
     isIncomingLike -> {
@@ -590,7 +769,7 @@ private fun HistoryEventEntity.displayAsset(): AssetEntity? = when {
     }
 }.takeIfDisplayable()
 
-private fun HistoryEventEntity.networkChain(): Chain =
+private fun HistoryEventEntity.networkChain(): Chain? =
     if (isIncomingLike) {
         toChain
     } else {
@@ -606,6 +785,10 @@ private fun Chain.displayName(): String = when (this) {
     Chain.arb -> "Arbitrum"
     Chain.bsc -> "BSC"
     Chain.sol -> "Solana"
+    Chain.avax -> "Avalanche"
+    Chain.polygon -> "Polygon"
+    Chain.robinhood -> "Robinhood"
+    Chain.unknown -> ""
 }
 
 private fun Chain.shortName(): String = when (this) {
@@ -617,10 +800,33 @@ private fun Chain.shortName(): String = when (this) {
     Chain.arb -> "ARB"
     Chain.bsc -> "BSC"
     Chain.sol -> "SOL"
+    Chain.avax -> "AVAX"
+    Chain.polygon -> "POL"
+    Chain.robinhood -> "RBH"
+    Chain.unknown -> ""
 }
 
 @Composable
-private fun headerTitle(event: HistoryEventEntity): AnnotatedString {
+private fun headerTitle(
+    event: HistoryEventEntity,
+    hiddenBalance: Boolean,
+): AnnotatedString {
+    if (event.isPerps) {
+        val result = event.perpsResult
+        val text = event.perpsResultText()
+        if (result == null || text == null) {
+            return AnnotatedString(event.title())
+        }
+        if (hiddenBalance) {
+            return AnnotatedString(HIDDEN_BALANCE)
+        }
+        val sign = if (result.isPositive) {
+            CurrencyFormatter.PREFIX_PLUS
+        } else {
+            CurrencyFormatter.PREFIX_MINUS
+        }
+        return AnnotatedString(sign + text)
+    }
     if (event.isDomainRenew) {
         return AnnotatedString(event.renewedDomain ?: event.title())
     }
@@ -639,6 +845,9 @@ private fun headerTitle(event: HistoryEventEntity): AnnotatedString {
         }
         return AnnotatedString(text)
     }
+    if (hiddenBalance) {
+        return AnnotatedString(HIDDEN_BALANCE)
+    }
     val sign = if (event.isIncomingLike) {
         "+ "
     } else {
@@ -652,8 +861,20 @@ private fun headerTitle(event: HistoryEventEntity): AnnotatedString {
 }
 
 @Composable
-private fun headerSubtitle(event: HistoryEventEntity): AnnotatedString? =
-    event.amountFiatText()?.let(::AnnotatedString)
+private fun headerSubtitle(
+    event: HistoryEventEntity,
+    hiddenBalance: Boolean,
+): AnnotatedString? {
+    if (event.isPerps) {
+        return event.perpsSubtitle()?.let(::AnnotatedString)
+    }
+    val fiat = event.amountFiatText() ?: return null
+    return if (hiddenBalance) {
+        AnnotatedString(HIDDEN_BALANCE)
+    } else {
+        AnnotatedString(fiat)
+    }
+}
 
 @Composable
 private fun HistoryEventEntity.swapFiatText(): String? {
@@ -680,6 +901,15 @@ private fun HistoryEventEntity.feeText(): String? {
     val value = unitFeeAmount ?: return null
     val asset = feeAsset?.valueOrNull ?: return null
     return remember(value, asset) { Formatter.formatShort(value = value, asset = asset) }
+}
+
+@Composable
+private fun HistoryEventEntity.batteryFeeText(): String? {
+    val charges = batteryCharges ?: return null
+    if (isIncoming) {
+        return null
+    }
+    return pluralStringResource(Plurals.battery_charges, charges, charges)
 }
 
 @Composable
@@ -754,7 +984,7 @@ private fun CopyableValueCell(
 
 // TODO move with some helper
 @Composable
-private fun OffsetDateTime.formatFullDateTime(): String {
+internal fun OffsetDateTime.formatFullDateTime(): String {
     val zoned = atZoneSameInstant(ZoneId.systemDefault())
     return DateTimeFormatter
         .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
@@ -871,6 +1101,7 @@ private fun EventDetailsModalReceivePreview() {
         EventDetailsModal(
             event = previewActivity(ActivityType.receive),
             wallet = previewWallet(),
+            hiddenBalance = false,
             onDismiss = {},
         )
     }
@@ -883,6 +1114,7 @@ private fun EventDetailsModalSendPreview() {
         EventDetailsModal(
             event = previewActivity(ActivityType.send),
             wallet = previewWallet(),
+            hiddenBalance = false,
             onDismiss = {},
         )
     }
@@ -895,6 +1127,7 @@ private fun EventDetailsModalPendingPreview() {
         EventDetailsModal(
             event = previewActivity(ActivityType.send).copy(status = ActivityStatus.pending),
             wallet = previewWallet(),
+            hiddenBalance = false,
             onDismiss = {},
         )
     }
@@ -912,6 +1145,7 @@ private fun EventDetailsModalSwapPreview() {
                 comment = null,
             ),
             wallet = previewWallet(),
+            hiddenBalance = false,
             onDismiss = {},
         )
     }
@@ -928,6 +1162,7 @@ private fun EventDetailsModalPendingSwapPreview() {
                 inAmountUsd = null,
             ),
             wallet = previewWallet(),
+            hiddenBalance = false,
             onDismiss = {},
         )
     }
@@ -946,6 +1181,7 @@ private fun EventDetailsModalPendingBridgePreview() {
                 inAmountUsd = null,
             ),
             wallet = previewWallet(),
+            hiddenBalance = false,
             onDismiss = {},
         )
     }
@@ -970,6 +1206,7 @@ private fun EventDetailsModalSpamNftPreview() {
                 isSpam = true,
             ),
             wallet = previewWallet(),
+            hiddenBalance = false,
             onDismiss = {},
         )
     }
@@ -991,6 +1228,19 @@ private fun PreviewCopyableValueCell() {
             title = "Tx hash",
             value = "d2e1b9c4abf3a1d61a0c5fe9b2a3e4d50f6789abc1234567890def123456abcd",
             onCopy = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun EventDetailsModalHiddenBalancePreview() {
+    ThemedPreview {
+        EventDetailsModal(
+            event = previewActivity(ActivityType.receive),
+            wallet = previewWallet(),
+            hiddenBalance = true,
+            onDismiss = {},
         )
     }
 }

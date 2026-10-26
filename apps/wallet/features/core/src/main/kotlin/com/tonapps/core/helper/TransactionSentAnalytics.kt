@@ -1,20 +1,34 @@
 package com.tonapps.core.helper
 
 import android.util.Log
+import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentCategory
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentCategoryDetail
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentFeeAsset
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentInitiatedBy
+import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentLedgerModel
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletInterface
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletMode
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletSource
+import java.util.concurrent.ConcurrentHashMap
 
 object TransactionSentAnalytics {
+
+    private val ledgerModels = ConcurrentHashMap<String, TransactionSentLedgerModel>()
+
+    fun rememberLedgerModel(walletId: String, ledgerModel: TransactionSentLedgerModel?) {
+        if (ledgerModel == null) {
+            ledgerModels.remove(walletId)
+        } else {
+            ledgerModels[walletId] = ledgerModel
+        }
+    }
 
     fun transactionSent(
         wallet: WalletEntity,
@@ -30,12 +44,13 @@ object TransactionSentAnalytics {
         toAsset: String? = null,
         stakingProvider: String? = null,
         isLiquid: Boolean? = null,
+        utm: UtmParameters = UtmParameters.Empty,
     ) {
         val walletInterface = walletInterface(wallet, asset) ?: run {
             Log.w("TransactionSentAnalytics", "dropping transaction_sent: no interface for ${wallet.version}")
             return
         }
-        AnalyticsHelper.Default.events.transactionSent.transactionSent(
+        AnalyticsHelper.Default.eventsTaggedWith(utm).transactionSent.transactionSent(
             category = category,
             categoryDetail = categoryDetail,
             asset = asset,
@@ -51,6 +66,7 @@ object TransactionSentAnalytics {
             toAsset = toAsset,
             stakingProvider = stakingProvider,
             isLiquid = isLiquid,
+            ledgerModel = ledgerModels[wallet.id],
         )
     }
 
@@ -63,6 +79,14 @@ object TransactionSentAnalytics {
             Events.SendNative.SendNativeFrom.TonconnectLocal -> TransactionSentInitiatedBy.TonconnectLocal
             Events.SendNative.SendNativeFrom.TonconnectRemote -> TransactionSentInitiatedBy.TonconnectRemote
             Events.SendNative.SendNativeFrom.Walletconnect -> TransactionSentInitiatedBy.Walletconnect
+        }
+    }
+
+    fun initiatedBy(initiator: ConfirmInitiator): TransactionSentInitiatedBy {
+        return when (initiator) {
+            ConfirmInitiator.User -> TransactionSentInitiatedBy.User
+            ConfirmInitiator.DeepLink -> TransactionSentInitiatedBy.DeepLink
+            ConfirmInitiator.QrCode -> TransactionSentInitiatedBy.QrCode
         }
     }
 

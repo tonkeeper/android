@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Position(
@@ -51,7 +56,7 @@ data class Position(
     @SerialName(value = "leverage")
     val leverage: Int? = null,
 
-    /* Cumulative funding paid (negative if received). */
+    /* Funding accumulated over the life of the position, signed -- positive was received, negative was paid. Summed from this service's own record of the settlements, so one it never received is missing from it; null when there is no record of the position at all. */
     @SerialName(value = "funding_paid")
     val fundingPaid: String? = null,
 

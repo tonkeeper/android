@@ -10,6 +10,7 @@ sealed interface PerpsChartFeedEvent {
     data object FeedFailed : PerpsChartFeedEvent
     data object Timeout : PerpsChartFeedEvent
     data class Selection(val active: Boolean) : PerpsChartFeedEvent
+    data class Older(val candles: List<PerpsCandle>, val endTimeSeconds: Long) : PerpsChartFeedEvent
 }
 
 /** staleEpoch: null = live; bumped per reconnect so the badge's linger timer restarts downstream. */
@@ -28,6 +29,7 @@ data class PerpsChartFeedState(
     // swallowed by distinctUntilChanged downstream, skipping the linger restart.
     val lastStaleEpoch: Long = 0L,
     val poisoned: Boolean = false,
+    val historyExhausted: Boolean = false,
 )
 
 data class PerpsChartFeedStep(
@@ -45,6 +47,7 @@ fun PerpsChartFeedState.onChartFeedEvent(event: PerpsChartFeedEvent): PerpsChart
         is PerpsChartFeedEvent.Reconnecting -> onReconnecting()
         is PerpsChartFeedEvent.Timeout -> onTimeout()
         is PerpsChartFeedEvent.Selection -> onSelection(event.active)
+        is PerpsChartFeedEvent.Older -> onOlder(event.candles, event.endTimeSeconds)
         is PerpsChartFeedEvent.FeedFailed -> PerpsChartFeedStep(
             state = copy(poisoned = true),
             emission = KResult.Err(PerpsError.Unknown),
@@ -53,13 +56,41 @@ fun PerpsChartFeedState.onChartFeedEvent(event: PerpsChartFeedEvent): PerpsChart
 }
 
 private fun PerpsChartFeedState.onSeries(candles: List<PerpsCandle>): PerpsChartFeedStep {
+    val prior = held
+    val contiguous = !prior.isNullOrEmpty() && candles.isNotEmpty() && prior.last().time >= candles.first().time
+    return if (contiguous) {
+        publish(prior.prependTo(candles), staleEpoch = null)
+    } else {
+        copy(historyExhausted = false).publish(candles, staleEpoch = null)
+    }
+}
+
+private fun PerpsChartFeedState.onOlder(candles: List<PerpsCandle>, endTimeSeconds: Long): PerpsChartFeedStep {
+    val frame = held
+    if (frame.isNullOrEmpty() || frame.first().time != endTimeSeconds) {
+        return PerpsChartFeedStep(state = this)
+    }
+    if (candles.isEmpty()) {
+        return PerpsChartFeedStep(state = copy(historyExhausted = true))
+    }
+    return publish(candles.prependTo(frame), staleEpoch)
+}
+
+private fun PerpsChartFeedState.publish(composite: List<PerpsCandle>, staleEpoch: Long?): PerpsChartFeedStep {
     if (selectionActive) {
-        return PerpsChartFeedStep(state = copy(held = candles, parked = candles, staleEpoch = null))
+        return PerpsChartFeedStep(
+            state = copy(held = composite, parked = composite, staleEpoch = staleEpoch),
+        )
     }
     return PerpsChartFeedStep(
-        state = copy(held = candles, emitted = candles, parked = null, staleEpoch = null),
-        emission = KResult.Ok(PerpsChartSeries(candles)),
+        state = copy(held = composite, emitted = composite, parked = null, staleEpoch = staleEpoch),
+        emission = KResult.Ok(PerpsChartSeries(composite, staleEpoch)),
     )
+}
+
+private fun List<PerpsCandle>.prependTo(candles: List<PerpsCandle>): List<PerpsCandle> {
+    val first = candles.firstOrNull() ?: return candles
+    return filter { it.time < first.time } + candles
 }
 
 private fun PerpsChartFeedState.onReconnecting(): PerpsChartFeedStep {

@@ -48,6 +48,33 @@
     </FrameLayout>
 
     <FrameLayout
+        android:id="@+id/sign_message_notice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:padding="@dimen/offsetMedium"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginBottom="@dimen/offsetMedium"
+        android:background="@drawable/bg_content_20">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/sign_message_notice_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="28dp"
+            android:textAppearance="@style/TextAppearance.Body3"
+            android:textColor="?attr/textSecondaryColor"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="end"
+            android:src="@drawable/ic_information_circle_28"
+            android:tint="?attr/iconSecondaryColor"/>
+
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/warning"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

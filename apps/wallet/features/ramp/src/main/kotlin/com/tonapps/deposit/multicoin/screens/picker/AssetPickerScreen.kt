@@ -27,8 +27,8 @@ import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.core.components.AccountCell
 import com.tonapps.core.components.chainImageResourceUrl
-import com.tonapps.core.components.imageResourceUrl
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
+import com.tonapps.wallet.data.multichain.account.displayOrder
 import com.tonapps.wallet.localization.Localization
 import kotlinx.collections.immutable.toPersistentList
 import ui.components.moon.MoonChipBarCell
@@ -77,10 +77,14 @@ fun AssetPickerScreen(
         val context = LocalContext.current
         val allStr = stringResource(Localization.all)
         val chains = remember(group) {
-            Chain.all.filter { group == null || it.network.group == group }
+            Chain.displayOrder.filter { group == null || it.network.group == group }
         }
         val coins = remember(group) {
-            val head = if (group == null) listOf(MoonItem(id = DEFAULT_SEARCH_KEY, title = allStr)) else emptyList()
+            val head = if (group == null) {
+                listOf(MoonItem(id = DEFAULT_SEARCH_KEY, title = allStr))
+            } else {
+                emptyList()
+            }
             (head + chains.map {
                 MoonItem(id = it.network.type.ordinal, title = it.coin.name, image = it.coin.chainImageResourceUrl(context))
             }).toPersistentList()
@@ -119,20 +123,25 @@ fun AssetPickerScreen(
                 isEmpty -> item(key = EMPTY_KEY, contentType = { EMPTY_KEY }) {
                     MoonEmptyScreen(
                         text = stringResource(Localization.cant_find_anything),
-                        description = if (searchText.value.isEmpty()) stringResource(Localization.no_results) else stringResource(Localization.search_no_result, searchText.value),
+                        description = if (searchText.value.isEmpty()) {
+                            stringResource(Localization.no_results)
+                        } else {
+                            stringResource(Localization.search_no_result, searchText.value)
+                        },
                         type = MoonEmptyScreenType.Empty,
                     )
                 }
                 else -> items(
                     count = pagingItems.itemCount,
-                    key = pagingItems.itemKey { it.asset.id },
+                    key = pagingItems.itemKey { it.account.asset.id },
                     contentType = pagingItems.itemContentType { "account" },
                 ) { index ->
-                    val account = pagingItems[index] ?: return@items
+                    val item = pagingItems[index] ?: return@items
                     AccountCell(
-                        account = account,
+                        account = item.account,
                         position = MoonBundlePosition.default(pagingItems.itemCount, index),
-                        onClick = { onAssetSelected(account) },
+                        hiddenBalance = item.hiddenBalance,
+                        onClick = { onAssetSelected(item.account) },
                         content = {}
                     )
                 }

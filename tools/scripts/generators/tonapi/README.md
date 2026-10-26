@@ -10,8 +10,7 @@ tonapi/
 ├── generate-tonapi.sh      # Core generation script
 ├── generate-battery.sh     # Battery API generation wrapper
 ├── update-all.sh           # Regenerate all APIs
-├── tonapi.sh               # Legacy tonapi wrapper (deprecated)
-├── battery-api.yml         # Battery API OpenAPI specification
+├── tonapi.sh               # Shared TonAPI spec generation wrapper
 └── templates/              # Custom Mustache templates for code generation
     ├── licenseInfo.mustache           # Custom generated file header
     ├── data_class.mustache            # Data class template
@@ -36,10 +35,7 @@ The simplest way to regenerate both Tonapi and Battery APIs:
 **Main Tonapi API:**
 
 ```bash
-./tools/scripts/generators/tonapi/generate-tonapi.sh \
-    "https://raw.githubusercontent.com/tonkeeper/opentonapi/master/api/openapi.yml" \
-    "tonapi" \
-    "tonapi:tonkeeper"
+./tools/scripts/generators/tonapi/tonapi.sh
 ```
 
 **Battery API:**
@@ -60,12 +56,12 @@ The generation creates code in the following module structure:
 - **tonapi:tonkeeper** - Main Tonapi API client
     - Location: `tonapi/main/src/main/kotlin/io/tonapi/`
     - Generated: 19 API classes, 265 model classes
-    - Source: https://raw.githubusercontent.com/tonkeeper/opentonapi/master/api/openapi.yml
+    - Source: `shared/api/tonapi.yaml` (`api/tonapi.yaml` in the public mirror)
 
 - **tonapi:battery** - Battery API client
     - Location: `tonapi/battery/src/main/kotlin/io/batteryapi/`
-    - Generated: 4 API classes, 66 model classes
-    - Source: `battery-api.yml` (local file)
+    - Generated: 6 API classes, 131 model classes
+    - Source: `shared/api/battery.yaml` in the monorepo (`api/battery.yaml` in the public mirror)
 
 - **tonapi:legacy** - Backward compatibility layer
     - No source code - just aggregates dependencies to core, main, and battery
@@ -75,17 +71,17 @@ The generation creates code in the following module structure:
 
 ### Tools
 
-- **OpenAPI Generator CLI**: Install with `brew install openapi-generator`
+- **OpenAPI Generator CLI**: run through `shared/tools/openapi-generator.sh` in the monorepo
+  (`tools/openapi-generator.sh` in the public mirror); it pins the version and fetches the jar on first use
 - **Java 11+**: Required by OpenAPI Generator
-- **Detekt Formatting** (optional): For code formatting (jar located at
-  `tools/scripts/detekt-formatting.jar`)
+- **Python 3 + PyYAML**: `python3 -m pip install -r tools/scripts/generators/tonapi/requirements.txt`
 
 ### Verification
 
-Check if OpenAPI Generator is installed:
-
 ```bash
-openapi-generator version
+generator="$(git rev-parse --show-toplevel)/shared/tools/openapi-generator.sh"
+[ -f "$generator" ] || generator="$(git rev-parse --show-toplevel)/tools/openapi-generator.sh"
+"$generator" version
 ```
 
 ## How It Works
@@ -93,14 +89,23 @@ openapi-generator version
 ### Generation Process
 
 1. **Download/Read OpenAPI Spec**: Fetches the OpenAPI YAML specification
-2. **Generate Kotlin Code**: Uses OpenAPI Generator with custom templates
-3. **Post-Process**: Applies sed transformations:
-    - Replace `Map<String, Any>` with `Map<String, io.JsonAny>`
-    - Clean up enum unknown default cases
-    - Replace `.values()` with `.entries` (Kotlin 1.9+ compatibility)
-4. **Copy to Module**: Moves generated code to target module directory
-5. **Remove Infrastructure**: Deletes generated infrastructure (kept only in core module)
-6. **Format Code**: Runs detekt formatting for consistent style
+2. **Adapt a temporary copy**: `prepare-spec.py` rewrites a parsed copy for the templates (see below)
+3. **Generate Kotlin Code**: Uses OpenAPI Generator with custom templates
+4. **Format**: Shortens `kotlin.` type prefixes, same-package imports and blank lines
+5. **Publish**: Replaces the generated package, removing stale models; restores previous sources if publication fails
+
+Each invocation uses a unique temporary directory. Mandatory generation and post-processing errors
+stop the script. Formatting does not depend on an optional local detekt installation.
+
+To verify the checked-in client without changing it:
+
+```bash
+API_GENERATION_CHECK=1 bash tools/scripts/generators/tonapi/generate-multichain.sh
+```
+
+The shared sync stages both platforms and the backend spec, then publishes them together. A failure
+on either platform leaves the previous spec and clients intact. An unchanged backend spec still skips
+regeneration; older clients migrate when their API is synced after a backend deployment.
 
 ### Custom Templates
 
@@ -138,7 +143,30 @@ Edit the sed commands in `generate-tonapi.sh` to add additional transformations.
 
 ### Generator Configuration
 
-Modify the `openapi-generator generate` command in `generate-tonapi.sh` to change:
+`generate-tonapi.sh` takes two optional per-API arguments after the target module, passed by the
+`generate-<api>.sh` wrappers:
+
+- `open-enums`: `true` decodes a string enum value the spec does not list as `unknown` instead of
+  failing the whole response (trading, perps, battery, multichain)
+- `schema-mappings`: `Schema=fully.qualified.Type,...` to use instead of a generated model
+
+Specs shared with iOS live in `shared/api/` in the monorepo (`api/` in the public mirror).
+They are updated by the monorepo's `shared/tools/api-sync.sh` (trading, perps, battery, multichain, tonapi); the rest are still under
+`openapi/`. Optional per-package settings live in `configs/<package-name>.yaml`; Battery separates
+the legacy TRON send body from the multichain body and avoids the enum entry `value` colliding
+with its value property. It also keeps ChainKit's signed operation as raw JSON.
+`prepare-spec.py` adapts a temporary parsed copy of the spec; the generated Kotlin is not patched:
+
+- the spec is read by YAML 1.2 like on iOS (`on`, `yes`, `0755` stay strings) and handed to the
+  generator as JSON, since the generator's own parser follows YAML 1.1;
+- wallet authentication and credential defaults become template metadata;
+- with open enums, every string enum gains an `unknown` value, the decoding fallback of the
+  `openEnums` templates (numeric enums stay strict);
+- `additionalProperties: true` maps to `io.JsonAny`;
+- a oneOf without a discriminator becomes one model with every variant's properties, all optional;
+  a property the variants declare differently is raw `JsonElement` (Perps `QuotePayloadMeta.data`).
+Modify the generator command in
+`generate-tonapi.sh` to change:
 
 - Type mappings: `--type-mappings "number=kotlin.String"`
 - Additional properties: Platform, serialization library, enum handling, etc.
@@ -149,14 +177,9 @@ Modify the `openapi-generator generate` command in `generate-tonapi.sh` to chang
 
 Check that:
 
-1. OpenAPI Generator is installed and in PATH
+1. Java is installed (the pinned generator wrapper downloads the jar itself)
 2. The OpenAPI spec URL is accessible (for tonapi)
-3. The `battery-api.yml` file exists (for battery)
-
-### Formatting Errors
-
-The detekt formatting step is optional and will be skipped if the jar is not found. If you see
-formatting errors, ensure `tools/scripts/detekt-formatting.jar` exists.
+3. The shared `battery.yaml` file exists (for battery)
 
 ### Module Build Errors
 

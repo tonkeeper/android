@@ -49,11 +49,18 @@ class WcSessionFeature(
             val walletId = it?.id ?: return@mapLatestCatching null
             val accounts = accountRepo.getCoinAccounts(walletId)
                 .associateBy { account -> account.chain.caip2 }
-            val resolved = dappConnection.chains.mapNotNull { chain ->
-                accounts[chain.caip2] // TODO check if required
+            val missingRequired = dappConnection.requiredChains.any { chain ->
+                accounts[chain.caip2] == null
+            }
+            if (missingRequired) {
+                failWithRejection(context.getString(Localization.wc_error_chains_unavailable))
+                return@mapLatestCatching null
             }
 
-            if (resolved.size != dappConnection.chains.size) {
+            val resolved = dappConnection.chains.mapNotNull { chain ->
+                accounts[chain.caip2]
+            }
+            if (resolved.isEmpty()) {
                 failWithRejection(context.getString(Localization.wc_error_chains_unavailable))
                 return@mapLatestCatching null
             }
@@ -133,16 +140,13 @@ class WcSessionFeature(
     }
 
     private suspend fun loadBalances(wallets: List<McWalletEntity>): Map<String, CharSequence> {
-        if (settingsRepository.hiddenBalances) return emptyMap()
+        if (settingsRepository.hiddenBalances) {
+            return emptyMap()
+        }
         val currency = settingsRepository.currency.code
-        val hideDust = settingsRepository.hideDustAssets
         return wallets.mapNotNull { wallet ->
             val total = runCatching {
-                accountRepo.getCachedAccounts(
-                    walletId = wallet.id,
-                    currency = currency,
-                    hideDust = hideDust,
-                )?.total
+                accountRepo.getCachedAccounts(wallet.id)?.total
             }.getOrNull() ?: return@mapNotNull null
             wallet.id to formatFiat(currency, total)
         }.toMap()

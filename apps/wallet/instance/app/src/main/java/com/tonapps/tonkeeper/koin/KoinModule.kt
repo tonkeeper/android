@@ -16,22 +16,26 @@ import com.tonapps.legacy.assets.AssetsManager
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.helper.CacheHelper
 import com.tonapps.tonkeeper.helper.ReferrerClientHelper
+import com.tonapps.dapp.screens.sessions.TonConnectDisconnectInteractor
+import com.tonapps.deposit.multicoin.screens.confirm.ConfirmResultListener
+import com.tonapps.tonkeeper.manager.ConfirmResultDispatcher
+import com.tonapps.tonkeeper.manager.earn.EarnUrlResolver
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.manager.shortcut.AppShortcutRepository
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderProtocol
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.bridge.RawInAppScript
 import com.tonapps.tonkeeper.ui.screen.main.MainViewModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
-import com.tonapps.tonkeeper.manager.TonConnectBridgeResolver
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
-import com.tonapps.tonkeeper.ui.base.picker.currency.CurrencyPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.add.AddWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.BatteryViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.search.BrowserSearchViewModel
 import com.tonapps.tonkeeper.ui.screen.country.CountryPickerViewModel
 import com.tonapps.tonkeeper.ui.screen.dev.DevViewModel
+import com.tonapps.tonkeeper.ui.screen.events.compose.McEncryptedCommentDecryptor
 import com.tonapps.tonkeeper.ui.screen.start.StartFeature
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeper.ui.screen.init.TonWalletVersionInteractor
@@ -47,16 +51,20 @@ import com.tonapps.tonkeeper.ui.screen.settings.security.SecurityViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.theme.ThemeViewModel
 import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesViewModel
 import com.tonapps.tonkeeper.ui.screen.tonconnect.TonConnectViewModel
-import com.tonapps.deposit.multicoin.screens.confirm.engine.TxFeeBuilder
-import com.tonapps.deposit.multicoin.screens.confirm.engine.GaslessSender
+import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeBuilder
+import com.tonapps.deposit.multicoin.screens.confirm.fee.GaslessSender
+import com.tonapps.deposit.multicoin.screens.confirm.fee.EvmGasless
 import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.deposit.usecase.sign.SignTransaction
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.tonkeeper.App
 import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
+import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tx.TransactionManager
+import com.tonapps.wallet.features.events.data.EncryptedCommentDecryptor
 import kotlinx.coroutines.Dispatchers
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -67,7 +75,9 @@ val koinModel = module {
     factory { Dispatchers.Default }
 
     single(createdAtStart = true) { Async.ioScope() }
-    singleOf(TonConnectBridgeResolver::create) { bind<ITonConnectBridge>() }
+    singleOf(::ConfirmResultDispatcher) { bind<ConfirmResultListener>() }
+    singleOf(::EarnUrlResolver)
+    factory { EvmProviderProtocol(RawInAppScript(androidContext(), R.raw.evm_provider)) }
 
     singleOf(::Environment) // TODO move to data module
     single<EnvironmentHelper.Delegate> { get<Environment>() }
@@ -97,7 +107,7 @@ val koinModel = module {
             }
         }
     }
-    singleOf(::TonConnectManager)
+    singleOf(::TonConnectManager) { bind<TonConnectDisconnectInteractor>() }
     singleOf(::PushManager)
     singleOf(::SafeModeClient)
     singleOf(::APKManager)
@@ -110,8 +120,10 @@ val koinModel = module {
     factoryOf(::SignUseCase)
     factoryOf(::EmulationUseCase)
     singleOf(::SignTransaction)
+    single<EncryptedCommentDecryptor> { McEncryptedCommentDecryptor(get(), get(), get(), get(), get()) }
     singleOf(::TxFeeBuilder)
     singleOf(::GaslessSender)
+    singleOf(::EvmGasless)
     factoryOf(::TonWalletVersionInteractor)
     factoryOf(::AddMcWalletTooltipInteractor)
 
@@ -133,7 +145,6 @@ val koinModel = module {
     viewModelOf(::RootViewModel)
     viewModelOf(::PickerViewModel)
     viewModelOf(::TonConnectViewModel)
-    viewModelOf(::CurrencyPickerViewModel)
 
     viewModelOf(::LedgerConnectionViewModel)
     viewModelOf(::W5StoriesViewModel)

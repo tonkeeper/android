@@ -8,6 +8,7 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.core.flags.AddMcWalletTooltipInteractor
+import com.tonapps.extensions.AppLifecycleProvider
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.log.L
@@ -36,7 +37,6 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.plugins.PluginsRepository
-import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.tx.TransactionManager
@@ -47,6 +47,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
@@ -67,7 +69,6 @@ class WalletViewModel(
     private val networkMonitor: NetworkMonitor,
     private val screenCacheSource: ScreenCacheSource,
     private val backupRepository: BackupRepository,
-    private val ratesRepository: RatesRepository,
     private val batteryRepository: BatteryRepository,
     private val transactionManager: TransactionManager,
     private val assetsManager: AssetsManager,
@@ -80,6 +81,7 @@ class WalletViewModel(
     private val bannerRepository: BannerRepository,
     private val addMcWalletTooltip: AddMcWalletTooltipInteractor,
     private val passcodeManager: PasscodeManager,
+    private val appLifecycle: AppLifecycleProvider,
 ) : BaseWalletVM(app) {
 
     val installId: String
@@ -94,6 +96,8 @@ class WalletViewModel(
     private val _lastLtFlow = MutableStateFlow(0L)
     private val _statusFlow = MutableStateFlow<Status?>(null)
     val statusFlow = _statusFlow.asStateFlow().filterNotNull()
+
+    private val balanceStale = MutableStateFlow(true)
 
     private val _stateMainFlow = MutableStateFlow<State.Main?>(null)
     private val stateMainFlow = _stateMainFlow.asStateFlow().filterNotNull()
@@ -116,8 +120,9 @@ class WalletViewModel(
         api.configFlow,
         settingsRepository.hiddenBalancesFlow,
         statusFlow,
-    ) { _, hiddenBalance, status ->
-        State.Settings(hiddenBalance, api.getConfig(wallet.network), status)
+        balanceStale,
+    ) { _, hiddenBalance, status, stale ->
+        State.Settings(hiddenBalance, api.getConfig(wallet.network), status, stale)
     }.distinctUntilChanged()
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>?>(null)
@@ -157,6 +162,11 @@ class WalletViewModel(
                 _domainRenewFlow.value =
                     collectiblesRepository.getDnsSoonExpiring(wallet.accountId, wallet.network)
             }
+        }
+
+        collectFlow(appLifecycle.observeWithoutGrace.drop(1).filter { it }) {
+            balanceStale.value = true
+            refresh()
         }
 
         collectFlow(networkMonitor.isOnlineFlow) { online ->
@@ -267,6 +277,7 @@ class WalletViewModel(
                             state.totalBalanceFiat
                         )
                         settingsRepository.setWalletLastUpdated(wallet.id)
+                        balanceStale.value = false
                         setStatus(Status.Default)
                     }
                 } catch (e: Throwable) {
@@ -332,6 +343,7 @@ class WalletViewModel(
                 prefixYourAddress = 3 > settingsRepository.addressCopyCount,
                 renewDomains = renewDomains,
                 assetsExpanded = assetsExpanded,
+                balanceStale = settings.balanceStale,
             )
             if (uiItems.isNotEmpty()) {
                 _uiItemsFlow.value = uiItems
@@ -385,7 +397,7 @@ class WalletViewModel(
         refresh: Boolean
     ): WalletCollectiblesState = withContext(Dispatchers.IO) {
         if (api.getConfig(wallet.network).flags.disableNfts) {
-            return@withContext WalletCollectiblesState(emptyList())
+            return@withContext WalletCollectiblesState(items = emptyList(), hiddenBalance = settingsRepository.hiddenBalances)
         }
         val nfts = if (refresh) {
             collectiblesRepository.getRemoteNftItems(wallet.address, wallet.network)
@@ -398,7 +410,7 @@ class WalletViewModel(
 
     private suspend fun mapCollectibles(nfts: List<NftEntity>): WalletCollectiblesState {
         if (nfts.isEmpty()) {
-            return WalletCollectiblesState(emptyList())
+            return WalletCollectiblesState(items = emptyList(), hiddenBalance = settingsRepository.hiddenBalances)
         }
         val visibleItems = nfts.mapNotNull { nft ->
             val nftPref = settingsRepository.getTokenPrefs(wallet.id, nft.collectionAddressOrNFTAddress)
@@ -408,9 +420,13 @@ class WalletViewModel(
             nft.with(nftPref)
         }
         return if (visibleItems.isNotEmpty()) {
-            WalletCollectiblesState(items = visibleItems)
+            WalletCollectiblesState(items = visibleItems, hiddenBalance = settingsRepository.hiddenBalances)
         } else {
-            WalletCollectiblesState(items = emptyList(), allHidden = true)
+            WalletCollectiblesState(
+                items = emptyList(),
+                allHidden = true,
+                hiddenBalance = settingsRepository.hiddenBalances,
+            )
         }
     }
 
@@ -445,28 +461,18 @@ class WalletViewModel(
     }
 
     fun nextWallet() {
-        viewModelScope.launch {
-            val wallets = accountRepository.getWallets()
-            val index = wallets.indexOf(wallet)
-            val nextIndex = if (index == wallets.size - 1) {
-                0
-            } else {
-                index + 1
-            }
-            accountRepository.setSelectedWallet(wallets[nextIndex].id)
-        }
+        selectAdjacentWallet(offset = 1)
     }
 
     fun prevWallet() {
+        selectAdjacentWallet(offset = -1)
+    }
+
+    private fun selectAdjacentWallet(offset: Int) {
         viewModelScope.launch {
-            val wallets = accountRepository.getWallets()
-            val index = wallets.indexOf(wallet)
-            val prevIndex = if (index == 0) {
-                wallets.size - 1
-            } else {
-                index - 1
-            }
-            accountRepository.setSelectedWallet(wallets[prevIndex].id)
+            val walletIds = accountRepository.getWallets().map { it.id }
+            val adjacentWalletId = findAdjacentWalletId(walletIds, wallet.id, offset) ?: return@launch
+            accountRepository.setSelectedWallet(adjacentWalletId)
         }
     }
 
@@ -523,7 +529,6 @@ class WalletViewModel(
                 currency = currency,
                 list = it.sort(wallet, settingsRepository),
                 fromCache = !refresh,
-                rates = ratesRepository.getTONRates(wallet.network, currency)
             )
         }
     }
@@ -553,13 +558,25 @@ class WalletViewModel(
             }
         }
 
+        internal fun findAdjacentWalletId(
+            walletIds: List<String>,
+            currentWalletId: String,
+            offset: Int,
+        ): String? {
+            val currentIndex = walletIds.indexOf(currentWalletId)
+            if (currentIndex == -1 || walletIds.size < 2) {
+                return null
+            }
+            return walletIds[(currentIndex + offset).mod(walletIds.size)]
+        }
+
         fun ScreenCacheSource.getWalletScreen(wallet: WalletEntity): List<Item>? {
             try {
                 val items: List<Item> = get(CACHE_NAME, wallet.id) { parcel ->
                     Item.createFromParcel(parcel)
                 }.map {
                     if (it is Item.Balance) {
-                        it.copy(status = Status.Updating)
+                        it.copy(status = Status.Updating, stale = true)
                     } else {
                         it
                     }

@@ -50,7 +50,11 @@ class TonConnectViewModel(
             val walletsCount = wallets.size
 
             _stateFlow.value = TonConnectScreenState.Data(
-                wallet = if (wallet.isTonConnectSupported) wallet else wallets.first(),
+                wallet = if (wallet.isTonConnectSupported) {
+                    wallet
+                } else {
+                    wallets.first()
+                },
                 hasWalletPicker = walletsCount > 1
             )
         }

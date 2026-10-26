@@ -15,12 +15,33 @@ appId: com.ton_keeper.debug
     centerElement: true
     timeout: 30000
 
-- extendedWaitUntil:
-    visible: ${SYMBOL}
+# Scroll to the ticker, not just to the shelf header: Core tokens is a grid and
+# everything past the first four sits below the fold. This was an
+# `extendedWaitUntil` on the ticker, which waits without scrolling — do not turn
+# it back into one.
+#
+# below: "Core tokens" keeps the search inside this shelf; tickers repeat across
+# shelves. The anchors stop "BTC" matching a longer ticker such as "BTCB".
+#
+# No centerElement on purpose. Centring the row would push the shelf header
+# towards the top of the screen and, on a short device, off it — and the header
+# is the anchor this selector and the tap below both depend on. Once it leaves
+# the hierarchy neither can resolve, which is the same height dependency this
+# step exists to remove. visibilityPercentage is what makes the row tappable;
+# centring was never what did that.
+- scrollUntilVisible:
+    element:
+      text: "^${SYMBOL}$"
+      below:
+        text: "Core tokens"
+    direction: DOWN
     timeout: 30000
+    visibilityPercentage: 60
+
 - tapOn:
-    text: ${SYMBOL}
-    below: "Core tokens"
+    text: "^${SYMBOL}$"
+    below:
+      text: "Core tokens"
 - waitForAnimationToEnd:
     timeout: 5000
 

@@ -32,10 +32,11 @@ fun StoryEntity.Stories.withRaffleSourceWalletId(walletId: String): StoryEntity.
     )
 
 fun String.withRaffleSource(source: String): String {
-    if (!startsWith(RAFFLE_DEEPLINK_PREFIX)) {
+    val normalized = DeepLinkRoute.normalize(toUri()).toString()
+    if (!normalized.startsWith(RAFFLE_DEEPLINK_PREFIX)) {
         return this
     }
-    val rest = substring(RAFFLE_DEEPLINK_PREFIX.length)
+    val rest = normalized.substring(RAFFLE_DEEPLINK_PREFIX.length)
     if (rest.isNotEmpty() && rest.first() != '/' && rest.first() != '?') {
         return this
     }

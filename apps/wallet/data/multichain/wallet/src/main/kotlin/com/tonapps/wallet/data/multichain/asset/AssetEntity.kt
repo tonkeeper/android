@@ -102,4 +102,12 @@ data class AssetWithDetails(
     val volume: AssetMarketCapEntity? = null
 )
 
-const val PERP_ASSET_ID_PREFIX = "lighter/mainnet/market/"
+private const val PERP_ASSET_ID_PREFIX = "lighter/mainnet/market/"
+
+fun perpsAssetId(marketIndex: Int): String = "$PERP_ASSET_ID_PREFIX$marketIndex"
+
+fun perpsMarketIndexOrNull(assetId: String?): Int? =
+    assetId
+        ?.takeIf { it.startsWith(PERP_ASSET_ID_PREFIX) }
+        ?.removePrefix(PERP_ASSET_ID_PREFIX)
+        ?.toIntOrNull()

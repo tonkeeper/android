@@ -1,0 +1,76 @@
+{
+  "quote_id": "0902f340-a12a-487d-a82c-363c3f68c2fb",
+  "routes": [
+    {
+      "route_id": "26d6b815-833e-4a45-93fc-8e5aaf2912a9",
+      "provider_route_id": "0xf534ca2150845b801035fa20bbcbf93ee30f4ca1c253212825f720e0764a6173",
+      "aggregator": "swapsxyz",
+      "protocol": "alt-vm-1",
+      "route_type": "cross_chain_swap",
+      "source_amount": "14350324860",
+      "maximum_source_amount": "14350324860",
+      "estimated_destination_amount": "20000000",
+      "minimum_destination_amount": "20000000",
+      "total_slippage_bps": 100,
+      "source_usd_price": 1.43,
+      "destination_usd_price": 1,
+      "fees": [
+        {
+          "type": "protocol",
+          "asset": "ton/mainnet/coin",
+          "chain_id": "999000337",
+          "amount": "14350324",
+          "amount_usd": "0.02"
+        },
+        {
+          "type": "bridge",
+          "asset": "ton/mainnet/coin",
+          "chain_id": "999000337",
+          "amount": "249508276",
+          "amount_usd": "0.36"
+        },
+        {
+          "type": "application",
+          "asset": "ton/mainnet/coin",
+          "chain_id": "999000337",
+          "amount": "100452274",
+          "amount_usd": "0.14"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "bridge",
+          "chain_id": "ton/mainnet",
+          "chain_family": "TON",
+          "from_asset": "ton/mainnet/coin",
+          "to_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+          "protocol": "alt-vm-1"
+        }
+      ],
+      "date_expire": "2026-09-05T19:13:13Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "1103a4f7-42af-491b-a98e-4c3dda80775b",
+          "kind": "main",
+          "chain_id": "ton/mainnet",
+          "chain_family": "TON",
+          "payload_type": "alt_vm_deposit",
+          "calldata_payload_type": "exact",
+          "payload": "[{\"to\":\"UQBQwOWdd_QxI29ErHSAXsW7SFmgvlC81wnczeft4uxB298p\",\"toExtra\":null,\"value\":\"14350324860\",\"chainId\":999000337,\"chainKey\":\"ton\"}]",
+          "human_summary": {
+            "action": "Swap GRAM for USDT",
+            "spend_asset": "ton/mainnet/coin",
+            "spend_amount": "14350324860",
+            "receive_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+            "receive_amount": "20000000",
+            "protocol": "alt-vm-1"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-05T19:13:13Z"
+        }
+      ]
+    }
+  ]
+}

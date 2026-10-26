@@ -9,13 +9,11 @@ import com.tonapps.bus.generated.Events.DappBrowser.DappSharingCopyFrom
 import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.tonkeeper.extensions.copyToClipboard
-import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappOpenAnalytics
 import com.tonapps.wallet.data.dapps.entities.AppEntity
-import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 
@@ -52,8 +50,7 @@ class DAppShareScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet),
 
     private fun copyLink() {
         dappAnalytics?.sharingCopy(DappSharingCopyFrom.CopyLink)
-        navigation?.toast(getString(Localization.copied))
-        context?.copyToClipboard(deepLink)
+        context?.copyWithToast(deepLink)
     }
 
     @Composable

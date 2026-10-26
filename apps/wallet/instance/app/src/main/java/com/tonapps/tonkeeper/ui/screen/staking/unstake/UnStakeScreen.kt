@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.staking.unstake
 
 import android.os.Bundle
 import android.view.View
+import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -20,7 +22,11 @@ class UnStakeScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
 
     private val poolAddress: String by lazy { arguments?.getString(POOL_ADDRESS_KEY) ?:"" }
 
-    override val viewModel: UnStakeViewModel by walletViewModel { parametersOf(poolAddress) }
+    private val utm: UtmParameters by lazy {
+        arguments?.getParcelableCompat<UtmParameters>(UTM_KEY) ?: UtmParameters.Empty
+    }
+
+    override val viewModel: UnStakeViewModel by walletViewModel { parametersOf(poolAddress, utm) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -48,10 +54,16 @@ class UnStakeScreen(wallet: WalletEntity): BaseHolderWalletScreen<ScreenContext.
     companion object {
 
         private const val POOL_ADDRESS_KEY = "pool_address"
+        private const val UTM_KEY = "utm"
 
-        fun newInstance(wallet: WalletEntity, poolAddress: String): BaseFragment {
+        fun newInstance(
+            wallet: WalletEntity,
+            poolAddress: String,
+            utm: UtmParameters = UtmParameters.Empty,
+        ): BaseFragment {
             val fragment = UnStakeScreen(wallet)
             fragment.putStringArg(POOL_ADDRESS_KEY, poolAddress)
+            fragment.putParcelableArg(UTM_KEY, utm)
             return fragment
         }
 

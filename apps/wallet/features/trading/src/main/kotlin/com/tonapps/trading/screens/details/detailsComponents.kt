@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -91,7 +92,8 @@ internal fun ChartSection(
     chartPeriod: ChartPeriod,
     onPeriodChange: (ChartPeriod) -> Unit,
     onOpenStaking: () -> Unit,
-    maxStakingApyFormatted: String? = null,
+    onOpenEarnVault: (network: String, vaultId: String) -> Unit,
+    apyBadge: AssetApyBadge? = null,
 ) {
     var selectedPoint by remember { mutableStateOf<ChartPoint?>(null) }
 
@@ -119,11 +121,20 @@ internal fun ChartSection(
                 )
             }
 
-            if (maxStakingApyFormatted != null) {
-                MaxStakingApyLabel(
-                    formattedApy = maxStakingApyFormatted,
+            when (apyBadge) {
+                is AssetApyBadge.Earn -> ApyLabel(
+                    icon = UIKitIcon.ic_earn_16,
+                    text = stringResource(Localization.earn_up_to_apy, apyBadge.apyFormatted),
+                    onClick = { onOpenEarnVault(apyBadge.network, apyBadge.vaultId) },
+                )
+
+                is AssetApyBadge.Staking -> ApyLabel(
+                    icon = UIKitIcon.ic_staking_16,
+                    text = stringResource(Localization.earn_apy, apyBadge.apyFormatted),
                     onClick = onOpenStaking,
                 )
+
+                null -> Unit
             }
         }
 
@@ -152,8 +163,9 @@ internal fun ChartSection(
 }
 
 @Composable
-private fun MaxStakingApyLabel(
-    formattedApy: String,
+private fun ApyLabel(
+    @DrawableRes icon: Int,
+    text: String,
     onClick: () -> Unit,
 ) {
     Row(
@@ -166,11 +178,11 @@ private fun MaxStakingApyLabel(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MoonItemIcon(
-            painter = painterResource(UIKitIcon.ic_staking_16),
+            painter = painterResource(icon),
             color = UIKit.colorScheme.accent.green
         )
         Text(
-            text = stringResource(Localization.earn_apy, formattedApy),
+            text = text,
             style = UIKit.typography.label2,
             color = UIKit.colorScheme.accent.green,
         )
@@ -223,7 +235,7 @@ private fun ChartPeriodSelector(
     onPeriodSelected: (ChartPeriod) -> Unit,
 ) {
     val periods = ChartPeriod.entries
-    val selectedIndex = periods.indexOf(chartPeriod).let { if (it >= 0) it else 0 }
+    val selectedIndex = periods.indexOf(chartPeriod).coerceAtLeast(0)
     val secondary = UIKit.colorScheme.buttonSecondary
 
     BoxWithConstraints(
@@ -432,7 +444,11 @@ private fun ChartHeader(
         percent to (activePrice - firstPrice)
     }
 
-    val percentText = if (activePrice != null) Formatter.percent(percent) else ""
+    val percentText = if (activePrice != null) {
+        Formatter.percent(percent)
+    } else {
+        ""
+    }
     val deltaPriceText =
         CurrencyFormatter.formatFiat(currencyCode, deltaPrice.toBigDecimal()).toString()
 
@@ -551,7 +567,7 @@ internal fun AssetActionButtonsRow(
         if (showSend) {
             AssetActionButton(
                 modifier = Modifier.weight(1f),
-                painter = painterResource(UIKitIcon.ic_tray_arrow_up_16),
+                painter = painterResource(UIKitIcon.ic_link_small_16),
                 title = stringResource(Localization.send),
                 onClick = onSendClick,
             )
@@ -651,7 +667,11 @@ fun FavoriteActionIcon(
     val accentColor = UIKit.colorScheme.accent.blue
 
     LaunchedEffect(isFavorite) {
-        val target = if (isFavorite) 1f else 0f
+        val target = if (isFavorite) {
+            1f
+        } else {
+            0f
+        }
         if (animateChanges) {
             progress.animateTo(
                 targetValue = target,

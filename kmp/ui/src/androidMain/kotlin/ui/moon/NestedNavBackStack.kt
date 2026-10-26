@@ -37,11 +37,18 @@ fun rememberNestedNavBackStack(
     initial: NavKey,
     onBack: () -> Unit,
     saveable: Boolean = true,
+): NestedNavBackStack = rememberNestedNavBackStack(listOf(initial), onBack, saveable)
+
+@Composable
+fun rememberNestedNavBackStack(
+    initial: List<NavKey>,
+    onBack: () -> Unit,
+    saveable: Boolean = true,
 ): NestedNavBackStack {
     val backStack = if (saveable) {
-        rememberNavBackStack(initial)
+        rememberNavBackStack(*initial.toTypedArray())
     } else {
-        remember { NavBackStack<NavKey>(initial) }
+        remember { NavBackStack<NavKey>(*initial.toTypedArray()) }
     }
     val currentOnBack by rememberUpdatedState(onBack)
     return remember(backStack) {

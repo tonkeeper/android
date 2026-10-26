@@ -1,0 +1,59 @@
+{
+    "quote_id": "ff0fb62a-adf8-4e23-af38-ed29d7c57d74",
+    "routes": [
+        {
+            "route_id": "b709085b-135d-403f-9c20-b174dcc4df4e",
+            "provider_route_id": "a539b9d0215bceb2f8c60df437136af8b912d8c3385a402e1a6ef7d94ed5d98c",
+            "aggregator": "omniston",
+            "protocol": "omniston",
+            "route_type": "cross_chain_swap",
+            "source_amount": "3000000000",
+            "estimated_destination_amount": "1938538544430",
+            "minimum_destination_amount": "1919153158985",
+            "total_slippage_bps": 100,
+            "price_impact_bps": 6,
+            "source_usd_price": 0.9997000899730081,
+            "destination_usd_price": 1.536039188243527,
+            "fees": [
+                {
+                    "type": "gas",
+                    "asset": "ton/mainnet/coin",
+                    "amount": "105300000",
+                    "amount_usd": "0.161745"
+                },
+                {
+                    "type": "integrator",
+                    "asset": "ton/mainnet/coin",
+                    "amount": "9314985805",
+                    "amount_usd": "14.308183"
+                }
+            ],
+            "legs": [],
+            "date_expire": "2026-09-30T13:08:12Z",
+            "risk_level": "low",
+            "payloads": [
+                {
+                    "payload_id": "6724cadb-1661-4134-b35d-d6f0b36b90a9",
+                    "kind": "main",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "payload_type": "ton_boc",
+                    "calldata_payload_type": "exact",
+                    "payload": "[{\"address\":\"EQC9bXRVHLtdjSa4EOcLlD8pNKhNWLeRGLFF0nNTDfl13uwH\",\"amount\":\"185000000\",\"payload\":\"te6cckEBAgEAywABsA+KfqUabvfZTtXZjEQhuF4IAO87mQKicbKgHIk4pSPP4k5xhHqutqYgAB7USnesDnCdACe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYiyBAX34EBANslk4VhgAIqFqMWTE1aoxM/MRD/EEluAMqKyKvv/FAn4CTTNIDD60uXMPFRACe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYi8ACJAc9yH0RADYSJtmhzOqonRuCSb2bmyLGATs10hcPtLry7xfg=\"},{\"address\":\"EQC9bXRVHLtdjSa4EOcLlD8pNKhNWLeRGLFF0nNTDfl13uwH\",\"amount\":\"330000000\",\"payload\":\"te6cckECBgEAAdYAAbAPin6lGm732U7V2YxBMvzeCAAxVRxd2qLo+1wGeA83JxB7KDlbHsqLPl3TmujpbXHauwAnujmZTRR11gWouVdws2LHTuvMmUdhjHTGFjujSdcGIsghYOwBAQFX46DUgoAHy/+VG7+ebYbZP+jeYqxVVqNzIpCLWthNl7zJOrFKsQUv3Sg9Z0ACAksAAAAAgB4cvF14lzyCzYbIPpNZEuRocSH7FOrcbJObwJRBFQtZZwMEAdEaPC/DgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAJ7o5mU0UddYFqLlXcLNix07rzJlHYYx0xhY7o0nXBiLgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAFAI08N9fpgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAJ7o5mU0UddYFqLlXcLNix07rzJlHYYx0xhY7o0nXBiLgDVgARIDnuQ+iIAbCRNs0OZ1VE6NwSTezc2RYwCdmukLh9pYAjQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBk7raG\"},{\"address\":\"EQC9bXRVHLtdjSa4EOcLlD8pNKhNWLeRGLFF0nNTDfl13uwH\",\"amount\":\"260000000\",\"payload\":\"te6cckECAwEAAR0AAbAPin6lGm732U7V2YxF2FCkCAElwoI1yo0SXmdlkVE9Ugchsf6Z93IvTIdyPOfuDftzowAnujmZTRR11gWouVdws2LHTuvMmUdhjHTGFjujSdcGIsgZCLEBAQHhZmTeKoASRBgwNNn9WaI29x7EJxvjdzmQVt2kzDpev13ECWffZBACe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYi4AT3RzMpoo66wLUXKu4WbFjp3XmTKOwxjpjCx3RpOuDEWAAAAAf////8ACAJdektsIU9gBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRYAACNAAiQHPch9EQA2EibZoczqqJ0bgkm9m5sixgE7NdIXD7S4MSqLQw==\"}]",
+                    "human_summary": {
+                        "action": "Swap on TON",
+                        "spend_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                        "spend_amount": "3000000000",
+                        "receive_asset": "ton/mainnet/coin",
+                        "receive_amount": "1938538544430",
+                        "recipient_address": "UQCe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYi5PA",
+                        "protocol": "omniston"
+                    },
+                    "validation_status": "validated",
+                    "date_expire": "2026-09-30T13:08:12Z"
+                }
+            ],
+            "execution_id": "78b9fe5c-ab0b-45a6-b362-d06fce206ef0"
+        }
+    ]
+}

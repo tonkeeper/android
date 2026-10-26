@@ -117,7 +117,7 @@ class TransactionManager(
             if (!foreground) {
                 return@combine null
             }
-            val tronAddress = accountRepository.getTronAddress(wallet.id)
+            val tronAddress = accountRepository.getTronAddressOrNull(wallet.id)
             if (tronAddress != null && wallet.hasPrivateKey && !wallet.testnet && !api.getConfig(wallet.network).flags.disableBattery) {
                 Pair(wallet, tronAddress)
             } else {
@@ -160,7 +160,9 @@ class TransactionManager(
         wallet: WalletEntity,
     ): AccountEventEntity? {
         val txArray = event.transactions ?: return null
-        if (txArray.length() == 0) return null
+        if (txArray.length() == 0) {
+            return null
+        }
         val firstTx = txArray.getJSONObject(0)
         val hash = event.traceExternalHashNorm ?: firstTx.optString("hash", "")
         val lt = firstTx.optString("lt", "0")?.toLongOrNull() ?: 0L
@@ -176,7 +178,11 @@ class TransactionManager(
             lt = lt,
             inProgress = inProgress,
             extra = 0,
-            progress = if (inProgress) 0f else 1f,
+            progress = if (inProgress) {
+                0f
+            } else {
+                1f
+            },
         )
         return AccountEventEntity(wallet.accountId, wallet.testnet, hash, body)
     }

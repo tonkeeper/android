@@ -25,6 +25,7 @@ dependencies {
     implementation(projects.apps.wallet.localization)
 
     implementation(projects.apps.wallet.data.account)
+    implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.banner)
     implementation(projects.apps.wallet.data.raffle)
@@ -33,6 +34,7 @@ dependencies {
     implementation(projects.apps.wallet.data.events)
     implementation(projects.apps.wallet.data.tx)
     implementation(projects.apps.wallet.data.staking)
+    implementation(projects.apps.wallet.data.earn)
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.features.events)

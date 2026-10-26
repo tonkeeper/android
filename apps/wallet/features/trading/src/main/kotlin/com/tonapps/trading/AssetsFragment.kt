@@ -4,13 +4,19 @@ import android.os.Bundle
 import android.view.View
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenFrom
+import com.tonapps.bus.generated.Events.EarnFlow.EarnEntryViewFrom
+import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.core.ComposableFragment
+import com.tonapps.core.navigation.NavigationDelegate
 import io.tradingapi.models.AssetsTab
 import io.tradingapi.models.MarketItem
+import uikit.base.BaseFragment
 import uikit.extensions.activity
 
-class AssetsFragment : ComposableFragment() {
+// SwipeBack so the asset page can be dragged away like the other stacked screens —
+// without it there is no swipe-to-go-back at all on button-navigation devices.
+class AssetsFragment : ComposableFragment(), BaseFragment.SwipeBack {
 
     interface Delegate {
         fun onOpenToken(token: TokenEntity, eventsOnly: Boolean = false)
@@ -20,6 +26,7 @@ class AssetsFragment : ComposableFragment() {
         fun onOpenReceive(assetId: String, token: TokenEntity)
         fun onOpenTxDetails(tx: TxEvent, actionIndex: Int)
         fun onOpenStaking()
+        fun onOpenEarnVault(network: String, vaultId: String, from: EarnEntryViewFrom)
         fun onOpenUnverifiedInfo()
         fun onSellToCard(assetId: String)
         fun onBuyWithCard(assetId: String)
@@ -53,6 +60,7 @@ class AssetsFragment : ComposableFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val delegate = context?.activity as? Delegate
+        val navigationDelegate = context?.activity as? NavigationDelegate
 
         setContent {
             AssetsRouter(
@@ -66,10 +74,16 @@ class AssetsFragment : ComposableFragment() {
                 onOpenReceive = { assetId, token -> delegate?.onOpenReceive(assetId, token) },
                 onOpenTxDetails = { tx, index -> delegate?.onOpenTxDetails(tx, index) },
                 onOpenStaking = { delegate?.onOpenStaking() },
+                onOpenEarnVault = { network, vaultId ->
+                    delegate?.onOpenEarnVault(network, vaultId, EarnEntryViewFrom.EarnApy)
+                },
                 onOpenUnverifiedInfo = { delegate?.onOpenUnverifiedInfo() },
                 onSellToCard = { delegate?.onSellToCard(it) },
                 onBuyWithCard = { delegate?.onBuyWithCard(it) },
                 onOpenAssetHistory = { delegate?.onOpenAssetHistory(it) },
+                onOpenPerpMarket = { marketIndex, symbol ->
+                    navigationDelegate?.onOpenPerpMarket(marketIndex, symbol, PerpsEntryPoint.AssetPage)
+                },
                 onClose = { finish() },
             )
         }

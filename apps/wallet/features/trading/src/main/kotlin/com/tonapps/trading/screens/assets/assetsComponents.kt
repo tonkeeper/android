@@ -72,7 +72,7 @@ internal fun AssetCell(
                             text = item.formattedChange,
                             color = item.formattedChange.percentDiffColor(),
                         )
-                        Verification.none -> MoonItemSubtitle(
+                        Verification.none, Verification.unknown -> MoonItemSubtitle(
                             text = stringResource(Localization.unverified_token),
                             color = UIKit.colorScheme.accent.orange,
                         )

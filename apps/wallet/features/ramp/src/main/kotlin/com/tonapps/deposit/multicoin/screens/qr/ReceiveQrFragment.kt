@@ -6,6 +6,7 @@ import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.core.ComposableFragment
 import com.tonapps.deposit.multicoin.DepositMulticoinFragment
 import com.tonapps.deposit.multicoin.DepositMulticoinRoutes
+import com.tonapps.deposit.multicoin.analytics.depositFlowFromOrNull
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -23,9 +24,9 @@ class ReceiveQrFragment : ComposableFragment(), BaseFragment.BottomSheet {
             "ReceiveQrFragment requires $ARG_ASSET_ID — create it via create(assetId)"
         }
 
-        val analyticsFrom = requireArguments().getString(ARG_FROM)
-            ?.let { key -> DepositFlowFrom.entries.firstOrNull { it.key == key } }
-            ?: DepositFlowFrom.JettonScreen
+        val analyticsFrom = requireNotNull(depositFlowFromOrNull(requireArguments().getString(ARG_FROM))) {
+            "ReceiveQrFragment requires $ARG_FROM — create it via create(assetId, analyticsFrom)"
+        }
 
         setContent {
             val feature = koinViewModel<ReceiveQrFeature> {
@@ -53,7 +54,7 @@ class ReceiveQrFragment : ComposableFragment(), BaseFragment.BottomSheet {
 
         fun create(
             assetId: String,
-            analyticsFrom: DepositFlowFrom = DepositFlowFrom.JettonScreen,
+            analyticsFrom: DepositFlowFrom,
         ): ReceiveQrFragment {
             return ReceiveQrFragment().apply {
                 arguments = Bundle().apply {

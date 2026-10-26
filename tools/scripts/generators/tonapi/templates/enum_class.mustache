@@ -1,0 +1,113 @@
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+{{#openEnums}}
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+{{^isString}}
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+{{/isString}}
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+{{/openEnums}}
+{{^openEnums}}{{^isString}}
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+{{/isString}}{{/openEnums}}
+
+/**
+ * {{{description}}}
+ *
+ * Values: {{#allowableValues}}{{#enumVars}}{{&name}}{{^-last}},{{/-last}}{{/enumVars}}{{/allowableValues}}
+ */
+@Serializable{{#openEnums}}(with = {{classname}}Serializer::class){{/openEnums}}{{^openEnums}}{{^isString}}(with = {{classname}}Serializer::class){{/isString}}{{/openEnums}}
+enum class {{classname}}(val value: {{{dataType}}}) {
+{{#allowableValues}}{{#enumVars}}
+    {{#enumDescription}}
+    /**
+     * {{.}}
+     */
+    {{/enumDescription}}
+    {{#isString}}
+    @SerialName(value = {{#lambda.doublequote}}{{{value}}}{{/lambda.doublequote}})
+    {{/isString}}
+    {{#isArray}}
+    {{#isList}}
+    {{#name}}{{^isEmpty}}{{&name}}{{/isEmpty}}{{#isEmpty}}_{{/isEmpty}}{{/name}}(listOf({{{value}}})){{^-last}},{{/-last}}{{#-last}};{{/-last}}
+    {{/isList}}
+    {{^isList}}
+    {{#name}}{{^isEmpty}}{{&name}}{{/isEmpty}}{{#isEmpty}}_{{/isEmpty}}{{/name}}(arrayOf({{{value}}})){{^-last}},{{/-last}}{{#-last}};{{/-last}}
+    {{/isList}}
+    {{/isArray}}
+    {{^isArray}}
+    {{#name}}{{^isEmpty}}{{&name}}{{/isEmpty}}{{#isEmpty}}_{{/isEmpty}}{{/name}}({{{value}}}){{^-last}},{{/-last}}{{#-last}};{{/-last}}
+    {{/isArray}}
+{{/enumVars}}{{/allowableValues}}
+    /**
+     * Override [toString()] to avoid using the enum variable name as the value, and instead use
+     * the actual value defined in the API spec file.
+     *
+     * This solves a problem when the variable name and its value are different, and ensures that
+     * the client sends the correct enum values to the server always.
+     */
+    override fun toString(): kotlin.String = value{{^isString}}.toString(){{/isString}}
+
+    companion object {
+        /**
+         * Converts the provided [data] to a [String] on success, null otherwise.
+         */
+        fun encode(data: kotlin.Any?): kotlin.String? = if (data is {{classname}}) "$data" else null
+
+        /**
+         * Returns a valid [{{classname}}] for [data], null otherwise.
+         */
+        fun decode(data: kotlin.Any?): {{classname}}? = data?.let {
+          val normalizedData = "$it".lowercase()
+          entries.firstOrNull { value ->
+            it == value || normalizedData == "$value".lowercase()
+          }
+        }
+    }
+}
+{{#kotlinx_serialization}}{{#openEnums}}
+internal object {{classname}}Serializer : KSerializer<{{classname}}> {
+    override val descriptor = {{dataType}}.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): {{classname}} {
+        val value = decoder.decodeSerializableValue({{{dataType}}}.serializer())
+        return {{classname}}.entries.firstOrNull { it.value == value }
+            {{#isString}}
+            ?: {{classname}}.unknown
+            {{/isString}}
+            {{^isString}}
+            ?: throw IllegalArgumentException("Unknown enum value: $value")
+            {{/isString}}
+    }
+
+    override fun serialize(encoder: Encoder, value: {{classname}}) {
+        encoder.encodeSerializableValue({{{dataType}}}.serializer(), value.value)
+    }
+}
+{{/openEnums}}
+{{^openEnums}}{{^isString}}
+internal object {{classname}}Serializer : KSerializer<{{classname}}> {
+    override val descriptor = {{dataType}}.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): {{classname}} {
+        val value = decoder.decodeSerializableValue({{{dataType}}}.serializer())
+        return {{classname}}.entries.firstOrNull { it.value == value }
+            ?: throw IllegalArgumentException("Unknown enum value: $value")
+    }
+
+    override fun serialize(encoder: Encoder, value: {{classname}}) {
+        encoder.encodeSerializableValue({{{dataType}}}.serializer(), value.value)
+    }
+}
+{{/isString}}{{/openEnums}}
+{{/kotlinx_serialization}}

@@ -12,7 +12,6 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.core.deeplink.DeepLink
 import com.tonapps.core.deeplink.DeepLinkRoute
-import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.currentTimeMillis
@@ -21,16 +20,19 @@ import com.tonapps.extensions.filterList
 import com.tonapps.extensions.generateUuid
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.tonConnectSignMessageMaxMessages
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectSignMessageError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
+import com.tonapps.tonkeeper.manager.tonconnect.signMessageRejection
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
@@ -52,7 +54,7 @@ import java.util.concurrent.CancellationException
 
 abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: WalletEntity): WalletContextScreen(layoutId, wallet) {
 
-    private val tonConnectBridge: ITonConnectBridge by inject()
+    private val tonConnectManager: TonConnectManager by inject()
     private val api: API by inject()
     private val rootViewModel: RootViewModel by activityViewModel()
 
@@ -67,13 +69,20 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         get() = webView.url?.toUri() ?: startUri
 
     val deviceInfo: JSONObject by lazy {
-        JsonBuilder.device(wallet.maxMessages, requireContext().appVersionName)
+        JsonBuilder.device(
+            maxMessages = wallet.maxMessages,
+            appVersion = requireContext().appVersionName,
+            signMessageMaxMessages = wallet.tonConnectSignMessageMaxMessages(),
+        )
     }
 
     val installId: String
         get() = rootViewModel.installId
 
     var lastDeepLinkTime: Long = 0
+
+    override val predictiveBackPreviewEnabled: Boolean
+        get() = !webView.canGoBack()
 
     fun back() {
         if (webView.canGoBack()) {
@@ -92,7 +101,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         val refererUri = request.requestHeaders?.get("Referer")?.toUri()
         val url = DeepLink.fixBadUri(request.url).normalizeTONSites()
         val scheme = url.scheme ?: ""
-        if (scheme == "https" && url.host != "app.tonkeeper.com") {
+        if (scheme == "https" && !DeepLinkRoute.isUniversalHost(url.host)) {
             return false
         }
         val deeplink = DeepLink(url, false, refererUri)
@@ -133,11 +142,11 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             return JsonBuilder.connectEventError(BridgeError.badRequest("Version $version is not supported"))
         }
         val activity = requireContext().activity ?: return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
-        if (tonConnectBridge.isScam(requireContext(), wallet, request.manifestUrl.toUri(), webView.url!!.toUri(), startUri)) {
+        if (tonConnectManager.isScam(requireContext(), wallet, request.manifestUrl.toUri(), webView.url!!.toUri(), startUri)) {
             return JsonBuilder.connectEventError(BridgeError.unknown("internal client error"))
         }
 
-        return tonConnectBridge.launchConnectFlow(
+        return tonConnectManager.launchConnectFlow(
             activity = activity,
             tonConnect = TonConnect.fromJsInject(request, webView.url?.toUri()),
             wallet = wallet,
@@ -152,10 +161,50 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             val proof = SignDataScreen.run(requireContext(), wallet, uri, payload)
             return JsonBuilder.responseSignData(message.id, proof, wallet.address, payload)
         } catch (e: CancellationException) {
-            context?.let { tonConnectBridge.showLogoutAppBar(wallet, it, uri) }
+            context?.let { tonConnectManager.showLogoutAppBar(wallet, it, uri) }
             return JsonBuilder.responseError(message.id, BridgeError.userDeclinedTransaction())
         } catch (e: Throwable) {
             return JsonBuilder.responseError(message.id, BridgeError.unknown(e.bestMessage))
+        }
+    }
+
+    /**
+     * TON Connect `signMessage` from the in-app browser: validates the request the way iOS does
+     * (TK-4003), shows the sign sheet and replies with the signed internal message for the relayer.
+     */
+    private suspend fun tonconnectSignMessage(message: BridgeEvent.Message, showLogout: Boolean): JSONObject {
+        if (message.params.size != 1) {
+            return JsonBuilder.responseError(message.id, BridgeError.badRequest("Request contains excess messages. Required: 1, Provided: ${message.params.size}"))
+        }
+        fun reject(error: TonConnectSignMessageError): JSONObject {
+            navigation?.toast(getString(error.toastRes))
+            return JsonBuilder.responseError(message.id, error.bridgeError)
+        }
+
+        val request = try {
+            SignRequestEntity.parse(message.params.first(), uri)
+        } catch (e: Throwable) {
+            null
+        } ?: return reject(TonConnectSignMessageError.InvalidMessages)
+        request.signMessageRejection(wallet, api)?.let { return reject(it) }
+        return try {
+            val internalBoc = SendTransactionScreen.runSignMessage(
+                context = requireContext(),
+                wallet = wallet,
+                request = request,
+                appName = uri.host ?: uri.toString(),
+            )
+            JsonBuilder.responseSignMessage(message.id, internalBoc)
+        } catch (e: CancellationException) {
+            if (showLogout) {
+                context?.let { tonConnectManager.showLogoutAppBar(wallet, it, uri) }
+            }
+            JsonBuilder.responseError(message.id, BridgeError.userDeclinedTransaction())
+        } catch (e: BridgeException) {
+            JsonBuilder.responseError(message.id, BridgeError.badRequest(e.bestMessage))
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            JsonBuilder.responseError(message.id, BridgeError.unknown(e.bestMessage))
         }
     }
 
@@ -164,7 +213,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         try {
             val message = BridgeEvent.Message(tx)
             id = message.id
-            if (tonConnectBridge.getConnection(wallet.accountId, wallet.network, uri, AppConnectEntity.Type.Internal) == null) {
+            if (tonConnectManager.getConnection(wallet.accountId, wallet.network, uri, AppConnectEntity.Type.Internal) == null) {
                 return JsonBuilder.responseError(id, BridgeError.unknownApp())
             }
             if (wallet.isWatchOnly) {
@@ -173,6 +222,8 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
             }
             if (message.method == BridgeMethod.SIGN_DATA) {
                 return tonconnectSignData(message)
+            } else if (message.method == BridgeMethod.SIGN_MESSAGE) {
+                return tonconnectSignMessage(message, showLogout)
             } else if (message.method != BridgeMethod.SEND_TRANSACTION) {
                 return JsonBuilder.responseError(id, BridgeError.methodNotSupported("Method \"${message.method}\" not supported."))
             }
@@ -189,7 +240,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                 operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
                 attemptSource = null,
                 startedAtMs = currentTimeSecondsInt(),
-                otherMetadata = WalletRedMetadata.walletKit(),
+                otherMetadata = null,
             )
             return try {
                 val boc = SendTransactionScreen.run(
@@ -208,7 +259,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     errorMessage = null,
                     errorType = null,
                     stage = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
+                    otherMetadata = null,
                 )
                 JsonBuilder.responseSendTransaction(id, boc)
             } catch (e: CancellationException) {
@@ -224,10 +275,10 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     errorMessage = null,
                     errorType = null,
                     stage = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
+                    otherMetadata = null,
                 )
                 if (showLogout) {
-                    context?.let { tonConnectBridge.showLogoutAppBar(wallet, it, uri) }
+                    context?.let { tonConnectManager.showLogoutAppBar(wallet, it, uri) }
                 }
                 JsonBuilder.responseError(id, BridgeError.userDeclinedTransaction())
             } catch (e: BridgeException) {
@@ -243,7 +294,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     errorMessage = e.bestMessage,
                     errorType = e.javaClass.simpleName,
                     stage = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
+                    otherMetadata = null,
                 )
                 JsonBuilder.responseError(id, BridgeError.badRequest(e.bestMessage))
             } catch (e: Throwable) {
@@ -259,7 +310,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     errorMessage = e.bestMessage,
                     errorType = e.javaClass.simpleName,
                     stage = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
+                    otherMetadata = null,
                 )
                 FirebaseCrashlytics.getInstance().recordException(e)
                 JsonBuilder.responseError(id, BridgeError.unknown(e.bestMessage))
@@ -274,12 +325,12 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     abstract class ViewModel(
         app: Application,
         private val wallet: WalletEntity,
-        private val tonConnectBridge: ITonConnectBridge
+        private val tonConnectManager: TonConnectManager
     ): BaseWalletVM(app) {
 
         abstract val url: Uri
 
-        val connectionFlow = tonConnectBridge.walletConnectionsFlow(wallet).filterList { connection ->
+        val connectionFlow = tonConnectManager.walletConnectionsFlow(wallet).filterList { connection ->
             connection.type == AppConnectEntity.Type.Internal && connection.appUrl.host == url.host
         }.map {
             it.firstOrNull()
@@ -292,7 +343,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                 val connection = withTimeoutOrNull(CONNECTION_LOOKUP_TIMEOUT_MS) {
                     connectionFlow.firstOrNull()
                 }
-                tonConnectBridge.disconnect(
+                tonConnectManager.disconnect(
                     wallet,
                     connection?.appUrl ?: url,
                     AppConnectEntity.Type.Internal
@@ -311,12 +362,12 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
 
         private suspend fun loadConnection(attempt: Int = 0, currentUri: Uri?): AppConnectEntity? {
             if (attempt > 3) {
-                val firstApp = tonConnectBridge.getConnection(wallet.accountId, wallet.network, url, AppConnectEntity.Type.Internal)
+                val firstApp = tonConnectManager.getConnection(wallet.accountId, wallet.network, url, AppConnectEntity.Type.Internal)
                 if (firstApp != null) {
                     return firstApp
                 }
                 if (currentUri != null) {
-                    return tonConnectBridge.getConnection(wallet.accountId, wallet.network, currentUri, AppConnectEntity.Type.Internal)
+                    return tonConnectManager.getConnection(wallet.accountId, wallet.network, currentUri, AppConnectEntity.Type.Internal)
                 }
                 return null
             }

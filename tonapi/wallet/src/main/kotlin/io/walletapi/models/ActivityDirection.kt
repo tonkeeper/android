@@ -12,18 +12,25 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * Values: `in`,`out`,self
+ * Values: `in`,`out`,self,unknown
  */
-@Serializable
+@Serializable(with = ActivityDirectionSerializer::class)
 enum class ActivityDirection(val value: String) {
     @SerialName(value = "in")
     `in`("in"),
     @SerialName(value = "out")
     `out`("out"),
     @SerialName(value = "self")
-    self("self");
+    self("self"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -49,6 +56,20 @@ enum class ActivityDirection(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ActivityDirectionSerializer : KSerializer<ActivityDirection> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ActivityDirection {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ActivityDirection.entries.firstOrNull { it.value == value }
+            ?: ActivityDirection.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ActivityDirection) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

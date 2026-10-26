@@ -59,13 +59,13 @@ fun MoonChip(
     )
 
     val modifier = Modifier
-        .clip(Shapes.medium)
         .selectable(
             selected = selected,
             onClick = onClick,
             role = Role.Checkbox,
         )
         .height(Dimens.sizeAction)
+        .clip(Shapes.medium)
 
     Row(
         modifier = modifier

@@ -14,7 +14,6 @@ import com.tonapps.extensions.toUriOrNull
 import com.tonapps.legacy.enteties.WalletPurchaseMethodEntity
 import com.tonapps.bus.generated.Events.DappBrowser.DappBrowserAssetChain
 import com.tonapps.tonkeeper.extensions.showToast
-import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.koin.environment
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
@@ -33,7 +32,6 @@ object BrowserHelper {
         context: Context,
         wallet: WalletEntity,
         source: String,
-        country: String,
         multichain: Boolean = false,
     ) {
         val dappAnalytics = DappBrowserAnalytics.catalogContext(
@@ -52,13 +50,7 @@ object BrowserHelper {
             } else if (useTG) {
                 openTG(context, url)
             }
-            context.analytics?.dappClick(
-                url = url.toString(),
-                name = name,
-                source = source,
-                country = context.environment?.deviceCountry ?: country
-            )
-            dappAnalytics?.click()
+            dappAnalytics.click()
         } else {
             Navigation.from(context)?.add(
                 DAppScreen.newInstance(

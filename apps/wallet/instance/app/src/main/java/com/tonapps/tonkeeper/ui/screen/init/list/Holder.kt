@@ -20,6 +20,7 @@ import uikit.extensions.reject
 import uikit.extensions.setColor
 import uikit.extensions.withAlpha
 import uikit.widget.CheckBoxView
+import uikit.extensions.setMoonOnClickListener
 
 class Holder(
     parent: ViewGroup,
@@ -39,7 +40,7 @@ class Holder(
 
     override fun onBind(item: AccountItem) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { selectedView.toggle() }
+        itemView.setMoonOnClickListener { selectedView.toggle() }
 
         itemView.isEnabled = !item.ledgerAdded
         addressView.text = item.address.shortAddress

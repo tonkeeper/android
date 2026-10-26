@@ -51,6 +51,7 @@ import ui.components.moon.container.CornerBadgeStrategy
 import ui.components.moon.container.MoonBadgedBox
 import ui.painterResource
 import ui.theme.Dimens
+import ui.theme.ScaleIndication
 import ui.theme.UIKit
 
 private const val HEADER_ANIMATION_DURATION_MS = 180
@@ -136,7 +137,7 @@ fun MoonTopAppBar(
                                     Modifier.clickable(
                                         onClick = onTitleClick,
                                         interactionSource = titleInteractionSource,
-                                        indication = null,
+                                        indication = ScaleIndication,
                                     )
                                 } else {
                                     Modifier

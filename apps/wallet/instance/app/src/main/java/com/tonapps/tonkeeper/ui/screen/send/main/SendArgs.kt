@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.send.main
 import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.cellFromBase64
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.extensions.getEnum
 import com.tonapps.extensions.getParcelableCompat
@@ -19,26 +20,9 @@ data class SendArgs(
     val nftAddress: String,
     val type: SendScreen.Companion.Type,
     val bin: Cell? = null,
-    val from: Events.SendNative.SendNativeFrom = Events.SendNative.SendNativeFrom.WalletScreen
+    val from: Events.SendNative.SendNativeFrom,
+    val utm: UtmParameters = UtmParameters.Empty,
 ): BaseArgs() {
-
-    private companion object {
-        private const val ARG_TARGET_ADDRESS = "target_address"
-        private const val ARG_TOKEN_ADDRESS = "token_address"
-        private const val ARG_AMOUNT_NANO = "amount_nano"
-        private const val ARG_TEXT = "text"
-        private const val ARG_NFT_ADDRESS = "nft_address"
-        private const val ARG_TYPE = "type"
-        private const val ARG_BIN = "bin"
-        private const val ARG_FROM = "from"
-
-        private fun normalizeAmount(amount: Coins?): Coins? {
-            if (amount?.isPositive == true) {
-                return amount
-            }
-            return null
-        }
-    }
 
     val isNft: Boolean
         get() = nftAddress.isNotEmpty()
@@ -51,7 +35,8 @@ data class SendArgs(
         nftAddress = bundle.getString(ARG_NFT_ADDRESS) ?: "",
         type = bundle.getEnum(ARG_TYPE, SendScreen.Companion.Type.Default),
         bin = bundle.getString(ARG_BIN)?.cellFromBase64(),
-        from = bundle.getEnum(ARG_FROM, Events.SendNative.SendNativeFrom.WalletScreen)
+        from = bundle.getEnum(ARG_FROM, Events.SendNative.SendNativeFrom.WalletScreen),
+        utm = bundle.getParcelableCompat<UtmParameters>(ARG_UTM) ?: UtmParameters.Empty,
     )
 
     override fun toBundle(): Bundle {
@@ -66,6 +51,26 @@ data class SendArgs(
             bundle.putString(ARG_BIN, it.base64())
         }
         bundle.putEnum(ARG_FROM, from)
+        bundle.putParcelable(ARG_UTM, utm)
         return bundle
+    }
+
+    private companion object {
+        private const val ARG_TARGET_ADDRESS = "target_address"
+        private const val ARG_TOKEN_ADDRESS = "token_address"
+        private const val ARG_AMOUNT_NANO = "amount_nano"
+        private const val ARG_TEXT = "text"
+        private const val ARG_NFT_ADDRESS = "nft_address"
+        private const val ARG_TYPE = "type"
+        private const val ARG_BIN = "bin"
+        private const val ARG_FROM = "from"
+        private const val ARG_UTM = "utm"
+
+        private fun normalizeAmount(amount: Coins?): Coins? {
+            if (amount?.isPositive == true) {
+                return amount
+            }
+            return null
+        }
     }
 }

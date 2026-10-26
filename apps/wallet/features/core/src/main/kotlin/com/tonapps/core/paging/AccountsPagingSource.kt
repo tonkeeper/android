@@ -26,11 +26,12 @@ class AccountsPagingSource(
     private val showHidden: Boolean = false,
     private val showAll: Boolean = false,
     private val capabilities: List<AssetCapability>? = null,
-    private val verifiedOnly: Boolean = false,
-    private val hideDust: Boolean = false,
+    private val verifiedOnly: Boolean,
+    private val hideDust: Boolean,
     private val cacheSession: AccountsPagingCacheSession,
     private val scope: CoroutineScope,
     private val onTotalLoaded: ((AccountsWithTotal) -> Unit)? = null,
+    private val onNetworkConfirmed: (() -> Unit)? = null,
     private val onLoadError: ((Throwable) -> Unit)? = null,
 ) : PagingSource<String, AccountWithDetails>() {
 
@@ -69,6 +70,7 @@ class AccountsPagingSource(
         if (params is LoadParams.Refresh) {
             cacheSession.takePrefetched(sessionKey)?.let { prefetched ->
                 notifyTotalLoaded(prefetched)
+                onNetworkConfirmed?.invoke()
                 return prefetched.toPage()
             }
 
@@ -90,6 +92,7 @@ class AccountsPagingSource(
 
         if (params is LoadParams.Refresh) {
             notifyTotalLoaded(result)
+            onNetworkConfirmed?.invoke()
         }
 
         return result.toPage()
@@ -130,6 +133,7 @@ class AccountsPagingSource(
                 }
 
                 if (previous == result) {
+                    onNetworkConfirmed?.invoke()
                     return@launch
                 }
 
@@ -163,6 +167,7 @@ class AccountsPagingSource(
                 capabilities = capabilities,
                 verifiedOnly = verifiedOnly,
                 hideDust = hideDust,
+                preferFetchedAccounts = true,
             )
         } catch (e: CancellationException) {
             throw e

@@ -6,6 +6,7 @@ import com.tonapps.signer.extensions.short8
 import com.tonapps.signer.screen.main.list.MainItem
 import uikit.extensions.drawable
 import uikit.widget.ActionCellView
+import uikit.extensions.setMoonOnClickListener
 
 class MainAccountHolder(
     parent: ViewGroup,
@@ -16,7 +17,7 @@ class MainAccountHolder(
 
     override fun onBind(item: MainItem.Account) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             selectAccountCallback(item.id)
         }
 

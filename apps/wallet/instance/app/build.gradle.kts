@@ -48,6 +48,8 @@ dependencies {
     implementation(projects.apps.wallet.data.browser)
     implementation(projects.apps.wallet.data.banner)
     implementation(projects.apps.wallet.data.raffle)
+    implementation(projects.apps.wallet.data.earn)
+    implementation(projects.apps.wallet.data.attribution)
     implementation(projects.apps.wallet.data.backup)
     implementation(projects.apps.wallet.data.rn)
     implementation(projects.apps.wallet.data.passcode)
@@ -66,6 +68,7 @@ dependencies {
     implementation(projects.apps.wallet.features.core)
     implementation(projects.apps.wallet.features.onboarding)
     implementation(projects.apps.wallet.features.ramp)
+    implementation(projects.apps.wallet.features.confirm)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.lib.features)
     implementation(projects.apps.wallet.features.dapp)
@@ -154,9 +157,10 @@ dependencies {
 
     implementation(libs.compose.viewModel)
 
-    implementation(projects.lib.walletKit)
-
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    // android.jar only has stubs of org.json: the in-app bridge tests need the real one.
+    testImplementation(libs.org.json)
 }
 
 tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {

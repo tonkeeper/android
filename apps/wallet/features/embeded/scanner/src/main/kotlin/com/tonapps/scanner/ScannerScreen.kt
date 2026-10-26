@@ -1,10 +1,12 @@
 package com.tonapps.scanner
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.ColorInt
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.TorchState
@@ -50,6 +52,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -65,11 +68,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import ui.components.moon.MoonTopAppBar
 import ui.components.moon.container.MoonSurface
-import ui.components.moon.dialog.MoonModalDialog
-import ui.components.moon.dialog.rememberDialogNavigator
 import ui.theme.UIKit
+import uikit.navigation.Navigation.Companion.navigation
 import java.util.concurrent.Executors
 
 // TODO refactor later
@@ -119,6 +120,8 @@ fun ScannerScreen(
         }
     }
 
+    val toastColor = UIKit.colorScheme.background.contentTint.toArgb()
+
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -127,9 +130,16 @@ fun ScannerScreen(
                 val inputImage = InputImage.fromFilePath(context, uri)
                 qrAnalyzer.barcodeScanner.process(inputImage)
                     .addOnSuccessListener { barcodes ->
-                        barcodes.firstOrNull()?.rawValue?.let(onResult)
+                        val value = barcodes.firstOrNull()?.rawValue
+                        if (value == null) {
+                            context.toastInvalidLink(toastColor)
+                        } else {
+                            onResult(value)
+                        }
                     }
+                    .addOnFailureListener { context.toastInvalidLink(toastColor) }
             } catch (_: Throwable) {
+                context.toastInvalidLink(toastColor)
             }
         }
     }
@@ -326,18 +336,22 @@ private fun CameraOverlay(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(if (flashEnabled) Color.White else dimWhite)
+                        .background(if (flashEnabled) { Color.White } else { dimWhite })
                         .clickable(onClick = onFlashClick),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(UIKitIcon.ic_flash),
                         contentDescription = null,
-                        tint = if (flashEnabled) Color.Black else Color.White,
+                        tint = if (flashEnabled) { Color.Black } else { Color.White },
                         modifier = Modifier.size(24.dp),
                     )
                 }
             }
         }
     }
+}
+
+private fun Context.toastInvalidLink(@ColorInt color: Int) {
+    navigation?.toast(message = getString(Localization.invalid_link), loading = false, color = color)
 }

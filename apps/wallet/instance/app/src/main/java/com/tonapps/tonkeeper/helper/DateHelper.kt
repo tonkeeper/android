@@ -2,6 +2,8 @@ package com.tonapps.tonkeeper.helper
 
 import android.content.Context
 import com.tonapps.extensions.currentTimeSeconds
+import com.tonapps.icu.TransactionDateFormatter
+import com.tonapps.icu.TransactionDateFormatter.DateFrom
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.wallet.localization.Localization
 import kotlinx.datetime.DateTimePeriod
@@ -38,16 +40,7 @@ object DateHelper {
 
     @OptIn(ExperimentalTime::class)
     fun formatTransactionDetailsTime(date: Instant, locale: Locale): String {
-        val shortMonth = formatDate(date, "MMM", locale).replace(".", "") + ","
-        val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
-        val time = formatDate(date, "HH:mm", locale)
-        val day = formatDate(date, "d", locale)
-        val year = formatDate(date, "yyyy", locale)
-        return if (isThisYear(date)) {
-            "$day $month $time"
-        } else {
-            "$day $month $year, $time"
-        }
+        return TransactionDateFormatter.format(date.toEpochMilliseconds(), locale, DateFrom.Always)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -77,34 +70,18 @@ object DateHelper {
         return formatTransactionTime(instant, locale)
     }
 
-    @OptIn(ExperimentalTime::class)
     fun formatChartTime(epochSeconds: Long, locale: Locale, hasHHmm: Boolean): String {
-        if (0 >= epochSeconds) {
-            return ""
-        }
-        val instant = Instant.fromEpochSeconds(epochSeconds)
-        val shortMonth = formatDate(instant, "MMM", locale).replace(".", "") + ","
-        val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
-        val time = formatDate(instant, "HH:mm", locale)
-        val day = formatDate(instant, "d", locale)
+        val epochMillis = epochSeconds * 1000
         return if (hasHHmm) {
-            "$day $month $time"
+            TransactionDateFormatter.format(epochMillis, locale, DateFrom.Always)
         } else {
-            "$day $month".replace(",", "")
+            TransactionDateFormatter.dayMonth(epochMillis, locale)
         }
     }
 
     @OptIn(ExperimentalTime::class)
     fun formatTransactionTime(date: Instant, locale: Locale): String {
-        val shortMonth = formatDate(date, "MMM", locale).replace(".", "") + ","
-        val month = if (locale.language == "en") shortMonth.capitalized else shortMonth
-        val time = formatDate(date, "HH:mm", locale)
-        val day = formatDate(date, "d", locale)
-        return if (isThisMonth(date)) {
-            time
-        } else {
-            "$day $month $time"
-        }
+        return TransactionDateFormatter.format(date.toEpochMilliseconds(), locale, DateFrom.ThisMonth)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -123,7 +100,8 @@ object DateHelper {
     fun isToday(timestamp: Long): Boolean {
         val today = Clock.System.todayIn(currentTz)
         return Instant.fromEpochSeconds(timestamp)
-            .toLocalDateTime(currentTz).date == today
+            .toLocalDateTime(currentTz)
+            .date == today
     }
 
     @OptIn(ExperimentalTime::class)
@@ -181,14 +159,8 @@ object DateHelper {
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     fun formattedDate(unixTimestamp: Long, locale: Locale): String {
-        if (0 >= unixTimestamp) {
-            return ""
-        }
-        val formatString = "d MMM, HH:mm"
-        val instant = Instant.fromEpochMilliseconds(unixTimestamp * 1000)
-        return formatDate(instant, formatString, locale)
+        return TransactionDateFormatter.format(unixTimestamp * 1000, locale, DateFrom.Always)
     }
 
     @OptIn(ExperimentalTime::class)

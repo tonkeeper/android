@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.core.helper.rememberClipboardManager
 import com.tonapps.blockchain.model.ConfirmRequest
+import com.tonapps.deposit.screens.send.CommentEncryptionHint
 import com.tonapps.deposit.utils.rememberSendAmountState
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Alignment
@@ -87,15 +88,19 @@ fun SendScreen(
 
     LaunchedEffect(scannerResult) {
         val value = scannerResult ?: return@LaunchedEffect
-        feature.setAddress(value)
+        feature.applyScannedValue(value)
     }
 
+    val expiredLinkMessage = stringResource(Localization.expired_link)
+    val invalidLinkMessage = stringResource(Localization.invalid_link)
     LaunchedEffect(Unit) {
         feature.events.collect { event ->
             when (event) {
                 is SendEvent.UpdateAmount -> amountState.onValueChange(event.displayString)
                 is SendEvent.Continue -> onContinue(event.request, event.txInfo)
                 is SendEvent.ShowError -> onShowError(event.message)
+                SendEvent.ExpiredLink -> onShowError(expiredLinkMessage)
+                SendEvent.UnsupportedLink -> onShowError(invalidLinkMessage)
             }
         }
     }
@@ -249,8 +254,8 @@ fun SendScreen(
             // Balance & fiat row
             val enteredAmount by feature.enteredAmount.collectAsState()
             val amountError by feature.amountError.collectAsState()
+            val balanceText by feature.balanceText.collectAsState()
             val rate = safeAccount.rate
-            val balance = safeAccount.displayBalance
 
             // Converted amount: token value when entering fiat, fiat value otherwise.
             val tokenValue = enteredAmount ?: BaseUnit(BigInteger.ZERO, safeAccount.asset.value.decimals)
@@ -295,15 +300,15 @@ fun SendScreen(
                             color = UIKit.colorScheme.accent.red,
                         )
                     } else {
-                        val formattedBalance = remember(balance, safeAccount.asset.symbol) {
-                            "${balance.fmt()} ${safeAccount.asset.symbol}"
+                        val balance = balanceText
+                        if (balance != null) {
+                            MoonItemSubtitle(
+                                text = stringResource(Localization.balance_prefix, balance),
+                                modifier = Modifier.weight(1f, fill = false),
+                                maxLines = 1,
+                                color = UIKit.colorScheme.text.secondary,
+                            )
                         }
-                        MoonItemSubtitle(
-                            text = stringResource(Localization.balance_prefix, formattedBalance),
-                            modifier = Modifier.weight(1f, fill = false),
-                            maxLines = 1,
-                            color = UIKit.colorScheme.text.secondary,
-                        )
                     }
 
                     if (amountError !is AmountError.InsufficientBalance) {
@@ -317,35 +322,58 @@ fun SendScreen(
             }
 
             // Comment input
-            Spacer(Modifier.height(16.dp))
+            val commentAvailable by feature.commentAvailable.collectAsState()
+            if (commentAvailable) {
+                Spacer(Modifier.height(16.dp))
 
-            val comment by feature.comment.collectAsState()
-            val memoRequired = (addressStatus as? AddressStatus.Valid)?.memoRequired == true
+                val comment by feature.comment.collectAsState()
+                val memoRequired = (addressStatus as? AddressStatus.Valid)?.memoRequired == true
+                val commentEncrypted by feature.commentEncrypted.collectAsState()
+                val encryptionAvailable by feature.encryptionAvailable.collectAsState()
+                val commentTooLong by feature.commentTooLong.collectAsState()
+                val isEncrypted = commentEncrypted && encryptionAvailable
 
-            MoonTextFieldCell(
-                value = comment,
-                onValueChange = { feature.setComment(it) },
-                hint = if (memoRequired) {
-                    stringResource(Localization.required_comment)
-                } else {
-                    stringResource(Localization.comment)
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            )
-
-            if (memoRequired) {
-                MoonItemSubtitle(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                    text = stringResource(Localization.send_request_comment),
-                    color = UIKit.colorScheme.accent.orange,
-                    maxLines = 3,
+                MoonTextFieldCell(
+                    value = comment,
+                    onValueChange = { feature.setComment(it) },
+                    hint = when {
+                        memoRequired -> stringResource(Localization.required_comment)
+                        isEncrypted -> stringResource(Localization.encrypted_comment)
+                        else -> stringResource(Localization.comment)
+                    },
+                    isError = commentTooLong,
+                    hintColor = if (isEncrypted && comment.isNotBlank()) {
+                        UIKit.colorScheme.accent.green
+                    } else {
+                        null
+                    },
+                    activeBorderColor = if (isEncrypted) {
+                        UIKit.colorScheme.accent.green
+                    } else {
+                        null
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 )
-            }
 
-            if (comment.isNotEmpty()) {
-                Box(Modifier.padding(16.dp, 12.dp)) {
-                    MoonItemSubtitle(stringResource(RStr.comment_decrypted_hint))
+                if (memoRequired) {
+                    MoonItemSubtitle(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                        text = stringResource(Localization.send_request_comment),
+                        color = UIKit.colorScheme.accent.orange,
+                        maxLines = 3,
+                    )
+                }
+
+                if (encryptionAvailable && comment.isNotBlank()) {
+                    CommentEncryptionHint(
+                        isEncrypted = isEncrypted,
+                        onToggle = { feature.setCommentEncrypted(!isEncrypted) },
+                    )
+                } else if (comment.isNotEmpty()) {
+                    Box(Modifier.padding(16.dp, 12.dp)) {
+                        MoonItemSubtitle(stringResource(RStr.comment_decrypted_hint))
+                    }
                 }
             }
 

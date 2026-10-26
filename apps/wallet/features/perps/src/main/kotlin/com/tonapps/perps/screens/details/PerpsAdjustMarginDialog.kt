@@ -3,7 +3,9 @@ package com.tonapps.perps.screens.details
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -12,9 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonChevronRight
 import ui.components.moon.MoonItemDivider
 import ui.components.moon.MoonItemIcon
@@ -30,21 +34,20 @@ import ui.theme.UIKit
 
 @Composable
 fun PerpsAdjustMarginDialog(
-    onAddMargin: () -> Unit,
-    onReduceMargin: () -> Unit,
+    canAdd: Boolean,
+    canReduce: Boolean,
+    onSelect: (add: Boolean) -> Unit,
     onClose: () -> Unit,
 ) {
     val navigator = rememberDialogNavigator(onClose = onClose)
 
     MoonModalDialog(navigator = navigator) {
         PerpsAdjustMarginDialogBody(
-            onAddMargin = {
+            canAdd = canAdd,
+            canReduce = canReduce,
+            onSelect = { add ->
                 navigator.close()
-                onAddMargin()
-            },
-            onReduceMargin = {
-                navigator.close()
-                onReduceMargin()
+                onSelect(add)
             },
             onClose = { navigator.close() },
         )
@@ -53,12 +56,13 @@ fun PerpsAdjustMarginDialog(
 
 @Composable
 private fun PerpsAdjustMarginDialogBody(
-    onAddMargin: () -> Unit,
-    onReduceMargin: () -> Unit,
+    canAdd: Boolean,
+    canReduce: Boolean,
+    onSelect: (add: Boolean) -> Unit,
     onClose: () -> Unit,
 ) {
     MoonTopAppBarSimple(
-        title = "Adjust margin",
+        title = stringResource(Localization.perps_adjust_margin_title),
         actionIconRes = UIKitIcon.ic_close_16,
         onActionClick = onClose,
     )
@@ -71,21 +75,29 @@ private fun PerpsAdjustMarginDialogBody(
         ) {
             MoonBundleCell {
                 Column {
-                    MarginRow(
-                        iconRes = UIKitIcon.ic_plus_outline_28,
-                        title = "Add margin",
-                        description = "Add margin to make your position safer and lower the risk of liquidation",
-                        onClick = onAddMargin,
-                    )
-                    MoonItemDivider()
-                    MarginRow(
-                        iconRes = UIKitIcon.ic_minus_outline_28,
-                        title = "Reduce margin",
-                        description = "Pull back margin when your position looks strong",
-                        onClick = onReduceMargin,
-                    )
+                    if (canAdd) {
+                        MarginRow(
+                            iconRes = UIKitIcon.ic_plus_outline_28,
+                            title = stringResource(Localization.perps_add_margin),
+                            description = stringResource(Localization.perps_add_margin_description),
+                            onClick = { onSelect(true) },
+                        )
+                    }
+                    if (canAdd && canReduce) {
+                        MoonItemDivider()
+                    }
+                    if (canReduce) {
+                        MarginRow(
+                            iconRes = UIKitIcon.ic_minus_outline_28,
+                            title = stringResource(Localization.perps_reduce_margin),
+                            description = stringResource(Localization.perps_reduce_margin_description),
+                            onClick = { onSelect(false) },
+                        )
+                    }
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -103,19 +115,24 @@ private fun MarginRow(
         maxLinesSubtitle = 2,
         onClick = onClick,
         content = { MoonChevronRight() },
-        minHeight = 76.dp,
+        minHeight = 96.dp,
         image = {
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(color = UIKit.colorScheme.accent.blue, shape = CircleShape),
+                modifier = Modifier.size(28.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                MoonItemIcon(
-                    painter = painterResource(iconRes),
-                    size = 28.dp,
-                    color = Color.White,
-                )
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .background(color = UIKit.colorScheme.accent.blue, shape = CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    MoonItemIcon(
+                        painter = painterResource(iconRes),
+                        size = 16.dp,
+                        color = Color.White,
+                    )
+                }
             }
         },
     )
@@ -126,8 +143,9 @@ private fun MarginRow(
 private fun PerpsAdjustMarginDialogPreview() {
     ThemedPreview(isDarkOnly = true) {
         PerpsAdjustMarginDialogBody(
-            onAddMargin = {},
-            onReduceMargin = {},
+            canAdd = true,
+            canReduce = true,
+            onSelect = {},
             onClose = {},
         )
     }

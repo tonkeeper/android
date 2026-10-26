@@ -1,8 +1,10 @@
 package com.tonapps.deposit.multicoin.screens.ramp
 
 import com.tonapps.async.Async
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.multicoin.analytics.DepositAnalytics
 import com.tonapps.deposit.screens.ramp.RampType
@@ -26,13 +28,14 @@ sealed interface RampState {
 class RampFeature(
     private val rampType: RampType,
     private val analyticsFrom: DepositFlowFrom,
+    private val utm: UtmParameters,
     private val exchangeRepository: ExchangeRepository,
     private val accountRepository: AccountRepository,
 ) : AsyncViewModel() {
 
     val state: StateFlow<RampState> field = MutableStateFlow<RampState>(RampState.Loading)
 
-    val analytics = DepositAnalytics(rampType, analyticsFrom)
+    val analytics = DepositAnalytics(rampType, analyticsFrom, DepositFlowWalletMode.Multi, utm)
 
     init {
         load()

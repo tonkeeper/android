@@ -34,7 +34,7 @@ internal class WcEventDelegate : WalletKit.WalletDelegate {
 
     override fun onRequestExpired(request: Wallet.Model.ExpiredRequest) {
         L.d("WalletConnect", "onRequestExpired")
-        // TODO implement extend session callback
+        wcMutableEventFlow.tryEmit(WcEventData.RequestExpired(request))
     }
 
     override fun onSessionDelete(sessionDelete: Wallet.Model.SessionDelete) {

@@ -11,7 +11,7 @@ import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.core.flags.WalletFeature
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.legacy.enteties.AssetsExtendedEntity
 import com.tonapps.tonkeeper.Environment
@@ -19,9 +19,10 @@ import com.tonapps.tonkeeper.Wallet
 import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.manager.push.PushManager
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.settings.main.list.Item
 import com.tonapps.tonkeeper.worker.PushToggleWorker
 import com.tonapps.uikit.list.ListCell
@@ -65,7 +66,7 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val backupRepository: BackupRepository,
-    private val tonConnectBridge: ITonConnectBridge,
+    private val tonConnectManager: TonConnectManager,
     private val passcodeManager: PasscodeManager,
     private val rnLegacy: RNLegacy,
     private val environment: Environment,
@@ -128,7 +129,6 @@ class SettingsViewModel(
                 accountRepository.getWallets().any { candidate ->
                     candidate.hasPrivateKey &&
                         !candidate.testnet &&
-                        !candidate.tetra &&
                         candidate.type != WalletType.Multichain
                 }
             }
@@ -173,7 +173,9 @@ class SettingsViewModel(
 
     private suspend fun resolveWallet(selected: WalletEntity): Wallet? {
         val id = selected.id
-        if (id.isBlank()) return null
+        if (id.isBlank()) {
+            return null
+        }
 
         accountRepository.getWalletById(id)?.let {
             return Wallet.Legacy(it)
@@ -217,6 +219,15 @@ class SettingsViewModel(
         settingsRepository.setMigrationOpened(walletId)
     }
 
+    fun openBattery() {
+        val walletId = walletFlow.value?.id ?: return
+
+        viewModelScope.launch {
+            val tonWallet = unifiedAccountRepository.getTonWalletById(walletId) ?: return@launch
+            openScreen(BatteryScreen.newInstance(tonWallet, from = BatteryNativeFrom.Settings))
+        }
+    }
+
     fun signOut(callback: () -> Unit) {
         analytics.simpleTrackEvent("delete_wallet")
 
@@ -225,7 +236,7 @@ class SettingsViewModel(
                 val entity = wallet.entity
 
                 viewModelScope.launch(Dispatchers.IO) {
-                    tonConnectBridge.clear(entity)
+                    tonConnectManager.clear(entity)
                     PushToggleWorker.run(context, entity, PushManager.State.Delete)
                     delay(2000)
 
@@ -240,7 +251,7 @@ class SettingsViewModel(
             is Wallet.Multichain -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     val entity = unifiedAccountRepository.getTonWalletById(wallet.id)
-                    entity?.let { tonConnectBridge.clear(it) }
+                    entity?.let { tonConnectManager.clear(it) }
 
                     // callback() before deleteWallet: re-selection can emit Empty and cancel this scope.
                     withContext(NonCancellable) {
@@ -488,7 +499,7 @@ class SettingsViewModel(
         uiItems.add(Item.Account(displayWallet))
         uiItems.add(Item.Space)
 
-        if (hasNonMultichainWallets && WalletFeature.Migration.isEnabled) {
+        if (hasNonMultichainWallets) {
             uiItems.add(
                 Item.Migration(
                     position = ListCell.Position.SINGLE,
@@ -507,11 +518,22 @@ class SettingsViewModel(
         }
 
         uiItems.add(Item.Currency(currency.code, cellPosition))
+
+        val tonWallet = unifiedAccountRepository.getTonWalletById(mc.id)
+        if (tonWallet != null && (!config.flags.disableBattery || getBatteryCharges(tonWallet) > 0)) {
+            uiItems.add(Item.Battery(ListCell.Position.MIDDLE))
+        }
+
         uiItems.add(Item.ConnectedApps(ListCell.Position.LAST))
 
         uiItems.add(Item.Space)
 
         uiItems.add(Item.Security(ListCell.Position.FIRST))
+
+        if (WidgetManager.isRequestPinAppWidgetSupported) {
+            uiItems.add(Item.Widget(ListCell.Position.MIDDLE))
+        }
+
         uiItems.add(Item.Theme(ListCell.Position.MIDDLE))
         uiItems.add(Item.SearchEngine(searchEngine, ListCell.Position.MIDDLE))
         uiItems.add(

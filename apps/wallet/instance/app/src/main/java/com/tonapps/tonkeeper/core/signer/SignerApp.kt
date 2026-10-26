@@ -3,31 +3,41 @@ package com.tonapps.tonkeeper.core.signer
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.hex
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.cell.Cell
 
 object SignerApp {
 
-    private const val STORE_LINK = "https://play.google.com/store/apps/details?id=com.tonapps.singer"
+    private const val SIGNER_PACKAGE = "com.tonapps.signer"
+    private const val PLAY_STORE_PACKAGE = "com.android.vending"
+    private const val SIGNER_DEEPLINK = "tonsign://v1/"
+    private const val SIGNER_MARKET_URL = "market://details?id=$SIGNER_PACKAGE"
+    private const val SIGNER_STORE_URL = "https://play.google.com/store/apps/details?id=$SIGNER_PACKAGE"
 
     fun openAppOrInstall(context: Context) {
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("tonsign://v1/"))
-            open(context, intent)
-        } catch (e: Throwable) {
-            openStore(context)
+        if (startActivitySafe(context, Intent(Intent.ACTION_VIEW, SIGNER_DEEPLINK.toUri()))) {
+            return
         }
+        val marketIntent = Intent(Intent.ACTION_VIEW, SIGNER_MARKET_URL.toUri()).apply {
+            setPackage(PLAY_STORE_PACKAGE)
+        }
+        if (startActivitySafe(context, marketIntent)) {
+            return
+        }
+        BrowserHelper.open(context, SIGNER_STORE_URL.toUri())
     }
 
-    private fun openStore(context: Context) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(STORE_LINK))
-        open(context, intent)
-    }
-
-    private fun open(context: Context, intent: Intent) {
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
+    private fun startActivitySafe(context: Context, intent: Intent): Boolean {
+        return try {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+            true
+        } catch (e: Throwable) {
+            false
+        }
     }
 
     fun createSignUri(cell: Cell, publicKey: PublicKeyEd25519): Uri {

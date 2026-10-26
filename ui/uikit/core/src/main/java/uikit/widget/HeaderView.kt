@@ -28,6 +28,7 @@ import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.setPaddingTop
 import uikit.extensions.useAttributes
 import uikit.extensions.withAnimation
+import uikit.extensions.setMoonOnClickListener
 
 open class HeaderView @JvmOverloads constructor(
     context: Context,
@@ -76,7 +77,7 @@ open class HeaderView @JvmOverloads constructor(
     var doOnCloseClick: (() -> Unit)? = null
         set(value) {
             field = value
-            closeView.setOnClickListener {
+            closeView.setMoonOnClickListener {
                 if (it.alpha != 0f) {
                     value?.invoke()
                 }
@@ -86,7 +87,7 @@ open class HeaderView @JvmOverloads constructor(
     var doOnActionClick: ((view: View) -> Unit)? = null
         set(value) {
             field = value
-            actionView.setOnClickListener {
+            actionView.setMoonOnClickListener {
                 if (it.alpha != 0f) {
                     value?.invoke(it)
                 }
@@ -181,7 +182,7 @@ open class HeaderView @JvmOverloads constructor(
     fun setRightButton(text: String, onClick: () -> Unit) {
         val button = inflate(R.layout.view_header_right_button) as Button
         button.text = text
-        button.setOnClickListener { onClick() }
+        button.setMoonOnClickListener { onClick() }
         setRightContent(button)
     }
 

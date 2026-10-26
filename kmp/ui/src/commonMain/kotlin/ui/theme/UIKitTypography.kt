@@ -12,23 +12,12 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 import ui.theme.resources.Res
 import ui.theme.resources.roboto_mono
-import ui.theme.resources.tt_firs_neue_demi_bold
-import ui.theme.resources.tt_firs_neue_medium
-import ui.theme.resources.tt_firs_neue_normal
 
 private const val NUM_AND_HEADING_FONT_FEATURE_SETTINGS = "'ss09' on, 'ss17' on, 'ss18' on"
 private const val TEXT_FONT_FEATURE_SETTINGS = "'ss07' on, $NUM_AND_HEADING_FONT_FEATURE_SETTINGS"
 
 @Composable
-private fun rememberTTFirsNeueFontFamily(): FontFamily {
-    val normal = Font(Res.font.tt_firs_neue_normal, weight = FontWeight.Normal)
-    val medium =  Font(Res.font.tt_firs_neue_medium, weight = FontWeight.Medium)
-    val semibold = Font(Res.font.tt_firs_neue_demi_bold, weight = FontWeight.SemiBold)
-    val bold = Font(Res.font.tt_firs_neue_demi_bold, weight = FontWeight.Bold)
-    return remember(normal, medium, semibold, bold) {
-        FontFamily(normal, medium, semibold, bold)
-    }
-}
+internal expect fun rememberTTFirsNeueFontFamily(): FontFamily
 
 @Composable
 private fun rememberRobotoMonoFamily(): FontFamily {

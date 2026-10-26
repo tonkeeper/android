@@ -8,6 +8,7 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation
 import uikit.widget.ModalHeader
+import uikit.extensions.setMoonOnClickListener
 
 class TonConnectSafeModeDialog(context: Context): ModalDialog(context, R.layout.dialog_tonconnect_safemode) {
 
@@ -18,15 +19,20 @@ class TonConnectSafeModeDialog(context: Context): ModalDialog(context, R.layout.
     init {
         findViewById<ModalHeader>(R.id.header)!!.onCloseClick = { dismiss() }
 
-        findViewById<View>(R.id.cancel)!!.setOnClickListener {
+        findViewById<View>(R.id.cancel)!!.setMoonOnClickListener {
             dismiss()
         }
     }
 
 
-    fun show(wallet: WalletEntity) {
+    fun show(wallet: WalletEntity?) {
         super.show()
-        findViewById<View>(R.id.open_settings)!!.setOnClickListener {
+        val openSettingsView = findViewById<View>(R.id.open_settings)!!
+        if (wallet == null) {
+            openSettingsView.visibility = View.GONE
+            return
+        }
+        openSettingsView.setMoonOnClickListener {
             dismiss()
             navigation?.add(SecurityScreen.newInstance(wallet))
         }

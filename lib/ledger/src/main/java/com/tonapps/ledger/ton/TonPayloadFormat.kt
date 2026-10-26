@@ -4,7 +4,7 @@ import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.loadRemainingBits
 import com.tonapps.blockchain.ton.toBigInteger
 import kotlinx.parcelize.Parcelize
-import kotlinx.parcelize.RawValue
+import kotlinx.parcelize.TypeParceler
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.cell.Cell
@@ -14,28 +14,39 @@ import java.math.BigInteger
 
 sealed class JettonBurnCustomPayload : Parcelable {
     @Parcelize
-    data class CellPayload(val cell: @RawValue Cell) : JettonBurnCustomPayload()
+    @TypeParceler<Cell, CellParceler>
+    data class CellPayload(val cell: Cell) : JettonBurnCustomPayload()
 
     @Parcelize
     data class ByteArrayPayload(val byteArray: ByteArray) : JettonBurnCustomPayload()
 }
 
+@Parcelize
+@TypeParceler<AddrStd, AddrStdParceler>
 data class DNSWalletRecord(
-    val address: @RawValue AddrStd,
+    val address: AddrStd,
     val capabilities: DnsChangeCapabilities?
-)
+) : Parcelable
 
 sealed class DNSRecord : Parcelable {
     @Parcelize
-    data class Wallet(val wallet: @RawValue DNSWalletRecord?) : DNSRecord()
+    data class Wallet(val wallet: DNSWalletRecord?) : DNSRecord()
 
     @Parcelize
-    data class Unknown(val key: ByteArray, val value: @RawValue Cell?) : DNSRecord()
+    @TypeParceler<Cell?, NullableCellParceler>
+    data class Unknown(val key: ByteArray, val value: Cell?) : DNSRecord()
 }
 
+@Parcelize
 data class DnsChangeCapabilities(
     var isWallet: Boolean
-)
+) : Parcelable
+
+@Parcelize
+data class KnownJetton(
+    val jettonId: Int,
+    val workchain: Int
+) : Parcelable
 
 sealed class TonPayloadFormat : Parcelable {
 
@@ -43,50 +54,62 @@ sealed class TonPayloadFormat : Parcelable {
     data class Comment(val text: String) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<Coins, CoinsParceler>
+    @TypeParceler<AddrStd, AddrStdParceler>
+    @TypeParceler<Cell?, NullableCellParceler>
     data class JettonTransfer(
         val queryId: BigInteger?,
-        val coins: @RawValue Coins,
-        val receiverAddress: @RawValue AddrStd,
-        val excessesAddress: @RawValue AddrStd,
-        val customPayload: @RawValue Cell?,
-        val forwardAmount: @RawValue Coins,
-        val forwardPayload: @RawValue Cell?
+        val coins: Coins,
+        val receiverAddress: AddrStd,
+        val excessesAddress: AddrStd,
+        val customPayload: Cell?,
+        val forwardAmount: Coins,
+        val forwardPayload: Cell?,
+        val knownJetton: KnownJetton? = null
     ) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<Coins, CoinsParceler>
+    @TypeParceler<AddrStd, AddrStdParceler>
+    @TypeParceler<Cell?, NullableCellParceler>
     data class NftTransfer(
         val queryId: BigInteger?,
-        val newOwnerAddress: @RawValue AddrStd,
-        val excessesAddress: @RawValue AddrStd,
-        val customPayload: @RawValue Cell?,
-        val forwardAmount: @RawValue Coins,
-        val forwardPayload: @RawValue Cell?
+        val newOwnerAddress: AddrStd,
+        val excessesAddress: AddrStd,
+        val customPayload: Cell?,
+        val forwardAmount: Coins,
+        val forwardPayload: Cell?
     ) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<Coins, CoinsParceler>
+    @TypeParceler<AddrStd, AddrStdParceler>
     data class JettonBurn(
         val queryId: BigInteger?,
-        val coins: @RawValue Coins,
-        val responseDestination: @RawValue AddrStd,
+        val coins: Coins,
+        val responseDestination: AddrStd,
         val customPayload: JettonBurnCustomPayload?
     ) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<Coins, CoinsParceler>
     data class SingleNominatorWithdraw(
         val queryId: BigInteger?,
-        val coins: @RawValue Coins
+        val coins: Coins
     ) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<AddrStd, AddrStdParceler>
     data class SingleNominatorChangeValidator(
         val queryId: BigInteger?,
-        val address: @RawValue AddrStd,
+        val address: AddrStd,
     ) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<AddrStd, AddrStdParceler>
     data class AddWhitelist(
         val queryId: BigInteger?,
-        val address: @RawValue AddrStd,
+        val address: AddrStd,
     ) : TonPayloadFormat()
 
     @Parcelize
@@ -96,9 +119,10 @@ sealed class TonPayloadFormat : Parcelable {
     ) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<AddrStd, AddrStdParceler>
     data class VoteForProposal(
         val queryId: BigInteger?,
-        val votingAddress: @RawValue AddrStd,
+        val votingAddress: AddrStd,
         val expirationDate: BigInteger,
         val vote: Boolean,
         val needConfirmation: Boolean,
@@ -117,8 +141,9 @@ sealed class TonPayloadFormat : Parcelable {
     ) : TonPayloadFormat()
 
     @Parcelize
+    @TypeParceler<Cell, CellParceler>
     data class Unsafe(
-        val message: @RawValue Cell,
+        val message: Cell,
     ) : TonPayloadFormat()
 
     companion object {
@@ -158,7 +183,11 @@ sealed class TonPayloadFormat : Parcelable {
         )
 
         private fun normalizeQueryId(queryId: ULong): BigInteger? {
-            return if (queryId != 0UL) BigInteger(queryId.toString()) else null
+            return if (queryId != 0UL) {
+                BigInteger(queryId.toString())
+            } else {
+                null
+            }
         }
 
         private fun loadBuffer(s: CellSlice): ByteArray {
@@ -210,9 +239,17 @@ sealed class TonPayloadFormat : Parcelable {
                         val coins = s.loadTlb(Coins)
                         val receiverAddress = s.loadTlb(AddrStd.tlbCodec())
                         val excessesAddress = s.loadTlb(AddrStd.tlbCodec())
-                        val customPayload = if (s.loadBit()) s.loadRef() else null
+                        val customPayload = if (s.loadBit()) {
+                            s.loadRef()
+                        } else {
+                            null
+                        }
                         val forwardAmount = s.loadTlb(Coins)
-                        val forwardPayload = if (s.loadBit()) s.loadRef() else null
+                        val forwardPayload = if (s.loadBit()) {
+                            s.loadRef()
+                        } else {
+                            null
+                        }
                         s.endParse()
 
                         return JettonTransfer(
@@ -230,9 +267,17 @@ sealed class TonPayloadFormat : Parcelable {
                         val queryId = normalizeQueryId(s.loadUInt64())
                         val newOwnerAddress = s.loadTlb(AddrStd.tlbCodec())
                         val excessesAddress = s.loadTlb(AddrStd.tlbCodec())
-                        val customPayload = if (s.loadBit()) s.loadRef() else null
+                        val customPayload = if (s.loadBit()) {
+                            s.loadRef()
+                        } else {
+                            null
+                        }
                         val forwardAmount = s.loadTlb(Coins)
-                        val forwardPayload = if (s.loadBit()) s.loadRef() else null
+                        val forwardPayload = if (s.loadBit()) {
+                            s.loadRef()
+                        } else {
+                            null
+                        }
                         s.endParse()
 
                         return NftTransfer(
@@ -249,8 +294,11 @@ sealed class TonPayloadFormat : Parcelable {
                         val queryId = normalizeQueryId(s.loadUInt64())
                         val coins = s.loadTlb(Coins)
                         val responseDestination = s.loadTlb(AddrStd.tlbCodec())
-                        var customPayload: JettonBurnCustomPayload? =
-                            if (s.loadBit()) JettonBurnCustomPayload.CellPayload(s.loadRef()) else null
+                        var customPayload: JettonBurnCustomPayload? = if (s.loadBit()) {
+                            JettonBurnCustomPayload.CellPayload(s.loadRef())
+                        } else {
+                            null
+                        }
                         s.endParse()
 
                         if (params.encodeJettonBurnEthAddressAsHex
@@ -298,7 +346,11 @@ sealed class TonPayloadFormat : Parcelable {
 
                     0x47d54391 -> {
                         val queryId = normalizeQueryId(s.loadUInt64())
-                        val appId = if (s.remainingBits > 0) s.loadUInt(64) else null
+                        val appId = if (s.remainingBits > 0) {
+                            s.loadUInt(64)
+                        } else {
+                            null
+                        }
                         s.endParse()
 
                         return TonstakersDeposit(queryId, appId?.toBigInteger())
@@ -327,9 +379,9 @@ sealed class TonPayloadFormat : Parcelable {
                         if (key.contentEquals(dnsWalletKey)) {
                             if (s.remainingRefs > 0) {
                                 val vs = s.loadRef().beginParse()
-                                if (s.remainingBits > 0 && !params.disallowModification) {
-                                    // tolerate the Maybe bit
-                                    if (!s.loadBit()) throw Error("Incorrect change DNS record message")
+                                // tolerate the Maybe bit
+                                if (s.remainingBits > 0 && !params.disallowModification && !s.loadBit()) {
+                                    throw Error("Incorrect change DNS record message")
                                 }
                                 s.endParse()
 
@@ -343,8 +395,11 @@ sealed class TonPayloadFormat : Parcelable {
                                 if (flags > 1) {
                                     throw Error("DNS wallet record must have flags 0 or 1")
                                 }
-                                val capabilities: DnsChangeCapabilities? =
-                                    if ((flags and 1) > 0) DnsChangeCapabilities(isWallet = false) else null
+                                val capabilities: DnsChangeCapabilities? = if ((flags and 1) > 0) {
+                                    DnsChangeCapabilities(isWallet = false)
+                                } else {
+                                    null
+                                }
                                 if (capabilities != null) {
                                     while (vs.loadBit()) {
                                         val cap = vs.loadUInt(16).toInt()
@@ -369,9 +424,9 @@ sealed class TonPayloadFormat : Parcelable {
                                     )
                                 )
                             } else {
-                                if (s.remainingBits > 0 && !params.disallowModification) {
-                                    // tolerate the Maybe bit
-                                    if (s.loadBit()) throw Error("Incorrect change DNS record message")
+                                // tolerate the Maybe bit
+                                if (s.remainingBits > 0 && !params.disallowModification && s.loadBit()) {
+                                    throw Error("Incorrect change DNS record message")
                                 }
                                 s.endParse()
 
@@ -383,9 +438,9 @@ sealed class TonPayloadFormat : Parcelable {
                         } else {
                             if (s.remainingRefs > 0) {
                                 val value = s.loadRef()
-                                if (s.remainingBits > 0 && !params.disallowModification) {
-                                    // tolerate the Maybe bit
-                                    if (!s.loadBit()) throw Error("Incorrect change DNS record message")
+                                // tolerate the Maybe bit
+                                if (s.remainingBits > 0 && !params.disallowModification && !s.loadBit()) {
+                                    throw Error("Incorrect change DNS record message")
                                 }
                                 s.endParse()
 
@@ -394,9 +449,9 @@ sealed class TonPayloadFormat : Parcelable {
                                     record = DNSRecord.Unknown(key, value)
                                 )
                             } else {
-                                if (s.remainingBits > 0 && !params.disallowModification) {
-                                    // tolerate the Maybe bit
-                                    if (s.loadBit()) throw Error("Incorrect change DNS record message")
+                                // tolerate the Maybe bit
+                                if (s.remainingBits > 0 && !params.disallowModification && s.loadBit()) {
+                                    throw Error("Incorrect change DNS record message")
                                 }
                                 s.endParse()
 

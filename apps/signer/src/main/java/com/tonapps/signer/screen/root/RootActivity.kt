@@ -41,6 +41,8 @@ import uikit.extensions.primaryFragment
 import uikit.extensions.round
 import uikit.extensions.setPaddingTop
 import uikit.navigation.NavigationActivity
+import uikit.extensions.setMoonOnClickListener
+import uikit.extensions.swallowClicks
 
 class RootActivity: NavigationActivity() {
 
@@ -68,10 +70,10 @@ class RootActivity: NavigationActivity() {
         sheetContainer = findViewById(uikit.R.id.sheet_container)
 
         lockView = findViewById(R.id.lock)
-        lockView.setOnClickListener {  }
+        lockView.swallowClicks()
 
         lockSignOutButton = findViewById(R.id.lock_sign_out)
-        lockSignOutButton.setOnClickListener { signOut() }
+        lockSignOutButton.setMoonOnClickListener { signOut() }
 
         lockPasswordView = findViewById(R.id.lock_password)
         lockPasswordView.doOnPassword = ::checkPassword

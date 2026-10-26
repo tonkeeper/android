@@ -132,6 +132,8 @@ data class WalletCurrency(
     }
 
     companion object {
+        private val fiatCodeRegex = Regex("[A-Z]{3}")
+
         private val popularCurrencies = listOf(
             "USD",
             "EUR",
@@ -149,112 +151,6 @@ data class WalletCurrency(
             "BTC",
             "USDT",
             "ETH",
-        )
-
-        val FIAT = listOf(
-            "USD", // United States Dollar
-            "EUR", // Euro
-            "RUB", // Russian Ruble
-            "AED", // United Arab Emirates Dirham
-            "UAH", // Ukrainian Hryvnia
-            "KZT", // Kazakhstani Tenge
-            "UZS", // Uzbekistani sum
-            "GBP", // Great Britain Pound
-            "CHF", // Swiss Franc
-            "CNY", // China Yuan
-            "GEL", // Georgian Lari
-            "KRW", // South Korean Won
-            "IDR", // Indonesian Rupiah
-            "INR", // Indian Rupee
-            "PKR", // Pakistani Rupee
-            "JPY", // Japanese Yen
-            "CAD", // Canadian Dollar
-            "ARS", // Argentine Peso
-            "BYN", // Belarusian Ruble
-            "COP", // Colombian Peso
-            "ETB", // Ethiopian Birr
-            "ILS", // Israeli Shekel
-            "KES", // Kenyan Shilling
-            "NGN", // Nigerian Naira
-            "UGX", // Ugandan Shilling
-            "VES", // Venezuelan Bolivar
-            "ZAR", // South African Rand
-            "TRY", // Turkish Lira
-            "THB", // Thai Baht
-            "VND", // Vietnamese Dong
-            "BRL", // Brazilian Real
-            "BDT", // Bangladeshi Taka
-            "AUD", // Australian Dollar
-            "HKD", // Hong Kong Dollar
-            "SGD", // Singapore Dollar
-            "ISK", // Icelandic Króna
-            "PHP", // Philippine Peso
-            "FJD", // Fijian Dollar
-            "AOA", // Angolan Kwanza
-            "MGA", // Malagasy Ariary
-            "FKP", // Falkland Islands Pound
-            "BSD", // Bahamian Dollar
-            "PGK", // Papua New Guinean Kina
-            "TOP", // Tongan Paʻanga
-            "XCD", // East Caribbean Dollar
-            "MDL", // Moldovan Leu
-            "PEN", // Peruvian Sol
-            "BHD", // Bahraini Dinar
-            "HNL", // Honduran Lempira
-            "GTQ", // Guatemalan Quetzal
-            "GHS", // Gibraltar Pound
-            "BZD", // Belize Dollar
-            "SBD", // Solomon Islands Dollar
-            "MRU", // Mauritanian Ouguiya
-            "OMR", // Omani Rial
-            "KGS", // Kyrgyzstani Som
-            "PLN", // Polish Zloty
-            "CLP", // Chilean Peso
-            "SCR", // Seychellois Rupee
-            "DOP", // Dominican Peso
-            "LKR", // Sri Lankan Rupee
-            "QAR", // Qatari Rial
-            "KYD", // Cayman Islands Dollar
-            "RWF", // Rwandan Franc
-            "AZN", // Azerbaijani Manat
-            "CZK", // Czech Koruna
-            "CRC", // Costa Rican Colón
-            "BGN", // Bulgarian Lev
-            "BMD", // Bermudian Dollar
-            "DKK", // Danish Krone
-            "UYU", // Uruguayan Peso
-            "DZD", // Algerian Dinar
-            "BAM", // Bosnian Convertible
-            "STN", // São Tomé and Príncipe Dobra
-            "TMT", // Turkmenistani Manat
-            "KHR", // Cambodian Riel
-            "BND", // Brunei Dollar
-            "MXN", // Mexican Peso
-            "NZD", // New Zealand Dollar
-            "MKD", // Macedonian Denar
-            "JOD", // Jordanian Dinar
-            "MWK", // Malawian Kwacha
-            "TTD", // Trinidad and Tobago Dollar
-            "KMF", // Comorian Franc
-            "SRD", // Surinamese Dollar
-            "TJS", // Tajikistani Somoni
-            "CVE", // Cape Verdean Escudo
-            "HUF", // Hungarian Forint
-            "PYG", // Paraguayan Guarani
-            "SEK", // Swedish Krona
-            "ANG", // Netherlands Antillean Guilder
-            "MYR", // Malaysian Ringgit
-            "TWD", // New Taiwan Dollar
-            "SZL", // Swazi Lilangeni
-            "RSD", // Serbian Dinar
-            "DJF", // Djiboutian Franc
-            "AMD", // Armenian Dram
-            "PAB", // Panamanian Balboa
-            "ZAR", // South African Rand
-            "KWD", // Kuwaiti Dinar
-            "RON", // Romanian Leu
-            "EGP", // Egyptian Pound
-            "NOK" // Norwegian Krone
         )
 
         const val USDT_KEY = "USDT"
@@ -420,13 +316,15 @@ data class WalletCurrency(
             isToken = true,
         )
 
-        val ALL = FIAT
-
         fun sort(value: List<WalletCurrency>): List<WalletCurrency> {
             return value.sortedWith(
                 compareBy { currency ->
                     val index = popularCurrencies.indexOf(currency.code)
-                    if (index >= 0) index else Int.MAX_VALUE
+                    if (index >= 0) {
+                        index
+                    } else {
+                        Int.MAX_VALUE
+                    }
                 }
             )
         }
@@ -451,7 +349,7 @@ data class WalletCurrency(
         }
 
         fun ofOrDefault(code: String?): WalletCurrency {
-            return of(code) ?: DEFAULT
+            return of(code) ?: fiatOrNull(code) ?: DEFAULT
         }
 
         fun isValid(code: String): Boolean {
@@ -474,27 +372,30 @@ data class WalletCurrency(
             }
             if (code.isNullOrBlank()) {
                 return null
-            } else if (code in FIAT) {
-                return WalletCurrency(
-                    code = code,
-                    title = CurrencyCountries.getCurrencyTitle(code),
-                    chain = Chain.FIAT(CurrencyCountries.getCountryCode(code)),
-                    isFiat = true,
-                )
-            } else if (code.equals(TON.code, ignoreCase = true)) {
-                return TON
-            } else if (code.equals(BTC.code, ignoreCase = true)) {
-                return BTC
-            } else if (code.equals(ETH.code, ignoreCase = true)) {
-                return ETH
-            } else if (USDT_TRON.equalsByCode(code)) {
-                return USDT_TRON
-            } else if (USDT_TON.equalsByCode(code)) {
-                return USDT_TON
-            } else if (USDT_ETH.equalsByCode(code)) {
-                return USDT_ETH
             }
-            return null
+            val upper = code.trim().uppercase()
+            return when {
+                upper == GRAM_KEY || upper == TON_CHAIN_KEY -> TON
+                upper == BTC_KEY -> BTC
+                upper == ETH_KEY -> ETH
+                USDT_TRON.equalsByCode(code) -> USDT_TRON
+                USDT_TON.equalsByCode(code) -> USDT_TON
+                USDT_ETH.equalsByCode(code) -> USDT_ETH
+                isFiatCode(upper) -> fiat(upper)
+                else -> null
+            }
+        }
+
+        private fun isFiatCode(code: String): Boolean {
+            return CurrencyCountries.getCountryCode(code).isNotEmpty()
+        }
+
+        fun fiatOrNull(code: String?): WalletCurrency? {
+            val upper = code?.trim()?.uppercase() ?: return null
+            if (!fiatCodeRegex.matches(upper)) {
+                return null
+            }
+            return fiat(upper)
         }
     }
 
@@ -594,7 +495,11 @@ data class WalletCurrency(
 
     @IgnoredOnParcel
     val tokenQuery: String by lazy {
-        if (isTONChain) address else code
+        if (isTONChain) {
+            address
+        } else {
+            code
+        }
     }
 
     override fun equals(other: Any?): Boolean {
@@ -657,7 +562,11 @@ data class WalletCurrency(
 
 fun WalletCurrency.toAssetId(testnet: Boolean): String {
     require(isTONChain) { "WalletCurrency.toAssetId supports TON chain only" }
-    val network = if (testnet) "testnet" else "mainnet"
+    val network = if (testnet) {
+        "testnet"
+    } else {
+        "mainnet"
+    }
     if (code.equals(WalletCurrency.GRAM_KEY, ignoreCase = true) && !isToken) {
         return "ton/$network/coin"
     }

@@ -7,6 +7,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.widget.RadioView
+import uikit.extensions.setMoonOnClickListener
 
 class CustomAmountHolder(
     parent: ViewGroup,
@@ -19,10 +20,10 @@ class CustomAmountHolder(
 
     override fun onBind(item: Item.CustomAmount) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onCustomAmountSelect() }
+        itemView.setMoonOnClickListener { onCustomAmountSelect() }
         titleView.text = getString(Localization.battery_other_title)
         subtitleView.text = getString(Localization.battery_other_subtitle)
         radioView.checked = item.selected
-        radioView.setOnClickListener { onCustomAmountSelect() }
+        radioView.setMoonOnClickListener { onCustomAmountSelect() }
     }
 }

@@ -85,12 +85,30 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"/>
 
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/available"
+                <uikit.widget.RowLayout
+                    android:id="@+id/available_container"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.Body2"
-                    android:textColor="?attr/textSecondaryColor"/>
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/available_info"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="4dp"
+                        android:src="@drawable/ic_information_circle_12"
+                        android:tint="?attr/accentRedColor"
+                        android:visibility="gone"/>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/available"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="@style/TextAppearance.Body2"
+                        android:textColor="?attr/textSecondaryColor"/>
+
+                </uikit.widget.RowLayout>
 
             </uikit.widget.RowLayout>
 
@@ -99,7 +117,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="@dimen/offsetMedium"
-                android:background="@drawable/bg_content_tint_16">
+                android:background="@drawable/bg_content">
 
                 <uikit.widget.AsyncImageView
                     android:id="@+id/pool_icon"

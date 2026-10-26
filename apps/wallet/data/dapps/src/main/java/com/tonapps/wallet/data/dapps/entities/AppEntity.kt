@@ -33,20 +33,11 @@ data class AppEntity(
         "https://www.google.com/s2/favicons?sz=256&domain=$host"
     }
 
-    constructor(json: JSONObject) : this(
-        url = json.getString("url").removeSuffix("/").toUri(),
-        name = json.getString("name").ifBlank {
-            throw IllegalArgumentException("name is empty")
-        },
-        iconUrl = json.getString("iconUrl").ifBlank {
-            throw IllegalArgumentException("iconUrl is empty")
-        },
-        empty = false,
-    )
-
-    constructor(value: String) : this(JSONObject(value))
-
     companion object {
+
+        private const val MAX_URL_LENGTH = 2048
+        private const val MAX_NAME_LENGTH = 256
+        private const val MAX_ICON_URL_LENGTH = 32 * 1024
 
         val ETHENA_BASE_URL = "https://ethena.ston.fi".toUri()
 
@@ -56,5 +47,32 @@ data class AppEntity(
             iconUrl = "https://static.ston.fi/logo/external-logo.jpg",
             empty = false
         )
+
+        fun fromManifest(value: String): AppEntity {
+            val json = JSONObject(value)
+            return sizeLimited(
+                url = json.getString("url").removeSuffix("/"),
+                name = json.getString("name").ifBlank {
+                    throw IllegalArgumentException("name is empty")
+                },
+                iconUrl = json.getString("iconUrl").ifBlank {
+                    throw IllegalArgumentException("iconUrl is empty")
+                },
+            )
+        }
+
+        fun sizeLimited(url: String, name: String, iconUrl: String): AppEntity {
+            val app = AppEntity(
+                url = url.take(MAX_URL_LENGTH).toUri(),
+                name = name.take(MAX_NAME_LENGTH),
+                iconUrl = iconUrl,
+                empty = false,
+            )
+            return if (iconUrl.length > MAX_ICON_URL_LENGTH) {
+                app.copy(iconUrl = app.iconByFavicon)
+            } else {
+                app
+            }
+        }
     }
 }

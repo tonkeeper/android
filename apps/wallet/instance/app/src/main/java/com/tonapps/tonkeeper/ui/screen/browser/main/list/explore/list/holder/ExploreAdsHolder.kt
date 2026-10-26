@@ -13,6 +13,7 @@ import com.tonapps.tonkeeper.ui.screen.root.RootActivity
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.activity
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class ExploreAdsHolder(parent: ViewGroup): ExploreHolder<ExploreItem.Ads>(parent, R.layout.view_browser_ads) {
 
@@ -24,20 +25,23 @@ class ExploreAdsHolder(parent: ViewGroup): ExploreHolder<ExploreItem.Ads>(parent
     private val descriptionView = findViewById<AppCompatTextView>(R.id.description)
     private val actionButton = findViewById<Button>(R.id.action)
 
+    init {
+    }
+
     override fun onBind(item: ExploreItem.Ads) {
         iconView.setImageURI(item.app.icon, this)
         titleView.text = item.app.name
         descriptionView.text = item.app.description
         actionButton.text = item.button.title
 
-        actionButton.setOnClickListener {
+        actionButton.setMoonOnClickListener {
             L.d("ExploreAdsHolderLog", "url: ${item.uri}")
             val result = item.button.payload.toUriOrNull()
                 ?.let { DeepLinkRoute.resolve(it) }
 
             if (result is DeepLinkRoute.DApp) {
                 item.app.copy(url = result.url.toUri())
-                    .openDApp(context, item.wallet, "ads", item.country, item.multichain)
+                    .openDApp(context, item.wallet, "ads", item.multichain)
             } else {
                 activity?.processDeepLink(item.uri, true, context.packageName)
             }

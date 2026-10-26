@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.composed
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import ui.theme.Dimens
@@ -34,30 +34,34 @@ fun Modifier.simmerOn(
     isShimmering: Boolean,
     width: Dp? = null,
     height: Dp? = null,
-): Modifier = composed {
-    if (isShimmering) {
-        val state by rememberShimmerPhase()
-        var modifier = this
-
-        if (width != null) {
-            modifier = width(width)
-        }
-
-        if (height != null) {
-            modifier = height(height)
-        }
-
-        modifier.shimmer(state)
-    } else {
-        this
+): Modifier {
+    if (!isShimmering) {
+        return this
     }
+
+    val phase = rememberShimmerPhase()
+    var modifier = this
+
+    if (width != null) {
+        modifier = modifier.width(width)
+    }
+
+    if (height != null) {
+        modifier = modifier.height(height)
+    }
+
+    return modifier.shimmer(phase)
 }
 
 @Composable
 fun rememberShimmerPhase(
     durationMillis: Int = 1000,
-    repeatDelay: Int = 0
+    repeatDelay: Int = 0,
+    enabled: Boolean = true,
 ): State<Float> {
+    if (!enabled) {
+        return remember { mutableFloatStateOf(0f) }
+    }
     val t = rememberInfiniteTransition(label = "fbShimmerPhase")
     return t.animateFloat(
         initialValue = 0f,
@@ -73,6 +77,29 @@ fun rememberShimmerPhase(
 @Composable
 fun Modifier.shimmer(
     phase: Float,
+    cornerRadius: Dp = Dimens.cornerMedium,
+    backgroundFill: Color = UIKit.colorScheme.background.content,
+    highlightColor: Color = UIKit.colorScheme.background.contentTint,
+    intensity: Float = 0.30f,
+    dropOff: Float = 0.60f,
+    tiltDegrees: Float = 6f
+): Modifier = shimmer(
+    phase = rememberUpdatedState(phase),
+    cornerRadius = cornerRadius,
+    backgroundFill = backgroundFill,
+    highlightColor = highlightColor,
+    intensity = intensity,
+    dropOff = dropOff,
+    tiltDegrees = tiltDegrees,
+)
+
+/**
+ * Reads [phase] inside the draw pass, so the sweep only invalidates drawing: passing the animated
+ * value down as a plain Float instead recomposes every caller on every frame.
+ */
+@Composable
+fun Modifier.shimmer(
+    phase: State<Float>,
     cornerRadius: Dp = Dimens.cornerMedium,
     backgroundFill: Color = UIKit.colorScheme.background.content,
     highlightColor: Color = UIKit.colorScheme.background.contentTint,
@@ -111,7 +138,7 @@ fun Modifier.shimmer(
 
     onDrawWithContent {
         clipPath(clipPath) {
-            val tShift = (-translateRange) + (2f * translateRange) * phase.coerceIn(0f, 1f)
+            val tShift = (-translateRange) + (2f * translateRange) * phase.value.coerceIn(0f, 1f)
 
             val t0 = t0Base + tShift
             val t1 = t1Base + tShift

@@ -1,5 +1,7 @@
 package com.tonapps.wallet.features.events.components
 
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
+import uikit.widget.image.hiddenBalanceBlur
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +34,7 @@ import ui.theme.UIKit
 @Composable
 internal fun ActivityNftPreview(
     nft: HistoryNft,
+    hiddenBalance: Boolean,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
 ) {
@@ -40,20 +43,37 @@ internal fun ActivityNftPreview(
             .fillMaxWidth()
             .clip(Shapes.medium12)
             .background(UIKit.colorScheme.background.contentTint)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MoonItemImage(
             image = nft.imageUrl,
             size = 64.dp,
             shape = RoundedCornerShape(0.dp),
+            builder = {
+                if (hiddenBalance) {
+                    hiddenBalanceBlur()
+                } else {
+                    this
+                }
+            },
         )
         Column(
             modifier = Modifier.padding(horizontal = 12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
-                text = nft.name,
+                text = if (hiddenBalance) {
+                    HIDDEN_BALANCE
+                } else {
+                    nft.name
+                },
                 style = UIKit.typography.body2,
                 color = UIKit.colorScheme.text.primary,
                 maxLines = 1,
@@ -61,6 +81,7 @@ internal fun ActivityNftPreview(
             )
             NftCollectionRow(
                 nft = nft,
+                hiddenBalance = hiddenBalance,
                 textStyle = UIKit.typography.body2,
                 verifiedIconTint = UIKit.colorScheme.text.secondary,
             )
@@ -71,17 +92,19 @@ internal fun ActivityNftPreview(
 @Composable
 internal fun NftCollectionRow(
     nft: HistoryNft,
+    hiddenBalance: Boolean,
     textStyle: TextStyle,
     verifiedIconTint: Color,
     textAlign: TextAlign? = null,
     modifier: Modifier = Modifier,
 ) {
     val title = when {
+        hiddenBalance -> HIDDEN_BALANCE
         nft.isUnverified -> stringResource(Localization.nft_unverified)
         nft.collectionName.isNotBlank() -> nft.collectionName
         else -> stringResource(Localization.unnamed_collection)
     }
-    val titleColor = if (nft.isUnverified) {
+    val titleColor = if (nft.isUnverified && !hiddenBalance) {
         UIKit.colorScheme.accent.orange
     } else {
         UIKit.colorScheme.text.secondary
@@ -100,7 +123,7 @@ internal fun NftCollectionRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (nft.isVerified) {
+        if (nft.isVerified && !hiddenBalance) {
             Icon(
                 painter = painterResource(UIKitIcon.ic_verification_16),
                 contentDescription = null,

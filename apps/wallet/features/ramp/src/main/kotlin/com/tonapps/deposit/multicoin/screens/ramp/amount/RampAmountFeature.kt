@@ -1,6 +1,8 @@
 package com.tonapps.deposit.multicoin.screens.ramp.amount
 
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.deposit.data.ExchangeRepository
+import com.tonapps.deposit.multicoin.analytics.RampAnalytics
 import com.tonapps.deposit.multicoin.data.RampQuote
 import com.tonapps.deposit.multicoin.data.RampRepository
 import com.tonapps.deposit.screens.provider.ProviderItem
@@ -16,6 +18,8 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.exchangeapi.models.ExchangePaymentMethodType
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,7 +69,6 @@ sealed interface RampAmountState {
 
 sealed interface RampAmountEvent {
     data class Continue(val widgetUrl: String) : RampAmountEvent
-    data class ShowConfirmation(val provider: ProviderItem) : RampAmountEvent
 }
 
 @OptIn(FlowPreview::class)
@@ -87,6 +90,9 @@ class RampAmountFeature(
     private var quotesByMerchant: Map<String, RampQuote> = emptyMap()
     private var walletId: String? = null
 
+    private val analytics = RampAnalytics.of(data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm)
+    private val viewTracked = AtomicBoolean(false)
+
     init {
         amountInput
             .debounce(300)
@@ -104,27 +110,19 @@ class RampAmountFeature(
         state.postExactData { copy(selectedProviderId = providerId) }
     }
 
-    /** Called on Continue: shows the one-time provider confirmation or proceeds directly. */
-    fun checkProvider() {
+    fun continueWithProvider() {
         bgScope.launch {
             val current = state.value as? RampAmountState.Data ?: return@launch
-            val provider = current.selectedProvider?.takeIf { it.quote != null } ?: return@launch
-            val wallet = walletId ?: return@launch
-
-            if (settingsRepository.isPurchaseOpenConfirm(wallet, provider.info.id)) {
-                events.tryEmit(RampAmountEvent.ShowConfirmation(provider.info))
-            } else {
-                createOrder(provider.info.id)
-            }
-        }
-    }
-
-    fun allowProvider(providerId: String, doNotShowAgain: Boolean) {
-        bgScope.launch {
-            if (doNotShowAgain) {
-                walletId?.let { settingsRepository.disablePurchaseOpenConfirm(it, providerId) }
-            }
-            createOrder(providerId)
+            val provider = current.selectedProvider ?: return@launch
+            val quote = provider.quote ?: return@launch
+            analytics.clickRampInsertAmountContinue(
+                cryptoAsset = data.assetId,
+                fiatCode = current.fiatCode,
+                paymentMethod = current.paymentMethodType.value,
+                providerName = provider.info.title,
+                amount = quote.amount.value.toDouble(),
+            )
+            createOrder(provider.info.id)
         }
     }
 
@@ -180,7 +178,6 @@ class RampAmountFeature(
                                 title = info?.title ?: merchant.value,
                                 imageUrl = info?.image.orEmpty(),
                                 isBest = false,
-                                buttons = info?.buttons.orEmpty(),
                             )
                         )
                     }
@@ -305,6 +302,11 @@ class RampAmountFeature(
                     selectedErrorProvider = errorProvider,
                 )
             }
+            (state.value as? RampAmountState.Data)?.let { updated ->
+                trackViewRampInsertAmount(updated, updated.selectedProvider ?: updated.providers.firstOrNull())
+            }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             L.e(e)
             quotesByMerchant = emptyMap()
@@ -320,7 +322,8 @@ class RampAmountFeature(
     private suspend fun createOrder(providerId: String) {
         val current = state.value as? RampAmountState.Data ?: return
         val quote = quotesByMerchant[providerId] ?: return
-        val providerQuote = current.providers.find { it.info.id == providerId }?.quote ?: return
+        val provider = current.providers.find { it.info.id == providerId } ?: return
+        val providerQuote = provider.quote ?: return
         if (current.address.isBlank()) {
             return
         }
@@ -337,10 +340,32 @@ class RampAmountFeature(
                 merchantTransactionId = quote.merchantTransactionId,
             )
 
+            analytics.continueToRampProvider(
+                cryptoAsset = data.assetId,
+                fiatCode = current.fiatCode,
+                paymentMethod = current.paymentMethodType.value,
+                providerName = provider.info.title,
+                amount = providerQuote.amount.value.toDouble(),
+                txId = quote.merchantTransactionId,
+            )
             events.tryEmit(RampAmountEvent.Continue(widgetUrl))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             L.e(e)
         }
+    }
+
+    private fun trackViewRampInsertAmount(current: RampAmountState.Data, provider: ProviderWithQuote?) {
+        if (provider == null || !viewTracked.compareAndSet(false, true)) {
+            return
+        }
+        analytics.viewRampInsertAmount(
+            cryptoAsset = data.assetId,
+            fiatCode = current.fiatCode,
+            paymentMethod = current.paymentMethodType.value,
+            providerName = provider.info.title,
+        )
     }
 
     private fun formatRate(quote: RampQuote, data: RampAmountState.Data): String {

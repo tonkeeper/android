@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.ui.component.CountryFlagView
 import com.tonapps.tonkeeper.ui.screen.country.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class CountryHolder(
     parent: ViewGroup,
@@ -19,7 +20,7 @@ class CountryHolder(
     private val checkView = findViewById<AppCompatImageView>(R.id.check)
 
     override fun onBind(item: Item.Country) {
-        itemView.setOnClickListener { onClick(item.code) }
+        itemView.setMoonOnClickListener { onClick(item.code) }
         itemView.background = item.position.drawable(itemView.context)
         flagView.setCountry(item.code)
         titleView.text = item.name

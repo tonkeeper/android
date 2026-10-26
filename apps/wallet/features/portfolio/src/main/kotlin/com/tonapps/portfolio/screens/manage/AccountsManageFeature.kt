@@ -4,16 +4,19 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import androidx.paging.map
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.log.L
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.core.paging.AccountsPagingCacheSession
 import com.tonapps.core.paging.AccountsPagingSource
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -21,6 +24,11 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+data class AccountsManageItem(
+    val account: AccountWithDetails,
+    val hiddenBalance: Boolean,
+)
 
 class AccountsManageFeature(
     private val accountRepo: McAccountRepository,
@@ -65,12 +73,16 @@ class AccountsManageFeature(
                         network = network?.id,
                         showHidden = true,
                         showAll = true,
+                        verifiedOnly = false,
                         hideDust = hideDust,
                         cacheSession = accountsPagingCacheSession,
                         scope = viewModelScope,
                     )
                 },
-            ).flow
+            ).flow.map { pagingData ->
+                val hiddenBalance = settingsRepository.hiddenBalances
+                pagingData.map { AccountsManageItem(account = it, hiddenBalance = hiddenBalance) }
+            }
         }
         .cachedIn(viewModelScope)
 

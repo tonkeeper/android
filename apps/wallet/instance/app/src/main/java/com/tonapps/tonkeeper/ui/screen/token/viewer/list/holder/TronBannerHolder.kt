@@ -5,12 +5,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.screens.qr.QrAssetFragment
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.tonkeeper.ui.screen.tronfees.TronFeesScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setMoonOnClickListener
 
 class TronBannerHolder(parent: ViewGroup): Holder<Item.TronBanner>(parent, R.layout.view_token_battery_banner) {
 
@@ -43,11 +45,11 @@ class TronBannerHolder(parent: ViewGroup): Holder<Item.TronBanner>(parent, R.lay
         } else {
             context.getString(Localization.top_up)
         }
-        buttonView.setOnClickListener {
+        buttonView.setMoonOnClickListener {
             if (item.onlyTrx) {
-                context.navigation?.add(QrAssetFragment.newInstance(TokenEntity.TRX))
+                context.navigation?.add(QrAssetFragment.newInstance(TokenEntity.TRX, analyticsFrom = DepositFlowFrom.JettonScreen))
             } else {
-                context.navigation?.add(TronFeesScreen.newInstance(item.wallet))
+                context.navigation?.add(TronFeesScreen.newInstance(item.wallet, DepositFlowFrom.JettonScreen))
             }
         }
     }

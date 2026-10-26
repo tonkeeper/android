@@ -13,6 +13,7 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.activity
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class RefundHolder(
     parent: ViewGroup,
@@ -24,7 +25,7 @@ class RefundHolder(
 
     override fun onBind(item: Item.Refund) {
         itemView.background = ListCell.Position.SINGLE.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             context.activity?.onBackPressed()
             val screen = if (item.wallet.isMultichain) {
                 BatteryWebScreen.newInstance(

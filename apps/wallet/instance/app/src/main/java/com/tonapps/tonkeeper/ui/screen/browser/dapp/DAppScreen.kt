@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import androidx.appcompat.widget.AppCompatTextView
@@ -24,8 +25,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.tonkeeper.extensions.copyToClipboard
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.tonkeeper.extensions.setWallet
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.extensions.webViewProfileName
@@ -34,23 +35,23 @@ import com.tonapps.bus.generated.Events.DappBrowser.DappSharingCopyFrom
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.environment
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappOpenAnalytics
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.bridges.DAppBridge
 import com.tonapps.tonkeeper.ui.screen.browser.share.DAppShareScreen
 import com.tonapps.tonkeeper.ui.screen.root.ShortcutDeeplinkActivity
 import com.tonapps.tonkeeperx.R
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.earn.EarnDAppScreen
 import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.core.deeplink.DeepLink
 import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.core.deeplink.DeepLinkRoute
-import com.tonapps.log.L
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.dapps.entities.AppEntity
@@ -63,22 +64,22 @@ import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
 import uikit.widget.AsyncImageView
 import uikit.widget.webview.WebViewFixed
+import uikit.extensions.setMoonOnClickListener
 
 open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.fragment_dapp, wallet) {
 
     override val fragmentName: String = "DAppScreen"
 
-    private val tonConnectBridge: ITonConnectBridge by inject()
     private val dAppsRepository: DAppsRepository by inject()
 
     private lateinit var headerDrawable: HeaderDrawable
-    private lateinit var headerView: View
+    protected lateinit var headerView: View
     private lateinit var backView: View
     private lateinit var titleView: AppCompatTextView
     private lateinit var hostView: AppCompatTextView
     private lateinit var menuView: View
     private lateinit var closeView: View
-    private lateinit var refreshView: SwipeRefreshLayout
+    protected lateinit var refreshView: SwipeRefreshLayout
     override lateinit var webView: TonConnectWebView
 
     private val args: DAppArgs by lazy { DAppArgs(requireArguments()) }
@@ -91,11 +92,12 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
 
     private var hadConnection = false
 
-    private val dappAnalytics: DappOpenAnalytics? by lazy {
+    protected val dappAnalytics: DappOpenAnalytics by lazy {
         args.analytics ?: DappBrowserAnalytics.directContext(
             source = args.source,
             url = args.url,
-            country = requireContext().environment?.deviceCountry
+            country = requireContext().environment?.deviceCountry,
+            utm = args.utm,
         )
     }
 
@@ -160,9 +162,24 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
             refreshView.isRefreshing = false
             applyHost(webView.url ?: url)
             if (trackDappOpen) {
-                dappAnalytics?.loaded()
+                dappAnalytics.loaded()
             }
             purgeOriginStorage(webView.url ?: url)
+        }
+
+        override fun onReceivedHttpError(request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+            super.onReceivedHttpError(request, errorResponse)
+            val status = errorResponse?.statusCode ?: return
+            if (trackDappOpen && request?.isForMainFrame == true && status >= HTTP_ERROR_STATUS) {
+                dappAnalytics.loadFailed(LOAD_ERROR_HTTP, status)
+            }
+        }
+
+        override fun onReceivedError(request: WebResourceRequest?, error: WebResourceError?) {
+            super.onReceivedError(request, error)
+            if (trackDappOpen && request?.isForMainFrame == true && error != null) {
+                dappAnalytics.loadFailed("$LOAD_ERROR_WEBVIEW:${error.errorCode}", null)
+            }
         }
 
         override fun onScroll(y: Int, x: Int) {
@@ -239,18 +256,27 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (view == null) {
+            return
+        }
+        val state = Bundle()
+        if (webView.saveState(state) != null) {
+            outState.putBundle(STATE_WEB_VIEW, state)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        analytics?.dappClick(
-            url = args.url.toString(),
-            name = args.title,
-            source = args.source,
-            country = requireContext().environment?.deviceCountry ?: viewModel.country
-        )
         if (savedInstanceState == null) {
             trackDappOpen = true
-            dappAnalytics?.click()
+            dappAnalytics.click()
         }
+    }
+
+    protected open fun onCloseClick() {
+        finish()
     }
 
     private fun applyHost(url: String) {
@@ -317,7 +343,7 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
                 title = uri.host ?: "unknown",
                 iconUrl = "https://www.google.com/s2/favicons?sz=256&domain=${uri.host}",
                 url = uri,
-                source = args.source
+                source = DappBrowserAnalytics.IN_DAPP_LINK_SOURCE
             )
         )
     }
@@ -330,7 +356,7 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
         headerView.background = headerDrawable
 
         backView = view.findViewById(R.id.back)
-        backView.setOnClickListener { back() }
+        backView.setMoonOnClickListener { back() }
 
         titleView = view.findViewById(R.id.title)
         titleView.text = args.title
@@ -341,7 +367,7 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
         menuView = view.findViewById(R.id.menu)
 
         closeView = view.findViewById(R.id.close)
-        closeView.setOnClickListener { finish() }
+        closeView.setMoonOnClickListener { onCloseClick() }
 
         webView = view.findViewById(R.id.web_view)
         if (viewModel.isDarkTheme && WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
@@ -354,23 +380,10 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
         webView.addCallback(webViewCallback)
 
         if (isTonConnectInjectionEnabled) {
-            val injector = tonConnectBridge.createInjector(
-                bridge = bridge,
-                wallet = wallet,
-            )
-
-            if (!injector.inject(webView)) {
-                val error = "TonConnect injection failed (source=${args.source})"
-                L.e(error)
-                FirebaseCrashlytics.getInstance().recordException(
-                    IllegalStateException(error)
-                )
-                finish()
-                return
-            }
+            webView.setJsBridge(bridge)
         }
         onWebViewCreated(webView)
-        webView.loadUrl(args.url.withUtmSource())
+        loadInitialPage(webView, savedInstanceState?.getBundle(STATE_WEB_VIEW))
 
         refreshView = view.findViewById(R.id.refresh)
         refreshView.setColorSchemeColors(requireContext().tabBarActiveIconColor)
@@ -379,10 +392,7 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
-            val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-            headerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = statusInsets.top
-            }
+            applyStatusBarInset(insets.getInsets(WindowInsetsCompat.Type.statusBars()).top)
             val bottomInsets =
                 insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.navigationBars())
             refreshView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
@@ -408,12 +418,24 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
 
     protected open fun onWebViewCreated(webView: TonConnectWebView) = Unit
 
+    protected open fun loadInitialPage(webView: TonConnectWebView, restoredState: Bundle?) {
+        if (restoredState == null || webView.restoreState(restoredState) == null) {
+            webView.loadUrl(args.url.withUtmSource())
+        }
+    }
+
+    protected open fun applyStatusBarInset(top: Int) {
+        headerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            topMargin = top
+        }
+    }
+
     private fun setDefaultState() {
-        menuView.setOnClickListener { openDefaultMenu(it) }
+        menuView.setMoonOnClickListener { openDefaultMenu(it) }
     }
 
     private fun setConnectionState(connection: AppConnectEntity) {
-        menuView.setOnClickListener { openConnectionMenu(it, connection) }
+        menuView.setMoonOnClickListener { openConnectionMenu(it, connection) }
     }
 
     private fun openDefaultMenu(view: View) {
@@ -481,8 +503,7 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
             MUTE_ID -> viewModel.mute()
             SHARE_ID -> shareLink()
             COPY_ID -> {
-                analyticsSharingCopy("Copy link")
-                dappAnalytics?.sharingCopy(DappSharingCopyFrom.CopyLink)
+                dappAnalytics.sharingCopy(DappSharingCopyFrom.CopyLink)
                 requireContext().copyToClipboard(DeepLinkBuilder.dAppShare(currentUrl.toString()))
             }
 
@@ -513,19 +534,9 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
         }
     }
 
-    private fun analyticsSharingCopy(from: String) {
-        val app = buildAppEntity()
-        analytics?.dappSharingCopy(
-            name = app.name,
-            from = from,
-            url = currentUrl.toString()
-        )
-    }
-
     private fun shareLink() {
-        analyticsSharingCopy("Share")
         if (DeepLinkBuilder.dAppIsSpecialUrl(currentUrl)) {
-            dappAnalytics?.sharingCopy(DappSharingCopyFrom.Share)
+            dappAnalytics.sharingCopy(DappSharingCopyFrom.Share)
             ShareCompat.IntentBuilder(requireContext())
                 .setType("text/plain")
                 .setChooserTitle(getString(Localization.share))
@@ -566,6 +577,11 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
         private const val REQUEST_CODE_FILE = 1933
         private const val REQUEST_CODE_PERMISSIONS = 1934
 
+        private const val STATE_WEB_VIEW = "web_view_state"
+        private const val HTTP_ERROR_STATUS = 400
+        private const val LOAD_ERROR_HTTP = "http_error"
+        private const val LOAD_ERROR_WEBVIEW = "webview_error"
+
         private const val PURGE_ORIGIN_STORAGE_JS =
             "(function(){try{localStorage.clear();sessionStorage.clear();return 'ok'}catch(e){return 'err:'+e}})()"
 
@@ -577,8 +593,10 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
             source: String,
             forceConnect: Boolean = false,
             analytics: DappOpenAnalytics? = null,
+            utm: UtmParameters = UtmParameters.Empty,
+            type: DAppType = DAppType.Browser,
         ): DAppScreen {
-            return newInstance(wallet, DAppArgs(title, url, source, iconUrl, forceConnect, analytics))
+            return newInstance(wallet, DAppArgs(title, url, source, iconUrl, forceConnect, analytics, utm, type))
         }
 
         fun newInstance(
@@ -595,7 +613,10 @@ open class DAppScreen(wallet: WalletEntity) : InjectedTonConnectScreen(R.layout.
             wallet: WalletEntity,
             args: DAppArgs,
         ): DAppScreen {
-            val fragment = DAppScreen(wallet)
+            val fragment = when (args.type) {
+                DAppType.Browser -> DAppScreen(wallet)
+                DAppType.Earn -> EarnDAppScreen(wallet)
+            }
             fragment.setArgs(args)
             return fragment
         }

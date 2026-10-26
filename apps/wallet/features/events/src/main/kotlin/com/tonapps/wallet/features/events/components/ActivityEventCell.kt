@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -36,12 +37,19 @@ import com.tonapps.chainkit.core.chain.model.num.BaseUnit
 import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.core.components.coinShortName
 import com.tonapps.extensions.short4
+import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.perps.data.formatUsdAmount
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
+import com.tonapps.wallet.features.events.components.legacy.EventActionEncryptedText
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import com.tonapps.wallet.features.events.data.HistoryNft
+import com.tonapps.wallet.features.events.formattedDateTime
 import com.tonapps.wallet.features.events.formattedTime
 import com.tonapps.wallet.features.events.hasStakingProviderIcon
 import com.tonapps.wallet.features.events.iconPainter
+import com.tonapps.wallet.features.events.perpsResultText
+import com.tonapps.wallet.features.events.perpsSubtitle
 import com.tonapps.wallet.features.events.stakingProviderName
 import com.tonapps.wallet.features.events.statusTitle
 import com.tonapps.wallet.localization.Localization
@@ -64,20 +72,30 @@ private const val AMOUNT_FONT_SCALE_STEP = 0.95f
 @Composable
 fun ActivityEventCell(
     activity: HistoryEventEntity,
+    hiddenBalance: Boolean,
     nft: HistoryNft? = null,
     position: MoonBundlePosition = MoonBundlePosition.Default,
+    labelsPerpsBalanceChanges: Boolean = true,
     onClick: () -> Unit = {},
     onNftClick: (() -> Unit)? = null,
+    decryptedComment: String? = null,
+    onDecryptComment: (() -> Unit)? = null,
+    showDate: Boolean = false,
 ) {
-    val subtitle = activity.stakingProviderName()
-        ?: activity.counterpartyAddress?.short4
-        ?: stringResource(Localization.unknown)
+    val subtitle = if (activity.isPerps) {
+        activity.perpsSubtitle(labelsBalanceChanges = labelsPerpsBalanceChanges)
+    } else {
+        activity.stakingProviderName()
+            ?: activity.counterpartyAddress?.short4
+            ?: stringResource(Localization.unknown)
+    }
     val isNft = activity.isNftActivity
     val comment = if (nft != null && activity.isDomainRenew) {
         activity.comment?.takeIf { it.isNotBlank() }
     } else {
         activity.displayComment
-    }
+    } ?: decryptedComment
+    val isEncrypted = comment == null && activity.encryptedComment != null
 
     MoonBundleCell(position = position, onClick = onClick) {
         TextCell(
@@ -89,6 +107,7 @@ fun ActivityEventCell(
                 ActivityTitleRow(
                     activity = activity,
                     isNft = isNft,
+                    hiddenBalance = hiddenBalance,
                 )
             },
             subtitle = {
@@ -97,8 +116,12 @@ fun ActivityEventCell(
                     subtitle = subtitle,
                     isNft = isNft,
                     nft = nft,
+                    hiddenBalance = hiddenBalance,
                     comment = comment,
+                    isEncrypted = isEncrypted,
                     onNftClick = onNftClick,
+                    onDecryptComment = onDecryptComment,
+                    showDate = showDate,
                 )
             },
             content = null,
@@ -142,6 +165,7 @@ private fun ActivityLeadingIcon(activity: HistoryEventEntity) {
 private fun ActivityTitleRow(
     activity: HistoryEventEntity,
     isNft: Boolean,
+    hiddenBalance: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -161,7 +185,7 @@ private fun ActivityTitleRow(
                     maxLines = 1,
                 )
             } else {
-                ActivityAmountRows(activity)
+                ActivityAmountRows(activity = activity, hiddenBalance = hiddenBalance)
             }
         }
     }
@@ -170,18 +194,24 @@ private fun ActivityTitleRow(
 @Composable
 private fun ActivitySecondaryRow(
     activity: HistoryEventEntity,
-    subtitle: String,
+    subtitle: String?,
     isNft: Boolean,
     nft: HistoryNft?,
+    hiddenBalance: Boolean,
     comment: String?,
+    isEncrypted: Boolean,
     onNftClick: (() -> Unit)?,
+    onDecryptComment: (() -> Unit)?,
+    showDate: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            MoonItemSubtitle(text = subtitle, maxLines = 1)
+            if (subtitle != null) {
+                MoonItemSubtitle(text = subtitle, maxLines = 1)
+            }
             if (activity.isFailed) {
                 Text(
                     text = stringResource(Localization.failed),
@@ -189,16 +219,23 @@ private fun ActivitySecondaryRow(
                     color = UIKit.colorScheme.accent.orange,
                 )
             }
-            if (nft != null || comment != null) {
+            if (nft != null || comment != null || isEncrypted) {
                 Column(
                     modifier = Modifier.padding(top = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (nft != null) {
-                        ActivityNftPreview(nft = nft, onClick = onNftClick)
+                        ActivityNftPreview(nft = nft, hiddenBalance = hiddenBalance, onClick = onNftClick)
                     }
                     if (comment != null) {
                         ActivityCommentChip(text = comment)
+                    }
+                    if (isEncrypted) {
+                        EventActionEncryptedText(
+                            placeholder = stringResource(Localization.encrypted_comment),
+                            enabled = onDecryptComment != null,
+                            onClick = { onDecryptComment?.invoke() },
+                        )
                     }
                 }
             }
@@ -206,7 +243,11 @@ private fun ActivitySecondaryRow(
         Spacer(modifier = Modifier.width(8.dp))
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = activity.formattedTime(),
+                text = if (showDate) {
+                    activity.formattedDateTime()
+                } else {
+                    activity.formattedTime()
+                },
                 style = UIKit.typography.body2,
                 color = UIKit.colorScheme.text.secondary,
             )
@@ -274,63 +315,81 @@ private fun ActivityStatusLabel(
 }
 
 @Composable
-private fun ActivityAmountRows(activity: HistoryEventEntity) {
+private fun ActivityAmountRows(
+    activity: HistoryEventEntity,
+    hiddenBalance: Boolean,
+) {
+    if (activity.isPerps) {
+        PerpsAmountRow(activity = activity, hiddenBalance = hiddenBalance)
+        return
+    }
     when (activity.activityType) {
         ActivityType.stake, ActivityType.unstake, ActivityType.burn, ActivityType.send -> {
             if (activity.unitOutAmount != null) {
-                OutAmountRow(activity)
+                OutAmountRow(activity = activity, hiddenBalance = hiddenBalance)
             } else {
                 AmountRow(
                     amount = activity.unitInAmount,
                     asset = activity.inAsset,
                     positive = false,
+                    hiddenBalance = hiddenBalance,
                 )
             }
         }
         ActivityType.mint, ActivityType.receive -> {
             if (activity.unitInAmount != null) {
-                InAmountRow(activity)
+                InAmountRow(activity = activity, hiddenBalance = hiddenBalance)
             } else {
                 AmountRow(
                     amount = activity.unitOutAmount,
                     asset = activity.outAsset,
                     positive = true,
+                    hiddenBalance = hiddenBalance,
                 )
             }
         }
         ActivityType.swap -> {
-            InAmountRow(activity)
-            OutAmountRow(activity)
+            InAmountRow(activity = activity, hiddenBalance = hiddenBalance)
+            OutAmountRow(activity = activity, hiddenBalance = hiddenBalance)
         }
         ActivityType.dns_renew -> {
             AmountRow(
                 amount = activity.unitFeeAmount,
                 asset = activity.feeAsset,
                 positive = false,
+                hiddenBalance = hiddenBalance,
             )
         }
         else -> {
-            InAmountRow(activity)
-            OutAmountRow(activity)
+            InAmountRow(activity = activity, hiddenBalance = hiddenBalance)
+            OutAmountRow(activity = activity, hiddenBalance = hiddenBalance)
         }
     }
 }
 
 @Composable
-private fun InAmountRow(activity: HistoryEventEntity) {
+private fun InAmountRow(
+    activity: HistoryEventEntity,
+    hiddenBalance: Boolean,
+) {
     AmountRow(
         amount = activity.unitInAmount,
         asset = activity.inAsset,
         positive = true,
+        hiddenBalance = hiddenBalance,
     )
 }
 
 @Composable
-private fun OutAmountRow(activity: HistoryEventEntity) {
+private fun OutAmountRow(
+    activity: HistoryEventEntity,
+    hiddenBalance: Boolean,
+) {
     AmountRow(
         amount = activity.unitOutAmount,
         asset = activity.outAsset,
         positive = false,
+        hiddenBalance = hiddenBalance,
     )
 }
 
@@ -339,13 +398,10 @@ private fun AmountRow(
     amount: BaseUnit?,
     asset: AssetEntity?,
     positive: Boolean,
+    hiddenBalance: Boolean,
 ) {
     val value = amount ?: return
     val resolved = asset?.valueOrNull ?: return
-
-    val formatted = remember(value, resolved) {
-        Formatter.formatShort(value = value, asset = resolved)
-    }
 
     val chainLabel = resolved.coinShortName()
     val amountColor = if (positive) {
@@ -359,12 +415,18 @@ private fun AmountRow(
     } else {
         "–"
     }
-    val text = remember(formatted, chainLabel, amountColor, secondaryColor, sign) {
+    val text = remember(value, resolved, hiddenBalance, chainLabel, amountColor, secondaryColor, sign) {
         buildAnnotatedString {
+            if (hiddenBalance) {
+                withStyle(SpanStyle(color = amountColor)) {
+                    append(HIDDEN_BALANCE)
+                }
+                return@buildAnnotatedString
+            }
             withStyle(SpanStyle(color = amountColor)) {
                 append(sign)
                 append(" ")
-                append(formatted)
+                append(Formatter.formatShort(value = value, asset = resolved))
             }
             if (chainLabel != null) {
                 append(" ")
@@ -375,6 +437,48 @@ private fun AmountRow(
         }
     }
 
+    AmountText(text)
+}
+
+@Composable
+private fun PerpsAmountRow(
+    activity: HistoryEventEntity,
+    hiddenBalance: Boolean,
+) {
+    val showsMargin = activity.isPerpsOpenOrIncrease
+    val formatted = if (showsMargin) {
+        activity.perps?.marginUsd?.takeIf { it.signum() > 0 }?.let { formatUsdAmount(it) }
+    } else {
+        activity.perpsResultText()
+    } ?: return
+    val isPositive = !showsMargin && activity.perpsResult?.isPositive == true
+    val color = when {
+        activity.isFailed -> UIKit.colorScheme.accent.orange
+        isPositive && !hiddenBalance -> UIKit.colorScheme.accent.green
+        else -> UIKit.colorScheme.text.primary
+    }
+    val prefix = when {
+        showsMargin -> ""
+        isPositive -> CurrencyFormatter.PREFIX_PLUS
+        else -> CurrencyFormatter.PREFIX_MINUS
+    }
+    val text = remember(formatted, color, prefix, hiddenBalance) {
+        buildAnnotatedString {
+            withStyle(SpanStyle(color = color)) {
+                if (hiddenBalance) {
+                    append(HIDDEN_BALANCE)
+                } else {
+                    append(prefix)
+                    append(formatted)
+                }
+            }
+        }
+    }
+    AmountText(text)
+}
+
+@Composable
+private fun AmountText(text: AnnotatedString) {
     var fontScale by remember(text) { mutableStateOf(1f) }
     var readyToDraw by remember(text) { mutableStateOf(false) }
     val style = UIKit.typography.label1
@@ -466,14 +570,17 @@ private fun ActivityEventCellRegularPreview() {
         Column {
             ActivityEventCell(
                 activity = previewShortReceive(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Header,
             )
             ActivityEventCell(
                 activity = previewSwap(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
                 activity = previewFailedSend(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Footer,
             )
         }
@@ -487,10 +594,12 @@ private fun ActivityEventCellLongAmountPreview() {
         Column {
             ActivityEventCell(
                 activity = previewLongAmountSend(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Header,
             )
             ActivityEventCell(
                 activity = previewSpamReceive(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Footer,
             )
         }
@@ -504,23 +613,28 @@ private fun ActivityEventCellLabelsPreview() {
         Column {
             ActivityEventCell(
                 activity = previewUnverifiedReceive(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Header,
             )
             ActivityEventCell(
                 activity = previewCommentSend(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
                 activity = previewDomainRenew(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
                 activity = previewDomainRenew(),
+                hiddenBalance = false,
                 nft = PREVIEW_DOMAIN_NFT,
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
                 activity = previewNftReceive(),
+                hiddenBalance = false,
                 nft = PREVIEW_NFT,
                 position = MoonBundlePosition.Footer,
             )
@@ -535,18 +649,22 @@ private fun ActivityEventCellPendingPreview() {
         Column {
             ActivityEventCell(
                 activity = previewPendingSend(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Header,
             )
             ActivityEventCell(
                 activity = previewPendingReceive(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
                 activity = previewPendingSwap(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
                 activity = previewFailedSend(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Footer,
             )
         }
@@ -560,11 +678,108 @@ private fun ActivityEventCellLongAmountLargeFontPreview() {
         Column {
             ActivityEventCell(
                 activity = previewLongAmountSend(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Header,
             )
             ActivityEventCell(
                 activity = previewSpamReceive(),
+                hiddenBalance = false,
                 position = MoonBundlePosition.Footer,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ActivityEventCellPerpsPreview() {
+    ThemedPreview {
+        Column {
+            ActivityEventCell(
+                activity = previewPerpsOpenedLong(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Header,
+            )
+            ActivityEventCell(
+                activity = previewPerpsIncreasedLong(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsReducedLong(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsClosedLong(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsLiquidatedShort(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsDeposit(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsFailedDeposit(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsWithdrawal(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Footer,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ActivityEventCellHiddenBalancePreview() {
+    ThemedPreview {
+        Column {
+            ActivityEventCell(
+                activity = previewSwap(),
+                hiddenBalance = true,
+                position = MoonBundlePosition.Header,
+            )
+            ActivityEventCell(
+                activity = previewPerpsClosedLong(),
+                hiddenBalance = true,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewNftReceive(),
+                hiddenBalance = true,
+                nft = PREVIEW_NFT,
+                position = MoonBundlePosition.Footer,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ActivityEventCellPerpsListPreview() {
+    ThemedPreview {
+        Column {
+            ActivityEventCell(
+                activity = previewPerpsDeposit(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Header,
+                labelsPerpsBalanceChanges = false,
+            )
+            ActivityEventCell(
+                activity = previewPerpsWithdrawal(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Footer,
+                labelsPerpsBalanceChanges = false,
             )
         }
     }

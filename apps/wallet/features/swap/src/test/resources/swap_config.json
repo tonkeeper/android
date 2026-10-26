@@ -1,0 +1,179 @@
+{
+  "slippages": {
+    "base": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "tron": {
+      "options_bps": [
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "ltc": {
+      "options_bps": [
+        100,
+        300,
+        500
+      ],
+      "default_bps": 300
+    },
+    "xrp": {
+      "options_bps": [
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "ada": {
+      "options_bps": [
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "ton": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "op": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "bsc": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "avax": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "near": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "doge": {
+      "options_bps": [
+        100,
+        300,
+        500
+      ],
+      "default_bps": 300
+    },
+    "arb": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "polygon": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "sol": {
+      "options_bps": [
+        10,
+        50,
+        100,
+        300
+      ],
+      "default_bps": 100
+    },
+    "btc": {
+      "options_bps": [
+        100,
+        300,
+        500
+      ],
+      "default_bps": 300
+    },
+    "eth": {
+      "options_bps": [
+        50,
+        100,
+        200,
+        300
+      ],
+      "default_bps": 200
+    }
+  },
+  "swap_pair": {
+    "source_asset_id": "ton/mainnet/coin",
+    "destination_asset_id": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+    "source_asset": {
+      "asset_id": "ton/mainnet/coin",
+      "symbol": "TON",
+      "name": "Toncoin",
+      "decimals": 9,
+      "image": "https://cache.tonapi.io/imgproxy/C6D0e4dAwmPanprl5pKj_xH02qAaS2trGyQcI-oQ4Qw/rs:fill:200:200:1/g:no/aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3RydXN0d2FsbGV0L2Fzc2V0cy9yZWZzL2hlYWRzL21hc3Rlci9ibG9ja2NoYWlucy90b24vaW5mby9sb2dvLnBuZw.webp",
+      "chain_family": "TON",
+      "supported_aggregators": [
+        "omniston",
+        "swapsxyz",
+        "swapkit"
+      ],
+      "usd_price": 1.430171621,
+      "verified": true,
+      "market_cap_usd": 7309142866
+    },
+    "destination_asset": {
+      "asset_id": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+      "symbol": "USDT",
+      "name": "Tether USD",
+      "decimals": 6,
+      "image": "https://cache.tonapi.io/imgproxy/T3PB4s7oprNVaJkwqbGg54nexKE0zzKhcrPv8jcWYzU/rs:fill:200:200:1/g:no/aHR0cHM6Ly90ZXRoZXIudG8vaW1hZ2VzL2xvZ29DaXJjbGUucG5n.webp",
+      "chain_family": "TON",
+      "stablecoin": true,
+      "supported_aggregators": [
+        "omniston",
+        "swapsxyz",
+        "swapkit"
+      ],
+      "usd_price": 1.000120014,
+      "verified": true,
+      "market_cap_usd": 1429974763
+    }
+  }
+}

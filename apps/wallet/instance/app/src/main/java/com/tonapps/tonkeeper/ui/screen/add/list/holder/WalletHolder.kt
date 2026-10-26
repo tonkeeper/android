@@ -7,6 +7,7 @@ import uikit.extensions.withBlueBadge
 import uikit.extensions.withCutIcons
 import uikit.extensions.withDefaultBadge
 import uikit.widget.ActionCellView
+import uikit.extensions.setMoonOnClickListener
 
 class WalletHolder(
     parent: ViewGroup,
@@ -15,8 +16,11 @@ class WalletHolder(
 
     private val itemActionView = itemView as ActionCellView
 
+    init {
+    }
+
     override fun onBind(item: Item.Wallet) {
-        itemActionView.setOnClickListener { onClick(item) }
+        itemActionView.setMoonOnClickListener { onClick(item) }
         itemActionView.iconRes = item.iconResId
         var title: CharSequence = getString(item.titleResId)
         item.tagResId?.let { tag ->

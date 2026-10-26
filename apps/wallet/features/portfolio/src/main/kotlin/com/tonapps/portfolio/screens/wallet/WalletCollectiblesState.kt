@@ -5,6 +5,7 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 data class WalletCollectiblesState(
     val items: List<NftEntity>,
     val allHidden: Boolean = false,
+    val hiddenBalance: Boolean,
 ) {
     val previewItems: List<NftEntity>
         get() = items.take(PREVIEW_LIMIT)

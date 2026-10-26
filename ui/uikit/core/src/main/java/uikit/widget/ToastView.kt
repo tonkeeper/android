@@ -3,6 +3,7 @@ package uikit.widget
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.SystemClock
 import android.util.AttributeSet
@@ -11,14 +12,15 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowInsets
+import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
-import androidx.core.view.setPadding
 import com.tonapps.uikit.color.backgroundContentTintColor
 import uikit.R
 import uikit.extensions.dp
-import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.hapticConfirm
 import kotlin.math.abs
 import kotlin.math.sign
@@ -34,7 +36,9 @@ class ToastView @JvmOverloads constructor(
         val loading: Boolean,
         val text: CharSequence,
         val color: Int,
-        val duration: Long
+        val duration: Long,
+        @DrawableRes val iconRes: Int,
+        @ColorInt val iconTint: Int
     )
 
     private var statusBarHeight: Int = 0
@@ -46,11 +50,12 @@ class ToastView @JvmOverloads constructor(
 
     private val dataQueue = mutableListOf<Data>()
     private val loaderView: View
+    private val iconView: AppCompatImageView
     private val textView: AppCompatTextView
 
     private val animator: ValueAnimator by lazy {
         val startY = -height.toFloat()
-        val endY = statusBarHeight + 24f.dp
+        val endY = statusBarHeight + TOP_OFFSET_DP.dp
 
         val valueAnimator = ValueAnimator.ofFloat(startY, endY)
         valueAnimator.duration = 160L
@@ -60,7 +65,8 @@ class ToastView @JvmOverloads constructor(
     }
 
     private val horizontalOffset = 24.dp
-    private val verticalOffset = context.getDimensionPixelSize(R.dimen.offsetMedium)
+    private val horizontalOffsetWithIcon = 16.dp
+    private val verticalOffset = 14.dp
 
     private val hideRunnable = Runnable { hide() }
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
@@ -73,9 +79,12 @@ class ToastView @JvmOverloads constructor(
     init {
         inflate(context, R.layout.view_toast, this)
         setBackgroundResource(R.drawable.bg_content_tint_24)
-        setPadding(horizontalOffset, verticalOffset, horizontalOffset, verticalOffset)
+        setPaddingRelative(horizontalOffset, verticalOffset, horizontalOffset, verticalOffset)
+        minimumHeight = MIN_HEIGHT_DP.dp
+        elevation = ELEVATION_DP.dp
         visibility = View.GONE
         loaderView = findViewById(R.id.toast_loader)
+        iconView = findViewById(R.id.toast_icon)
         textView = findViewById(R.id.toast_text)
     }
 
@@ -83,14 +92,23 @@ class ToastView @JvmOverloads constructor(
         text: CharSequence,
         loading: Boolean,
         color: Int = context.backgroundContentTintColor,
-        duration: Long = DURATION_DEFAULT
+        duration: Long = DURATION_DEFAULT,
+        @DrawableRes iconRes: Int = 0,
+        @ColorInt iconTint: Int = Color.TRANSPARENT
     ) {
-        val data = createData(loading, text, color, duration)
+        val data = createData(loading, text, color, duration, iconRes, iconTint)
         run(data)
     }
 
     private fun run(data: Data) {
-        val cancelCurrent = currentData != null && currentData?.text == data.text && currentData?.color == data.color
+        // Showing the same toast again dismisses it; `loading` stays out of the comparison because
+        // that is how the loading toast is hidden — same text and color, only the flag flips.
+        val current = currentData
+        val cancelCurrent = current != null &&
+                current.text == data.text &&
+                current.color == data.color &&
+                current.iconRes == data.iconRes &&
+                current.iconTint == data.iconTint
         postOnAnimation {
             if (cancelCurrent) {
                 hide()
@@ -102,7 +120,14 @@ class ToastView @JvmOverloads constructor(
         }
     }
 
-    private fun createData(loading: Boolean, text: CharSequence, color: Int, duration: Long): Data {
+    private fun createData(
+        loading: Boolean,
+        text: CharSequence,
+        color: Int,
+        duration: Long,
+        @DrawableRes iconRes: Int,
+        @ColorInt iconTint: Int
+    ): Data {
         return Data(
             loading = loading,
             text = text,
@@ -111,7 +136,9 @@ class ToastView @JvmOverloads constructor(
             } else {
                 color
             },
-            duration = duration
+            duration = duration,
+            iconRes = iconRes,
+            iconTint = iconTint
         )
     }
 
@@ -123,6 +150,13 @@ class ToastView @JvmOverloads constructor(
         val data = currentData ?: return
         hapticConfirm()
         textView.text = data.text
+        applyIcon(data)
+        val startOffset = if (data.loading || data.iconRes != 0) {
+            horizontalOffsetWithIcon
+        } else {
+            horizontalOffset
+        }
+        setPaddingRelative(startOffset, verticalOffset, horizontalOffset, verticalOffset)
         background.setTint(data.color)
         removeCallbacks(hideRunnable)
         animate().cancel()
@@ -142,6 +176,20 @@ class ToastView @JvmOverloads constructor(
                 showDefault(data.duration)
             }
         }
+    }
+
+    private fun applyIcon(data: Data) {
+        if (data.iconRes == 0) {
+            iconView.visibility = View.GONE
+            return
+        }
+        iconView.setImageResource(data.iconRes)
+        iconView.imageTintList = if (data.iconTint == Color.TRANSPARENT) {
+            null
+        } else {
+            ColorStateList.valueOf(data.iconTint)
+        }
+        iconView.visibility = View.VISIBLE
     }
 
     private fun showLoading() {
@@ -321,5 +369,8 @@ class ToastView @JvmOverloads constructor(
 
         private const val SWIPE_ANIMATION_DURATION = 160L
         private const val MIN_DISMISS_VELOCITY_DPS = 400
+        private const val TOP_OFFSET_DP = 8f
+        private const val MIN_HEIGHT_DP = 48
+        private const val ELEVATION_DP = 4f
     }
 }

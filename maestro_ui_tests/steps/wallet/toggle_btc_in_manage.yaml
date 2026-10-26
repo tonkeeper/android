@@ -1,0 +1,51 @@
+# Wallet → Manage → BTC eye → Save Changes. Flips BTC's visibility, which is
+# stored on the backend per wallet, so it follows the wallet to every device.
+# The eye carries no state in the hierarchy (no testTag, no checked), so the
+# caller decides from home whether BTC is shown before flipping it.
+# Starts from a fresh home: call launch_app_ensure_multichain_wallet first.
+appId: com.ton_keeper.debug
+---
+- tapOn:
+    text: Manage
+    rightOf: Crypto
+- waitForAnimationToEnd:
+    timeout: 3000
+- extendedWaitUntil:
+    visible: "Search by ticker or name"
+    timeout: 30000
+- tapOn: Search by ticker or name
+- inputText: BTC
+# Enter drops the IME, which otherwise covers the bottom-anchored Save Changes.
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    text: "^All$"
+- waitForAnimationToEnd:
+    timeout: 1000
+- extendedWaitUntil:
+    visible:
+      text: "^BTC$"
+      childOf:
+        id: "sheet_content"
+    timeout: 30000
+# The search field itself reads "BTC" and home keeps its own BTC row in the
+# hierarchy under the sheet (Maestro tapped that row at [265,1966] and the
+# eye never toggled, so Save Changes never appeared). Fence the row in with
+# `childOf: id: sheet_content` and anchor it below the filter chips row; do
+# not anchor on neighbouring rows (WBTC, BTCR…) — the result set depends on
+# the wallet's asset list.
+- tapOn:
+    text: "^BTC$"
+    below: "^All$"
+    childOf:
+      id: "sheet_content"
+- waitForAnimationToEnd:
+    timeout: 2000
+- extendedWaitUntil:
+    visible: Save Changes
+    timeout: 30000
+- tapOn: Save Changes
+- extendedWaitUntil:
+    notVisible: Save Changes
+    timeout: 30000

@@ -28,9 +28,4 @@ class StoryAutoShowSession {
             ownerByWalletId.remove(walletId)
         }
     }
-
-    @Synchronized
-    fun reset() {
-        ownerByWalletId.clear()
-    }
 }

@@ -18,15 +18,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,46 +40,41 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import com.tonapps.core.LocalIsTopFragment
 import com.tonapps.paging.collectAsStateWorkaround
-import com.tonapps.perps.data.PERPS_EMPTY_VALUE
 import com.tonapps.perps.data.PerpMarket
-import com.tonapps.perps.data.PerpsBalance
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsLoadException
-import com.tonapps.perps.data.PerpsPortfolio
+import com.tonapps.perps.data.PerpsPortfolioOrder
 import com.tonapps.perps.data.PerpsPosition
 import com.tonapps.perps.data.PerpsPositionSide
 import com.tonapps.perps.data.PerpsSort
-import com.tonapps.perps.data.formatSignedPercent
-import com.tonapps.perps.data.formatSignedUsd
-import com.tonapps.perps.data.formatUsd
 import com.tonapps.perps.data.perpsTicker
-import com.tonapps.perps.data.unrealizedPnlPercent
 import com.tonapps.perps.data.withLivePrice
+import com.tonapps.perps.screens.common.openPerpsBasics
 import com.tonapps.perps.screens.markets.PerpMarketRow
-import com.tonapps.perps.screens.markets.PerpsAssetIcon
-import com.tonapps.perps.screens.markets.PerpsSideLabel
 import com.tonapps.perps.screens.markets.PerpsSortSelector
 import com.tonapps.perps.screens.markets.perpsChangeColor
 import com.tonapps.perps.screens.markets.perpsErrorDescription
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import ui.components.moon.ButtonColorsPrimary
 import ui.components.moon.ButtonSizeLarge
+import ui.components.moon.ButtonSizeSmall
 import ui.components.moon.MoonAccentButton
 import ui.components.moon.MoonBottomBar
 import ui.components.moon.MoonCircleIcon
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemSubtitle
-import ui.components.moon.MoonLabel
+import ui.components.moon.MoonLoader
+import ui.components.moon.MoonSmallItemTitle
 import ui.components.moon.MoonTopAppBar
 import ui.components.moon.MoonTopAppBarIcon
 import ui.components.moon.MoonTopAppBarSubtitle
 import ui.components.moon.MoonTopAppBarTitle
 import ui.components.moon.cell.MoonBundleCell
-import ui.components.moon.cell.MoonBundleCellContent
+import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.MoonBundleTitleCell
 import ui.components.moon.cell.defaultBundleType
 import ui.components.moon.cell.MoonCardCell
@@ -84,10 +82,7 @@ import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.MoonRetryCell
 import ui.components.moon.container.MoonScaffold
 import ui.components.moon.moonBottomBarHeight
-import ui.moon.MoonToastHost
-import ui.moon.rememberMoonToastHostState
 import ui.preview.ThemedPreview
-import ui.theme.Shapes
 import ui.theme.UIKit
 import java.math.BigDecimal
 
@@ -96,6 +91,9 @@ fun PerpsPortfolioScreen(
     feature: PerpsPortfolioFeature,
     onOpenMarket: (marketIndex: Int, symbol: String) -> Unit,
     onOpenExplore: () -> Unit,
+    onDeposit: () -> Unit,
+    onOpenHistory: () -> Unit,
+    onWithdraw: () -> Unit,
     onBack: () -> Unit,
 ) {
     val portfolio by feature.portfolio.collectAsStateWorkaround()
@@ -104,47 +102,60 @@ fun PerpsPortfolioScreen(
     val sort by feature.sort.collectAsStateWorkaround()
     val exploreMarkets = feature.exploreMarkets.collectAsLazyPagingItems()
     val livePrices by feature.livePrices.collectAsStateWorkaround()
+    val fundingStatus by feature.fundingStatus.collectAsStateWorkaround()
 
-    val toastHost = rememberMoonToastHostState()
-    val scope = rememberCoroutineScope()
-    val comingSoonText = stringResource(Localization.perps_coming_soon)
+    val context = LocalContext.current
 
-    LifecycleResumeEffect(feature) {
-        feature.sendAction(PerpsPortfolioAction.SetActive(true))
+    val isTopFragment = LocalIsTopFragment.current
+    LifecycleResumeEffect(feature, isTopFragment) {
+        if (isTopFragment) {
+            feature.sendAction(PerpsPortfolioAction.SetActive(true))
+        }
         onPauseOrDispose {
             feature.sendAction(PerpsPortfolioAction.SetActive(false))
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        PerpsPortfolioContent(
-            portfolio = portfolio,
-            portfolioLoading = portfolioLoading,
-            portfolioError = portfolioError,
-            sort = sort,
-            exploreMarkets = exploreMarkets,
-            livePrices = livePrices,
-            onSortChange = { feature.sendAction(PerpsPortfolioAction.SetSort(it)) },
-            onRetry = { feature.sendAction(PerpsPortfolioAction.Retry) },
-            onOpenMarket = onOpenMarket,
-            onRowVisible = { symbol, visible ->
-                feature.sendAction(PerpsPortfolioAction.RowVisible(symbol, visible))
-            },
-            onOpenExplore = onOpenExplore,
-            onComingSoon = {
-                if (toastHost.currentData == null) {
-                    scope.launch { toastHost.showToast(comingSoonText) }
-                }
-            },
-            onBack = onBack,
-        )
-        MoonToastHost(toastHost)
-    }
+    PerpsPortfolioContent(
+        portfolio = portfolio,
+        portfolioLoading = portfolioLoading,
+        portfolioError = portfolioError,
+        sort = sort,
+        exploreMarkets = exploreMarkets,
+        livePrices = livePrices,
+        onSortChange = { feature.sendAction(PerpsPortfolioAction.SetSort(it)) },
+        onRetry = { feature.sendAction(PerpsPortfolioAction.Retry) },
+        onOpenMarket = onOpenMarket,
+        onRowVisible = { symbol, visible ->
+            feature.sendAction(PerpsPortfolioAction.RowVisible(symbol, visible))
+        },
+        onOpenExplore = onOpenExplore,
+        onDeposit = onDeposit,
+        onWithdraw = onWithdraw,
+        fundingStatus = fundingStatus,
+        onFundingPillClick = {
+            when (fundingStatus) {
+                PerpsFundingStatus.NEEDS_AUTHORIZATION ->
+                    feature.sendAction(PerpsPortfolioAction.AuthorizeDeposit(context))
+
+                PerpsFundingStatus.FAILED,
+                PerpsFundingStatus.REFUNDED,
+                PerpsFundingStatus.WITHDRAW_FAILED -> feature.sendAction(PerpsPortfolioAction.DismissFundingOutcome)
+
+                PerpsFundingStatus.SENDING,
+                PerpsFundingStatus.CONFIRMED,
+                null -> Unit
+            }
+        },
+        onOpenHistory = onOpenHistory,
+        onLearnBasics = { context.openPerpsBasics() },
+        onBack = onBack,
+    )
 }
 
 @Composable
 private fun PerpsPortfolioContent(
-    portfolio: PerpsPortfolio?,
+    portfolio: PerpsPortfolioUi,
     portfolioLoading: Boolean,
     portfolioError: PerpsError?,
     sort: PerpsSort,
@@ -155,54 +166,72 @@ private fun PerpsPortfolioContent(
     onOpenMarket: (marketIndex: Int, symbol: String) -> Unit,
     onRowVisible: (symbol: String, visible: Boolean) -> Unit,
     onOpenExplore: () -> Unit,
-    onComingSoon: () -> Unit,
+    onDeposit: () -> Unit,
+    onWithdraw: () -> Unit,
+    fundingStatus: PerpsFundingStatus?,
+    onFundingPillClick: () -> Unit,
+    onOpenHistory: () -> Unit,
+    onLearnBasics: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val positions = portfolio.positions
+    val isZeroState = !portfolioLoading && portfolioError == null && portfolio.isEmpty
+
     MoonScaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            MoonTopAppBar(
-                modifier = Modifier.statusBarsPadding(),
-                title = { MoonTopAppBarTitle(text = stringResource(Localization.perps_title)) },
-                onTitleClick = onComingSoon,
-                subtitle = {
-                    MoonTopAppBarSubtitle(
-                        text = stringResource(Localization.perps_learn_basics),
-                        color = UIKit.colorScheme.text.accent,
+            Box(modifier = Modifier.statusBarsPadding()) {
+                MoonTopAppBar(
+                    title = { MoonTopAppBarTitle(text = stringResource(Localization.perps_title)) },
+                    onTitleClick = onLearnBasics.takeIf { fundingStatus == null },
+                    textVisible = fundingStatus == null,
+                    subtitle = {
+                        MoonTopAppBarSubtitle(
+                            text = stringResource(Localization.perps_learn_basics),
+                            color = UIKit.colorScheme.text.accent,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        MoonItemIcon(
+                            painter = painterResource(UIKitIcon.ic_information_circle_16),
+                            color = UIKit.colorScheme.text.accent,
+                        )
+                    },
+                    navigationIconRes = UIKitIcon.ic_chevron_left_16,
+                    onNavigationClick = onBack,
+                    actions = {
+                        if (!isZeroState) {
+                            MoonTopAppBarIcon(
+                                painter = painterResource(UIKitIcon.ic_clock_outline_28),
+                                onClick = onOpenHistory,
+                            )
+                        }
+                        MoonTopAppBarIcon(
+                            painter = painterResource(UIKitIcon.ic_magnifying_glass_16),
+                            onClick = onOpenExplore,
+                        )
+                    },
+                    backgroundColor = Color.Transparent,
+                )
+                if (fundingStatus != null) {
+                    FundingStatusPill(
+                        status = fundingStatus,
+                        modifier = Modifier.align(Alignment.Center),
+                        onClick = onFundingPillClick.takeIf { fundingStatus.actionable },
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    MoonItemIcon(
-                        painter = painterResource(UIKitIcon.ic_information_circle_16),
-                        color = UIKit.colorScheme.text.accent,
-                    )
-                },
-                navigationIconRes = UIKitIcon.ic_chevron_left_16,
-                onNavigationClick = onBack,
-                actions = {
-                    MoonTopAppBarIcon(
-                        painter = painterResource(UIKitIcon.ic_clock_outline_28),
-                        onClick = onComingSoon,
-                    )
-                    MoonTopAppBarIcon(
-                        painter = painterResource(UIKitIcon.ic_magnifying_glass_16),
-                        onClick = onOpenExplore,
-                    )
-                },
-                backgroundColor = Color.Transparent,
-            )
+                }
+            }
         },
     ) {
-        val positions = portfolio?.positions.orEmpty()
-        val availableBalance = portfolio?.balance?.availableBalance
-        val isZeroState = !portfolioLoading && portfolioError == null && positions.isEmpty() &&
-            (availableBalance == null || availableBalance.signum() == 0)
-
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 contentPadding = if (isZeroState) {
-                    PaddingValues(bottom = moonBottomBarHeight())
+                    PaddingValues(top = 8.dp, bottom = moonBottomBarHeight())
                 } else {
-                    WindowInsets.navigationBars.asPaddingValues()
+                    PaddingValues(
+                        top = 8.dp,
+                        bottom = WindowInsets.navigationBars.asPaddingValues()
+                            .calculateBottomPadding(),
+                    )
                 },
             ) {
                 item(key = "balance") {
@@ -216,10 +245,16 @@ private fun PerpsPortfolioContent(
                         )
 
                         else -> PerpsBalanceCard(
-                            balance = portfolio?.balance,
-                            onDeposit = onComingSoon,
+                            balanceFormat = portfolio.balanceFormat,
+                            funded = portfolio.funded,
+                            onDeposit = onDeposit,
+                            onWithdraw = onWithdraw,
                         )
                     }
+                }
+
+                item(key = "balance_gap") {
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 if (positions.isNotEmpty()) {
@@ -227,16 +262,46 @@ private fun PerpsPortfolioContent(
                         MoonBundleTitleCell(title = stringResource(Localization.perps_open_positions))
                     }
                     item(key = "positions_total") {
-                        PerpsPositionsTotalCard(balance = portfolio?.balance)
+                        PerpsPositionsTotalCard(total = portfolio.positionsTotal)
                     }
-                    items(
+                    itemsIndexed(
                         items = positions,
-                        key = { "position_${it.marketIndex}_${it.side}" },
-                    ) { position ->
-                        PerpsPositionRow(
-                            position = position,
-                            onClick = { onOpenMarket(position.marketIndex, position.symbol) },
-                        )
+                        key = { _, item -> "position_${item.position.marketIndex}_${item.position.side}" },
+                    ) { index, item ->
+                        MoonBundleCell(
+                            position = if (index == positions.lastIndex) {
+                                MoonBundlePosition.Footer
+                            } else {
+                                MoonBundlePosition.Middle
+                            },
+                            onClick = { onOpenMarket(item.position.marketIndex, item.position.symbol) },
+                        ) {
+                            PerpsPositionRow(item = item, modifier = Modifier.padding(16.dp))
+                        }
+                    }
+                    item(key = "positions_gap") {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+
+                val openOrders = portfolio.orders
+                if (openOrders.isNotEmpty()) {
+                    item(key = "orders_title") {
+                        MoonBundleTitleCell(title = stringResource(Localization.perps_limit_orders))
+                    }
+                    itemsIndexed(
+                        items = openOrders,
+                        key = { _, item -> "order_${item.order.marketIndex}_${item.order.orderIndex}" },
+                    ) { index, item ->
+                        MoonBundleCell(
+                            position = defaultBundleType(openOrders.size, index),
+                            onClick = { onOpenMarket(item.order.marketIndex, item.order.symbol) },
+                        ) {
+                            PerpsPortfolioOrderRow(item = item, modifier = Modifier.padding(16.dp))
+                        }
+                    }
+                    item(key = "orders_gap") {
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
 
@@ -314,7 +379,7 @@ private fun PerpsPortfolioContent(
                         text = stringResource(Localization.perps_deposit),
                         size = ButtonSizeLarge,
                         buttonColors = ButtonColorsPrimary,
-                        onClick = onComingSoon,
+                        onClick = onDeposit,
                     )
                 }
             }
@@ -323,9 +388,101 @@ private fun PerpsPortfolioContent(
 }
 
 @Composable
+private fun FundingStatusPill(
+    status: PerpsFundingStatus,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(UIKit.colorScheme.background.contentTint)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                },
+            )
+            .padding(start = 16.dp, top = 14.dp, end = 24.dp, bottom = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        when (status) {
+            PerpsFundingStatus.SENDING -> MoonLoader(
+                modifier = Modifier.size(16.dp),
+                color = UIKit.colorScheme.icon.secondary,
+            )
+
+            PerpsFundingStatus.CONFIRMED -> MoonItemIcon(
+                painter = painterResource(UIKitIcon.ic_checkmark_circle_16),
+                size = 16.dp,
+                color = UIKit.colorScheme.accent.green,
+            )
+
+            PerpsFundingStatus.NEEDS_AUTHORIZATION -> MoonItemIcon(
+                painter = painterResource(UIKitIcon.ic_information_circle_16),
+                size = 16.dp,
+                color = UIKit.colorScheme.accent.orange,
+            )
+
+            PerpsFundingStatus.FAILED,
+            PerpsFundingStatus.WITHDRAW_FAILED -> MoonItemIcon(
+                painter = painterResource(UIKitIcon.ic_xmark_circle_16),
+                size = 16.dp,
+                color = UIKit.colorScheme.accent.red,
+            )
+
+            PerpsFundingStatus.REFUNDED -> MoonItemIcon(
+                painter = painterResource(UIKitIcon.ic_exclamationmark_circle_16),
+                size = 16.dp,
+                color = UIKit.colorScheme.accent.orange,
+            )
+        }
+        MoonSmallItemTitle(
+            text = stringResource(
+                when (status) {
+                    PerpsFundingStatus.SENDING -> Localization.sending_transaction
+                    PerpsFundingStatus.CONFIRMED -> Localization.transaction_confirmed
+                    PerpsFundingStatus.NEEDS_AUTHORIZATION -> Localization.perps_deposit_confirm_pending
+                    PerpsFundingStatus.FAILED -> Localization.perps_deposit_failed
+                    PerpsFundingStatus.REFUNDED -> Localization.perps_deposit_refunded
+                    PerpsFundingStatus.WITHDRAW_FAILED -> Localization.perps_withdraw_failed
+                },
+            ),
+        )
+    }
+}
+
+@Composable
+private fun BalanceActionButton(
+    iconRes: Int,
+    background: Color,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(background)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        MoonItemIcon(
+            painter = painterResource(iconRes),
+            size = 28.dp,
+            color = tint,
+        )
+    }
+}
+
+@Composable
 private fun PerpsBalanceCard(
-    balance: PerpsBalance?,
+    balanceFormat: String,
+    funded: Boolean,
     onDeposit: () -> Unit,
+    onWithdraw: () -> Unit,
 ) {
     MoonCardCell(
         image = {
@@ -335,89 +492,63 @@ private fun PerpsBalanceCard(
                 size = 44.dp,
             )
         },
-        title = formatUsd(balance?.availableBalance ?: BigDecimal.ZERO),
+        title = balanceFormat,
         subtitle = stringResource(Localization.perps_balance),
         content = {
-            MoonAccentButton(text = stringResource(Localization.perps_deposit), onClick = onDeposit)
+            if (funded) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BalanceActionButton(
+                        iconRes = UIKitIcon.ic_minus_outline_28,
+                        background = UIKit.colorScheme.background.contentTint,
+                        tint = UIKit.colorScheme.icon.primary,
+                        onClick = onWithdraw,
+                    )
+                    BalanceActionButton(
+                        iconRes = UIKitIcon.ic_plus_outline_28,
+                        background = UIKit.colorScheme.buttonPrimary.primaryBackground,
+                        tint = UIKit.colorScheme.buttonPrimary.primaryForeground,
+                        onClick = onDeposit,
+                    )
+                }
+            } else {
+                MoonAccentButton(
+                    text = stringResource(Localization.perps_deposit),
+                    size = ButtonSizeSmall,
+                    onClick = onDeposit,
+                )
+            }
         },
     )
 }
 
 @Composable
-private fun PerpsPositionsTotalCard(balance: PerpsBalance?) {
-    val pnl = balance?.unrealizedPnlTotal
-    val pnlPercent = balance?.unrealizedPnlPercent()
-
-    MoonBundleCell(contentPadding = MoonBundleCellContent.Default) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+private fun PerpsPositionsTotalCard(total: PerpsPositionsTotalUi) {
+    MoonBundleCell(position = MoonBundlePosition.Header) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        ) {
             MoonItemSubtitle(stringResource(Localization.perps_total_amount))
             Text(
-                text = balance?.equity?.let { formatUsd(it) } ?: PERPS_EMPTY_VALUE,
+                text = total.amountFormat,
                 style = UIKit.typography.h2,
                 color = UIKit.colorScheme.text.primary,
             )
-            Spacer(modifier = Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = pnl?.let { formatSignedUsd(it) } ?: PERPS_EMPTY_VALUE,
+                    text = total.pnlFormat,
                     style = UIKit.typography.body2,
-                    color = perpsChangeColor(pnl),
+                    color = perpsChangeColor(total.pnl),
                 )
-                Text(
-                    text = pnlPercent?.let { formatSignedPercent(it) } ?: PERPS_EMPTY_VALUE,
-                    style = UIKit.typography.body2,
-                    color = perpsChangeColor(pnlPercent).copy(alpha = 0.48f),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PerpsPositionRow(
-    position: PerpsPosition,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clip(Shapes.medium12)
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        PerpsAssetIcon(symbol = position.symbol, iconUrl = position.iconUrl)
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = position.symbol,
-                style = UIKit.typography.label1,
-                color = UIKit.colorScheme.text.primary,
-                maxLines = 1,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                position.leverage?.let { leverage ->
-                    MoonLabel(text = stringResource(Localization.perps_leverage_pattern, leverage))
+                if (total.pnlPercentFormat != null) {
+                    Text(
+                        text = total.pnlPercentFormat,
+                        style = UIKit.typography.body2,
+                        color = perpsChangeColor(total.pnlPercent).copy(alpha = 0.48f),
+                    )
                 }
-                PerpsSideLabel(side = position.side)
             }
-        }
-        Spacer(modifier = Modifier.size(12.dp))
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = position.positionValue?.let { formatUsd(it) } ?: PERPS_EMPTY_VALUE,
-                style = UIKit.typography.label1,
-                color = UIKit.colorScheme.text.primary,
-                maxLines = 1,
-            )
-            Text(
-                text = position.unrealizedPnl?.let { formatSignedUsd(it) } ?: PERPS_EMPTY_VALUE,
-                style = UIKit.typography.body3,
-                color = perpsChangeColor(position.unrealizedPnl),
-                maxLines = 1,
-            )
         }
     }
 }
@@ -454,24 +585,94 @@ private val previewMarkets = listOf(
 )
 
 private val previewPositions = listOf(
-    PerpsPosition(
-        marketIndex = 1,
-        symbol = "BTC",
-        iconUrl = null,
-        side = PerpsPositionSide.LONG,
-        positionValue = BigDecimal("540.00"),
-        unrealizedPnl = BigDecimal("20.50"),
-        leverage = 27,
+    PerpsPositionUi(
+        position = PerpsPosition(
+            marketIndex = 1,
+            symbol = "BTC",
+            iconUrl = null,
+            side = PerpsPositionSide.LONG,
+            margin = BigDecimal("20.00"),
+            unrealizedPnl = BigDecimal("20.50"),
+            equity = BigDecimal("40.50"),
+            leverage = 27,
+        ),
+        equityFormat = "$40.50",
+        pnl = BigDecimal("20.50"),
+        pnlFormat = "+$20.50",
     ),
-    PerpsPosition(
-        marketIndex = 2,
-        symbol = "ETH",
-        iconUrl = null,
-        side = PerpsPositionSide.SHORT,
-        positionValue = BigDecimal("120.00"),
-        unrealizedPnl = BigDecimal("-4.20"),
-        leverage = 10,
+    PerpsPositionUi(
+        position = PerpsPosition(
+            marketIndex = 2,
+            symbol = "ETH",
+            iconUrl = null,
+            side = PerpsPositionSide.SHORT,
+            margin = BigDecimal("12.00"),
+            unrealizedPnl = BigDecimal("-4.20"),
+            equity = BigDecimal("7.80"),
+            leverage = 10,
+        ),
+        equityFormat = "$7.80",
+        pnl = BigDecimal("-4.20"),
+        pnlFormat = "−$4.20",
     ),
+)
+
+private val previewOrders = listOf(
+    PerpsOrderUi(
+        order = PerpsPortfolioOrder(
+            marketIndex = 1,
+            orderIndex = 281474976712112L,
+            clientOrderIndex = null,
+            symbol = "BTC",
+            iconUrl = null,
+            side = PerpsPositionSide.LONG,
+            remainingBase = BigDecimal("0.00150"),
+            limitPrice = BigDecimal("64200.00"),
+            leverage = 10,
+            margin = BigDecimal("9.63"),
+        ),
+        amountFormat = "$9.63",
+        limitPriceFormat = "$64,200.00",
+    ),
+    PerpsOrderUi(
+        order = PerpsPortfolioOrder(
+            marketIndex = 2,
+            orderIndex = 281474976712113L,
+            clientOrderIndex = null,
+            symbol = "ETH",
+            iconUrl = null,
+            side = PerpsPositionSide.SHORT,
+            remainingBase = BigDecimal("0.0250"),
+            limitPrice = BigDecimal("3620.40"),
+            leverage = 5,
+            margin = BigDecimal("18.10"),
+        ),
+        amountFormat = "$18.10",
+        limitPriceFormat = "$3,620.40",
+    ),
+)
+
+private val previewEmptyTotal = PerpsPositionsTotalUi(
+    amountFormat = "$0.00",
+    pnl = BigDecimal.ZERO,
+    pnlFormat = "$0.00",
+    pnlPercent = null,
+    pnlPercentFormat = "—",
+)
+
+private val previewZeroPortfolio = PerpsPortfolioUi(
+    balanceFormat = "$0.00",
+    funded = false,
+    isEmpty = true,
+    positions = emptyList(),
+    positionsTotal = previewEmptyTotal,
+    orders = emptyList(),
+)
+
+private val previewFundedPortfolio = previewZeroPortfolio.copy(
+    balanceFormat = "$1,762.09",
+    funded = true,
+    isEmpty = false,
 )
 
 @Preview
@@ -479,7 +680,7 @@ private val previewPositions = listOf(
 private fun PerpsPortfolioZeroPreview() {
     ThemedPreview(isDarkOnly = true) {
         PerpsPortfolioContent(
-            portfolio = PerpsPortfolio(balance = null, positions = emptyList()),
+            portfolio = previewZeroPortfolio,
             portfolioLoading = false,
             portfolioError = null,
             sort = PerpsSort.VOLUME,
@@ -490,7 +691,12 @@ private fun PerpsPortfolioZeroPreview() {
             onOpenMarket = { _, _ -> },
             onRowVisible = { _, _ -> },
             onOpenExplore = {},
-            onComingSoon = {},
+            onDeposit = {},
+            onWithdraw = {},
+            fundingStatus = null,
+            onFundingPillClick = {},
+            onOpenHistory = {},
+            onLearnBasics = {},
             onBack = {},
         )
     }
@@ -501,14 +707,7 @@ private fun PerpsPortfolioZeroPreview() {
 private fun PerpsPortfolioFundedPreview() {
     ThemedPreview(isDarkOnly = true) {
         PerpsPortfolioContent(
-            portfolio = PerpsPortfolio(
-                balance = PerpsBalance(
-                    availableBalance = BigDecimal("980.15"),
-                    equity = BigDecimal("1865.89"),
-                    unrealizedPnlTotal = BigDecimal("103.80"),
-                ),
-                positions = emptyList(),
-            ),
+            portfolio = previewFundedPortfolio,
             portfolioLoading = false,
             portfolioError = null,
             sort = PerpsSort.VOLUME,
@@ -519,7 +718,12 @@ private fun PerpsPortfolioFundedPreview() {
             onOpenMarket = { _, _ -> },
             onRowVisible = { _, _ -> },
             onOpenExplore = {},
-            onComingSoon = {},
+            onDeposit = {},
+            onWithdraw = {},
+            fundingStatus = null,
+            onFundingPillClick = {},
+            onOpenHistory = {},
+            onLearnBasics = {},
             onBack = {},
         )
     }
@@ -530,13 +734,16 @@ private fun PerpsPortfolioFundedPreview() {
 private fun PerpsPortfolioPositionsPreview() {
     ThemedPreview(isDarkOnly = true) {
         PerpsPortfolioContent(
-            portfolio = PerpsPortfolio(
-                balance = PerpsBalance(
-                    availableBalance = BigDecimal("980.15"),
-                    equity = BigDecimal("1865.89"),
-                    unrealizedPnlTotal = BigDecimal("103.80"),
-                ),
+            portfolio = previewFundedPortfolio.copy(
                 positions = previewPositions,
+                positionsTotal = PerpsPositionsTotalUi(
+                    amountFormat = "$48.30",
+                    pnl = BigDecimal("16.30"),
+                    pnlFormat = "+$16.30",
+                    pnlPercent = BigDecimal("50.94"),
+                    pnlPercentFormat = "+50.94%",
+                ),
+                orders = previewOrders,
             ),
             portfolioLoading = false,
             portfolioError = null,
@@ -548,7 +755,12 @@ private fun PerpsPortfolioPositionsPreview() {
             onOpenMarket = { _, _ -> },
             onRowVisible = { _, _ -> },
             onOpenExplore = {},
-            onComingSoon = {},
+            onDeposit = {},
+            onWithdraw = {},
+            fundingStatus = null,
+            onFundingPillClick = {},
+            onOpenHistory = {},
+            onLearnBasics = {},
             onBack = {},
         )
     }

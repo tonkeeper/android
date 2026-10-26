@@ -12,11 +12,16 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * Values: mercuryo,transak,moonpay,avanchange,changelly,wallet
+ * Values: mercuryo,transak,moonpay,avanchange,changelly,wallet,unknown
  */
-@Serializable
+@Serializable(with = ExchangeMerchantSlugSerializer::class)
 enum class ExchangeMerchantSlug(val value: String) {
     @SerialName(value = "mercuryo")
     mercuryo("mercuryo"),
@@ -29,7 +34,9 @@ enum class ExchangeMerchantSlug(val value: String) {
     @SerialName(value = "changelly")
     changelly("changelly"),
     @SerialName(value = "wallet")
-    wallet("wallet");
+    wallet("wallet"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -55,6 +62,20 @@ enum class ExchangeMerchantSlug(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ExchangeMerchantSlugSerializer : KSerializer<ExchangeMerchantSlug> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ExchangeMerchantSlug {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ExchangeMerchantSlug.entries.firstOrNull { it.value == value }
+            ?: ExchangeMerchantSlug.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ExchangeMerchantSlug) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

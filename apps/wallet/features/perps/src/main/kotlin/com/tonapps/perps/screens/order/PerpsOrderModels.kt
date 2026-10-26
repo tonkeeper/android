@@ -1,16 +1,23 @@
 package com.tonapps.perps.screens.order
 
-/**
- * Hardcoded perps order flow models. These mirror the design ("Long BTC" open-order
- * screen + order-type sheet + limit price screen) and stay UI-only until the real
- * trading API lands.
- */
-enum class PerpsOrderSide(val label: String) {
-    Long("Long"),
-    Short("Short"),
-}
+import com.tonapps.perps.data.PerpsError
+import java.math.BigDecimal
 
 enum class PerpsOrderType {
     Market,
     Limit,
 }
+
+sealed interface PerpsOrderIssue {
+    data object Loading : PerpsOrderIssue
+    data class Failed(val error: PerpsError) : PerpsOrderIssue
+    data object TradingDisabled : PerpsOrderIssue
+    data class BelowMinMargin(val minMargin: BigDecimal, val canDeposit: Boolean) : PerpsOrderIssue
+    data object InsufficientBalance : PerpsOrderIssue
+    data object LimitPriceMissing : PerpsOrderIssue
+}
+
+data class PerpsAutoCloseEstimate(
+    val sizeBase: BigDecimal,
+    val referencePrice: BigDecimal,
+)

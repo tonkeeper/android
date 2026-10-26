@@ -22,6 +22,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.pinToBottomInsets
+import uikit.extensions.setMoonOnClickListener
 
 class DNSRenewScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
@@ -66,7 +67,7 @@ class DNSRenewScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.W
                 locale = requireContext().locale
             ))
             actionButton.pinToBottomInsets()
-            actionButton.setOnClickListener { renewAll() }
+            actionButton.setMoonOnClickListener { renewAll() }
         } else {
             actionButton.visibility = View.GONE
             setBottomMargin(0)

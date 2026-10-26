@@ -10,6 +10,7 @@ import uikit.drawable.HeaderDrawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.useAttributes
+import uikit.extensions.setMoonOnClickListener
 
 class ModalHeader @JvmOverloads constructor(
     context: Context,
@@ -26,7 +27,7 @@ class ModalHeader @JvmOverloads constructor(
     var onCloseClick: (() -> Unit)? = null
         set(value) {
             field = value
-            closeView.setOnClickListener { value?.invoke() }
+            closeView.setMoonOnClickListener { value?.invoke() }
         }
 
     init {

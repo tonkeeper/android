@@ -16,6 +16,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class AccountHolder(
     parent: ViewGroup,
@@ -34,7 +35,7 @@ class AccountHolder(
     }
 
     override fun onBind(item: Item.Account) {
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
         itemView.background = ListCell.Position.SINGLE.drawable(context)
 
         colorView.backgroundTintList = ColorStateList.valueOf(item.color)

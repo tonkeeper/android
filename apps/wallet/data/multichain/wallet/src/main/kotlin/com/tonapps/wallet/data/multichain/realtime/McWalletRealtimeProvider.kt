@@ -2,7 +2,6 @@ package com.tonapps.wallet.data.multichain.realtime
 
 import android.os.SystemClock
 import com.tonapps.async.Async
-import com.tonapps.core.flags.WalletFeature
 import com.tonapps.extensions.AppLifecycleProvider
 import com.tonapps.log.L
 import com.tonapps.network.NetworkMonitor
@@ -72,7 +71,7 @@ class McWalletRealtimeProvider(
                 disabledByBackend,
             ) { isForeground, isOnline, walletId, isDisabledByBackend ->
                 walletId.takeIf {
-                    isForeground && isOnline && !isDisabledByBackend && WalletFeature.Realtime.isEnabled
+                    isForeground && isOnline && !isDisabledByBackend
                 }
             }
                 .distinctUntilChanged()
@@ -112,8 +111,9 @@ class McWalletRealtimeProvider(
                 }
             }
             is RealtimeSignal.Unsubscribed -> signal.channel.toWalletId()?.let { walletId ->
-                _subscribedWalletId.compareAndSet(walletId, null)
-                unsubscribedAt[walletId] = SystemClock.elapsedRealtime()
+                if (_subscribedWalletId.compareAndSet(walletId, null)) {
+                    unsubscribedAt[walletId] = SystemClock.elapsedRealtime()
+                }
             }
             is RealtimeSignal.Publication -> signal.channel.toWalletId()?.let { walletId ->
                 handlePublication(walletId, signal.payload)

@@ -26,6 +26,7 @@ import uikit.widget.AsyncImageView
 import uikit.widget.HeaderView
 import uikit.widget.ProcessTaskView
 import java.util.concurrent.CancellationException
+import uikit.extensions.setMoonOnClickListener
 
 class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_stake_withdraw, wallet), BaseFragment.BottomSheet {
 
@@ -64,10 +65,10 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         taskView = view.findViewById(R.id.task)
 
         val cancelButton = view.findViewById<Button>(R.id.cancel)
-        cancelButton.setOnClickListener { finish() }
+        cancelButton.setMoonOnClickListener { finish() }
 
         confirmButton = view.findViewById(R.id.confirm)
-        confirmButton.setOnClickListener { send() }
+        confirmButton.setMoonOnClickListener { send() }
 
         buttonsView = view.findViewById(R.id.buttons)
 

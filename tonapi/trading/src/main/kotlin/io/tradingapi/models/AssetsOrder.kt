@@ -12,18 +12,25 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * В каком порядке сортировать каталог.
  *
- * Values: desc,asc
+ * Values: desc,asc,unknown
  */
-@Serializable
+@Serializable(with = AssetsOrderSerializer::class)
 enum class AssetsOrder(val value: String) {
     @SerialName(value = "desc")
     desc("desc"),
     @SerialName(value = "asc")
-    asc("asc");
+    asc("asc"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -49,6 +56,20 @@ enum class AssetsOrder(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AssetsOrderSerializer : KSerializer<AssetsOrder> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AssetsOrder {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AssetsOrder.entries.firstOrNull { it.value == value }
+            ?: AssetsOrder.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AssetsOrder) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

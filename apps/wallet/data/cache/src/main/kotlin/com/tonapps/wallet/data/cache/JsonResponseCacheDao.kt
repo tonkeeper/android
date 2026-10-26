@@ -21,7 +21,4 @@ interface JsonResponseCacheDao {
 
     @Query("DELETE FROM json_response_cache WHERE wallet_id = :walletId")
     suspend fun deleteByWalletId(walletId: String)
-
-    @Query("DELETE FROM json_response_cache WHERE wallet_id IN (:walletIds)")
-    suspend fun deleteByWalletIds(walletIds: List<String>)
 }

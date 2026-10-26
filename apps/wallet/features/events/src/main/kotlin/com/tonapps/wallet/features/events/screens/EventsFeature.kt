@@ -8,19 +8,24 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.network.NetworkMonitor
+import com.tonapps.perps.data.PerpMarket
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.account.toApiChain
 import com.tonapps.wallet.data.multichain.realtime.McWalletRealtimeProvider
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import com.tonapps.wallet.features.events.data.HistoryNft
 import com.tonapps.wallet.features.events.data.HistoryNftResolver
+import com.tonapps.wallet.features.events.data.HistoryPerpsMarketResolver
 import com.tonapps.wallet.features.events.data.McEventsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -37,6 +42,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map as flowMap
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -51,12 +57,15 @@ private data class EventsQuery(
     val typeFilter: EventsTypeFilter,
     val tonNetwork: TonNetwork,
     val hideDust: Boolean,
+    val showPerps: Boolean,
+    val hiddenBalance: Boolean,
 )
 
 internal data class EventsTypeSelectorState(
     val items: List<String>,
     val selectedIndex: Int,
     val selected: EventsTypeFilter,
+    val entries: List<EventsTypeFilter>,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -64,12 +73,16 @@ class EventsFeature(
     private val application: Application,
     private val eventsRepository: McEventsRepository,
     private val nftResolver: HistoryNftResolver,
+    private val perpsMarketResolver: HistoryPerpsMarketResolver,
     private val accountRepoLegacy: AccountRepository,
     private val accountRepo: McAccountRepository,
     private val settingsRepository: SettingsRepository,
     networkMonitor: NetworkMonitor,
     private val realtimeProvider: McWalletRealtimeProvider,
+    unifiedAccountRepository: UnifiedAccountRepository,
     private val assetId: String? = null,
+    private val mode: EventsScreenMode = EventsScreenMode.General,
+    awaitsFundingActivity: Boolean = false,
 ) : AsyncViewModel() {
 
     val isOnline: StateFlow<Boolean> = networkMonitor.isOnlineFlow
@@ -92,7 +105,33 @@ class EventsFeature(
 
     val chainFilter: StateFlow<Chain?> field =
         MutableStateFlow(assetId?.let { Asset.coinFromString(it)?.chain })
-    private val typeFilter = MutableStateFlow(EventsTypeFilter.All)
+    private val typeFilter = MutableStateFlow(
+        if (mode == EventsScreenMode.Perps) {
+            EventsTypeFilter.Perps
+        } else {
+            EventsTypeFilter.All
+        },
+    )
+
+    private val perpsAllowed: StateFlow<Boolean> = if (mode == EventsScreenMode.Perps) {
+        MutableStateFlow(true)
+    } else {
+        unifiedAccountRepository.selectedTonWalletFlow
+            .flowMap { wallet ->
+                assetId == null && wallet?.type == WalletType.Multichain && WalletFeature.Perps.isEnabled
+            }
+            .cacheState(initialValue = false)
+    }
+
+    init {
+        bgScope.launch {
+            perpsAllowed.collect { allowed ->
+                if (!allowed && typeFilter.value == EventsTypeFilter.Perps) {
+                    typeFilter.value = EventsTypeFilter.All
+                }
+            }
+        }
+    }
 
     // null = unknown/loading. Means "has a non-dust activity, or has spam" once the dust
     // filter is on, since the initial fetch is filtered too; consumed only for the All filter.
@@ -122,28 +161,50 @@ class EventsFeature(
         .filter { walletId -> walletId == wallet.value?.id }
         .flowMap { }
 
-    internal val activitiesRefreshSignal: Flow<Unit> = merge(pendingActivitiesRefreshSignal, realtimeRefreshSignal)
+    private val fundingActivityRefreshSignal: Flow<Unit> = if (awaitsFundingActivity) {
+        isOnline.flatMapLatest { online ->
+            if (online) {
+                pendingActivitiesTicker().take(PENDING_REFRESH_FAST_TICKS)
+            } else {
+                emptyFlow()
+            }
+        }
+    } else {
+        emptyFlow()
+    }
+
+    internal val activitiesRefreshSignal: Flow<Unit> =
+        merge(pendingActivitiesRefreshSignal, realtimeRefreshSignal, fundingActivityRefreshSignal)
 
     val resolvedNfts: StateFlow<Map<String, HistoryNft>> = nftResolver.nfts
 
-    internal val typeSelector: StateFlow<EventsTypeSelectorState> = typeFilter
-        .flowMap(::typeSelectorState)
-        .cacheState(initialValue = typeSelectorState(EventsTypeFilter.All))
+    val resolvedPerpsMarkets: StateFlow<Map<Int, PerpMarket>> = perpsMarketResolver.markets
+
+    internal val typeSelector: StateFlow<EventsTypeSelectorState> =
+        combine(typeFilter, perpsAllowed, ::typeSelectorState)
+            .cacheState(
+                initialValue = typeSelectorState(typeFilter.value, perpsAllowed = perpsAllowed.value),
+            )
 
     private val queryFlow = combine(
         wallet.filterNotNull(),
         chainFilter,
-        typeFilter,
+        combine(typeFilter, perpsAllowed) { filter, allowed -> filter to allowed },
         accountRepoLegacy.selectedWalletFlow,
-        settingsRepository.hideDustActivitiesFlow,
-    ) { wallet, chain, typeFilter, legacyWallet, hideDust ->
+        combine(
+            settingsRepository.hideDustActivitiesFlow,
+            settingsRepository.hiddenBalancesFlow,
+        ) { hideDust, _ -> hideDust to settingsRepository.hiddenBalances },
+    ) { wallet, chain, (typeFilter, perpsAllowed), legacyWallet, (hideDust, hiddenBalance) ->
         EventsQuery(
             walletId = wallet.id,
             chain = chain,
             assetId = assetId,
             typeFilter = typeFilter,
             tonNetwork = legacyWallet.network,
-            hideDust = hideDust,
+            hideDust = hideDust && mode == EventsScreenMode.General,
+            showPerps = typeFilter.requestsPerps && perpsAllowed,
+            hiddenBalance = hiddenBalance,
         )
     }
 
@@ -165,14 +226,21 @@ class EventsFeature(
     }
 
     internal fun onTypeFilterSelected(index: Int) {
-        EventsTypeFilter.entries.getOrNull(index)?.let { typeFilter.value = it }
+        typeSelector.value.entries.getOrNull(index)?.let { typeFilter.value = it }
     }
 
-    private fun typeSelectorState(selected: EventsTypeFilter) = EventsTypeSelectorState(
-        items = EventsTypeFilter.entries.map { application.getString(it.titleRes) },
-        selectedIndex = EventsTypeFilter.entries.indexOf(selected).coerceAtLeast(0),
-        selected = selected,
-    )
+    private fun typeSelectorState(
+        selected: EventsTypeFilter,
+        perpsAllowed: Boolean,
+    ): EventsTypeSelectorState {
+        val entries = EventsTypeFilter.visible(perpsAllowed)
+        return EventsTypeSelectorState(
+            items = entries.map { application.getString(it.titleRes) },
+            selectedIndex = entries.indexOf(selected).coerceAtLeast(0),
+            selected = selected,
+            entries = entries,
+        )
+    }
 
     fun invalidateCache() {
         eventsRepository.invalidateFirstPageCache()
@@ -200,6 +268,7 @@ class EventsFeature(
                     assetId = query.assetId,
                     typeFilter = query.typeFilter,
                     hideDust = query.hideDust,
+                    showPerps = query.showPerps,
                     onInitialLoad = { hasAnyActivity.value = it },
                     onPageLoaded = { activities, isInitialLoad ->
                         if (isInitialLoad) {
@@ -208,6 +277,9 @@ class EventsFeature(
                         if (activities.isNotEmpty()) {
                             viewModelScope.launch {
                                 nftResolver.resolve(activities, query.tonNetwork)
+                            }
+                            viewModelScope.launch {
+                                perpsMarketResolver.resolve(activities)
                             }
                         }
                     },
@@ -221,6 +293,7 @@ class EventsFeature(
                     data = data,
                     application = application,
                     locale = locale,
+                    hiddenBalance = query.hiddenBalance,
                 )
             },
         )
@@ -247,8 +320,9 @@ class EventsFeature(
         data: PagingData<HistoryEventEntity>,
         application: Application,
         locale: Locale,
+        hiddenBalance: Boolean,
     ): PagingData<WalletActivityListItem> {
-        return data.map { WalletActivityListItem.Entry(it) }
+        return data.map { WalletActivityListItem.Entry(activity = it, hiddenBalance = hiddenBalance) }
             .insertSeparators { before, after ->
                 after ?: return@insertSeparators null
 
@@ -263,7 +337,7 @@ class EventsFeature(
                 }
 
                 WalletActivityListItem.DateHeader(
-                    sectionKey = afterKey,
+                    firstActivityKey = after.activity.listKey,
                     title = WalletActivityDateHeaderUtils.formatGroupDateLabel(
                         context = application,
                         epochMillis = afterMillis,

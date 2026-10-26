@@ -19,7 +19,6 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
 import com.tonapps.core.helper.TransactionSentAnalytics
-import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.deposit.usecase.emulation.Emulated.Companion.buildFee
@@ -62,6 +61,7 @@ import com.tonapps.wallet.data.swap.SwapRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tx.TransactionManager
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -122,6 +122,10 @@ class OmnistonViewModel(
 
     private var initialFromCurrency: WalletCurrency = defaultFromCurrency
     private var initialToCurrency: WalletCurrency = defaultToCurrency
+
+    private val initiatedBy = TransactionSentAnalytics.initiatedBy(args.initiator)
+
+    private val utm = args.utm
 
     private val tokenizedCatalogCache = ConcurrentHashMap<String, Boolean>()
 
@@ -456,9 +460,17 @@ class OmnistonViewModel(
         val token = uiStateToken.value.fromToken ?: return
         val balance = token.token.balance.value
         val isTon = token.token.isTon
+        // Nothing above the fee reserve: the amount stays as it was and a toast says why, as in the
+        // multichain swap.
+        if (isTon && balance <= MAX_TON_RESERVED_FOR_FEE) {
+            viewModelScope.launch {
+                val reserve = CurrencyFormatter.format(value = MAX_TON_RESERVED_FOR_FEE)
+                toast(getString(Localization.swap_error_max_below_reserve, reserve))
+            }
+            return
+        }
         val target = when {
-            isTon && balance > MAX_TON_RESERVED_FOR_FEE -> balance - MAX_TON_RESERVED_FOR_FEE
-            isTon -> Coins.ZERO
+            isTon -> balance - MAX_TON_RESERVED_FOR_FEE
             else -> balance
         }
         if (twinInput.state.focus != TwinInput.Type.Send) {
@@ -735,7 +747,7 @@ class OmnistonViewModel(
                 operation = Events.RedOperations.RedOperationsOperation.Send,
                 attemptSource = null,
                 startedAtMs = currentTimeSecondsInt(),
-                otherMetadata = WalletRedMetadata.walletKit(),
+                otherMetadata = null,
             )
             try {
                 val isBattery = state.isPreferredFeeMethodBattery
@@ -790,8 +802,9 @@ class OmnistonViewModel(
                     } else {
                         Events.TransactionSent.TransactionSentFeeAsset.Coin
                     },
-                    initiatedBy = Events.TransactionSent.TransactionSentInitiatedBy.User,
+                    initiatedBy = initiatedBy,
                     toAsset = state.toCurrency.analyticsAssetId(),
+                    utm = utm,
                 )
 
                 val finishedAtMs = currentTimeMillis()
@@ -806,7 +819,7 @@ class OmnistonViewModel(
                     errorMessage = null,
                     errorType = null,
                     stage = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
+                    otherMetadata = null,
                 )
                 withContext(Dispatchers.Main) {
                     onSuccess()
@@ -820,7 +833,6 @@ class OmnistonViewModel(
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
                     finishedAtMs = currentTimeSecondsInt(),
                     error = e,
-                    otherMetadata = WalletRedMetadata.walletKit(),
                 )
                 withContext(Dispatchers.Main) {
                     onError(e)
@@ -982,7 +994,7 @@ class OmnistonViewModel(
             operation = Events.RedOperations.RedOperationsOperation.Quote,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         var quoteReceived = false
         swapStreamJob = api.swapStream(
@@ -1000,7 +1012,6 @@ class OmnistonViewModel(
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
                     finishedAtMs = currentTimeSecondsInt(),
                     error = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
                 )
             }
             setMessages(messages)

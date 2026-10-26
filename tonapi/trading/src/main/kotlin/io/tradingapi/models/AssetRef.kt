@@ -13,6 +13,11 @@ package io.tradingapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class AssetRef(
@@ -56,18 +61,37 @@ data class AssetRef(
     @SerialName(value = "reference_id")
     val referenceId: String? = null,
     @SerialName(value = "perps")
-    val perps: PerpMarket? = null
+    val perps: PerpMarket? = null,
+
+    /* Perp-рынки на базовый актив этого spot-ассета — точка входа в Perps со страницы обычного актива. Поле есть только если хотя бы один рынок найден; отсутствие поля означает, что perp-рынка нет. У самих perp-рынков (asset_type=perpetuals) поле не приходит никогда. Связь строится на сервере, а не по тикеру на клиенте: рынок привязан, если его reference_id — этот же ассет (или та же нативная монета в другой сети: ETH в eth/base/arb/robinhood), другой контракт той же монеты по CoinMarketCap (мосты), а для stocks/etfs — токен того же типа под тикером рынка или его tokenized-вариантом (TSLA, TSLAx, TSLAon). Рынков может быть несколько; первым идёт рынок, для которого этот ассет — прямой reference_id, дальше — по объёму за 24ч. Открывать рынок по id (он же assetId для /details).  */
+    @SerialName(value = "perp_markets")
+    val perpMarkets: List<PerpMarketLink>? = null
 ) {
     /**
      * Усовершенствованная версия is_scam
      *
-     * Values: trusted,whitelist,none,blacklist
+     * Values: trusted,whitelist,none,blacklist,unknown
      */
-    @Serializable
+    @Serializable(with = VerificationSerializer::class)
     enum class Verification(val value: String) {
         @SerialName(value = "trusted") trusted("trusted"),
         @SerialName(value = "whitelist") whitelist("whitelist"),
         @SerialName(value = "none") none("none"),
-        @SerialName(value = "blacklist") blacklist("blacklist");
+        @SerialName(value = "blacklist") blacklist("blacklist"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object VerificationSerializer : KSerializer<Verification> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Verification {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Verification.entries.firstOrNull { it.value == value }
+                ?: Verification.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Verification) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

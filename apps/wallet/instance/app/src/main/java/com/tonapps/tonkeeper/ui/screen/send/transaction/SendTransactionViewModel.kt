@@ -16,6 +16,9 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
 import com.tonapps.tonkeeper.extensions.method
 import com.tonapps.tonkeeper.helper.BatteryHelper
+import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectSignMessageValidation
+import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
@@ -47,11 +50,13 @@ import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import org.ton.contract.wallet.WalletTransfer
 import java.math.BigInteger
@@ -66,6 +71,7 @@ class SendTransactionViewModel(
     private val forceRelayer: Boolean,
     private val broadcastVia: BroadcastVia,
     private val analyticsContext: SendTransactionAnalyticsContext,
+    private val mode: SendTransactionMode,
     private val accountRepository: AccountRepository,
     private val tokenRepository: TokenRepository,
     private val settingsRepository: SettingsRepository,
@@ -81,6 +87,9 @@ class SendTransactionViewModel(
 
     private val currency = settingsRepository.currency
     private val isBattery = AtomicBoolean(false)
+
+    private val isSignMessage: Boolean
+        get() = mode is SendTransactionMode.SignMessage
 
     private val _stateFlow = MutableStateFlow<SendTransactionState>(SendTransactionState.Loading)
     val stateFlow = _stateFlow.asStateFlow()
@@ -117,11 +126,15 @@ class SendTransactionViewModel(
         }
 
     init {
-        analytics.tcViewConfirm(
+        analytics.eventDelegateTaggedWith(analyticsContext.utm).tcViewConfirm(
             request.appUri.toString(),
             request.targetAddressValue
         )
         viewModelScope.launch(Dispatchers.IO) {
+            if (isSignMessage) {
+                emulateSignMessage()
+                return@launch
+            }
             val tokens = getTokens()
             val useBattery = BatteryHelper.isBatteryIsEnabledTx(
                 wallet,
@@ -246,11 +259,70 @@ class SendTransactionViewModel(
         }
     }
 
-    private suspend fun createDetails(emulated: Emulated): SendTransactionState.Details {
+    /**
+     * Preview for TON Connect `signMessage`. The relayer pays the network fee and tops the balance
+     * up as needed, so the emulation runs with a balance override, the TON at risk is capped at the
+     * wallet's own balance, and an insufficient balance never blocks the sheet. The jetton transfer
+     * to the tonapi gasless relay is the relayer's fee and is labelled as such.
+     */
+    private suspend fun emulateSignMessage() = coroutineScope {
+        try {
+            val tokens = getTokens()
+            val transfers = transfers(tokens.filter { it.isRequestMinting }, true, false)
+            message = signMessageBody(transfers)
+
+            val relayAddressDeferred = async { api.getGaslessRelayAddress(wallet.network) }
+            val emulated = emulationUseCase(
+                message = message!!,
+                useBattery = false,
+                forceRelayer = false,
+                params = true,
+                checkTonBalance = false,
+                capTonRiskToBalance = true,
+            )
+            emulationReadyDate.set(System.currentTimeMillis())
+
+            if (emulated.failed) {
+                _stateFlow.value = SendTransactionState.FailedEmulation
+                return@coroutineScope
+            }
+            tonAnalyticsTransfer = emulated.analyticsTransfer()
+            tonDetails = createDetails(emulated, includeFee = false, relayAddress = relayAddressDeferred.await())
+            _stateFlow.value = tonDetails!!
+        } catch (e: Throwable) {
+            IssueHelper.recordException(
+                APIException.Emulation(
+                    boc = message?.createSignedBody(EmptyPrivateKeyEd25519.invoke(), true)?.base64() ?: "failed",
+                    sourceUri = request.appUri,
+                    cause = e
+                )
+            )
+            toast(e.getDebugMessage() ?: getString(Localization.unknown_error))
+            _stateFlow.value = SendTransactionState.FailedEmulation
+        }
+    }
+
+    private suspend fun createDetails(
+        emulated: Emulated,
+        includeFee: Boolean = true,
+        relayAddress: String? = null,
+    ): SendTransactionState.Details {
         val fee: SendFee =
             emulated.buildFee(wallet, api, accountRepository, batteryRepository, ratesRepository)
 
-        val details = historyHelper.create(wallet, emulated, fee)
+        val details = historyHelper.create(wallet, emulated, fee, includeFee).let { created ->
+            if (relayAddress == null) {
+                created
+            } else {
+                created.copy(items = created.items.map { item ->
+                    if (item is HistoryItem.Event && item.recipient?.address?.equalsAddress(relayAddress) == true) {
+                        item.copy(actionTitle = getString(Localization.fee))
+                    } else {
+                        item
+                    }
+                })
+            }
+        }
         val totalFormatBuilder = StringBuilder(getString(Localization.total, emulated.totalFormat))
         if (emulated.nftCount > 0) {
             totalFormatBuilder.append(" + ").append(emulated.nftCount).append(" NFT")
@@ -307,15 +379,48 @@ class SendTransactionViewModel(
         return transactions.toList()
     }
 
-    private suspend fun messageBody(transfers: List<WalletTransfer>): MessageBodyEntity {
+    private suspend fun messageBody(
+        transfers: List<WalletTransfer>,
+        validUntil: Long = request.validUntil,
+    ): MessageBodyEntity {
         val seqNo = request.seqNo ?: accountRepository.getSeqno(wallet)
         return accountRepository.messageBody(
             wallet = wallet,
             seqNo = seqNo,
-            validUntil = request.validUntil,
+            validUntil = validUntil,
             transfers = transfers
         )
     }
+
+    /**
+     * The body `signMessage` signs, and its preview emulates: the lifetime follows the dApp's
+     * `valid_until`, capped as in TON WalletKit, and an already expired request fails.
+     */
+    private suspend fun signMessageBody(transfers: List<WalletTransfer>): MessageBodyEntity {
+        val now = api.getServerTime(wallet.network).toLong()
+        val validUntil = TonConnectSignMessageValidation.signValidUntil(request.validUntil, now)
+            ?: throw BridgeException(message = "Request expired")
+        return messageBody(transfers, validUntil)
+    }
+
+    /**
+     * TON Connect `signMessage`: signs the request as an `internal_signed` W5 body, wraps it into an
+     * internal message to this wallet and emits that message's base64 BOC. Nothing is broadcast; the
+     * dApp hands the message to a relayer. An already expired request fails before the passcode
+     * prompt.
+     */
+    fun signMessage() = flow {
+        val compressedTokens = getTokens().filter { it.isRequestMinting }
+        val transfers = transfers(compressedTokens, false, false)
+        val message = signMessageBody(transfers)
+        val unsignedBody = message.createUnsignedBody(internalMessage = true)
+        val signature = withContext(Dispatchers.Main) {
+            signUseCase(context = context, wallet = wallet, unsignedBody = unsignedBody)
+        }
+        val signedBody = wallet.contract.signedBody(signature, unsignedBody)
+        val internalMessage = wallet.contract.createSignedInternalMessageCell(message.seqNo, signedBody)
+        emit(internalMessage.base64())
+    }.flowOn(Dispatchers.IO)
 
     fun send() = flow {
         val isBattery = isBattery.get()
@@ -373,7 +478,7 @@ class SendTransactionViewModel(
             isBattery -> "battery"
             else -> "ton"
         }
-        analytics.tcSendSuccess(
+        analytics.eventDelegateTaggedWith(analyticsContext.utm).tcSendSuccess(
             url = request.appUri.toString(),
             address = request.targetAddressValue,
             feePaid = feePaid
@@ -401,6 +506,7 @@ class SendTransactionViewModel(
             initiatedBy = initiatedBy,
             appId = dappHost,
             dappUrl = dappHost,
+            utm = analyticsContext.utm,
         )
         logSendSuccess(isBattery)
         emit(cells.map { it.base64() }.toTypedArray())
@@ -493,7 +599,7 @@ class SendTransactionViewModel(
             tonAnalyticsTransfer
         }
         val transfer = emulatedTransfer ?: nativeAnalyticsTransfer()
-        analytics.events.sendNative.sendSuccess(
+        analytics.eventsTaggedWith(analyticsContext.utm).sendNative.sendSuccess(
             from = from,
             asset = transfer.asset,
             amount = transfer.amount,

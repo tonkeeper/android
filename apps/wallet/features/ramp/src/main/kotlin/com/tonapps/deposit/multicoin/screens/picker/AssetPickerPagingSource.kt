@@ -35,6 +35,8 @@ internal class AssetPickerPagingSource(
                 cursor = params.key,
                 limit = params.loadSize,
                 availableOnly = true,
+                verifiedOnly = false,
+                hideDust = false,
             )
 
             val accounts = page.accounts.dropAlreadyLoaded()

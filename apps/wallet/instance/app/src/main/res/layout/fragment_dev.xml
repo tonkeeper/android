@@ -27,6 +27,19 @@
                 android:layout_height="match_parent">
 
                 <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/dev_warning"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:layout_marginBottom="@dimen/offsetMedium"
+                    android:background="@drawable/bg_button_orange"
+                    android:paddingHorizontal="@dimen/offsetMedium"
+                    android:paddingVertical="12dp"
+                    android:text="@string/dev_menu_warning"
+                    android:textAppearance="@style/TextAppearance.Body3"
+                    android:textColor="@color/constantBlack" />
+
+                <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/device"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -88,21 +101,13 @@
                     android:paddingHorizontal="8dp"
                     android:visibility="gone" />
 
-                <uikit.widget.item.ItemSwitchView
-                    android:id="@+id/tetra"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/offsetMedium"
-                    android:text="Tetra L2"
-                    app:position="first" />
-
                 <uikit.widget.item.ItemTextView
                     android:id="@+id/import_testnet_wallet"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:text="Import Testnet Wallet"
-                    app:position="middle" />
+                    app:position="first" />
 
                 <uikit.widget.item.ItemSwitchView
                     android:id="@+id/blur"
@@ -135,6 +140,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:text="Copy install ID"
+                    app:position="middle" />
+
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/copy_wallet_id"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Copy wallet ID"
                     app:position="middle" />
 
                 <uikit.widget.item.ItemSwitchView
@@ -194,6 +207,14 @@
                     app:position="middle" />
 
                 <uikit.widget.item.ItemTextView
+                    android:id="@+id/remove_new_networks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Remove SOL, POL, AVAX from selected wallet"
+                    app:position="middle" />
+
+                <uikit.widget.item.ItemTextView
                     android:id="@+id/import_legacy"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -223,14 +244,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:text="Tooltips"
-                    app:position="middle" />
-
-                <uikit.widget.item.ItemTextView
-                    android:id="@+id/raffle_qa"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="@dimen/offsetMedium"
-                    android:text="Raffle QA"
                     app:position="last" />
 
 

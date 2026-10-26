@@ -9,6 +9,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.widget.InputView
 import uikit.widget.RowLayout
+import uikit.extensions.setMoonOnClickListener
 
 class AddressHolder(
     parent: ViewGroup,
@@ -35,11 +36,11 @@ class AddressHolder(
             }
         }
 
-        addressBookView.setOnClickListener {
+        addressBookView.setMoonOnClickListener {
             openAddressBook()
         }
 
-        pasteView.setOnClickListener {
+        pasteView.setMoonOnClickListener {
             inputView.text = context.clipboardText()
         }
 

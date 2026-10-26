@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
-import uikit.HapticHelper
 import uikit.base.BaseFragment
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -40,25 +39,6 @@ abstract class QRCameraScreen(
         val isFlashEnabled: Boolean,
     )
 
-    private companion object {
-
-        private fun createCameraController(
-            context: Context,
-        ): LifecycleCameraController {
-            val cameraController = LifecycleCameraController(context)
-            cameraController.isTapToFocusEnabled = true
-            cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
-            cameraController.cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-            cameraController.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
-            cameraController.imageAnalysisOutputImageFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888
-            cameraController.cameraControl?.let { control ->
-                control.setLinearZoom(0.1f)
-                control.setExposureCompensationIndex(1)
-            }
-            return cameraController
-        }
-    }
-
     private val qrAnalyzer = QRImageAnalyzer()
     private val cameraController: LifecycleCameraController by lazy {
         createCameraController(requireContext())
@@ -70,6 +50,8 @@ abstract class QRCameraScreen(
     val readerFlow: Flow<String> = qrAnalyzer.flow.map {
         it.rawValue
     }.filterNotNull().shareIn(lifecycleScope, SharingStarted.Lazily, 1)
+
+    val scanFlow: Flow<String> = qrAnalyzer.scanFlow
 
     private val _flashConfigFlow = MutableStateFlow(FlashConfig(
         isFlashAvailable = false,
@@ -132,9 +114,7 @@ abstract class QRCameraScreen(
     fun toggleFlash() {
         val cameraController = cameraView.controller ?: return
         val flashMode = cameraController.torchState.value == TorchState.ON
-        cameraController.enableTorch(!flashMode).addListener({
-            HapticHelper.selection(requireContext())
-        }, cameraExecutor)
+        cameraController.enableTorch(!flashMode)
     }
 
     override fun onDestroy() {
@@ -143,5 +123,24 @@ abstract class QRCameraScreen(
         qrAnalyzer.release()
         cameraExecutor.shutdown()
         parentFragmentManager.unregisterFragmentLifecycleCallbacks(lifecycleCallback)
+    }
+
+    private companion object {
+
+        private fun createCameraController(
+            context: Context,
+        ): LifecycleCameraController {
+            val cameraController = LifecycleCameraController(context)
+            cameraController.isTapToFocusEnabled = true
+            cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+            cameraController.cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            cameraController.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
+            cameraController.imageAnalysisOutputImageFormat = ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888
+            cameraController.cameraControl?.let { control ->
+                control.setLinearZoom(0.1f)
+                control.setExposureCompensationIndex(1)
+            }
+            return cameraController
+        }
     }
 }

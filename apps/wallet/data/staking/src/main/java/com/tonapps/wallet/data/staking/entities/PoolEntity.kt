@@ -25,20 +25,24 @@ data class PoolEntity(
     val isTonstakers: Boolean
         get() = implementation == StakingPool.Implementation.LiquidTF
 
-    constructor(
-        info: PoolInfo,
-        maxApy: Boolean
-    ): this(
-        address = info.address,
-        name = info.name,
-        implementation = StakingPool.implementation(info.implementation),
-        minStake = Coins.of(info.minStake),
-        apy = BigDecimal(info.apy),
-        verified = info.verified,
-        cycleStart = info.cycleStart,
-        cycleEnd = info.cycleEnd,
-        liquidJettonMaster = info.liquidJettonMaster,
-        maxApy = maxApy
-    )
+    companion object {
+
+        /** Returns null when the pool's implementation isn't one the app can stake into. */
+        fun of(info: PoolInfo, maxApy: Boolean): PoolEntity? {
+            val implementation = StakingPool.implementation(info.implementation) ?: return null
+            return PoolEntity(
+                address = info.address,
+                name = info.name,
+                implementation = implementation,
+                minStake = Coins.of(info.minStake),
+                apy = BigDecimal(info.apy),
+                verified = info.verified,
+                cycleStart = info.cycleStart,
+                cycleEnd = info.cycleEnd,
+                liquidJettonMaster = info.liquidJettonMaster,
+                maxApy = maxApy
+            )
+        }
+    }
 
 }

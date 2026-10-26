@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -74,7 +75,9 @@ fun AssetsScreen(
         onSearch = { query, tab -> feature.sendAction(AssetsAction.Search(query, tab)) },
         onLoadMore = { feature.sendAction(AssetsAction.LoadMore) },
         onAssetClick = {
-            feature.trackAssetClick(it)
+            feature.sendAction(
+                AssetsAction.TrackAssetClick(it, (state as? AssetsState.Data)?.query.orEmpty())
+            )
             onOpenAssetDetails(it)
         },
         onBack = onBack,
@@ -127,7 +130,8 @@ private fun AssetsContent(
     MoonScaffold(
         modifier = Modifier
             .nestedScroll(rememberNestedScrollInteropConnection())
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .imePadding(),
         title = stringResource(Localization.crypto),
         onBack = onBack,
     ) {

@@ -12,6 +12,12 @@ package io.tradingapi.models
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class MarketMetricsSummary(
@@ -32,8 +38,8 @@ data class MarketMetricsSummary(
     val provider: String,
 
     /* Timestamp, когда метрика была актуальна у провайдера. */
-    @SerialName(value = "as_of")
-    val asOf: String,
+    @Contextual @SerialName(value = "as_of")
+    val asOf: java.time.OffsetDateTime,
 
     /* Рыночная капитализация в USD (decimal string). Отсутствует, если неизвестна. */
     @SerialName(value = "market_cap")

@@ -14,6 +14,11 @@ import com.tonapps.tonkeeper.ui.screen.card.CardScreen
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.dapps.DAppsRepository
+import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.chainkit.core.chain.model.account.Network
+import com.tonapps.wallet.data.multichain.account.displayOrder
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +39,16 @@ class DevViewModel(
     private val dAppsRepository: DAppsRepository,
     private val environment: Environment,
     private val api: API,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
+    private val mcAccountRepository: McAccountRepository,
 ): BaseWalletVM(app) {
 
     val installId: String
         get() = settingsRepository.installId
+
+    val selectedWalletId: String?
+        get() = unifiedAccountRepository.getSelectedWalletId()
 
     val debugCountryFlow = environment.countryDataFlow.map {
         val lines = mutableListOf<String>()
@@ -67,6 +77,23 @@ class DevViewModel(
             withContext(Dispatchers.Main) {
                 callback(newJSON.toString())
             }
+        }
+    }
+
+    // For QA of the new networks screen: these become "new" again for the selected wallet.
+    fun removeNewNetworks(callback: (result: String) -> Unit) {
+        viewModelScope.launch {
+            val result = try {
+                val walletId = selectedWalletId ?: throw IllegalStateException("No selected wallet")
+                val names = setOf("Solana", "Polygon", "Avalanche")
+                val chains = Chain.displayOrder.filter { it.network.mode == Network.Mode.Mainnet && it.name in names }
+                mcAccountRepository.removeChains(walletId, chains)
+                "Removed ${chains.joinToString { it.name }}. Lock and unlock the app to add them back."
+            } catch (e: Throwable) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+                "Failed: ${e.bestMessage}"
+            }
+            callback(result)
         }
     }
 

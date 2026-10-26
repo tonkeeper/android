@@ -2,6 +2,7 @@ package ui.components.moon
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +13,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImagePainter
+import coil3.request.ImageRequest
 import com.tonapps.uikit.icon.UIKitIcon
 import ui.painterResource
 import ui.theme.Dimens
@@ -82,9 +83,15 @@ fun MoonActionIcon(
     Box(
         modifier = modifier
             .size(size)
+            .let {
+                if (onClick != null) {
+                    it.clickable(onClick = onClick)
+                } else {
+                    it
+                }
+            }
             .clip(CircleShape)
-            .background(backgroundColor)
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it },
+            .background(backgroundColor),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -233,9 +240,11 @@ fun MoonItemImage(
     onClick: (() -> Unit)? = null,
     onState: ((AsyncImagePainter.State) -> Unit)? = null,
     contentScale: ContentScale = ContentScale.Crop,
+    builder: ImageRequest.Builder.() -> ImageRequest.Builder = { this },
 ) {
     MoonAsyncImage(
         image = image,
+        builder = builder,
         placeholder = placeholder,
         error = error,
         modifier = modifier.defaultImageModifier(size, size, shape, onClick),
@@ -311,7 +320,7 @@ private fun Modifier.defaultIconModifier(
             if (onClick != null) {
                 clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = false),
+                    indication = LocalIndication.current,
                     onClick = onClick
                 )
             } else {
@@ -333,7 +342,7 @@ private fun Modifier.defaultImageModifier(
             if (onClick != null) {
                 clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = false),
+                    indication = LocalIndication.current,
                     onClick = onClick
                 )
             } else {

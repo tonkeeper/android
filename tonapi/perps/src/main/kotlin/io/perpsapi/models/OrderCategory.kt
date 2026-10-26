@@ -12,13 +12,18 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Functional category of an order.
  *
- * Values: `open`,close,take_profit,stop_loss,liquidation
+ * Values: `open`,close,take_profit,stop_loss,liquidation,unknown
  */
-@Serializable
+@Serializable(with = OrderCategorySerializer::class)
 enum class OrderCategory(val value: String) {
     @SerialName(value = "open")
     `open`("open"),
@@ -29,7 +34,9 @@ enum class OrderCategory(val value: String) {
     @SerialName(value = "stop_loss")
     stop_loss("stop_loss"),
     @SerialName(value = "liquidation")
-    liquidation("liquidation");
+    liquidation("liquidation"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -55,6 +62,20 @@ enum class OrderCategory(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object OrderCategorySerializer : KSerializer<OrderCategory> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): OrderCategory {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return OrderCategory.entries.firstOrNull { it.value == value }
+            ?: OrderCategory.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: OrderCategory) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

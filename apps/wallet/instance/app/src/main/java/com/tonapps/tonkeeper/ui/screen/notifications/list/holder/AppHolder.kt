@@ -8,6 +8,8 @@ import com.tonapps.tonkeeperx.R
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 import uikit.widget.SwitchView
+import uikit.extensions.MoonHaptic
+import uikit.extensions.setMoonOnClickListener
 
 class AppHolder(
     parent: ViewGroup,
@@ -18,14 +20,11 @@ class AppHolder(
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
     private val pushView = findViewById<SwitchView>(R.id.push)
 
-    init {
-        itemView.setOnClickListener {
-            pushView.toggle(true)
-        }
-    }
-
     override fun onBind(item: Item.App) {
         itemView.background = item.position.drawable(context)
+        itemView.setMoonOnClickListener(haptic = MoonHaptic.None) {
+            pushView.toggle(true)
+        }
         iconView.setImageURI(item.icon, null)
         titleView.text = item.name
         pushView.setChecked(item.pushEnabled, false)

@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import com.tonapps.deposit.screens.method.RampAsset
-import com.tonapps.deposit.screens.provider.ProviderConfirmDialog
 import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization

@@ -2,7 +2,6 @@ package com.tonapps.portfolio.domain
 
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.icu.Coins
 import com.tonapps.legacy.assets.AssetsManager
 import com.tonapps.portfolio.wallet.CommonWallet
@@ -35,12 +34,7 @@ class WalletFiatBalanceInteractorImpl(
             }?.let { formatLegacy(wallet.wallet, it) }
 
             is CommonWallet.Mc -> safeCall {
-                mcAccountRepository.getCachedAccounts(
-                    walletId = wallet.id,
-                    currency = settingsRepository.currency.code,
-                    verifiedOnly = safeMode(wallet.id),
-                    hideDust = settingsRepository.hideDustAssets,
-                )?.total
+                mcAccountRepository.getCachedAccounts(wallet.id)?.total
             }?.let { formatMc(it) }
         }
     }
@@ -62,21 +56,10 @@ class WalletFiatBalanceInteractorImpl(
             is CommonWallet.Mc -> safeCall {
                 mcAccountRepository.fetchAccounts(
                     walletId = wallet.id,
-                    currency = settingsRepository.currency.code,
-                    // There is no dedicated totals endpoint — the total only comes with an assets
-                    // page, and fetchAccounts with cursor == null saves that page to a cache whose
-                    // key ignores limit. Request the same page size as the wallet screen's pager
-                    // so the cached first page is never truncated by this call.
                     limit = WALLET_ASSETS_PAGE_SIZE,
-                    verifiedOnly = safeMode(wallet.id),
-                    hideDust = settingsRepository.hideDustAssets,
                 ).total
             }?.let { formatMc(it) }
         }
-    }
-
-    private fun safeMode(walletId: String): Boolean {
-        return settingsRepository.isSafeModeEnabled(walletId, TonNetwork.MAINNET)
     }
 
     private fun formatLegacy(wallet: WalletEntity, balance: Coins): CharSequence {

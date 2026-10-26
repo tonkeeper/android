@@ -7,6 +7,7 @@ import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentCategory
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentCategoryDetail
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentFeeAsset
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentInitiatedBy
+import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentLedgerModel
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletInterface
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletMode
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletSource
@@ -47,7 +48,8 @@ Chain and network are NOT separate fields: they are carried inside `asset` (and 
         isMax: Boolean?,
         toAsset: String?,
         stakingProvider: String?,
-        isLiquid: Boolean?
+        isLiquid: Boolean?,
+        ledgerModel: TransactionSentLedgerModel?
     ) {
         val props = hashMapOf<String, Any>(
             "category" to category.key,
@@ -66,6 +68,7 @@ Chain and network are NOT separate fields: they are carried inside `asset` (and 
         toAsset?.let { props["to_asset"] = it }
         stakingProvider?.let { props["staking_provider"] = it }
         isLiquid?.let { props["is_liquid"] = it }
+        ledgerModel?.let { props["ledger_model"] = it.key }
         trackEvent("transaction_sent", props)
     }
 }

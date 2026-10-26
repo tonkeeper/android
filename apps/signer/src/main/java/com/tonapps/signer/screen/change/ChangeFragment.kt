@@ -17,6 +17,7 @@ import uikit.extensions.pinToBottomInsets
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.LoaderView
+import uikit.extensions.setMoonOnClickListener
 
 class ChangeFragment: BaseFragment(R.layout.fragment_change), BaseFragment.SwipeBack {
 
@@ -65,7 +66,7 @@ class ChangeFragment: BaseFragment(R.layout.fragment_change), BaseFragment.Swipe
         actionView.pinToBottomInsets()
 
         continueButton = view.findViewById(R.id.done)
-        continueButton.setOnClickListener { changeViewModel.continuePassword() }
+        continueButton.setMoonOnClickListener { changeViewModel.continuePassword() }
 
         loaderView = view.findViewById(R.id.loader)
         successView = view.findViewById(R.id.success)

@@ -19,6 +19,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.navigation.Navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 import uikit.widget.BadgeTextView
 
 class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_cell_jetton) {
@@ -34,7 +35,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
     }
 
     override fun onBind(item: Item.Token) {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             openToken(item)
         }
 

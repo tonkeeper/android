@@ -35,6 +35,7 @@ data class CrosshairEvent(
     val time: Long,
     val point: CrosshairPoint,
     val seriesData: JsonObject,
+    val leftmostIndex: Int?,
 )
 
 data class CrosshairPoint(

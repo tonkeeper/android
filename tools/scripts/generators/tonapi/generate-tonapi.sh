@@ -1,11 +1,17 @@
 #!/bin/bash
 
-# Usage: generate-tonapi.sh <openapi-url> <package-name> <target-module>
+# Usage: generate-tonapi.sh <openapi-url> <package-name> <target-module> [open-enums] [schema-mappings]
 # Example: generate-tonapi.sh "https://..." "tonapi" "tonapi:tonkeeper"
+# open-enums: "true" decodes an unknown string enum value as `unknown` instead of failing.
+# schema-mappings: "Schema=fully.qualified.Type,..." to use instead of the generated model.
 
-OPENAPI_URL="$1"
-PACKAGE_NAME="$2"
-TARGET_MODULE="$3"
+set -euo pipefail
+
+OPENAPI_URL="${API_SPEC_PATH:-${1:-}}"
+PACKAGE_NAME="${2:-}"
+TARGET_MODULE="${3:-}"
+OPEN_ENUMS="${4:-false}"
+EXTRA_SCHEMA_MAPPINGS="${5:-}"
 
 download_openapi_spec() {
     local source="$1"
@@ -19,237 +25,91 @@ download_openapi_spec() {
     fi
 }
 
-patch_wallet_bulk_header() {
-    local spec_path="$1"
-    local temp_path="${spec_path}.tmp"
-
-    if ! grep -q '^  /v2/pubkeys/wallets/_bulk:$' "$spec_path"; then
-        echo "⚠️  Wallet bulk path not found in schema, skipping F header patch."
-        return 0
-    fi
-
-    awk '
-        BEGIN {
-            in_path = 0
-            in_post = 0
-            in_parameters = 0
-            has_parameters = 0
-            has_f_header = 0
-            inserted = 0
-        }
-
-        function insert_f_header_param() {
-            print "        - in: header"
-            print "          name: F"
-            print "          schema:"
-            print "            type: string"
-            print "          required: false"
-            inserted = 1
-        }
-
-        /^  \/v2\/pubkeys\/wallets\/_bulk:$/ {
-            in_path = 1
-            print
-            next
-        }
-
-        in_path && /^  \// {
-            if (in_post && !inserted && !has_f_header && !has_parameters) {
-                print "      parameters:"
-                insert_f_header_param()
-            }
-
-            in_path = 0
-            in_post = 0
-            in_parameters = 0
-            has_parameters = 0
-            has_f_header = 0
-            inserted = 0
-        }
-
-        {
-            if (in_path && /^    post:$/) {
-                in_post = 1
-                print
-                next
-            }
-
-            if (in_post && /^      parameters:$/) {
-                has_parameters = 1
-                in_parameters = 1
-                print
-                next
-            }
-
-            if (in_post && in_parameters && /^      [^ ]/ && $0 !~ /^      - /) {
-                in_parameters = 0
-                if (!inserted && !has_f_header) {
-                    insert_f_header_param()
-                }
-            }
-
-            if (in_post && in_parameters && /^          name: F$/) {
-                has_f_header = 1
-            }
-
-            if (in_post && !has_parameters && !inserted && ($0 ~ /^      requestBody:$/ || $0 ~ /^      responses:$/)) {
-                print "      parameters:"
-                insert_f_header_param()
-            }
-
-            print
-        }
-
-        END {
-            if (in_post && !inserted && !has_f_header && !has_parameters) {
-                print "      parameters:"
-                insert_f_header_param()
-            }
-        }
-    ' "$spec_path" > "$temp_path" && mv "$temp_path" "$spec_path"
-}
-
-# Marks every parameter naming the wallet the request acts on — `wallet_id` in the path, or
-# battery's `X-Wallet-ID` header — so the api template can lift it into RequestConfig.walletId,
-# which is what tags the request for the Wallet-Authorization header.
-patch_wallet_id_parameters() {
-    local spec_path="$1"
-    local temp_path="${spec_path}.tmp"
-
-    if grep -q '^[[:space:]]*x-wallet-id:' "$spec_path"; then
-        return 0
-    fi
-
-    if ! grep -qE '^[[:space:]]*name: (wallet_id|X-Wallet-ID)[[:space:]]*$' "$spec_path"; then
-        echo "⚠️  No wallet id parameter found in schema, skipping walletId patch."
-        return 0
-    fi
-
-    awk '
-        # securitySchemes entries carry a `name:` too, but they are credentials rather than
-        # parameters: stamping one makes the api template synthesize a second wallet id on top
-        # of the parameter it already lifts, and the operation ends up declaring it twice.
-        /^  securitySchemes:[[:space:]]*$/ { in_schemes = 1; print; next }
-        in_schemes && /^  [^ ]/ { in_schemes = 0 }
-
-        !in_schemes && /^[[:space:]]*name: (wallet_id|X-Wallet-ID)[[:space:]]*$/ {
-            print
-            match($0, /^[[:space:]]*/)
-            printf "%sx-wallet-id: true\n", substr($0, 1, RLENGTH)
-            next
-        }
-
-        { print }
-    ' "$spec_path" > "$temp_path" && mv "$temp_path" "$spec_path"
-}
-
 if [ -z "$OPENAPI_URL" ] || [ -z "$PACKAGE_NAME" ] || [ -z "$TARGET_MODULE" ]; then
-    echo "Usage: $0 <openapi-url> <package-name> <target-module>"
+    echo "Usage: $0 <openapi-url> <package-name> <target-module> [open-enums]"
     echo "Example: $0 'https://...' 'tonapi' 'tonapi:tonkeeper'"
     exit 1
 fi
 
 # Determine project root and paths
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Physical, like `git rev-parse --show-toplevel`: the staged target is the module path relative to it.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-TARGET_SRC_DIR="$PROJECT_ROOT/${TARGET_MODULE//:///}/src/main/kotlin"
-TEMP_DIR="$PROJECT_ROOT/temp_api_gen"
+REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
+TARGET_MODULE_DIR="$PROJECT_ROOT/${TARGET_MODULE//://}"
+if [ -d "$TARGET_MODULE_DIR/src/commonMain" ]; then
+    TARGET_SRC_DIR="$TARGET_MODULE_DIR/src/commonMain/kotlin"
+else
+    TARGET_SRC_DIR="$TARGET_MODULE_DIR/src/main/kotlin"
+fi
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT
+STAGE=${API_GENERATION_STAGE:-$TEMP_DIR/stage}
+PUBLISHER="$REPO_ROOT/shared/tools/api-generation.py"
+[ -f "$PUBLISHER" ] || PUBLISHER="$REPO_ROOT/tools/api-generation.py"
 TEMPLATE_DIR="$SCRIPT_DIR/templates"
-LOCAL_OPENAPI_SPEC="$TEMP_DIR/openapi.yaml"
+LOCAL_OPENAPI_SPEC="$TEMP_DIR/openapi.json"
 
 echo "Generating $PACKAGE_NAME for module $TARGET_MODULE..."
 echo "  OpenAPI spec: $OPENAPI_URL"
 echo "  Target directory: $TARGET_SRC_DIR"
 
-rm -rf "$TEMP_DIR"
-mkdir -p "$TEMP_DIR"
-
-download_openapi_spec "$OPENAPI_URL" "$LOCAL_OPENAPI_SPEC"
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to download/read OpenAPI spec."
-    rm -rf "$TEMP_DIR"
-    exit 1
+download_openapi_spec "$OPENAPI_URL" "$TEMP_DIR/source.yaml"
+SCHEMA_MAPPINGS=$(python3 "$SCRIPT_DIR/prepare-spec.py" "$TEMP_DIR/source.yaml" "$LOCAL_OPENAPI_SPEC" "$PACKAGE_NAME" "$OPEN_ENUMS")
+if [ -n "$EXTRA_SCHEMA_MAPPINGS" ]; then
+    SCHEMA_MAPPINGS="${SCHEMA_MAPPINGS:+$SCHEMA_MAPPINGS,}$EXTRA_SCHEMA_MAPPINGS"
+fi
+GENERATOR_ARGS=(--type-mappings "number=kotlin.String")
+# Templates read openEnums as a section, where any string, "false" included, is true.
+[ "$OPEN_ENUMS" = true ] && OPEN_ENUMS_PROPERTY=,openEnums=true
+if [ -n "$SCHEMA_MAPPINGS" ]; then
+    GENERATOR_ARGS+=(--schema-mappings "$SCHEMA_MAPPINGS")
 fi
 
-patch_wallet_bulk_header "$LOCAL_OPENAPI_SPEC"
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to patch OpenAPI spec."
-    rm -rf "$TEMP_DIR"
-    exit 1
+GENERATOR="$REPO_ROOT/shared/tools/openapi-generator.sh"
+[ -f "$GENERATOR" ] || GENERATOR="$REPO_ROOT/tools/openapi-generator.sh"
+if [ -f "$SCRIPT_DIR/configs/$PACKAGE_NAME.yaml" ]; then
+    GENERATOR_ARGS+=(-c "$SCRIPT_DIR/configs/$PACKAGE_NAME.yaml")
 fi
-
-patch_wallet_id_parameters "$LOCAL_OPENAPI_SPEC"
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to patch OpenAPI spec."
-    rm -rf "$TEMP_DIR"
-    exit 1
-fi
-
-openapi-generator generate \
+"$GENERATOR" generate \
   -i "$LOCAL_OPENAPI_SPEC" \
   -g kotlin \
   -o "$TEMP_DIR" \
   -t "$TEMPLATE_DIR" \
   --library jvm-okhttp4 \
   --global-property apiTests=false,modelTests=false \
-  --type-mappings "number=kotlin.String" \
-  --additional-properties "serializationLibrary=kotlinx_serialization,packageName=io.$PACKAGE_NAME,platform=android,hideGenerationTimestamp=true"
-
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to generate API client."
-    rm -rf "$TEMP_DIR"
-    exit 1
-fi
+  "${GENERATOR_ARGS[@]}" \
+  --additional-properties "serializationLibrary=kotlinx_serialization,packageName=io.$PACKAGE_NAME,platform=android,hideGenerationTimestamp=true${OPEN_ENUMS_PROPERTY:-}"
 
 # Post-process generated files
 echo "Post-processing generated files..."
+SED_IN_PLACE=(-i)
+if [[ "$OSTYPE" == darwin* ]]; then
+    SED_IN_PLACE+=('')
+fi
 # Parameter and argument lists are emitted with a trailing separator so that credentials declared
 # as security schemes can be appended without knowing whether the operation declares any
 # parameters of its own. Kotlin accepts the trailing comma; drop it anyway for readability.
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/, )/)/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin.collections.Map<kotlin.String, kotlin.Any>/kotlin.collections.Map<kotlin.String, io.JsonAny>/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/@SerialName(value = "unknown_default_open_api")/@SerialName(value = "unknown")/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/unknown_default_open_api("unknown_default_open_api")/unknown("unknown")/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/.unknown_default_open_api/.unknown/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/values()/entries/g'
+find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed "${SED_IN_PLACE[@]}" -e 's/, )/)/g'
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 perl -0pi -e 's/(\@Serializable\n)\n+/$1/g'
-# openapi-generator 7.24 qualifies an enum-ref default with its type and the api template prefixes
-# the type again, so `Network.mainnet` is emitted as `Network.Network.mainnet`.
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 perl -i -pe 's/= (\w+)\.\1\./= $1./g'
-
 # Remove unnecessary kotlin. prefixes
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.collections\.List</List</g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.collections\.Map</Map</g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.String/String/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Int/Int/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Long/Long/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Boolean/Boolean/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Double/Double/g'
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed -i '' 's/kotlin\.Float/Float/g'
-
-# X-Wallet-ID names the wallet a request is authorized for, which on wallet-scoped routes is the
-# same wallet the path already addresses. Default the header parameter to that path parameter so
-# callers pass it explicitly only when the two genuinely differ.
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 perl -i -pe \
-    's/^(\s*fun \w+\(.*\bwalletId: String.*?)\bxWalletId: String\? = null/$1xWalletId: String? = walletId/'
+find "$TEMP_DIR" -type f -name "*.kt" -print0 | xargs -0 sed "${SED_IN_PLACE[@]}" \
+    -e 's/kotlin\.collections\.List</List</g' \
+    -e 's/kotlin\.collections\.Map</Map</g' \
+    -e 's/kotlin\.String/String/g' \
+    -e 's/kotlin\.Int/Int/g' \
+    -e 's/kotlin\.Long/Long/g' \
+    -e 's/kotlin\.Boolean/Boolean/g' \
+    -e 's/kotlin\.Double/Double/g' \
+    -e 's/kotlin\.Float/Float/g'
 
 # Remove same-package imports
 find "$TEMP_DIR" -type f -name "*.kt" -print0 | while IFS= read -r -d '' file; do
     # Extract package name from file
-    package=$(grep '^package ' "$file" | sed 's/^package //' | tr -d '\n')
+    package=$(awk '/^package / { print $2; exit }' "$file")
     if [ -n "$package" ]; then
         # Remove imports from the same package
-        sed -i '' "/^import ${package}\./d" "$file"
-    fi
-done
-
-# Simplify nested class references (ClassName.NestedClass -> NestedClass within ClassName)
-find "$TEMP_DIR" -type f -name "*.kt" -print0 | while IFS= read -r -d '' file; do
-    # Extract class name from data class or enum class declarations
-    classname=$(grep -E '^(data class|enum class|class) [A-Z]' "$file" | head -1 | sed -E 's/.*(data class|enum class|class) ([A-Za-z0-9_]+).*/\2/')
-    if [ -n "$classname" ]; then
-        # Replace ClassName.NestedClass with just NestedClass in property types
-        sed -i '' "s/: ${classname}\./: /g" "$file"
+        sed "${SED_IN_PLACE[@]}" "/^import ${package}\./d" "$file"
     fi
 done
 
@@ -273,6 +133,7 @@ find "$TEMP_DIR" -type f -name "*.kt" -print0 | while IFS= read -r -d '' file; d
             # Skip blank lines between constructor parameters (after comma, before @SerialName)
             if (NF == 0 && prev_line ~ /,$/) {
                 # Buffer the blank line
+                next_line = ""
                 getline next_line
                 # If next line is @SerialName, skip the blank
                 if (next_line ~ /^[[:space:]]*@SerialName/) {
@@ -300,6 +161,7 @@ find "$TEMP_DIR" -type f -name "*.kt" -print0 | while IFS= read -r -d '' file; d
 
             # Remove blank line immediately before closing brace/paren
             if (NF == 0) {
+                next_line = ""
                 getline next_line
                 if (next_line ~ /^[[:space:]]*[})]/) {
                     print next_line
@@ -328,37 +190,21 @@ if [ ! -d "$GENERATED_SRC_PATH" ]; then
     exit 1
 fi
 
-# Copy to target module
-echo "Copying to target module..."
-mkdir -p "$TARGET_SRC_DIR"
-cp -r "$GENERATED_SRC_PATH"* "$TARGET_SRC_DIR/"
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to copy generated sources to target directory: $TARGET_SRC_DIR"
-    rm -rf "$TEMP_DIR"
-    exit 1
+# Infrastructure is shared from tonapi:core; publish only the generated package.
+if [[ "$TARGET_MODULE" != "tonapi:core" ]]; then
+    rm -rf "$GENERATED_SRC_PATH/io/${PACKAGE_NAME}/infrastructure"
 fi
 
-# Remove infrastructure if not core module
-if [[ "$TARGET_MODULE" != "tonapi:core" ]]; then
-    INFRA_DIR="$TARGET_SRC_DIR/io/${PACKAGE_NAME}/infrastructure"
-    if [ -d "$INFRA_DIR" ]; then
-        echo "Removing infrastructure directory (not core module)..."
-        rm -rf "$INFRA_DIR"
+RELATIVE="${TARGET_SRC_DIR#"$REPO_ROOT"/}/io/$PACKAGE_NAME"
+mkdir -p "$STAGE/$RELATIVE"
+cp -R "$GENERATED_SRC_PATH/io/$PACKAGE_NAME/." "$STAGE/$RELATIVE/"
+printf '%s\n' "$RELATIVE" >> "$STAGE/.api-generation-targets"
+if [ -z "${API_GENERATION_STAGE:-}" ]; then
+    if [ "${API_GENERATION_CHECK:-0}" = 1 ]; then
+        python3 "$PUBLISHER" --check "$STAGE" "$REPO_ROOT"
+    else
+        python3 "$PUBLISHER" "$STAGE" "$REPO_ROOT"
     fi
 fi
-
-# Format with detekt
-DETEKT_VERSION="1.23.8"
-GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"
-TOOLS_BUILD_DIR="$GIT_COMMON_DIR/detekt-cache"
-DETEKT_JAR="$TOOLS_BUILD_DIR/detekt-formatting-${DETEKT_VERSION}.jar"
-if [ -f "$DETEKT_JAR" ]; then
-    echo "Formatting with detekt..."
-    java -jar "$DETEKT_JAR" --input "$TARGET_SRC_DIR" --auto-correct 2>/dev/null || echo "⚠️  Detekt formatting skipped (not available)"
-else
-    echo "⚠️  Detekt formatting jar not found at $DETEKT_JAR"
-fi
-
-rm -rf "$TEMP_DIR"
 
 echo "✅ Done generating $PACKAGE_NAME"

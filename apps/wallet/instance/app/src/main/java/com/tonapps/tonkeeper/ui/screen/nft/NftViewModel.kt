@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uikit.extensions.activity
-import uikit.navigation.Navigation.Companion.navigation
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class NftViewModel(
@@ -45,6 +44,9 @@ class NftViewModel(
     private val api: API,
     private val collectiblesRepository: CollectiblesRepository,
 ) : BaseWalletVM(app) {
+
+    val hiddenBalance: Boolean
+        get() = settingsRepository.hiddenBalances
 
     val walletFlow: StateFlow<WalletEntity?> = combine(
         unifiedAccountRepository.selectedTonWalletFlow,
@@ -134,13 +136,13 @@ class NftViewModel(
         val wallet = walletFlow.value ?: return
         val nft = nftFlow.value ?: return
         viewModelScope.launch(Dispatchers.IO) {
-            val state = if (spam) TokenPrefsEntity.State.SPAM else TokenPrefsEntity.State.TRUST
+            val state = if (spam) {
+                TokenPrefsEntity.State.SPAM
+            } else {
+                TokenPrefsEntity.State.TRUST
+            }
             val address = nft.collectionAddressOrNFTAddress
             settingsRepository.setTokenState(wallet.id, address, state)
-            try {
-                api.reportNtfSpam(nft.address, spam)
-            } catch (_: Throwable) {
-            }
             withContext(Dispatchers.Main) {
                 callback()
             }

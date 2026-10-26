@@ -5,7 +5,6 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.tonapps.settings.dev.features.FeatureFlagsScreen
-import com.tonapps.settings.dev.raffle.RaffleDebugScreen
 import com.tonapps.settings.dev.tooltips.TooltipsScreen
 import kotlinx.serialization.Serializable
 import ui.moon.MoonNav
@@ -17,9 +16,6 @@ sealed interface DevSettingsRoutes : NavKey {
 
     @Serializable
     data object Tooltips : DevSettingsRoutes
-
-    @Serializable
-    data object RaffleDebug : DevSettingsRoutes
 }
 
 @Composable
@@ -29,7 +25,6 @@ fun DevSettingsRouter(
 ) {
     val initialRoute = when (startRoute) {
         ROUTE_TOOLTIPS -> DevSettingsRoutes.Tooltips
-        ROUTE_RAFFLE_DEBUG -> DevSettingsRoutes.RaffleDebug
         else -> DevSettingsRoutes.FeatureFlags
     }
     val backStack = rememberNavBackStack(initialRoute)
@@ -50,12 +45,6 @@ fun DevSettingsRouter(
                 )
             }
 
-            is DevSettingsRoutes.RaffleDebug -> NavEntry(key) {
-                RaffleDebugScreen(
-                    onBack = onClose,
-                )
-            }
-
             else -> throw IllegalStateException("Unknown key: $key")
         }
     }
@@ -63,4 +52,3 @@ fun DevSettingsRouter(
 
 const val ROUTE_FEATURE_FLAGS = "feature_flags"
 const val ROUTE_TOOLTIPS = "tooltips"
-const val ROUTE_RAFFLE_DEBUG = "raffle_debug"

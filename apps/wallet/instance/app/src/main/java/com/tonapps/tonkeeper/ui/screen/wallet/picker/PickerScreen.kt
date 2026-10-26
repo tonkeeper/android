@@ -22,12 +22,13 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
-import uikit.HapticHelper
+import uikit.extensions.hapticTick
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
+import uikit.extensions.setMoonOnClickListener
 
 class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None), BaseFragment.Modal {
 
@@ -72,7 +73,7 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
         val horizontalOffset = requireContext().getDimensionPixelSize(uikit.R.dimen.cornerMedium)
 
         actionButton = createActionButton(view.context)
-        actionButton.setOnClickListener { viewModel.toggleEditMode() }
+        actionButton.setMoonOnClickListener { viewModel.toggleEditMode() }
         if (mode is PickerMode.TonConnect) {
             actionButton.visibility = View.GONE
         }
@@ -105,7 +106,7 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
                     return false
                 }
                 adapter.moveItem(fromPosition, toPosition)
-                HapticHelper.impactLight(requireContext())
+                view?.hapticTick()
                 return true
             }
 

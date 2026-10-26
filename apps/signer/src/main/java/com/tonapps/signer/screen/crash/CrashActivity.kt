@@ -13,6 +13,7 @@ import com.tonapps.signer.extensions.copyToClipboard
 import uikit.base.BaseActivity
 import java.io.PrintWriter
 import java.io.StringWriter
+import uikit.extensions.setMoonOnClickListener
 
 class CrashActivity: BaseActivity() {
 
@@ -49,7 +50,7 @@ class CrashActivity: BaseActivity() {
         stackView.text = stack
 
         val copyButton = findViewById<TextView>(R.id.copy)
-        copyButton.setOnClickListener {
+        copyButton.setMoonOnClickListener {
             copyToClipboard(stack)
         }
     }

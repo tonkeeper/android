@@ -13,6 +13,11 @@ package io.batteryapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class PromoCodeBatteryPurchaseStatusError(
@@ -22,12 +27,27 @@ data class PromoCodeBatteryPurchaseStatusError(
     val code: Code
 ) {
     /**
-     * Values: promoMinusCodeMinusNotMinusFound,promoMinusExceededMinusAttempts,temporaryMinusError
+     * Values: promoMinusCodeMinusNotMinusFound,promoMinusExceededMinusAttempts,temporaryMinusError,unknown
      */
-    @Serializable
+    @Serializable(with = CodeSerializer::class)
     enum class Code(val value: String) {
         @SerialName(value = "promo-code-not-found") promoMinusCodeMinusNotMinusFound("promo-code-not-found"),
         @SerialName(value = "promo-exceeded-attempts") promoMinusExceededMinusAttempts("promo-exceeded-attempts"),
-        @SerialName(value = "temporary-error") temporaryMinusError("temporary-error");
+        @SerialName(value = "temporary-error") temporaryMinusError("temporary-error"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object CodeSerializer : KSerializer<Code> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Code {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Code.entries.firstOrNull { it.value == value }
+                ?: Code.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Code) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

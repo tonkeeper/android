@@ -4,4 +4,5 @@ interface RemoteConfigProvider {
     fun isFeatureEnabled(feature: FeatureKey): Boolean
     fun getFeatureValue(feature: FeatureKey, default: String): String
     fun optFeatureValue(feature: FeatureKey): String?
+    fun isRemoteResolved(feature: FeatureKey): Boolean
 }

@@ -10,6 +10,7 @@ import uikit.dialog.modal.ModalDialog
 import uikit.widget.CheckBoxView
 import uikit.widget.HeaderView
 import kotlin.coroutines.resume
+import uikit.extensions.setMoonOnClickListener
 
 class EncryptedCommentScreen(context: Context): ModalDialog(context, R.layout.fragment_encrypted_comment) {
 
@@ -41,9 +42,9 @@ class EncryptedCommentScreen(context: Context): ModalDialog(context, R.layout.fr
         checkboxContainerView = findViewById(R.id.checkbox_container)!!
         checkboxView = findViewById(R.id.checkbox)!!
 
-        checkboxContainerView.setOnClickListener { checkboxView.toggle() }
+        checkboxContainerView.setMoonOnClickListener { checkboxView.toggle() }
 
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             noShowAgain = checkboxView.checked
             dismiss()
         }

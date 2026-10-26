@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.settings.apps
 
 import android.app.Application
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.settings.apps.list.Item
 import com.tonapps.uikit.list.ListCell
@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.take
 class AppsViewModel(
     application: Application,
     private val wallet: WalletEntity,
-    private val tonConnectBridge: ITonConnectBridge
+    private val tonConnectManager: TonConnectManager
 ): BaseWalletVM(application) {
 
-    val uiItemsFlow = tonConnectBridge.walletAppsFlow(wallet).map { apps ->
+    val uiItemsFlow = tonConnectManager.walletAppsFlow(wallet).map { apps ->
         val uiItems = mutableListOf<Item>()
         if (apps.isNotEmpty()) {
             uiItems.add(Item.DisconnectAll)
@@ -37,13 +37,13 @@ class AppsViewModel(
     }
 
     fun disconnectApp(app: AppEntity) {
-        tonConnectBridge.disconnect(wallet, app.url)
+        tonConnectManager.disconnect(wallet, app.url)
     }
 
     fun disconnectAll() {
-        tonConnectBridge.walletAppsFlow(wallet).take(1).collectFlow { apps ->
+        tonConnectManager.walletAppsFlow(wallet).take(1).collectFlow { apps ->
             for (app in apps) {
-                tonConnectBridge.disconnect(wallet, app.url)
+                tonConnectManager.disconnect(wallet, app.url)
             }
         }
     }

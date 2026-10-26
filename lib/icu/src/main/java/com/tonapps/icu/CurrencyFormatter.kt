@@ -1,7 +1,6 @@
 package com.tonapps.icu
 
 import android.content.Context
-import android.content.res.Configuration
 import android.text.SpannableString
 import com.tonapps.icu.format.CurrencyFormat
 import com.tonapps.icu.format.TONSymbolSpan
@@ -28,13 +27,24 @@ object CurrencyFormatter {
         Locale("si"),
     )
 
+    @Volatile
     private var format = CurrencyFormat(getFixedLocale(Locale.getDefault(Locale.Category.FORMAT)))
 
-    val monetaryDecimalSeparator: String
-        get() = format.monetaryDecimalSeparator
+    val decimalSeparator: String
+        get() = format.decimalSeparator
+
+    val groupingSeparator: String
+        get() = format.groupingSeparator
 
     val locale: Locale
         get() = format.locale
+
+    fun setLocale(locale: Locale) {
+        val fixedLocale = getFixedLocale(locale)
+        if (format.locale != fixedLocale) {
+            format = CurrencyFormat(fixedLocale)
+        }
+    }
 
     fun getScale(value: BigDecimal): Int {
         return CurrencyFormat.getScale(value)
@@ -50,15 +60,6 @@ object CurrencyFormatter {
         } catch (e: Throwable) {
             Locale.US
         }
-    }
-
-    fun onConfigurationChanged(newConfig: Configuration) {
-        val newLocale = newConfig.locales[0]
-        onLocaleChanged(newLocale)
-    }
-
-    private fun onLocaleChanged(newLocale: Locale) {
-        format = CurrencyFormat(getFixedLocale(newLocale))
     }
 
     fun formatPercent(

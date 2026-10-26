@@ -5,7 +5,7 @@
 # from that tab so the next run (and browser_tabs_smoke) starts clean.
 #
 # WebView notes: dApp texts/ids are exposed to accessibility (cookie banner
-# ids too). The Reown search field is addressed relative to the header (see
+# ids too). The Reown search field is matched by its hint "Search wallet" (see
 # below). The wallet tile is "Tonkeeper Tonkeeper" today and may
 # become "Keeper Keeper" after the TK-3495 rebrand reaches the WalletConnect
 # registry — the regex accepts both. `scroll` swipes the screen centre, which
@@ -16,7 +16,7 @@
 # expires 5 minutes later (Reown proposal TTL); approving after that fails
 # with ProposalDao getProposalByKey = null and the dApp never shows the
 # account. Every hierarchy read on the Aave page is slow (huge WebView tree),
-# so between "Connect wallet" on the dApp and "Connect wallet" in the native
+# so between the dApp's own Connect button and "Connect wallet" in the native
 # sheet keep the command count minimal: tapOn waits for its element itself,
 # and the sheet is verified with a few key strings only.
 name: "Browser — WalletConnect Aave"
@@ -42,13 +42,20 @@ appId: com.ton_keeper.debug
       text: "app.aave.com"
       id: host
     timeout: 30000
-# Aave dashboard boot; cookie banner is optional.
+# Aave dashboard boot. Aave renamed the header button "Connect wallet" ->
+# "Connect" (2026-09), so every dApp-side match accepts both.
 - extendedWaitUntil:
-    visible: "Connect wallet|avatar 0x.*"
+    visible: "Connect|Connect wallet|avatar 0x.*"
     timeout: 30000
+# Consent banner: "We value your privacy" sheet with Opt-out / Allow analytics
+# (replaced the old react-cookie-consent rcc-decline-button in 2026-09). Only
+# the current button is tried: an optional tap on a missing element still pays
+# a full lookup on this huge WebView tree (9 min 40 s locally for the old id).
 - tapOn:
-    id: rcc-decline-button
+    text: "^Opt-out$"
     optional: true
+- waitForAnimationToEnd:
+    timeout: 1000
 
 # Precondition: a leftover session from an aborted run — disconnect on the
 # dApp side first so the picker can be opened.
@@ -62,28 +69,39 @@ appId: com.ton_keeper.debug
           timeout: 30000
       - tapOn: "Disconnect"
       - extendedWaitUntil:
-          visible: "Connect wallet"
+          visible: "Connect|Connect wallet"
           timeout: 30000
 
-- tapOn: "Connect wallet"
-- tapOn: "^Other$"
+# waitToSettleTimeoutMs caps Maestro's post-tap "did the UI change" hierarchy
+# re-read. On the Aave page that read is the slowest step of the whole suite:
+# measured locally, the settle check after tapping More alone ran 5 min 49 s
+# (18:14:57 -> 18:20:46) while the Reown proposal expires after 5 min.
+- tapOn:
+    text: "^(Connect|Connect wallet)$"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: "^Other$"
+    waitToSettleTimeoutMs: 500
 - waitForAnimationToEnd:
     timeout: 3000
 - scroll
 - waitForAnimationToEnd:
     timeout: 2000
-- tapOn: "^More$"
-# The search field has no text, hint or id, and its placeholder is not exposed.
-# Box it in with the header instead: below the title, above the first wallet
-# tile ("<Name> <Name>"), right of the Back button and left of the centred
-# title. That excludes Back itself (the closest element below the title, which
-# is what Cloud tapped), the clear (×) button, the toggle and the QR icon.
-# Back/Close are matched by their accessibility labels.
 - tapOn:
-    below: "All Wallets"
-    above: "^(.+) \\1$"
-    rightOf: "^Back$"
-    leftOf: "All Wallets"
+    text: "^More$"
+    waitToSettleTimeoutMs: 500
+# Reown "All Wallets" sheet. Never tap it by coordinates: a tap fired while the
+# sheet is still rendering lands on the ConnectKit grid underneath (Coinbase
+# tile -> market:// -> Play Store, seen locally with a point tap 4 s after
+# More). The search field is an EditText whose placeholder
+# is exposed as hint "Search wallet" (26.09.3); Maestro matches hints by text.
+# The old box-in locator (below title / above "<Name> <Name>" / right of Back /
+# left of title) is geometrically dead: the input now spans the whole row.
+# tapOn waits for the field itself, and the field only exists once the Reown
+# sheet has rendered — no separate "All Wallets" assert (one lookup fewer).
+- tapOn:
+    text: "Search wallet"
+    waitToSettleTimeoutMs: 500
 - inputText: "keep"
 # Fail here, not on the tile, if the field never took focus.
 - extendedWaitUntil:
@@ -92,14 +110,12 @@ appId: com.ton_keeper.debug
 # Search results come from the WalletConnect explorer API — give them time.
 # Tile text is "<Name> <Name>" today ("Tonkeeper Tonkeeper"); match any tile
 # whose name contains Keeper so the registry rename does not break it.
-- extendedWaitUntil:
-    visible:
-      text: ".*(Tonkeeper|Keeper).*"
-      below: "All Wallets"
-    timeout: 30000
+# The tap waits for the tile itself (explorer API results). Settle cap: the
+# uncapped post-tap check ran 27 min locally and the proposal had expired.
 - tapOn:
     text: ".*(Tonkeeper|Keeper).*"
     below: "All Wallets"
+    waitToSettleTimeoutMs: 500
 
 # Native Keeper sheet: title, requester, permissions. Networks is covered by
 # the tap anchor below.
@@ -115,6 +131,7 @@ appId: com.ton_keeper.debug
 - tapOn:
     text: "Connect wallet"
     below: "^Networks$"
+    waitToSettleTimeoutMs: 500
 
 # dApp side: header shows the connected account, its modal shows the address.
 - extendedWaitUntil:

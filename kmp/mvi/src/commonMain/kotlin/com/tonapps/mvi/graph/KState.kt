@@ -11,3 +11,8 @@ sealed interface KState<T> {
         }
     }
 }
+
+inline fun <T, R> KState<T>.map(transform: (T) -> R): KState<R> = when (this) {
+    is KState.Loading -> KState.Loading(state?.let(transform))
+    is KState.Data -> KState.Data(transform(state))
+}

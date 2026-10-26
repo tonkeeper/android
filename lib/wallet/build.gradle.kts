@@ -6,6 +6,7 @@ dependencies {
     implementation(projects.lib.extensions)
     implementation(projects.lib.log)
     implementation(libs.chainkit.sdk)
+    implementation(libs.chainkit.op)
     implementation(libs.chainkit.chain.ethereum)
     implementation(libs.chainkit.chain.ton)
     implementation(libs.chainkit.net.json)

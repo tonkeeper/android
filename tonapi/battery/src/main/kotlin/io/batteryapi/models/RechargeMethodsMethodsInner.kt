@@ -13,6 +13,11 @@ package io.batteryapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class RechargeMethodsMethodsInner(
@@ -36,11 +41,26 @@ data class RechargeMethodsMethodsInner(
     val minBootstrapValue: String? = null
 ) {
     /**
-     * Values: jetton,ton
+     * Values: jetton,ton,unknown
      */
-    @Serializable
+    @Serializable(with = TypeSerializer::class)
     enum class Type(val value: String) {
         @SerialName(value = "jetton") jetton("jetton"),
-        @SerialName(value = "ton") ton("ton");
+        @SerialName(value = "ton") ton("ton"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object TypeSerializer : KSerializer<Type> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Type {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Type.entries.firstOrNull { it.value == value }
+                ?: Type.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Type) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

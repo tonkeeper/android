@@ -33,6 +33,15 @@ class SecurityViewModel(
     val biometric: Boolean
         get() = settingsRepository.biometric
 
+    val isLockScreenOptional: Boolean
+        get() = passcodeManager.isLockScreenOptional
+
+    var lockScreenEnabled: Boolean
+        get() = !settingsRepository.lockScreenDisabled
+        set(value) {
+            settingsRepository.lockScreenDisabled = !value
+        }
+
     init {
         refreshPasscodeState()
     }

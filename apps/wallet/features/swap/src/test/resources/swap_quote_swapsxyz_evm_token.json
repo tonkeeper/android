@@ -1,0 +1,57 @@
+{
+  "quote_id": "0bceab1c-b6c0-4489-806c-ff6335c530d2",
+  "routes": [
+    {
+      "route_id": "63059cbe-fd58-4991-a33c-9e199fea20be",
+      "provider_route_id": "0x5a1440691f8d77106470dcb75e26e4a9bf43951bfab6eb2438170a7287c255ae",
+      "aggregator": "swapsxyz",
+      "route_type": "cross_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "7883888919510323",
+      "minimum_destination_amount": "7805050030315219",
+      "total_slippage_bps": 100,
+      "source_usd_price": 0.9998929999999999,
+      "destination_usd_price": 2510.92,
+      "fees": [
+        {
+          "type": "protocol",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "1",
+          "amount": "59530",
+          "amount_usd": "0.06"
+        },
+        {
+          "type": "application",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "1",
+          "amount": "140000",
+          "amount_usd": "0.14"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-09-07T05:45:39Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "098c0821-79b0-4e6f-b7b1-3392ee1ba5ff",
+          "kind": "main",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "payload_type": "evm_tx",
+          "calldata_payload_type": "flex",
+          "payload": "{\"to\":\"0x5721B720E23F1c35a4E361A9914D4AEaf6eCC062\",\"value\":\"20000000\",\"chainId\":1,\"chainKey\":\"ethereum\"}",
+          "human_summary": {
+            "action": "Swap USDT for ETH",
+            "spend_asset": "eth/mainnet/erc20/0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            "spend_amount": "20000000",
+            "receive_asset": "eth/mainnet/coin",
+            "receive_amount": "7883888919510323"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-07T05:45:39Z",
+          "requires_token_approval": true
+        }
+      ]
+    }
+  ]
+}

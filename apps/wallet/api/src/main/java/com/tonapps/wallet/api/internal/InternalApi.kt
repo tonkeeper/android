@@ -10,15 +10,13 @@ import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.map
 import com.tonapps.network.get
-import com.tonapps.network.postJSON
+import com.tonapps.wallet.api.Constants
 import com.tonapps.wallet.api.configs.CountryConfig
 import com.tonapps.wallet.api.entity.BannerEntity
 import com.tonapps.wallet.api.entity.ConfigResponseEntity
 import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
-import com.tonapps.wallet.api.entity.OnRampArgsEntity
 import com.tonapps.wallet.api.entity.StoryEntity
-import com.tonapps.wallet.api.readBody
 import com.tonapps.wallet.api.withRetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -28,6 +26,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 
+private const val MULTICHAIN_FEATURE = "multichain"
+
 internal class InternalApi(
     private val context: Context,
     private val okHttpClient: OkHttpClient,
@@ -36,20 +36,13 @@ internal class InternalApi(
 
     private var config: CountryConfig? = null
 
-    @Volatile
-    private var featuresProvider: (() -> List<String>)? = null
-
-    private var _apiEndpoint = "https://api.tonkeeper.com".toUri()
+    private var _apiEndpoint = Constants.TONKEEPER_API.toUri()
 
     val country: String
         get() = config?.storeCountry ?: config?.deviceCountry?: config?.simCountry ?: Locale.getDefault().country.uppercase()
 
     fun setConfig(newConfig: CountryConfig) {
         config = newConfig
-    }
-
-    fun setFeaturesProvider(provider: () -> List<String>) {
-        featuresProvider = provider
     }
 
     fun setApiUrl(url: String) {
@@ -76,7 +69,6 @@ internal class InternalApi(
         val chainName = when (network) {
             TonNetwork.TESTNET -> "testnet"
             TonNetwork.MAINNET -> "mainnet"
-            TonNetwork.TETRA -> "mainnet"
         }
         builder
             .appendEncodedPath(path)
@@ -104,9 +96,7 @@ internal class InternalApi(
         walletId?.let {
             builder.appendQueryParameter("wallet_id", it)
         }
-        featuresProvider?.invoke()?.takeIf { it.isNotEmpty() }?.let {
-            builder.appendQueryParameter("features", it.joinToString(","))
-        }
+        builder.appendQueryParameter("features", MULTICHAIN_FEATURE)
 
         queryParams.forEach {
             builder.appendQueryParameter(it.key, it.value)
@@ -194,31 +184,6 @@ internal class InternalApi(
 
     fun getOnRampMerchants(prefix: String) = withRetry {
         okHttpClient.get(swapEndpoint(prefix, "v2/onramp/merchants"))
-    }
-
-    fun calculateOnRamp(prefix: String, args: OnRampArgsEntity): String? {
-        val json = args.toJSON()
-        config?.deviceCountry?.let {
-            json.put("device_country_code", it)
-        }
-        config?.storeCountry?.let {
-            json.put("store_country_code", it)
-        }
-        config?.simCountry?.let {
-            json.put("sim_country", it)
-        }
-        config?.timezone?.let {
-            json.put("timezone", it)
-        }
-        config?.isVpn?.let {
-            json.put("is_vpn_active", it)
-        }
-        return withRetry {
-            okHttpClient.postJSON(
-                swapEndpoint(prefix, "v2/onramp/calculate"),
-                json.toString()
-            ).readBody()
-        }
     }
 
     fun getNotifications(walletId: String?): List<NotificationEntity> {

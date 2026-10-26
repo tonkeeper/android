@@ -1,0 +1,81 @@
+{
+    "quote_id": "bb7ed46e-07d3-4ce9-8358-fef3ac7b0c56",
+    "routes": [
+        {
+            "route_id": "ee4b4034-c781-4c96-914f-251cb391ad42",
+            "provider_route_id": "0x511b8e3acf0f638ae41735d6e194ec5a22d16665f143f679b136af673256efd0",
+            "aggregator": "swapsxyz",
+            "protocol": "alt-vm-2",
+            "route_type": "cross_chain_swap",
+            "source_amount": "50000000",
+            "estimated_destination_amount": "19670684959999996",
+            "minimum_destination_amount": "19473978110399996",
+            "estimated_time": {
+                "inbound_seconds": 0,
+                "swap_seconds": 0,
+                "outbound_seconds": 0,
+                "total_seconds": 180
+            },
+            "total_slippage_bps": 100,
+            "source_usd_price": 0.99989,
+            "destination_usd_price": 2497.5699999999997,
+            "fees": [
+                {
+                    "type": "protocol",
+                    "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "chain_id": "999000337",
+                    "amount": "50000",
+                    "amount_usd": "0.05"
+                },
+                {
+                    "type": "bridge",
+                    "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "chain_id": "999000337",
+                    "amount": "443157",
+                    "amount_usd": "0.44"
+                },
+                {
+                    "type": "application",
+                    "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "chain_id": "999000337",
+                    "amount": "350000",
+                    "amount_usd": "0.35"
+                }
+            ],
+            "legs": [
+                {
+                    "leg_index": 0,
+                    "type": "bridge",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "from_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "to_asset": "eth/mainnet/coin",
+                    "protocol": "alt-vm-2"
+                }
+            ],
+            "date_expire": "2026-09-07T13:56:25Z",
+            "risk_level": "medium",
+            "payloads": [
+                {
+                    "payload_id": "b46bb1ff-b382-44f7-a099-0b1a84d73f47",
+                    "kind": "main",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "payload_type": "alt_vm_deposit",
+                    "calldata_payload_type": "exact",
+                    "payload": "[{\"to\":\"UQCCRc2Ncx6Y6O0FwLUc17XNgRj-1fci4gkO_QLOQrTAutf0\",\"toExtra\":null,\"value\":\"50000000\",\"chainId\":999000337,\"chainKey\":\"ton\"}]",
+                    "human_summary": {
+                        "action": "Swap USDT for ETH",
+                        "spend_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                        "spend_amount": "50000000",
+                        "receive_asset": "eth/mainnet/coin",
+                        "receive_amount": "19670684959999996",
+                        "protocol": "alt-vm-2"
+                    },
+                    "validation_status": "validated",
+                    "date_expire": "2026-09-07T13:56:25Z"
+                }
+            ]
+        }
+    ]
+}

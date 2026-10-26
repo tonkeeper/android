@@ -1,10 +1,14 @@
 package com.tonapps.deposit.multicoin.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tonapps.chainkit.core.chain.model.account.Chain
@@ -12,16 +16,20 @@ import com.tonapps.core.components.painterResource
 import com.tonapps.core.helper.rememberClipboardManager
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.account.AccountEntity
+import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonItemTitle
+import ui.components.moon.MoonLabel
+import ui.components.moon.MoonLabelDefault
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.TextCell
 import ui.preview.ThemedPreview
 import ui.shortAddress
 import ui.theme.UIKit
+import ui.theme.pressScale
 
 @Preview
 @Composable
@@ -51,6 +59,7 @@ fun QrAccountCellPreview() {
 @Composable
 fun QrAccountCell(
     account: AccountEntity,
+    isNew: Boolean = false,
     position: MoonBundlePosition = MoonBundlePosition.Default,
     onOpenQr: () -> Unit,
 ) {
@@ -67,6 +76,12 @@ fun QrAccountCell(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         MoonItemTitle(text = account.chain.name)
                     }
+                    if (isNew) {
+                        MoonLabel(
+                            text = stringResource(Localization.badge_new),
+                            colors = MoonLabelDefault.blue(),
+                        )
+                    }
                 }
             },
             subtitle = {
@@ -80,7 +95,12 @@ fun QrAccountCell(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = onOpenQr) {
+                    val qrInteractionSource = remember { MutableInteractionSource() }
+                    IconButton(
+                        onClick = onOpenQr,
+                        modifier = Modifier.pressScale(qrInteractionSource),
+                        interactionSource = qrInteractionSource,
+                    ) {
                         MoonItemIcon(
                             painter = ui.painterResource(UIKitIcon.ic_qr_code_16),
                             color = UIKit.colorScheme.icon.primary,
@@ -88,7 +108,12 @@ fun QrAccountCell(
                         )
                     }
 
-                    IconButton(onClick = { clipboard.copy(account.displayAddress) }) {
+                    val copyInteractionSource = remember { MutableInteractionSource() }
+                    IconButton(
+                        onClick = { clipboard.copy(account.displayAddress) },
+                        modifier = Modifier.pressScale(copyInteractionSource),
+                        interactionSource = copyInteractionSource,
+                    ) {
                         MoonItemIcon(
                             painter = ui.painterResource(UIKitIcon.ic_copy_16),
                             color = UIKit.colorScheme.icon.primary,

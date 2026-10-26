@@ -37,20 +37,20 @@ interface WalletBundleDao {
     @Query("DELETE FROM account WHERE wallet_id = :walletId")
     suspend fun deleteAccounts(walletId: String)
 
-    @Query("DELETE FROM account WHERE wallet_id IN (:walletIds)")
-    suspend fun deleteAccounts(walletIds: List<String>)
-
     @Query("DELETE FROM favorite_asset WHERE wallet_id = :walletId")
     suspend fun deleteFavoriteAssets(walletId: String)
 
-    @Query("DELETE FROM favorite_asset WHERE wallet_id IN (:walletIds)")
-    suspend fun deleteFavoriteAssets(walletIds: List<String>)
+    @Query(
+        "DELETE FROM perps_operation_step WHERE operation_id IN " +
+            "(SELECT operation_id FROM perps_operation WHERE wallet_id = :walletId)",
+    )
+    suspend fun deletePerpsOperationSteps(walletId: String)
+
+    @Query("DELETE FROM perps_operation WHERE wallet_id = :walletId")
+    suspend fun deletePerpsOperations(walletId: String)
 
     @Query("DELETE FROM wallet WHERE id = :walletId")
     suspend fun deleteWalletRow(walletId: String)
-
-    @Query("DELETE FROM wallet WHERE id IN (:walletIds)")
-    suspend fun deleteWalletRows(walletIds: List<String>)
 
     @Query("DELETE FROM credential WHERE id IN (:ids)")
     suspend fun deleteCredentials(ids: List<String>)
@@ -61,15 +61,9 @@ interface WalletBundleDao {
     suspend fun deleteWallet(walletId: String, credentialIds: List<String>) {
         deleteAccounts(walletId)
         deleteFavoriteAssets(walletId)
+        deletePerpsOperationSteps(walletId)
+        deletePerpsOperations(walletId)
         deleteWalletRow(walletId)
-        deleteCredentials(credentialIds)
-    }
-
-    @Transaction
-    suspend fun deleteWallets(walletIds: List<String>, credentialIds: List<String>) {
-        deleteAccounts(walletIds)
-        deleteFavoriteAssets(walletIds)
-        deleteWalletRows(walletIds)
         deleteCredentials(credentialIds)
     }
 }

@@ -21,7 +21,11 @@ data class GasRelayAction(
     @SerialName(value = "relayer")
     val relayer: AccountAddress,
     @SerialName(value = "target")
-    val target: AccountAddress
+    val target: AccountAddress,
+    @SerialName(value = "is_battery")
+    val isBattery: Boolean? = null,
+    @SerialName(value = "relayer_fee")
+    val relayerFee: GasRelayFee? = null
 ) {
 }
 

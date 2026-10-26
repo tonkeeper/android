@@ -9,6 +9,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.tonapps.uikit.color.textPrimaryColor
 import uikit.extensions.dp
+import uikit.extensions.setMoonOnClickListener
 
 class ChartPeriodView @JvmOverloads constructor(
     context: Context,
@@ -36,7 +37,7 @@ class ChartPeriodView @JvmOverloads constructor(
         orientation = HORIZONTAL
         ChartPeriod.entries.forEach { period ->
             val button = createButton(period)
-            button.setOnClickListener {
+            button.setMoonOnClickListener {
                 selectedPeriod = period
             }
             addView(button, buttonParams)

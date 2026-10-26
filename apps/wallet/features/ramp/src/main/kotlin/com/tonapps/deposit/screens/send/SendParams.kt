@@ -1,6 +1,7 @@
 package com.tonapps.deposit.screens.send
 
 import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.deposit.screens.send.state.SendDestination
 import com.tonapps.icu.Coins
@@ -19,7 +20,9 @@ data class SendParams(
     val tokens: List<AccountTokenEntity>,
     val tronAvailable: Boolean,
     val exchangeData: Exchange? = null,
-    val analyticsFrom: Events.SendNative.SendNativeFrom = Events.SendNative.SendNativeFrom.WalletScreen,
+    val analyticsFrom: Events.SendNative.SendNativeFrom,
+    val withdrawFlowFrom: Events.WithdrawFlow.WithdrawFlowFrom,
+    val utm: UtmParameters = UtmParameters.Empty,
 ) {
     data class Exchange(
         val currency: WalletCurrency,

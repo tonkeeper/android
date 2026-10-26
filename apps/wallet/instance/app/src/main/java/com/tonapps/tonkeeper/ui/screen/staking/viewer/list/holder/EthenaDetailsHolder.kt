@@ -5,6 +5,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
 import com.tonapps.tonkeeperx.R
+import uikit.extensions.setMoonOnClickListener
 
 class EthenaDetailsHolder(
     parent: ViewGroup,
@@ -25,10 +26,10 @@ class EthenaDetailsHolder(
 
         bonusApyTitleView.text = item.bonusTitle
         bonusApySubtitleView.text = item.bonusDescription
-        faqView.setOnClickListener {
+        faqView.setMoonOnClickListener {
             BrowserHelper.open(context, item.faqUrl)
         }
-        checkEligibilityView.setOnClickListener {
+        checkEligibilityView.setMoonOnClickListener {
             item.bonusUrl?.let {
                 BrowserHelper.open(context, it)
             }

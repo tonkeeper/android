@@ -1,20 +1,23 @@
-# Tonkeeper
+# Keeper
 
 A production-grade Android wallet application for TON blockchain, built with Kotlin and Jetpack
 Compose.
 
 ## Project Overview
 
-Tonkeeper is a multi-app Android project consisting of:
+Keeper is a multi-app Android project consisting of:
 
-- **Tonkeeper Wallet** — main cryptocurrency wallet application
-- **Tonkeeper Signer** — companion offline signer application
+- **Keeper Wallet** — main cryptocurrency wallet application
+- **Keeper Signer** — companion offline signer application
 - Multiple shared libraries and Kotlin Multiplatform modules
 
 ## Project Structure
 
+Paths below are relative to this directory, the Gradle root. In the private monorepo it is
+`android/`; in the public mirror it is the repository root.
+
 ```
-repo_root/
+.
 ├── apps/                              # Applications
 │   ├── wallet/                        # Main wallet app
 │   │   ├── instance/
@@ -77,7 +80,7 @@ repo_root/
 │
 ├── tonapi/                            # TON API client library
 │   ├── core/                          # Core API client
-│   ├── tonkeeper/                     # Tonkeeper-specific API
+│   ├── tonkeeper/                     # Keeper-specific API
 │   ├── battery/                       # Battery API
 │   └── legacy/                        # Legacy API
 │
@@ -86,7 +89,6 @@ repo_root/
 ├── detekt/                            # Code quality configuration
 ├── fastlane/                          # CI/CD automation
 └── tools/                             # Build tools and scripts
-    ├── hooks/                         # Git pre-commit hooks
     └── scripts/                       # Code generators (tonapi, battery)
 ```
 
@@ -191,14 +193,14 @@ Key patterns:
 
 ## CI/CD
 
-GitHub Actions workflows in `.github/workflows/`:
+GitHub Actions workflows live in the repository's `.github/workflows/`:
 
-| Workflow              | Trigger        | Purpose                        |
-|-----------------------|----------------|--------------------------------|
-| `debug.yml`           | Push to `dev`  | Dev builds                     |
-| `ci.yml`              | Tagged commits | Release builds                 |
-| `baselineprofile.yml` | Manual         | Performance profile generation |
-| `publish.yml`         | Manual         | Mirror to public repository    |
+| Workflow              | Trigger                                   | Purpose                        |
+|-----------------------|-------------------------------------------|--------------------------------|
+| `android-debug.yml`   | PRs touching `android/`, weekday schedule | Debug APK builds               |
+| `ci.yml`              | Tagged commits                            | Release builds                 |
+| `baselineprofile.yml` | Manual                                    | Performance profile generation |
+| `publish.yml`         | Manual                                    | Mirror to public repository    |
 
 ## Key Configuration Files
 

@@ -7,8 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowWithdrawOption
@@ -32,6 +35,8 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ui.moon.MoonNav
 import ui.moon.rememberNestedNavBackStack
+import ui.theme.UIKit
+import uikit.navigation.Navigation.Companion.navigation
 
 private const val KEY_SCANNER_RESULT = "mc_withdraw_scanner_result"
 
@@ -66,14 +71,15 @@ fun WithdrawMulticoinRouter(
     onTopUp: (assetId: String) -> Unit,
     onOpenBattery: (walletId: String, from: BatteryNativeFrom) -> Unit,
     onSendSuccess: () -> Unit = onBack,
-    analyticsFrom: WithdrawFlowFrom = WithdrawFlowFrom.WalletScreen,
+    analyticsFrom: WithdrawFlowFrom,
+    utm: UtmParameters = UtmParameters.Empty,
     onAddressBook: ((onResult: (String) -> Unit) -> Unit)? = null,
 ) {
     val backStack = rememberNestedNavBackStack(initial, onBack)
     val resultStore = rememberResultStore()
     var confirmRequest by remember { mutableStateOf<ConfirmRequest?>(null) }
     var confirmTxInfo by remember { mutableStateOf<SendTxInfo?>(null) }
-    val analytics = remember(analyticsFrom) { WithdrawAnalytics(analyticsFrom) }
+    val analytics = remember(analyticsFrom, utm) { WithdrawAnalytics(analyticsFrom, utm = utm) }
 
     LaunchedEffect(analytics) {
         analytics.started(listOf(WithdrawFlowWithdrawOption.SendTokens))
@@ -87,7 +93,7 @@ fun WithdrawMulticoinRouter(
             when (key) {
                 is WithdrawMulticoinRoutes.Picker -> NavEntry(key) {
                     val feature = koinViewModel<AssetPickerFeature> {
-                        parametersOf(analyticsFrom)
+                        parametersOf(analyticsFrom, utm)
                     }
                     val group = remember(key.presetAddress) {
                         val presetAddress = key.presetAddress
@@ -116,12 +122,15 @@ fun WithdrawMulticoinRouter(
                 }
 
                 is WithdrawMulticoinRoutes.Send -> NavEntry(key) {
+                    val context = LocalContext.current
+                    val toastColor = UIKit.colorScheme.background.contentTint.toArgb()
                     val feature = koinViewModel<SendFeature> {
                         parametersOf(
                             SendData(
                                 initAssetId = key.assetId,
                                 presetAddress = key.presetAddress,
                                 analyticsFrom = analyticsFrom,
+                                utm = utm,
                                 presetAmount = key.presetAmount,
                                 presetComment = key.presetComment,
                             )
@@ -132,6 +141,9 @@ fun WithdrawMulticoinRouter(
                         feature = feature,
                         onClose = onBack,
                         onBack = { backStack.safeRemoveLastOrNull(key) },
+                        onShowError = { message ->
+                            context.navigation?.toast(message, loading = false, color = toastColor)
+                        },
                         scannerResult = resultStore.removeResult(KEY_SCANNER_RESULT),
                         onNavigateToScanner = {
                             backStack.add(WithdrawMulticoinRoutes.Scanner)

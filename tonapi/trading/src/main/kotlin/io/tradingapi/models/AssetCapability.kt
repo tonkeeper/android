@@ -12,13 +12,18 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Capability flag. Clients must tolerate unknown values added later
  *
- * Values: onramp,offramp,swap,p2p
+ * Values: onramp,offramp,swap,p2p,unknown
  */
-@Serializable
+@Serializable(with = AssetCapabilitySerializer::class)
 enum class AssetCapability(val value: String) {
     @SerialName(value = "onramp")
     onramp("onramp"),
@@ -27,7 +32,9 @@ enum class AssetCapability(val value: String) {
     @SerialName(value = "swap")
     swap("swap"),
     @SerialName(value = "p2p")
-    p2p("p2p");
+    p2p("p2p"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -53,6 +60,20 @@ enum class AssetCapability(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AssetCapabilitySerializer : KSerializer<AssetCapability> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AssetCapability {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AssetCapability.entries.firstOrNull { it.value == value }
+            ?: AssetCapability.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AssetCapability) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

@@ -21,6 +21,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.withDefaultBadge
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 @SuppressLint("ClickableViewAccessibility")
 class TokenHolder(
@@ -73,14 +74,14 @@ class TokenHolder(
             balanceView.setTextColor(context.accentOrangeColor)
         }
 
-        pinnedView.setOnClickListener {
+        pinnedView.setMoonOnClickListener {
             val pinned = !item.pinned
             doOnPinChange(item.address, pinned)
-            applyPinnedState(pinned)
+            applyPinnedState(pinned, item.isHideable)
         }
-        applyPinnedState(item.pinned)
+        applyPinnedState(item.pinned, item.isHideable)
 
-        hiddenView.setOnClickListener {
+        hiddenView.setMoonOnClickListener {
             val hidden = !item.hidden
             doOnHiddeChange(item.address, hidden)
             applyHiddenState(hidden, item.pinned)
@@ -89,7 +90,11 @@ class TokenHolder(
 
         val showNetwork = item.isUSDT || item.isTRC20
 
-        networkIconView.visibility = if (showNetwork) View.VISIBLE else View.GONE
+        networkIconView.visibility = if (showNetwork) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
         setNetworkIcon(item.blockchain)
     }
 
@@ -102,7 +107,7 @@ class TokenHolder(
         networkIconView.setLocalRes(icon)
     }
 
-    private fun applyPinnedState(pinned: Boolean) {
+    private fun applyPinnedState(pinned: Boolean, isHideable: Boolean) {
         pinnedView.imageTintList = if (pinned) {
             context.accentBlueColor.stateList
         } else {
@@ -115,7 +120,11 @@ class TokenHolder(
             pinnedView.visibility = View.VISIBLE
         } else {
             reorderView.visibility = View.GONE
-            hiddenView.visibility = View.VISIBLE
+            hiddenView.visibility = if (isHideable) {
+                View.VISIBLE
+            } else {
+                View.INVISIBLE
+            }
         }
     }
 

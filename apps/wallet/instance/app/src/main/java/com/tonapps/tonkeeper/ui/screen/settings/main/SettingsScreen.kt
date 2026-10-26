@@ -12,13 +12,13 @@ import com.tonapps.blockchain.model.legacy.Wallet as TonWallet
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.bus.generated.Events.InappReview.InappReviewAction
 import com.tonapps.bus.generated.Events.Migration.MigrationFrom
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.core.flags.InAppReviewManager
 import com.tonapps.tonkeeper.Wallet
 import com.tonapps.tonkeeper.extensions.toastLoading
+import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.manager.widget.WidgetManager
 import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.migration.MigrationFragment
@@ -26,7 +26,6 @@ import com.tonapps.dapp.screens.sessions.WcSessionsFragment
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
-import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.settings.currency.CurrencyScreen
 import com.tonapps.tonkeeper.ui.screen.settings.language.LanguageScreen
 import com.tonapps.tonkeeper.ui.screen.name.edit.EditNameScreen
@@ -101,8 +100,12 @@ class SettingsScreen : BaseListWalletScreen<ScreenContext.None>(ScreenContext.No
                 val legacy = (viewModel.walletFlow.value as? Wallet.Legacy)?.entity ?: return
                 navigation?.add(W5StoriesScreen.newInstance(!legacy.isW5))
             }
-            is Item.Battery -> navigation?.add(BatteryScreen.newInstance(wallet, from = BatteryNativeFrom.Settings))
-            is Item.Logout -> if (item.delete) deleteAccount() else showSignOutDialog()
+            is Item.Battery -> viewModel.openBattery()
+            is Item.Logout -> if (item.delete) {
+                deleteAccount()
+            } else {
+                showSignOutDialog()
+            }
             is Item.ConnectedApps -> when (viewModel.walletFlow.value) {
                 is Wallet.Multichain -> navigation?.add(WcSessionsFragment.newInstance())
                 is Wallet.Legacy -> navigation?.add(AppsScreen.newInstance(wallet))
@@ -150,10 +153,11 @@ class SettingsScreen : BaseListWalletScreen<ScreenContext.None>(ScreenContext.No
     private fun openGooglePlay() {
         context?.let {
             val packageName = it.packageName.replace(".debug", "")
-            val uri = "market://details?id=$packageName"
-            val intent = Intent(Intent.ACTION_VIEW, uri.toUri())
-            if (intent.resolveActivity(it.packageManager) != null) {
+            val intent = Intent(Intent.ACTION_VIEW, "$MARKET_DETAILS_URL$packageName".toUri())
+            try {
                 startActivity(intent)
+            } catch (e: Throwable) {
+                BrowserHelper.open(it, "$PLAY_STORE_DETAILS_URL$packageName")
             }
         }
     }
@@ -227,6 +231,8 @@ class SettingsScreen : BaseListWalletScreen<ScreenContext.None>(ScreenContext.No
     companion object {
 
         private const val ARG_FROM = "from"
+        private const val MARKET_DETAILS_URL = "market://details?id="
+        private const val PLAY_STORE_DETAILS_URL = "https://play.google.com/store/apps/details?id="
 
         fun newInstance(from: String): SettingsScreen {
             val screen = SettingsScreen()

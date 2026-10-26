@@ -4,27 +4,17 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.StoryEntity
-import com.tonapps.wallet.data.raffle.debug.RaffleDebugStore
 import com.tonapps.wallet.data.settings.SettingsRepository
 
 class ConfigStoriesAutoShow(
     private val api: API,
     private val settingsRepository: SettingsRepository,
-    private val debugStore: RaffleDebugStore?,
     private val session: StoryAutoShowSession,
 ) {
 
-    private var seenDedupeResetCount = 0
     private val storiesWithoutAutoShow = mutableSetOf<Pair<String?, List<String>>>()
 
     suspend fun showOnce(wallet: WalletEntity, show: suspend (StoryEntity.Stories) -> Boolean) {
-        debugStore?.storyDedupeResetCount?.value?.let { resetCount ->
-            if (resetCount != seenDedupeResetCount) {
-                seenDedupeResetCount = resetCount
-                storiesWithoutAutoShow.clear()
-                session.reset()
-            }
-        }
         if (session.hasShown(wallet.id)) {
             return
         }

@@ -46,10 +46,10 @@ class BrowserRepository(context: Context, private val api: API) {
         deeplink: Uri,
         walletId: String?,
     ): Boolean {
-        if (deeplink.host == "dapp.aeon.xyz" || deeplink.host == "tonkeeper.com" || deeplink.host?.endsWith(".tonkeeper.com") == true) {
+        val host = deeplink.host ?: return false
+        if (host == "dapp.aeon.xyz" || TRUSTED_DOMAINS.any { host == it || host.endsWith(".$it") }) {
             return true
         }
-        val host = deeplink.host ?: return false
         val apps = getApps(country, network, locale, walletId)
         for (app in apps) {
             if (app.useTG) {
@@ -148,5 +148,9 @@ class BrowserRepository(context: Context, private val api: API) {
         val key = cacheKey(country, locale, walletId)
         localDataSource.setCache(key, data)
         return data
+    }
+
+    private companion object {
+        val TRUSTED_DOMAINS = setOf("tonkeeper.com", "keeperwallet.com")
     }
 }

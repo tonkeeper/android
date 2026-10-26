@@ -11,6 +11,7 @@ import com.tonapps.async.Async
 import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.loading
 import com.tonapps.tonkeeper.extensions.showToast
+import com.tonapps.tonkeeper.extensions.showWarningToast
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +94,10 @@ abstract class BaseWalletVM(
 
     suspend fun toast(text: String) = withContext(Dispatchers.Main) {
         context.showToast(text)
+    }
+
+    suspend fun warningToast(@StringRes resId: Int) = withContext(Dispatchers.Main) {
+        context.showWarningToast(resId)
     }
 
     suspend fun loading(loading: Boolean) = withContext(Dispatchers.Main) {

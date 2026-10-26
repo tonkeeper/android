@@ -19,6 +19,8 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.activity
 import uikit.extensions.dp
 import uikit.extensions.drawable
+import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.setMoonOnClickListener
 
 class IconHolder(parent: ViewGroup): Holder<Item.Icon>(parent, R.layout.view_theme_icon) {
 
@@ -35,7 +37,7 @@ class IconHolder(parent: ViewGroup): Holder<Item.Icon>(parent, R.layout.view_the
     override fun onBind(item: Item.Icon) {
         setDrawable(item.icon)
         titleView.text = item.icon.type
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             LauncherIcon.setEnable(itemView.context, item.icon)
             Toast.makeText(itemView.context, getString(Localization.app_icon_changed), Toast.LENGTH_SHORT).show()
             activity?.finish()

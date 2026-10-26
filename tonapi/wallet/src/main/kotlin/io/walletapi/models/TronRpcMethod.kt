@@ -12,13 +12,18 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Whitelisted java-tron HTTP methods the proxy forwards via POST — the set the mobile TronRpcClient uses.
  *
- * Values: getaccount,getaccountresource,getchainparameters,getReward,getnowblock,gettransactionbyid,getcontract,getcontractinfo,triggerconstantcontract,broadcasttransaction
+ * Values: getaccount,getaccountresource,getchainparameters,getReward,getnowblock,gettransactionbyid,getcontract,getcontractinfo,triggerconstantcontract,broadcasttransaction,broadcasthex,unknown
  */
-@Serializable
+@Serializable(with = TronRpcMethodSerializer::class)
 enum class TronRpcMethod(val value: String) {
     @SerialName(value = "getaccount")
     getaccount("getaccount"),
@@ -39,7 +44,11 @@ enum class TronRpcMethod(val value: String) {
     @SerialName(value = "triggerconstantcontract")
     triggerconstantcontract("triggerconstantcontract"),
     @SerialName(value = "broadcasttransaction")
-    broadcasttransaction("broadcasttransaction");
+    broadcasttransaction("broadcasttransaction"),
+    @SerialName(value = "broadcasthex")
+    broadcasthex("broadcasthex"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -65,6 +74,20 @@ enum class TronRpcMethod(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object TronRpcMethodSerializer : KSerializer<TronRpcMethod> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): TronRpcMethod {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return TronRpcMethod.entries.firstOrNull { it.value == value }
+            ?: TronRpcMethod.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: TronRpcMethod) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

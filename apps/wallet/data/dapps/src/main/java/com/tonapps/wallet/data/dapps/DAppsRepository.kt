@@ -407,22 +407,6 @@ class DAppsRepository internal constructor(
         }
     }
 
-    suspend fun getMatchingConnections(
-        accountId: String,
-        network: TonNetwork,
-        appUrl: Uri,
-        type: AppConnectEntity.Type?
-    ): List<AppConnectEntity> {
-        val targetHost = appUrl.host?.lowercase() ?: return emptyList()
-        val targetPath = appUrl.path.orEmpty().trimEnd('/')
-        return getConnections().filter { connection ->
-            connection.accountId == accountId &&
-            connection.network == network &&
-            matchesTarget(connection.appUrl, targetHost, targetPath) &&
-            (type == null || connection.type == type)
-        }
-    }
-
     // TODO: replace URL-based matching with a stable per-connection requestId (UUID or similar).
     // Origin-style rows (the norm) match the whole host; rows carrying a path (Telegram mini apps)
     // only match targets under that path, so a sibling's disconnect cannot delete them.
@@ -619,7 +603,7 @@ class DAppsRepository internal constructor(
         for (path in manifestPaths) {
             val manifestUrl = "https://$host/$path"
             try {
-                return@withContext AppEntity(api.get(manifestUrl))
+                return@withContext AppEntity.fromManifest(api.get(manifestUrl))
             } catch (e: Throwable) {
                 FirebaseCrashlytics.getInstance().recordException(e)
                 continue
@@ -691,11 +675,10 @@ class DAppsRepository internal constructor(
         }
         val keys = urls.map { it.withoutQuery.toString() }
         appDao.getByUrls(keys).map { row ->
-            AppEntity(
-                url = (row.url).removeSuffix("/").toUri(),
+            AppEntity.sizeLimited(
+                url = row.url.removeSuffix("/"),
                 name = row.name.orEmpty(),
                 iconUrl = row.iconUrl.orEmpty(),
-                empty = false,
             )
         }
     }

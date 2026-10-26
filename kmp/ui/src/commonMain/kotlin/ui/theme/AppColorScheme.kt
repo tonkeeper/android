@@ -1,7 +1,6 @@
 package ui.theme
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
@@ -37,10 +36,6 @@ data class AppColorScheme(
 
     val isLightTheme: Boolean
         get() = appearance == AppThemeAppearance.Light
-
-    val rippleConfiguration = RippleConfiguration(
-        color = background.highlighted
-    )
 
     val shimmerColors = listOf(
         background.content,

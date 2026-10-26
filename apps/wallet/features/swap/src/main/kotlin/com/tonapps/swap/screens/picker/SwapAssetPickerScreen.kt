@@ -129,15 +129,16 @@ fun SwapAssetPickerScreen(
                 else -> {
                     items(
                         count = pagingItems.itemCount,
-                        key = pagingItems.itemKey { it.asset.id },
+                        key = pagingItems.itemKey { it.account.asset.id },
                         contentType = pagingItems.itemContentType { "account" },
                     ) { index ->
                         val item = pagingItems[index] ?: return@items
                         AccountCell(
-                            account = item,
+                            account = item.account,
                             position = defaultBundleType(pagingItems.itemCount, index),
                             showVerification = true,
-                            onClick = { onAssetSelected(item.asset) },
+                            hiddenBalance = item.hiddenBalance,
+                            onClick = { onAssetSelected(item.account.asset) },
                             content = {},
                         )
                     }

@@ -7,9 +7,8 @@ plugins {
 
 android {
     defaultConfig {
-        // Enables instrumented tests (src/androidTest). Host unit tests stay disabled by the
-        // convention plugin, but instrumented tests need TrustWalletCore's native lib, so they
-        // must run on a device/emulator anyway.
+        // Enables instrumented tests (src/androidTest). They need TrustWalletCore's native lib,
+        // so they must run on a device/emulator.
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -36,6 +35,7 @@ dependencies {
     implementation(libs.chainkit.models)
     implementation(libs.chainkit.api)
     implementation(libs.chainkit.sdk)
+    implementation(libs.chainkit.op)
 
     implementation(libs.compose.paging)
     implementation(libs.compose.paging.runtime)
@@ -74,6 +74,7 @@ dependencies {
     implementation(projects.apps.wallet.data.legacy)
 
     implementation(projects.apps.wallet.features.core)
+    implementation(projects.apps.wallet.features.confirm)
     implementation(projects.apps.wallet.features.dapp)
     implementation(projects.apps.wallet.features.embeded.scanner)
     implementation(projects.apps.wallet.data.dapps)
@@ -109,4 +110,11 @@ dependencies {
     androidTestImplementation(libs.chainkit.models)
     // The unsigned SigningInput is a Wire protobuf Message; expose the type to the test classpath.
     androidTestImplementation("com.squareup.wire:wire-runtime:4.5.6")
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+}
+
+tasks.withType<Test>().configureEach {
+    enabled = true
 }

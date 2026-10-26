@@ -1,0 +1,62 @@
+{
+  "quote_id": "d020d4f0-84fb-413e-b90e-c0a3a5b5f005",
+  "routes": [
+    {
+      "route_id": "91b50d68-ffe6-4cd3-b4ea-740da6d8d520",
+      "provider_route_id": "0xba1f2d8d38c4d0ad15272aa1bb0d332343fcf4b1cae038502974d4bbc713781b",
+      "aggregator": "swapsxyz",
+      "route_type": "cross_chain_swap",
+      "source_amount": "1000000000",
+      "estimated_destination_amount": "1417408",
+      "minimum_destination_amount": "1403233",
+      "estimated_time": {
+        "inbound_seconds": 0,
+        "swap_seconds": 0,
+        "outbound_seconds": 0,
+        "total_seconds": 1
+      },
+      "total_slippage_bps": 100,
+      "source_usd_price": 1.43,
+      "destination_usd_price": 1,
+      "fees": [
+        {
+          "type": "protocol",
+          "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+          "chain_id": "999000337",
+          "amount": "1428",
+          "amount_usd": "0.00"
+        },
+        {
+          "type": "application",
+          "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+          "chain_id": "999000337",
+          "amount": "10002",
+          "amount_usd": "0.01"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-09-05T19:13:07Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "65c4f310-e28f-424a-b769-a403040a0c05",
+          "kind": "main",
+          "chain_id": "ton/mainnet",
+          "chain_family": "TON",
+          "payload_type": "ton_boc",
+          "calldata_payload_type": "exact",
+          "payload": "[{\"address\":\"EQAH4MY1EbqP7Gg2wJkoZvoCG4BYPsEG5lVBXPZn0UqXNz4y\",\"amount\":\"1280000000\",\"payload\":\"te6cckECBQEAAWoAAiGlp8v4x3nPEyphRgRDuaygCAECABnEQlAPMVaWIAAAAAABAdOAHhy8XXiXPILNhsg+k1kS5GhxIfsU6txsk5vAlEEVC1loFXUqAUALXMdcMUMp6BCaRG4+NP0bqZn72kNWnz3NRatcDdZ/KoAgBa5jrhihlPQITSI3Hxp+jdTM/e0hq0+e5qLVrgbrP5VEAwHRGjwvw4AWuY64YoZT0CE0iNx8afo3UzP3tIatPnuai1a4G6z+VRAC1zHXDFDKegQmkRuPjT9G6mZ+9pDVp89zUWrXA3WfyqIAWuY64YoZT0CE0iNx8afo3UzP3tIatPnuai1a4G6z+VRABADVgAlJeN+vfDbQxudkdEm05n9KvgbpS1s7SiZm1Rqz3ce4wAoQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEDr96hX\"}]",
+          "human_summary": {
+            "action": "Swap GRAM for USDT",
+            "spend_asset": "ton/mainnet/coin",
+            "spend_amount": "1000000000",
+            "receive_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+            "receive_amount": "1417408"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-05T19:13:07Z"
+        }
+      ]
+    }
+  ]
+}

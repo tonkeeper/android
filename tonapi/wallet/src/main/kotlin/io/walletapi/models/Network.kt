@@ -12,16 +12,23 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * Values: mainnet,testnet
+ * Values: mainnet,testnet,unknown
  */
-@Serializable
+@Serializable(with = NetworkSerializer::class)
 enum class Network(val value: String) {
     @SerialName(value = "mainnet")
     mainnet("mainnet"),
     @SerialName(value = "testnet")
-    testnet("testnet");
+    testnet("testnet"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -47,6 +54,20 @@ enum class Network(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object NetworkSerializer : KSerializer<Network> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): Network {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return Network.entries.firstOrNull { it.value == value }
+            ?: Network.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: Network) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

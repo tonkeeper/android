@@ -36,7 +36,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:title="@string/setup_finish_backup_title"
-            android:description="@string/setup_finish_backup_subtitle"/>
+            android:description="@string/setup_finish_backup_onboarding_subtitle"/>
 
     </uikit.widget.ColumnLayout>
 

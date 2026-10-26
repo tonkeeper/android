@@ -1,0 +1,11 @@
+# Cold start to a funded multichain wallet home, with Perps switched on.
+#
+# android_is_perps_enabled defaults to false in RemoteConfig, so without the
+# launch extra the Trade tab has no Perpetuals entry at all and every perps flow
+# dies on "Trending Perpetuals".
+appId: com.ton_keeper.debug
+---
+- runFlow:
+    file: launch_app_ensure_multichain_wallet.yaml
+    env:
+      FEATURE_FLAGS: '{"android_is_perps_enabled": true}'

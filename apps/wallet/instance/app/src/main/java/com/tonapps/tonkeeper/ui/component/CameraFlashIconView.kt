@@ -8,7 +8,6 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.icon.UIKitIcon
-import uikit.HapticHelper
 
 class CameraFlashIconView @JvmOverloads constructor(
     context: Context,

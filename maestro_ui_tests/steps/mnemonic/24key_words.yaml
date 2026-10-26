@@ -54,8 +54,10 @@ appId: com.ton_keeper.debug
 - pressKey: Enter
 
 # Phrase submit can land on Create passcode, Choose wallet, or Choose wallet version.
+# Adding a wallet to an app that already has one lands on Enter passcode instead:
+# without it here the fallback below hunts for a Continue that is not on screen.
 - extendedWaitUntil:
-    visible: "Create passcode|Choose wallet"
+    visible: "Create passcode|Enter passcode|Choose wallet"
     timeout: 15000
     optional: true
 
@@ -63,7 +65,7 @@ appId: com.ton_keeper.debug
 # Do not hideKeyboard: Android treats it as Back and leaves the flow.
 - runFlow:
     when:
-      notVisible: "Create passcode|Choose wallet"
+      notVisible: "Create passcode|Enter passcode|Choose wallet"
     commands:
       - scrollUntilVisible:
           element:

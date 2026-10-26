@@ -128,7 +128,7 @@ class AssetsManager(
         val safeMode = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
         val tronAddress =
             if (wallet.hasPrivateKey && !wallet.testnet) {
-                accountRepository.getTronAddress(wallet.id)
+                accountRepository.getTronAddressOrNull(wallet.id)
             } else {
                 null
             }

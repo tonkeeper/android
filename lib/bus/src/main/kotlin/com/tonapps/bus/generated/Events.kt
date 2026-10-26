@@ -7,7 +7,7 @@ package com.tonapps.bus.generated
 interface Events {
 
     companion object {
-        const val VERSION = "6.0.1"
+        const val VERSION = "6.1.2"
     }
 
     interface AssetScreen {
@@ -36,6 +36,44 @@ interface Events {
 
         /** asset_button_click */
         fun assetButtonClick(button: AssetScreenButton, asset: String)
+    }
+
+
+    interface Banner {
+
+        enum class BannerWalletMode(val key: String) {
+            Multi("multi"),
+            Single("single")
+        }
+
+        enum class BannerFrom(val key: String) {
+            Home("home"),
+            Browser("browser")
+        }
+
+        enum class BannerAction(val key: String) {
+            Deposit("deposit"),
+            Withdraw("withdraw"),
+            Swap("swap"),
+            Staking("staking"),
+            Battery("battery"),
+            Send("send"),
+            Trade("trade"),
+            Exchange("exchange"),
+            Dapp("dapp"),
+            Other("other")
+        }
+
+        /** banner_view */
+        fun bannerView(bannerId: String, walletMode: BannerWalletMode, from: BannerFrom)
+
+        /** banner_click */
+        fun bannerClick(
+            bannerId: String,
+            action: BannerAction,
+            walletMode: BannerWalletMode,
+            from: BannerFrom
+        )
     }
 
 
@@ -92,7 +130,9 @@ interface Events {
             Wallet("wallet"),
             History("history"),
             DeepLink("deep_link"),
-            Story("story")
+            Story("story"),
+            ConnectedApps("connected_apps"),
+            Other("other")
         }
 
         enum class DappBrowserType(val key: String) {
@@ -107,6 +147,8 @@ interface Events {
             Arb("arb"),
             Bnb("bnb"),
             Pol("pol"),
+            Avax("avax"),
+            Robinhood("robinhood"),
             Sol("sol"),
             Tron("tron"),
             Btc("btc"),
@@ -128,7 +170,16 @@ interface Events {
             BrowserConnected("browser_connected"),
             Push("push"),
             Sidebar("sidebar"),
-            DeepLink("deep_link")
+            DeepLink("deep_link"),
+            History("history"),
+            Collectibles("collectibles"),
+            Tonconnect("tonconnect"),
+            EarnFeatured("earn_featured"),
+            EarnYourVaults("earn_your_vaults"),
+            EarnApy("earn_apy"),
+            Dapp("dapp"),
+            Shortcut("shortcut"),
+            Other("other")
         }
 
         /** dapp_browser_open */
@@ -168,7 +219,21 @@ interface Events {
             assetChain: DappBrowserAssetChain,
             appId: String,
             bannerId: String?,
-            location: String
+            location: String,
+            loadDurationMs: Int
+        )
+
+        /** dapp_app_load_failed */
+        fun dappAppLoadFailed(
+            from: DappAppClickFrom,
+            url: String,
+            assetChain: DappBrowserAssetChain,
+            appId: String,
+            bannerId: String?,
+            location: String,
+            errorCode: String,
+            httpStatus: Int?,
+            loadDurationMs: Int
         )
 
         /** dapp_browser_search_open */
@@ -179,13 +244,70 @@ interface Events {
     }
 
 
+    interface DeeplinkOpen {
+
+        enum class DeeplinkOpenFrom(val key: String) {
+            AppLink("app_link"),
+            UniversalLink("universal_link")
+        }
+
+        enum class DeeplinkOpenLinkType(val key: String) {
+            Transfer("transfer"),
+            Staking("staking"),
+            Pool("pool"),
+            Swap("swap"),
+            Deposit("deposit"),
+            Withdraw("withdraw"),
+            Action("action"),
+            Publish("publish"),
+            ExternalSign("external_sign"),
+            Tonconnect("tonconnect"),
+            WalletConnect("wallet_connect"),
+            Dapp("dapp"),
+            Battery("battery"),
+            Browser("browser"),
+            Migration("migration"),
+            Trading("trading"),
+            TradeAsset("trade_asset"),
+            Story("story"),
+            Receive("receive"),
+            Backup("backup"),
+            AddWallet("add_wallet"),
+            Main("main"),
+            Raffle("raffle"),
+            Unknown("unknown")
+        }
+
+        /** deeplink_open */
+        fun deeplinkOpen(
+            from: DeeplinkOpenFrom,
+            linkType: DeeplinkOpenLinkType,
+            isColdStart: Boolean
+        )
+    }
+
+
     interface DepositFlow {
 
         enum class DepositFlowFrom(val key: String) {
             WalletScreen("wallet_screen"),
             JettonScreen("jetton_screen"),
             DeepLink("deep_link"),
-            QrCode("qr_code")
+            QrCode("qr_code"),
+            HistoryScreen("history_screen"),
+            Browser("browser"),
+            Collectibles("collectibles"),
+            Perps("perps"),
+            Walletconnect("walletconnect"),
+            Tonconnect("tonconnect"),
+            Staking("staking"),
+            Migration("migration"),
+            Other("other")
+        }
+
+        enum class DepositFlowWalletMode(val key: String) {
+            Multi("multi"),
+            Single("single")
         }
 
         enum class DepositFlowAddFundsOption(val key: String) {
@@ -206,14 +328,23 @@ interface Events {
         }
 
         /** deposit_started */
-        fun depositStarted(from: DepositFlowFrom, availableOptions: String)
+        fun depositStarted(
+            from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
+            availableOptions: String
+        )
 
         /** deposit_option_click */
-        fun depositOptionClick(from: DepositFlowFrom, addFundsOption: DepositFlowAddFundsOption)
+        fun depositOptionClick(
+            from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
+            addFundsOption: DepositFlowAddFundsOption
+        )
 
         /** deposit_view_receive_tokens */
         fun depositViewReceiveTokens(
             from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
             addFundsOption: DepositFlowAddFundsOption,
             network: DepositFlowNetwork
         )
@@ -224,6 +355,7 @@ interface Events {
         /** deposit_continue_to_p2p_market */
         fun depositContinueToP2pMarket(
             from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
             addFundsOption: DepositFlowAddFundsOption
         )
 
@@ -238,6 +370,7 @@ interface Events {
         /** deposit_view_send_asset */
         fun depositViewSendAsset(
             from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
             addFundsOption: DepositFlowAddFundsOption,
             sellAsset: String,
             buyAsset: String
@@ -246,6 +379,7 @@ interface Events {
         /** deposit_view_qr_code */
         fun depositViewQrCode(
             from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
             addFundsOption: DepositFlowAddFundsOption,
             sellAsset: String,
             buyAsset: String
@@ -318,6 +452,7 @@ interface Events {
         /** deposit_continue_to_ramp_provider */
         fun depositContinueToRampProvider(
             from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
             addFundsOption: DepositFlowAddFundsOption,
             buyAsset: String,
             sellAsset: String,
@@ -377,26 +512,282 @@ interface Events {
     }
 
 
-    interface HomeBanner {
+    interface EarnFlowExternal {
 
-        enum class HomeBannerAction(val key: String) {
-            Deposit("deposit"),
-            Withdraw("withdraw"),
-            Swap("swap"),
-            Staking("staking"),
-            Battery("battery"),
-            Send("send"),
-            Trade("trade"),
-            Exchange("exchange"),
+        /** earn_webview_screen_view */
+        fun earnWebviewScreenView(isExternalWebView: Int, eventProvider: String, screenName: String)
+
+        /** earn_vault_list_viewed */
+        fun earnVaultListViewed(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultsCount: Int,
+            chainsShown: String,
+            assetsShown: String
+        )
+
+        /** earn_vault_filter_applied */
+        fun earnVaultFilterApplied(
+            isExternalWebView: Int,
+            eventProvider: String,
+            filterType: String
+        )
+
+        /** earn_vault_sort_applied */
+        fun earnVaultSortApplied(isExternalWebView: Int, eventProvider: String, sortBy: String)
+
+        /** earn_vault_selected */
+        fun earnVaultSelected(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            isInitialRoute: Boolean,
+            asset: String,
+            apy: Double,
+            tvlUsd: Double,
+            riskScore: Double?
+        )
+
+        /** earn_deposit_started */
+        fun earnDepositStarted(isExternalWebView: Int, eventProvider: String, vaultId: String)
+
+        /** earn_deposit_amount_entered */
+        fun earnDepositAmountEntered(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            amountUsd: Double,
+            isMax: Boolean
+        )
+
+        /** earn_deposit_review_shown */
+        fun earnDepositReviewShown(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            estimatedGasUsd: Double,
+            estimatedApy: Double
+        )
+
+        /** earn_deposit_confirm_tapped */
+        fun earnDepositConfirmTapped(isExternalWebView: Int, eventProvider: String, vaultId: String)
+
+        /** earn_deposit_success */
+        fun earnDepositSuccess(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            amountUsd: Double
+        )
+
+        /** earn_deposit_failed */
+        fun earnDepositFailed(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            errorCode: String,
+            errorMessage: String?
+        )
+
+        /** earn_withdraw_started */
+        fun earnWithdrawStarted(isExternalWebView: Int, eventProvider: String, vaultId: String)
+
+        /** earn_withdraw_amount_entered */
+        fun earnWithdrawAmountEntered(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            amountUsd: Double,
+            isMax: Boolean
+        )
+
+        /** earn_withdraw_review_shown */
+        fun earnWithdrawReviewShown(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            estimatedGasUsd: Double
+        )
+
+        /** earn_withdraw_confirm_tapped */
+        fun earnWithdrawConfirmTapped(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String
+        )
+
+        /** earn_withdraw_requested */
+        fun earnWithdrawRequested(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            amountUsd: Double
+        )
+
+        /** earn_withdraw_success */
+        fun earnWithdrawSuccess(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            amountUsd: Double
+        )
+
+        /** earn_withdraw_failed */
+        fun earnWithdrawFailed(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            errorCode: String,
+            errorMessage: String?
+        )
+
+        /** earn_claim_started */
+        fun earnClaimStarted(isExternalWebView: Int, eventProvider: String, vaultId: String)
+
+        /** earn_claim_success */
+        fun earnClaimSuccess(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            rewardAmountUsd: Double
+        )
+
+        /** earn_claim_failed */
+        fun earnClaimFailed(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            errorCode: String,
+            errorMessage: String?
+        )
+
+        /** earn_position_viewed */
+        fun earnPositionViewed(
+            isExternalWebView: Int,
+            eventProvider: String,
+            vaultId: String,
+            balanceUsd: Double,
+            accruedYieldUsd: Double
+        )
+
+        /** earn_history_viewed */
+        fun earnHistoryViewed(isExternalWebView: Int, eventProvider: String)
+
+        /** earn_external_link_clicked */
+        fun earnExternalLinkClicked(isExternalWebView: Int, eventProvider: String, url: String)
+
+        /** earn_webview_error */
+        fun earnWebviewError(
+            isExternalWebView: Int,
+            eventProvider: String,
+            errorType: String,
+            errorMessage: String?
+        )
+    }
+
+
+    interface EarnFlow {
+
+        enum class EarnEntryViewFrom(val key: String) {
+            EarnFeatured("earn_featured"),
+            EarnYourVaults("earn_your_vaults"),
+            EarnApy("earn_apy")
+        }
+
+        enum class EarnSignRequestFrom(val key: String) {
+            Banner("banner"),
+            Browser("browser"),
+            BrowserSearch("browser_search"),
+            BrowserConnected("browser_connected"),
+            Push("push"),
+            Sidebar("sidebar"),
+            DeepLink("deep_link"),
+            History("history"),
+            Collectibles("collectibles"),
+            Tonconnect("tonconnect"),
+            EarnFeatured("earn_featured"),
+            EarnYourVaults("earn_your_vaults"),
+            EarnApy("earn_apy"),
             Dapp("dapp"),
+            Shortcut("shortcut"),
             Other("other")
         }
 
-        /** banner_view */
-        fun bannerView(bannerId: String)
+        enum class EarnFlowMethod(val key: String) {
+            SendTransaction("send_transaction"),
+            PersonalSign("personal_sign"),
+            SignTypedData("sign_typed_data")
+        }
 
-        /** banner_click */
-        fun bannerClick(bannerId: String, action: HomeBannerAction)
+        enum class EarnFlowChain(val key: String) {
+            Ton("ton"),
+            Eth("eth"),
+            Base("base"),
+            Arb("arb"),
+            Bnb("bnb"),
+            Pol("pol"),
+            Avax("avax"),
+            Robinhood("robinhood"),
+            Sol("sol"),
+            Tron("tron"),
+            Btc("btc"),
+            Ltc("ltc"),
+            Doge("doge"),
+            Bch("bch"),
+            Multichain("multichain")
+        }
+
+        enum class EarnFlowExitMethod(val key: String) {
+            Page("page"),
+            CloseButton("close_button"),
+            SystemBack("system_back"),
+            Other("other")
+        }
+
+        /** earn_entry_view */
+        fun earnEntryView(
+            from: EarnEntryViewFrom,
+            vaultsCount: Int?,
+            balanceUsd: Double?,
+            asset: String?
+        )
+
+        /** earn_sign_request */
+        fun earnSignRequest(
+            from: EarnSignRequestFrom,
+            method: EarnFlowMethod,
+            chain: EarnFlowChain,
+            vaultId: String?
+        )
+
+        /** earn_sign_success */
+        fun earnSignSuccess(
+            from: EarnSignRequestFrom,
+            method: EarnFlowMethod,
+            chain: EarnFlowChain,
+            vaultId: String?
+        )
+
+        /** earn_sign_rejected */
+        fun earnSignRejected(
+            from: EarnSignRequestFrom,
+            method: EarnFlowMethod,
+            chain: EarnFlowChain,
+            vaultId: String?
+        )
+
+        /** earn_sign_failed */
+        fun earnSignFailed(
+            from: EarnSignRequestFrom,
+            method: EarnFlowMethod,
+            chain: EarnFlowChain,
+            vaultId: String?,
+            errorCode: String,
+            errorMessage: String?
+        )
+
+        /** earn_close */
+        fun earnClose(from: EarnSignRequestFrom, exitMethod: EarnFlowExitMethod, durationMs: Int)
     }
 
 
@@ -414,8 +805,20 @@ interface Events {
 
     interface InstallApp {
 
+        enum class InstallAppProvider(val key: String) {
+            Branch("branch"),
+            Linkrunner("linkrunner")
+        }
+
         /** install_app */
         fun installApp(referrer: String?, deeplink: String?, installerStore: String?)
+
+        /** install_attribution */
+        fun installAttribution(
+            provider: InstallAppProvider,
+            campaignId: String?,
+            campaignName: String?
+        )
     }
 
 
@@ -487,6 +890,8 @@ interface Events {
             Arb("arb"),
             Bnb("bnb"),
             Pol("pol"),
+            Avax("avax"),
+            Robinhood("robinhood"),
             Sol("sol"),
             Tron("tron"),
             Btc("btc"),
@@ -600,6 +1005,9 @@ interface Events {
         /** onboarding_view_customize */
         fun onboardingViewCustomize()
 
+        /** onboarding_view_notifications */
+        fun onboardingViewNotifications()
+
         /** onboarding_click_customize_continue */
         fun onboardingClickCustomizeContinue()
     }
@@ -691,6 +1099,63 @@ interface Events {
 
         /** passcode_lockout */
         fun passcodeLockout(from: PasscodeLockoutFrom, lockoutSeconds: Int, failedAttempts: Int)
+    }
+
+
+    interface Perps {
+
+        enum class PerpsEntryPoint(val key: String) {
+            MainBanner("main_banner"),
+            MainCarousel("main_carousel"),
+            MainPositions("main_positions"),
+            AssetPage("asset_page"),
+            Search("search"),
+            TradeTab("trade_tab")
+        }
+
+        enum class PerpsWalletType(val key: String) {
+            Multichain("multichain"),
+            Ton("ton")
+        }
+
+        enum class PerpsSide(val key: String) {
+            Long("long"),
+            Short("short")
+        }
+
+        enum class PerpsOrderType(val key: String) {
+            Market("market"),
+            Limit("limit")
+        }
+
+        enum class PerpsReason(val key: String) {
+            VenueRejected("venue_rejected"),
+            PriceMoved("price_moved"),
+            InsufficientFunds("insufficient_funds"),
+            NetworkError("network_error"),
+            Other("other")
+        }
+
+        /** perps_section_opened */
+        fun perpsSectionOpened(entryPoint: PerpsEntryPoint)
+
+        /** perps_deposit_started */
+        fun perpsDepositStarted(walletType: PerpsWalletType)
+
+        /** perps_order_submitted */
+        fun perpsOrderSubmitted(
+            side: PerpsSide,
+            asset: String,
+            leverage: Double,
+            margin: Double,
+            orderType: PerpsOrderType
+        )
+
+        /** perps_order_failed */
+        fun perpsOrderFailed(reason: PerpsReason)
+
+        /** perps_trading_data_error */
+        fun perpsTradingDataError(asset: String)
     }
 
 
@@ -1100,6 +1565,17 @@ interface Events {
             EvmInjected("evm_injected")
         }
 
+        enum class TransactionSentLedgerModel(val key: String) {
+            NanoS("nano_s"),
+            NanoSPlus("nano_s_plus"),
+            NanoX("nano_x"),
+            Stax("stax"),
+            Flex("flex"),
+            NanoGen5("nano_gen5"),
+            Atom("atom"),
+            Unknown("unknown")
+        }
+
         /** transaction_sent */
         fun transactionSent(
             category: TransactionSentCategory,
@@ -1116,7 +1592,8 @@ interface Events {
             isMax: Boolean?,
             toAsset: String?,
             stakingProvider: String?,
-            isLiquid: Boolean?
+            isLiquid: Boolean?,
+            ledgerModel: TransactionSentLedgerModel?
         )
     }
 
@@ -1191,7 +1668,8 @@ interface Events {
         enum class WalletFlowSource(val key: String) {
             Onboarding("onboarding"),
             WalletSetupSection("wallet_setup_section"),
-            Settings("settings")
+            Settings("settings"),
+            DeepLink("deep_link")
         }
 
         enum class WalletFlowWalletSource(val key: String) {
@@ -1201,6 +1679,28 @@ interface Events {
             Keystone("keystone"),
             Privatekey("privatekey"),
             Watchonly("watchonly")
+        }
+
+        enum class WalletFlowLedgerModel(val key: String) {
+            NanoS("nano_s"),
+            NanoSPlus("nano_s_plus"),
+            NanoX("nano_x"),
+            Stax("stax"),
+            Flex("flex"),
+            NanoGen5("nano_gen5"),
+            Atom("atom"),
+            Unknown("unknown")
+        }
+
+        enum class WalletFlowBalanceBucket(val key: String) {
+            _0("0"),
+            _01("0-1"),
+            _110("1-10"),
+            _10100("10-100"),
+            _1001k("100-1k"),
+            _1k10k("1k-10k"),
+            _10k100k("10k-100k"),
+            _100k("100k+")
         }
 
         /** add_wallet_menu_view */
@@ -1241,6 +1741,43 @@ interface Events {
             from: WalletFlowFrom
         )
 
+        /** wallet_import_mnemonic_accepted */
+        fun walletImportMnemonicAccepted(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom
+        )
+
+        /** wallet_import_signer_scanned */
+        fun walletImportSignerScanned(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom
+        )
+
+        /** wallet_import_keystone_scanned */
+        fun walletImportKeystoneScanned(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom
+        )
+
+        /** wallet_import_ledger_bluetooth_connected */
+        fun walletImportLedgerBluetoothConnected(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            ledgerModel: WalletFlowLedgerModel?
+        )
+
+        /** wallet_import_ledger_app_opened */
+        fun walletImportLedgerAppOpened(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            ledgerModel: WalletFlowLedgerModel?
+        )
+
         /** wallet_import_error */
         fun walletImportError(
             walletMode: WalletFlowWalletMode,
@@ -1248,14 +1785,24 @@ interface Events {
             from: WalletFlowFrom,
             errorType: String?,
             errorCode: Int?,
-            errorMessage: String?
+            errorMessage: String?,
+            ledgerModel: WalletFlowLedgerModel?
         )
 
         /** wallet_import_success */
         fun walletImportSuccess(
             walletMode: WalletFlowWalletMode,
             walletSource: WalletFlowWalletSource,
-            from: WalletFlowFrom
+            from: WalletFlowFrom,
+            ledgerModel: WalletFlowLedgerModel?
+        )
+
+        /** wallet_import_balance */
+        fun walletImportBalance(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            balanceBucket: WalletFlowBalanceBucket
         )
     }
 
@@ -1311,7 +1858,16 @@ interface Events {
             WalletScreen("wallet_screen"),
             JettonScreen("jetton_screen"),
             DeepLink("deep_link"),
-            QrCode("qr_code")
+            QrCode("qr_code"),
+            HistoryScreen("history_screen"),
+            Browser("browser"),
+            Collectibles("collectibles"),
+            Perps("perps"),
+            Walletconnect("walletconnect"),
+            Tonconnect("tonconnect"),
+            Staking("staking"),
+            Migration("migration"),
+            Other("other")
         }
 
         enum class WithdrawFlowWithdrawOption(val key: String) {

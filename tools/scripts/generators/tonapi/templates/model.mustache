@@ -1,0 +1,11 @@
+{{>licenseInfo}}
+package {{modelPackage}}
+
+{{#imports}}import {{import}}
+{{/imports}}
+
+{{#models}}
+{{#model}}
+{{#isEnum}}{{>enum_class}}{{/isEnum}}{{^isEnum}}{{#isAlias}}typealias {{classname}} = {{{dataType}}}{{/isAlias}}{{^isAlias}}{{#vendorExtensions.x-one-of-sealed}}{{>sealed_class}}{{/vendorExtensions.x-one-of-sealed}}{{^vendorExtensions.x-one-of-sealed}}{{>data_class}}{{/vendorExtensions.x-one-of-sealed}}{{/isAlias}}{{/isEnum}}
+{{/model}}
+{{/models}}

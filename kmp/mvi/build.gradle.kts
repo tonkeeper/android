@@ -15,7 +15,10 @@ kotlin {
 //            compose = true
 //        }
 
-        withHostTestBuilder {}
+        // ThreadChecker and L reach for Looper/Log; the graph only asks them for defaults.
+        withHostTestBuilder {}.configure {
+            isReturnDefaultValues = true
+        }
     }
 
     applyDefaultHierarchyTemplate()
@@ -27,6 +30,7 @@ kotlin {
 
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.compose.multiplatform.runtime)
+            implementation(libs.compose.multiplatform.ui.util)
             implementation(libs.compose.multiplatform.viewmodel)
             implementation(libs.androidx.annotation)
         }

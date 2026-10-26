@@ -12,13 +12,18 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * По чему сортировать каталог. По умолчанию market_cap. open_interest_usd доступен только при tab=perpetuals, иначе 400.
+ * По чему сортировать каталог. По умолчанию market_cap. open_interest_usd доступен только при tab=perpetuals, иначе 400. При tab=all и filter=all выдача сначала группируется по классу актива — токены, акции, ETF, товары, затем perp-рынки — и уже внутри каждого блока сортируется по sort/order (и по совпадению с q при поиске). 
  *
- * Values: volume_24h,market_cap,price_24h,volume,open_interest_usd
+ * Values: volume_24h,market_cap,price_24h,volume,open_interest_usd,unknown
  */
-@Serializable
+@Serializable(with = AssetsSortSerializer::class)
 enum class AssetsSort(val value: String) {
     @SerialName(value = "volume_24h")
     volume_24h("volume_24h"),
@@ -29,7 +34,9 @@ enum class AssetsSort(val value: String) {
     @SerialName(value = "volume")
     volume("volume"),
     @SerialName(value = "open_interest_usd")
-    open_interest_usd("open_interest_usd");
+    open_interest_usd("open_interest_usd"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -55,6 +62,20 @@ enum class AssetsSort(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AssetsSortSerializer : KSerializer<AssetsSort> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AssetsSort {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AssetsSort.entries.firstOrNull { it.value == value }
+            ?: AssetsSort.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AssetsSort) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

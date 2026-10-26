@@ -31,6 +31,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setMoonOnClickListener
 
 class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragment.BottomSheet {
 
@@ -46,23 +47,23 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
         val constantWhiteColor = requireContext().constantWhiteColor.withAlpha(.08f).stateList
 
         val closeView = view.findViewById<View>(R.id.close)
-        closeView.setOnClickListener { finish() }
+        closeView.setMoonOnClickListener { finish() }
         closeView.backgroundTintList = constantWhiteColor
 
         val aboutView = view.findViewById<View>(R.id.about)
         aboutView.backgroundTintList = constantWhiteColor
-        aboutView.setOnClickListener {
+        aboutView.setMoonOnClickListener {
             BrowserHelper.open(requireActivity(), "https://tonkeeper.com/signer")
         }
 
         cameraView = view.findViewById(R.id.camera)
 
         val flashView = view.findViewById<CameraFlashIconView>(R.id.flash)
-        flashView.setOnClickListener { toggleFlash() }
+        flashView.setMoonOnClickListener { toggleFlash() }
 
         val signerOpenButton = view.findViewById<View>(R.id.signer_open)
         signerOpenButton.pinToBottomInsets()
-        signerOpenButton.setOnClickListener {
+        signerOpenButton.setMoonOnClickListener {
             SignerApp.openAppOrInstall(requireContext())
             finish()
         }
@@ -86,6 +87,7 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
                     return@onEach
                 }
             val name = uri.getQueryParameter("name") ?: ""
+            importAnalytics.trackSignerScanned()
             addAccount(pk, name)
         }.launchIn(lifecycleScope)
     }
@@ -99,7 +101,12 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
     }
 
     private fun addAccount(publicKey: PublicKeyEd25519, name: String) {
-        val fragment = InitScreen.newInstance(InitArgs.Type.SignerQR, publicKey, name)
+        val fragment = InitScreen.newInstance(
+            type = InitArgs.Type.SignerQR,
+            publicKeyEd25519 = publicKey,
+            name = name,
+            importStartedTracked = true,
+        )
         navigation?.add(fragment)
         finish()
     }

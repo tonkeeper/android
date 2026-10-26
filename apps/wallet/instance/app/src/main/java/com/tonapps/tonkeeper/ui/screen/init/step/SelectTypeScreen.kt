@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
 import com.tonapps.tonkeeper.ui.screen.add.AddWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.add.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.add.list.Item
@@ -40,12 +41,20 @@ class SelectTypeScreen : BaseFragment(R.layout.fragment_init_select_type) {
             Item.NEW_WALLET_ID -> initViewModel.continueWith(InitArgs.Type.New)
             Item.IMPORT_WALLET_ID -> initViewModel.continueWith(InitArgs.Type.Import)
             Item.WATCH_WALLET_ID -> initViewModel.continueWith(InitArgs.Type.Watch)
-            Item.TETRA_WALLET_ID -> initViewModel.continueWith(InitArgs.Type.Tetra)
             // External pairing flows (camera/bluetooth) open their own screens and spawn a fresh
             // InitScreen once the device is paired.
-            Item.SIGNER_WALLET_ID -> navigation?.add(SignerAddScreen.newInstance())
-            Item.LEDGER_WALLET_ID -> navigation?.add(PairLedgerScreen.newInstance())
-            Item.KEYSTONE_WALLET_ID -> navigation?.add(KeystoneAddScreen.newInstance())
+            Item.SIGNER_WALLET_ID -> {
+                initViewModel.trackPairingStarted(WalletFlowWalletSource.Signer)
+                navigation?.add(SignerAddScreen.newInstance())
+            }
+            Item.LEDGER_WALLET_ID -> {
+                initViewModel.trackPairingStarted(WalletFlowWalletSource.Ledger)
+                navigation?.add(PairLedgerScreen.newInstance())
+            }
+            Item.KEYSTONE_WALLET_ID -> {
+                initViewModel.trackPairingStarted(WalletFlowWalletSource.Keystone)
+                navigation?.add(KeystoneAddScreen.newInstance())
+            }
         }
     }
 

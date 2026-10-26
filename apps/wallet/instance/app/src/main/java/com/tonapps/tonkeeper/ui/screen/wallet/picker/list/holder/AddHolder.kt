@@ -6,6 +6,7 @@ import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeperx.R
+import uikit.extensions.setMoonOnClickListener
 
 class AddHolder(
     parent: ViewGroup
@@ -14,7 +15,7 @@ class AddHolder(
     private val addButton = findViewById<View>(R.id.add)
 
     init {
-        addButton.setOnClickListener {
+        addButton.setMoonOnClickListener {
             navigation?.add(InitScreen.newInstance(InitArgs.Type.AddWallet))
         }
     }

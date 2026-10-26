@@ -4,7 +4,7 @@ import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.data.multichain.asset.AssetMarketCapEntity
 import com.tonapps.wallet.data.multichain.asset.AssetRateEntity
 import com.tonapps.wallet.data.multichain.asset.AssetWithDetails
-import com.tonapps.wallet.data.multichain.asset.PERP_ASSET_ID_PREFIX
+import com.tonapps.wallet.data.multichain.asset.perpsMarketIndexOrNull
 import io.tradingapi.models.AssetRef
 import io.tradingapi.models.AssetType
 import io.tradingapi.models.MarketItem
@@ -32,7 +32,8 @@ fun MarketItem.toCatalogSearchRow(currency: String): CatalogSearchRow? {
         symbol = asset.symbol,
         decimals = asset.decimals,
         imageUrl = asset.imageUrl,
-        verification = AssetEntity.Verification.valueOf(asset.verification.value),
+        verification = AssetEntity.Verification.entries.firstOrNull { it.name == asset.verification.value }
+            ?: AssetEntity.Verification.none,
     )
     entity.valueOrNull ?: return null
     val change = metrics.change24hPercent.toBigDecimalOrNull()?.setScale(2, RoundingMode.HALF_UP)
@@ -92,10 +93,7 @@ private fun perpMarket(
     change: String?,
     volume: BigDecimal?,
 ): PerpMarket? {
-    if (!assetId.startsWith(PERP_ASSET_ID_PREFIX)) {
-        return null
-    }
-    val index = assetId.removePrefix(PERP_ASSET_ID_PREFIX).toIntOrNull() ?: return null
+    val index = perpsMarketIndexOrNull(assetId) ?: return null
     val ticker = symbol.takeIf { it.isNotBlank() }?.uppercase() ?: return null
 
     return PerpMarket(

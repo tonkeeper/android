@@ -26,6 +26,8 @@ data class OfframpAssetDetail(
     val stablecoin: Boolean,
     @SerialName(value = "extra_id_required")
     val extraIdRequired: Boolean,
+
+    /* Ordered for display; render as received */
     @SerialName(value = "payout_methods")
     val payoutMethods: List<OfframpPayoutMethod>,
     @SerialName(value = "network_name")

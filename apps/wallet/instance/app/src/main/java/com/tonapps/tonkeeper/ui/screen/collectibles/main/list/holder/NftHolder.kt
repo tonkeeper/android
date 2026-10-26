@@ -21,6 +21,7 @@ import uikit.extensions.round
 import uikit.navigation.Navigation
 import uikit.widget.AsyncImageView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_collectibles) {
 
@@ -40,7 +41,7 @@ class NftHolder(parent: ViewGroup): Holder<Item.Nft>(parent, R.layout.view_colle
     }
 
     override fun onBind(item: Item.Nft) {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             Navigation.from(context)?.add(NftScreen.newInstance(item.entity))
         }
         fireBadgeView.visibility = if (item.expiringDomainSoon) View.VISIBLE else View.GONE

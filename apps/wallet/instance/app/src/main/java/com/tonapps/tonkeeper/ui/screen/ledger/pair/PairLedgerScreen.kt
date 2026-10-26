@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionType
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerEvent
+import com.tonapps.tonkeeper.ui.screen.ledger.toWalletFlowLedgerModel
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeperx.R
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.LoadableButton
+import uikit.extensions.setMoonOnClickListener
 
 class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragment.Modal {
 
@@ -51,15 +53,15 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
         continueButton = view.findViewById(R.id.continue_button)
 
         tabUsbView = view.findViewById(R.id.tab_usb)
-        tabUsbView.setOnClickListener { connectionViewModel.setConnectionType(LedgerConnectionType.USB) }
+        tabUsbView.setMoonOnClickListener { connectionViewModel.setConnectionType(LedgerConnectionType.USB) }
 
         tabBluetoothView = view.findViewById(R.id.tab_bluetooth)
-        tabBluetoothView.setOnClickListener { connectionViewModel.setConnectionType(LedgerConnectionType.BLUETOOTH) }
+        tabBluetoothView.setMoonOnClickListener { connectionViewModel.setConnectionType(LedgerConnectionType.BLUETOOTH) }
 
-        view.findViewById<View>(R.id.close).setOnClickListener { finish() }
-        view.findViewById<View>(R.id.cancel).setOnClickListener { finish() }
+        view.findViewById<View>(R.id.close).setMoonOnClickListener { finish() }
+        view.findViewById<View>(R.id.cancel).setMoonOnClickListener { finish() }
         continueButton.isEnabled = false
-        continueButton.setOnClickListener {
+        continueButton.setMoonOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) { connectionViewModel.getConnectData() }
         }
 
@@ -110,11 +112,13 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
     }
 
     private fun trackImportError(message: String) {
+        val ledgerModel = connectionViewModel.connectedLedgerModel?.toWalletFlowLedgerModel()
         lifecycleScope.launch {
             importAnalytics.trackError(
                 walletSource = WalletFlowWalletSource.Ledger,
                 errorType = "ledger_connect_error",
                 errorMessage = message,
+                ledgerModel = ledgerModel,
             )
         }
     }

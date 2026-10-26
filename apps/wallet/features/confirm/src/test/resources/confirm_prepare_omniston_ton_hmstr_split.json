@@ -1,0 +1,27 @@
+{
+  "route_id": "e8bfbbcd-c818-45d9-afe7-04d3d0cf3e75",
+  "aggregator": "omniston",
+  "payloads": [
+    {
+      "payload_id": "c2b72938-4ae5-4af8-b08d-491ac0896b69",
+      "kind": "main",
+      "chain_id": "ton/mainnet",
+      "chain_family": "TON",
+      "payload_type": "ton_boc",
+      "calldata_payload_type": "exact",
+      "payload": "[{\"address\":\"EQACuz151snlY46PKdUOkyiCf0zzcxMsN6XmKQkSKZjkvyFH\",\"amount\":\"36900000000\",\"payload\":\"te6cckEBAwEA+gABZgHzg10TZlI9FhTHyVCIpMYgCAGcR0l8wbEfXkYTGP1ULDsDtmM6gj8KBdw/eLQhF8ICwQEB4WZk3iqAAI+qMBwGijNL/n+ZaIV4t4m0eWfhGi6bYkWSSWYdhpNQAziOkvmDYj68jCYx+qhYdgdsxnUEfhQLuH7xaEIvhAWCAGcR0l8wbEfXkYTGP1ULDsDtmM6gj8KBdw/eLQhF8ICwAAAAAH/////AAgCbcBAwbR83S0gBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsAAACNAAiQHPch9EQA2EibZoczqqJ0bgkm9m5sixgE7NdIXD7S4zsWGTg==\"},{\"address\":\"EQClcxRtn7nhZ3zzwsLk_itGaSe0r1r0Dj8fBLAxonkKNsZh\",\"amount\":\"18890000000\",\"payload\":\"te6cckEBAwEA+QABZgHzg10TZlI9FhTHyVBFjRl4CAGcR0l8wbEfXkYTGP1ULDsDtmM6gj8KBdw/eLQhF8ICwQEB4WZk3iqAFFDUZzEY6fetaG6UXFxZaZkYueEtTaevvzqFDFRPAYXQAziOkvmDYj68jCYx+qhYdgdsxnUEfhQLuH7xaEIvhAWCAGcR0l8wbEfXkYTGP1ULDsDtmM6gj8KBdw/eLQhF8ICwAAAAAH/////AAgCZaD2UDqrqyAGcR0l8wbEfXkYTGP1ULDsDtmM6gj8KBdw/eLQhF8ICwAAAI0ACJAc9yH0RADYSJtmhzOqonRuCSb2bmyLGATs10hcPtLj9gucC\"},{\"address\":\"EQCSIMGBps_qzRG3uPYhON8bucyCtu0mYdL1-u4gSz77IBa3\",\"amount\":\"15420000000\",\"payload\":\"te6cckECBQEAAZ4AAWYB84NdE2ZSPRYUx8lQN9eT+AgBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsEBAeFmZN4qgBJFrE+vsdt6AcnEd7YYqU7dy8PoyudDXogvCv9HxH0j8AM4jpL5g2I+vIwmMfqoWHYHbMZ1BH4UC7h+8WhCL4QFggBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsAAAAAB/////wAIBW0AT4QQYAKH6gKF6PteSkZQeEUdtEWWUDWy0v2RM3THkEuknw4cOgZCLEBAAABADAeFmZN4qgAq7PHcR30lwjV9hq1RVIW0rv0xIYMmW4zgTAtrLz7+N0AM4jpL5g2I+vIwmMfqoWHYHbMZ1BH4UC7h+8WhCL4QFggBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsAAAAAB/////wAQAmWai1YGwuLgBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsAAACNAAiQHPch9EQA2EibZoczqqJ0bgkm9m5sixgE7NdIXD7S4EI1FeQ==\"},{\"address\":\"EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_\",\"amount\":\"29940000000\",\"payload\":\"te6cckECBQEAAYkAAXPqBhhdE2ZSPRYUx8lQbn368AgBv8fX2NcwfUbV9QiYybOdJOyAOLaGkmBX/6n09eRYPtJtGSBfMe8UAQJLAAAAAIAeHLxdeJc8gs2GyD6TWRLkaHEh+xTq3GyTm8CUQRULWWcCAwHRGjwvw4AZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLBADOI6S+YNiPryMJjH6qFh2B2zGdQR+FAu4fvFoQi+EBYIAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLBABACNPDfX6YAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLBADOI6S+YNiPryMJjH6qFh2B2zGdQR+FAu4fvFoQi+EBYIA1YAESA57kPoiAGwkTbNDmdVROjcEk3s3NkWMAnZrpC4faWAI0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAnZCcZA==\"}]",
+      "human_summary": {
+        "action": "Swap on TON",
+        "spend_asset": "ton/mainnet/coin",
+        "spend_amount": "100000000000",
+        "receive_asset": "ton/mainnet/jetton/0:09f2e59dec406ab26a5259a45d7ff23ef11f3e5c7c21de0b0d2a1cbe52b76b3d",
+        "receive_amount": "784787882368220",
+        "recipient_address": "UQDOI6S-YNiPryMJjH6qFh2B2zGdQR-FAu4fvFoQi-EBYFwm",
+        "protocol": "omniston"
+      },
+      "validation_status": "validated",
+      "date_expire": "2026-10-16T12:25:40Z"
+    }
+  ],
+  "execution_id": "569e5b6f-501b-4e3a-ac16-f2176ecd0316"
+}

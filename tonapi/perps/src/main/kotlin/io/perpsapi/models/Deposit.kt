@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Deposit(
@@ -20,7 +25,7 @@ data class Deposit(
     @SerialName(value = "deposit_id")
     val depositId: String? = null,
 
-    /* pending until Lighter credits the funds (credited) or nothing has arrived within the waiting window (unfunded). unfunded means the deposit was not confirmed while it was being watched, which is not quite the same as the money never arriving: what arrives is Lighter's to say and this record only tracks it. A deposit credited after the window is not noticed, so an unfunded record is where such a deposit stays. Treat it as \"we did not see it\", not as proof of loss, and check the account balance before telling anyone their money is gone. */
+    /* pending until the deposit ends; every other value is final. - credited: Lighter credited the funds. - unfunded: nothing was confirmed within the waiting window, or the transaction credited   another address. - failed: a deposit recorded by execution whose swap failed. - refunded: a deposit recorded by execution whose swap the aggregator refunded to the   sender. GET /funding/status/{execution_id} has the aggregator's own words. - expired: a deposit recorded by execution whose source transaction was never seen within   ten minutes of recording, or whose execution swaps-backend closed unpaid.  None of the final values but credited appears in /activity. unfunded means the deposit was not confirmed while it was being watched, which is not quite the same as the money never arriving: what arrives is Lighter's to say and this record only tracks it. A deposit credited after the window is not noticed, so an unfunded record is where such a deposit stays. Treat it as \"we did not see it\", not as proof of loss, and check the account balance before telling anyone their money is gone. */
     @SerialName(value = "status")
     val status: Status? = null,
 
@@ -36,7 +41,7 @@ data class Deposit(
     @SerialName(value = "credited_amount")
     val creditedAmount: String? = null,
 
-    /* The Ethereum transaction this deposit was recorded against, echoed back. */
+    /* The Ethereum transaction this deposit is confirmed by. Echoed back when the request named it; for a deposit recorded by execution_id, absent until the aggregator delivers. */
     @SerialName(value = "l1_tx_hash")
     val l1TxHash: String? = null,
 
@@ -53,14 +58,32 @@ data class Deposit(
     val closedAt: java.time.OffsetDateTime? = null
 ) {
     /**
-     * pending until Lighter credits the funds (credited) or nothing has arrived within the waiting window (unfunded). unfunded means the deposit was not confirmed while it was being watched, which is not quite the same as the money never arriving: what arrives is Lighter's to say and this record only tracks it. A deposit credited after the window is not noticed, so an unfunded record is where such a deposit stays. Treat it as \"we did not see it\", not as proof of loss, and check the account balance before telling anyone their money is gone.
+     * pending until the deposit ends; every other value is final. - credited: Lighter credited the funds. - unfunded: nothing was confirmed within the waiting window, or the transaction credited   another address. - failed: a deposit recorded by execution whose swap failed. - refunded: a deposit recorded by execution whose swap the aggregator refunded to the   sender. GET /funding/status/{execution_id} has the aggregator's own words. - expired: a deposit recorded by execution whose source transaction was never seen within   ten minutes of recording, or whose execution swaps-backend closed unpaid.  None of the final values but credited appears in /activity. unfunded means the deposit was not confirmed while it was being watched, which is not quite the same as the money never arriving: what arrives is Lighter's to say and this record only tracks it. A deposit credited after the window is not noticed, so an unfunded record is where such a deposit stays. Treat it as \"we did not see it\", not as proof of loss, and check the account balance before telling anyone their money is gone.
      *
-     * Values: pending,credited,unfunded
+     * Values: pending,credited,unfunded,failed,refunded,expired,unknown
      */
-    @Serializable
+    @Serializable(with = StatusSerializer::class)
     enum class Status(val value: String) {
         @SerialName(value = "pending") pending("pending"),
         @SerialName(value = "credited") credited("credited"),
-        @SerialName(value = "unfunded") unfunded("unfunded");
+        @SerialName(value = "unfunded") unfunded("unfunded"),
+        @SerialName(value = "failed") failed("failed"),
+        @SerialName(value = "refunded") refunded("refunded"),
+        @SerialName(value = "expired") expired("expired"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object StatusSerializer : KSerializer<Status> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Status {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Status.entries.firstOrNull { it.value == value }
+                ?: Status.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Status) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

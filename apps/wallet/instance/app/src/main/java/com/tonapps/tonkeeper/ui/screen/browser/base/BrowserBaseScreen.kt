@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
@@ -19,11 +20,13 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import kotlinx.coroutines.launch
 import uikit.base.BaseFragment
+import uikit.base.TabScreen
 import uikit.drawable.FooterDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.setMoonOnClickListener
 
-class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_base, wallet) {
+class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_base, wallet), TabScreen {
 
     override val fragmentName: String = "BrowserBaseScreen"
 
@@ -33,6 +36,12 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     private lateinit var searchContainerView: View
     private lateinit var searchView: View
 
+    val canGoBack: Boolean
+        get() {
+            val last = childFragmentManager.fragments.lastOrNull() ?: return false
+            return last !is BrowserMainScreen
+        }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         footerDrawable = FooterDrawable(requireContext())
@@ -41,7 +50,7 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         searchContainerView.background = footerDrawable
 
         searchView = view.findViewById(R.id.search)
-        searchView.setOnClickListener {
+        searchView.setMoonOnClickListener {
             navigation?.add(BrowserSearchScreen.newInstance(screenContext.wallet))
         }
 
@@ -80,12 +89,16 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         }
     }
 
+    override fun smoothScrollToTop() {
+        (childFragmentManager.fragments.lastOrNull() as? TabScreen)?.smoothScrollToTop()
+    }
+
     fun openNetwork(network: String) {
         viewModel.setPendingChain(network)
     }
 
-    fun trackBrowserOpen(from: String) {
-        viewModel.trackBrowserOpen(from)
+    fun trackBrowserOpen(from: String, utm: UtmParameters) {
+        viewModel.trackBrowserOpen(from, utm)
     }
 
     override fun onBackPressed(): Boolean {

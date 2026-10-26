@@ -2,7 +2,6 @@ package uikit.drawable
 
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
@@ -13,9 +12,8 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.RippleDrawable
-import com.tonapps.log.L
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.withSave
 import com.tonapps.uikit.color.backgroundContentColor
@@ -24,50 +22,17 @@ import com.tonapps.uikit.color.separatorCommonColor
 import com.tonapps.uikit.list.ListCell
 import uikit.R
 import uikit.base.BaseDrawable
-import uikit.extensions.contentDrawable
+import uikit.extensions.applyPressScale
+import uikit.extensions.applyPressScaleContent
 import uikit.extensions.dp
 import uikit.extensions.getDimension
 
 class CellBackgroundDrawable(
     private val context: Context,
-    private val position: ListCell.Position,
+    val position: ListCell.Position,
     private val backgroundColor: Int = context.backgroundContentColor,
     private val shimmerColor: Int = context.backgroundHighlightedColor
 ): BaseDrawable(), Animatable {
-
-    companion object {
-        private fun createCorners(
-            topLeft: Float,
-            topRight: Float,
-            bottomRight: Float,
-            bottomLeft: Float
-        ): FloatArray {
-            return floatArrayOf(
-                topLeft, topLeft,
-                topRight, topRight,
-                bottomRight, bottomRight,
-                bottomLeft, bottomLeft
-            )
-        }
-
-        fun create(
-            context: Context,
-            position: ListCell.Position,
-            backgroundColor: Int = context.backgroundContentColor
-        ): Drawable {
-            val color = context.backgroundHighlightedColor
-            return RippleDrawable(
-                ColorStateList.valueOf(color),
-                CellBackgroundDrawable(context, position, backgroundColor),
-                null
-            )
-        }
-
-        fun find(view: View): CellBackgroundDrawable? {
-            val background = view.background as? RippleDrawable ?: return null
-            return background.contentDrawable as? CellBackgroundDrawable
-        }
-    }
 
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = backgroundColor
@@ -166,6 +131,19 @@ class CellBackgroundDrawable(
 
     override fun onBoundsChange(bounds: Rect) {
         super.onBoundsChange(bounds)
+        // onBoundsChange fires on every layout pass; the press-scale helpers guard themselves via a
+        // view tag (see PressScale.kt), so attaching here every pass binds only once per host view.
+        // A grouped cell scales only its content so this shared background stays put and neighbouring
+        // cells keep forming one continuous card; a SINGLE cell is a standalone card and scales as a
+        // whole, background included.
+        when (val host = callback) {
+            is ViewGroup -> if (position == ListCell.Position.SINGLE) {
+                host.applyPressScale()
+            } else {
+                host.applyPressScaleContent()
+            }
+            is View -> host.applyPressScale()
+        }
         when (position) {
             ListCell.Position.FIRST -> firstPath(bounds)
             ListCell.Position.MIDDLE -> middlePath(bounds)
@@ -202,4 +180,32 @@ class CellBackgroundDrawable(
     }
 
     override fun isRunning() = isShimmerAnimation && shimmerAnimator.isRunning
+
+    companion object {
+        private fun createCorners(
+            topLeft: Float,
+            topRight: Float,
+            bottomRight: Float,
+            bottomLeft: Float
+        ): FloatArray {
+            return floatArrayOf(
+                topLeft, topLeft,
+                topRight, topRight,
+                bottomRight, bottomRight,
+                bottomLeft, bottomLeft
+            )
+        }
+
+        fun create(
+            context: Context,
+            position: ListCell.Position,
+            backgroundColor: Int = context.backgroundContentColor
+        ): Drawable {
+            return CellBackgroundDrawable(context, position, backgroundColor)
+        }
+
+        fun find(view: View): CellBackgroundDrawable? {
+            return view.background as? CellBackgroundDrawable
+        }
+    }
 }

@@ -2,11 +2,9 @@ package com.tonapps.wallet.data.raffle
 
 import android.content.Context
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.core.flags.WalletFeature
 import com.tonapps.log.L
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.BlobDataSource
-import com.tonapps.wallet.data.raffle.debug.RaffleDebugStore
 import com.tonapps.wallet.data.raffle.entities.RaffleEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.walletapi.models.MarkWalletRaffleImportRequest
@@ -20,7 +18,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -31,7 +28,6 @@ import kotlinx.serialization.SerializationException
 class RaffleRepository(
     context: Context,
     private val api: API,
-    private val debugStore: RaffleDebugStore,
     private val settingsRepository: SettingsRepository,
 ) {
 
@@ -43,10 +39,7 @@ class RaffleRepository(
         get() = settingsRepository.getLocale().language
 
     fun getRafflesFlow(walletId: String, forced: Boolean): Flow<List<RaffleEntity>> =
-        when {
-            WalletFeature.Raffles.isDisabled -> flowOf(emptyList())
-            else -> remoteFlow(walletId, forced)
-        }.map { raffles -> raffles.map { it.toEntity() } }
+        remoteFlow(walletId, forced).map { raffles -> raffles.mapNotNull { it.toEntity() } }
 
     suspend fun getRaffle(
         walletId: String,
@@ -54,19 +47,16 @@ class RaffleRepository(
         forced: Boolean,
     ): RaffleEntity? = withContext(Dispatchers.IO) {
         val key = cacheKey(walletId)
-        val raffles = when {
-            WalletFeature.Raffles.isDisabled -> null
-            forced -> loadRemote(walletId) ?: cached(key)
-            else -> cached(key) ?: loadRemote(walletId)
+        val raffles = if (forced) {
+            loadRemote(walletId) ?: cached(key)
+        } else {
+            cached(key) ?: loadRemote(walletId)
         }
-        val raffle = raffles?.firstOrNull { it.id == raffleId } ?: raffles?.firstOrNull()
-        raffle?.toEntity()
+        val entities = raffles?.mapNotNull { it.toEntity() }.orEmpty()
+        entities.firstOrNull { it.id == raffleId } ?: entities.firstOrNull()
     }
 
     suspend fun prefetch(walletId: String) {
-        if (WalletFeature.Raffles.isDisabled) {
-            return
-        }
         withContext(Dispatchers.IO) { loadRemote(walletId) }
     }
 
@@ -100,7 +90,11 @@ class RaffleRepository(
         }
         val disk = diskCache.getCache(key)?.distinctBy { it.id } ?: return
         memoryCache.update { current ->
-            if (current.containsKey(key)) current else current + (key to disk)
+            if (current.containsKey(key)) {
+                current
+            } else {
+                current + (key to disk)
+            }
         }
     }
 
@@ -111,7 +105,7 @@ class RaffleRepository(
         val isNew = !settingsRepository.hadWalletsOnMultichainRelease
         return try {
             val raffles = api.multichain.raffles
-                .getWalletRaffles(walletId, lang, null, debugStore.debugNow, isNew)
+                .getWalletRaffles(walletId, lang, null, isNew)
                 .raffles
                 .distinctBy { it.id }
             diskCache.setCache(key, raffles)

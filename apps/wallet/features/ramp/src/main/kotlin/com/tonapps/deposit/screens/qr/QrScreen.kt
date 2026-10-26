@@ -205,6 +205,8 @@ fun Tabs(
                 },
                 modifier = Modifier
                     .defaultMinSize(minHeight = 32.dp)
+                    // clickable before clip/background so the press-scale covers the whole tab
+                    .clickable { onTabClick(tab) }
                     .clip(Shapes.medium)
                     .background(
                         if (isSelected) {
@@ -214,8 +216,7 @@ fun Tabs(
                         }
                     )
                     .wrapContentHeight(align = Alignment.CenterVertically)
-                    .padding(horizontal = Dimens.offsetMedium)
-                    .clickable { onTabClick(tab) },
+                    .padding(horizontal = Dimens.offsetMedium),
                 style = UIKit.typography.label2,
                 color = UIKit.colorScheme.text.primary
             )

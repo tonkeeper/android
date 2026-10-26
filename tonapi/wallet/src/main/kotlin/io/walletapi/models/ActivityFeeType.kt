@@ -12,20 +12,27 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * How the fee was paid: the chain's native coin, a gasless relayer, or Tonkeeper Battery. Defaults to native.
+ * How the fee was paid: the chain's native coin, a gasless relayer, or Keeper Battery. Defaults to native.
  *
- * Values: gasless,native,battery
+ * Values: gasless,native,battery,unknown
  */
-@Serializable
+@Serializable(with = ActivityFeeTypeSerializer::class)
 enum class ActivityFeeType(val value: String) {
     @SerialName(value = "gasless")
     gasless("gasless"),
     @SerialName(value = "native")
     native("native"),
     @SerialName(value = "battery")
-    battery("battery");
+    battery("battery"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -51,6 +58,20 @@ enum class ActivityFeeType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ActivityFeeTypeSerializer : KSerializer<ActivityFeeType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ActivityFeeType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ActivityFeeType.entries.firstOrNull { it.value == value }
+            ?: ActivityFeeType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ActivityFeeType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

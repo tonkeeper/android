@@ -1,0 +1,27 @@
+{
+    "route_id": "8e4c0897-a495-4de2-af91-8ff3f1234b7f",
+    "aggregator": "swapkit",
+    "provider_route_id": "prepare-provider-route-id",
+    "payloads": [
+        {
+            "payload_id": "4d489a4e-007f-4d87-8890-b1f0851b1503",
+            "kind": "main",
+            "chain_id": "ton/mainnet",
+            "chain_family": "TON",
+            "payload_type": "ton_boc",
+            "calldata_payload_type": "flex",
+            "payload": "[{\"address\":\"EQAmgMf3URUyDeXEsIAiNVORsLkncPhXB-copJD4RKabqVKU\",\"amount\":\"50000000\",\"payload\":\"te6cckEBAQEAWQAArg+KfqUAAAAAAAAAAEBfXhAIAeiosw1WlFdj9UA5jxvlNhxMMkXSXpOszrVqav9yhD29AC1zHXDFDKegQmkRuPjT9G6mZ+9pDVp89zUWrXA3WfyqBzEtAC0SN0s=\",\"sendMode\":3}]",
+            "human_summary": {
+                "action": "Swap USDT for BTC",
+                "spend_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                "spend_amount": "100000000",
+                "receive_asset": "btc/mainnet/coin",
+                "receive_amount": "123856",
+                "deposit_address": "UQD0VFmGq0orsfqgHMeN8psOJhki6S9J1mdatTV_uUIe3ok2",
+                "protocol": "near_intents"
+            },
+            "validation_status": "validated",
+            "date_expire": "2026-09-07T13:59:05Z"
+        }
+    ]
+}

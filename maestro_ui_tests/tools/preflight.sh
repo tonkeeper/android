@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Preflight for local Maestro QA runs (tk-qa-verify skill).
+# Preflight for local Maestro QA runs (tk-qa-verify-android skill).
 # usage: maestro_ui_tests/tools/preflight.sh [adb-serial]
 # Checks the host tools, the device, the installed debug build and the mock
 # prerequisites, and prints one OK/WARN/FAIL line per item. Exit code 1 when

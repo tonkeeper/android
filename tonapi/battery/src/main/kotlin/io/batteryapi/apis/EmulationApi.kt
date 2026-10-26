@@ -44,8 +44,8 @@ class EmulationApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToWallet(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String? = "en", enableValidation: Boolean? = false, tonConnectAuth: String? = null, xWalletId: String? = null): Map<String, io.JsonAny> {
-        val localVarResponse = emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
+    fun emulateMessageToWallet(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String? = "en", tonConnectAuth: String? = null, xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null, enableValidation: Boolean? = false): Map<String, io.JsonAny> {
+        val localVarResponse = emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, enableValidation = enableValidation)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Map<String, io.JsonAny>
@@ -64,15 +64,15 @@ class EmulationApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): ApiResponse<Map<String, io.JsonAny>?> {
-        val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, enableValidation = enableValidation, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId)
+    fun emulateMessageToWalletWithHttpInfo(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, enableValidation: Boolean?): ApiResponse<Map<String, io.JsonAny>?> {
+        val localVariableConfig = emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest = emulateMessageToWalletRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, enableValidation = enableValidation)
 
         return request<EmulateMessageToWalletRequest, Map<String, io.JsonAny>>(
             localVariableConfig
         )
     }
 
-    fun emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, enableValidation: Boolean?, tonConnectAuth: String?, xWalletId: String?): RequestConfig<EmulateMessageToWalletRequest> {
+    fun emulateMessageToWalletRequestConfig(emulateMessageToWalletRequest: EmulateMessageToWalletRequest, acceptLanguage: String?, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, enableValidation: Boolean?): RequestConfig<EmulateMessageToWalletRequest> {
         val localVariableBody = emulateMessageToWalletRequest
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -82,8 +82,10 @@ class EmulationApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
-        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this }
-        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        authorization?.apply { localVariableHeaders["Authorization"] = this.toString() }
+        xWalletAuthorization?.apply { localVariableHeaders["X-Wallet-Authorization"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 

@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Balance(
@@ -20,8 +25,12 @@ data class Balance(
     val currency: String? = null,
     @SerialName(value = "equity")
     val equity: String? = null,
+
+    /* Collateral not used as margin by open positions and not reserved by resting orders. */
     @SerialName(value = "available_balance")
     val availableBalance: String? = null,
+
+    /* What can be withdrawn. Lighter reports no separate figure, so it equals available_balance. */
     @SerialName(value = "transferable_balance")
     val transferableBalance: String? = null,
     @SerialName(value = "unrealized_pnl_total")

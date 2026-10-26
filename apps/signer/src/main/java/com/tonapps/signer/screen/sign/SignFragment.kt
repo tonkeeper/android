@@ -37,7 +37,7 @@ import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.ton.cell.Cell
-import uikit.HapticHelper
+import uikit.extensions.hapticReject
 import uikit.base.BaseFragment
 import uikit.extensions.bottomBarsOffset
 import uikit.extensions.collectFlow
@@ -47,6 +47,7 @@ import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.LoaderView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
+import uikit.extensions.setMoonOnClickListener
 
 class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
@@ -90,7 +91,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         super.onViewCreated(view, savedInstanceState)
 
         closeView = view.findViewById(R.id.close)
-        closeView.setOnClickListener { reject() }
+        closeView.setMoonOnClickListener { reject() }
 
         subtitleView = view.findViewById(R.id.subtitle)
 
@@ -100,7 +101,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         auditView = view.findViewById(R.id.audit)
 
         showAuditView = view.findViewById(R.id.show_audit)
-        showAuditView.setOnClickListener { showDetails() }
+        showAuditView.setMoonOnClickListener { showDetails() }
 
         rawView = view.findViewById(R.id.raw)
         rawView.setOnLongClickListener {
@@ -117,13 +118,13 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         }
 
         emulateButton = view.findViewById(R.id.emulate)
-        emulateButton.setOnClickListener { emulateBody(false) }
+        emulateButton.setMoonOnClickListener { emulateBody(false) }
 
         copyButton = view.findViewById(R.id.copy)
-        copyButton.setOnClickListener { copyBody() }
+        copyButton.setMoonOnClickListener { copyBody() }
 
         qrView = view.findViewById(R.id.qr)
-        qrView.setOnClickListener { emulateBody(true) }
+        qrView.setMoonOnClickListener { emulateBody(true) }
 
         actionView = view.findViewById(R.id.action)
 
@@ -145,7 +146,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
 
     private fun showError() {
         requireContext().authorizationRequiredError()
-        HapticHelper.error(requireContext())
+        view?.hapticReject()
     }
 
     private fun copyBody() {

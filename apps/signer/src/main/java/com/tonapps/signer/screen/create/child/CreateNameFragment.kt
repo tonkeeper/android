@@ -19,6 +19,7 @@ import uikit.extensions.pinToBottomInsets
 import uikit.extensions.setPaddingTop
 import uikit.widget.InputView
 import uikit.widget.LoaderView
+import uikit.extensions.setMoonOnClickListener
 
 class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
 
@@ -47,7 +48,7 @@ class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
         actionView.pinToBottomInsets()
 
         doneButton = view.findViewById(R.id.done)
-        doneButton.setOnClickListener { done() }
+        doneButton.setMoonOnClickListener { done() }
 
         loaderView = view.findViewById(R.id.loader)
 

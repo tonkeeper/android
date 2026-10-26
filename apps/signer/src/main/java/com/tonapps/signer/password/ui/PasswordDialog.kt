@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import uikit.base.BaseDialog
+import uikit.extensions.swallowClicks
 import uikit.widget.HeaderView
 import javax.crypto.SecretKey
 
@@ -40,7 +41,7 @@ class PasswordDialog(
         setContentView(R.layout.dialog_password)
 
         rootView = findViewById(R.id.root)
-        rootView.setOnClickListener {  }
+        rootView.swallowClicks()
 
         headerView = findViewById(R.id.header)
         headerView.doOnCloseClick = { dismiss() }

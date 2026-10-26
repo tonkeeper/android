@@ -1,20 +1,19 @@
 package com.tonapps.perps.screens.order
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonItemDivider
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonTopAppBarSimple
@@ -54,7 +53,7 @@ private fun PerpsOrderTypeDialogBody(
     onClose: () -> Unit,
 ) {
     MoonTopAppBarSimple(
-        title = "Order type",
+        title = stringResource(Localization.perps_order_type_title),
         actionIconRes = UIKitIcon.ic_close_16,
         onActionClick = onClose,
     )
@@ -70,8 +69,8 @@ private fun PerpsOrderTypeDialogBody(
                     OrderTypeRow(
                         iconRes = UIKitIcon.ic_money_28,
                         iconBackground = UIKit.colorScheme.accent.blue,
-                        title = "Market",
-                        description = "Long or short at the best available current market price",
+                        title = stringResource(Localization.perps_order_type_market),
+                        description = stringResource(Localization.perps_order_type_market_description),
                         isChecked = selected == PerpsOrderType.Market,
                         onClick = { onSelect(PerpsOrderType.Market) },
                     )
@@ -79,13 +78,15 @@ private fun PerpsOrderTypeDialogBody(
                     OrderTypeRow(
                         iconRes = UIKitIcon.ic_sale_badge_28,
                         iconBackground = UIKit.colorScheme.accent.blue,
-                        title = "Limit",
-                        description = "Long or short at a specific price or better",
+                        title = stringResource(Localization.perps_order_type_limit),
+                        description = stringResource(Localization.perps_order_type_limit_description),
                         isChecked = selected == PerpsOrderType.Limit,
                         onClick = { onSelect(PerpsOrderType.Limit) },
                     )
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -105,7 +106,7 @@ private fun OrderTypeRow(
         maxLinesSubtitle = 2,
         isChecked = isChecked,
         onCheckedChange = { onClick() },
-        minHeight = 76.dp,
+        minHeight = 96.dp,
         image = {
             MoonItemIcon(
                 painter = painterResource(iconRes),

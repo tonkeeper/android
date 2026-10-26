@@ -19,7 +19,6 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.events.compose.TxScope.decryptComment
 import com.tonapps.tonkeeper.ui.screen.events.compose.details.state.UiState
 import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
-import com.tonapps.tonkeeper.ui.screen.transaction.CommentReportDialog
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.API
@@ -58,16 +57,6 @@ class TxDetailsViewModel(
     private val collectiblesRepository: CollectiblesRepository,
     private val api: API,
 ) : BaseWalletVM(app) {
-
-    private companion object {
-        private const val ACCOUNT_NAME_ROW_ID = "account"
-        private const val ADDRESS_ROW_ID = "address"
-        private const val COMMENT_ROW_ID = "comment"
-        private const val EXTRA_ROW_ID = "extra"
-        private const val OPERATION_ROW_ID = "operation"
-        private const val DESCRIPTION_ROW_ID = "description"
-        private const val PROTOCOL_ROW_ID = "protocol"
-    }
 
     private val locale: Locale
         get() = settingsRepository.getLocale()
@@ -119,7 +108,7 @@ class TxDetailsViewModel(
     private val remoteSpamState: UiState.Spam
         get() = if (tx.spam) {
             UiState.Spam.Spam
-        } else if (action.isMaybeSpam) {
+        } else if (action.isMaybeSpam && !wallet.isWatchOnly && !wallet.testnet) {
             UiState.Spam.Maybe
         } else {
             UiState.Spam.No
@@ -139,7 +128,11 @@ class TxDetailsViewModel(
         hash = txId.shortAddress,
         imageUrl = action.product?.imageUrl,
         title = title,
-        aboveTitle = if (incomingFormatted != null && outgoingFormatted != null) outgoingFormatted else null,
+        aboveTitle = if (incomingFormatted != null && outgoingFormatted != null) {
+            outgoingFormatted
+        } else {
+            null
+        },
         subtitle = action.product?.subtitle,
         verifiedSubtitle = action.hasVerifiedNft,
         date = date(),
@@ -201,7 +194,11 @@ class TxDetailsViewModel(
         sender: Boolean = false,
     ): List<UiDetails.Row> {
         val rows = mutableListOf<UiDetails.Row>()
-        val key = getString(if (sender) Localization.sender else Localization.recipient)
+        val key = if (sender) {
+            getString(Localization.sender)
+        } else {
+            getString(Localization.recipient)
+        }
         if (account.name.isNullOrBlank()) {
             rows.add(UiDetails.Row(
                 id = ADDRESS_ROW_ID,
@@ -220,7 +217,11 @@ class TxDetailsViewModel(
             }
             rows.add(UiDetails.Row(
                 id = ADDRESS_ROW_ID,
-                key = getString(if (sender) Localization.sender_address else Localization.recipient_address),
+                key = if (sender) {
+                    getString(Localization.sender_address)
+                } else {
+                    getString(Localization.recipient_address)
+                },
                 value = account.userFriendlyAddress,
                 clickable = true
             ))
@@ -270,17 +271,6 @@ class TxDetailsViewModel(
     }
 
     private fun getDecryptedComment() = eventsRepository.getDecryptedComment(txId)
-
-    private fun isCommentDecrypted() = getDecryptedComment() != null
-
-    private fun getCommentText(): String? {
-        val text = action.text
-        return when (text) {
-            is TxActionBody.Text.Encrypted -> getDecryptedComment()
-            is TxActionBody.Text.Plain -> text.text
-            else -> null
-        }
-    }
 
     private fun textDetails(text: TxActionBody.Text?): UiDetails.Row? {
         if (text is TxActionBody.Text.Encrypted) {
@@ -482,32 +472,25 @@ class TxDetailsViewModel(
 
     private fun markAsSpam() {
         viewModelScope.launch {
-            if (action.hasEncryptedText && !isCommentDecrypted()) {
-                CommentReportDialog.show(context)
-                if (!decryptComment()) {
-                    return@launch
-                }
-            }
-
-            loading(true)
-            settingsRepository.setSpamStateTransaction(wallet.id, txId, SpamTransactionState.SPAM)
-            val comment = getCommentText()
-            try {
-                api.reportTX(
-                    txId = txId,
-                    comment = comment,
-                    recipient = wallet.accountId
-                )
-                eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)
-                _uiStateFlow.update {
-                    it.copy(spam = UiState.Spam.Spam)
-                }
-                loading(false)
-                toast(Localization.tx_marked_as_spam)
-            } catch (ignored: Throwable) {
-                loading(false)
+            if (!eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)) {
                 toast(Localization.unknown_error)
+                return@launch
             }
+            settingsRepository.setSpamStateTransaction(wallet.id, txId, SpamTransactionState.SPAM)
+            _uiStateFlow.update {
+                it.copy(spam = UiState.Spam.Spam)
+            }
+            toast(Localization.tx_marked_as_spam)
         }
+    }
+
+    private companion object {
+        private const val ACCOUNT_NAME_ROW_ID = "account"
+        private const val ADDRESS_ROW_ID = "address"
+        private const val COMMENT_ROW_ID = "comment"
+        private const val EXTRA_ROW_ID = "extra"
+        private const val OPERATION_ROW_ID = "operation"
+        private const val DESCRIPTION_ROW_ID = "description"
+        private const val PROTOCOL_ROW_ID = "protocol"
     }
 }

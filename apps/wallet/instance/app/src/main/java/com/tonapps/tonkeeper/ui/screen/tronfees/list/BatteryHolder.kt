@@ -11,6 +11,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class BatteryHolder(parent: ViewGroup): Holder<Item.Battery>(parent, R.layout.view_tron_fee_option) {
 
@@ -23,7 +24,7 @@ class BatteryHolder(parent: ViewGroup): Holder<Item.Battery>(parent, R.layout.vi
 
     override fun onBind(item: Item.Battery) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             context.navigation?.add(BatteryScreen.newInstance(wallet = item.wallet, from = BatteryNativeFrom.TronFees))
         }
         asyncImageView.visibility = View.GONE

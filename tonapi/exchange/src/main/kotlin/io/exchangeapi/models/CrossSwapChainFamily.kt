@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 /**
  * Chain family group used to pick signing/broadcast handlers
  *
- * Values: UTXO,EVM,SOLANA,TON,COSMOS,TRON,RIPPLE,OTHER
+ * Values: UTXO,EVM,SOLANA,TON,COSMOS,TRON,RIPPLE,LIGHTER,OTHER
  */
 @Serializable
 enum class CrossSwapChainFamily(val value: String) {
@@ -34,6 +34,8 @@ enum class CrossSwapChainFamily(val value: String) {
     TRON("TRON"),
     @SerialName(value = "RIPPLE")
     RIPPLE("RIPPLE"),
+    @SerialName(value = "LIGHTER")
+    LIGHTER("LIGHTER"),
     @SerialName(value = "OTHER")
     OTHER("OTHER");
 

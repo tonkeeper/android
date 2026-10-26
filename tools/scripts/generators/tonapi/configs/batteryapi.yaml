@@ -1,0 +1,12 @@
+inlineSchemaNameMappings:
+  tronSend_request: LegacyTronSendRequest
+modelNameMappings:
+  LegacyTronSendRequest: TronSendRequest
+  TronSendRequest: MultichainTronSendRequest
+enumNameMappings:
+  value: VALUE
+schemaMappings:
+  GaslessV2SignedOperation: kotlinx.serialization.json.JsonObject
+parameterNameMappings:
+  X-Wallet-ID: xWalletId
+  X-TonConnect-Auth: tonConnectAuth

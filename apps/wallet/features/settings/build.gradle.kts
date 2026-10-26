@@ -17,7 +17,6 @@ dependencies {
 
     implementation(projects.apps.wallet.api)
     implementation(projects.apps.wallet.data.settings)
-    implementation(projects.apps.wallet.data.raffle)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.data.account)
     implementation(projects.apps.wallet.data.multichain.wallet)

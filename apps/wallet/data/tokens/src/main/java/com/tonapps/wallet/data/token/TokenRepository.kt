@@ -163,6 +163,22 @@ class TokenRepository(
         return getRemote(currency, accountId, tronAddress, network)
     }
 
+    /**
+     * Reads one jetton position straight from the API: the caller gets the real jetton wallet address
+     * instead of the placeholder [get] serves for a jetton the account does not hold yet.
+     */
+    suspend fun getJettonBalance(
+        accountId: String,
+        jettonMaster: String,
+        network: TonNetwork,
+    ): BalanceEntity? = withContext(Dispatchers.IO) {
+        remoteDataSource.loadJetton(
+            accountId = accountId,
+            jettonMaster = jettonMaster,
+            network = network,
+        )
+    }
+
     suspend fun mustGet(
         currency: WalletCurrency,
         accountId: String,

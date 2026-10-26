@@ -10,7 +10,6 @@ import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.blockchain.tron.TronTransfer
 import com.tonapps.bus.generated.Events.Migration.MigrationChain
-import com.tonapps.core.flags.WalletFeature
 import com.tonapps.icu.Coins
 import com.tonapps.log.L
 import com.tonapps.migration.analytics.MigrationAnalytics
@@ -291,11 +290,7 @@ class MigrationRepository(
             prepareTonMigration(from, to, publicKey, MigrationPrepareRequest.GasPayer.self)
         }
         val batteryDeferred = async {
-            if (!WalletFeature.MigrationBattery.isEnabled) {
-                null
-            } else {
-                prepareTonMigration(from, to, publicKey, MigrationPrepareRequest.GasPayer.battery)
-            }
+            prepareTonMigration(from, to, publicKey, MigrationPrepareRequest.GasPayer.battery)
         }
 
         val selfCandidate = selfDeferred.await()?.let { prepared ->
@@ -429,9 +424,6 @@ class MigrationRepository(
     }
 
     private suspend fun availableBatteryCharges(source: WalletEntity): Int {
-        if (!WalletFeature.MigrationBattery.isEnabled) {
-            return 0
-        }
         if (api.getConfig(source.network).flags.disableBattery) {
             return 0
         }
@@ -837,11 +829,7 @@ class MigrationRepository(
         chargesBalance: Int,
     ): TronFeeSelection = coroutineScope {
         val batteryDeferred = async {
-            if (!WalletFeature.MigrationBattery.isEnabled) {
-                null
-            } else {
-                estimateBatteryFee(source, transfer, resources, rates, chargesBalance)
-            }
+            estimateBatteryFee(source, transfer, resources, rates, chargesBalance)
         }
         val trxDeferred = async { estimateTrxFee(resources, trxBalance, rates) }
         buildTronFeeSelection(
@@ -934,7 +922,6 @@ class MigrationRepository(
         return accountRepository.getWallets().filter { wallet ->
             wallet.hasPrivateKey &&
                 !wallet.testnet &&
-                !wallet.tetra &&
                 wallet.type != WalletType.Multichain
         }
     }

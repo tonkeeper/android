@@ -1,0 +1,56 @@
+{
+  "quote_id": "dd8418f8-16a2-4667-a7f8-87ee46955daf",
+  "routes": [
+    {
+      "route_id": "b6d1c611-3e2e-48d2-a3fa-dc27cb82e7a4",
+      "provider_route_id": "0x7c1208b4e21a851f4e8dd9717233f6ffdca0e26c5bebbe7fe76a38dd6651b998",
+      "aggregator": "swapsxyz",
+      "route_type": "cross_chain_swap",
+      "source_amount": "10000000000000000",
+      "estimated_destination_amount": "24751926",
+      "minimum_destination_amount": "24504406",
+      "total_slippage_bps": 100,
+      "source_usd_price": 2500.55,
+      "destination_usd_price": 0.99989,
+      "fees": [
+        {
+          "type": "protocol",
+          "asset": "eth/mainnet/coin",
+          "chain_id": "1",
+          "amount": "23274682900000",
+          "amount_usd": "0.06"
+        },
+        {
+          "type": "application",
+          "asset": "eth/mainnet/coin",
+          "chain_id": "1",
+          "amount": "70000000000000",
+          "amount_usd": "0.18"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-09-07T06:53:30Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "87a1a908-cf82-4e96-9547-c3dad07a0e51",
+          "kind": "main",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "payload_type": "evm_tx",
+          "calldata_payload_type": "flex",
+          "payload": "{\"to\":\"0xE1017bF0d9d9C92Edd95AA64174db61E28300129\",\"value\":\"10000000000000000\",\"chainId\":1,\"chainKey\":\"ethereum\"}",
+          "human_summary": {
+            "action": "Swap ETH for USDT",
+            "spend_asset": "eth/mainnet/coin",
+            "spend_amount": "10000000000000000",
+            "receive_asset": "eth/mainnet/erc20/0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            "receive_amount": "24751926"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-07T06:53:30Z"
+        }
+      ]
+    }
+  ]
+}

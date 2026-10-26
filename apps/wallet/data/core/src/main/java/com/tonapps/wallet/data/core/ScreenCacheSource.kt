@@ -3,21 +3,28 @@ package com.tonapps.wallet.data.core
 import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
-import com.tonapps.log.L
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.file
 import com.tonapps.extensions.folder
+import com.tonapps.extensions.packageInfo
 import com.tonapps.extensions.toByteArray
 import com.tonapps.extensions.toListParcel
 import java.io.File
+import java.io.IOException
 import kotlin.math.min
 
 class ScreenCacheSource(
     context: Context
 ) {
 
-    private val rootFolder = context.cacheFolder("screen")
+    private val rootFolder = context.cacheFolder("screen").let { screenFolder ->
+        val currentInstallFolderName = context.packageInfo.lastUpdateTime.toString()
+        screenFolder.listFiles()
+            ?.filterNot { it.name == currentInstallFolderName }
+            ?.forEach { it.deleteRecursively() }
+        screenFolder.folder(currentInstallFolderName)
+    }
 
     inline fun <reified T: Parcelable> get(
         name: String,
@@ -60,7 +67,11 @@ class ScreenCacheSource(
             val maxListSize = min(list.size, 25)
             val bytes = list.subList(0, maxListSize).toByteArray()
             // val bytes = list.toByteArray()
-            file.writeBytes(bytes)
+            try {
+                file.writeBytes(bytes)
+            } catch (e: IOException) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+            }
         }
     }
 

@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class TradingScreen(
@@ -25,11 +30,19 @@ data class TradingScreen(
     @SerialName(value = "position")
     val position: Position? = null,
 
-    /* Caller's open orders in this market (empty without X-Lighter-Auth). */
+    /* Caller's open orders in this market (empty without a usable stored token). */
     @SerialName(value = "open_orders")
     val openOrders: List<Order>? = null,
     @SerialName(value = "balance")
     val balance: Balance? = null,
+
+    /* Caller's leverage on this market, with or without a position. Lighter keeps it after a position closes. When the account never set it, and when there is no account, this is the market default. */
+    @SerialName(value = "leverage")
+    val leverage: Int? = null,
+
+    /* Caller's margin mode on this market, with the same fallback as leverage; the default is cross. */
+    @Contextual @SerialName(value = "margin_mode")
+    val marginMode: MarginMode? = null,
     @SerialName(value = "flags")
     val flags: TradingFlags? = null
 ) {

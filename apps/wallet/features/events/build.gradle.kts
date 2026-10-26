@@ -16,14 +16,18 @@ dependencies {
     implementation(libs.chainkit.models)
     implementation(libs.compose.paging)
     implementation(libs.compose.paging.runtime)
+    implementation(libs.coil.compose)
 
     implementation(libs.kotlinx.collections.immutable)
 
     implementation(projects.apps.wallet.localization)
 
     implementation(projects.apps.wallet.features.core)
+    implementation(projects.apps.wallet.features.perps)
     implementation(projects.apps.wallet.data.account)
+    implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.events)
+    implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.staking)
@@ -41,6 +45,7 @@ dependencies {
     implementation(projects.lib.blockchain)
     implementation(projects.lib.icu)
     implementation(projects.lib.network)
+    implementation(projects.lib.bus)
 
     implementation(projects.ui.uikit.core)
 }

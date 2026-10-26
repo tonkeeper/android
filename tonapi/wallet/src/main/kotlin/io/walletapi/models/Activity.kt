@@ -13,11 +13,17 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Activity(
-    @Contextual @SerialName(value = "activity_type")
-    val activityType: ActivityType,
+    /* One of ActivityType; kept a plain string so a new kind does not break older clients */
+    @SerialName(value = "activity_type")
+    val activityType: String,
 
     @Contextual @SerialName(value = "status")
     val status: ActivityStatus,
@@ -25,11 +31,13 @@ data class Activity(
     @Contextual @SerialName(value = "block_time")
     val blockTime: java.time.OffsetDateTime,
 
-    @Contextual @SerialName(value = "from_chain")
-    val fromChain: Chain,
+    /* Chain of the sender; perps rows carry lighter, which is not a Chain value */
+    @SerialName(value = "from_chain")
+    val fromChain: String,
 
-    @Contextual @SerialName(value = "to_chain")
-    val toChain: Chain,
+    /* Chain of the receiver; same values as from_chain */
+    @SerialName(value = "to_chain")
+    val toChain: String,
 
     @Contextual @SerialName(value = "direction")
     val direction: ActivityDirection,
@@ -45,6 +53,10 @@ data class Activity(
     val fromAddress: String? = null,
     @SerialName(value = "to_address")
     val toAddress: String? = null,
+    @SerialName(value = "from")
+    val from: ActivityParty? = null,
+    @SerialName(value = "to")
+    val to: ActivityParty? = null,
     @SerialName(value = "out_token")
     val outToken: AssetInfo? = null,
     @SerialName(value = "out_amount")
@@ -84,7 +96,7 @@ data class Activity(
     @SerialName(value = "fee")
     val fee: ActivityFee? = null,
 
-    /* DEX/bridge protocol name (uniswap_v3, stargate, etc.) */
+    /* Bridge/DeFi protocol name (stargate, etc.). Always empty for swap activities. */
     @SerialName(value = "protocol")
     val protocol: String? = null,
 
@@ -100,7 +112,7 @@ data class Activity(
     @SerialName(value = "is_spam")
     val isSpam: Boolean? = null,
 
-    /* Chain-specific extras (memo, input data, etc.). Known fields: `comment` — plaintext memo attached to the transfer; `encrypted_comment` — `{encryption_type, cipher_text}` of a memo only the recipient can read; `tron_resource` — `{energy, bandwidth}`, what a TRON transaction cost its sender in resources. Energy and bandwidth are resource units, the two fees are sun of the TRX fee spent on each. A sender with staked energy or free bandwidth burns no TRX at all, so `fee_amount` of 0 is the normal case there and this object is the real cost. */
+    /* Chain-specific extras (memo, input data, etc.). Known fields: `comment` — plaintext memo attached to the transfer; `encrypted_comment` — `{encryption_type, cipher_text}` of a memo only the recipient can read; `tron_resource` — `{energy, bandwidth}`, what a TRON transaction cost its sender in resources. Energy and bandwidth are resource units, the two fees are sun of the TRX fee spent on each. A sender with staked energy or free bandwidth burns no TRX at all, so `fee_amount` of 0 is the normal case there and this object is the real cost; `perps` — on a Lighter perps row (chain `lighter`, activity types `perps.*`): `{symbol, asset_id, side, reason, account_index, settled_at}`, plus the position figures a detail screen draws from, all decimal strings and absent when unknown: `size` (base units), `size_usd`, `entry_price` (the position's average entry; on an open or an add, the price of that order), `leverage` (e.g. `\"40\"`). On `perps.position_opened` and `perps.position_increased` (an add to an open position): `margin_usd`, what the order put up. On `perps.position_reduced` (a partial close) and `perps.position_closed` (the whole position closed, or flipped): `close_price` and `result_pct` (the result against the margin behind the closed part, in percent). On `perps.position_closed` only: `funding_usd`, the total funding of the position over its life, signed (positive was received), already inside the result. `side` is the side of the position, `long` or `short`, not the direction of the trade. `reason` is set on `perps.position_reduced` and `perps.position_closed`: `manual`, `take_profit`, `stop_loss` or `liquidation`. `asset_id` is the market's catalog asset (`lighter/<network>/<market_id>`); `account_index` is the Lighter account; `settled_at` is when a deposit arrived. */
     @Contextual @SerialName(value = "meta")
     val meta: Map<String, io.JsonAny>? = null
 ) {

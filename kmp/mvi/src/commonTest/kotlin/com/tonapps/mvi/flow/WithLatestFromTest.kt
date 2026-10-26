@@ -54,4 +54,32 @@ class WithLatestFromTest {
 
         assertEquals(listOf("a1"), result)
     }
+
+    @Test
+    fun samplesSeveralFlowsAtTheSameEmission() = runTest {
+        val trigger = MutableSharedFlow<String>(extraBufferCapacity = 8)
+        val first = MutableStateFlow(1)
+        val second = MutableStateFlow('x')
+        val third = MutableStateFlow(true)
+        val result = mutableListOf<String>()
+
+        trigger
+            .withLatestFrom(first, second, third) { value, a, b, c -> "$value$a$b$c" }
+            .onEach { result += it }
+            .launchIn(backgroundScope)
+        runCurrent()
+
+        trigger.tryEmit("a")
+        runCurrent()
+
+        first.value = 2
+        second.value = 'y'
+        third.value = false
+        runCurrent()
+
+        trigger.tryEmit("b")
+        runCurrent()
+
+        assertEquals(listOf("a1xtrue", "b2yfalse"), result)
+    }
 }

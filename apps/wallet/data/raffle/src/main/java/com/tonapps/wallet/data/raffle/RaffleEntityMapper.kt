@@ -12,9 +12,10 @@ import io.walletapi.models.RaffleStatus
 import io.walletapi.models.RaffleStory
 import io.walletapi.models.RaffleTask
 
-internal fun Raffle.toEntity() = RaffleEntity(
+// A status or CTA action the spec does not list leaves the raffle unrenderable, so it is skipped.
+internal fun Raffle.toEntity(): RaffleEntity? = RaffleEntity(
     id = id,
-    status = status.toEntity(),
+    status = status.toEntity() ?: return null,
     hero = RaffleEntity.Hero(image = hero.image, badgeIconId = hero.badgeIconId),
     title = title,
     subtitle = subtitle,
@@ -29,7 +30,7 @@ internal fun Raffle.toEntity() = RaffleEntity(
     prizes = prizes.map { it.toEntity() },
     tasks = tasks.map { it.toEntity() },
     milestones = milestones.map { it.toEntity() },
-    cta = cta.toEntity(),
+    cta = cta.toEntity() ?: return null,
     prizesRevealAt = prizesRevealAt,
     statusBadge = statusBadge,
     benefitCards = benefitCards.orEmpty().map { it.toEntity() },
@@ -44,21 +45,23 @@ private fun RaffleStatus.toEntity() = when (this) {
     RaffleStatus.ended_pending -> RaffleEntity.Status.EndedPending
     RaffleStatus.won -> RaffleEntity.Status.Won
     RaffleStatus.lost -> RaffleEntity.Status.Lost
+    RaffleStatus.unknown -> null
 }
 
-private fun RaffleCTA.toEntity() = RaffleEntity.Cta(
+private fun RaffleCTA.toEntity(): RaffleEntity.Cta? = RaffleEntity.Cta(
     title = title,
     action = when (action) {
         RaffleCTA.Action.deeplink -> RaffleEntity.Cta.Action.Deeplink
         RaffleCTA.Action.link -> RaffleEntity.Cta.Action.Link
+        RaffleCTA.Action.unknown -> return null
     },
     payload = payload,
 )
 
-private fun RaffleBanner.toEntity() = RaffleEntity.Banner(
+private fun RaffleBanner.toEntity(): RaffleEntity.Banner? = RaffleEntity.Banner(
     title = title,
     imageUrl = imageUrl,
-    button = button.toEntity(),
+    button = button.toEntity() ?: return null,
     description = description,
 )
 
@@ -104,7 +107,7 @@ private fun RaffleStory.toEntity() = RaffleEntity.Story(
             title = page.title,
             description = page.description,
             image = page.image,
-            buttons = page.buttons.orEmpty().map { it.toEntity() },
+            buttons = page.buttons.orEmpty().mapNotNull { it.toEntity() },
         )
     },
 )
@@ -121,6 +124,5 @@ private fun RaffleProgress.toEntity() = RaffleEntity.Progress(
         )
     },
     winningPrize = winningPrize?.let { RaffleEntity.WinningPrize(title = it.title, image = it.image) },
-    prizeDeliveryDays = prizeDeliveryDays,
     zeroFeeEndsAt = zeroFeeEndsAt,
 )

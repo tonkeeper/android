@@ -1,5 +1,6 @@
 package com.tonapps.trading.screens.details
 
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
@@ -76,6 +77,7 @@ data class AssetDetailsSections(
         val items: List<HistoryEventEntity>,
         val showSeeAll: Boolean,
         val wallet: McWalletEntity?,
+        val hiddenBalance: Boolean,
     )
 
     data class Links(
@@ -101,12 +103,16 @@ data class AssetDetailsSections(
             recentActivitiesWallet: McWalletEntity?,
         ): AssetDetailsSections {
             return AssetDetailsSections(
-                balance = buildBalance(accountToken, account),
+                balance = buildBalance(accountToken, account, hiddenBalance = hiddenBalances),
                 about = buildAbout(details),
                 overview = buildOverview(details, currencyCode),
                 trading = buildTrading(details.sections.tradingActivity, details.infoSource, currencyCode),
                 recentEvents = buildRecentEvents(details, hiddenBalances, recentEvents),
-                recentActivities = buildRecentActivities(recentActivities, recentActivitiesWallet),
+                recentActivities = buildRecentActivities(
+                    recentActivities = recentActivities,
+                    wallet = recentActivitiesWallet,
+                    hiddenBalance = hiddenBalances,
+                ),
                 links = buildLinks(details.sections.links),
             )
         }
@@ -114,12 +120,23 @@ data class AssetDetailsSections(
         private fun buildBalance(
             accountToken: AccountTokenEntity?,
             account: AccountWithDetails?,
+            hiddenBalance: Boolean,
         ): Balance? {
             // Sell in the bottom bar and Send/Cash sell in the actions row are gated on this
             // section being present, so a zero balance must produce no section at all.
             if (account != null) {
                 if (!account.unitBalance.isPositive) {
                     return null
+                }
+                if (hiddenBalance) {
+                    return Balance(
+                        balanceFormatted = HIDDEN_BALANCE,
+                        fiatFormatted = if (account.rate == null) {
+                            ""
+                        } else {
+                            HIDDEN_BALANCE
+                        },
+                    )
                 }
                 return Balance(
                     balanceFormatted = ChainKitFormatter.formatShort(
@@ -139,6 +156,13 @@ data class AssetDetailsSections(
             if (!token.balance.value.isPositive) {
                 return null
             }
+            if (hiddenBalance) {
+                return Balance(
+                    token = token.token,
+                    balanceFormatted = HIDDEN_BALANCE,
+                    fiatFormatted = HIDDEN_BALANCE,
+                )
+            }
             return Balance(
                 token = token.token,
                 balanceFormatted = CurrencyFormatter.format(
@@ -155,7 +179,9 @@ data class AssetDetailsSections(
         private fun buildAbout(details: AssetDetailsResponse): About? {
             val about = details.sections.about
             val text = about.text?.trim() ?: return null
-            if (!about.enabled || text.isBlank()) return null
+            if (!about.enabled || text.isBlank()) {
+                return null
+            }
             return About(body = text)
         }
 
@@ -164,7 +190,9 @@ data class AssetDetailsSections(
             currencyCode: String,
         ): Overview? {
             val overview = details.sections.overview
-            if (!overview.enabled) return null
+            if (!overview.enabled) {
+                return null
+            }
             val decimals = details.asset.decimals
             val marketCapFormatted = overview.marketCap?.let {
                 CurrencyFormatter.formatFiat(
@@ -216,7 +244,9 @@ data class AssetDetailsSections(
                     )
                 }
             }
-            if (items.isEmpty()) return null
+            if (items.isEmpty()) {
+                return null
+            }
             return Overview(items = items)
         }
 
@@ -225,11 +255,15 @@ data class AssetDetailsSections(
             infoSource: AssetInfoSource,
             currencyCode: String,
         ): Trading? {
-            if (!tradingActivity.enabled) return null
+            if (!tradingActivity.enabled) {
+                return null
+            }
             val totalValue = tradingActivity.volume24h?.let { BigDecimal(it) } ?: return null
             val buyValue = tradingActivity.buy24h?.let { BigDecimal(it) } ?: return null
             val sellValue = tradingActivity.sell24h?.let { BigDecimal(it) } ?: return null
-            if (totalValue.compareTo(BigDecimal.ZERO) == 0) return null
+            if (totalValue.compareTo(BigDecimal.ZERO) == 0) {
+                return null
+            }
 
             val buyWeight = (buyValue / totalValue).toFloat().coerceIn(0f, 1f)
             val sellWeight = (sellValue / totalValue).toFloat().coerceIn(0f, 1f)
@@ -261,13 +295,15 @@ data class AssetDetailsSections(
                 buy24hFormatted = buy24hFormatted,
                 sell24hFormatted = sell24hFormatted,
                 sourceName = infoSource.displayedName,
-                sourceUrl = infoSource.url.takeIf { it.isNotBlank() },
+                sourceUrl = infoSource.url.toString().takeIf { it.isNotBlank() },
             )
         }
 
         private fun buildLinks(sectionLinks: SectionLinks): Links? {
             val items = sectionLinks.items ?: return null
-            if (!sectionLinks.enabled || items.isEmpty()) return null
+            if (!sectionLinks.enabled || items.isEmpty()) {
+                return null
+            }
             return Links(
                 items = items.map { item ->
                     LinkItem(
@@ -284,7 +320,9 @@ data class AssetDetailsSections(
             hiddenBalances: Boolean,
             recentEvents: List<RecentEvents.Item>?,
         ): RecentEvents? {
-            if (recentEvents == null || recentEvents.isEmpty()) return null
+            if (recentEvents == null || recentEvents.isEmpty()) {
+                return null
+            }
             val token = details.asset.asTokenEntity
             return RecentEvents(
                 items = recentEvents.take(3),
@@ -297,12 +335,16 @@ data class AssetDetailsSections(
         private fun buildRecentActivities(
             recentActivities: List<HistoryEventEntity>?,
             wallet: McWalletEntity?,
+            hiddenBalance: Boolean,
         ): RecentActivities? {
-            if (recentActivities.isNullOrEmpty()) return null
+            if (recentActivities.isNullOrEmpty()) {
+                return null
+            }
             return RecentActivities(
                 items = recentActivities.take(3),
                 showSeeAll = recentActivities.size > 3,
                 wallet = wallet,
+                hiddenBalance = hiddenBalance,
             )
         }
     }

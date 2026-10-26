@@ -18,15 +18,21 @@ import android.widget.ImageView
 import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.graphics.drawable.toDrawable
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
+import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.findFragment
 import com.tonapps.uikit.color.accentBlueColor
+import com.tonapps.uikit.color.backgroundContentTintColor
+import com.tonapps.uikit.color.textPrimaryColor
 import uikit.R
 import uikit.extensions.dp
+import uikit.extensions.setPaddingHorizontal
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
+import uikit.extensions.setMoonOnClickListener
 
 private fun assertBalloonTooltipMainThread() {
     check(Looper.myLooper() == Looper.getMainLooper()) {
@@ -39,6 +45,7 @@ class BalloonTooltip private constructor(
     private val badgeText: String,
     private val messageText: String,
     private val placement: Placement,
+    private val style: Style,
     private val offset: Int,
     private val autoDismissMs: Long,
     private val onShown: (() -> Unit)?,
@@ -48,6 +55,11 @@ class BalloonTooltip private constructor(
     enum class Placement {
         TOP,
         BOTTOM,
+    }
+
+    enum class Style {
+        ACCENT,
+        PLAIN,
     }
 
     private data class TooltipGeometry(
@@ -60,6 +72,8 @@ class BalloonTooltip private constructor(
 
         private const val ARROW_HALF_WIDTH_DP = 8
         private const val SCREEN_EDGE_PADDING_DP = 16
+        private const val PLAIN_HORIZONTAL_PADDING_DP = 16
+        private const val PLAIN_MESSAGE_MAX_WIDTH_DP = 168
         private const val AUTO_DISMISS_MS = 5000L
         private const val ADVANCE_QUEUE_DELAY_MS = 200L
         private const val FADE_DURATION_MS = 200L
@@ -77,9 +91,10 @@ class BalloonTooltip private constructor(
 
         fun show(
             anchorView: View,
-            badgeText: String,
+            badgeText: String = "",
             messageText: String,
             placement: Placement = Placement.TOP,
+            style: Style = Style.ACCENT,
             offset: Int = 0,
             autoDismissMs: Long = AUTO_DISMISS_MS,
             onShown: (() -> Unit)? = null,
@@ -93,6 +108,7 @@ class BalloonTooltip private constructor(
                 badgeText = badgeText,
                 messageText = messageText,
                 placement = placement,
+                style = style,
                 offset = offset,
                 autoDismissMs = autoDismissMs,
                 onShown = onShown,
@@ -361,11 +377,31 @@ class BalloonTooltip private constructor(
     }
 
     private fun bindTooltipViews(tooltipView: View, context: Context) {
-        tooltipView.findViewById<TextView>(R.id.tooltip_badge).text = badgeText
-        tooltipView.findViewById<TextView>(R.id.tooltip_message).text = messageText
-        tooltipView.findViewById<ImageView>(R.id.tooltip_arrow).setColorFilter(context.accentBlueColor)
+        val badgeView = tooltipView.findViewById<TextView>(R.id.tooltip_badge)
+        badgeView.text = badgeText
+        badgeView.isVisible = badgeText.isNotEmpty()
+
+        val messageView = tooltipView.findViewById<TextView>(R.id.tooltip_message)
+        messageView.text = messageText
+
+        val bubbleView = tooltipView.findViewById<View>(R.id.tooltip_bubble)
+        val arrowView = tooltipView.findViewById<ImageView>(R.id.tooltip_arrow)
+        when (style) {
+            Style.ACCENT -> {
+                arrowView.setColorFilter(context.accentBlueColor)
+            }
+            Style.PLAIN -> {
+                bubbleView.setBackgroundResource(R.drawable.bg_tooltip_bubble_tint)
+                bubbleView.setPaddingHorizontal(PLAIN_HORIZONTAL_PADDING_DP.dp)
+                arrowView.setColorFilter(context.backgroundContentTintColor)
+                messageView.maxWidth = PLAIN_MESSAGE_MAX_WIDTH_DP.dp
+                TextViewCompat.setTextAppearance(messageView, R.style.TextAppearance_Body2)
+                messageView.setTextColor(context.textPrimaryColor)
+            }
+        }
+
         onClickListener?.let { listener ->
-            tooltipView.setOnClickListener { listener() }
+            tooltipView.setMoonOnClickListener { listener() }
         }
     }
 

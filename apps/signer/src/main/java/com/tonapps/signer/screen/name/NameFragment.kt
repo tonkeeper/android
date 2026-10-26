@@ -21,6 +21,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.doKeyboardAnimation
 import uikit.widget.HeaderView
 import uikit.widget.InputView
+import uikit.extensions.setMoonOnClickListener
 
 class NameFragment: BaseFragment(R.layout.fragment_name), BaseFragment.BottomSheet {
 
@@ -51,7 +52,7 @@ class NameFragment: BaseFragment(R.layout.fragment_name), BaseFragment.BottomShe
         nameInput.setOnDoneActionListener {save() }
 
         saveButton = view.findViewById(R.id.save)
-        saveButton.setOnClickListener { save() }
+        saveButton.setMoonOnClickListener { save() }
 
         nameInput.doOnTextChange = {
             nameInput.error = false

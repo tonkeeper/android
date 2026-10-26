@@ -10,10 +10,12 @@ import android.os.ResultReceiver
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.extensions.toIpcFriendly
 import com.tonapps.tonkeeper.core.signer.SignerHiddenActivity.Companion.ARG_SIGN
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.bitstring.BitString
 import org.ton.cell.Cell
+import uikit.dialog.alert.AlertDialog
 import kotlin.coroutines.resume
 
 object SignerHelper {
@@ -32,6 +34,11 @@ object SignerHelper {
                 if (cancellationSignal.isCanceled) {
                     return
                 }
+                if (code == SignerHiddenActivity.RESULT_SIGNER_NOT_INSTALLED) {
+                    showSignerNotInstalledAlert(context)
+                    continuation.resume(null)
+                    return
+                }
                 val sign = bundle.getString(ARG_SIGN)?.let { BitString(it) }
                 continuation.resume(sign)
             }
@@ -44,6 +51,17 @@ object SignerHelper {
                 continuation.resume(null)
             }
         }
+    }
+
+    private fun showSignerNotInstalledAlert(context: Context) {
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle(Localization.signer_not_installed_title)
+        builder.setMessage(Localization.signer_not_installed_message)
+        builder.setNegativeButton(Localization.cancel)
+        builder.setPositiveButton(Localization.signer_install) {
+            SignerApp.openAppOrInstall(context)
+        }
+        builder.show()
     }
 
     private fun startHiddenActivity(

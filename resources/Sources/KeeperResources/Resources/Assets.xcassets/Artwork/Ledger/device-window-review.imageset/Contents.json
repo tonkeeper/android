@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "device-window-review.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

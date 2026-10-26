@@ -100,7 +100,7 @@ Same platform scope as dapp_pin: emitted only by `pro-mobile`, never by the nati
     /**
      * dapp_app_click
      *
-     * Triggered when the user TAPS a dapp to open it — the intent / attempt, NOT a successful open. Always fires before dapp_app_loaded. A dapp_app_click with no matching dapp_app_loaded means the dapp failed to load (or the user abandoned it); the dapp_app_loaded / dapp_app_click ratio, matched on url / app_id, is the dapp-open success rate.
+     * Triggered when the user TAPS a dapp to open it — the intent / attempt, NOT a successful open. It always comes first, and the open then ends in dapp_app_loaded when the page loads, in dapp_app_load_failed when it fails to load, or in neither when the user leaves before the page answers; a client that does not emit dapp_app_load_failed yet leaves its failures in the last group. The dapp_app_loaded / dapp_app_click ratio, matched on url / app_id, is the dapp-open success rate.
 
      */
     @AnyThread
@@ -126,7 +126,7 @@ Same platform scope as dapp_pin: emitted only by `pro-mobile`, never by the nati
     /**
      * dapp_app_loaded
      *
-     * Triggered when a dapp has SUCCESSFULLY loaded and is ready in the in-app browser (the webview finished loading). Always preceded by dapp_app_click and emitted only on a successful load, so the gap between the two events (matched on url / app_id) measures dapp load failures. Replaces the legacy dapp_app_open name.
+     * Triggered when a dapp has SUCCESSFULLY loaded and is ready in the in-app browser (the webview finished loading). Always preceded by dapp_app_click and emitted only on a successful load: a page the server answers with an HTTP error status is dapp_app_load_failed, not this event, even though the webview finishes rendering the error page. Replaces the legacy dapp_app_open name.
 
      */
     @AnyThread
@@ -136,17 +136,51 @@ Same platform scope as dapp_pin: emitted only by `pro-mobile`, never by the nati
         assetChain: DappBrowserAssetChain,
         appId: String,
         bannerId: String?,
-        location: String
+        location: String,
+        loadDurationMs: Int
     ) {
         val props = hashMapOf<String, Any>(
             "from" to from.key,
             "url" to url,
             "asset_chain" to assetChain.key,
             "app_id" to appId,
-            "location" to location
+            "location" to location,
+            "load_duration_ms" to loadDurationMs
         )
         bannerId?.let { props["banner_id"] = it }
         trackEvent("dapp_app_loaded", props)
+    }
+
+    /**
+     * dapp_app_load_failed
+     *
+     * Triggered when the page of a dapp fails to load in the in-app browser — the load dapp_app_click started, not a later navigation inside the dapp. It ends the open in place of dapp_app_loaded, so the two never follow the same click. A page that loads and then fails inside — a script error, its own API down, a blank screen — has loaded as far as the browser can tell and reports dapp_app_loaded; only the page itself can report that.
+
+     */
+    @AnyThread
+    override fun dappAppLoadFailed(
+        from: DappAppClickFrom,
+        url: String,
+        assetChain: DappBrowserAssetChain,
+        appId: String,
+        bannerId: String?,
+        location: String,
+        errorCode: String,
+        httpStatus: Int?,
+        loadDurationMs: Int
+    ) {
+        val props = hashMapOf<String, Any>(
+            "from" to from.key,
+            "url" to url,
+            "asset_chain" to assetChain.key,
+            "app_id" to appId,
+            "location" to location,
+            "error_code" to errorCode,
+            "load_duration_ms" to loadDurationMs
+        )
+        bannerId?.let { props["banner_id"] = it }
+        httpStatus?.let { props["http_status"] = it }
+        trackEvent("dapp_app_load_failed", props)
     }
 
     /**

@@ -23,6 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,12 +36,14 @@ import com.tonapps.chart.options.CrosshairOptions
 import com.tonapps.chart.options.GridLineOptions
 import com.tonapps.chart.options.GridOptions
 import com.tonapps.chart.options.HandleScrollOptions
+import com.tonapps.chart.options.TickMarkFormatter
 import com.tonapps.chart.options.TimeScaleOptions
 import com.tonapps.chart.options.TrackingModeExitMode
 import com.tonapps.chart.options.TrackingModeOptions
 import com.tonapps.log.L
 import com.tonapps.perps.data.PerpsCandle
 import com.tonapps.perps.data.PerpsChartMode
+import com.tonapps.perps.data.PerpsChartPoint
 import com.tonapps.perps.data.PerpsChartSectionState
 import com.tonapps.perps.data.PerpsChartTimeframe
 import com.tonapps.perps.data.PerpsPositionLevels
@@ -59,7 +63,8 @@ internal fun PerpsChart(
     priceDecimals: Int,
     sectionState: PerpsChartSectionState,
     isStale: Boolean,
-    onCrosshairTime: (Long?) -> Unit,
+    onCrosshairPoint: (PerpsChartPoint?) -> Unit,
+    onReachedLeftEdge: () -> Unit = {},
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -76,9 +81,12 @@ internal fun PerpsChart(
             separator = scheme.separator.common,
         )
     }
+    val entryLabel = stringResource(Localization.perps_chart_marker_entry)
+    val liquidationLabel = stringResource(Localization.perps_chart_marker_liquidation)
     // Not keyed on the palette: attach() runs once per view (AndroidView factory), so a swapped
     // controller would never re-attach; render() re-applies the palette in place instead.
-    val controller = remember { PerpsChartController(palette) }
+    val controller = remember { PerpsChartController(palette, entryLabel, liquidationLabel) }
+    val haptics = LocalHapticFeedback.current
     val hiddenCrosshairLine = CrosshairLineOptions(visible = false, labelVisible = false)
     val hiddenGridLine = GridLineOptions(visible = false)
 
@@ -104,6 +112,8 @@ internal fun PerpsChart(
                     borderVisible = false,
                     timeVisible = true,
                     fixRightEdge = true,
+                    allowBoldLabels = false,
+                    tickMarkFormatter = TickMarkFormatter.DayMarksAsTime,
                 ),
                 crosshair = CrosshairOptions(
                     mode = CrosshairMode.Normal,
@@ -114,7 +124,7 @@ internal fun PerpsChart(
                 handleScroll = HandleScrollOptions(vertTouchDrag = false),
                 trackingMode = TrackingModeOptions(exitMode = TrackingModeExitMode.OnTouchEnd),
             ),
-            onCrosshairMove = { event -> onCrosshairTime(event?.time) },
+            onCrosshairMove = { event -> onCrosshairPoint(controller.pointAt(event)) },
             onCreated = { view ->
                 view.onChartError = { message -> L.e(message) }
                 controller.attach(view)
@@ -122,6 +132,8 @@ internal fun PerpsChart(
         )
 
         SideEffect {
+            controller.onReachedLeftEdge = onReachedLeftEdge
+            controller.onCandleChanged = { haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick) }
             controller.render(
                 candles = candles,
                 mode = mode,
@@ -304,7 +316,7 @@ private fun PerpsChartPreview() {
             priceDecimals = 2,
             sectionState = PerpsChartSectionState.READY,
             isStale = false,
-            onCrosshairTime = {},
+            onCrosshairPoint = {},
             onRetry = {},
             modifier = Modifier
                 .fillMaxWidth()
@@ -325,7 +337,7 @@ private fun PerpsChartFailedPreview() {
             priceDecimals = 2,
             sectionState = PerpsChartSectionState.FAILED,
             isStale = false,
-            onCrosshairTime = {},
+            onCrosshairPoint = {},
             onRetry = {},
             modifier = Modifier
                 .fillMaxWidth()

@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.base
 
 import android.app.Application
 import androidx.core.view.WindowInsetsCompat
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DappBrowser.DappBrowserType
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.Environment
@@ -55,11 +56,12 @@ class BrowserBaseViewModel(
         activeTab = type
     }
 
-    fun trackBrowserOpen(from: String) {
+    fun trackBrowserOpen(from: String, utm: UtmParameters) {
         DappBrowserAnalytics.browserOpen(
             from = from,
             type = activeTab ?: defaultTab,
-            country = environment.deviceCountry
+            country = environment.deviceCountry,
+            utm = utm,
         )
     }
 

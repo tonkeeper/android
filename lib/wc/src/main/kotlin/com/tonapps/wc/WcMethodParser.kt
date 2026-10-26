@@ -2,14 +2,16 @@ package com.tonapps.wc
 
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.DappConnectRequest
-import com.tonapps.chainkit.core.chain.model.account.Account
 import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.chainkit.core.common.containsHexPrefix
 import com.tonapps.chainkit.core.common.hexToBigInteger
-import com.tonapps.chainkit.core.common.isHexEncoded
 import com.tonapps.log.L
 import com.tonapps.wc.chains.WcRequestData
 import com.tonapps.wc.chains.ethereum.WcEthTransaction
 import com.tonapps.wc.chains.ethereum.WcEthSignMessage
+import com.tonapps.wc.chains.solana.WcSolanaSignAllTransactions
+import com.tonapps.wc.chains.solana.WcSolanaSignMessage
+import com.tonapps.wc.chains.solana.WcSolanaSignTransaction
 import com.tonapps.wc.chains.tron.WcTronSignMessage
 import com.tonapps.wc.chains.tron.WcTronSignTransaction
 import com.tonapps.wc.exceptions.InvalidJsonRpcParamsException
@@ -77,7 +79,7 @@ class WcMethodParser(
         meta: WcDappConnection,
     ): Result {
         return when (method) {
-            WcMethod.ETH_SIGN_TYPE_DATA_V4 -> {
+            WcMethod.EthSignTypedDataV4 -> {
                 val result = parseListString(requestId, params)
                 val message = WcEthSignMessage(result, WcEthSignMessage.WcSignType.TypedMessage)
                 val chainId = runCatching {
@@ -85,7 +87,7 @@ class WcMethodParser(
                         .getJSONObject("domain")
                         .getString("chainId")
 
-                    when (chainId.isHexEncoded()) {
+                    when (chainId.containsHexPrefix()) {
                         true -> chainId.hexToBigInteger().toString()
                         false -> chainId
                     }
@@ -98,35 +100,61 @@ class WcMethodParser(
                     Result.Request(url)
                 }
             }
-            WcMethod.ETH_PERSONAL_SIGN -> {
+            WcMethod.EthPersonalSign -> {
                 val result = parseListString(requestId, params)
                 val message = WcEthSignMessage(result, WcEthSignMessage.WcSignType.PersonalMessage)
                 val url = forceConvertRequest(requestId, walletId, chain, meta, message)
                 Result.Request(url)
             }
-            WcMethod.ETH_SIGN_TRANSACTION -> {
+            WcMethod.EthSignTransaction -> {
                 val result = parseDataList<WcEthTransaction>(requestId, params)
                 val url = forceConvertRequest(requestId, walletId, chain, meta, result)
                 Result.Request(url)
             }
-            WcMethod.ETH_SEND_TRANSACTION ->{
+            WcMethod.EthSendTransaction ->{
                 val result = parseDataList<WcEthTransaction>(requestId, params)
                     .copy(isSend = true)
 
                 val url = forceConvertRequest(requestId, walletId, chain, meta, result)
                 Result.Request(url)
             }
-            WcMethod.WALLET_GET_CAPABILITIES -> Result.Error(Result.Error.ERROR_PARSE)
-            WcMethod.WALLET_WATCH_ASSET -> Result.Error(Result.Error.ERROR_PARSE)
+            WcMethod.WalletGetCapabilities -> Result.Error(Result.Error.ERROR_PARSE)
+            WcMethod.WalletWatchAsset -> Result.Error(Result.Error.ERROR_PARSE)
 
             // TRON
-            WcMethod.TRON_SIGN_MESSAGE -> {
+            WcMethod.TronSignMessage -> {
                 val result = json.decodeFromString<WcTronSignMessage>(params)
                 val url = forceConvertRequest(requestId, walletId, chain, meta, result)
                 Result.Request(url)
             }
-            WcMethod.TRON_SIGN_TRANSACTION -> {
+            WcMethod.TronSignTransaction -> {
                 val result = json.decodeFromString<WcTronSignTransaction>(params)
+                val url = forceConvertRequest(requestId, walletId, chain, meta, result)
+                Result.Request(url)
+            }
+
+            // SOLANA
+            WcMethod.SolanaGetAccounts -> Result.Error(Result.Error.ERROR_PARSE) // Should be already handled
+            WcMethod.SolanaRequestAccounts -> Result.Error(Result.Error.ERROR_PARSE) // Should be already handled
+            WcMethod.SolanaSignMessage -> {
+                val result = json.decodeFromString<WcSolanaSignMessage>(params)
+                val url = forceConvertRequest(requestId, walletId, chain, meta, result)
+                Result.Request(url)
+            }
+            WcMethod.SolanaSignTransaction -> {
+                val result = json.decodeFromString<WcSolanaSignTransaction>(params)
+                val url = forceConvertRequest(requestId, walletId, chain, meta, result)
+                Result.Request(url)
+            }
+            WcMethod.SolanaSignAndSendTransaction -> {
+                val result = json.decodeFromString<WcSolanaSignTransaction>(params)
+                    .copy(isSend = true)
+
+                val url = forceConvertRequest(requestId, walletId, chain, meta, result)
+                Result.Request(url)
+            }
+            WcMethod.SolanaSignAllTransactions -> {
+                val result = json.decodeFromString<WcSolanaSignAllTransactions>(params)
                 val url = forceConvertRequest(requestId, walletId, chain, meta, result)
                 Result.Request(url)
             }

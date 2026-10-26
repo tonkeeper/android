@@ -11,9 +11,9 @@ fun walletAssetsCacheKey(
     showAll: Boolean,
     query: String?,
     network: String?,
-    capabilities: List<AssetCapability>? = null,
-    verifiedOnly: Boolean = false,
-    hideDust: Boolean = false,
+    capabilities: List<AssetCapability>?,
+    verifiedOnly: Boolean,
+    hideDust: Boolean,
 ): String = buildString {
     appendPart(walletId)
     appendPart(currency)

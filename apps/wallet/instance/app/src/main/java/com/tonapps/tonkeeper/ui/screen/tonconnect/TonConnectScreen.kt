@@ -8,13 +8,13 @@ import android.text.SpannableString
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
-import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.extensions.currentTimeMillis
 import com.tonapps.extensions.currentTimeSecondsInt
@@ -24,6 +24,7 @@ import com.tonapps.extensions.short4
 import com.tonapps.tonkeeper.extensions.debugToast
 import com.tonapps.tonkeeper.extensions.getWalletBadges
 import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
@@ -36,19 +37,21 @@ import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.uikit.color.textTertiaryColor
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setColor
-import uikit.extensions.setOnClickListener
 import uikit.widget.AsyncImageView
 import uikit.widget.CheckBoxView
 import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
 import java.util.concurrent.CancellationException
+import uikit.extensions.setMoonOnClickListener
 
 class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_tonconnect, ScreenContext.None), BaseFragment.Modal, BaseFragment.SingleTask {
 
@@ -70,6 +73,10 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     private val args: TonConnectArgs by lazy { TonConnectArgs(requireArguments()) }
 
     override val viewModel: TonConnectViewModel by viewModel()
+
+    private val tonConnectManager: TonConnectManager by inject()
+
+    private var connectJob: Job? = null
 
     private lateinit var loaderView: LoaderView
     private lateinit var bodyView: View
@@ -95,7 +102,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         loaderView = view.findViewById(R.id.loader)
         bodyView = view.findViewById(R.id.body)
 
-        view.setOnClickListener(R.id.close) { finish() }
+        view.setMoonOnClickListener(R.id.close) { finish() }
 
         cryptoView = view.findViewById(R.id.crypto)
         appIconView = view.findViewById(R.id.app_icon)
@@ -115,7 +122,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         pushView = view.findViewById(R.id.push)
         pushCheckBoxView = view.findViewById(R.id.checkbox)
         pushCheckBoxView.checked = true
-        pushView.setOnClickListener {
+        pushView.setMoonOnClickListener {
             pushCheckBoxView.toggle()
         }
         pushView.visibility = if (viewModel.pushAvailable) {
@@ -138,6 +145,17 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         analytics?.tcRequest(args.app.url.toString())
     }
 
+    private fun onConnectClick(wallet: WalletEntity) {
+        if (connectJob?.isActive == true) {
+            return
+        }
+        connectJob = lifecycleScope.launch {
+            if (!tonConnectManager.isScam(requireContext(), wallet, args.manifestUrl.toUri(), args.app.iconUrl.toUri(), args.app.url)) {
+                connect(wallet)
+            }
+        }
+    }
+
     private fun connect(wallet: WalletEntity) {
         val proofPayload = args.proofPayload
         if (wallet.signer && proofPayload != null) {
@@ -156,7 +174,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                 operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
                 attemptSource = null,
                 startedAtMs = currentTimeSecondsInt(),
-                otherMetadata = WalletRedMetadata.walletKit(),
+                otherMetadata = null,
             )
             lifecycleScope.launch {
                 try {
@@ -169,7 +187,6 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                         durationMs = (finishedAtMs - startedAtMs).toDouble(),
                         finishedAtMs = currentTimeSecondsInt(),
                         error = null,
-                        otherMetadata = WalletRedMetadata.walletKit(),
                     )
                     setResponse(wallet, proof)
                 } catch (e: CancellationException) {
@@ -181,7 +198,6 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                         durationMs = (finishedAtMs - startedAtMs).toDouble(),
                         finishedAtMs = currentTimeSecondsInt(),
                         error = e,
-                        otherMetadata = WalletRedMetadata.walletKit(),
                     )
                     context?.debugToast(e)
                     setDefaultState()
@@ -194,7 +210,6 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                         durationMs = (finishedAtMs - startedAtMs).toDouble(),
                         finishedAtMs = currentTimeSecondsInt(),
                         error = e,
-                        otherMetadata = WalletRedMetadata.walletKit(),
                     )
                     context?.debugToast(e)
                     setFailedState()
@@ -307,7 +322,9 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         applyAppTitle(args.app.host)
         applyAppDescription(args.app.name, if (!state.hasWalletPicker) {
             state.wallet.address
-        } else null)
+        } else {
+            null
+        })
 
         if (state.hasWalletPicker) {
             walletPickerView.visibility = View.VISIBLE
@@ -316,7 +333,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             walletPickerView.visibility = View.GONE
         }
 
-        button.setOnClickListener { connect(state.wallet) }
+        button.setMoonOnClickListener { onConnectClick(state.wallet) }
     }
 
     private fun applyAppTitle(host: String) {
@@ -346,7 +363,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         walletNameView.text = wallet.label.name
         walletTypesView.text = requireContext().getWalletBadges(wallet.type, wallet.version)
         walletAddressView.text = wallet.address.short4
-        walletPickerView.setOnClickListener { openWalletPicker(wallet) }
+        walletPickerView.setMoonOnClickListener { openWalletPicker(wallet) }
     }
 
     private fun openWalletPicker(wallet: WalletEntity) {
@@ -362,13 +379,14 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
 
         fun newInstance(
             app: AppEntity,
+            manifestUrl: String,
             proofPayload: String?,
             returnUri: Uri?,
             wallet: WalletEntity?,
             fromPackageName: String?
         ): TonConnectScreen {
             val fragment = TonConnectScreen()
-            fragment.setArgs(TonConnectArgs(app, proofPayload, returnUri, wallet, fromPackageName))
+            fragment.setArgs(TonConnectArgs(app, manifestUrl, proofPayload, returnUri, wallet, fromPackageName))
             return fragment
         }
     }

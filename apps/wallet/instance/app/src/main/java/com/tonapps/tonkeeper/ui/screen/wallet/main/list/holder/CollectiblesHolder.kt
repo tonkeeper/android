@@ -29,6 +29,7 @@ class CollectiblesHolder(parent: ViewGroup): Holder<Item.Collectibles>(parent, R
                     state = WalletCollectiblesState(
                         items = item.nfts,
                         allHidden = item.allHidden,
+                        hiddenBalance = item.hiddenBalance,
                     ),
                     onHeaderClick = {
                         navigation?.add(CollectiblesScreen.newInstance(from = "wallet"))

@@ -20,6 +20,7 @@ import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.environment
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppType
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
 import com.tonapps.tonkeeper.ui.screen.browser.safe.DAppSafeScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
@@ -29,6 +30,9 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import kotlinx.coroutines.launch
+import com.tonapps.tonkeeper.manager.earn.EarnUrlResolver
+import com.tonapps.tonkeeperx.BuildConfig
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.drawable.FooterDrawable
@@ -40,8 +44,11 @@ import uikit.extensions.hideKeyboard
 import uikit.extensions.isMaxScrollReached
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_search, wallet) {
+
+    private val earnUrlResolver: EarnUrlResolver by inject()
 
     override val fragmentName: String = "BrowserSearchScreen"
 
@@ -106,7 +113,7 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         }
         contentView = view.findViewById(R.id.content)
 
-        view.findViewById<View>(R.id.search_icon).setOnClickListener { searchInput.hideKeyboard() }
+        view.findViewById<View>(R.id.search_icon).setMoonOnClickListener { searchInput.hideKeyboard() }
 
         placeholderView = view.findViewById(R.id.placeholder)
 
@@ -115,10 +122,15 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
         collectFlow(viewModel.uiItemsFlow) {
             submitList(it)
-            placeholderView.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
+            placeholderView.visibility = if (it.isEmpty()) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         }
 
-        view.findViewById<Button>(R.id.cancel_button).setOnClickListener {
+        val cancelButton = view.findViewById<Button>(R.id.cancel_button)
+        cancelButton.setMoonOnClickListener {
             finish()
         }
     }
@@ -148,7 +160,7 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
         }
 
         if (uri.host?.endsWith("mercuryo.io") == true) {
-            dappAnalytics?.click()
+            dappAnalytics.click()
             BrowserHelper.open(requireContext(), url)
         } else {
             navigation?.add(DAppScreen.newInstance(
@@ -157,10 +169,21 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
                 url = uri,
                 iconUrl = iconUrl,
                 source = SOURCE_SEARCH,
-                analytics = dappAnalytics
+                analytics = dappAnalytics,
+                type = dappType(uri)
             ))
         }
         finish()
+    }
+
+    // Until the native Earn entry points exist, opening the dapp by hand in the browser is the
+    // only way to reach it; release builds route to Earn from those entry points only.
+    private fun dappType(uri: Uri): DAppType {
+        return if (BuildConfig.DEBUG && earnUrlResolver.isEarn(uri)) {
+            DAppType.Earn
+        } else {
+            DAppType.Browser
+        }
     }
 
     private fun inputDone() {
@@ -180,7 +203,8 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
                         title = uri.host ?: "unknown",
                         url = uri,
                         iconUrl = "",
-                        source = "browser_search_direct"
+                        source = "browser_search_direct",
+                        type = dappType(uri)
                     ))
                 }
             }

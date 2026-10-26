@@ -302,7 +302,7 @@ class BatteryRechargeViewModel(
             .distinctUntilChanged()
             .debounce(300L) // wait 300ms before emitting
             .onEach { params ->
-                analytics.events.batteryNative.batterySelect(
+                analytics.eventsTaggedWith(args.utm).batteryNative.batterySelect(
                     from = args.from,
                     type = BatteryNativeType.Crypto,
                     size = params.size,
@@ -656,6 +656,7 @@ class BatteryRechargeViewModel(
                 true -> BroadcastVia.Battery
                 else -> BroadcastVia.Default
             },
+            utm = args.utm,
         )
 
         val size = if (_customAmountFlow.value) {
@@ -663,7 +664,7 @@ class BatteryRechargeViewModel(
         } else {
             _selectedPackTypeFlow.value?.batterySize() ?: BatteryNativeSize.Custom
         }
-        analytics.events.batteryNative.batterySuccess(
+        analytics.eventsTaggedWith(args.utm).batteryNative.batterySuccess(
             from = args.from,
             type = BatteryNativeType.Crypto,
             size = size,

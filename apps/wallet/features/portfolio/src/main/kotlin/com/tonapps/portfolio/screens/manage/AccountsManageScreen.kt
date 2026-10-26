@@ -192,10 +192,11 @@ fun AccountsManageScreen(
                         else -> {
                             items(
                                 count = pagingItems.itemCount,
-                                key = pagingItems.itemKey { it.asset.id },
+                                key = pagingItems.itemKey { it.account.asset.id },
                                 contentType = pagingItems.itemContentType { "account" },
                             ) { index ->
-                                val item = pagingItems[index] ?: return@items
+                                val row = pagingItems[index] ?: return@items
+                                val item = row.account
                                 val isHidden = hiddenOverrides[item.asset.id] ?: item.isHidden
                                 fun onClick() {
                                     feature.toggleVisibility(
@@ -208,6 +209,7 @@ fun AccountsManageScreen(
                                     account = item,
                                     position = defaultBundleType(pagingItems.itemCount, index),
                                     showVerification = true,
+                                    hiddenBalance = row.hiddenBalance,
                                     onClick = { onClick() },
                                 ) {
                                     MoonItemIcon(

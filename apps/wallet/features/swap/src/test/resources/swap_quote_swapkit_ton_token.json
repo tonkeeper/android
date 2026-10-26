@@ -1,0 +1,68 @@
+{
+    "quote_id": "b9e07c92-1de2-4814-bc40-6b32b741c7a3",
+    "routes": [
+        {
+            "route_id": "8e4c0897-a495-4de2-af91-8ff3f1234b7f",
+            "provider_route_id": "a23f060a-9fc9-41db-9818-3167ce3f14cd",
+            "aggregator": "swapkit",
+            "protocol": "near_intents",
+            "route_type": "cross_chain_swap",
+            "source_amount": "100000000",
+            "estimated_destination_amount": "123854",
+            "minimum_destination_amount": "122615",
+            "estimated_time": {
+                "inbound_seconds": 10,
+                "swap_seconds": 212,
+                "outbound_seconds": 600,
+                "total_seconds": 822
+            },
+            "total_slippage_bps": -171,
+            "source_usd_price": 0.99982,
+            "destination_usd_price": 79338,
+            "warnings": [],
+            "fees": [
+                {
+                    "type": "affiliate",
+                    "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "amount": "0"
+                },
+                {
+                    "type": "service",
+                    "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "amount": "150000"
+                },
+                {
+                    "type": "outbound",
+                    "asset": "btc/mainnet/coin",
+                    "amount": "1900"
+                },
+                {
+                    "type": "inbound",
+                    "asset": "ton/mainnet/coin",
+                    "amount": "74269"
+                }
+            ],
+            "legs": [
+                {
+                    "leg_index": 0,
+                    "type": "swap",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "from_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "to_asset": "btc/mainnet/coin",
+                    "protocol": "near_intents"
+                }
+            ],
+            "date_expire": "2026-09-07T14:57:38Z",
+            "risk_level": "medium"
+        }
+    ],
+    "provider_errors": [
+        {
+            "aggregator": "swapkit",
+            "protocol": "flashnet",
+            "code": "provider_error",
+            "message": "quoteError: amount_exceeds_liquidity"
+        }
+    ]
+}

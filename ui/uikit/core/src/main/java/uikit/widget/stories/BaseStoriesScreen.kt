@@ -3,6 +3,9 @@ package uikit.widget.stories
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ClickableSpan
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -23,9 +26,10 @@ import uikit.R
 import uikit.base.BaseFragment
 import uikit.extensions.dp
 import uikit.extensions.getViews
-import uikit.extensions.round
+import uikit.span.ClickableSpanCompat
 import uikit.widget.AsyncImageView
 import uikit.widget.RowLayout
+import uikit.extensions.setMoonOnClickListener
 
 open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
 
@@ -33,13 +37,17 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         val image: Uri,
         val title: String? = null,
         val subtitle: String? = null,
-        val button: String? = null
+        val button: String? = null,
+        val links: List<Link> = emptyList()
     )
+
+    data class Link(val text: String, val url: String)
 
     private lateinit var contentView: View
     private lateinit var imageView: AsyncImageView
     private lateinit var linesView: RowLayout
     private lateinit var closeView: View
+    private lateinit var textsView: View
     private lateinit var titleView: AppCompatTextView
     private lateinit var subtitleView: AppCompatTextView
     private lateinit var button: AppCompatTextView
@@ -49,6 +57,8 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
     private var progress: Double = 0.0
 
     private var timerJob: Job? = null
+
+    private var pressedLink: ClickableSpan? = null
 
     val isLastStory: Boolean
         get() = state.currentIndex == stories.size - 1
@@ -76,10 +86,9 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         super.onViewCreated(view, savedInstanceState)
         view.setBackgroundColor(Color.BLACK)
 
-        view.findViewById<View>(R.id.stories_close).setOnClickListener { finish() }
+        view.findViewById<View>(R.id.stories_close).setMoonOnClickListener { finish() }
 
         contentView = view.findViewById(R.id.stories_content)
-        contentView.round(20f.dp)
         contentView.setOnTouchListener { v, event ->
             onTouchEvent(event)
             true
@@ -92,13 +101,25 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         closeView = view.findViewById(R.id.stories_close)
         titleView = view.findViewById(R.id.story_title)
         subtitleView = view.findViewById(R.id.story_subtitle)
+        subtitleView.setOnTouchListener { _, event -> onSubtitleTouch(event) }
+        textsView = view.findViewById(R.id.story_texts)
         button = view.findViewById(R.id.story_button)
-        button.setOnClickListener { onStoryButton(state.currentIndex) }
+        button.setMoonOnClickListener { onStoryButton(state.currentIndex) }
 
+        val closeTopMargin = resources.getDimensionPixelSize(R.dimen.tertiaryHeight)
+        val textsBottomMargin = 32.dp
         ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
             val statusBarOffset = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
             val navBarOffset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-            applyContentMargin(statusBarOffset, navBarOffset)
+            linesView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = statusBarOffset
+            }
+            closeView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = closeTopMargin + statusBarOffset
+            }
+            textsView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                bottomMargin = textsBottomMargin + navBarOffset
+            }
             insets
         }
     }
@@ -111,20 +132,17 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
                 it.isAppearanceLightNavigationBars = false
             }
         }
+        if (stories.isNotEmpty() && !state.isAutoSwitchPaused) {
+            startStoryTimer()
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        stopStoryTimer()
         windowInsetsController?.let {
             it.isAppearanceLightStatusBars = initialIsAppearanceLightStatusBars
             it.isAppearanceLightNavigationBars = initialIsAppearanceLightNavigationBars
-        }
-    }
-
-    private fun applyContentMargin(top: Int, bottom: Int) {
-        contentView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            topMargin = top
-            bottomMargin = bottom
         }
     }
 
@@ -142,12 +160,13 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
     }
 
     open fun onStoryButton(index: Int) {
-
     }
+
+    open fun onStoryLink(url: String) {}
 
     open fun onStoryItem(item: Item) {
         setTitle(item.title)
-        setSubtitle(item.subtitle)
+        setSubtitle(item.subtitle, item.links)
         setButton(item.button)
         imageView.setImageURI(item.image)
     }
@@ -173,13 +192,69 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         }
     }
 
-    private fun setSubtitle(subtitle: String?) {
+    private fun setSubtitle(subtitle: String?, links: List<Link>) {
         if (!subtitle.isNullOrBlank()) {
             subtitleView.visibility = View.VISIBLE
-            subtitleView.text = subtitle
+            subtitleView.text = subtitle.withLinks(links)
         } else {
             subtitleView.visibility = View.GONE
         }
+    }
+
+    private fun String.withLinks(links: List<Link>): CharSequence {
+        if (links.isEmpty()) {
+            return this
+        }
+        val color = requireContext().getColor(com.tonapps.ui.uikit.color.R.color.textAccentDark)
+        val builder = SpannableStringBuilder(this)
+        for (link in links) {
+            val start = indexOf(link.text)
+            if (link.text.isNotEmpty() && start >= 0) {
+                builder.setSpan(
+                    ClickableSpanCompat(color) { onStoryLink(link.url) },
+                    start,
+                    start + link.text.length,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+        return builder
+    }
+
+    private fun onSubtitleTouch(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            pressedLink = findLink(event)
+            if (pressedLink != null) {
+                pause()
+            }
+        }
+        val link = pressedLink ?: return false
+        val action = event.actionMasked
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            pressedLink = null
+            state = state.copy(isAutoSwitchPaused = false)
+            startStoryTimer()
+            if (action == MotionEvent.ACTION_UP && findLink(event) === link) {
+                link.onClick(subtitleView)
+            }
+        }
+        return true
+    }
+
+    private fun findLink(event: MotionEvent): ClickableSpan? {
+        val text = subtitleView.text as? Spanned ?: return null
+        val layout = subtitleView.layout ?: return null
+        val x = event.x - subtitleView.totalPaddingLeft + subtitleView.scrollX
+        val y = event.y.toInt() - subtitleView.totalPaddingTop + subtitleView.scrollY
+        if (y < 0 || y > layout.height) {
+            return null
+        }
+        val line = layout.getLineForVertical(y)
+        if (x < layout.getLineLeft(line) || x > layout.getLineRight(line)) {
+            return null
+        }
+        val offset = layout.getOffsetForHorizontal(line, x)
+        return text.getSpans(offset, offset, ClickableSpan::class.java).firstOrNull()
     }
 
     private fun setButton(text: String?) {
@@ -254,9 +329,7 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         if (isFirstStory) {
             return
         }
-        state = state.copy(
-            currentIndex = if (state.currentIndex - 1 < 0) stories.size - 1 else state.currentIndex - 1
-        )
+        state = state.copy(currentIndex = state.currentIndex - 1)
         applyCurrentStory()
     }
 

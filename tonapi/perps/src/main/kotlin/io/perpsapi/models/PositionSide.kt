@@ -12,18 +12,25 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Direction of an open position.
  *
- * Values: long,short
+ * Values: long,short,unknown
  */
-@Serializable
+@Serializable(with = PositionSideSerializer::class)
 enum class PositionSide(val value: String) {
     @SerialName(value = "long")
     long("long"),
     @SerialName(value = "short")
-    short("short");
+    short("short"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -49,6 +56,20 @@ enum class PositionSide(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object PositionSideSerializer : KSerializer<PositionSide> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): PositionSide {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return PositionSide.entries.firstOrNull { it.value == value }
+            ?: PositionSide.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: PositionSide) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

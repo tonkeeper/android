@@ -13,13 +13,18 @@ package io.batteryapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class SendMessageRequest(
     @SerialName(value = "boc")
     val boc: String,
 
-    /* Ed25519 signature made with the WalletID key over LP(\"keeper.battery.send.v1\") | LP(wallet_id) | LP(chain) | LP(blake2b256(boc)), hex-encoded. For now it is only accepted, nothing is verified with it. */
+    /* Signature made with the wallet's root key over LP(\"keeper.battery.send.v1\") | LP(wallet_id) | LP(chain) | LP(blake2b256(boc)), hex-encoded. LP(x) is a single length byte followed by x, applied to every field including the digest. chain is \"ton\" for this endpoint. The digest covers the boc as sent, before it is decoded. Recoverable secp256k1 signature over blake2b-256 of that message: 65 bytes laid out R | S | V in the EVM ordering, 130 hex. The key is not sent — it is recovered from the signature, and the wallet_id derived from it has to equal the one the request came with. Requires a format 2 wallet_id. */
     @SerialName(value = "proof")
     val proof: String? = null
 ) {

@@ -5,6 +5,7 @@ import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
 import com.tonapps.uikit.color.iconPrimaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class MyWalletHolder(
     parent: ViewGroup,
@@ -16,7 +17,7 @@ class MyWalletHolder(
     }
 
     override fun onBind(item: Item.MyWallet) {
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
         itemView.background = item.position.drawable(context)
 
         emojiView.setEmoji(item.emoji, itemView.context.iconPrimaryColor)

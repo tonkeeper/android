@@ -1,12 +1,13 @@
 package com.tonapps.tonkeeper.ui.screen.root
 
 import android.net.Uri
+import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.core.deeplink.DeepLink
 import com.tonapps.icu.Coins
 import com.tonapps.ledger.ton.LedgerConnectData
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
-import io.ton.walletkit.request.TONWalletConnectionRequest
 import org.ton.cell.Cell
 import org.ton.kotlin.crypto.PublicKeyEd25519
 
@@ -15,6 +16,7 @@ sealed class RootEvent {
         val link: Uri,
         val wallet: WalletEntity,
         val from: String,
+        val utm: UtmParameters,
     ): RootEvent()
 
     data class Swap(
@@ -22,7 +24,9 @@ sealed class RootEvent {
         val uri: Uri,
         val address: String,
         val from: String,
-        val to: String?
+        val to: String?,
+        val initiator: ConfirmInitiator,
+        val utm: UtmParameters,
     ): RootEvent()
 
     data class Singer(
@@ -46,24 +50,14 @@ sealed class RootEvent {
         val initStateBase64: String?,
         val validUnit: Long?,
         val source: DeepLink.Source,
+        val utm: UtmParameters,
     ): RootEvent()
 
     data object CloseCurrentTonConnect: RootEvent()
 
-    /**
-     * Event to show TonConnect connection screen (WalletKit only).
-     * Used when WalletKit SDK receives a connect request asynchronously.
-     */
-    data class ShowTonConnect(
-        val request: TONWalletConnectionRequest,
-        val wallet: WalletEntity?,
-        val fromPackageName: String?
-    ): RootEvent()
-
     data class OpenDAppByShortcut(
         val wallet: WalletEntity,
         val url: Uri,
-        val source: String
     ): RootEvent()
 
     data object CheckGooglePlayUpdate: RootEvent()

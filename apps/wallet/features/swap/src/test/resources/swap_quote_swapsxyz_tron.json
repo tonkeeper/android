@@ -1,0 +1,75 @@
+{
+    "quote_id": "562ff828-a212-4b95-b21f-4ee0cb3895e6",
+    "routes": [
+        {
+            "route_id": "57833f95-0e8b-4b11-aba7-985c0ff8bf42",
+            "provider_route_id": "0xba473fa3da1b2ae7f0e7d24974786c9220bdb2c7d6fc5c9f21b9c45207510b1b",
+            "aggregator": "swapsxyz",
+            "protocol": "alt-vm-2",
+            "route_type": "cross_chain_swap",
+            "source_amount": "1000000000",
+            "estimated_destination_amount": "329461097",
+            "minimum_destination_amount": "326166486",
+            "total_slippage_bps": 100,
+            "source_usd_price": 0.335299,
+            "destination_usd_price": 0.9998789999999999,
+            "fees": [
+                {
+                    "type": "protocol",
+                    "asset": "tron/mainnet/coin",
+                    "chain_id": "728126428",
+                    "amount": "1000000",
+                    "amount_usd": "0.34"
+                },
+                {
+                    "type": "bridge",
+                    "asset": "tron/mainnet/coin",
+                    "chain_id": "728126428",
+                    "amount": "9522051",
+                    "amount_usd": "3.19"
+                },
+                {
+                    "type": "application",
+                    "asset": "tron/mainnet/coin",
+                    "chain_id": "728126428",
+                    "amount": "7000000",
+                    "amount_usd": "2.35"
+                }
+            ],
+            "legs": [
+                {
+                    "leg_index": 0,
+                    "type": "bridge",
+                    "chain_id": "tron/mainnet",
+                    "chain_family": "TRON",
+                    "from_asset": "tron/mainnet/coin",
+                    "to_asset": "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                    "protocol": "alt-vm-2"
+                }
+            ],
+            "date_expire": "2026-09-07T13:57:09Z",
+            "risk_level": "medium",
+            "payloads": [
+                {
+                    "payload_id": "b821ef9e-273c-48fe-9e45-24ebdc243491",
+                    "kind": "main",
+                    "chain_id": "tron/mainnet",
+                    "chain_family": "TRON",
+                    "payload_type": "alt_vm_deposit",
+                    "calldata_payload_type": "flex",
+                    "payload": "{\"to\":\"TGLsPyvyPopF8V7VG49BdiRBEMvZTEe713\",\"toExtra\":null,\"value\":\"1000000000\",\"chainId\":728126428,\"chainKey\":\"trx\"}",
+                    "human_summary": {
+                        "action": "Swap TRX for USDT",
+                        "spend_asset": "tron/mainnet/coin",
+                        "spend_amount": "1000000000",
+                        "receive_asset": "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                        "receive_amount": "329461097",
+                        "protocol": "alt-vm-2"
+                    },
+                    "validation_status": "validated",
+                    "date_expire": "2026-09-07T13:57:09Z"
+                }
+            ]
+        }
+    ]
+}

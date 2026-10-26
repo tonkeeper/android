@@ -3,7 +3,9 @@ package com.tonapps.trading.screens.details
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.core.LocalIsTopFragment
 import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.trading.isTokenized
 import com.tonapps.wallet.data.events.tx.model.TxEvent
@@ -20,10 +22,12 @@ fun AssetDetailsScreen(
     onOpenReceive: (assetId: String, token: TokenEntity) -> Unit,
     onOpenTxDetails: (tx: TxEvent, actionIndex: Int) -> Unit,
     onOpenStaking: () -> Unit,
+    onOpenEarnVault: (network: String, vaultId: String) -> Unit,
     onOpenUnverifiedInfo: () -> Unit,
     onSellToCard: (assetId: String) -> Unit,
     onBuyWithCard: (assetId: String) -> Unit,
     onSeeAllActivities: () -> Unit,
+    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
     onBack: () -> Unit,
 ) {
     val state by feature.state.global.observeSafeState()
@@ -33,6 +37,18 @@ fun AssetDetailsScreen(
             when (event) {
                 is AssetDetailsEvent.OpenUrl -> onOpenUrl(event.url)
             }
+        }
+    }
+
+    val isTopFragment = LocalIsTopFragment.current
+    LifecycleResumeEffect(feature, isTopFragment) {
+        if (isTopFragment) {
+            feature.sendAction(AssetDetailsAction.SetResumed(true))
+            feature.sendAction(AssetDetailsAction.Shown)
+        }
+        onPauseOrDispose {
+            feature.sendAction(AssetDetailsAction.SetResumed(false))
+            feature.sendAction(AssetDetailsAction.Hidden)
         }
     }
 
@@ -59,6 +75,7 @@ fun AssetDetailsScreen(
             onToggleFavorite = { feature.sendAction(AssetDetailsAction.ToggleFavorite) },
             onTrackButtonClick = { feature.trackButtonClick(it) },
             onRefresh = { feature.sendAction(AssetDetailsAction.PullToRefresh) },
+            onOpenPerpMarket = onOpenPerpMarket,
             onBack = onBack,
         )
     } else {
@@ -76,6 +93,7 @@ fun AssetDetailsScreen(
             onOpenTxDetails = onOpenTxDetails,
             onOpenExplorer = { feature.sendAction(AssetDetailsAction.OpenTokenExplorer) },
             onOpenStaking = onOpenStaking,
+            onOpenEarnVault = onOpenEarnVault,
             onOpenUnverifiedInfo = onOpenUnverifiedInfo,
             onSellToCard = onSellToCard,
             onBuyWithCard = onBuyWithCard,
@@ -84,6 +102,7 @@ fun AssetDetailsScreen(
             onToggleFavorite = { feature.sendAction(AssetDetailsAction.ToggleFavorite) },
             onTrackButtonClick = { feature.trackButtonClick(it) },
             onRefresh = { feature.sendAction(AssetDetailsAction.PullToRefresh) },
+            onOpenPerpMarket = onOpenPerpMarket,
             onBack = onBack,
         )
     }

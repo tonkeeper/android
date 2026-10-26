@@ -21,8 +21,20 @@ import com.tonapps.wallet.data.multichain.asset.AssetRateEntity
 data class AccountsWithTotal(
     val accounts: List<AccountWithDetails>,
     val total: BigDecimal,
+    val perpsTotal: WalletPerpsTotal,
     val nextCursor: String? = null,
 )
+
+data class WalletTotals(
+    val total: BigDecimal,
+    val perpsTotal: WalletPerpsTotal,
+)
+
+sealed interface WalletPerpsTotal {
+    data object Unavailable : WalletPerpsTotal
+    data object Empty : WalletPerpsTotal
+    data class Amount(val value: BigDecimal) : WalletPerpsTotal
+}
 
 @Entity(
     tableName = "account",

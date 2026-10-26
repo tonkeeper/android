@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.analytics
 
 import android.net.Uri
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.DappBrowser.DappAppClickFrom
 import com.tonapps.bus.generated.Events.DappBrowser.DappBrowserAssetChain
@@ -11,14 +12,28 @@ import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 
 object DappBrowserAnalytics {
 
+    const val WALLET_TAB_SOURCE = "wallet"
+    const val IN_DAPP_LINK_SOURCE = "dapp"
+    const val SHORTCUT_DAPP_SOURCE = "shortcut"
+    const val EXTERNAL_LINK_SOURCE = "external_link"
+
     private const val UNKNOWN_LOCATION = "ZZ"
     private const val UNKNOWN_DOMAIN = "unknown"
 
     internal val events: Events.DappBrowser
         get() = AnalyticsHelper.Default.events.dappBrowser
 
-    fun browserOpen(from: String, type: DappBrowserType, country: String?) {
-        events.dappBrowserOpen(
+    internal fun eventsTaggedWith(utm: UtmParameters): Events.DappBrowser {
+        return AnalyticsHelper.Default.eventsTaggedWith(utm).dappBrowser
+    }
+
+    fun browserOpen(
+        from: String,
+        type: DappBrowserType,
+        country: String?,
+        utm: UtmParameters = UtmParameters.Empty,
+    ) {
+        eventsTaggedWith(utm).dappBrowserOpen(
             from = openFrom(from),
             type = type,
             location = location(country)
@@ -51,8 +66,8 @@ object DappBrowserAnalytics {
         app: BrowserAppEntity,
         fallbackChain: DappBrowserAssetChain,
         country: String?,
-    ): DappOpenAnalytics? {
-        val from = appClickFrom(source) ?: return null
+    ): DappOpenAnalytics {
+        val from = appClickFrom(source)
         val urlDomain = domain(app.url)
         val bannerId = app.bannerId?.trim()?.takeIf { it.isNotEmpty() }
         return DappOpenAnalytics(
@@ -60,7 +75,11 @@ object DappBrowserAnalytics {
             url = urlDomain,
             assetChain = assetChain(app.chains, fallbackChain),
             appId = app.id.trim().ifEmpty { urlDomain },
-            bannerId = if (from == DappAppClickFrom.Banner) bannerId else null,
+            bannerId = if (from == DappAppClickFrom.Banner) {
+                bannerId
+            } else {
+                null
+            },
             location = location(country)
         )
     }
@@ -70,8 +89,9 @@ object DappBrowserAnalytics {
         url: Uri,
         chain: String? = null,
         country: String?,
-    ): DappOpenAnalytics? {
-        val from = appClickFrom(source) ?: return null
+        utm: UtmParameters = UtmParameters.Empty,
+    ): DappOpenAnalytics {
+        val from = appClickFrom(source)
         val urlDomain = domain(url)
 
         return DappOpenAnalytics(
@@ -80,20 +100,23 @@ object DappBrowserAnalytics {
             assetChain = assetChain(chain) ?: DappBrowserAssetChain.Multichain,
             appId = urlDomain,
             bannerId = null,
-            location = location(country)
+            location = location(country),
+            utm = utm,
         )
     }
 
     private fun openFrom(source: String): DappBrowserOpenFrom {
         return when (source.lowercase()) {
-            "wallet" -> DappBrowserOpenFrom.Wallet
+            WALLET_TAB_SOURCE -> DappBrowserOpenFrom.Wallet
             "story", "stories" -> DappBrowserOpenFrom.Story
             "history", "activity" -> DappBrowserOpenFrom.History
-            else -> DappBrowserOpenFrom.DeepLink
+            "connected_apps" -> DappBrowserOpenFrom.ConnectedApps
+            EXTERNAL_LINK_SOURCE -> DappBrowserOpenFrom.DeepLink
+            else -> DappBrowserOpenFrom.Other
         }
     }
 
-    private fun appClickFrom(source: String): DappAppClickFrom? {
+    private fun appClickFrom(source: String): DappAppClickFrom {
         return when (source.lowercase()) {
             "banner" -> DappAppClickFrom.Banner
             "browser", "browser_all", "ads" -> DappAppClickFrom.Browser
@@ -102,7 +125,14 @@ object DappBrowserAnalytics {
             "push" -> DappAppClickFrom.Push
             "sidebar" -> DappAppClickFrom.Sidebar
             "deep-link", "deep_link", "deeplink" -> DappAppClickFrom.DeepLink
-            else -> null
+            "history", "activity" -> DappAppClickFrom.History
+            "collectibles", "nft" -> DappAppClickFrom.Collectibles
+            "earn_featured" -> DappAppClickFrom.EarnFeatured
+            "earn_your_vaults" -> DappAppClickFrom.EarnYourVaults
+            "earn_apy" -> DappAppClickFrom.EarnApy
+            IN_DAPP_LINK_SOURCE -> DappAppClickFrom.Dapp
+            SHORTCUT_DAPP_SOURCE -> DappAppClickFrom.Shortcut
+            else -> DappAppClickFrom.Other
         }
     }
 

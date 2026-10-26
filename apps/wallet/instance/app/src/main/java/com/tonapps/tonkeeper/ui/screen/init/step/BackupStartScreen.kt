@@ -11,7 +11,9 @@ import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.R
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
+import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.setMoonOnClickListener
 
 class BackupStartScreen: BaseFragment(R.layout.fragment_backup_start) {
 
@@ -22,10 +24,15 @@ class BackupStartScreen: BaseFragment(R.layout.fragment_backup_start) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val laterView = view.findViewById<View>(R.id.later)
-        laterView.setOnClickListener { skip() }
-
         val button = view.findViewById<Button>(R.id.button)
-        button.setOnClickListener { startBackup() }
+
+        laterView.setMoonOnClickListener { initViewModel.skipBackup() }
+        button.setMoonOnClickListener { initViewModel.navigateToBackupPhrase() }
+
+        viewLifecycleOwner.collectFlow(initViewModel.newWalletPhraseReady) { ready ->
+            laterView.isEnabled = ready
+            button.isEnabled = ready
+        }
 
         val offsetMedium = requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
 
@@ -39,14 +46,6 @@ class BackupStartScreen: BaseFragment(R.layout.fragment_backup_start) {
             }
             insets
         }
-    }
-
-    private fun startBackup() {
-        initViewModel.navigateToBackupPhrase()
-    }
-
-    private fun skip() {
-        initViewModel.skipBackup()
     }
 
     companion object {

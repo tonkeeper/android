@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class LegalScreen: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBack {
 
@@ -24,12 +25,12 @@ class LegalScreen: BaseFragment(R.layout.fragment_legal), BaseFragment.SwipeBack
         val serverConfig = requireContext().serverConfig!!
 
         termsView = view.findViewById(R.id.terms)
-        termsView.setOnClickListener {
+        termsView.setMoonOnClickListener {
             BrowserHelper.open(requireActivity(), serverConfig.termsOfUseUrl)
         }
 
         privacyView = view.findViewById(R.id.privacy)
-        privacyView.setOnClickListener {
+        privacyView.setMoonOnClickListener {
             BrowserHelper.open(requireActivity(), serverConfig.privacyPolicyUrl)
         }
     }

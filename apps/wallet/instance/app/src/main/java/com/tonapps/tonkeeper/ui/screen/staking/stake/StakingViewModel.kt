@@ -16,11 +16,11 @@ import com.tonapps.blockchain.ton.extensions.storeCoins
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeQueryId
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
 import com.tonapps.core.helper.TON_COIN_ASSET_ID
 import com.tonapps.core.helper.TransactionSentAnalytics
-import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.deposit.usecase.emulation.Emulated
 import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.deposit.usecase.sign.SignUseCase
@@ -33,6 +33,8 @@ import com.tonapps.ledger.ton.Transaction
 import com.tonapps.legacy.enteties.SendMetadataEntity
 import com.tonapps.portfolio.analytics.StakingAnalytics
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.staking.StakingInsufficientFundsUiState
+import com.tonapps.tonkeeper.ui.screen.staking.StakingReserveUiState
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
@@ -43,6 +45,7 @@ import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.StakingRepository
 import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.data.staking.entities.PoolInfoEntity
+import com.tonapps.wallet.data.staking.entities.findPoolByAddress
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tx.TransactionManager
@@ -56,6 +59,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -73,6 +77,7 @@ class StakingViewModel(
     private val wallet: WalletEntity,
     private val poolAddress: String,
     private val from: String,
+    private val utm: UtmParameters,
     private val accountRepository: AccountRepository,
     private val stakingRepository: StakingRepository,
     private val tokenRepository: TokenRepository,
@@ -92,6 +97,7 @@ class StakingViewModel(
         val balanceFormat: CharSequence,
         val remainingFormat: CharSequence,
         val minStakeFormat: CharSequence,
+        val reserveHintFormat: CharSequence?,
         val insufficientBalance: Boolean,
         val requestMinStake: Boolean,
         val hiddenBalance: Boolean,
@@ -109,19 +115,28 @@ class StakingViewModel(
     private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
     val tokenFlow = _tokenFlow.asStateFlow().filterNotNull()
 
+    private val _networkFeeFlow = MutableStateFlow<Coins?>(null)
+
     val availableUiStateFlow = combine(
         amountFlow,
         tokenFlow,
         selectedPoolFlow
     ) { amount, token, pool ->
         val balance = token.balance.value
+        val minRemaining = StakingPool.getStakeMinRemaining(pool.implementation)
         val balanceFormat = CurrencyFormatter.format(token.symbol, balance)
         val minStakeFormat = CurrencyFormatter.format(token.symbol, pool.minStake)
+        val reserveHintFormat = if (StakingPool.hasStakeTemporaryReserve(pool.implementation)) {
+            CurrencyFormatter.format(token.symbol, minRemaining)
+        } else {
+            null
+        }
         if (amount == Coins.ZERO) {
             AvailableUiState(
                 balanceFormat = balanceFormat,
                 remainingFormat = balanceFormat,
                 minStakeFormat = minStakeFormat,
+                reserveHintFormat = reserveHintFormat,
                 insufficientBalance = false,
                 requestMinStake = false,
                 hiddenBalance = settingsRepository.hiddenBalances,
@@ -132,7 +147,8 @@ class StakingViewModel(
                 balanceFormat = balanceFormat,
                 remainingFormat = CurrencyFormatter.format(token.symbol, remaining),
                 minStakeFormat = minStakeFormat,
-                insufficientBalance = if (remaining.isZero) false else remaining.isNegative,
+                reserveHintFormat = reserveHintFormat,
+                insufficientBalance = amount.isPositive && remaining < minRemaining,
                 requestMinStake = pool.minStake > amount,
                 hiddenBalance = settingsRepository.hiddenBalances,
             )
@@ -145,6 +161,10 @@ class StakingViewModel(
 
     val fiatFormatFlow = fiatFlow.map {
         CurrencyFormatter.format(settingsRepository.currency.code, it, replaceSymbol = false)
+    }
+
+    val confirmFiatFormatFlow = fiatFlow.map {
+        CurrencyFormatter.formatFiat(settingsRepository.currency.code, it)
     }
 
     val amountFormatFlow = combine(amountFlow, tokenFlow) { amount, token ->
@@ -174,8 +194,26 @@ class StakingViewModel(
         }
     }
 
+    val reserveUiStateFlow = combine(
+        tokenFlow,
+        selectedPoolFlow,
+    ) { token, pool ->
+        val reserve = StakingPool.getStakeTemporaryReserve(pool.implementation)
+        if (reserve.isZero || StakingPool.isReserveIncludedInFee(pool.implementation)) {
+            return@combine null
+        }
+        val currency = settingsRepository.currency
+        val rates = ratesRepository.getTONRates(wallet.network, currency)
+        val reserveFormat = CurrencyFormatter.format(token.symbol, reserve)
+        StakingReserveUiState(
+            amountFormat = reserveFormat,
+            fiatFormat = CurrencyFormatter.formatFiat(currency.code, rates.convertTON(reserve)),
+            hint = getString(Localization.staking_reserve_returned_hint, reserveFormat),
+        )
+    }
+
     init {
-        StakingAnalytics.open(from)
+        StakingAnalytics.open(from, utm)
 
         collectFlow(poolsFlow) { pools ->
             if (_selectedPoolFlow.value != null) {
@@ -185,9 +223,7 @@ class StakingViewModel(
             val poolAddress = poolAddress.ifBlank {
                 pools.first().pools.first().address
             }
-            pools.map { it.pools }.flatten().find {
-                it.address == poolAddress
-            }?.let {
+            pools.findPoolByAddress(poolAddress)?.let {
                 selectPool(it)
             }
         }
@@ -222,18 +258,20 @@ class StakingViewModel(
     }
 
     private fun trackStakeInputIfReady() {
-        if (stakeInputTracked) return
+        if (stakeInputTracked) {
+            return
+        }
         val props = analyticsProps() ?: return
         stakeInputTracked = true
-        StakingAnalytics.stakeInput(from, props)
+        StakingAnalytics.stakeInput(from, props, utm)
     }
 
     fun onConfirm() {
-        analyticsProps()?.let(StakingAnalytics::stakeConfirm)
+        analyticsProps()?.let { StakingAnalytics.stakeConfirm(it, utm) }
     }
 
     private fun trackStakeSuccess() {
-        analyticsProps()?.let(StakingAnalytics::stakeSuccess)
+        analyticsProps()?.let { StakingAnalytics.stakeSuccess(it, utm) }
         val pool = _selectedPoolFlow.value
         TransactionSentAnalytics.transactionSent(
             wallet = wallet,
@@ -245,41 +283,59 @@ class StakingViewModel(
             initiatedBy = Events.TransactionSent.TransactionSentInitiatedBy.User,
             stakingProvider = pool?.address,
             isLiquid = pool?.let { it.implementation == StakingPool.Implementation.LiquidTF },
+            utm = utm,
         )
     }
 
-    private suspend fun loadTonToken(): AccountTokenEntity? {
+    private suspend fun loadTonToken(forceRefresh: Boolean = false): AccountTokenEntity? {
         if (wallet.type == WalletType.Multichain) {
-            return loadMultichainTonToken()
+            return loadMultichainTonToken(forceRefresh)
         }
         return tokenRepository.getTON(
             settingsRepository.currency,
             wallet.accountId,
             wallet.network,
+            refresh = forceRefresh,
         )
     }
 
-    private suspend fun loadMultichainTonToken(): AccountTokenEntity? {
+    private suspend fun loadMultichainTonToken(forceRefresh: Boolean = false): AccountTokenEntity? {
         val assetId = WalletCurrency.TON.toAssetId(wallet.testnet)
         val currency = settingsRepository.currency.code
-        val cached = runCatching {
-            mcAccountRepository.getCachedAccounts(
-                walletId = wallet.id,
-                currency = currency,
-                hideDust = settingsRepository.hideDustAssets,
-            )
-        }.getOrNull()?.accounts?.firstOrNull { it.asset.id == assetId }
+        val cached = if (forceRefresh) {
+            null
+        } else {
+            runCatching {
+                mcAccountRepository.getCachedAccounts(wallet.id)
+            }.getOrNull()?.accounts?.firstOrNull { it.asset.id == assetId }
+        }
 
         val account = cached
             ?: runCatching {
-                mcAccountRepository.findAccount(wallet.id, assetId, currency)
+                mcAccountRepository.findAccount(wallet.id, assetId, currency, forceRefresh = forceRefresh)
             }.getOrNull()
             ?: return null
         return account.toAccountTokenEntity(settingsRepository.currency)
     }
 
-    fun requestMax() = tokenFlow.take(1).map {
-        it.balance.value
+    data class MaxAmount(
+        val amount: Coins,
+        val reserveHintFormat: CharSequence?,
+    )
+
+    fun requestMax() = combine(
+        tokenFlow.take(1),
+        selectedPoolFlow.take(1),
+    ) { token, pool ->
+        val minRemaining = StakingPool.getStakeMinRemaining(pool.implementation)
+        MaxAmount(
+            amount = maxOf(token.balance.value - minRemaining, Coins.ZERO),
+            reserveHintFormat = if (StakingPool.hasStakeTemporaryReserve(pool.implementation)) {
+                CurrencyFormatter.format(token.symbol, minRemaining)
+            } else {
+                null
+            },
+        )
     }
 
     fun updateAmount(amount: Double) {
@@ -287,7 +343,9 @@ class StakingViewModel(
     }
 
     fun selectPool(pool: PoolEntity) {
-        if (_selectedPoolFlow.value?.address == pool.address) return
+        if (_selectedPoolFlow.value?.address == pool.address) {
+            return
+        }
         _selectedPoolFlow.value = pool
         trackStakeInputIfReady()
     }
@@ -383,7 +441,7 @@ class StakingViewModel(
             operation = Events.RedOperations.RedOperationsOperation.Emulate,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         try {
             val result = emulationUseCase(message, wallet.testnet, params = true).extra
@@ -395,7 +453,6 @@ class StakingViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             result
         } catch (e: Throwable) {
@@ -407,7 +464,6 @@ class StakingViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             Emulated.defaultExtra
         }
@@ -417,15 +473,50 @@ class StakingViewModel(
         requestFee(),
         selectedPoolFlow,
     ) { extra, pool ->
+        Pair(extra.value.abs(), StakingPool.getTotalFee(extra.value, pool.implementation))
+    }.onEach { (networkFee, _) ->
+        _networkFeeFlow.value = networkFee
+    }.map { (_, totalFee) ->
         val currency = settingsRepository.currency
         val rates = ratesRepository.getTONRates(wallet.network, currency)
-        val fee = StakingPool.getTotalFee(extra.value, pool.implementation)
-
-        val fiat = rates.convertTON(fee)
-        val first = CurrencyFormatter.format(TokenEntity.TON.symbol, fee)
+        val fiat = rates.convertTON(totalFee)
+        val first = CurrencyFormatter.format(TokenEntity.TON.symbol, totalFee)
         val second = CurrencyFormatter.formatFiat(currency.code, fiat)
 
         Pair(first, second)
+    }
+
+    suspend fun checkInsufficientFunds(): StakingInsufficientFundsUiState? {
+        val token = _tokenFlow.value ?: return null
+        val pool = _selectedPoolFlow.value ?: return null
+        val networkFee = _networkFeeFlow.value ?: return null
+        val reserve = StakingPool.getStakeTemporaryReserve(pool.implementation)
+        val required = Coins.of(_amountFlow.value) + reserve + networkFee
+        if (token.balance.value >= required) {
+            return null
+        }
+        val balance = reloadBalance() ?: token.balance.value
+        if (balance >= required) {
+            return null
+        }
+        return StakingInsufficientFundsUiState(
+            requiredFormat = CurrencyFormatter.format(token.symbol, required),
+            balanceFormat = CurrencyFormatter.format(token.symbol, balance),
+            reserveHint = if (reserve.isZero) {
+                null
+            } else {
+                getString(
+                    Localization.staking_reserve_returned_hint,
+                    CurrencyFormatter.format(token.symbol, reserve),
+                )
+            },
+        )
+    }
+
+    private suspend fun reloadBalance(): Coins? {
+        val token = withContext(Dispatchers.IO) { loadTonToken(forceRefresh = true) } ?: return null
+        _tokenFlow.value = token
+        return token.balance.value
     }
 
     fun stake(
@@ -442,8 +533,7 @@ class StakingViewModel(
             storeQueryId(TransferEntity.newWalletQueryId())
             storeUInt(0x000000000005b7c1, 64)
         }
-        val withdrawalFee = Coins.ONE // TODO fees: will it remain static?
-        val amountWithFee = withdrawalFee + amount
+        val amountWithFee = StakingPool.getStakeTemporaryReserve(StakingPool.Implementation.LiquidTF) + amount
 
         this.coins = amountWithFee.toGrams()
         this.messageData = MessageData.raw(body, stateInitRef)
@@ -482,7 +572,7 @@ class StakingViewModel(
             operation = Events.RedOperations.RedOperationsOperation.Stake,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         try {
             val message = signUseCase(context, wallet, seqno, transaction)
@@ -497,7 +587,6 @@ class StakingViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
         } catch (e: Throwable) {
             val finishedAtMs = currentTimeMillis()
@@ -508,7 +597,6 @@ class StakingViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             throw e
         }
@@ -525,7 +613,7 @@ class StakingViewModel(
             operation = Events.RedOperations.RedOperationsOperation.Stake,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         try {
             val cell = message.createUnsignedBody(false)
@@ -540,7 +628,6 @@ class StakingViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
         } catch (e: Throwable) {
             val finishedAtMs = currentTimeMillis()
@@ -551,7 +638,6 @@ class StakingViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             throw e
         }

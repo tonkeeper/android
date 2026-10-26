@@ -38,8 +38,4 @@ class JsonCacheRepository(
     suspend fun deleteByWalletId(walletId: String) = withContext(Dispatchers.IO) {
         dao.deleteByWalletId(walletId)
     }
-
-    suspend fun deleteByWalletIds(walletIds: List<String>) = withContext(Dispatchers.IO) {
-        dao.deleteByWalletIds(walletIds)
-    }
 }

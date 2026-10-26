@@ -1,0 +1,62 @@
+# Perps asset page opens and the chart reaches a rendered state on live data.
+# Chart drawing itself lives in a WebView canvas and cannot be asserted; what is
+# checked here is that the page is usable and the chart is not stuck in its
+# empty / failed state.
+name: "Perps — chart smoke"
+appId: com.ton_keeper.debug
+---
+- runFlow:
+    file: "../../../steps/perps/open_asset_page.yaml"
+    env:
+      SYMBOL: "SOL"
+
+# Default state: candles, 5M (TK-4474).
+- assertVisible: "^5M$"
+
+# Neither of the two non-rendered chart states is showing.
+# The two texts below belong to terminal states; neither is on screen while the
+# chart is still loading, so asserting them immediately is a race that always
+# wins. Settle first, then assert. What the pair proves is that the section did
+# not end empty or failed — not that candles were drawn: the chart is a canvas
+# in a WebView and nothing inside it reaches the hierarchy.
+- runFlow: "../../../steps/perps/settle_chart.yaml"
+- assertNotVisible: "No chart data"
+- assertNotVisible: "Couldn’t load chart"
+
+# Price header is present and is not the chart's own value (PRD: Current price
+# comes from the quotes stream, not from candles).
+- assertVisible: "^Perpetual$"
+# Scoped above the timeframe row: a bare "$<digits>" also matches 24h Volume and
+# Open Interest in the Info block below, so the unscoped form stayed green even
+# with an empty header.
+# The dot stands for the thousands separator: the formatter writes a no-break
+# space, which a literal space in a character class never matches.
+- assertVisible:
+    text: ".*\\$[0-9]{1,3}(.[0-9]{3})*\\.[0-9]{2}.*"
+    above:
+      text: "^1H$"
+- assertVisible: ".*[-+−][0-9]+\\.[0-9]{2}[  ]?%.*"
+
+# The rest of the asset page survives next to the chart.
+- assertVisible: "^Info$"
+- assertVisible: "24h Volume"
+- assertVisible: "Open Interest"
+- assertVisible: "Funding"
+
+# Long / Short are the action bar pinned at the bottom, so they are asserted
+# before any scrolling moves the page.
+- assertVisible: "^Long$"
+- assertVisible: "^Short$"
+
+# "About" sits below the Info block, off screen on a shorter device. Compose
+# does not keep undrawn rows in the hierarchy, so a bare assertVisible found
+# nothing: the check passed on the local emulator (2856 px tall, About just made
+# it into the viewport) and failed in Maestro Cloud, whose device is shorter.
+# That is the perps shard going red in CI for a page that was perfectly fine.
+# Scroll to it instead of assuming it shares the viewport with Info.
+- scrollUntilVisible:
+    element:
+      text: "^About$"
+    direction: DOWN
+    timeout: 15000
+- assertVisible: "^About$"

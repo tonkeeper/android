@@ -27,11 +27,11 @@ import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.accentRedColor
-import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.localization.Localization
 import ui.ComposeIcon
+import uikit.extensions.hapticConfirm
 import uikit.navigation.Navigation
 import uikit.navigation.Navigation.Companion.navigation
 
@@ -88,13 +88,21 @@ fun Context.showToast(test: String) {
     navigation?.toast(test)
 }
 
+fun Context.showWarningToast(@StringRes resId: Int) {
+    navigation?.warningToast(resId)
+}
+
 fun Context.loading(loading: Boolean = true) {
     navigation?.toastLoading(loading)
 }
 
-fun Context.copyWithToast(text: String, color: Int = backgroundContentTintColor) {
-    navigation?.toast(getString(Localization.copied), color)
-    copyToClipboard(text)
+fun Context.copyWithToast(
+    text: String,
+    message: String? = null,
+    sensitive: Boolean = false,
+) {
+    writeToClipboard(text, sensitive)
+    navigation?.confirmedToast(message ?: getString(Localization.copied))
 }
 
 fun Context.clipboardText(): String {
@@ -122,6 +130,11 @@ fun Context.clearClipboard() {
 }
 
 fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
+    writeToClipboard(text, sensitive)
+    hapticConfirm()
+}
+
+private fun Context.writeToClipboard(text: String, sensitive: Boolean) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
     val clip = ClipData.newPlainText("", text)
     if (sensitive) {
@@ -207,7 +220,6 @@ fun Context.getWalletBadges(
             WalletType.Signer, WalletType.SignerQR -> Localization.signer
             WalletType.Ledger -> Localization.ledger
             WalletType.Keystone -> Localization.keystone
-            WalletType.Tetra -> Localization.tetra
             else -> null
         }
         if (resId != null) {

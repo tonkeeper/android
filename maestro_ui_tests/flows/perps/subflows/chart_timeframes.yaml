@@ -1,0 +1,44 @@
+# All seven M3 timeframes are present and switchable on the asset page.
+# The selected timeframe is styled, not labelled, so selection itself is not
+# assertable without a testTag; what is checked is that every label exists, that
+# tapping it keeps the chart in a rendered state and leaves the page usable.
+#
+# The row scrolls horizontally and 1D sits past the right edge on a 390 dp
+# screen, behind the candle/line toggle. select_timeframe.yaml swipes the row
+# before tapping when the label is off screen.
+name: "Perps — chart timeframes"
+appId: com.ton_keeper.debug
+---
+- runFlow:
+    file: "../../../steps/perps/open_asset_page.yaml"
+    env:
+      SYMBOL: "SOL"
+
+- runFlow:
+    file: "../../../steps/perps/select_timeframe.yaml"
+    env:
+      TIMEFRAME: "1M"
+- runFlow:
+    file: "../../../steps/perps/select_timeframe.yaml"
+    env:
+      TIMEFRAME: "5M"
+- runFlow:
+    file: "../../../steps/perps/select_timeframe.yaml"
+    env:
+      TIMEFRAME: "15M"
+- runFlow:
+    file: "../../../steps/perps/select_timeframe.yaml"
+    env:
+      TIMEFRAME: "4H"
+- runFlow:
+    file: "../../../steps/perps/select_timeframe.yaml"
+    env:
+      TIMEFRAME: "12H"
+- runFlow:
+    file: "../../../steps/perps/select_timeframe.yaml"
+    env:
+      TIMEFRAME: "1D"
+- runFlow:
+    file: "../../../steps/perps/select_timeframe.yaml"
+    env:
+      TIMEFRAME: "1H"

@@ -53,7 +53,7 @@ class BatteryWebBridgeTest {
     @Test
     fun logsRequestProgressWithoutCredentials() = runBlocking {
         val bridge = BatteryWebBridge {
-            BatteryWebBridge.Data("private-device-id", "private-device-token", "private-proof-token")
+            BatteryWebBridge.Data("wallet-id", "private-device-token", "private-wallet-token")
         }
 
         bridge.handleMessage("not json: private-malformed-token")
@@ -73,7 +73,7 @@ class BatteryWebBridgeTest {
     fun getDataReturnsCorrelatedResponseWithStringPayload() = runBlocking {
         val bridge = BatteryWebBridge { expiredAccessToken ->
             assertNull(expiredAccessToken)
-            BatteryWebBridge.Data("device", "current-token", "proof")
+            BatteryWebBridge.Data("wallet", "current-token", "wallet-token")
         }
 
         val response = Json.parseToJsonElement(bridge.handleMessage(
@@ -85,7 +85,7 @@ class BatteryWebBridgeTest {
         val payload = response.getValue("payload").jsonPrimitive
         assertTrue(payload.isString)
         assertEquals(
-            Json.parseToJsonElement("""{"deviceId":"device","deviceToken":"current-token","proofToken":"proof"}"""),
+            Json.parseToJsonElement("""{"walletId":"wallet","deviceToken":"current-token","walletToken":"wallet-token"}"""),
             Json.parseToJsonElement(payload.content),
         )
     }
@@ -94,7 +94,7 @@ class BatteryWebBridgeTest {
     fun refreshDataPassesExpiredTokenAndReturnsRefreshedData() = runBlocking {
         val bridge = BatteryWebBridge { expiredAccessToken ->
             assertEquals("expired-token", expiredAccessToken)
-            BatteryWebBridge.Data("device", "new-token", "proof")
+            BatteryWebBridge.Data("wallet", "new-token", "wallet-token")
         }
 
         val response = Json.parseToJsonElement(bridge.handleMessage(
@@ -126,15 +126,15 @@ class BatteryWebBridgeTest {
 
     @Test
     fun escapesQueryIdAndPayloadStrings() = runBlocking {
-        val proof = "proof\"\\\n"
-        val bridge = BatteryWebBridge { BatteryWebBridge.Data("", "", proof) }
+        val walletToken = "wallet-token\"\\\n"
+        val bridge = BatteryWebBridge { BatteryWebBridge.Data("", "", walletToken) }
         val response = Json.parseToJsonElement(bridge.handleMessage(
             """{"type":"get-data","queryId":"query\"\\\n"}"""
         )!!).jsonObject
 
         assertEquals("query\"\\\n", response.getValue("queryId").jsonPrimitive.content)
         val payload = Json.parseToJsonElement(response.getValue("payload").jsonPrimitive.content).jsonObject
-        assertEquals(proof, payload.getValue("proofToken").jsonPrimitive.content)
+        assertEquals(walletToken, payload.getValue("walletToken").jsonPrimitive.content)
         assertEquals("", payload.getValue("deviceToken").jsonPrimitive.content)
     }
 }

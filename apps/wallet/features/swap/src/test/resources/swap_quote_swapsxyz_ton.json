@@ -1,0 +1,81 @@
+{
+    "quote_id": "53cb7a8b-2904-4da7-8397-e848d3bfa05d",
+    "routes": [
+        {
+            "route_id": "33e53252-33d4-4ee2-ba38-b0ac8d2ec48e",
+            "provider_route_id": "0x5b2127364eefd9d538f458251ccf85b9c97865ab838c00e339f69e86a9c14e84",
+            "aggregator": "swapsxyz",
+            "protocol": "alt-vm-2",
+            "route_type": "cross_chain_swap",
+            "source_amount": "50000000000",
+            "estimated_destination_amount": "27887403905000000",
+            "minimum_destination_amount": "27608529865950000",
+            "estimated_time": {
+                "inbound_seconds": 0,
+                "swap_seconds": 0,
+                "outbound_seconds": 0,
+                "total_seconds": 180
+            },
+            "total_slippage_bps": 100,
+            "source_usd_price": 1.41,
+            "destination_usd_price": 2497.5700000000006,
+            "fees": [
+                {
+                    "type": "protocol",
+                    "asset": "ton/mainnet/coin",
+                    "chain_id": "999000337",
+                    "amount": "50000000",
+                    "amount_usd": "0.07"
+                },
+                {
+                    "type": "bridge",
+                    "asset": "ton/mainnet/coin",
+                    "chain_id": "999000337",
+                    "amount": "180157969",
+                    "amount_usd": "0.25"
+                },
+                {
+                    "type": "application",
+                    "asset": "ton/mainnet/coin",
+                    "chain_id": "999000337",
+                    "amount": "350000000",
+                    "amount_usd": "0.49"
+                }
+            ],
+            "legs": [
+                {
+                    "leg_index": 0,
+                    "type": "bridge",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "from_asset": "ton/mainnet/coin",
+                    "to_asset": "eth/mainnet/coin",
+                    "protocol": "alt-vm-2"
+                }
+            ],
+            "date_expire": "2026-09-07T13:56:18Z",
+            "risk_level": "medium",
+            "payloads": [
+                {
+                    "payload_id": "185902ad-5555-4f45-ab3d-22cafe8a64ec",
+                    "kind": "main",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "payload_type": "alt_vm_deposit",
+                    "calldata_payload_type": "exact",
+                    "payload": "[{\"to\":\"UQAgjoHIpEnInHzcfYRdr-NdXZbN5AKJa8wRf_bdIqq8P00r\",\"toExtra\":null,\"value\":\"50000000000\",\"chainId\":999000337,\"chainKey\":\"ton\"}]",
+                    "human_summary": {
+                        "action": "Swap GRAM for ETH",
+                        "spend_asset": "ton/mainnet/coin",
+                        "spend_amount": "50000000000",
+                        "receive_asset": "eth/mainnet/coin",
+                        "receive_amount": "27887403905000000",
+                        "protocol": "alt-vm-2"
+                    },
+                    "validation_status": "validated",
+                    "date_expire": "2026-09-07T13:56:18Z"
+                }
+            ]
+        }
+    ]
+}

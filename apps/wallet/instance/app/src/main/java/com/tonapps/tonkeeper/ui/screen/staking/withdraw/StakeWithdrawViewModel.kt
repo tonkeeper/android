@@ -18,7 +18,6 @@ import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
 import com.tonapps.core.helper.TON_COIN_ASSET_ID
 import com.tonapps.core.helper.TransactionSentAnalytics
-import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.deposit.usecase.emulation.Emulated
 import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.deposit.usecase.sign.SignUseCase
@@ -121,7 +120,7 @@ class StakeWithdrawViewModel(
             operation = Events.RedOperations.RedOperationsOperation.Emulate,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         try {
             val result = emulationUseCase(message, wallet.testnet).extra
@@ -133,7 +132,6 @@ class StakeWithdrawViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             result
         } catch (e: Throwable) {
@@ -145,7 +143,6 @@ class StakeWithdrawViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             Emulated.defaultExtra
         }
@@ -291,7 +288,7 @@ class StakeWithdrawViewModel(
             operation = Events.RedOperations.RedOperationsOperation.Unstake,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         try {
             val message = signUseCase(context, wallet, seqno, transaction)
@@ -308,7 +305,6 @@ class StakeWithdrawViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
         } catch (e: Throwable) {
             val finishedAtMs = currentTimeMillis()
@@ -319,7 +315,6 @@ class StakeWithdrawViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             throw e
         }
@@ -336,7 +331,7 @@ class StakeWithdrawViewModel(
             operation = Events.RedOperations.RedOperationsOperation.Unstake,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         try {
             val cell = message.createUnsignedBody(false)
@@ -355,7 +350,6 @@ class StakeWithdrawViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
         } catch (e: Throwable) {
             val finishedAtMs = currentTimeMillis()
@@ -366,7 +360,6 @@ class StakeWithdrawViewModel(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             throw e
         }

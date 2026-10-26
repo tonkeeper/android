@@ -12,6 +12,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
+import uikit.extensions.setMoonOnClickListener
 
 class ReNewDomainsHolder(
     parent: ViewGroup
@@ -31,7 +32,7 @@ class ReNewDomainsHolder(
 
     override fun onBind(item: Item.RenewDomains) {
         textView.text = context.getString(Localization.wallet_renew_dns, item.items.size, untilDateString)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             navigation?.add(DNSRenewScreen.newInstance(item.wallet, item.items))
         }
     }

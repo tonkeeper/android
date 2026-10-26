@@ -27,7 +27,7 @@ import com.tonapps.blockchain.model.legacy.WalletColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import uikit.HapticHelper
+import uikit.extensions.hapticTick
 import uikit.extensions.bottomBarsOffset
 import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.dp
@@ -37,6 +37,7 @@ import uikit.extensions.useAttributes
 import uikit.extensions.withAlpha
 import uikit.widget.ColumnLayout
 import uikit.widget.InputView
+import uikit.extensions.setMoonOnClickListener
 
 class LabelEditorView @JvmOverloads constructor(
     context: Context,
@@ -75,7 +76,7 @@ class LabelEditorView @JvmOverloads constructor(
         get() = emojiView.getEmoji()
         set(value) {
             if (emojiView.setEmoji(value, Color.TRANSPARENT)) {
-                HapticHelper.selection(context)
+                hapticTick()
                 emojiView.runAnimation(uikit.R.anim.scale_switch)
                 notifyChange()
             }
@@ -105,7 +106,7 @@ class LabelEditorView @JvmOverloads constructor(
         }
 
         colorView = findViewById(R.id.label_color)
-        colorView.setOnClickListener { nameInput.hideKeyboard() }
+        colorView.setMoonOnClickListener { nameInput.hideKeyboard() }
 
         emojiView = findViewById(R.id.label_emoji)
 
@@ -114,13 +115,13 @@ class LabelEditorView @JvmOverloads constructor(
 
         overlayView = findViewById(R.id.label_overlay)
         overlayView.setBackgroundColor(context.backgroundPageColor.withAlpha(.68f))
-        overlayView.setOnClickListener { nameInput.hideKeyboard() }
+        overlayView.setMoonOnClickListener { nameInput.hideKeyboard() }
 
         actionView = findViewById(R.id.label_action)
         actionView.background.alpha = 0
 
         button = findViewById(R.id.label_button)
-        button.setOnClickListener { done() }
+        button.setMoonOnClickListener { done() }
 
         applyColorPicker()
         applyEmojiPicker()

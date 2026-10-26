@@ -20,8 +20,10 @@ import java.math.BigDecimal
 import kotlin.math.min
 import kotlin.random.Random
 
+data class PerpsMarkQuote(val price: BigDecimal, val observedAtMs: Long)
+
 sealed interface PerpsPriceEvent {
-    data class Snapshot(val prices: Map<String, BigDecimal>) : PerpsPriceEvent
+    data class Snapshot(val quotes: Map<String, PerpsMarkQuote>) : PerpsPriceEvent
     data object Reconnecting : PerpsPriceEvent
 
     /** Hermes refused the subscribe — no further attempt will be made for this stream. */
@@ -40,6 +42,7 @@ class PerpsPriceFeed(private val api: API) {
         SILENT,
         IDLE,
         REJECTED,
+        RELOGIN,
     }
 
     private sealed interface LoopInput {
@@ -57,6 +60,7 @@ class PerpsPriceFeed(private val api: API) {
 
         private val updates = Channel<Set<String>>(Channel.CONFLATED)
         private var desired: Set<String> = emptySet()
+        private var loginRefreshUsed = false
 
         suspend fun run() {
             val updatesJob = scope.launch { desiredTickers.collect { updates.send(it) } }
@@ -76,6 +80,8 @@ class PerpsPriceFeed(private val api: API) {
                             backoffMs = MIN_BACKOFF_MS
                             continue
                         }
+
+                        SessionEnd.RELOGIN -> continue
 
                         SessionEnd.DELIVERED -> backoffMs = MIN_BACKOFF_MS
                         SessionEnd.SILENT -> Unit
@@ -97,6 +103,7 @@ class PerpsPriceFeed(private val api: API) {
             var opened = false
             var awaitingAck = false
             var delivered = false
+            var loginToken: String? = null
             try {
                 socket.connect()
                 while (true) {
@@ -124,6 +131,13 @@ class PerpsPriceFeed(private val api: API) {
                         is LoopInput.Socket -> when (val event = input.event) {
                             HermesPriceEvent.Opened -> {
                                 opened = true
+                                loginToken = try {
+                                    api.hermes.accessToken()
+                                } catch (e: Throwable) {
+                                    L.e(e)
+                                    null
+                                }
+                                loginToken?.let { socket.login(it) }
                                 subscribe(socket)
                                 awaitingAck = true
                                 pingJob = scope.launch { socket.keepAlive() }
@@ -131,10 +145,24 @@ class PerpsPriceFeed(private val api: API) {
 
                             HermesPriceEvent.Subscribed -> awaitingAck = false
 
+                            HermesPriceEvent.LoggedIn -> loginRefreshUsed = false
+
+                            HermesPriceEvent.LoginRejected -> if (!loginRefreshUsed) {
+                                loginRefreshUsed = true
+                                loginToken?.let { expired ->
+                                    try {
+                                        api.hermes.refreshAccessToken(expired)
+                                    } catch (e: Throwable) {
+                                        L.e(e)
+                                    }
+                                }
+                                return SessionEnd.RELOGIN
+                            }
+
                             is HermesPriceEvent.Prices -> {
                                 awaitingAck = false
                                 delivered = true
-                                scope.send(PerpsPriceEvent.Snapshot(event.prices))
+                                scope.send(PerpsPriceEvent.Snapshot(event.prices.toQuotes(System.currentTimeMillis())))
                             }
 
                             HermesPriceEvent.Rejected -> return SessionEnd.REJECTED
@@ -173,3 +201,7 @@ private fun Long.withJitter(): Long {
 }
 
 private const val BACKOFF_JITTER = 0.2
+
+private fun Map<String, BigDecimal>.toQuotes(observedAtMs: Long): Map<String, PerpsMarkQuote> {
+    return mapValues { (_, price) -> PerpsMarkQuote(price, observedAtMs) }
+}

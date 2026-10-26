@@ -12,18 +12,25 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Order execution type.
  *
- * Values: market,limit
+ * Values: market,limit,unknown
  */
-@Serializable
+@Serializable(with = OrderTypeSerializer::class)
 enum class OrderType(val value: String) {
     @SerialName(value = "market")
     market("market"),
     @SerialName(value = "limit")
-    limit("limit");
+    limit("limit"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -49,6 +56,20 @@ enum class OrderType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object OrderTypeSerializer : KSerializer<OrderType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): OrderType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return OrderType.entries.firstOrNull { it.value == value }
+            ?: OrderType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: OrderType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.wallet.main.list.holder
 import android.view.ViewGroup
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
 import com.tonapps.deposit.DepositFragment
 import com.tonapps.deposit.WithdrawFragment
 import com.tonapps.deposit.multicoin.DepositMulticoinFragment
@@ -14,6 +16,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeper.ui.screen.watchonly.WatchInfoScreen
 import com.tonapps.tonkeeperx.R
 import uikit.widget.ActionIconButtonView
+import uikit.extensions.setMoonOnClickListener
 
 class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout.view_new_wallet_actions) {
 
@@ -28,20 +31,20 @@ class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout
         val isSendEnabled = item.walletType != WalletType.Watch
         val isStakeEnabled = item.walletType != WalletType.Watch && item.walletType != WalletType.Testnet && !item.isStakingDisabled
 
-        receiveView.setOnClickListener {
+        receiveView.setMoonOnClickListener {
             if (item.walletType == WalletType.Multichain) {
-                navigation?.add(DepositMulticoinFragment())
+                navigation?.add(DepositMulticoinFragment.create(analyticsFrom = DepositFlowFrom.WalletScreen))
             } else {
-                navigation?.add(DepositFragment())
+                navigation?.add(DepositFragment.create(analyticsFrom = DepositFlowFrom.WalletScreen))
             }
         }
 
-        swapView.setOnClickListener {
+        swapView.setMoonOnClickListener {
             if (isWatchOnly) {
                 openWatchInfo(item.wallet)
-                return@setOnClickListener
+                return@setMoonOnClickListener
             } else if (!isSwapEnabled) {
-                return@setOnClickListener
+                return@setMoonOnClickListener
             }
 
             navigation?.add(SwapScreen.newInstance(
@@ -51,26 +54,26 @@ class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout
             ))
         }
 
-        sendView.setOnClickListener {
+        sendView.setMoonOnClickListener {
             if (isWatchOnly) {
                 openWatchInfo(item.wallet)
-                return@setOnClickListener
+                return@setMoonOnClickListener
             } else if (!isSendEnabled) {
-                return@setOnClickListener
+                return@setMoonOnClickListener
             }
 
             if (item.walletType == WalletType.Multichain) {
-                navigation?.add(WithdrawMulticoinFragment())
+                navigation?.add(WithdrawMulticoinFragment.create(analyticsFrom = WithdrawFlowFrom.WalletScreen))
             } else {
-                navigation?.add(WithdrawFragment.create())
+                navigation?.add(WithdrawFragment.create(analyticsFrom = WithdrawFlowFrom.WalletScreen))
             }
         }
-        stakeView.setOnClickListener {
+        stakeView.setMoonOnClickListener {
             if (isWatchOnly) {
                 openWatchInfo(item.wallet)
-                return@setOnClickListener
+                return@setMoonOnClickListener
             } else if (!isStakeEnabled) {
-                return@setOnClickListener
+                return@setMoonOnClickListener
             }
 
             navigation?.add(StakingScreen.newInstance(wallet = item.wallet, from = "wallet"))

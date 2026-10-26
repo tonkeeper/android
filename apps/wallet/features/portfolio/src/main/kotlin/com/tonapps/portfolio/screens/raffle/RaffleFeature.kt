@@ -6,7 +6,6 @@ import com.tonapps.core.deeplink.isMigrateDeeplink
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.mvi.flow.mapLatestCatching
 import com.tonapps.wallet.data.account.AccountRepository
-import com.tonapps.wallet.data.raffle.RaffleClock
 import com.tonapps.wallet.data.raffle.RaffleRepository
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.wallet.localization.Localization
@@ -83,7 +82,7 @@ class RaffleFeature(
                     // same second; the random delay spreads that thundering herd over 30s
                     // (mirrors the iOS boundary refresh in MysteryRaffleCoordinator).
                     while (true) {
-                        val untilBoundary = Duration.between(RaffleClock.now(), boundary).toMillis()
+                        val untilBoundary = Duration.between(OffsetDateTime.now(), boundary).toMillis()
                         delay(untilBoundary.coerceAtLeast(0) + Random.nextLong(BOUNDARY_REFRESH_JITTER_MS))
                         refresh()
                     }
@@ -208,7 +207,7 @@ class RaffleFeature(
     }
 
     private fun RaffleEntity.toContent(): RaffleScreenState.Content {
-        val now = RaffleClock.now()
+        val now = OffsetDateTime.now()
         val kind = toKind()
         val analyticsKind = toAnalyticsKind(kind)
 

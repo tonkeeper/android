@@ -26,14 +26,16 @@ plugins {
 //    }
 //}
 
+val bcprovVersion = libs.versions.bcprov.get()
+
 allprojects {
     configurations.all {
         exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
         exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
         resolutionStrategy {
-            force("org.bouncycastle:bcprov-jdk18on:1.80")
-            force("org.bouncycastle:bcpkix-jdk18on:1.80")
-            force("org.bouncycastle:bcutil-jdk18on:1.80")
+            force("org.bouncycastle:bcprov-jdk18on:$bcprovVersion")
+            force("org.bouncycastle:bcpkix-jdk18on:$bcprovVersion")
+            force("org.bouncycastle:bcutil-jdk18on:$bcprovVersion")
         }
     }
 
@@ -98,16 +100,9 @@ tasks.register<Delete>("clean") {
     delete(getLayout().buildDirectory)
 }
 
-// Install git hooks automatically on every Gradle run (worktree-aware)
-val gitHooksDir = providers.exec {
-    commandLine("git", "rev-parse", "--git-dir")
-}.standardOutput.asText.get().trim().let { gitDir ->
-    rootDir.resolve(gitDir).resolve("hooks")
-}
-
-copy {
-    from(rootDir.resolve("tools/hooks/pre-commit"))
-    into(gitHooksDir)
+// Point git at the repository's shared hooks; the public mirror has no .githooks/.
+if (rootDir.resolve("../.githooks").isDirectory) {
+    providers.exec { commandLine("git", "config", "core.hooksPath", ".githooks") }.result.get()
 }
 
 extensions.findByName("buildScan")?.withGroovyBuilder {

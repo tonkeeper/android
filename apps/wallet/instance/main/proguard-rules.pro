@@ -6,8 +6,6 @@
 
 -keep class io.tonapi.** { *; }
 
--keep class io.ton.walletkit.** { *; }
-
 # Tink KeysDownloader - optional Google HTTP client and Joda Time deps not used at runtime
 -dontwarn com.google.api.client.http.**
 -dontwarn com.google.api.client.http.javanet.**
@@ -86,24 +84,6 @@
     public static int e(...);
 }
 
-# WalletKit
--keep class io.ton.walletkit.** { *; }
-
-# WalletKit resolves its bridge-DTO serializers reflectively
-# (serializersModule.serializer(klass)) and ships those @Serializable DTOs obfuscated and
-# package-flattened, so each DTO's Companion is a separate top-level class, not a nested
-# $Companion. That defeats both the stock kotlinx rules (keyed on $Companion) and
-# `-keep @Serializable` (which misses the companion's serializer()), and R8 full mode then
-# strips the reflectively-only serializer -> "Serializer for class 'x' is not found".
-# Keep the reflective serializer entry points structurally, not by package/annotation.
--keepattributes RuntimeVisibleAnnotations,AnnotationDefault,InnerClasses,Signature
--keepclassmembers @kotlinx.serialization.Serializable class ** { *; }
--keepclassmembers class ** {
-    *** Companion;
-    kotlinx.serialization.KSerializer serializer(...);
-}
--keep,allowobfuscation class * implements kotlinx.serialization.KSerializer { *; }
-
 # JNA — native code resolves fields (e.g. com.sun.jna.Pointer#peer) and
 # Structure subclass field order by name via JNI/reflection. Stripping or
 # renaming them yields UnsatisfiedLinkError: "Can't obtain peer field ID".
@@ -117,3 +97,10 @@
 -keepclassmembers class uniffi.** { *; }
 -keepnames class * extends androidx.fragment.app.Fragment
 -keepnames class * extends android.app.Fragment
+
+-keep class org.bouncycastle.jcajce.provider.** { *; }
+-keep class org.bouncycastle.jce.provider.** { *; }
+-dontwarn org.bouncycastle.**
+
+# Branch
+-keepnames class com.google.android.gms.ads.identifier.AdvertisingIdClient

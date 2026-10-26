@@ -59,6 +59,10 @@ class ProcessTaskView @JvmOverloads constructor(
         failedLabelView.text = label
     }
 
+    fun setSuccessLabel(label: String) {
+        successLabelView.text = label
+    }
+
     private fun applyState(state: State) {
         withAnimation {
             when (state) {

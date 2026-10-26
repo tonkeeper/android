@@ -103,7 +103,6 @@ fun WalletsListScreen(
     val banners by feature.banners.collectAsState()
     val editMode by feature.editMode.collectAsState()
     val hiddenBalances by feature.hiddenBalances.collectAsState()
-    val shimmerPhase by rememberShimmerPhase()
     val haptic = LocalHapticFeedback.current
     val hostView = LocalView.current
 
@@ -127,6 +126,10 @@ fun WalletsListScreen(
         }
     }
     val orderedWallets = remember { mutableStateListOf<CommonWallet>().apply { addAll(feature.wallets.value) } }
+    val showsBalanceShimmer by remember {
+        derivedStateOf { !hiddenBalances && orderedWallets.any { feature.balances[it.id] == null } }
+    }
+    val shimmerPhase by rememberShimmerPhase(enabled = showsBalanceShimmer)
     val dragDropState = rememberWalletsDragDropState(
         listState = listState,
         onMove = { fromWalletId, toWalletId ->
@@ -232,6 +235,7 @@ fun WalletsListScreen(
                     item(key = "banners") {
                         BannersViewer(
                             banners = banners,
+                            analytics = null,
                             onClick = { button ->
                                 raffleEvents.raffleBannerClick(MysteryRaffleSource.WalletsList)
                                 onOpenLink(button.payload.withRaffleSource(MysteryRaffleSource.WalletsList.key))
@@ -425,7 +429,6 @@ private fun RowScope.WalletTags(wallet: CommonWallet) {
         WalletType.Signer, WalletType.SignerQR -> stringResource(Localization.signer)
         WalletType.Ledger -> stringResource(Localization.ledger)
         WalletType.Keystone -> stringResource(Localization.keystone)
-        WalletType.Tetra -> stringResource(Localization.tetra)
         WalletType.Default, WalletType.Lockup -> null
     }
     if (typeText != null) {

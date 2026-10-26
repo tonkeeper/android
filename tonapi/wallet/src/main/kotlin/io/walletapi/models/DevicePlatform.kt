@@ -12,11 +12,16 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * Values: ios,android,ios_pro,web,extension,desktop
+ * Values: ios,android,ios_pro,web,extension,desktop,unknown
  */
-@Serializable
+@Serializable(with = DevicePlatformSerializer::class)
 enum class DevicePlatform(val value: String) {
     @SerialName(value = "ios")
     ios("ios"),
@@ -29,7 +34,9 @@ enum class DevicePlatform(val value: String) {
     @SerialName(value = "extension")
     extension("extension"),
     @SerialName(value = "desktop")
-    desktop("desktop");
+    desktop("desktop"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -55,6 +62,20 @@ enum class DevicePlatform(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object DevicePlatformSerializer : KSerializer<DevicePlatform> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): DevicePlatform {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return DevicePlatform.entries.firstOrNull { it.value == value }
+            ?: DevicePlatform.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: DevicePlatform) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

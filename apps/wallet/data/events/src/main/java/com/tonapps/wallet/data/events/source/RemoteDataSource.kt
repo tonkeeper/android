@@ -88,6 +88,8 @@ internal class RemoteDataSource(
 
     suspend fun getSingle(eventId: String, network: TonNetwork) = api.getSingleEvent(eventId, network)
 
+    suspend fun getAccountEvent(accountId: String, network: TonNetwork, eventId: String) = api.getAccountEvent(accountId, network, eventId)
+
     fun getLatestRecipients(accountId: String, network: TonNetwork): List<LatestRecipientEntity> {
         val events = api.getEvents(
             accountId = accountId,

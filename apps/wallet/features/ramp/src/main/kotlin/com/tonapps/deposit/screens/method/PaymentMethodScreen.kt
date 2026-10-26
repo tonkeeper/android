@@ -13,18 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -32,12 +26,10 @@ import androidx.lifecycle.flowWithLifecycle
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.core.extensions.iconExternalUrl
 import com.tonapps.deposit.components.VerticalAssetCell
-import com.tonapps.deposit.screens.provider.ProviderConfirmDialog
 import com.tonapps.deposit.screens.ramp.RampType
 import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
-import io.exchangeapi.models.ExchangeMerchantInfo
 import ui.components.moon.MoonItemDivider
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
@@ -53,7 +45,6 @@ import ui.components.moon.screen.MoonEmptyScreen
 import ui.painterResource
 import ui.theme.UIKit
 import ui.theme.modifiers.modifyIf
-import ui.utils.toRichSpanStyle
 import uikit.navigation.Navigation.Companion.navigation
 
 internal const val KEY_CURRENCY_SELECTION_RESULT = "currency_selection_result"
@@ -73,11 +64,11 @@ fun PaymentMethodScreen(
     onOpenP2P: (url: String) -> Unit,
     onAutoNavigateCrypto: ((asset: RampAsset, targetCurrency: WalletCurrency) -> Unit)? = null,
     onAutoNavigateCash: ((asset: RampAsset, paymentMethodType: String, fiatCurrency: WalletCurrency) -> Unit)? = null,
+    onAssetUnavailable: (() -> Unit)? = null,
 ) {
     val state by feature.state.global.observeSafeState()
     val lifecycle = LocalLifecycleOwner.current
     val context = LocalContext.current
-    var confirmationMerchant by remember { mutableStateOf<ExchangeMerchantInfo?>(null) }
 
     LaunchedEffect(currencySelectionResult) {
         if (currencySelectionResult != null) {
@@ -91,7 +82,6 @@ fun PaymentMethodScreen(
     LaunchedEffect(Unit) {
         feature.events.flowWithLifecycle(lifecycle.lifecycle).collect { event ->
             when (event) {
-                is PaymentMethodEvent.ShowP2PConfirmation -> confirmationMerchant = event.merchant
                 is PaymentMethodEvent.OpenP2P -> onOpenP2P(event.url)
                 is PaymentMethodEvent.AutoNavigateCrypto -> onAutoNavigateCrypto?.invoke(
                     event.resolvedAsset,
@@ -104,6 +94,8 @@ fun PaymentMethodScreen(
                     event.fiatCurrency
                 )
 
+                is PaymentMethodEvent.AssetUnavailable -> onAssetUnavailable?.invoke()
+
                 is PaymentMethodEvent.ShowP2PError -> {
                     context.navigation?.toast(
                         message = p2pErrorText,
@@ -113,37 +105,6 @@ fun PaymentMethodScreen(
                 }
             }
         }
-    }
-
-    confirmationMerchant?.let { merchant ->
-        val style = UIKit.typography.body1
-        val color = UIKit.colorScheme.text.accent
-        val buttons = merchant.buttons
-        val description = remember(color, buttons) {
-            if (buttons.isEmpty()) return@remember null
-            buildAnnotatedString {
-                val linkStyle = style.toRichSpanStyle(color = color)
-                buttons
-                    .filter { it.url.isNotEmpty() }
-                    .forEachIndexed { index, button ->
-                        if (index > 0) append(" · ")
-                        withLink(
-                            LinkAnnotation.Url(
-                                url = button.url,
-                                styles = TextLinkStyles(linkStyle),
-                            )
-                        ) { append(button.title) }
-                    }
-            }
-        }
-
-        ProviderConfirmDialog(
-            title = merchant.title,
-            icon = merchant.image,
-            description = description,
-            onConfirm = { feature.sendAction(PaymentMethodAction.AllowP2P(it)) },
-            onClose = { confirmationMerchant = null },
-        )
     }
 
     val resolveAsset = { feature.resolvedAsset ?: fallbackAsset }
@@ -156,7 +117,7 @@ fun PaymentMethodScreen(
         onPaymentMethodClick = { type, currency ->
             resolveAsset()?.let { onPaymentMethodClick(it, type, currency) }
         },
-        onP2PMethodClick = { feature.sendAction(PaymentMethodAction.CheckP2PMethod) },
+        onP2PMethodClick = { feature.sendAction(PaymentMethodAction.OpenP2PMethod) },
         onBuyWithCrypto = { currency ->
             resolveAsset()?.let { onBuyWithCrypto(it, currency) }
         },
@@ -243,7 +204,9 @@ private fun PaymentMethodContent(
                         MoonBundleCell {
                             Column {
                                 state.paymentMethods.fastForEachIndexed { index, method ->
-                                    if (index > 0) MoonItemDivider()
+                                    if (index > 0) {
+                                        MoonItemDivider()
+                                    }
                                     VerticalAssetCell(
                                         name = method.title,
                                         assetImageUrl = method.iconUrl,
@@ -278,7 +241,9 @@ private fun PaymentMethodContent(
                             Column {
                                 cryptoAssets.fastForEachIndexed { index, currency ->
                                     key(currency.key) {
-                                        if (index > 0) MoonItemDivider()
+                                        if (index > 0) {
+                                            MoonItemDivider()
+                                        }
                                         VerticalAssetCell(currency) { onBuyWithCrypto(currency) }
                                     }
                                 }
@@ -306,7 +271,9 @@ private fun PaymentMethodContent(
                             Column {
                                 val context = LocalContext.current
                                 state.stablecoinAssets.fastForEachIndexed { index, stablecoin ->
-                                    if (index > 0) MoonItemDivider()
+                                    if (index > 0) {
+                                        MoonItemDivider()
+                                    }
                                     val networkIcons =
                                         remember(stablecoin.code, state.stablecoinNetworks) {
                                             state.stablecoinNetworks[stablecoin.code.uppercase()]

@@ -13,11 +13,11 @@ import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.Holder
 import com.tonapps.tonkeeper.ui.screen.wallet.manage.list.holder.TokenHolder
 import com.tonapps.wallet.localization.Localization
-import uikit.HapticHelper
 import uikit.R
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.hapticTick
 
 class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)), BaseFragment.BottomSheet {
 
@@ -55,7 +55,8 @@ class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenConte
                 target: RecyclerView.ViewHolder
             ): Boolean {
                 val item = (viewHolder as? Holder<*>)?.item ?: return false
-                if (item is Item.Token && item.pinned) {
+                val targetItem = (target as? Holder<*>)?.item ?: return false
+                if (item is Item.Token && item.pinned && targetItem is Item.Token && targetItem.pinned) {
                     val fromPosition = viewHolder.bindingAdapterPosition
                     val toPosition = target.bindingAdapterPosition
 
@@ -63,7 +64,7 @@ class TokensManageScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenConte
                         return false
                     }
 
-                    HapticHelper.impactLight(requireContext())
+                    viewHolder.itemView.hapticTick()
                     return true
                 }
                 return false

@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
@@ -35,21 +38,28 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.perps.screens.portfolio.PerpsPositionsCard
 import com.tonapps.trading.percentDiffColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.features.events.components.ActivityEventCell
+import com.tonapps.wallet.features.events.data.EncryptedCommentEntity
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
+import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsAction
+import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsFeature
 import com.tonapps.wallet.features.events.screens.details.EventDetailsModal
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.features.events.components.legacy.EventItem
 import com.tonapps.wallet.features.events.components.legacy.EventItemClickPart
+import org.koin.androidx.compose.koinViewModel
 import ui.components.moon.MoonActionIcon
 import ui.components.moon.MoonCircleIcon
 import ui.components.moon.MoonDivider
 import ui.components.moon.MoonExpandableText
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
+import ui.components.moon.MoonItemSubtitle
+import ui.components.moon.MoonItemTitle
 import ui.components.moon.MoonLabel
 import ui.components.moon.MoonLabelDefault
 import ui.components.moon.MoonTag
@@ -70,8 +80,10 @@ import ui.components.moon.container.BadgeDirection
 import ui.components.moon.container.MoonCutBadgedBox
 import ui.components.popup.ActionMenu
 import ui.components.popup.ComposeActionItem
+import ui.animation.BlurCrossfade
 import ui.painterResource
 import ui.theme.UIKit
+import ui.theme.modifiers.textShimmer
 import ui.utils.toRichSpanStyle
 import uikit.chart.ChartPoint
 
@@ -226,6 +238,7 @@ internal fun DetailsBalanceSection(
     balance: AssetDetailsSections.Balance,
     imageUrl: String,
     chainImageUrl: String?,
+    isStale: Boolean = false,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         MoonBundleTitleCell(
@@ -234,8 +247,30 @@ internal fun DetailsBalanceSection(
 
         MoonBundleCell {
             TextCell(
-                title = balance.balanceFormatted,
-                subtitle = balance.fiatFormatted,
+                title = {
+                    Column(
+                        modifier = Modifier.textShimmer(
+                            isActive = isStale,
+                            dimColor = UIKit.colorScheme.background.content,
+                        ),
+                    ) {
+                        BlurCrossfade(
+                            targetState = balance.balanceFormatted,
+                            contentAlignment = Alignment.CenterStart,
+                        ) { formatted ->
+                            MoonItemTitle(text = formatted)
+                        }
+                        if (balance.fiatFormatted.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            BlurCrossfade(
+                                targetState = balance.fiatFormatted,
+                                contentAlignment = Alignment.CenterStart,
+                            ) { formatted ->
+                                MoonItemSubtitle(text = formatted, maxLines = 1)
+                            }
+                        }
+                    }
+                },
                 image = {
                     MoonCutBadgedBox(
                         badge = {
@@ -263,33 +298,56 @@ internal fun DetailsBalanceSection(
 }
 
 @Composable
-internal fun PerpsSection() {
+internal fun PerpsSection(
+    state: AssetPerpsState,
+    assetSymbol: String,
+    imageUrl: String,
+    onOpenMarket: (marketIndex: Int, symbol: String) -> Unit,
+) {
+    if (state == AssetPerpsState.Hidden) {
+        return
+    }
     Column {
         MoonBundleTitleCell(
             title = stringResource(Localization.perp_position),
         )
-
-        MoonBundleCell {
-            TextCell(
-                title = stringResource(Localization.trade_ton_perps),
-                subtitle = stringResource(Localization.trade_ton_perps_subtitle),
-                tags = {
-                    MoonLabel(
-                        text = stringResource(Localization.badge_new),
-                        colors = MoonLabelDefault.blue(),
-                    )
-                },
-                image = {
-                    MoonCircleIcon(
-                        painter = androidx.compose.ui.res.painterResource(UIKitIcon.ic_perps_28),
-                        color = UIKit.colorScheme.accent.blue.copy(alpha = 0.12f),
-                        size = 44.dp
-                    )
-                },
-                content = {
-                    MoonItemIcon(painterResource(UIKitIcon.ic_chevron_right_16))
-                },
-                minHeight = 76.dp,
+        when (state) {
+            AssetPerpsState.Hidden -> Unit
+            AssetPerpsState.Loading -> PerpsPositionShimmer()
+            is AssetPerpsState.Banner -> MoonBundleCell(
+                onClick = { onOpenMarket(state.market.marketIndex, state.market.symbol) },
+            ) {
+                TextCell(
+                    title = stringResource(Localization.perps_asset_trade_title, assetSymbol),
+                    subtitle = state.market.maxLeverage?.let {
+                        stringResource(
+                            Localization.perps_asset_leverage_caption,
+                            stringResource(Localization.perps_leverage_value_pattern, it),
+                        )
+                    },
+                    maxLinesSubtitle = 2,
+                    tags = {
+                        MoonLabel(
+                            text = stringResource(Localization.badge_new),
+                            colors = MoonLabelDefault.blue(),
+                        )
+                    },
+                    image = {
+                        MoonCircleIcon(
+                            painter = androidx.compose.ui.res.painterResource(UIKitIcon.ic_perps_28),
+                            color = UIKit.colorScheme.accent.blue.copy(alpha = 0.12f),
+                            size = 44.dp
+                        )
+                    },
+                    content = {
+                        MoonItemIcon(painterResource(UIKitIcon.ic_chevron_right_16))
+                    },
+                    minHeight = 76.dp,
+                )
+            }
+            is AssetPerpsState.Position -> PerpsPositionsCard(
+                positions = listOf(state.position.copy(position = state.position.position.copy(iconUrl = imageUrl))),
+                onOpenMarket = onOpenMarket,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -343,6 +401,34 @@ internal fun DetailsBalanceSectionShimmer() {
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun PerpsPositionShimmer() {
+    val fill = UIKit.colorScheme.background.contentTint
+    MoonBundleCell {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(modifier = Modifier.size(44.dp).background(fill, CircleShape))
+            Spacer(modifier = Modifier.width(16.dp))
+            Box(modifier = Modifier.size(width = 65.dp, height = 12.dp).background(fill, CircleShape))
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(modifier = Modifier.size(width = 41.dp, height = 12.dp).background(fill, CircleShape))
+            Spacer(modifier = Modifier.weight(1f))
+            Column(horizontalAlignment = Alignment.End) {
+                Box(modifier = Modifier.height(24.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.size(width = 65.dp, height = 12.dp).background(fill, CircleShape))
+                }
+                Box(modifier = Modifier.height(20.dp), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.size(width = 53.dp, height = 12.dp).background(fill, CircleShape))
+                }
+            }
+        }
     }
 }
 
@@ -410,14 +496,24 @@ internal fun ActivitiesSection(
             },
         )
         var selectedActivity by remember { mutableStateOf<HistoryEventEntity?>(null) }
+        val comments = koinViewModel<EncryptedCommentsFeature>()
+        val decryptedComments by comments.decrypted.collectAsState()
+        val context = LocalContext.current
+        val onDecrypt: (EncryptedCommentEntity) -> Unit = { c ->
+            recentActivities.wallet?.id?.let { comments.sendAction(EncryptedCommentsAction.Decrypt(context, it, c)) }
+        }
         recentActivities.items.forEachIndexed { index, activity ->
             ActivityEventCell(
                 activity = activity,
+                hiddenBalance = recentActivities.hiddenBalance,
                 position = MoonBundlePosition.default(
                     size = recentActivities.items.size,
                     index = index,
                 ),
                 onClick = { selectedActivity = activity },
+                decryptedComment = activity.encryptedComment?.let { decryptedComments[it.cipherText] },
+                onDecryptComment = activity.encryptedComment?.let { c -> { onDecrypt(c) } },
+                showDate = true,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -426,6 +522,9 @@ internal fun ActivitiesSection(
             EventDetailsModal(
                 event = activity,
                 wallet = recentActivities.wallet,
+                hiddenBalance = recentActivities.hiddenBalance,
+                decryptedComment = activity.encryptedComment?.let { decryptedComments[it.cipherText] },
+                onDecryptComment = activity.encryptedComment?.let { c -> { onDecrypt(c) } },
                 onDismiss = { selectedActivity = null },
             )
         }

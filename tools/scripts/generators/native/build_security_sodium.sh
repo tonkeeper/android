@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-PROJECT_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 MODULE_DIR="$PROJECT_ROOT/lib/security"
 SRC_DIR="$MODULE_DIR/build/intermediates/cmake/release/obj"
 DST_DIR="$MODULE_DIR/src/main/jniLibs"

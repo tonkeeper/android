@@ -17,6 +17,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
+import uikit.extensions.setMoonOnClickListener
 
 class SelectScreen : BaseFragment(R.layout.fragment_init_select) {
 
@@ -45,7 +46,7 @@ class SelectScreen : BaseFragment(R.layout.fragment_init_select) {
         listView.applyNavBottomPadding(requireContext().getDimensionPixelSize(uikit.R.dimen.offsetLarge))
 
         button = view.findViewById(R.id.button)
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             initViewModel.nextStep(requireContext(), InitRoute.SelectAccount)
         }
 

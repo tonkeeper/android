@@ -14,7 +14,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Values: whales,tf,liquidTF,ffvault
+ * Values: whales,tf,liquidTF,ffvault,hipo
  */
 @Serializable
 enum class PoolImplementationType(val value: String) {
@@ -25,7 +25,9 @@ enum class PoolImplementationType(val value: String) {
     @SerialName(value = "liquidTF")
     liquidTF("liquidTF"),
     @SerialName(value = "ffvault")
-    ffvault("ffvault");
+    ffvault("ffvault"),
+    @SerialName(value = "hipo")
+    hipo("hipo");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

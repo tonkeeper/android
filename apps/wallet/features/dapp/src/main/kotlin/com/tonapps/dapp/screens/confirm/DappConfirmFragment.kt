@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.core.ComposableFragment
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.wallet.data.dapps.entities.AppEntity
@@ -14,7 +15,7 @@ import uikit.base.BaseFragment
 class DappConfirmFragment : ComposableFragment(), BaseFragment.Modal {
 
     interface Delegate {
-        fun openDapp(walletId: String, app: AppEntity, dAppUrl: Uri, source: String)
+        fun openDapp(walletId: String, app: AppEntity, dAppUrl: Uri, source: String, utm: UtmParameters)
     }
 
     override val fragmentName: String = "DAppShareScreen"
@@ -27,6 +28,9 @@ class DappConfirmFragment : ComposableFragment(), BaseFragment.Modal {
 
     private val dAppUrl: Uri
         get() = requireArguments().getString(ARG_URL)!!.toUri()
+
+    private val utm: UtmParameters
+        get() = requireArguments().getParcelableCompat(ARG_UTM) ?: UtmParameters.Empty
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -57,7 +61,8 @@ class DappConfirmFragment : ComposableFragment(), BaseFragment.Modal {
                     walletId = walletId,
                     app = app,
                     dAppUrl = dAppUrl,
-                    source = "deep-link"
+                    source = "deep-link",
+                    utm = utm,
                 )
             }
         }
@@ -69,12 +74,14 @@ class DappConfirmFragment : ComposableFragment(), BaseFragment.Modal {
         private const val ARG_WALLET = "wallet"
         private const val ARG_APP = "app"
         private const val ARG_URL = "url"
+        private const val ARG_UTM = "utm"
 
-        fun newInstance(walletId: String, app: AppEntity, url: Uri): BaseFragment {
+        fun newInstance(walletId: String, app: AppEntity, url: Uri, utm: UtmParameters): BaseFragment {
             val screen = DappConfirmFragment()
             screen.putStringArg(ARG_WALLET, walletId)
             screen.putParcelableArg(ARG_APP, app)
             screen.putStringArg(ARG_URL, url.toString())
+            screen.putParcelableArg(ARG_UTM, utm)
             return screen
         }
     }

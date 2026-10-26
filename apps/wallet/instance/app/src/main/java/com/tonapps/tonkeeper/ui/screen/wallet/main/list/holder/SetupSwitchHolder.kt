@@ -25,6 +25,7 @@ import uikit.extensions.activity
 import uikit.extensions.drawable
 import uikit.extensions.withAlpha
 import uikit.widget.SwitchView
+import uikit.extensions.setMoonOnClickListener
 
 class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.layout.view_wallet_setup_switch) {
 
@@ -40,7 +41,7 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
         val greenColor = context.accentGreenColor
         iconView.imageTintList = greenColor.stateList
         iconView.backgroundTintList = greenColor.withAlpha(.12f).stateList
-        itemView.setOnClickListener { switchView.toggle(true) }
+        itemView.setMoonOnClickListener { switchView.toggle(true) }
     }
 
     override fun onBind(item: Item.SetupSwitch) {

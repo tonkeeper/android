@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.battery.settings.list
 
+import androidx.annotation.PluralsRes
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.blockchain.model.legacy.WalletEntity
@@ -11,6 +12,7 @@ sealed class Item(type: Int) : BaseListItem(type) {
     companion object {
         const val TYPE_SETTINGS_HEADER = 1
         const val TYPE_SUPPORTED_TRANSACTION = 2
+        const val TYPE_NETWORKS = 3
     }
 
     data class SupportedTransaction(
@@ -20,7 +22,8 @@ sealed class Item(type: Int) : BaseListItem(type) {
         val enabled: Boolean,
         val changes: Int,
         val changesRange: Pair<Int, Int>? = null,
-        val showToggle: Boolean
+        val showToggle: Boolean,
+        @PluralsRes val chargesRes: Int,
     ) : Item(TYPE_SUPPORTED_TRANSACTION) {
 
         val accountId: String
@@ -44,4 +47,6 @@ sealed class Item(type: Int) : BaseListItem(type) {
     }
 
     data object SettingsHeader: Item(TYPE_SETTINGS_HEADER)
+
+    data class Networks(val text: String) : Item(TYPE_NETWORKS)
 }

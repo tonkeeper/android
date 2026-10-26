@@ -43,6 +43,7 @@ window.AndroidChart = (function () {
             type: 'crosshairMove',
             time: typeof param.time === 'number' ? param.time : null,
             point: param.point ? { x: param.point.x, y: param.point.y } : null,
+            leftmostIndex: param.point ? chart.timeScale().coordinateToLogical(0) : null,
             seriesData: seriesData
         });
     }
@@ -59,6 +60,7 @@ window.AndroidChart = (function () {
         if (chart) {
             var size = viewportSize();
             chart.resize(size.width, size.height);
+            refreshZoomSensitiveLabels();
         }
     }
 
@@ -76,6 +78,73 @@ window.AndroidChart = (function () {
         });
     }
 
+    var timeLabelFormatters = {};
+
+    function timeLabel(timeSeconds, locale) {
+        var key = locale || '';
+        if (!timeLabelFormatters[key]) {
+            timeLabelFormatters[key] = new Intl.DateTimeFormat(locale || undefined, {
+                hour: '2-digit',
+                minute: '2-digit',
+                hourCycle: 'h23',
+                timeZone: 'UTC'
+            });
+        }
+        return timeLabelFormatters[key].format(new Date(timeSeconds * 1000));
+    }
+
+    function hourMarksFit() {
+        var timeScale = chart.timeScale();
+        var range = timeScale.getVisibleRange();
+        if (!range || typeof range.from !== 'number' || typeof range.to !== 'number') {
+            return false;
+        }
+        var bars = timeScale.timeToIndex(range.to, false) - timeScale.timeToIndex(range.from, false);
+        if (!(bars > 0) || !(range.to > range.from)) {
+            return false;
+        }
+        var barSeconds = (range.to - range.from) / bars;
+        var options = timeScale.options();
+        var maxLabelWidth = (chart.options().layout.fontSize + 4) * 5 / 8 * (options.tickMarkMaxCharacterLength || 8);
+        var maxIndexesPerMark = Math.ceil(maxLabelWidth / options.barSpacing);
+        return 86400 / barSeconds / 2 >= maxIndexesPerMark;
+    }
+
+    var tickMarkFormatters = {
+        dayMarksAsTime: function (time, tickMarkType, locale) {
+            if (tickMarkType > 2 || typeof time !== 'number' || !hourMarksFit()) {
+                return null;
+            }
+            return timeLabel(time, locale);
+        }
+    };
+
+    var zoomSensitiveLabels = false;
+    var lastHourMarksFit = null;
+
+    function resolveTimeScaleOptions(options) {
+        if (options && typeof options.tickMarkFormatter === 'string') {
+            var formatter = tickMarkFormatters[options.tickMarkFormatter];
+            if (!formatter) {
+                throw new Error('Unknown tickMarkFormatter: ' + options.tickMarkFormatter);
+            }
+            options.tickMarkFormatter = formatter;
+            zoomSensitiveLabels = true;
+        }
+        return options;
+    }
+
+    function refreshZoomSensitiveLabels() {
+        if (!zoomSensitiveLabels) {
+            return;
+        }
+        var fit = hourMarksFit();
+        if (fit !== lastHourMarksFit) {
+            lastHourMarksFit = fit;
+            chart.timeScale().applyOptions({});
+        }
+    }
+
     return {
         init: guarded('init', function (options) {
             document.body.style.margin = 0;
@@ -83,11 +152,32 @@ window.AndroidChart = (function () {
             var size = viewportSize();
             options.width = size.width;
             options.height = size.height;
+            resolveTimeScaleOptions(options.timeScale);
             chart = LightweightCharts.createChart(document.body, options);
             chart.subscribeCrosshairMove(onCrosshairMove);
-            // A vertical drag ends in a touchcancel, which tracking mode ignores — without this
-            // the crosshair would stay armed until the next tap.
-            document.addEventListener('touchcancel', guarded('touchcancel', function () {
+            chart.timeScale().subscribeVisibleLogicalRangeChange(guarded('visibleLogicalRange', function (range) {
+                if (range) {
+                    var timeScale = chart.timeScale();
+                    post({
+                        type: 'visibleLogicalRange',
+                        from: range.from,
+                        to: range.to,
+                        leftmostIndex: timeScale.coordinateToLogical(0),
+                        rightmostIndex: timeScale.coordinateToLogical(timeScale.width() - 1)
+                    });
+                    refreshZoomSensitiveLabels();
+                }
+            }));
+            // lightweight-charts ignores touchcancel and would drop the next touchstart and keep
+            // the crosshair armed; replay it as a touchend and clear the crosshair ourselves.
+            document.addEventListener('touchcancel', guarded('touchcancel', function (event) {
+                event.target.dispatchEvent(new TouchEvent('touchend', {
+                    bubbles: true,
+                    cancelable: true,
+                    touches: [],
+                    targetTouches: [],
+                    changedTouches: Array.prototype.slice.call(event.changedTouches)
+                }));
                 chart.clearCrosshairPosition();
                 // clearCrosshairPosition fires no crosshair-move event; clear the plugins and
                 // the native side ourselves, or both keep their last crosshair state.
@@ -106,6 +196,7 @@ window.AndroidChart = (function () {
         }),
 
         applyChartOptions: guarded('applyChartOptions', function (options) {
+            resolveTimeScaleOptions(options.timeScale);
             chart.applyOptions(options);
         }),
 
@@ -144,11 +235,15 @@ window.AndroidChart = (function () {
         }),
 
         applyTimeScaleOptions: guarded('applyTimeScaleOptions', function (options) {
-            chart.timeScale().applyOptions(options);
+            chart.timeScale().applyOptions(resolveTimeScaleOptions(options));
         }),
 
         resetTimeScale: guarded('resetTimeScale', function () {
             chart.timeScale().resetTimeScale();
+        }),
+
+        setVisibleLogicalRange: guarded('setVisibleLogicalRange', function (from, to) {
+            chart.timeScale().setVisibleLogicalRange({ from: from, to: to });
         }),
 
         attachPriceLevelMarkers: guarded('attachPriceLevelMarkers', function (pluginId, seriesId, options) {

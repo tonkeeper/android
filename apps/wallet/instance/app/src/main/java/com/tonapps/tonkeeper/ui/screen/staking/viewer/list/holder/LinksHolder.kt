@@ -15,6 +15,7 @@ import uikit.extensions.setLeftDrawable
 import uikit.navigation.Navigation
 import uikit.widget.FlexboxWithGapLayout
 import androidx.core.net.toUri
+import uikit.extensions.setMoonOnClickListener
 
 class LinksHolder(
     parent: ViewGroup,
@@ -35,7 +36,7 @@ class LinksHolder(
                 } else {
                 "https://$link"
             }
-            linkView.setOnClickListener { BrowserHelper.open(context, fixedLink) }
+            linkView.setMoonOnClickListener { BrowserHelper.open(context, fixedLink) }
             linksView.addView(linkView)
         }
     }

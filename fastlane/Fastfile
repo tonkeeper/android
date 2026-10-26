@@ -68,7 +68,7 @@ platform :android do
         puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
 
-        sh("echo AAB_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]} >> $GITHUB_ENV")
+        sh("echo AAB_OUTPUT_PATH=#{File.expand_path(Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH])} >> $GITHUB_ENV")
     end
 
     desc "Build the android apk"
@@ -93,7 +93,7 @@ platform :android do
         puts Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
         puts Actions.lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS]
 
-        sh("echo APK_OUTPUT_PATH=#{Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]} >> $GITHUB_ENV")
+        sh("echo APK_OUTPUT_PATH=#{File.expand_path(Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH])} >> $GITHUB_ENV")
     end
 
     desc "Upload to GooglePlay"

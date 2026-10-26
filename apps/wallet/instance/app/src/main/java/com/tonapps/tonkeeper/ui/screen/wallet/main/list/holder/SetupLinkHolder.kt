@@ -4,7 +4,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.tonkeeper.koin.settingsRepository
+import com.tonapps.tonkeeper.ui.screen.backup.main.BackupScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentBlueColor
@@ -12,6 +14,7 @@ import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.stateList
 import uikit.extensions.drawable
 import uikit.extensions.withAlpha
+import uikit.extensions.setMoonOnClickListener
 
 class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layout.view_wallet_setup_link) {
 
@@ -33,15 +36,21 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
         } else {
             subtitleView.visibility = View.GONE
         }
-        itemView.setOnClickListener { click(item) }
-        setIconColor(if (item.blue) context.accentBlueColor else context.accentOrangeColor)
+        itemView.setMoonOnClickListener { click(item) }
+        setIconColor(
+            if (item.blue) {
+                context.accentBlueColor
+            } else {
+                context.accentOrangeColor
+            }
+        )
         if (item.settingsType == Item.SetupLink.TYPE_STORIES) {
             setIconColor(null)
             iconView.background = null
         }
         if (item.settingsType == Item.SetupLink.TYPE_TELEGRAM_CHANNEL) {
             buttonView.visibility = View.VISIBLE
-            buttonView.setOnClickListener { click(item) }
+            buttonView.setMoonOnClickListener { click(item) }
             chevronView.visibility = View.GONE
         } else {
             buttonView.visibility = View.GONE
@@ -51,6 +60,10 @@ class SetupLinkHolder(parent: ViewGroup): Holder<Item.SetupLink>(parent, R.layou
     }
 
     private fun click(item: Item.SetupLink) {
+        if (item.settingsType == Item.SetupLink.TYPE_BACKUP) {
+            navigation?.add(BackupScreen.newInstance(WalletFlowSource.WalletSetupSection))
+            return
+        }
         navigation?.openURL(item.link)
         if (item.settingsType == Item.SetupLink.TYPE_TELEGRAM_CHANNEL) {
             settingsRepository?.setTelegramChannel(item.walletId)

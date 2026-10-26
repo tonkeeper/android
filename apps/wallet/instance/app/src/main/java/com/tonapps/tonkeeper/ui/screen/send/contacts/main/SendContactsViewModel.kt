@@ -82,6 +82,34 @@ class SendContactsViewModel(
         }
     }
 
+    private val tronLatestTransactionsFlow = flow {
+        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
+            accountRepository.getTronAddressOrNull(wallet.id)
+        } else {
+            null
+        }
+        val tonProofToken = accountRepository.requestTonProofToken(wallet)
+
+        if (tronAddress != null && tonProofToken != null) {
+            val events = eventsRepository.tronLatestSentTransactions(tronAddress, wallet.id)
+            emit(events)
+        } else {
+            emit(emptyList())
+        }
+    }.flowOn(Dispatchers.IO)
+
+    private val latestTronContactsFlow = combine(
+        contactsRepository.hiddenFlow,
+        tronLatestTransactionsFlow,
+    ) { _, events ->
+        events.filter {
+            !contactsRepository.isHidden(it.to, wallet.network)
+        }.mapIndexed { index, event ->
+            val position = ListCell.getPosition(events.size, index)
+            Item.LatestContact(position, event.to, event.timestamp.value)
+        }
+    }
+
     fun hideContact(address: String) {
         contactsRepository.hide(address.toRawAddress(), wallet.network)
     }
@@ -102,32 +130,6 @@ class SendContactsViewModel(
         return wallets.mapIndexed { index, wallet ->
             val position = ListCell.getPosition(wallets.size, index)
             Item.MyWallet(position, wallet)
-        }
-    }
-
-    private val tronLatestTransactionsFlow = flow {
-        val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
-            accountRepository.getTronAddress(wallet.id)
-        } else null
-        val tonProofToken = accountRepository.requestTonProofToken(wallet)
-
-        if (tronAddress != null && tonProofToken != null) {
-            val events = eventsRepository.tronLatestSentTransactions(tronAddress, wallet.id)
-            emit(events)
-        } else {
-            emit(emptyList())
-        }
-    }.flowOn(Dispatchers.IO)
-
-    private val latestTronContactsFlow = combine(
-        contactsRepository.hiddenFlow,
-        tronLatestTransactionsFlow,
-    ) { _, events ->
-        events.filter {
-            !contactsRepository.isHidden(it.to, wallet.network)
-        }.mapIndexed { index, event ->
-            val position = ListCell.getPosition(events.size, index)
-            Item.LatestContact(position, event.to, event.timestamp.value)
         }
     }
 

@@ -12,13 +12,18 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Business meaning of a submitted transaction. These values belong to the Argus event vocabulary shared with the poc service, which is why they are UPPER_SNAKE rather than following this API's other enums; they are matched byte for byte on the far side. Lighter's own numeric transaction type cannot stand in for this: closing a position is the same CreateOrder as opening one (reduce-only), and adding and removing margin share a single UpdateMargin. Only the caller knows which it meant.
  *
- * Values: POSITION_CLOSE,POSITION_PARTIAL_CLOSE,POSITION_LIQUIDATION,POSITION_PARTIAL_LIQUIDATION,ORDER_CREATE,ORDER_CREATE_INTENT,ORDER_CANCEL,SET_LEVERAGE,MAIN_TO_SUB_TRANSFER,POSITION_MARGIN_ADD,POSITION_MARGIN_REMOVE,AUTO_CLOSE_TRIGGERED,AUTO_CLOSE_CANCELED,WITHDRAWAL
+ * Values: POSITION_CLOSE,POSITION_PARTIAL_CLOSE,POSITION_LIQUIDATION,POSITION_PARTIAL_LIQUIDATION,ORDER_CREATE,ORDER_CREATE_INTENT,ORDER_CANCEL,SET_LEVERAGE,MAIN_TO_SUB_TRANSFER,POSITION_MARGIN_ADD,POSITION_MARGIN_REMOVE,AUTO_CLOSE_TRIGGERED,AUTO_CLOSE_CANCELED,WITHDRAWAL,unknown
  */
-@Serializable
+@Serializable(with = TransactionTypeSerializer::class)
 enum class TransactionType(val value: String) {
     @SerialName(value = "POSITION_CLOSE")
     POSITION_CLOSE("POSITION_CLOSE"),
@@ -47,7 +52,9 @@ enum class TransactionType(val value: String) {
     @SerialName(value = "AUTO_CLOSE_CANCELED")
     AUTO_CLOSE_CANCELED("AUTO_CLOSE_CANCELED"),
     @SerialName(value = "WITHDRAWAL")
-    WITHDRAWAL("WITHDRAWAL");
+    WITHDRAWAL("WITHDRAWAL"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -73,6 +80,20 @@ enum class TransactionType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object TransactionTypeSerializer : KSerializer<TransactionType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): TransactionType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return TransactionType.entries.firstOrNull { it.value == value }
+            ?: TransactionType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: TransactionType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

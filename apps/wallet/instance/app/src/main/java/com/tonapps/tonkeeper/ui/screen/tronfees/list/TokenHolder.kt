@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.tronfees.list
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.screens.qr.QrAssetFragment
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
@@ -10,8 +11,12 @@ import com.tonapps.wallet.localization.Plurals
 import uikit.extensions.drawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
-class TokenHolder(parent: ViewGroup) : Holder<Item.Token>(parent, R.layout.view_tron_fee_option) {
+class TokenHolder(
+    parent: ViewGroup,
+    private val analyticsFrom: DepositFlowFrom,
+) : Holder<Item.Token>(parent, R.layout.view_tron_fee_option) {
 
     private val asyncImageView = itemView.findViewById<AsyncImageView>(R.id.icon)
     private val titleView = itemView.findViewById<AppCompatTextView>(R.id.title)
@@ -20,9 +25,9 @@ class TokenHolder(parent: ViewGroup) : Holder<Item.Token>(parent, R.layout.view_
 
     override fun onBind(item: Item.Token) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             context.navigation?.add(
-                QrAssetFragment.newInstance(item.token, true)
+                QrAssetFragment.newInstance(item.token, true, analyticsFrom = analyticsFrom)
             )
         }
         asyncImageView.setImageURI(item.token.imageUri, this)

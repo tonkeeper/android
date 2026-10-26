@@ -14,6 +14,7 @@ import uikit.extensions.drawable
 import uikit.extensions.withAlpha
 import uikit.widget.AsyncImageView
 import uikit.widget.RadioView
+import uikit.extensions.setMoonOnClickListener
 
 class PoolHolder(
     parent: ViewGroup,
@@ -34,7 +35,7 @@ class PoolHolder(
 
     override fun onBind(item: Item.Pool) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             onClick(item.entity)
         }
 

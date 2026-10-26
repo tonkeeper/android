@@ -7,6 +7,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import com.tonapps.uikit.color.backgroundContentTintColor
 import uikit.R
 import uikit.extensions.dp
+import uikit.extensions.setMoonOnClickListener
 
 class WordHintView @JvmOverloads constructor(
     context: Context,
@@ -35,7 +36,7 @@ class WordHintView @JvmOverloads constructor(
         words.forEach { word ->
             val wordView = createWordView()
             wordView.text = word
-            wordView.setOnClickListener {
+            wordView.setMoonOnClickListener {
                 doOnClickText?.invoke(word)
             }
             addView(wordView, wordLayoutParams)

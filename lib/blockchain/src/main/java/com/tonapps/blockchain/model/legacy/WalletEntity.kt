@@ -72,14 +72,7 @@ data class WalletEntity(
     ) : Parcelable
 
     val contract: BaseWalletContract by lazy {
-        val contractNetwork = if (tetra) TonNetwork.MAINNET else network
-        val signatureNetwork = if (tetra) network else null
-        BaseWalletContract.Companion.create(
-            publicKey,
-            version.title,
-            contractNetwork,
-            signatureNetwork
-        )
+        BaseWalletContract.Companion.create(publicKey, version.title, network)
     }
 
     val multichainWalletId: String?
@@ -97,13 +90,9 @@ data class WalletEntity(
     val testnet: Boolean
         get() = type == WalletType.Testnet
 
-    val tetra: Boolean
-        get() = type == WalletType.Tetra
-
     val network: TonNetwork
         get() = when (type) {
             WalletType.Testnet -> TonNetwork.TESTNET
-            WalletType.Tetra -> TonNetwork.TETRA
             else -> TonNetwork.MAINNET
         }
 
@@ -111,7 +100,7 @@ data class WalletEntity(
         get() = type == WalletType.Signer || type == WalletType.SignerQR
 
     val hasPrivateKey: Boolean
-        get() = type == WalletType.Default || type == WalletType.Tetra || type == WalletType.Testnet || type == WalletType.Lockup
+        get() = type == WalletType.Default || type == WalletType.Testnet || type == WalletType.Lockup
 
     val accountId: String = addressOverride?.toRawAddress() ?: contract.address.toAccountId()
 

@@ -321,7 +321,9 @@ sealed class HistoryItem(
         val spamState: SpamTransactionState = SpamTransactionState.UNKNOWN,
         val actionOutStatus: ActionOutStatus,
         val showNetwork: Boolean = false,
-        val sendFee: SendFee? = null
+        val sendFee: SendFee? = null,
+        /** Replaces the [action] name in the row, e.g. "Fee" for a relayer's jetton transfer. */
+        val actionTitle: CharSequence? = null,
     ): HistoryItem(TYPE_ACTION) {
 
         val account: Account?

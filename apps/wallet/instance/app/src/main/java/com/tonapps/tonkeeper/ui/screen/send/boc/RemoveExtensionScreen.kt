@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.send.boc
 
-import android.content.Context
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
@@ -14,21 +13,17 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.extensions.getParcelableCompat
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
-import com.tonapps.tonkeeper.ui.screen.nft.NftScreen
 import com.tonapps.tonkeeper.ui.screen.send.InsufficientFundsDialog
-import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen.Companion.BOC
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen.Companion.ERROR
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionState
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionTotalDialog
 import com.tonapps.tonkeeper.ui.screen.settings.extensions.ExtensionsScreen
-import com.tonapps.tonkeeper.ui.screen.token.viewer.TokenScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentOrangeColor
 import com.tonapps.uikit.color.resolveColor
@@ -43,14 +38,11 @@ import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
 import uikit.drawable.FooterDrawable
 import uikit.drawable.HeaderDrawable
-import uikit.extensions.activity
-import uikit.extensions.addForResult
 import uikit.extensions.applyNavBottomMargin
 import uikit.extensions.bottomScrolled
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.isMaxScrollReached
-import uikit.extensions.setOnClickListener
 import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
 import uikit.extensions.withAlpha
@@ -59,6 +51,7 @@ import uikit.widget.ProcessTaskView
 import uikit.widget.SimpleRecyclerView
 import uikit.widget.SlideActionView
 import java.util.concurrent.CancellationException
+import uikit.extensions.setMoonOnClickListener
 
 class RemoveExtensionScreen(
     wallet: WalletEntity
@@ -70,7 +63,7 @@ class RemoveExtensionScreen(
     private val pluginAddress: String by lazy { requireArguments().getString(ARG_PLUGIN_ADDRESS)!! }
 
     private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
-        InsufficientFundsDialog(this)
+        InsufficientFundsDialog(this, DepositFlowFrom.Other)
     }
 
     override val viewModel: RemoveExtensionViewModel by walletViewModel {
@@ -115,7 +108,7 @@ class RemoveExtensionScreen(
         headerView.background = headerDrawable
 
         walletView = view.findViewById(R.id.wallet)
-        view.setOnClickListener(R.id.close) { finish() }
+        view.setMoonOnClickListener(R.id.close) { finish() }
 
         emulatedView = view.findViewById(R.id.emulated)
 
@@ -303,7 +296,7 @@ class RemoveExtensionScreen(
         totalView.visibility = View.VISIBLE
         totalView.setTextColor(color)
         totalView.setRightDrawable(drawable)
-        totalView.setOnClickListener { showTotalDialog(state) }
+        totalView.setMoonOnClickListener { showTotalDialog(state) }
     }
 
     private fun showTotalDialog(state: SendTransactionState.Details) {

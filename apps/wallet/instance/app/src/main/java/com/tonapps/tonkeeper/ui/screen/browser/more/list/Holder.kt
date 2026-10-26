@@ -9,6 +9,7 @@ import com.tonapps.uikit.list.BaseListHolder
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class Holder(parent: ViewGroup): BaseListHolder<Item.App>(parent, R.layout.view_browser_full_app) {
 
@@ -19,8 +20,8 @@ class Holder(parent: ViewGroup): BaseListHolder<Item.App>(parent, R.layout.view_
 
     override fun onBind(item: Item.App) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
-            item.app.openDApp(context, item.wallet, "browser_all", item.country, item.multichain)
+        itemView.setMoonOnClickListener {
+            item.app.openDApp(context, item.wallet, "browser_all", item.multichain)
         }
 
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(128))

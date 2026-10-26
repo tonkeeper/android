@@ -1,0 +1,37 @@
+{
+  "quote_id": "5e274bd5-e4be-4f21-ad53-031ab9222a5b",
+  "routes": [
+    {
+      "route_id": "e8bfbbcd-c818-45d9-afe7-04d3d0cf3e75",
+      "provider_route_id": "e6e5b95f18ddc33d170bfc7d9cd5d2ed91ea0164f3f840e11366523d1614c7c9",
+      "aggregator": "omniston",
+      "protocol": "omniston",
+      "route_type": "cross_chain_swap",
+      "source_amount": "100000000000",
+      "estimated_destination_amount": "784787882368220",
+      "minimum_destination_amount": "776940003544537",
+      "total_slippage_bps": 100,
+      "price_impact_bps": 987,
+      "source_usd_price": 1.391330403515781,
+      "destination_usd_price": 0.00017317606148768892,
+      "fees": [
+        {
+          "type": "gas",
+          "asset": "ton/mainnet/coin",
+          "amount": "131500000",
+          "amount_usd": "0.18296"
+        },
+        {
+          "type": "integrator",
+          "asset": "ton/mainnet/jetton/0:09f2e59dec406ab26a5259a45d7ff23ef11f3e5c7c21de0b0d2a1cbe52b76b3d",
+          "amount": "5532240862614",
+          "amount_usd": "0.958052"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-10-16T12:25:40Z",
+      "risk_level": "low",
+      "execution_id": "569e5b6f-501b-4e3a-ac16-f2176ecd0316"
+    }
+  ]
+}

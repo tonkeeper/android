@@ -2,12 +2,14 @@ package com.tonapps.wallet.data.dapps.wc
 
 import androidx.core.net.toUri
 import com.tonapps.async.Async
+import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.DappConnectRequest
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.net.provider.NetworkProvider
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.log.L
+import com.tonapps.wallet.data.dapps.confirm.ConfirmSheetQueue
 import com.tonapps.wallet.data.dapps.entities.DappProvider
 import com.tonapps.wallet.data.dapps.source.db.ConnectDao
 import com.tonapps.wallet.data.dapps.source.db.ConnectEntity
@@ -30,6 +32,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.put
 import java.util.concurrent.ConcurrentHashMap
 
 sealed interface WcRequestResult {
@@ -76,6 +81,7 @@ class WcRepository internal constructor(
     private val accountRepo: McAccountRepository,
     private val connectDao: ConnectDao,
     private val networkProvider: NetworkProvider,
+    private val confirmSheetQueue: ConfirmSheetQueue,
 ) {
     private val json = Json {
         encodeDefaults = false
@@ -107,6 +113,10 @@ class WcRepository internal constructor(
                 is WcEvent.SessionError -> handleSessionError(event)
                 is WcEvent.RequestError -> handleRequestError(event)
                 is WcEvent.Error -> handleConnectError(event)
+                is WcEvent.RequestExpired -> {
+                    pendingRequests.remove(event.requestId)
+                    confirmSheetQueue.discard(event.requestId)
+                }
             }
         }.launchIn(Async.globalScope())
     }
@@ -239,13 +249,13 @@ class WcRepository internal constructor(
             return
         }
 
-        if (event.request.method == WcMethod.WALLET_GET_CAPABILITIES) {
+        if (event.request.method == WcMethod.WalletGetCapabilities) {
             // EIP-5792: no advanced capabilities supported; respond silently.
             wcManager.approveRequest(event.requestId, "{}")
             return
         }
 
-        if (event.request.method == WcMethod.WALLET_WATCH_ASSET) {
+        if (event.request.method == WcMethod.WalletWatchAsset) {
             wcManager.approveRequest(event.requestId, "{}")
             return
         }
@@ -253,6 +263,22 @@ class WcRepository internal constructor(
         val walletId = connectDao.getWalletConnectByTopic(topic)?.walletId
         if (walletId == null) {
             handleRequestError(WcEvent.RequestError(event.requestId, topic, WcError.UNSUPPORTED_REQUEST_INVALID))
+            return
+        }
+
+        val method = event.request.method
+        // TODO filter Solana.Accounts
+        if (method == WcMethod.SolanaGetAccounts || method == WcMethod.SolanaRequestAccounts) {
+            val accounts = accountRepo.getCoinAccounts(walletId)
+                .filter { it.chain == event.request.chain }
+
+            val result = buildJsonArray {
+                accounts.forEach { account ->
+                    addJsonObject { put("pubkey", account.displayAddress) }
+                }
+            }
+
+            wcManager.approveRequest(event.requestId, result.toString())
             return
         }
 
@@ -289,6 +315,10 @@ class WcRepository internal constructor(
             is WcPendingEvent.Disconnected -> {
                 connectDao.deleteWalletConnectByTopic(state.topic)
                 sources.remove(state.topic)
+                pendingRequests
+                    .filterValues { (it.context as? ConfirmContext.Dapp)?.topic == state.topic }
+                    .keys
+                    .forEach(confirmSheetQueue::discard)
             }
         }
 

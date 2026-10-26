@@ -47,8 +47,8 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getNextNonce(apiKeyIndex: Int, xWalletID: String): NextNonce {
-        val localVarResponse = getNextNonceWithHttpInfo(apiKeyIndex = apiKeyIndex, xWalletID = xWalletID)
+    fun getNextNonce(apiKeyIndex: Int, xWalletId: String? = null): NextNonce {
+        val localVarResponse = getNextNonceWithHttpInfo(apiKeyIndex = apiKeyIndex, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as NextNonce
@@ -67,22 +67,22 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getNextNonceWithHttpInfo(apiKeyIndex: Int, xWalletID: String): ApiResponse<NextNonce?> {
-        val localVariableConfig = getNextNonceRequestConfig(apiKeyIndex = apiKeyIndex, xWalletID = xWalletID)
+    fun getNextNonceWithHttpInfo(apiKeyIndex: Int, xWalletId: String?): ApiResponse<NextNonce?> {
+        val localVariableConfig = getNextNonceRequestConfig(apiKeyIndex = apiKeyIndex, xWalletId = xWalletId)
 
         return request<Unit, NextNonce>(
             localVariableConfig
         )
     }
 
-    fun getNextNonceRequestConfig(apiKeyIndex: Int, xWalletID: String): RequestConfig<Unit> {
+    fun getNextNonceRequestConfig(apiKeyIndex: Int, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
                 put("api_key_index", listOf(apiKeyIndex.toString()))
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -92,14 +92,14 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun reportTransactions(xWalletID: String, reportTransactionsRequest: ReportTransactionsRequest): Unit {
-        val localVarResponse = reportTransactionsWithHttpInfo(xWalletID = xWalletID, reportTransactionsRequest = reportTransactionsRequest)
+    fun reportTransactions(reportTransactionsRequest: ReportTransactionsRequest, xWalletId: String? = null): Unit {
+        val localVarResponse = reportTransactionsWithHttpInfo(reportTransactionsRequest = reportTransactionsRequest, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> Unit
@@ -117,19 +117,19 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
     }
 
     @Throws(IllegalStateException::class, IOException::class)
-    fun reportTransactionsWithHttpInfo(xWalletID: String, reportTransactionsRequest: ReportTransactionsRequest): ApiResponse<Unit?> {
-        val localVariableConfig = reportTransactionsRequestConfig(xWalletID = xWalletID, reportTransactionsRequest = reportTransactionsRequest)
+    fun reportTransactionsWithHttpInfo(reportTransactionsRequest: ReportTransactionsRequest, xWalletId: String?): ApiResponse<Unit?> {
+        val localVariableConfig = reportTransactionsRequestConfig(reportTransactionsRequest = reportTransactionsRequest, xWalletId = xWalletId)
 
         return request<ReportTransactionsRequest, Unit>(
             localVariableConfig
         )
     }
 
-    fun reportTransactionsRequestConfig(xWalletID: String, reportTransactionsRequest: ReportTransactionsRequest): RequestConfig<ReportTransactionsRequest> {
+    fun reportTransactionsRequestConfig(reportTransactionsRequest: ReportTransactionsRequest, xWalletId: String?): RequestConfig<ReportTransactionsRequest> {
         val localVariableBody = reportTransactionsRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -140,15 +140,15 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun sendTransactions(xWalletID: String, sendTransactionsRequest: SendTransactionsRequest): SendTransactionsResponse {
-        val localVarResponse = sendTransactionsWithHttpInfo(xWalletID = xWalletID, sendTransactionsRequest = sendTransactionsRequest)
+    fun sendTransactions(sendTransactionsRequest: SendTransactionsRequest, xWalletId: String? = null): SendTransactionsResponse {
+        val localVarResponse = sendTransactionsWithHttpInfo(sendTransactionsRequest = sendTransactionsRequest, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as SendTransactionsResponse
@@ -167,19 +167,19 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun sendTransactionsWithHttpInfo(xWalletID: String, sendTransactionsRequest: SendTransactionsRequest): ApiResponse<SendTransactionsResponse?> {
-        val localVariableConfig = sendTransactionsRequestConfig(xWalletID = xWalletID, sendTransactionsRequest = sendTransactionsRequest)
+    fun sendTransactionsWithHttpInfo(sendTransactionsRequest: SendTransactionsRequest, xWalletId: String?): ApiResponse<SendTransactionsResponse?> {
+        val localVariableConfig = sendTransactionsRequestConfig(sendTransactionsRequest = sendTransactionsRequest, xWalletId = xWalletId)
 
         return request<SendTransactionsRequest, SendTransactionsResponse>(
             localVariableConfig
         )
     }
 
-    fun sendTransactionsRequestConfig(xWalletID: String, sendTransactionsRequest: SendTransactionsRequest): RequestConfig<SendTransactionsRequest> {
+    fun sendTransactionsRequestConfig(sendTransactionsRequest: SendTransactionsRequest, xWalletId: String?): RequestConfig<SendTransactionsRequest> {
         val localVariableBody = sendTransactionsRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -190,7 +190,7 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

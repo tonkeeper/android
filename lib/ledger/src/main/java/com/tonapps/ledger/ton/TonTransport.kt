@@ -223,12 +223,25 @@ class TonTransport(private val transport: Transport) {
                 var cell = CellBuilder.beginCell().storeUInt(0x0f8a7ea5, 32)
                 var bytes = ByteArray(0)
 
+                val knownJetton = transaction.payload.knownJetton
+                var flags = 0
+                if (transaction.payload.queryId != null) {
+                    flags = flags or 1
+                }
+                if (knownJetton != null) {
+                    flags = flags or 2
+                }
+                bytes += LedgerWriter.putUint8(flags)
+
                 transaction.payload.queryId?.let { queryId ->
-                    bytes += LedgerWriter.putUint8(1) + LedgerWriter.putUint64(queryId)
+                    bytes += LedgerWriter.putUint64(queryId)
                     cell = cell.storeUInt(queryId.toBigInt(), 64)
                 } ?: run {
-                    bytes += LedgerWriter.putUint8(0)
                     cell = cell.storeUInt(0, 64)
+                }
+
+                if (knownJetton != null) {
+                    bytes += LedgerWriter.putUint16(knownJetton.jettonId) + LedgerWriter.putUint8(knownJetton.workchain)
                 }
 
                 bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount.toLong()) + LedgerWriter.putAddress(

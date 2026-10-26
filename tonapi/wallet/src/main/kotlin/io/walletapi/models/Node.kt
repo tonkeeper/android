@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Node(
@@ -39,11 +44,26 @@ data class Node(
     /**
      * Node type, either main or fallback
      *
-     * Values: main,fallback
+     * Values: main,fallback,unknown
      */
-    @Serializable
+    @Serializable(with = TypeSerializer::class)
     enum class Type(val value: String) {
         @SerialName(value = "main") main("main"),
-        @SerialName(value = "fallback") fallback("fallback");
+        @SerialName(value = "fallback") fallback("fallback"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object TypeSerializer : KSerializer<Type> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Type {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Type.entries.firstOrNull { it.value == value }
+                ?: Type.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Type) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

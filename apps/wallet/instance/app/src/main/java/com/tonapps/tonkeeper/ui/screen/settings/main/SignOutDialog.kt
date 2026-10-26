@@ -15,6 +15,7 @@ import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.CheckBoxView
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class SignOutDialog(
     context: Context,
@@ -32,14 +33,14 @@ class SignOutDialog(
         checkbox.doOnCheckedChanged = { logoutButton.isEnabled = it }
 
         findViewById<HeaderView>(R.id.header)?.doOnActionClick = { dismiss() }
-        findViewById<View>(R.id.confirmation)?.setOnClickListener { checkbox.toggle() }
-        findViewById<View>(R.id.backup)?.setOnClickListener { openBackup() }
+        findViewById<View>(R.id.confirmation)?.setMoonOnClickListener { checkbox.toggle() }
+        findViewById<View>(R.id.backup)?.setMoonOnClickListener { openBackup() }
     }
 
     fun show(onClick: () -> Unit) {
         super.show()
         confirmationTextView.text = context.getStringCompat(Localization.logout_confirmation, wallet.label.getTitle(context, confirmationTextView))
-        findViewById<View>(R.id.logout)?.setOnClickListener {
+        findViewById<View>(R.id.logout)?.setMoonOnClickListener {
             onClick()
             dismiss()
         }

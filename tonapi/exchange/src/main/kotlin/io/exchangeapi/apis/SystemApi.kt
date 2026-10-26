@@ -16,6 +16,7 @@ import okhttp3.HttpUrl
 
 import io.exchangeapi.models.Healthcheck500Response
 import io.exchangeapi.models.Ok
+import io.exchangeapi.models.Readiness503Response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -81,6 +82,52 @@ class SystemApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/healthcheck",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun readiness(): Ok {
+        val localVarResponse = readinessWithHttpInfo()
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Ok
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun readinessWithHttpInfo(): ApiResponse<Ok?> {
+        val localVariableConfig = readinessRequestConfig()
+
+        return request<Unit, Ok>(
+            localVariableConfig
+        )
+    }
+
+    fun readinessRequestConfig(): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/readiness",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

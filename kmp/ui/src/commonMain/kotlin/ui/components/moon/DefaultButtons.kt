@@ -1,5 +1,6 @@
 package ui.components.moon
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ui.theme.pressScale
 import ui.components.moon.MoonLoader
 
 @Composable
@@ -27,14 +29,18 @@ fun MoonAccentButton(
     icon: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Button(
         onClick = onClick,
         enabled = enabled && !loading,
-        modifier = modifier.height(size.height),
+        modifier = modifier
+            .height(size.height)
+            .pressScale(interactionSource),
         shape = size.shape,
         colors = buttonColors,
         elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
         contentPadding = remember { PaddingValues(horizontal = 16.dp, vertical = 8.dp) },
+        interactionSource = interactionSource,
     ) {
         if (loading) {
             MoonLoader(Modifier.size(24.dp), color = buttonColors.contentColor)
@@ -61,11 +67,15 @@ fun MoonTextButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     TextButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.height(size.height),
-        shape = size.shape
+        modifier = modifier
+            .height(size.height)
+            .pressScale(interactionSource),
+        shape = size.shape,
+        interactionSource = interactionSource,
     ) {
         Text(
             text = text,

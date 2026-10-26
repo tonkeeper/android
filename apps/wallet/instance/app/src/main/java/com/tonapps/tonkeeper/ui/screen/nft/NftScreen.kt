@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.core.widget.NestedScrollView
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.locale
@@ -25,7 +24,6 @@ import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.helper.DateHelper
 import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -45,6 +43,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.core.Trust
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.combine
@@ -70,6 +69,7 @@ import uikit.extensions.topScrolled
 import uikit.widget.AsyncImageView
 import uikit.widget.ColumnLayout
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class NftScreen : BaseWalletScreen<ScreenContext.None>(
     R.layout.fragment_nft,
@@ -133,12 +133,16 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
         spamView = view.findViewById(R.id.spam)
         domainExpirationView = view.findViewById(R.id.domain_expiration)
 
-        view.findViewById<Button>(R.id.report_spam).setOnClickListener { reportSpam(true) }
-        view.findViewById<Button>(R.id.not_spam).setOnClickListener { reportSpam(false) }
+        view.findViewById<Button>(R.id.report_spam).setMoonOnClickListener { reportSpam(true) }
+        view.findViewById<Button>(R.id.not_spam).setMoonOnClickListener { reportSpam(false) }
 
         collectFlow(
             combine(viewModel.walletFlow, viewModel.nftFlow) { wallet, nft ->
-                if (wallet != null && nft != null) wallet to nft else null
+                if (wallet != null && nft != null) {
+                    wallet to nft
+                } else {
+                    null
+                }
             }.filterNotNull(),
         ) { (loadedWallet, loadedNft) ->
             if (contentBound) {
@@ -152,11 +156,19 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
     }
 
     private fun bindContent(view: View) {
-        headerView.title = nftEntity.name
+        val hiddenBalance = viewModel.hiddenBalance
+        fun masked(text: String): String = if (hiddenBalance) {
+            HIDDEN_BALANCE
+        } else {
+            text
+        }
+
+        headerView.title = masked(nftEntity.name)
 
         val imageView = view.findViewById<AsyncImageView>(R.id.image)
         imageView.setRoundTop(16f.dp)
 
+        imageView.blur = hiddenBalance
         imageView.setImageURI(nftEntity.bigUri, this)
 
         val saleBadgeView = view.findViewById<AppCompatImageView>(R.id.sale_badge)
@@ -167,11 +179,13 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
         }
 
         val nameView = view.findViewById<AppCompatTextView>(R.id.name)
-        nameView.text = nftEntity.name
+        nameView.text = masked(nftEntity.name)
 
         val collectionNameView = view.findViewById<AppCompatTextView>(R.id.collection_name)
-        collectionNameView.text = nftEntity.collectionName.ifEmpty {
-            getString(Localization.unnamed_collection)
+        collectionNameView.text = when {
+            hiddenBalance -> HIDDEN_BALANCE
+            nftEntity.collectionName.isEmpty() -> getString(Localization.unnamed_collection)
+            else -> nftEntity.collectionName
         }
         if (nftEntity.verified) {
             collectionNameView.setCompoundDrawablesWithIntrinsicBounds(
@@ -189,11 +203,11 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
             descriptionView.visibility = View.GONE
         } else {
             descriptionView.visibility = View.VISIBLE
-            bindDescription(descriptionView, nftEntity.description)
+            bindDescription(descriptionView, masked(nftEntity.description))
         }
 
         val transferButton = view.findViewById<Button>(R.id.transfer)
-        transferButton.setOnClickListener {
+        transferButton.setMoonOnClickListener {
             navigation?.add(
                 SendScreen.newInstance(
                     wallet = wallet,
@@ -213,7 +227,7 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
                     locale = requireContext().locale
                 )
             )
-            domainRenewButton.setOnClickListener { viewModel.renewDomain() }
+            domainRenewButton.setMoonOnClickListener { viewModel.renewDomain() }
             domainRenewButton.isEnabled = !nftEntity.inSale
         } else {
             domainRenewButton.visibility = View.GONE
@@ -228,7 +242,7 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
             for ((index, button) in nftEntity.metadata.buttons.take(5).withIndex()) {
                 val buttonView = newNftButton(buttonsContainer, index == 0)
                 buttonView.text = button.label
-                buttonView.setOnClickListener { openButtonDApp(button.uri) }
+                buttonView.setMoonOnClickListener { openButtonDApp(button.uri) }
             }
         }
 
@@ -248,7 +262,7 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
             aboutView.visibility = View.GONE
         } else {
             aboutView.visibility = View.VISIBLE
-            bindDescription(collectionDescription, nftEntity.collectionDescription)
+            bindDescription(collectionDescription, masked(nftEntity.collectionDescription))
         }
 
         nftEntity.owner?.address?.let {
@@ -263,7 +277,8 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
             transferButton.visibility = View.GONE
         }
 
-        if (nftEntity.lottieUri != null) {
+        // A Lottie can't be blurred, so it would cover the blurred image
+        if (nftEntity.lottieUri != null && !hiddenBalance) {
             lottieView = LottieView(requireContext()).apply {
                 roundTop(16.dp)
                 setUri(nftEntity.lottieUri!!)
@@ -368,7 +383,11 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
 
     private fun newNftButton(parent: ColumnLayout, first: Boolean): Button {
         val isLight = requireContext().isLightTheme
-        val layout = if (first) R.layout.view_nft_button_green else R.layout.view_nft_button
+        val layout = if (first) {
+            R.layout.view_nft_button_green
+        } else {
+            R.layout.view_nft_button
+        }
         val view = parent.context.inflate(layout)
         val button = view.findViewById<Button>(R.id.nft_button)
         button.isEnabled = isCanSend
@@ -488,12 +507,16 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
     }
 
     private fun reportSpam(spam: Boolean) {
-        navigation?.toastLoading(true)
-        setTrust(if (spam) Trust.blacklist else Trust.whitelist)
+        setTrust(
+            if (spam) {
+                Trust.blacklist
+            } else {
+                Trust.whitelist
+            }
+        )
         spamView.visibility = View.GONE
         headerView.setSubtitle(null)
         viewModel.reportSpam(spam) {
-            navigation?.toastLoading(false)
             if (spam) {
                 navigation?.toast(Localization.nft_marked_as_spam)
                 finish()
@@ -513,7 +536,7 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
     private fun setOwner(view: View, address: String) {
         val ownerContainerView = view.findViewById<View>(R.id.owner_container)
         ownerContainerView.background = ListCell.Position.FIRST.drawable(requireContext())
-        ownerContainerView.setOnClickListener {
+        ownerContainerView.setMoonOnClickListener {
             context?.copyWithToast(address)
         }
 
@@ -523,13 +546,13 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
 
     private fun setAddress(view: View, address: String) {
         val explorerView = view.findViewById<AppCompatTextView>(R.id.open_explorer)
-        explorerView.setOnClickListener {
+        explorerView.setMoonOnClickListener {
             openTonViewer()
         }
 
         val addressContainerView = view.findViewById<View>(R.id.address_container)
         addressContainerView.background = ListCell.Position.LAST.drawable(requireContext())
-        addressContainerView.setOnClickListener {
+        addressContainerView.setMoonOnClickListener {
             context?.copyWithToast(address)
         }
 

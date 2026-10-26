@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.battery.settings.list
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.tonkeeper.ui.screen.battery.settings.list.holder.NetworksHolder
 import com.tonapps.tonkeeper.ui.screen.battery.settings.list.holder.SettingsHeaderHolder
 import com.tonapps.tonkeeper.ui.screen.battery.settings.list.holder.SupportedTransactionHolder
 import com.tonapps.uikit.list.BaseListAdapter
@@ -14,6 +15,7 @@ class Adapter: BaseListAdapter() {
         return when(viewType) {
             Item.TYPE_SETTINGS_HEADER -> SettingsHeaderHolder(parent)
             Item.TYPE_SUPPORTED_TRANSACTION -> SupportedTransactionHolder(parent)
+            Item.TYPE_NETWORKS -> NetworksHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

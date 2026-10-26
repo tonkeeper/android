@@ -22,7 +22,7 @@ data class CrossSwapQuote(
     @SerialName(value = "routes")
     val routes: List<CrossSwapRoute>,
 
-    /* Errors returned by aggregators that yielded no usable route */
+    /* Errors returned by aggregators that yielded no usable route. A `wallet_screened` entry is the exception that can accompany a listed route: with `include_payload: true` the route priced but its payloads could not be built, so it is present and unsignable.  */
     @SerialName(value = "provider_errors")
     val providerErrors: List<CrossSwapProviderError>? = null
 ) {

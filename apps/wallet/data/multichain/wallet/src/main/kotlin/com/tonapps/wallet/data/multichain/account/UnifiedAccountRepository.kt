@@ -1,25 +1,18 @@
 package com.tonapps.wallet.data.multichain.account
 
 import com.tonapps.async.Async
-import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
-import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.api.AuthorizationProvider
 import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.device.SecureDeviceRepository
-import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -50,15 +43,11 @@ interface UnifiedAccountRepository : AuthorizationProvider {
         network: TonNetwork = TonNetwork.MAINNET,
     ): WalletEntity?
 
-    suspend fun getMultichainTonAccount(walletId: String): AccountEntity?
-
     suspend fun getAccountAddress(wallet: WalletEntity, chain: Chain): Address?
 
     suspend fun buildAuth(wallet: WalletEntity?): Authorization
 
     suspend fun deleteWallet(id: String)
-
-    suspend fun deleteAllWallets()
 
     suspend fun hasAnyWallet(): Boolean
 }
@@ -66,13 +55,12 @@ interface UnifiedAccountRepository : AuthorizationProvider {
 class UnifiedAccountRepositoryImpl(
     private val accountRepository: AccountRepository,
     private val mcAccountRepository: McAccountRepository,
-    private val chainKitProvider: ChainKitProvider,
+    private val tonWalletResolver: McTonWalletResolver,
     private val deviceRepository: SecureDeviceRepository,
 ) : UnifiedAccountRepository {
 
-    // Combined with the MC store's write signal: at cold start the selection can
-    // resolve to the legacy placeholder before the MC rows are readable, and the
-    // legacy state alone never re-emits.
+    // Combined with the MC store's write signal: the selected MC wallet is a snapshot,
+    // so a rename in the MC store must re-resolve it; the legacy state never re-emits.
     @OptIn(ExperimentalCoroutinesApi::class)
     override val selectedTonWalletFlow: Flow<WalletEntity?> = combine(
         accountRepository.selectedStateFlow
@@ -92,7 +80,7 @@ class UnifiedAccountRepositoryImpl(
     override suspend fun getTonWallets(): List<WalletEntity> {
         return withContext(Async.Io) {
             val legacy = accountRepository.getWallets()
-            val mc = mcAccountRepository.getWallets().mapNotNull { toTonWalletEntity(it) }
+            val mc = mcAccountRepository.getWallets().mapNotNull { tonWalletResolver.toTonWalletEntity(it) }
             legacy + mc
         }
     }
@@ -114,20 +102,15 @@ class UnifiedAccountRepositoryImpl(
         return withContext(Async.Io) {
             accountRepository.getSelectedWallet()?.let { return@withContext resolveSelected(it) }
             val id = accountRepository.getSelectedWalletId() ?: return@withContext null
-            mcAccountRepository.getWallet(id)?.let { toTonWalletEntity(it) }
+            tonWalletResolver.getTonWallet(id)
         }
     }
 
     override suspend fun getTonWalletById(id: String): WalletEntity? {
         return withContext(Async.Io) {
-            accountRepository.getWalletById(id) ?: mcAccountRepository.getWallet(id)?.let {
-                toTonWalletEntity(it)
-            }
+            accountRepository.getWalletById(id) ?: tonWalletResolver.getTonWallet(id)
         }
     }
-
-    override suspend fun getMultichainTonAccount(walletId: String): AccountEntity? =
-        mcAccountRepository.getTonAccount(walletId)
 
     override suspend fun getAccountAddress(wallet: WalletEntity, chain: Chain): Address? {
         return withContext(Async.Io) {
@@ -183,7 +166,7 @@ class UnifiedAccountRepositoryImpl(
             }
 
             for (mc in mcAccountRepository.getWallets()) {
-                val entity = toTonWalletEntity(mc) ?: continue
+                val entity = tonWalletResolver.toTonWalletEntity(mc) ?: continue
                 if (entity.accountId.equalsAddress(accountId)) {
                     return@withContext entity
                 }
@@ -205,20 +188,9 @@ class UnifiedAccountRepositoryImpl(
             }
 
             if (selectedId == null || selectedId == id) {
-                val nextId = mcAccountRepository.getWallets().firstOrNull()?.id
-                    ?: accountRepository.getWallets().firstOrNull()?.id
-
-                accountRepository.setSelectedWallet(nextId)
+                accountRepository.selectDefaultWallet()
             }
 
-            mcAccountRepository.refresh()
-        }
-    }
-
-    override suspend fun deleteAllWallets() {
-        withContext(Async.Io) {
-            mcAccountRepository.deleteAllWallets()
-            accountRepository.logout()
             mcAccountRepository.refresh()
         }
     }
@@ -229,45 +201,11 @@ class UnifiedAccountRepositoryImpl(
         }
     }
 
-    private suspend fun resolveSelected(legacy: WalletEntity): WalletEntity {
-        if (!legacy.isMcPlaceholder()) {
-            return legacy
+    private suspend fun resolveSelected(wallet: WalletEntity): WalletEntity {
+        if (wallet.type != WalletType.Multichain) {
+            return wallet
         }
 
-        return mcAccountRepository.getWallet(legacy.id)
-            ?.let { toTonWalletEntity(it) }
-            ?: legacy
-    }
-
-    private fun WalletEntity.isMcPlaceholder(): Boolean {
-        return publicKey == EmptyPrivateKeyEd25519.publicKey()
-    }
-
-    private suspend fun toTonWalletEntity(mc: McWalletEntity): WalletEntity? {
-        val account = mcAccountRepository.getTonAccount(mc.id) ?: return null
-        val hex = account.publicKey.removePrefix("0x")
-        val publicKey = hex.publicKeyFromHex()
-    // TON Connect ton_addr must send a state init that hashes to addressOverride (the TW Core
-    // address MC actually holds; org.ton's V5R1 differs, so `contract` would send the wrong one).
-    // For V5R1 the address is hash(buildV5R1StateInit), so build the matching state init the same
-        // way. V4R2 has no TW Core builder here → leave null and fall back to the V4R2 `contract`.
-        val stateInitOverride = if (mc.tonWalletType == Address.Type.TonV4R2) {
-            null
-        } else {
-            chainKitProvider.buildTonV5R1StateInitBase64(account.publicKey)
-        }
-        return WalletEntity(
-            id = mc.id,
-            publicKey = publicKey,
-            type = WalletType.Multichain,
-            version = when (mc.tonWalletType) {
-                Address.Type.TonV4R2 -> WalletVersion.V4R2
-                else -> WalletVersion.V5R1
-            },
-            label = Wallet.Label(mc.name, mc.emoji, mc.color),
-            initialized = true,
-            addressOverride = account.displayAddress,
-            stateInitOverride = stateInitOverride,
-        )
+        return tonWalletResolver.getTonWallet(wallet.id) ?: wallet
     }
 }

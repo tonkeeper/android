@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
-import com.tonapps.blockchain.ton.SignatureDomain
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.chainkit.core.chain.model.account.Chain
@@ -42,10 +41,7 @@ class UnlockedWalletSigner(
         seqNo: Int,
     ): Cell {
         val hash = unsignedBody.hash().toByteArray()
-        val dataToSign = wallet.contract.signatureGlobalId
-            ?.let { SignatureDomain.prefixedHash(it, hash) }
-            ?: hash
-        val signature = BitString(tonPrivateKey.signToByteArray(dataToSign))
+        val signature = BitString(tonPrivateKey.signToByteArray(hash))
         val signedBody = wallet.contract.signedBody(signature, unsignedBody)
         return wallet.contract.createTransferMessageCell(
             address = wallet.contract.address,
@@ -180,7 +176,7 @@ class SignTransaction(
         return when (wallet.type) {
             WalletType.SignerQR -> signerQR(activity, wallet, unsignedBody)
             WalletType.Signer -> signerApp(activity, wallet, unsignedBody)
-            WalletType.Default, WalletType.Tetra, WalletType.Testnet, WalletType.Lockup -> default(
+            WalletType.Default, WalletType.Testnet, WalletType.Lockup -> default(
                 activity,
                 wallet,
                 unsignedBody
@@ -267,8 +263,7 @@ class SignTransaction(
         val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id)
             ?: throw SendException.UnableSendTransaction()
         val hash = unsignedBody.hash().toByteArray()
-        val dataToSign = wallet.contract.signatureGlobalId?.let { SignatureDomain.prefixedHash(it, hash) } ?: hash
-        BitString(privateKey.signToByteArray(dataToSign))
+        BitString(privateKey.signToByteArray(hash))
     }
 
     suspend fun default(
@@ -294,8 +289,7 @@ class SignTransaction(
     ): BitString = withContext(Dispatchers.IO) {
         val privateKey = unlockTonPrivateKey(activity, wallet.id)
         val hash = unsignedBody.hash().toByteArray()
-        val dataToSign = wallet.contract.signatureGlobalId?.let { SignatureDomain.prefixedHash(it, hash) } ?: hash
-        BitString(privateKey.signToByteArray(dataToSign))
+        BitString(privateKey.signToByteArray(hash))
     }
 
     suspend fun multichain(

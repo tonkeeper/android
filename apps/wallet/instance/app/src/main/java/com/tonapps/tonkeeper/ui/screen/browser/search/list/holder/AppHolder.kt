@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class AppHolder(
     parent: ViewGroup,
@@ -20,7 +21,7 @@ class AppHolder(
 
     override fun onBind(item: Item.App) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
 
         iconView.setImageURI(item.icon)
         networkIconView.bindBrowserNetworkIcon(item.app.chains)

@@ -18,6 +18,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.InputView
+import uikit.extensions.setMoonOnClickListener
 
 class WatchScreen: BaseFragment(R.layout.fragment_init_watch) {
 
@@ -38,7 +39,7 @@ class WatchScreen: BaseFragment(R.layout.fragment_init_watch) {
         inputView.setOnDoneActionListener { next() }
 
         button = view.findViewById(R.id.button)
-        button.setOnClickListener { next() }
+        button.setMoonOnClickListener { next() }
         button.pinToBottomInsets()
 
         collectFlow(initViewModel.uiTopOffset) {

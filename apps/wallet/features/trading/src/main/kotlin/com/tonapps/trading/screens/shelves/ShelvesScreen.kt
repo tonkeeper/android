@@ -69,14 +69,13 @@ import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.core.components.tokenChainImageUrl
+import com.tonapps.core.navigation.PortfolioSearchAssetType
 import com.tonapps.core.navigation.PortfolioSearchSort
 import com.tonapps.icu.Formatter
 import com.tonapps.paging.collectAsStateWorkaround
-import com.tonapps.perps.data.PERPS_EMPTY_VALUE
 import com.tonapps.perps.data.PerpMarket
-import com.tonapps.perps.data.formatSignedPercent
-import com.tonapps.perps.screens.markets.PerpsAssetIcon
-import com.tonapps.perps.screens.markets.perpsChangeColor
+import com.tonapps.perps.screens.portfolio.PerpsCategoryTiles
+import com.tonapps.perps.screens.portfolio.PerpsShelf
 import com.tonapps.trading.displayChainName
 import com.tonapps.trading.percentDiffColor
 import com.tonapps.uikit.icon.UIKitIcon
@@ -92,8 +91,11 @@ import io.tradingapi.models.ShelfConfig
 import io.tradingapi.models.ShelfConfigSeeAll
 import io.tradingapi.models.ShelfGroup
 import io.tradingapi.models.ShelfType
+import java.time.OffsetDateTime
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import ui.components.moon.MoonActionSelector
 import ui.components.moon.MoonActionSelectorStyle
 import ui.components.moon.MoonAsyncImage
@@ -118,6 +120,7 @@ import com.tonapps.core.deeplink.withRaffleSource
 import com.tonapps.wallet.api.entity.BannerEntity
 import ui.preview.ThemedPreview
 import ui.theme.Dimens
+import ui.theme.ScaleIndication
 import ui.theme.Shapes
 import ui.theme.UIKit
 
@@ -128,10 +131,12 @@ fun ShelvesScreen(
     onOpenSeeAll: (AssetsTab, PortfolioSearchSort, Network.Type?) -> Unit,
     onOpenAssetDetails: (MarketItem) -> Unit,
     onOpenPerps: () -> Unit,
+    onOpenSearchCategory: (PortfolioSearchAssetType) -> Unit,
     onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
     onOpenLink: (String) -> Unit,
     scrollToShelfKey: MarketListKey? = null,
     onScrollToShelfHandled: () -> Unit = {},
+    scrollToTop: Flow<Unit> = emptyFlow(),
 ) {
     val shelfGroups by feature.shelfGroupsFlow.collectAsStateWorkaround()
     val favoriteAssets by feature.favoritesFlow.collectAsStateWorkaround()
@@ -177,12 +182,21 @@ fun ShelvesScreen(
         },
         onOpenPerps = onOpenPerps,
         onOpenPerpMarket = onOpenPerpMarket,
+        onOpenSearchCategory = onOpenSearchCategory,
         isPerpsVisible = isPerpsVisible,
         perpsShelfMarkets = perpsShelfMarkets,
         onRemoveFavorites = feature::removeFavorites,
         scrollToShelfKey = scrollToShelfKey,
         onScrollToShelfHandled = onScrollToShelfHandled,
+        scrollToTop = scrollToTop,
     )
+}
+
+private enum class ShelvesHeader(val key: String) {
+    Banners("raffle_banner"),
+    PerpsTiles("perps_tiles"),
+    PerpsTrending("perps_trending"),
+    Favorites("favorite_tokens"),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -206,11 +220,13 @@ private fun ShelvesContent(
     onOpenAssetDetails: (MarketItem) -> Unit,
     onOpenPerps: () -> Unit,
     onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit = { _, _ -> },
+    onOpenSearchCategory: (PortfolioSearchAssetType) -> Unit = {},
     isPerpsVisible: Boolean,
     perpsShelfMarkets: List<PerpMarket> = emptyList(),
     onRemoveFavorites: (Collection<String>) -> Unit,
     scrollToShelfKey: MarketListKey? = null,
     onScrollToShelfHandled: () -> Unit = {},
+    scrollToTop: Flow<Unit> = emptyFlow(),
 ) {
     MoonScaffold(
         topBar = {
@@ -247,262 +263,189 @@ private fun ShelvesContent(
                 )
             },
         ) {
-            when {
-                isLoading -> ShelvesShimmer()
+            val groups = shelfGroups.orEmpty()
+            val listState = rememberLazyListState()
+            val isAtTop by remember {
+                derivedStateOf {
+                    listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+                }
+            }
+            var wasAtTopWithoutFavorites by remember { mutableStateOf(true) }
+            var hadFavorites by remember { mutableStateOf(favoriteAssets.isNotEmpty()) }
 
-                shelvesError -> Column(
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .padding(bottom = Dimens.heightBar),
-                ) {
+            LaunchedEffect(isAtTop, favoriteAssets.isEmpty()) {
+                if (favoriteAssets.isEmpty()) {
+                    wasAtTopWithoutFavorites = isAtTop
+                }
+            }
+
+            LaunchedEffect(favoriteAssets.isNotEmpty()) {
+                val hasFavorites = favoriteAssets.isNotEmpty()
+                if (hasFavorites && !hadFavorites && wasAtTopWithoutFavorites) {
+                    listState.animateScrollToItem(0)
+                }
+                hadFavorites = hasFavorites
+            }
+
+            var wasAtTopWithoutBanners by remember { mutableStateOf(true) }
+            var hadBanners by remember { mutableStateOf(banners.isNotEmpty()) }
+
+            LaunchedEffect(isAtTop, banners.isEmpty()) {
+                if (banners.isEmpty()) {
+                    wasAtTopWithoutBanners = isAtTop
+                }
+            }
+
+            LaunchedEffect(banners.isNotEmpty()) {
+                val hasBanners = banners.isNotEmpty()
+                if (hasBanners && !hadBanners && wasAtTopWithoutBanners) {
+                    listState.scrollToItem(0)
+                }
+                hadBanners = hasBanners
+            }
+
+            var wasAtTopWithoutPerps by remember { mutableStateOf(true) }
+            var hadPerps by remember { mutableStateOf(isPerpsVisible) }
+
+            LaunchedEffect(isAtTop, isPerpsVisible) {
+                if (!isPerpsVisible) {
+                    wasAtTopWithoutPerps = isAtTop
+                }
+            }
+
+            LaunchedEffect(isPerpsVisible) {
+                if (isPerpsVisible && !hadPerps && wasAtTopWithoutPerps) {
+                    listState.scrollToItem(0)
+                }
+                hadPerps = isPerpsVisible
+            }
+
+            LaunchedEffect(scrollToTop) {
+                scrollToTop.collect {
+                    listState.animateScrollToItem(0)
+                }
+            }
+
+            val headers = remember(
+                banners.isNotEmpty(),
+                isPerpsVisible,
+                perpsShelfMarkets.isNotEmpty(),
+                favoriteAssets.isNotEmpty(),
+            ) {
+                buildList {
                     if (banners.isNotEmpty()) {
-                        BannersViewer(
+                        add(ShelvesHeader.Banners)
+                    }
+                    if (isPerpsVisible) {
+                        add(ShelvesHeader.PerpsTiles)
+                    }
+                    if (isPerpsVisible && perpsShelfMarkets.isNotEmpty()) {
+                        add(ShelvesHeader.PerpsTrending)
+                    }
+                    if (favoriteAssets.isNotEmpty()) {
+                        add(ShelvesHeader.Favorites)
+                    }
+                }
+            }
+
+            LaunchedEffect(scrollToShelfKey, groups, isLoading, headers.size) {
+                val key = scrollToShelfKey ?: return@LaunchedEffect
+                if (isLoading || groups.isEmpty()) {
+                    return@LaunchedEffect
+                }
+                val targetIndex = groups.indexOfFirst { multichainGroup ->
+                    multichainGroup.groups.any { shelfGroup ->
+                        shelfGroup.items.any { it.key == key }
+                    }
+                }
+                if (targetIndex >= 0) {
+                    val targetGroup = groups[targetIndex]
+                    val subgroupName = targetGroup.groups.firstOrNull { shelfGroup ->
+                        shelfGroup.items.any { it.key == key }
+                    }?.name
+                    onSelectShelf(targetGroup.id, subgroupName, key)
+                    listState.animateScrollToItem(headers.size + targetIndex)
+                }
+                onScrollToShelfHandled()
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .padding(bottom = Dimens.heightBar),
+            ) {
+                items(
+                    items = headers,
+                    key = { header -> header.key },
+                    contentType = { header -> header.key },
+                ) { header ->
+                    when (header) {
+                        ShelvesHeader.Banners -> BannersViewer(
                             banners = banners,
+                            analytics = null,
                             onClick = { button -> onBannerClick(button.payload) },
                             onHide = onHideBanner,
                             modifier = Modifier.padding(top = 8.dp),
                         )
-                    }
-                    if (favoriteAssets.isNotEmpty()) {
-                        FavoriteTokensSection(
-                            items = favoriteAssets,
-                            onAssetClick = onOpenAssetDetails,
-                            onRemoveFavorites = onRemoveFavorites,
+
+                        ShelvesHeader.PerpsTiles -> PerpsCategoryTiles(
+                            onOpenPerps = onOpenPerps,
+                            onOpenCategory = onOpenSearchCategory,
                         )
-                    }
-                    MoonEmptyScreen(
-                        text = stringResource(Localization.something_went_wrong),
-                        buttonText = stringResource(Localization.retry),
-                        onButtonClick = onRefresh,
-                    )
-                }
 
-                else -> {
-                    val groups = shelfGroups.orEmpty()
-                    val listState = rememberLazyListState()
-                    val isAtTop by remember {
-                        derivedStateOf {
-                            listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
-                        }
-                    }
-                    var wasAtTopWithoutFavorites by remember { mutableStateOf(true) }
-                    var hadFavorites by remember { mutableStateOf(favoriteAssets.isNotEmpty()) }
+                        ShelvesHeader.PerpsTrending -> PerpsShelf(
+                            title = stringResource(Localization.perps_trending),
+                            markets = perpsShelfMarkets,
+                            onOpenPerps = onOpenPerps,
+                            onOpenPerpMarket = onOpenPerpMarket,
+                            modifier = Modifier.padding(bottom = 16.dp),
+                        )
 
-                    LaunchedEffect(isAtTop, favoriteAssets.isEmpty()) {
-                        if (favoriteAssets.isEmpty()) {
-                            wasAtTopWithoutFavorites = isAtTop
-                        }
-                    }
-
-                    LaunchedEffect(favoriteAssets.isNotEmpty()) {
-                        val hasFavorites = favoriteAssets.isNotEmpty()
-                        if (hasFavorites && !hadFavorites && wasAtTopWithoutFavorites) {
-                            listState.animateScrollToItem(0)
-                        }
-                        hadFavorites = hasFavorites
-                    }
-
-                    var wasAtTopWithoutBanners by remember { mutableStateOf(true) }
-                    var hadBanners by remember { mutableStateOf(banners.isNotEmpty()) }
-
-                    LaunchedEffect(isAtTop, banners.isEmpty()) {
-                        if (banners.isEmpty()) {
-                            wasAtTopWithoutBanners = isAtTop
-                        }
-                    }
-
-                    LaunchedEffect(banners.isNotEmpty()) {
-                        val hasBanners = banners.isNotEmpty()
-                        if (hasBanners && !hadBanners && wasAtTopWithoutBanners) {
-                            listState.scrollToItem(0)
-                        }
-                        hadBanners = hasBanners
-                    }
-
-                    LaunchedEffect(scrollToShelfKey, groups, favoriteAssets.isEmpty(), banners.isEmpty()) {
-                        val key = scrollToShelfKey ?: return@LaunchedEffect
-                        val targetIndex = groups.indexOfFirst { multichainGroup ->
-                            multichainGroup.groups.any { shelfGroup ->
-                                shelfGroup.items.any { it.key == key }
-                            }
-                        }
-                        if (targetIndex >= 0) {
-                            val targetGroup = groups[targetIndex]
-                            val subgroupName = targetGroup.groups.firstOrNull { shelfGroup ->
-                                shelfGroup.items.any { it.key == key }
-                            }?.name
-                            onSelectShelf(targetGroup.id, subgroupName, key)
-                            val bannersOffset = if (banners.isNotEmpty()) 1 else 0
-                            val favoritesOffset = if (favoriteAssets.isNotEmpty()) 1 else 0
-                            listState.animateScrollToItem(targetIndex + bannersOffset + favoritesOffset)
-                        }
-                        onScrollToShelfHandled()
-                    }
-
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier
-                            .navigationBarsPadding()
-                            .padding(bottom = Dimens.heightBar),
-                    ) {
-                        if (banners.isNotEmpty()) {
-                            item(key = "raffle_banner", contentType = "banners") {
-                                BannersViewer(
-                                    banners = banners,
-                                    onClick = { button -> onBannerClick(button.payload) },
-                                    onHide = onHideBanner,
-                                    modifier = Modifier.padding(top = 8.dp),
-                                )
-                            }
-                        }
-
-                        if (favoriteAssets.isNotEmpty()) {
-                            item(key = "favorite_tokens") {
-                                Box(modifier = Modifier.graphicsLayer { clip = false }) {
-                                    FavoriteTokensSection(
-                                        items = favoriteAssets,
-                                        onAssetClick = onOpenAssetDetails,
-                                        onRemoveFavorites = onRemoveFavorites,
-                                    )
-                                }
-                            }
-                        }
-
-                        if (isPerpsVisible) {
-                            item(key = "perps_shelf") {
-                                PerpsShelfSection(
-                                    markets = perpsShelfMarkets,
-                                    onOpenPerps = onOpenPerps,
-                                    onOpenPerpMarket = onOpenPerpMarket,
-                                )
-                            }
-                        }
-
-                        items(
-                            items = groups,
-                            key = { group -> group.id },
-                        ) { multichainGroup ->
-                            MultichainShelfGroupItem(
-                                multichainGroup = multichainGroup,
-                                selection = selections[multichainGroup.id],
-                                listState = listState,
-                                onNetworkSelected = { onNetworkSelected(multichainGroup.id, it) },
-                                onTabSelected = { onTabSelected(multichainGroup.id, it) },
-                                onAssetClick = { onOpenAssetDetails(it) },
-                                onOpenSeeAll = onOpenSeeAll,
+                        ShelvesHeader.Favorites -> Box(modifier = Modifier.graphicsLayer { clip = false }) {
+                            FavoriteTokensSection(
+                                items = favoriteAssets,
+                                onAssetClick = onOpenAssetDetails,
+                                onRemoveFavorites = onRemoveFavorites,
                             )
                         }
                     }
                 }
-            }
-        }
-    }
-}
 
+                when {
+                    isLoading -> item(key = "shelves_shimmer") {
+                        ShelvesShimmer()
+                    }
 
+                    shelvesError -> item(key = "shelves_error") {
+                        MoonEmptyScreen(
+                            text = stringResource(Localization.something_went_wrong),
+                            buttonText = stringResource(Localization.retry),
+                            onButtonClick = onRefresh,
+                        )
+                    }
 
-@Composable
-private fun PerpsShelfSection(
-    markets: List<PerpMarket>,
-    onOpenPerps: () -> Unit,
-    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-    ) {
-        MoonBundleTitleCell(
-            title = stringResource(Localization.perps_trending),
-            onClick = onOpenPerps,
-        )
-        if (markets.isNotEmpty()) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .background(shape = Shapes.medium, color = UIKit.colorScheme.background.content)
-                    .padding(8.dp),
-            ) {
-                PerpsShelfGrid(markets = markets, onOpenPerpMarket = onOpenPerpMarket)
-            }
-        }
-    }
-}
-
-@Composable
-private fun PerpsShelfGrid(
-    markets: List<PerpMarket>,
-    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        markets.chunked(4).forEach { rowItems ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-            ) {
-                rowItems.forEach { market ->
-                    Box(modifier = Modifier.weight(1f)) {
-                        PerpsShelfItem(
-                            market = market,
-                            onClick = { onOpenPerpMarket(market.marketIndex, market.symbol) },
+                    else -> items(
+                        items = groups,
+                        key = { group -> group.id },
+                    ) { multichainGroup ->
+                        MultichainShelfGroupItem(
+                            multichainGroup = multichainGroup,
+                            selection = selections[multichainGroup.id],
+                            listState = listState,
+                            onNetworkSelected = { onNetworkSelected(multichainGroup.id, it) },
+                            onTabSelected = { onTabSelected(multichainGroup.id, it) },
+                            onAssetClick = { onOpenAssetDetails(it) },
+                            onOpenSeeAll = onOpenSeeAll,
                         )
                     }
                 }
-                repeat(4 - rowItems.size) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
             }
         }
     }
 }
 
-@Composable
-private fun PerpsShelfItem(
-    market: PerpMarket,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Shapes.medium12)
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        PerpsAssetIcon(symbol = market.symbol, iconUrl = market.iconUrl, size = 56.dp)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = market.symbol,
-                style = UIKit.typography.body3,
-                color = UIKit.colorScheme.text.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            if (market.maxLeverage > 0) {
-                Text(
-                    text = stringResource(Localization.perps_leverage_pattern, market.maxLeverage),
-                    style = UIKit.typography.body3,
-                    color = UIKit.colorScheme.text.secondary,
-                    maxLines = 1,
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(1.dp))
-        val change = market.priceChange24hPercent
-        Text(
-            text = change?.let { formatSignedPercent(it) } ?: PERPS_EMPTY_VALUE,
-            style = UIKit.typography.body3,
-            color = perpsChangeColor(change),
-            maxLines = 1,
-        )
-    }
-}
+
 
 private val FavoriteTokenOverflow = 4.dp
 
@@ -553,7 +496,7 @@ private fun FavoriteTokensSection(
                     .defaultMinSize(48.dp)
                     .clickable(
                         interactionSource = interactionSource,
-                        indication = null,
+                        indication = ScaleIndication,
                         onClick = {
                             if (isEditing) {
                                 onRemoveFavorites(pendingRemovalIds)
@@ -614,12 +557,20 @@ private fun FavoriteTokenCard(
     var isRemoving by remember(item.asset.id) { mutableStateOf(false) }
 
     val width by animateDpAsState(
-        targetValue = if (isRemoving) 0.dp else FavoriteTokenCardWidth,
+        targetValue = if (isRemoving) {
+            0.dp
+        } else {
+            FavoriteTokenCardWidth
+        },
         animationSpec = tween(FavoriteRemoveAnimationMillis),
         label = "favoriteCardWidth",
     )
     val alpha by animateFloatAsState(
-        targetValue = if (isRemoving) 0f else 1f,
+        targetValue = if (isRemoving) {
+            0f
+        } else {
+            1f
+        },
         animationSpec = tween(FavoriteRemoveAnimationMillis),
         label = "favoriteCardAlpha",
     )
@@ -649,7 +600,11 @@ private fun FavoriteTokenCard(
                 AssetItem(
                     padding = remember { PaddingValues(horizontal = 8.dp, vertical = 16.dp) },
                     item = item,
-                    onClick = if (isEditing) null else onClick,
+                    onClick = if (isEditing) {
+                        null
+                    } else {
+                        onClick
+                    },
                 )
             }
 
@@ -988,7 +943,7 @@ private fun mockItem(symbol: String, change: String) =
             price = "0.00001",
             change24hPercent = change,
             provider = "mock",
-            asOf = "",
+            asOf = OffsetDateTime.MIN,
         ),
     )
 

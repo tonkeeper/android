@@ -360,13 +360,6 @@ components:
         minLength: 32
         maxLength: 64
         pattern: "^([a-f0-9]{64}|[a-z2-7]{32}|[a-z2-7]{36})$"
-    IsNewUserQuery:
-      name: is_new
-      in: query
-      required: false
-      schema:
-        type: boolean
-        default: false
 
   schemas:
     ErrorResponse:
@@ -1165,6 +1158,7 @@ components:
           type: string
         payment_methods:
           type: array
+          description: Ordered for display; render as received
           items:
             $ref: '#/components/schemas/OnrampPaymentMethod'
     OnrampPaymentMethod:
@@ -1436,6 +1430,7 @@ components:
           type: string
         payout_methods:
           type: array
+          description: Ordered for display; render as received
           items:
             $ref: '#/components/schemas/OfframpPayoutMethod'
     OfframpPayoutMethod:
@@ -1801,6 +1796,7 @@ components:
         - base
         - polygon
         - avax
+        - robinhood
         - tron
         - near
         - ltc
@@ -1834,20 +1830,231 @@ components:
         - COSMOS
         - TRON
         - RIPPLE
+        - LIGHTER
         - OTHER
     CrossSwapAggregator:
       type: string
       description: |
         Cross-chain aggregator that produced the route.
-        `omniston` serves TON to TON only. For clients reporting build
-        26.9.0 or newer on Android, or 26.9.1 or newer on iOS, it is out of
-        the default fan-out and is queried as a fallback, when the other
-        aggregators returned no route at all; older clients keep it in the
-        default fan-out.
+        `omniston` serves TON to TON, and swaps leaving TON for an EVM chain
+        (`eth`, `bsc`, `arb`, `base`, `polygon`, `avax`) when both sides are
+        stablecoins. Those it settles through an escrow, so the route is one
+        TON message and the swap completes minutes later; it is not quoted
+        into TON, and not above roughly $1000.
+
+        A swap out of TON worth less than
+        `CROSSSWAP_OMNISTON_CROSSCHAIN_BELOW_USD` is quoted from Omniston
+        alone, because its spread there is flat rather than proportional. An
+        `aggregators` list or an exclusion naming `omniston` overrides that.
+
+        How the TON to TON pair is routed is a server switch,
+        `CROSSSWAP_FORCE_OMNISTON_TON`.
+
+        While it is on, which is the default, a swap that stays on TON is
+        quoted from Omniston alone — whatever `aggregators` names, whatever it
+        excludes, whatever build the client reports. The other aggregators are
+        tried only if Omniston returns no route.
+
+        While it is off, the pair follows the ordinary rules: clients below
+        Android 26.9.0 / iOS 26.9.1 still get Omniston alone, newer ones are
+        fanned out, and an explicit `aggregators` list wins for either.
+
+        `exact_output` follows the same switch: within TON it is answered by
+        searching Omniston's exact-input quotes (and swaps.xyz's, which
+        route through Omniston) for the source amount that yields
+        `destination_amount`. Off a
+        TON to TON pair Omniston is quoted only when `aggregators` names it.
+        `relay` serves Lighter deposits and withdrawals only: it is quoted when
+        the request names a `destination_target` or a `source_target`, and
+        never in the swap fan-out.
       enum:
         - swapkit
         - swapsxyz
         - omniston
+        - relay
+    CrossSwapDestinationTarget:
+      type: string
+      description: |
+        A contract on the destination chain the delivered asset is handed to,
+        instead of the recipient's wallet. `recipient_address` is then the
+        account that contract credits.
+        `lighter`: Lighter's L1 deposit gateway on Ethereum. The destination
+        asset must be USDC on Ethereum
+        (`eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48`) and
+        `recipient_address` the Ethereum address whose Lighter account is
+        credited. Quoted from `ton`, `eth`, `bsc`, `base`, `arb`, `tron`
+        (TRX and TRC-20 tokens) and `btc`; a `btc` quote spends the sender's
+        own outputs, so the sender must hold the amount already. USDC
+        already on Ethereum is quoted as a direct gateway call with no
+        aggregator (protocol `lighter_gateway`, nothing to track), anything
+        else through `relay`.
+      enum:
+        - lighter
+    CrossSwapSourceTarget:
+      type: string
+      description: |
+        A balance the source asset is taken out of, instead of the sender's
+        wallet. `sender_address` then names the account in it. The reverse of
+        a `destination_target`.
+        `lighter`: the USDC collateral of a Lighter perps account -- a
+        withdrawal. `source_asset` is USDC on Ethereum
+        (`eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48`), the
+        asset a lighter deposit lands as, and `sender_address` the account
+        index, in decimal. `destination_asset` is any asset `relay` delivers
+        from Lighter -- quoted today to `ton`, `eth`, `bsc`, `base`, `arb`,
+        `tron` and `btc` -- and `recipient_address` the wallet on its chain.
+        Nothing leaves Lighter to L1: the one payload is a Lighter transfer of
+        the collateral into relay's account there (`lighter_transfer`), and
+        relay pays out on the destination chain.
+      enum:
+        - lighter
+    CrossSwapChangePubKey:
+      type: object
+      description: |
+        Register a Lighter L2 signing key in the same cross-chain action as the
+        deposit, so a wallet that holds no ETH never has to pay for the call
+        itself. Only with `destination_target: lighter`.
+        On a deposit of USDC on Ethereum, which the wallet sends itself, the
+        registration is the third call of the EIP-7702 batch, after the
+        approval and the deposit: it needs `eip7702_batch: true`, a sender
+        that is the recipient (changePubKey runs as the sender), and a sender
+        that can run the batch -- an EOA. `authorization` and `execute` are
+        then absent: the wallet's own type-4 transaction delegates, and a call
+        the account makes to itself needs no signature over it. A quote that
+        cannot carry it this way is refused rather than given without it.
+        On a route relay fills:
+        Lighter's `changePubKey` insists the caller is the account owner, and
+        under relay the caller is the solver's multicaller. The way round that
+        is EIP-7702: `authorization` delegates the owner's own EOA to the
+        delegate contract for the fill, and the solver then calls into that
+        EOA, so `msg.sender` is the owner. The delegate is pinned by the
+        service; an authorization naming any other address is refused.
+        The solver is not the account, so the delegate runs the call only
+        with the owner's signature over it: `execute`. Both go together.
+        Asked with neither, the quote is a preview: priced as the signed one
+        will be, with no payloads and no execution, and the route carries
+        `change_pub_key_signing` -- the nonces and the deadline the owner
+        signs both over. The same request again with the two signatures is
+        the quote to send.
+      required:
+        - account_index
+        - api_key_index
+        - pub_key
+      properties:
+        account_index:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 281474976710655
+          description: |
+            The Lighter account the key is registered on. 281474976710655
+            (2^48 - 1, Lighter's `NIL_ACCOUNT_INDEX`) is the caller's own
+            account, resolved when the call runs -- the one to use, and the
+            only one a deposit that creates the account can name: `deposit`
+            assigns the index on L1 earlier in the same batch. An explicit
+            index is taken by L1 as given, even a wrong one, and fails only
+            on L2, with the deposit landed and the key not set.
+        api_key_index:
+          type: integer
+          minimum: 0
+          maximum: 254
+          description: |
+            The slot the key goes into. 255 is Lighter's "all keys" sentinel
+            and is not a slot.
+        pub_key:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{80}$'
+          description: The L2 public key, 40 bytes.
+        authorization:
+          $ref: '#/components/schemas/EIP7702Authorization'
+        execute:
+          $ref: '#/components/schemas/HermesExecuteSignature'
+    HermesExecuteSignature:
+      type: object
+      description: |
+        The owner's EIP-712 signature letting the solver run the changePubKey
+        call through the delegated EOA (HermesDelegateV1's signed batch mode).
+        Signed over
+        `Execute(bytes32 mode,Call[] calls,uint256 nonce,uint256 deadline)`
+        with `Call(address target,uint256 value,bytes data)`, in the domain
+        `{name: "Hermes", version: "v1.0.0", chainId: 1, verifyingContract:
+        <the owner's address>, salt: <the delegate, left-padded to 32 bytes>}`,
+        where `mode` is
+        `0x0100000000007821000100000000000000000000000000000000000000000000`
+        and `calls` is the one call
+        `{target: <Lighter gateway 0x3b4d794a66304f130a4db8f2551b0070dfcf5ca7>,
+        value: 0, data: changePubKey(account_index, api_key_index, pub_key)}`.
+        Checked when the quote is made: a signature that does not recover to
+        the owner over that call, or a stale nonce, would revert the fill and
+        the deposit with it.
+      required:
+        - deadline
+        - signature
+      properties:
+        nonce:
+          type: integer
+          format: int64
+          minimum: 0
+          description: |
+            The owner's nonce at the delegate's nonce manager
+            (`HermesV1.nonceOf(owner)`), consumed by the fill. Any other signed
+            batch of the owner's in between invalidates the signature.
+            Optional: absent, the chain's is taken, and the signature has to
+            recover to the owner over it.
+        deadline:
+          type: integer
+          format: int64
+          description: |
+            Unix seconds after which the signature no longer validates;
+            between 5 minutes and 24 hours ahead. The signature stays usable
+            until then if the fill fails, so keep it short.
+        signature:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{130}$'
+          description: r || s || v, v 27 or 28.
+    EIP7702Authorization:
+      type: object
+      description: |
+        An EIP-7702 authorization tuple, signed by the account owner over
+        `keccak(0x05 || rlp([chain_id, address, nonce]))`. It is forwarded to
+        the aggregator unchanged and lands in the fill transaction.
+        The nonce is the owner's own nonce on the destination chain, checked
+        against the chain when the quote is made: the solver sends the
+        transaction, so the nonce is untouched at execution time, and any
+        transaction the owner sends in between invalidates the authorization.
+      required:
+        - chain_id
+        - address
+        - y_parity
+        - r
+        - s
+      properties:
+        chain_id:
+          type: integer
+          format: int64
+          description: The chain the delegation applies to. 1 (Ethereum) here; 0 (any chain) is refused.
+        address:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{40}$'
+          description: The delegate the EOA's code is set to. Must be the delegate this service pins.
+        nonce:
+          type: integer
+          format: int64
+          minimum: 0
+          description: |
+            The owner's nonce on that chain when the authorization was signed.
+            Optional: absent, the chain's is taken. Either way the signature
+            has to recover to the owner over it.
+        y_parity:
+          type: integer
+          minimum: 0
+          maximum: 1
+        r:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{64}$'
+        s:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{64}$'
     CrossSwapProtocol:
       type: string
       description: Underlying protocol or DEX that actually executes the swap (provider-driven, free-form).
@@ -1885,9 +2092,19 @@ components:
         report `estimated_destination_amount`.
         `exact_output`: `destination_amount` is what the user must receive,
         routes report the `source_amount` the user is expected to pay and
-        `maximum_source_amount`, the cap including slippage. Only `swapsxyz`
-        can quote `exact_output`; other aggregators are skipped and reported
-        in `provider_errors`.
+        `maximum_source_amount`, the cap including slippage. Off TON only
+        `swapsxyz` can quote `exact_output`; other aggregators are skipped and
+        reported in `provider_errors`. Within TON (both assets on TON) only
+        `omniston` and `swapsxyz` answer it, each quoted exact-input for the
+        smallest source amount found whose estimate reaches
+        `destination_amount`: the route is an ordinary
+        exact-input swap of that amount, so `maximum_source_amount` equals
+        `source_amount`, `estimated_destination_amount` is at least
+        `destination_amount` (within 0.15%), and slippage lands on the
+        destination side as `minimum_destination_amount`. Both assets must
+        have a USD price; a pair without one, or a route found that way which
+        loses more than 1% of its USD value, is reported in `provider_errors`
+        with code `no_route` instead.
       enum:
         - exact_input
         - exact_output
@@ -1905,6 +2122,8 @@ components:
         - tron_tx
         - ripple_tx
         - alt_vm_deposit
+        - lighter_transfer
+        - evm_7702_batch_tx
     CrossSwapCalldataPayloadType:
       type: string
       description: |
@@ -2041,9 +2260,15 @@ components:
           type: string
           description: |
             The aggregator's own identifier for this route, passed through
-            verbatim: swapsxyz `txId`, swapkit `routeId`, omniston `quoteId`.
-            Interpret it together with `aggregator`. Omitted when the
-            provider does not expose one.
+            verbatim: swapkit `routeId`, omniston `quoteId`. Interpret it
+            together with `aggregator`. Omitted when the provider does not
+            expose one.
+
+            swapsxyz and relay price a quote without an identifier, so at
+            quote time this is an id of ours. The swapsxyz `txId` only exists
+            once the transaction is built: with `include_payload: true` the
+            route carries the `txId` here, otherwise it arrives as
+            `provider_route_id` on the prepare response.
         aggregator:
           $ref: '#/components/schemas/CrossSwapAggregator'
         protocol:
@@ -2068,7 +2293,8 @@ components:
           pattern: ^\d+$
           description: |
             Raw base-units amount the user is expected to receive. For
-            `exact_output` it equals the requested `destination_amount`.
+            `exact_output` it equals the requested `destination_amount`, or
+            within TON is at least it (see `CrossSwapExactType`).
         minimum_destination_amount:
           type: string
           pattern: ^\d+$
@@ -2131,6 +2357,64 @@ components:
             skipping the separate `/v2/swap/route/{route_id}/prepare`.
           items:
             $ref: '#/components/schemas/CrossSwapPayload'
+        execution_id:
+          type: string
+          description: |
+            The execution opened for this route by the inline prepare, when
+            the provider can follow the route before a payload is submitted
+            (a `relay` deposit, tracked by the id it was quoted under). Absent
+            otherwise: submit the signed payload to get one.
+        change_pub_key_signing:
+          $ref: '#/components/schemas/CrossSwapChangePubKeySigning'
+    CrossSwapChangePubKeySigning:
+      type: object
+      description: |
+        What the owner signs to register the key on a route relay fills, for
+        a quote asked with `change_pub_key` and no signatures. The route is
+        then a preview: no payloads, and a prepare is refused. Sign the
+        authorization over these values, the Execute over `execute.nonce`
+        and `execute.deadline` (see `HermesExecuteSignature`), and quote
+        again with both.
+        On a route from Ethereum there is no fill: relay swaps in the
+        sender's own transaction and runs the calls from it, so that
+        transaction delegates the address -- the batch by its own
+        authorization, a single payment by an `authorization` the payload
+        carries for the wallet to sign into it. `authorization` is then
+        absent here, and the quote again takes `execute` alone.
+      required:
+        - execute
+      properties:
+        authorization:
+          type: object
+          required:
+            - chain_id
+            - address
+            - nonce
+          properties:
+            chain_id:
+              type: integer
+              format: int64
+            address:
+              type: string
+              description: The delegate this service pins.
+            nonce:
+              type: integer
+              format: int64
+              description: The owner's nonce on Ethereum now.
+        execute:
+          type: object
+          required:
+            - nonce
+            - deadline
+          properties:
+            nonce:
+              type: integer
+              format: int64
+              description: The owner's Hermes nonce now (HermesV1.nonceOf).
+            deadline:
+              type: integer
+              format: int64
+              description: Unix seconds; the signed quote takes it while at least 5 minutes remain.
     CrossSwapProviderError:
       type: object
       description: Per-aggregator error explaining why a quote returned no route
@@ -2147,13 +2431,89 @@ components:
           $ref: '#/components/schemas/CrossSwapProviderErrorCode'
         message:
           type: string
+        min_amount_usd:
+          type: string
+          pattern: ^\d+\.\d{2}$
+          description: |
+            On `min_amount_not_met`, where the aggregator can price it: the
+            smallest source amount it quotes the route at now, in US dollars,
+            two places, rounded up -- with headroom for the price and the gas
+            to move within a quote's life, so asking again with that much is
+            quoted. Today only `relay` deposits into Lighter say.
+        expected_amount_usd:
+          type: string
+          pattern: ^\d+\.\d{2}$
+          description: |
+            On `min_amount_not_met`, where known: what the source amount asked
+            for would have delivered, in US dollars, two places, rounded down.
+            "0.00" when it does not even cover the fixed costs.
     CrossSwapProviderErrorCode:
       type: string
+      description: |
+        Why an aggregator produced no route, in our own vocabulary. The
+        aggregator's own code is not passed through; it stays in `message`,
+        which carries the upstream text verbatim after our prefix.
+
+        swapsxyz answers with `{"success": false, "error": {"code", "name",
+        "message", "statusCode", "details"}}`, and its codes fold in as
+        follows:
+
+        * `no_route` — `NO_AVAILABLE_ROUTE`, `INSUFFICIENT_LIQUIDITY`,
+          `UNSUPPORTED_NETWORK`, `UNSUPPORTED_NETWORK_PAIR`,
+          `UNSUPPORTED_NETWORK_TOKEN_PAIR`, `UNSUPPORTED_SWAP_DIRECTION`,
+          `INVALID_SOURCE_TOKEN`, `INVALID_DESTINATION_TOKEN`. The pair, the
+          direction or the size has nothing to route; another aggregator may
+          still answer.
+        * `min_amount_not_met` — `AMOUNT_TOO_LOW`, and `AMOUNT_TOO_HIGH`,
+          `AMOUNT_INVALID`, `INVALID_AMOUNT_ZERO`, `EXCESSIVE_FEE`,
+          `EXCESSIVE_RELAYER_FEE` when upstream words them as a bound on the
+          amount. They otherwise arrive as `provider_error`, so treat the
+          message as the detail.
+        * `country_blocked` — `GEO_BLOCKED`, a 403 keyed on the caller's IP.
+          Since we call swapsxyz server-side that is our egress, not the
+          user's location, so it means the aggregator is unreachable for
+          everyone rather than for this user.
+        * `provider_unavailable` — HTTP 429 and any 5xx, including
+          `INTERNAL_SERVER_ERROR`, plus transport timeouts. Retryable.
+        * `provider_error` — everything else: `INVALID_ADDRESS_FORMAT`,
+          `INVALID_PARAMETER`, `CROSS_VM_RECEIVER_REQUIRED`,
+          `MISSING_REQUIRED_FIELD`, `METHOD_NOT_ALLOWED`, `INVALID_API_KEY`,
+          `MISSING_API_KEY`.
+
+        * `insufficient_balance` — the sender holds less of the source asset
+          than the quote spends. Only a quote that reads the sender's balance
+          reports it: today relay's Bitcoin quote, which builds its
+          transaction out of the sender's own outputs and so has nothing to
+          spend from an empty address. More funds or a smaller amount fixes
+          it; a retry does not.
+
+        * `wallet_screened` — `WALLET_SCREENED`, the aggregator's compliance
+          check refusing the sender or the recipient. An AML block on the
+          wallet itself, not a malformed address: the user cannot fix it by
+          correcting anything, and a retry, another route or another
+          aggregator is refused the same way. Terminal — send the user to
+          support rather than to a retry.
+
+          It reaches a quote only with `include_payload: true`, because
+          swapsxyz prices against placeholder addresses and screens the real
+          ones only when it builds the transaction. The route is still listed,
+          since it priced, but it arrives with no `payloads` and cannot be
+          signed. Without `include_payload` the refusal surfaces on
+          `POST /v2/crosschain/routes/{route_id}/prepare` as a `400` with the
+          same code.
+
+        Except for `wallet_screened`, these codes are reported by a quote
+        only. Prepare fails the whole request instead: the address family
+        (`GEO_BLOCKED`, `INVALID_ADDRESS_FORMAT`, `INVALID_PARAMETER`,
+        `CROSS_VM_RECEIVER_REQUIRED`) becomes `invalid_address`, the amount
+        family `insufficient_balance`, 429 and 5xx `provider_unavailable`.
       enum:
         - no_route
         - asset_not_supported
         - min_amount_not_met
         - country_blocked
+        - wallet_screened
+        - insufficient_balance
         - provider_unavailable
         - provider_error
     CrossSwapQuote:
@@ -2171,9 +2531,112 @@ components:
             $ref: '#/components/schemas/CrossSwapRoute'
         provider_errors:
           type: array
-          description: Errors returned by aggregators that yielded no usable route
+          description: |
+            Errors returned by aggregators that yielded no usable route. A
+            `wallet_screened` entry is the exception that can accompany a
+            listed route: with `include_payload: true` the route priced but
+            its payloads could not be built, so it is present and unsignable.
           items:
             $ref: '#/components/schemas/CrossSwapProviderError'
+    CrossSwapStoredRoute:
+      type: object
+      description: |
+        A route read back from storage, flattened together with the quote it
+        came from. The asset fields and `slippage_bps` belong to the quote and
+        are shared by its other routes; everything else is this route's own.
+      required:
+        - route_id
+        - quote_id
+        - exact_type
+        - source_asset
+        - destination_asset
+        - aggregator
+        - route_type
+        - estimated_destination_amount
+        - slippage_bps
+        - date_expire
+        - date_create
+      properties:
+        route_id:
+          type: string
+        quote_id:
+          type: string
+          description: Identifier of the quote this route was returned by
+        exact_type:
+          $ref: '#/components/schemas/CrossSwapExactType'
+        source_asset:
+          type: string
+          description: Canonical asset id the user pays with
+        source_amount:
+          type: string
+          pattern: ^\d+$
+          description: |
+            Raw base-units amount this route spends. For `exact_input` it is
+            what the quote asked for; for `exact_output` it is the provider's
+            own expected input, read from the route's first leg. Omitted when
+            neither is known.
+        destination_asset:
+          type: string
+          description: Canonical asset id the user receives
+        destination_amount:
+          type: string
+          pattern: ^\d+$
+          description: |
+            Raw base-units amount the quote asked to receive. Present only for
+            `exact_output` quotes; otherwise the route's own
+            `estimated_destination_amount` is the answer.
+        estimated_destination_amount:
+          type: string
+          pattern: ^\d+$
+          description: Raw base-units amount this route was expected to deliver
+        minimum_destination_amount:
+          type: string
+          pattern: ^\d+$
+          description: Slippage-protected floor, when the provider gave one
+        aggregator:
+          type: string
+          description: |
+            Aggregator that produced the route. Free-form rather than the
+            `CrossSwapAggregator` enum, so routes written by an aggregator
+            that has since been retired still read back.
+        protocol:
+          $ref: '#/components/schemas/CrossSwapProtocol'
+        providers:
+          type: array
+          description: |
+            The whole chain of protocols the route goes through, in order.
+            `protocol` is the first of them. Omitted for routes stored before
+            the chain was recorded.
+          items:
+            type: string
+        route_type:
+          $ref: '#/components/schemas/CrossSwapRouteType'
+        provider_route_id:
+          type: string
+          description: |
+            The aggregator's own identifier for this route as it was quoted.
+            For swapsxyz and relay this is an id of ours; the swapsxyz `txId`
+            is only minted when the transaction is built.
+        estimated_duration_seconds:
+          type: integer
+        value_difference_bps:
+          type: integer
+          description: |
+            USD value difference between input and output at quote time, in
+            basis points. Negative means the user receives less USD than they
+            pay.
+        risk_level:
+          $ref: '#/components/schemas/CrossSwapRiskLevel'
+        slippage_bps:
+          type: integer
+          description: Slippage tolerance the quote was priced with (bps)
+        date_expire:
+          type: string
+          format: date-time
+        date_create:
+          type: string
+          format: date-time
+          description: When the route was quoted
     CrossSwapHumanSummary:
       type: object
       required:
@@ -2192,6 +2655,16 @@ components:
           type: string
         receive_amount:
           type: string
+        minimum_receive_amount:
+          type: string
+          pattern: ^\d+$
+          description: |
+            Least amount of `receive_asset` the built transaction lets
+            through, as the aggregator reported it when building, in minimal
+            units. It can be below the route's `minimum_destination_amount`:
+            the aggregator may reprice between quote and build. Omitted when
+            the aggregator reports none at build time; then only the route's
+            `minimum_destination_amount` is known.
         recipient_address:
           type: string
           description: Final destination of the swap (user's address on destination chain)
@@ -2261,15 +2734,72 @@ components:
             Payload data. Encoding depends on `payload_type`:
               * `ton_boc`: JSON-array string of TON Connect messages
                 `[{address, amount, payload: base64_boc, stateInit?}, ...]`
-                (not raw base64 — the outer envelope is JSON).
-              * `utxo_psbt`: base64-encoded PSBT bytes.
+                (not raw base64 — the outer envelope is JSON). A `relay`
+                payload adds `bounce` and `mode` to each message, as the
+                aggregator built it; a wallet that ignores them keeps its
+                defaults.
+              * `lighter_transfer`: JSON-encoded Lighter L2 transfer, chain
+                `lighter/mainnet`: `{"to_account_index", "asset_index",
+                "from_route_type", "to_route_type", "amount", "usdc_fee",
+                "memo"}`, integers as numbers and `memo` 0x and 32 bytes of
+                hex. The wallet signs it as a Lighter transfer (tx type 12)
+                from the account `sender_address` names, with the account's
+                API key and -- the recipient being another account -- the
+                owner's L1 key over Lighter's transfer message, and sends it to
+                Lighter. `amount` plus `usdc_fee` is what leaves the account.
+              * `utxo_psbt`: base64-encoded PSBT bytes. A `relay` PSBT spends
+                the sender's own outputs: sign every input and broadcast.
               * `utxo_pczt`: base64-encoded PCZT bytes.
               * `evm_tx`, `evm_approval_tx`: JSON-encoded EVM transaction
                 object (to, data, value, chainId, ...) as returned by the
-                aggregator.
+                aggregator. For `relay`, `gas` is a gas limit, decimal, with
+                headroom already in it -- relay's own figure, or on Ethereum
+                where relay states none (a direct deposit, sometimes the
+                payment) this service's estimate raised by 30%, the payment
+                after an approval estimated as if the approval were mined. It
+                is absent when neither exists or the estimate reverted.
+                A `swapsxyz` payload with `calldata_payload_type: exact` is
+                the flat object `{to, value, data?, gas?, gasPrice?}`, amounts
+                decimal or 0x hex. When the token needs an allowance it comes
+                after a `kind: approval` `evm_approval_tx` built by this
+                service: `{to: token, value: "0", data: approve(router in the
+                main payload's to, spend amount)}`, and the main payload then
+                carries no `requires_token_approval`. swaps.xyz states no gas:
+                this service estimates `gas` (with 30%
+                headroom, the payment as if the approval were mined) and reads
+                `gasPrice` from the node, both decimal; either is absent when
+                the node gives none. The same holds on every EVM chain with a
+                node configured (SWAPSXYZ_EVM_RPC_URLS); one without carries
+                no gas.
+              * `evm_7702_batch_tx`: JSON-encoded EVM transaction that
+                replaces an approval and the payment after it, on
+                `eth/mainnet`, when the quote asked for `eip7702_batch`:
+                `{from, to, data, value, chainId, gas?, maxFeePerGas?,
+                maxPriorityFeePerGas?, gasPrice?, delegate, authorization?}`.
+                `to` is `from` itself, and `data` is ERC-7821
+                `execute(0x01 followed by 31 zero bytes, abi.encode(Call[]))`
+                with two calls: the approve, then the payment, which run as
+                `delegate`'s code at the sender's address and revert
+                together. `authorization`, `{chainId, address, nonce}`, is
+                present when the address is not delegated yet: the wallet
+                sends a type-4 transaction whose authorization list holds one
+                it signs for `address` on `chainId` with `nonce`, which is the
+                sender's nonce at the quote plus one -- the transaction's own
+                nonce plus one, since the wallet sends it. A wallet whose next
+                nonce plus one is not `nonce` re-quotes: the chain skips a
+                stale authorization and the call then does nothing. Without
+                it, a plain transaction. The delegation
+                stays after the deposit, until the address authorizes
+                another delegate or address zero. `gas` includes the
+                authorization's cost.
               * `solana_tx`, `cosmos_tx`, `tron_tx`, `ripple_tx`: chain-native
                 serialized transaction bytes (base64) or aggregator-specific
                 envelope; parse per `chain_id`.
+                A `relay` `tron_tx` is the JSON object
+                `{"type":"TriggerSmartContract","parameter":{owner_address,
+                contract_address, call_value, data}}`, addresses in hex with
+                the `41` prefix and `data` without `0x`, for the wallet to
+                build (e.g. TronWeb `triggerSmartContract`) and sign.
               * `alt_vm_deposit`: chain-specific deposit descriptor
                 (JSON or address+memo pair) — inspect `chain_id`.
         human_summary:
@@ -2296,12 +2826,28 @@ components:
       properties:
         route_id:
           type: string
+        provider_route_id:
+          type: string
+          description: |
+            The aggregator's own identifier for this route, as the built
+            transaction carries it. For swapsxyz this is the `txId` that
+            `/getAction` minted, which is the id its own dashboards and
+            `/getStatus` know the swap by; a quote that was not prepared
+            inline carries an id of ours instead, so this is where the
+            upstream one first appears. Omitted when the provider exposes
+            none.
         aggregator:
           $ref: '#/components/schemas/CrossSwapAggregator'
         payloads:
           type: array
           items:
             $ref: '#/components/schemas/CrossSwapPayload'
+        execution_id:
+          type: string
+          description: |
+            The execution opened for this route, when the provider can follow
+            it before a payload is submitted (a `relay` deposit). Absent
+            otherwise: submit the signed payload to get one.
     CrossSwapSubmit:
       type: object
       required:
@@ -2688,9 +3234,11 @@ components:
               return_deposit_address:
                 type: boolean
                 description: |
-                  Forwarded to SwapsXYZ `/getAction?returnDepositAddress`. When
-                  true, upstream returns a deposit address in the response for
-                  deposit-based swap flows. Default false. Ignored by other
+                  Forwarded to SwapsXYZ as `returnDepositAddress`, on
+                  `/getQuote` when pricing and on `/getAction` when the route
+                  is prepared. When true, upstream prices and builds a
+                  deposit-based swap flow and returns a deposit address with
+                  the transaction. Default false. Ignored by other
                   aggregators.
                   Ignored (forced to false) only when the source asset is on
                   TON and the client reports build 26.9.0 or newer on Android,
@@ -2699,6 +3247,64 @@ components:
                   upstream bridge route that those clients no longer need.
                   Older clients, clients of an unknown platform below 26.9.1,
                   and any non-TON source are honoured as sent.
+                  Also forced to false, for every client regardless of build,
+                  when both assets are on TON: a swap that stays on TON bridges
+                  nothing, so a deposit address only buys the bridge fee.
+              destination_target:
+                allOf:
+                  - $ref: '#/components/schemas/CrossSwapDestinationTarget'
+                description: |
+                  Turns the quote into a deposit: the destination asset is
+                  delivered into this contract for `recipient_address`. Only
+                  aggregators that can call a contract on the destination are
+                  asked (`relay` today), and the swap routing -- small-swap
+                  companion, fallback -- does not apply. `source_amount` is a
+                  budget: the payloads never move more than it, and the route's
+                  `estimated_destination_amount` equals
+                  `minimum_destination_amount` -- the deposit is exact, and the
+                  slippage allowed for is on the source side. `exact_type` must
+                  be `exact_input`. `source_asset` may equal `destination_asset`.
+                  With `include_payload: true` each route also carries
+                  `execution_id`, which `/v2/crosschain/executions/{execution_id}`
+                  answers from the moment of the quote: the aggregator follows
+                  the deposit by the id it quoted, so no submit is needed for a
+                  wallet that broadcasts on its own.
+              source_target:
+                allOf:
+                  - $ref: '#/components/schemas/CrossSwapSourceTarget'
+                description: |
+                  Turns the quote into a withdrawal: the source asset is taken
+                  out of this balance, for the account `sender_address` names,
+                  and delivered to `recipient_address` as `destination_asset`.
+                  Only aggregators that take from it are asked (`relay`
+                  today), and the swap routing does not apply. As with a
+                  `destination_target`, `source_amount` is a budget -- the
+                  payload never moves more than it, fees of the balance itself
+                  included -- and `exact_type` must be `exact_input`. Cannot be
+                  combined with `destination_target`. With
+                  `include_payload: true` each route carries `execution_id`,
+                  answered from the moment of the quote.
+              change_pub_key:
+                allOf:
+                  - $ref: '#/components/schemas/CrossSwapChangePubKey'
+                description: |
+                  Register a Lighter L2 signing key alongside the deposit. Only
+                  with `destination_target: lighter`, and only on a relay-filled
+                  route; a source that is already USDC on Ethereum is sent by the
+                  wallet itself, which can call `changePubKey` directly.
+              eip7702_batch:
+                type: boolean
+                description: |
+                  The wallet can send an EIP-7702 (type-4) transaction, and
+                  asks for a token source's approval and payment as one:
+                  an `evm_7702_batch_tx` payload in their place. Only
+                  `relay`, only with `destination_target: lighter`, and only
+                  on an Ethereum source whose sender is an EOA: a plain
+                  account, one delegated to the service's delegate already, or
+                  one delegated to any other -- whose delegation the
+                  authorization then replaces. For a contract sender, anywhere
+                  else, and on a route with no approval to fold, the payloads
+                  are what they would be without it. Default false.
               use_multi_aggregator:
                 type: boolean
                 description: |
@@ -2707,14 +3313,17 @@ components:
                   swap is quoted by SwapsXYZ and SwapKit together and both
                   routes come back; SwapKit also answers when SwapsXYZ finds no
                   route. Pairs with TON on either side stay on SwapsXYZ.
-                  Omitted, the service default applies; an explicit
-                  `aggregators` list wins over both.
+                  Omitted, it is on for clients reporting build 26.9.2 or newer
+                  in their `Tonkeeper/<version>` User-Agent, and the service
+                  default applies to every older or unrecognised client; an
+                  explicit `aggregators` list wins over both.
               is_max:
                 type: boolean
                 description: |
                   True when `source_amount` is the entire balance of the
                   source asset. Forwarded to SwapsXYZ `/getAction` as
-                  `isMax`; the other aggregators ignore it.
+                  `isMax` when the route is prepared; the other aggregators
+                  ignore it.
               slippage_bps:
                 type: integer
                 minimum: 0
@@ -2736,11 +3345,16 @@ components:
                   alone, when the source side is worth less than the threshold,
                   and otherwise as a fallback after the fan-out returned no
                   route at all.
-                  `omniston` is dropped from the default fan-out for clients
-                  reporting build 26.9.0 or newer on Android, or 26.9.1 or
-                  newer on iOS, in their `Tonkeeper/<version>` User-Agent;
-                  older clients still get it. For the newer clients it is a fallback too, and only on
-                  a TON to TON pair, which is all it serves.
+                  `omniston` serves TON to TON, and this field does not
+                  decide that pair while the server runs with
+                  `CROSSSWAP_FORCE_OMNISTON_TON` on, which is the default: the
+                  swap is quoted from Omniston alone however the list reads,
+                  and the aggregators named here are tried only if Omniston
+                  returns no route. With the switch off the list wins, and the
+                  pair otherwise defaults to Omniston only for clients below
+                  Android 26.9.0 / iOS 26.9.1. `exact_output` follows the
+                  same rules, answered by an exact-input search. Off a TON to
+                  TON pair Omniston is quoted only when named here.
                   A requested aggregator that is disabled on the server is
                   reported in `provider_errors` with code
                   `provider_unavailable`; if none of the requested
@@ -2759,10 +3373,18 @@ components:
                   If true, backend also runs `prepare` inline for each route
                   and returns the signing payloads under
                   `routes[].payloads`. Lets the wallet skip the separate
-                  `/v2/swap/route/{route_id}/prepare` call. For SwapsXYZ the
-                  tx is already returned by the upstream quote and this is
-                  effectively free; for other aggregators it adds a round-
-                  trip per route.
+                  `/v2/crosschain/routes/{route_id}/prepare` call. It adds an
+                  upstream round-trip per route: for SwapsXYZ that is the
+                  `/getAction` call that builds the transaction, which the
+                  quote itself no longer makes — about three seconds.
+
+                  **Ignored from build 26.13.0**, which calls prepare itself
+                  once the user has picked a route. Older builds still get the
+                  inline payloads, because they have no second call to fall
+                  back on. Note the route only lives as long as
+                  `routes[].date_expire` says — 60 seconds for SwapsXYZ and
+                  for TON-to-TON — so a prepare that comes later is answered
+                  `400 route_expired` and the quote has to be repeated.
     CrossSwapPrepare:
       description: Optional flags controlling how the route is prepared
       required: false
@@ -3019,6 +3641,30 @@ paths:
                 $ref: '#/components/schemas/Ok'
         '500':
           $ref: '#/components/responses/InternalError'
+  /v2/readiness:
+    get:
+      summary: Check the pod can take traffic
+      description: Unready until the first provider data refresh has finished.
+      operationId: readiness
+      tags:
+        - system
+      responses:
+        '200':
+          description: "Pod is ready"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ok'
+        '503':
+          description: "Provider data is not loaded yet or storage is unreachable"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
   /v2/swap/calculate:
     get:
       operationId: calculateSwap
@@ -3462,7 +4108,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/WalletIdHeader'
         - $ref: '#/components/parameters/FirebaseUserHeader'
-        - $ref: '#/components/parameters/IsNewUserQuery'
       requestBody:
         $ref: '#/components/requestBodies/CrossSwapQuote'
       responses:
@@ -3476,17 +4121,69 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
+  /v2/crosschain/routes/{route_id}:
+    get:
+      operationId: getCrossSwapStoredRoute
+      summary: Read back a stored route
+      description: |
+        Returns a route as it was persisted when `POST /v2/crosschain/quotes`
+        answered, together with the pair and amounts of the quote it belonged
+        to. Lets a caller holding only a `route_id` recover what was swapped
+        for what.
+
+        Not every route is readable: a quote that produced no route at all was
+        never stored, an unexecuted quote is deleted 30 days after it was
+        created, and an expired route is dropped earlier unless a swap was
+        executed on it. All of those answer 404.
+      tags:
+        - crosschain
+      parameters:
+        - $ref: '#/components/parameters/CrossSwapRouteIDPath'
+      responses:
+        '200':
+          description: Stored route
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrossSwapStoredRoute'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /v2/crosschain/routes/{route_id}/prepare:
     post:
       operationId: prepareCrossSwapRoute
       summary: Prepare selected route
+      description: |
+        Builds the transaction for a quoted route. This is the call that
+        commits: the aggregator allocates any deposit address, screens the
+        wallets and mints its own id for the swap, which comes back as
+        `provider_route_id`.
+
+        Screening is why a route that quoted fine can fail here. A `400` with
+        code `wallet_screened` means the aggregator's compliance check
+        rejected the sender or the recipient — an AML block on the wallet
+        itself, not a malformed address. It is final for that wallet: a retry,
+        a fresh quote or another route will be refused the same way, and the
+        user cannot fix it by correcting the address. swapsxyz raises it as
+        `WALLET_SCREENED` with `details.riskLevel` and `details.screenedAt`,
+        which our message carries verbatim. Treat it as a terminal state for
+        the swap and route the user to support rather than to a retry.
+
+        Other `400` codes: `invalid_address` when the address is genuinely
+        malformed or the pair needs a receiver we do not have,
+        `insufficient_balance` for an amount the aggregator refuses,
+        `route_expired` once the quote is stale, `cannot_build_transaction`,
+        and `provider_unavailable` for a rate limit or an upstream outage,
+        which is the one worth retrying.
       tags:
         - crosschain
       parameters:
         - $ref: '#/components/parameters/CrossSwapRouteIDPath'
         - $ref: '#/components/parameters/WalletIdHeader'
         - $ref: '#/components/parameters/FirebaseUserHeader'
-        - $ref: '#/components/parameters/IsNewUserQuery'
       requestBody:
         $ref: '#/components/requestBodies/CrossSwapPrepare'
       responses:
@@ -3909,3 +4606,4 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
+

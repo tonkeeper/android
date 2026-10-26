@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 /**
  * Encoding of the payload to be signed by the wallet
  *
- * Values: utxo_psbt,utxo_pczt,evm_tx,evm_approval_tx,solana_tx,ton_boc,cosmos_tx,tron_tx,ripple_tx,alt_vm_deposit
+ * Values: utxo_psbt,utxo_pczt,evm_tx,evm_approval_tx,solana_tx,ton_boc,cosmos_tx,tron_tx,ripple_tx,alt_vm_deposit,lighter_transfer,evm_7702_batch_tx
  */
 @Serializable
 enum class CrossSwapPayloadType(val value: String) {
@@ -39,7 +39,11 @@ enum class CrossSwapPayloadType(val value: String) {
     @SerialName(value = "ripple_tx")
     ripple_tx("ripple_tx"),
     @SerialName(value = "alt_vm_deposit")
-    alt_vm_deposit("alt_vm_deposit");
+    alt_vm_deposit("alt_vm_deposit"),
+    @SerialName(value = "lighter_transfer")
+    lighter_transfer("lighter_transfer"),
+    @SerialName(value = "evm_7702_batch_tx")
+    evm_7702_batch_tx("evm_7702_batch_tx");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use

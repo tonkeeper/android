@@ -10,20 +10,23 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 sealed interface HermesCandleEvent {
     data object Opened : HermesCandleEvent
-    data class Candles(val response: GetCandlesResponse) : HermesCandleEvent
-
-    /** The feed will never deliver on this connection — reconnecting cannot fix it. */
-    data object FeedRejected : HermesCandleEvent
+    data class Candles(val feedId: String?, val response: GetCandlesResponse) : HermesCandleEvent
+    data object LoggedIn : HermesCandleEvent
+    data object LoginRejected : HermesCandleEvent
+    data class FeedError(val feedId: String?, val permanent: Boolean) : HermesCandleEvent
     data object Terminated : HermesCandleEvent
 }
 
@@ -36,8 +39,7 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
     @Volatile
     private var socket: WebSocket? = null
 
-    @Volatile
-    private var subscribedFeedId: String? = null
+    private val subscriptions = ConcurrentHashMap<Long, String>()
 
     val events: ReceiveChannel<HermesCandleEvent>
         get() = inbound
@@ -77,8 +79,9 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
     }
 
     fun subscribe(feedId: String) {
-        subscribedFeedId = feedId
-        request(CHANNEL_SUBSCRIBE, NAME_SUBSCRIBE, buildJsonObject { put("feedId", feedId) })
+        val reqid = nextRequestId.incrementAndGet()
+        subscriptions[reqid] = feedId
+        request(CHANNEL_SUBSCRIBE, NAME_SUBSCRIBE, buildJsonObject { put("feedId", feedId) }, reqid)
     }
 
     suspend fun keepAlive() {
@@ -89,18 +92,23 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
     }
 
     fun close() {
-        subscribedFeedId?.let { feedId ->
+        subscriptions.values.distinct().forEach { feedId ->
             request(CHANNEL_UNSUBSCRIBE, NAME_UNSUBSCRIBE, buildJsonObject { put("feedId", feedId) })
         }
-        subscribedFeedId = null
+        subscriptions.clear()
         socket?.close(CLOSE_NORMAL, null)
         socket = null
         inbound.close()
     }
 
-    private fun request(channel: String, name: String, payload: JsonObject? = null) {
+    private fun request(
+        channel: String,
+        name: String,
+        payload: JsonObject? = null,
+        reqid: Long = nextRequestId.incrementAndGet(),
+    ) {
         val socket = socket ?: return
-        socket.send(hermesFrame(channel, name, nextRequestId.incrementAndGet(), payload))
+        socket.send(hermesFrame(channel, name, reqid, payload))
     }
 
     private fun decode(text: String): HermesCandleEvent? {
@@ -110,22 +118,26 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
             if (envelope.channel == CHANNEL_CANDLES && message.name == NAME_CANDLES_PUSH) {
                 val payload = message.payload ?: return null
                 val push = hermesJson.decodeFromJsonElement<CandlesPush>(payload)
-                return HermesCandleEvent.Candles(push.data)
+                return HermesCandleEvent.Candles(push.feedId, push.data)
+            }
+            if (envelope.channel == CHANNEL_LOGIN && message.name == NAME_LOGIN_RESPONSE) {
+                return HermesCandleEvent.LoggedIn
             }
             if (message.name == NAME_ERROR_RESPONSE || message.name == NAME_ERROR_MESSAGE) {
                 val error = message.payload?.let { hermesJson.decodeFromJsonElement<ErrorPayload>(it) }
                 L.e("hermes ${envelope.channel} error: ${error?.code} ${error?.description}")
+                val code = error?.code.orEmpty()
+                if (envelope.channel == CHANNEL_LOGIN) {
+                    return HermesCandleEvent.LoginRejected.takeIf { code == HERMES_ERROR_INVALID_CREDENTIALS }
+                }
                 if (envelope.channel != CHANNEL_SUBSCRIBE) {
                     return null
                 }
-                val code = error?.code.orEmpty()
                 if (code == HERMES_ERROR_ALREADY_SUBSCRIBED) {
                     return null
                 }
-                if (code in PERMANENT_FEED_ERRORS) {
-                    return HermesCandleEvent.FeedRejected
-                }
-                return HermesCandleEvent.Terminated
+                val feedId = (message.reqid as? JsonPrimitive)?.longOrNull?.let { subscriptions[it] }
+                return HermesCandleEvent.FeedError(feedId, permanent = code in PERMANENT_FEED_ERRORS)
             }
             return null
         } catch (e: SerializationException) {
@@ -136,6 +148,7 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
 
     @Serializable
     private data class CandlesPush(
+        val feedId: String? = null,
         val data: GetCandlesResponse,
     )
 
@@ -148,6 +161,7 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
 
         const val NAME_PING = "ping"
         const val NAME_LOGIN = "loginRequest"
+        const val NAME_LOGIN_RESPONSE = "loginResponse"
         const val NAME_SUBSCRIBE = "subscribeCandleFeedRequest"
         const val NAME_UNSUBSCRIBE = "unsubscribeCandleFeedRequest"
         const val NAME_CANDLES_PUSH = "candlesFeedMessage"

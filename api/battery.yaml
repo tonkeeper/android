@@ -1,0 +1,3540 @@
+openapi: 3.0.2
+info:
+  title: Custodial-Battery REST API.
+  version: 0.0.1
+  description: REST API for Custodial Battery which provides gas to different networks to help execute transactions.
+  contact:
+    name: Support
+    email: support@tonkeeper.com
+servers:
+  - url: "https://battery.tonkeeper.com"
+  - url: "https://testnet-battery.tonkeeper.com"
+paths:
+  /tonconnect/payload:
+    get:
+      description: Get a payload for further token receipt
+      operationId: getTonConnectPayload
+      tags:
+        - Connect
+      responses:
+        '200':
+          description: payload
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - payload
+                properties:
+                  payload:
+                    type: string
+                    example: "84jHVNLQmZsAAAAAZB0Zryi2wqVJI-KaKNXOvCijEi46YyYzkaSHyJrMPBMOkVZa"
+        'default':
+          $ref: '#/components/responses/Error'
+  /tonconnect/proof:
+    post:
+      description: Account verification and token issuance
+      operationId: tonConnectProof
+      tags:
+        - Wallet
+      requestBody:
+        $ref: "#/components/requestBodies/TonConnectProof"
+      responses:
+        '200':
+          description: auth token
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+                    example: "NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ3..."
+        'default':
+          $ref: '#/components/responses/Error'
+  /status:
+    get:
+      description: This method returns information about the current status of Battery Service.
+      operationId: getStatus
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        'default':
+          $ref: '#/components/responses/Error'
+  /gasless/battery/config:
+    get:
+      description: >-
+        What the gasless 2.0 flow serves: the chains, the payload types each of them accepts, and
+        the assets that can pay the relayer there. "battery/mainnet" is the user's charges ("battery" is accepted too).
+      operationId: gaslessBatteryConfig
+      tags:
+        - Gasless
+      responses:
+        '200':
+          description: The chains and assets served.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaslessV2Config'
+        '4XX':
+          $ref: '#/components/responses/GaslessV2Error'
+        'default':
+          $ref: '#/components/responses/Error'
+  /gasless/estimate:
+    post:
+      description: >-
+        Prices one payload in every asset that can pay the relayer on its chain, and says which of
+        them the sender can afford.
+      operationId: gaslessEstimate
+      tags:
+        - Gasless
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GaslessV2EstimateRequest'
+      responses:
+        '200':
+          description: One estimation per asset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaslessV2EstimateResponse'
+        '4XX':
+          $ref: '#/components/responses/GaslessV2Error'
+        'default':
+          $ref: '#/components/responses/Error'
+  /gasless/emulate:
+    post:
+      description: >-
+        Builds the operation to sign from unsigned payloads and the asset chosen to pay the relayer,
+        and emulates it. The operation is kept until expires_at and /gasless/send checks the
+        signatures against it.
+      operationId: gaslessEmulate
+      tags:
+        - Gasless
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GaslessV2EmulateRequest'
+      responses:
+        '200':
+          description: The operation to sign.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaslessV2EmulateResponse'
+        '4XX':
+          $ref: '#/components/responses/GaslessV2Error'
+        'default':
+          $ref: '#/components/responses/Error'
+  /gasless/send:
+    post:
+      description: >-
+        Takes the signed payloads of an emulated operation, checks them against it one to one, and
+        broadcasts.
+      operationId: gaslessSend
+      tags:
+        - Gasless
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GaslessV2SendRequest'
+      responses:
+        '200':
+          description: The operation was broadcast.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaslessV2SendResponse'
+        '4XX':
+          $ref: '#/components/responses/GaslessV2Error'
+        'default':
+          $ref: '#/components/responses/Error'
+  /config:
+    get:
+      description: This method returns information about Battery Service.
+      operationId: getConfig
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+        'default':
+          $ref: '#/components/responses/Error'
+  /promo-used:
+    get:
+      operationId: getPromoUsed
+      parameters:
+        - name: promo
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromoUsed'
+        'default':
+          $ref: '#/components/responses/Error'
+  /battery-charged:
+    get:
+      description: This method returns information about a user's balance.
+      operationId: getBatteryCharged
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatteryCharged'
+        'default':
+          $ref: '#/components/responses/Error'
+  /balance:
+    get:
+      description: This method returns information about a user's balance.
+      operationId: getBalance
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/balanceUnits'
+        - $ref: '#/components/parameters/region'
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        'default':
+          $ref: '#/components/responses/Error'
+  /wallet/emulate:
+    post:
+      description: Emulate sending message to blockchain
+      operationId: emulateMessageToWallet
+      tags:
+        - Emulation
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - name: enable_validation
+          in: query
+          schema:
+            type: boolean
+            default: false
+          required: false
+      requestBody:
+        $ref: "#/components/requestBodies/Boc"
+      responses:
+        '200':
+          description: emulated message
+          headers:
+            Allowed-By-Battery:
+              required: true
+              schema:
+                type: boolean
+                example: "true"
+            Supported-By-Battery:
+              required: true
+              schema:
+                type: boolean
+                example: "true"
+            Reject-Reason:
+              schema:
+                type: string
+                example: "message is too large"
+            X-Battery-Protocol-Name:
+              schema:
+                type: string
+            Excess:
+              required: true
+              schema:
+                type: integer
+                format: int64
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /message:
+    post:
+      description: Send message to blockchain
+      operationId: sendMessage
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/promo'
+      requestBody:
+        $ref: "#/components/requestBodies/BocWithProof"
+      responses:
+        '200':
+          description: "success"
+          headers:
+            X-Battery-Protocol-Name:
+              schema:
+                type: string
+        'default':
+          $ref: '#/components/responses/Error'
+  /estimate:
+    post:
+      description: >-
+        Estimate what an operation will cost, on any chain. The request body is picked by its
+        "chain" field, and each chain takes the values its own estimator needs.
+      operationId: estimate
+      tags:
+        - Multichain
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/optionalEnterpriseAccessToken'
+        - name: X-Pro-Auth
+          in: header
+          required: false
+          schema:
+            type: string
+          description: JWT token from Pro service for free charges verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateRequest'
+      responses:
+        '200':
+          description: The estimate, shaped by the chain it was asked for.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimateResponse'
+        'default':
+          $ref: '#/components/responses/Error'
+  /send:
+    post:
+      description: >-
+        Send an operation, on any chain. The request body is picked by its "chain" field, and each
+        chain takes the values its own relayer needs.
+      operationId: send
+      tags:
+        - Multichain
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/optionalEnterpriseAccessToken'
+        - $ref: '#/components/parameters/promo'
+        - name: X-Pro-Auth
+          in: header
+          required: false
+          schema:
+            type: string
+          description: JWT token from Pro service for free charges verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendRequest'
+      responses:
+        '200':
+          description: The result, shaped by the chain it was sent on.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendResponse'
+        'default':
+          $ref: '#/components/responses/Error'
+  /v0/tron/config:
+    get:
+      operationId: getTronConfig
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - safety_margin_percent
+                properties:
+                  safety_margin_percent:
+                    type: string
+                    example: "1.5"
+        'default':
+          $ref: '#/components/responses/Error'
+  /v0/tron/estimate:
+    get:
+      description: Estimate cost of sending a tx in Tron network
+      operationId: tronEstimate
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/optionalEnterpriseAccessToken'
+        - name: X-Pro-Auth
+          in: header
+          required: false
+          schema:
+            type: string
+          description: JWT token from Pro service for free charges verification
+        - name: energy
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 1000000
+            minimum: 0
+        - name: bandwidth
+          in: query
+          required: false
+          schema:
+            type: integer
+            maximum: 2000
+            minimum: 0
+        - name: wallet
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: enable_validation
+          in: query
+          required: false
+          description: Enable balance validation for battery charges
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimatedTronTx'
+        'default':
+          $ref: '#/components/responses/Error'
+  /v0/tron/send:
+    post:
+      description: send TRON tx
+      operationId: tronSend
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/optionalEnterpriseAccessToken'
+        - name: X-Pro-Auth
+          in: header
+          required: false
+          schema:
+            type: string
+          description: JWT token from Pro service for free charges verification
+        - name: user_public_key
+          in: query
+          required: false
+          description: User public key for commission payments (required when instant_fee_tx is provided)
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/TronTx"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SentTronTx'
+        'default':
+          $ref: '#/components/responses/Error'
+  /v0/tron/transactions:
+    get:
+      operationId: getTronTransactions
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/limitQuery'
+        - $ref: '#/components/parameters/maxTimestamp'
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TronTransactionsList'
+        'default':
+          $ref: '#/components/responses/Error'
+  /v0/tron/available-transfers:
+    get:
+      description: Get number of available TRON free transfers for Pro users
+      operationId: getTronAvailableTransfers
+      parameters:
+        - name: X-Pro-Auth
+          in: header
+          required: true
+          schema:
+            type: string
+          description: JWT token from Pro service (Bearer token)
+      responses:
+        '200':
+          description: Available transfers information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TronAvailableTransfers'
+        'default':
+          $ref: '#/components/responses/Error'
+  /v0/tron/itrx-io-callback:
+    post:
+      description: receive callback from itrx.io
+      operationId: itrxIoCallback
+      parameters:
+        - $ref: '#/components/parameters/itrxSignature'
+        - $ref: '#/components/parameters/itrxTimestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/android:
+    post:
+      description: verify an in-app purchase
+      operationId: androidBatteryPurchase
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        $ref: "#/components/requestBodies/AndroidBatteryPurchase"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AndroidBatteryPurchaseStatus'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/ios/app-store-notification:
+    post:
+      operationId: appStoreNotification
+      requestBody:
+        $ref: "#/components/requestBodies/appStoreNotification"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/appStoreResponse'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/ios:
+    post:
+      description: verify an in-app purchase
+      operationId: iosBatteryPurchase
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        $ref: "#/components/requestBodies/iOSBatteryPurchase"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/iOSBatteryPurchaseStatus'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/promo-code:
+    post:
+      description: charge battery with promo code
+      operationId: promoCodeBatteryPurchase
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        $ref: "#/components/requestBodies/promoCodeBatteryPurchase"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/promoCodeBatteryPurchaseStatus'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/verify-purchase-promo:
+    get:
+      operationId: verifyPurchasePromo
+      parameters:
+        - name: promo
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - bonus_charges
+                properties:
+                  bonus_charges:
+                    type: string
+                    example: "10.250"
+        'default':
+          $ref: '#/components/responses/Error'
+  /recharge-methods:
+    get:
+      description: This method returns on-chain recharge methods.
+      operationId: getRechargeMethods
+      parameters:
+        - name: include_recharge_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeMethods'
+        'default':
+          $ref: '#/components/responses/Error'
+  /request-refund:
+    post:
+      operationId: requestRefund
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        $ref: "#/components/requestBodies/requestRefund"
+      responses:
+        '200':
+          description: success
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchases:
+    get:
+      description: This method returns a list of purchases made by a specific user.
+      operationId: getPurchases
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/limitQuery'
+        - $ref: '#/components/parameters/offsetQuery'
+        - name: include_gifts_on_the_way
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Purchases'
+        'default':
+          $ref: '#/components/responses/Error'
+  /transactions:
+    get:
+      description: This method returns a list of transactions made by a specific user.
+      operationId: getTransactions
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - $ref: '#/components/parameters/limitQuery'
+        - $ref: '#/components/parameters/offsetQuery'
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transactions'
+        'default':
+          $ref: '#/components/responses/Error'
+  /gasless/estimate-cost/{jetton_master}:
+    post:
+      operationId: estimateGaslessCost
+      parameters:
+        - $ref: '#/components/parameters/jettonMasterParameter'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - name: wallet_address
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: wallet_public_key
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: enable_validation
+          in: query
+          schema:
+            type: boolean
+            default: false
+          required: false
+      requestBody:
+        $ref: "#/components/requestBodies/gaslessEstimateCost"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaslessEstimation'
+        'default':
+          $ref: '#/components/responses/Error'
+
+  /gasless/estimate/jetton-transfer:
+    post:
+      operationId: EstimateGaslessJettonTransfer
+      summary: Estimate gasless commission for a jetton transfer by its parameters
+      requestBody:
+        $ref: "#/components/requestBodies/gaslessEstimateJettonTransfer"
+      responses:
+        '200':
+          description: Gasless commission transfer parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaslessCommissionJettonTransfer'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/promo-campaign:
+    post:
+      operationId: createPromoCampaign
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - participants
+                - name
+              properties:
+                name:
+                  type: string
+                participants:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - address
+                      - amount
+                    properties:
+                      address:
+                        type: string
+                      amount:
+                        type: string
+                        description: amount in TON
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - participants
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - address
+                      properties:
+                        address:
+                          type: string
+                        balance_increased:
+                          type: string
+                        error:
+                          type: string
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/promo-campaign-by-user:
+    post:
+      operationId: createPromoCampaignByUser
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - participants
+                - name
+              properties:
+                name:
+                  type: string
+                participants:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - user_id
+                      - amount
+                    properties:
+                      user_id:
+                        type: integer
+                        format: int64
+                      amount:
+                        type: string
+                        description: amount in TON
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - participants
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - user_id
+                      properties:
+                        user_id:
+                          type: integer
+                          format: int64
+                        balance_increased:
+                          type: string
+                        error:
+                          type: string
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/apply-promo:
+    post:
+      operationId: applyPromo
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - promo_code
+                - public_key
+              properties:
+                public_key:
+                  type: string
+                promo_code:
+                  type: string
+                  example: "1234567890"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/promoCodeBatteryPurchaseStatus'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/create-custom-refund:
+    post:
+      operationId: createCustomRefund
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        $ref: "#/components/requestBodies/customRefund"
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/battery-transfer:
+    post:
+      operationId: batteryTransfer
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: string
+                  description: Amount in TON (not nano)
+                comment:
+                  type: string
+                  description: Optional text comment for TON transfer
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/battery-swap-ton-to-usdt:
+    post:
+      operationId: batterySwapTonToUsdt
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: string
+                  description: Amount in TON (not nano) to swap to USDT on battery.ton
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/battery-nft-transfer:
+    post:
+      operationId: batteryNftTransfer
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nft
+                - to
+              properties:
+                nft:
+                  type: string
+                  description: NFT item address to transfer
+                to:
+                  type: string
+                  description: New NFT owner address
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/okx-deposit:
+    post:
+      operationId: replenishOKXBalance
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: string
+                  description: Amount in TON
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/relayer-to-battery:
+    post:
+      operationId: relayerToBattery
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: string
+                  description: Amount in TON (not nano) to transfer from main relayer to battery.ton
+                comment:
+                  type: string
+                  description: Optional text comment for TON transfer
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/evm-relay-topup:
+    post:
+      operationId: evmRelayTopup
+      description: |
+        Swaps TON from the main relayer into the native coin of an EVM chain through Changelly, paid
+        out to the EVM relay wallet. Without confirm it only quotes; with confirm it creates the swap
+        and sends the TON. The relayer keeps at least 2000 TON.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chain
+                - amount
+              properties:
+                chain:
+                  type: string
+                  description: EVM chain of the relay to top up
+                  example: bsc
+                amount:
+                  type: string
+                  description: Amount in TON (not nano) to swap
+                confirm:
+                  type: boolean
+                  description: Create the swap and send the TON; otherwise only quote
+                  default: false
+                currency:
+                  type: string
+                  description: Changelly ticker to receive, overriding the chain's default (eth, bnbbsc, etharb, ethbase)
+      responses:
+        '200':
+          description: "the quote, or the created swap"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/migrate-old-battery:
+    post:
+      operationId: migrateOldBattery
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - seed
+              properties:
+                seed:
+                  type: string
+                  description: Old battery wallet mnemonic (seed phrase)
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/migrate-relayer:
+    post:
+      operationId: migrateRelayer
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - seed
+              properties:
+                seed:
+                  type: string
+                  description: Old relayer mnemonic (seed phrase)
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/omniston-swap:
+    post:
+      operationId: omnistonSwap
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: master0
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Jetton master address or 'ton' for native TON
+        - name: master1
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Jetton master address or 'ton' for native TON
+        - name: from_amount
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Amount in human-readable units of master0 (not nano)
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/users/{user_id}/reset-balance:
+    post:
+      operationId: resetUserBalance
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/resetUserBalance"
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/ton-purchases/{purchase_id}/reassign:
+    post:
+      operationId: reassignTonPurchase
+      description: >-
+        Moves a TON purchase that was claimed by the wallet's public-key user over to the same
+        wallet's wallet-id user: the purchase row, its user_purchase_id, and the balance it added.
+        Everything is checked and applied in one transaction; dry_run checks and reports without
+        changing anything.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: purchase_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ to_user_id, reason ]
+              properties:
+                to_user_id:
+                  type: integer
+                  format: int64
+                  description: The wallet-id user the purchase should have gone to.
+                reason:
+                  type: string
+                dry_run:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: the purchase, moved or as it would be moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TonPurchaseReassignment'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/purchases/{purchase_id}/extend-refund-period:
+    post:
+      operationId: extendRefundPeriod
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: purchase_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/users/{user_id}/increase-balance:
+    post:
+      operationId: increaseUserBalance
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: string
+                  description: amount in TON to increase balance by
+                reason:
+                  type: string
+                  description: reason for balance increase
+      responses:
+        '200':
+          description: "all good"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/invisible-user-liabilities:
+    post:
+      operationId: addInvisibleUserLiability
+      description: |
+        Records TON that left the cold wallet but is still the users' money -- moved somewhere the
+        on-chain balance does not see. Its amount is added to the cold wallet's balance in the
+        assets accounting (battery.invisible_user_liabilities). One record per transaction.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tx_hash
+                - amount
+              properties:
+                tx_hash:
+                  type: string
+                  description: Transaction hash, 64 hex characters
+                amount:
+                  type: string
+                  description: Amount in TON (not nano); negative to record money coming back
+                event_time:
+                  type: integer
+                  format: int64
+                  description: Unix time of the transaction; now if omitted
+                comment:
+                  type: string
+      responses:
+        '200':
+          description: "the record"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /jetton-metadata/{name}.json:
+    get:
+      operationId: getJettonMetadata
+      tags:
+        - Emulation
+      parameters:
+        - name: name
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: ""
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /enterprise/wallets/{wallet_id}/config:
+    get:
+      operationId: enterpriseGetWalletConfig
+      parameters:
+        - $ref: '#/components/parameters/enterpriseAccessToken'
+        - name: wallet_id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnterpriseWalletConfig'
+        'default':
+          $ref: '#/components/responses/Error'
+  /enterprise/wallets/{wallet_id}/estimate:
+    post:
+      operationId: enterpriseEstimate
+      parameters:
+        - $ref: '#/components/parameters/enterpriseAccessToken'
+        - $ref: '#/components/parameters/i18n'
+        - name: wallet_id
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: emulate
+          in: query
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        $ref: "#/components/requestBodies/EnterpriseSendingBoc"
+      responses:
+        '200':
+          description: TBD
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - estimated_upfront_payment
+                properties:
+                  estimated_upfront_payment:
+                    type: string
+                  emulation:
+                    type: string
+                    description: base64 encoded emulation results. The exact type can be taken from /v2/wallet/emulate (TONAPI).
+        'default':
+          $ref: '#/components/responses/Error'
+  /enterprise/wallets/{wallet_id}/send:
+    post:
+      operationId: enterpriseSend
+      parameters:
+        - $ref: '#/components/parameters/enterpriseAccessToken'
+        - name: wallet_id
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/EnterpriseSendingBoc"
+      responses:
+        '200':
+          description: "success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - msg_id
+                properties:
+                  msg_id:
+                    type: string
+                  external:
+                    type: string
+                    description: base64 encoded external message (signed) that was sent to the network
+        'default':
+          $ref: '#/components/responses/Error'
+  /enterprise/messages/{msg_id}:
+    get:
+      operationId: enterpriseGetMessage
+      parameters:
+        - $ref: '#/components/parameters/enterpriseAccessToken'
+        - name: msg_id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: "success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  payment_tx_hash:
+                    type: string
+                  committed_tx_hash:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - pending
+                      - completed
+                      - failed
+                  final_cost:
+                    type: string
+                  failed_reason:
+                    type: string
+        'default':
+          $ref: '#/components/responses/Error'
+  /enterprise/status:
+    get:
+      operationId: enterpriseGetStatus
+      parameters:
+        - $ref: '#/components/parameters/enterpriseAccessToken'
+      responses:
+        '200':
+          description: "success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - balance
+                  - wallet
+                properties:
+                  balance:
+                    type: string
+                  wallet:
+                    type: string
+        'default':
+          $ref: '#/components/responses/Error'
+  /transaction:
+    get:
+      description: >-
+        Return how many battery charges a transaction consumed. Public: it exposes only the charge
+        cost of a transaction the caller already knows the hash of.
+      operationId: getTransaction
+      tags:
+        - Multichain
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          description: >-
+            tron, ton, or an EVM network the relay serves: eth, bsc, arb, base, polygon.
+          schema:
+            type: string
+            enum: [ tron, ton, eth, bsc, arb, base, polygon ]
+        - name: hash
+          in: query
+          required: true
+          description: >-
+            transaction hash. For TRON this is the txid. For TON it is either the on-chain
+            transaction hash or the hash of the external message the wallet signed; both hex
+            and base64 are accepted. For an EVM network it is the hash /send returned, 0x-prefixed
+            hex.
+          schema:
+            type: string
+            example: 6c4e6d3a2b1f0e9d8c7b6a5948372615043f2e1d0c9b8a7968574635241302f1
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ chain, hash, charges ]
+                properties:
+                  chain:
+                    type: string
+                    enum: [ tron, ton, eth, bsc, arb, base, polygon ]
+                  hash:
+                    type: string
+                  charges:
+                    type: integer
+                    description: >-
+                      battery charges consumed by the transaction. On an EVM network it is what was
+                      held for it while pending, and 0 for a gasless transaction paid in a token.
+                  is_pending:
+                    type: boolean
+                  is_failed:
+                    type: boolean
+                  timestamp:
+                    type: integer
+                    format: int64
+        'default':
+          $ref: '#/components/responses/Error'
+components:
+  parameters:
+    enterpriseAccessToken:
+      in: header
+      name: X-Enterprise-Auth
+      schema:
+        type: string
+        example: NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ3...
+      required: true
+    itrxSignature:
+      in: header
+      name: SIGNATURE
+      schema:
+        type: string
+      required: true
+    itrxTimestamp:
+      in: header
+      name: TIMESTAMP
+      schema:
+        type: string
+      required: true
+    token:
+      in: header
+      name: X-TonConnect-Auth
+      schema:
+        type: string
+        example: NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ3...
+      required: true
+    optionalToken:
+      in: header
+      name: X-TonConnect-Auth
+      schema:
+        type: string
+        example: NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ3...
+      required: false
+    walletId:
+      in: header
+      name: X-Wallet-ID
+      required: false
+      description: >-
+        Tonkeeper WalletID identifying the wallet, format 2 only: base32 lowercase 36-char, which
+        carries its own format and kind and is the one X-Wallet-Authorization can be checked
+        against. The earlier hex64 and base32 32-char spellings are no longer accepted — a proof is
+        verified by recovering the signing key from it, which those derivations cannot do, so an id
+        that cannot be proven cannot be trusted to name a wallet.
+        When it comes with a valid access token in Authorization, the request is
+        authenticated by the wallet id; otherwise X-TonConnect-Auth is used as before.
+        The wallet id alone identifies the user; the public key is not sent by
+        the client, it is taken from the message the request carries.
+      schema:
+        type: string
+        pattern: '^[a-z2-7]{36}$'
+        example: "aia4kzm6zmtrdhv3iqy3knmnjaxoqy54migq"
+    walletToken:
+      in: header
+      name: Authorization
+      required: false
+      description: >-
+        Bearer token for WalletID-based requests, "Bearer <token>". A keeper-issued access token,
+        verified against the published keys. A request that has X-Wallet-ID with a token that does
+        not verify is rejected with 401 unless it also carries X-TonConnect-Auth.
+        The token is issued to a device and says nothing about which wallet it speaks for, so on
+        its own it does not authenticate the X-Wallet-ID beside it — that is what
+        X-Wallet-Authorization is for.
+      schema:
+        type: string
+        example: Bearer NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ3...
+    walletAuth:
+      in: header
+      name: X-Wallet-Authorization
+      required: false
+      description: >-
+        Proof that the wallet owns the access token in Authorization, base64url of a 65-byte
+        recoverable secp256k1 signature (R | S | V) over
+        LP("keeper.wallet.auth.v1") | LP(blake2b256(access_token)), padding optional.
+        It carries no operation of its own and is what guards the replies that would otherwise
+        reveal which addresses sit behind a wallet_id.
+        Mandatory, on every endpoint, whenever the request authenticates by a format 2 wallet_id:
+        the access token belongs to a device and says nothing about which wallet it speaks for, so
+        without this the wallet_id is unauthenticated. A request that names one and cannot prove it
+        is answered with 401.
+        Marked optional here because it is not always applicable, not because it can be skipped:
+        callers authenticating by X-TonConnect-Auth or an enterprise token have no wallet_id to
+        prove and never send it.
+        It is bound to the access token, so it lives exactly as long as that token and has to be
+        signed again after a device refresh.
+      schema:
+        type: string
+        example: "MCr-AZmLXTXN5MxMMpzx3k3XHQYxn3qE967viec3RQd-rCdDXZ3HHPj9addvd2QzJTxN1LOe0imcQ8MOqdSYpgA"
+    promo:
+      in: header
+      name: X-Promo
+      required: false
+      description: >-
+        Promo code the client wants applied. For now it is only accepted, nothing
+        is redeemed by it.
+      schema:
+        type: string
+        example: "HAMSTER"
+    optionalEnterpriseAccessToken:
+      in: header
+      name: X-Enterprise-Auth
+      schema:
+        type: string
+        example: NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ3...
+      required: false
+      description: Enterprise access token; use with Tron battery billing for enterprise accounts
+    adminToken:
+      in: query
+      name: token
+      schema:
+        type: string
+      required: true
+    jettonMasterParameter:
+      in: path
+      name: jetton_master
+      required: true
+      schema:
+        type: string
+    purchaseId:
+      in: query
+      name: id
+      required: true
+      schema:
+        type: integer
+    limitQuery:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        default: 1000
+        maximum: 1000
+    offsetQuery:
+      in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        default: 0
+    maxTimestamp:
+      in: query
+      name: max_timestamp
+      required: false
+      schema:
+        type: integer
+        format: int64
+    i18n:
+      in: header
+      name: Accept-Language
+      required: false
+      schema:
+        type: string
+        example: "ru-RU,ru;q=0.5"
+        default: "en"
+    balanceUnits:
+      in: query
+      name: units
+      schema:
+        type: string
+        default: "usd"
+        enum:
+          - usd
+          - ton
+    region:
+      in: query
+      name: region
+      required: false
+      schema:
+        type: string
+        description: "User's region for analytics purposes"
+  requestBodies:
+    TonConnectProof:
+      description: "Data that is expected from TON Connect"
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - address
+              - proof
+            properties:
+              address:
+                type: string
+                example: "0:97146a46acc2654y27947f14c4a4b14273e954f78bc017790b41208b0043200b"
+              proof:
+                type: object
+                required:
+                  - timestamp
+                  - domain
+                  - signature
+                  - payload
+                properties:
+                  timestamp:
+                    type: integer
+                    format: int64
+                    example: "1678275313"
+                  domain:
+                    type: object
+                    required:
+                      - value
+                    properties:
+                      length_bytes:
+                        type: integer
+                        format: int32
+                      value:
+                        type: string
+                  signature:
+                    type: string
+                  payload:
+                    type: string
+                    example: "84jHVNLQmZsAAAAAZB0Zryi2wqVJI-KaKNXOvCijEi46YyYzkaSHyJrMPBMOkVZa"
+                  state_init:
+                    type: string
+    EnterpriseSendingBoc:
+      description: bag-of-cells serialized to base64
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - boc
+              - wallet_public_key
+            properties:
+              boc:
+                type: string
+                example: te6ccgECBQEAARUAAkWIAWTtae+KgtbrX26Bep8JSq8lFLfGOoyGR/xwdjfvpvEaHg
+              wallet_public_key:
+                type: string
+
+    TronTx:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - wallet
+            properties:
+              tx:
+                type: string
+              energy:
+                type: integer
+                minimum: 0
+                maximum: 1000000
+              bandwidth:
+                type: integer
+                minimum: 0
+                maximum: 2000
+              wallet:
+                type: string
+              instant_fee_tx:
+                type: string
+                description: "base64 encoded payment transaction in the TON network"
+              proof:
+                description: >-
+                  Not enforced yet: the value is accepted and validated when present, and a request
+                  without it is still served. Signature made with the wallet's root key over
+                  LP("keeper.battery.send.v1") | LP(wallet_id) | LP(chain) | LP(blake2b256(digest)),
+                  hex-encoded, exactly as on /message. chain is "tron" for this endpoint.
+                  Unlike TON, where the boc alone fixes the cost, the charges spent here also depend
+                  on the fields travelling beside the tx, so the digest covers all of them:
+                  blake2b256(LP(tx) | LP(energy) | LP(bandwidth) | LP(instant_fee_tx)), where every
+                  field is its exact request value and an omitted one is the empty string. energy
+                  and bandwidth are their decimal representations.
+                  Recoverable secp256k1 signature over blake2b-256 of that message: 65 bytes laid
+                  out R | S | V in the EVM ordering, 130 hex. The key is not sent — it is recovered
+                  from the signature, and the wallet_id derived from it has to equal the one the
+                  request came with. Requires a format 2 wallet_id.
+                type: string
+                minLength: 130
+                maxLength: 130
+                pattern: '^[a-f0-9]{130}$'
+    Boc:
+      description: bag-of-cells serialized to base64
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - boc
+            properties:
+              boc:
+                type: string
+                example: te6ccgECBQEAARUAAkWIAWTtae+KgtbrX26Bep8JSq8lFLfGOoyGR/xwdjfvpvEaHg
+
+    BocWithProof:
+      description: bag-of-cells serialized to base64, with a proof of the wallet's consent
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - boc
+            properties:
+              boc:
+                type: string
+                example: te6ccgECBQEAARUAAkWIAWTtae+KgtbrX26Bep8JSq8lFLfGOoyGR/xwdjfvpvEaHg
+              proof:
+                description: >-
+                  Signature made with the wallet's root key over
+                  LP("keeper.battery.send.v1") | LP(wallet_id) | LP(chain) | LP(blake2b256(boc)),
+                  hex-encoded. LP(x) is a single length byte followed by x, applied to every field
+                  including the digest. chain is "ton" for this endpoint. The digest covers the boc
+                  as sent, before it is decoded.
+                  Recoverable secp256k1 signature over blake2b-256 of that message: 65 bytes laid
+                  out R | S | V in the EVM ordering, 130 hex. The key is not sent — it is recovered
+                  from the signature, and the wallet_id derived from it has to equal the one the
+                  request came with. Requires a format 2 wallet_id.
+                type: string
+                minLength: 130
+                maxLength: 130
+                pattern: '^[a-f0-9]{130}$'
+                example: "3a7f1c9e00000000000000000000000000000000000000000000000000000000d204a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90"
+
+    AndroidBatteryPurchase:
+      description: In-App purchase
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - purchases
+            properties:
+              purchases:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - token
+                    - product_id
+                  properties:
+                    token:
+                      type: string
+                      example: 0:2cf3b5b8c891e517c9addbda1c0386a09ccacbb0e3faf630b51cfc8152325acb
+                    product_id:
+                      type: string
+                      example: 0:2cf3b5b8c891e517c9addbda1c0386a09ccacbb0e3faf630b51cfc8152325acb
+                    promo:
+                      type: string
+                      example: "HAMSTER"
+
+    appStoreNotification:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - signedPayload
+            properties:
+              signedPayload:
+                type: string
+    iOSBatteryPurchase:
+      description: In-App purchase
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - transactions
+            properties:
+              transactions:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                  properties:
+                    id:
+                      type: string
+                    promo:
+                      type: string
+                      example: "HAMSTER"
+    gaslessEstimateCost:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - payload
+            properties:
+              battery:
+                type: boolean
+                default: true
+              payload:
+                type: string
+
+    gaslessEstimateJettonTransfer:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - jetton_master
+              - destination
+            properties:
+              jetton_master:
+                type: string
+                description: Jetton master address
+              destination:
+                type: string
+                description: Destination wallet address
+              response_destination:
+                type: string
+                description: Optional response/excess address
+              attached_ton:
+                type: string
+                description: Optional attached TON amount in nanoTONs
+              forward_ton_amount:
+                type: string
+                description: Optional forward TON amount in nanoTONs
+
+    resetUserBalance:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - reason
+            properties:
+              reason:
+                type: string
+    customRefund:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - amount
+              - currency
+              - comment
+              - reason
+              - destination
+            properties:
+              relayer_event_id:
+                type: integer
+              amount:
+                type: string
+                example: "10.250"
+              currency:
+                type: string
+              comment:
+                type: string
+              reason:
+                type: string
+              destination:
+                type: string
+
+    requestRefund:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              user_purchase_id:
+                type: integer
+                deprecated: true
+                example: 43
+              purchase_id:
+                type: integer
+                example: 43
+    promoCodeBatteryPurchase:
+      description: charge battery with promo code
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - promo_code
+            properties:
+              promo_code:
+                type: string
+                example: "1234567890"
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: error description
+    Status:
+      type: object
+      required:
+        - pending_transactions
+      properties:
+        pending_transactions:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+    EnterpriseWalletConfig:
+      type: object
+      required:
+        - excess_account
+      properties:
+        excess_account:
+          type: string
+          description: when building a message to transfer an NFT or Jetton, use this address to send excess funds back to Battery Service.
+          example: 0:da6b1b6663a0e4d18cc8574ccd9db5296e367dd9324706f3bbd9eb1cd2caf0bf
+
+    RelayerSendingEstimation:
+      type: object
+      required:
+        - commission
+      properties:
+        commission:
+          type: string
+    Config:
+      type: object
+      required:
+        - excess_account
+        - fund_receiver
+        - message_ttl
+        - charge_cost
+        - gas_proxy
+        - mean_prices
+        - battery_reserved_amount
+        - packages
+        - transfer_cost
+      properties:
+        charge_cost:
+          description: "cost of 1 charge in TON"
+          type: string
+          example: "0.0026"
+        fund_receiver:
+          type: string
+          description: "with zero balance it is possible to transfer some jettons (stablecoins, jusdt, etc) to this address to refill the balance. Such transfers would be paid by Battery Service."
+          example: 0:07331e629e39d006d86a8cc7659c10a97c671f7535dc8b7f251a1a944dda348e
+        excess_account:
+          type: string
+          description: when building a message to transfer an NFT or Jetton, use this address to send excess funds back to Battery Service.
+          example: 0:da6b1b6663a0e4d18cc8574ccd9db5296e367dd9324706f3bbd9eb1cd2caf0bf
+        message_ttl:
+          type: integer
+          description: "ttl for message in seconds"
+          example: 300
+        gas_proxy:
+          type: array
+          items:
+            type: object
+            required:
+              - address
+            properties:
+              address:
+                type: string
+        mean_prices:
+          type: object
+          required:
+            - battery_mean_price_swap
+            - battery_mean_price_jetton
+            - battery_mean_price_nft
+          properties:
+            battery_mean_price_swap:
+              type: integer
+            battery_mean_price_jetton:
+              type: integer
+            battery_mean_price_nft:
+              type: integer
+            battery_mean_price_tron_usdt:
+              type: integer
+            ton_mean_price_tron_usdt:
+              type: number
+              format: float
+        battery_reserved_amount:
+          type: string
+          description: "reserved amount in TON that is kept for gas fees"
+          example: "0.065"
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageItem'
+        transfer_cost:
+          type: object
+          required:
+            - default
+            - jettons
+          properties:
+            default:
+              type: string
+              description: "default transfer cost in TON"
+              example: "0.05"
+            jettons:
+              type: array
+              items:
+                type: object
+                required:
+                  - jetton_master
+                  - symbol
+                  - value
+                properties:
+                  jetton_master:
+                    type: string
+                  symbol:
+                    type: string
+                    example: "USD₮"
+                  value:
+                    type: string
+                    description: "transfer cost in TON"
+                    example: "0.002"
+    PackageItem:
+      type: object
+      required:
+        - name
+        - image
+        - charges
+      properties:
+        name:
+          type: string
+          enum: 
+            - large
+            - medium
+            - small
+            - other
+        image:
+          type: string
+        charges:
+          type: integer
+    GaslessEstimation:
+      type: object
+      required:
+        - commission
+      properties:
+        commission:
+          type: string
+
+    GaslessCommissionJettonTransfer:
+      type: object
+      required:
+        - destination
+        - amount
+      properties:
+        destination:
+          type: string
+          description: Destination of commission jetton transfer (usually relayer)
+        amount:
+          type: string
+          description: Commission amount in smallest jetton units (nano-jettons)
+    PromoUsed:
+      type: object
+      required:
+        - promo_used
+        - bonus_charges
+      properties:
+        promo_used:
+          type: boolean
+        bonus_charges:
+          type: string
+          example: "10.250"
+        purchases:
+          type: array
+          items:
+            type: object
+            required:
+              - charges
+            properties:
+              charges:
+                type: integer
+                example: 100
+    BatteryCharged:
+      type: object
+      required:
+        - battery_charged
+      properties:
+        battery_charged:
+          type: boolean
+    Balance:
+      type: object
+      required:
+        - balance
+        - units
+        - reserved
+      properties:
+        balance:
+          type: string
+          example: "10.250"
+        reserved:
+          type: string
+          example: "0.3"
+          description: "reserved amount in units (TON/USD)"
+        units:
+          type: string
+          example: "usd"
+          enum:
+            - usd
+            - ton
+    RechargeMethods:
+      type: object
+      required:
+        - methods
+      properties:
+        methods:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - symbol
+              - decimals
+              - rate
+              - support_gasless
+              - support_recharge
+            properties:
+              image:
+                type: string
+                example: "https://example.com/image.png"
+              jetton_master:
+                type: string
+              min_bootstrap_value:
+                type: string
+                example: "10.0"
+              type:
+                type: string
+                enum:
+                  - jetton
+                  - ton
+              rate:
+                type: string
+                example: "10.250"
+              symbol:
+                type: string
+                example: "usdt"
+              decimals:
+                type: integer
+                example: 6
+              support_gasless:
+                type: boolean
+                example: true
+              support_recharge:
+                type: boolean
+                example: true
+    Purchases:
+      type: object
+      required:
+        - purchases
+        - total_purchases
+      properties:
+        total_purchases:
+          type: integer
+          example: 1
+        purchases:
+          type: array
+          items:
+            type: object
+            required:
+              - user_purchase_id
+              - purchase_id
+              - type
+              - charges
+              - datetime
+            properties:
+              promo:
+                type: string
+              for_account_id:
+                type: string
+              user_purchase_id:
+                type: integer
+                deprecated: true
+                example: 2
+              purchase_id:
+                type: integer
+                example: 2
+              type:
+                type: string
+                example: "android"
+                enum:
+                  - android
+                  - ios
+                  - promo-code
+                  - crypto
+                  - gift
+                  - on-the-way-gift
+              amount:
+                description: "Amount describes the amount paid by the user for this purchase when we know it. For crypto purchases it is always set."
+                type: string
+                example: "10.250"
+              charges:
+                type: integer
+                example: 1200
+              currency:
+                description: "Currency is set when we know it. For crypto purchases it is always set."
+                type: string
+                example: "USDT"
+              datetime:
+                type: string
+                example: "2006-01-02T15:04:05Z07:00"
+              refund_information:
+                type: object
+                required:
+                  - pending_refund
+                  - fully_refunded
+                  - partially_refunded
+                properties:
+                  fully_refunded:
+                    type: boolean
+                  partially_refunded:
+                    type: boolean
+                  pending_refund:
+                    type: boolean
+                  refunded:
+                    type: object
+                    required:
+                      - amount
+                      - charges
+                    properties:
+                      amount:
+                        type: string
+                        example: "10.250"
+                      charges:
+                        type: integer
+                        example: 1200
+                  refundable:
+                    type: object
+                    required:
+                      - amount
+                      - charges
+                    properties:
+                      amount:
+                        type: string
+                        example: "10.250"
+                      charges:
+                        type: integer
+                        example: 1200
+    Chain:
+      type: string
+      enum: [ ton, tron, eth ]
+      description: >-
+        Which chain an operation runs on, and which shape the body around it takes. "eth" covers
+        the EVM family; the particular network is named by evm_chain inside the body.
+
+    EstimateRequest:
+      oneOf:
+        - $ref: '#/components/schemas/TonEstimateRequest'
+        - $ref: '#/components/schemas/TronEstimateRequest'
+        - $ref: '#/components/schemas/EvmEstimateRequest'
+      discriminator:
+        propertyName: chain
+        mapping:
+          ton: '#/components/schemas/TonEstimateRequest'
+          tron: '#/components/schemas/TronEstimateRequest'
+          eth: '#/components/schemas/EvmEstimateRequest'
+
+    SendRequest:
+      oneOf:
+        - $ref: '#/components/schemas/TonSendRequest'
+        - $ref: '#/components/schemas/TronSendRequest'
+        - $ref: '#/components/schemas/EvmSendRequest'
+      discriminator:
+        propertyName: chain
+        mapping:
+          ton: '#/components/schemas/TonSendRequest'
+          tron: '#/components/schemas/TronSendRequest'
+          eth: '#/components/schemas/EvmSendRequest'
+
+    # Gasless 2.0 (docs/generic payload). Payload and signed-payload "meta" depend on chain_id and
+    # type, so they are free-form objects here and checked in code.
+    GaslessV2Fee:
+      type: object
+      required: [ type, asset_id, data ]
+      properties:
+        type:
+          type: string
+          enum: [ value ]
+        asset_id:
+          type: string
+          example: battery/mainnet
+        data:
+          type: object
+          required: [ amount ]
+          properties:
+            amount:
+              type: string
+              description: In the asset's smallest units; charges for "battery/mainnet".
+
+    GaslessV2Payload:
+      type: object
+      required: [ id, type, chain_id, version, meta ]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          description: main | prebuild | batch | eip7702/authorization | eip7821/hermes/delegate | solana/message
+        chain_id:
+          type: string
+          example: ton/mainnet
+        version:
+          type: integer
+        fee:
+          $ref: '#/components/schemas/GaslessV2Fee'
+        meta:
+          type: object
+          additionalProperties: true
+
+    GaslessV2Operation:
+      x-operation: true
+      type: object
+      required: [ id, type, payloads ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          description: transfer | swap | call | message | auth | stake | unstake
+        payloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaslessV2Payload'
+
+    GaslessV2SignedPayload:
+      type: object
+      required: [ type, chain_id, payload_id, meta ]
+      properties:
+        type:
+          type: string
+          description: signed | eip7702/authorization/signed | eip7821/hermes/delegate/signed (eip7821/hermes/1/signed is accepted too) | solana/message/signed
+        chain_id:
+          type: string
+        payload_id:
+          type: string
+        meta:
+          type: object
+          additionalProperties: true
+
+    GaslessV2SignedOperation:
+      type: object
+      required: [ id, payloads ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        payloads:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaslessV2SignedPayload'
+
+    GaslessV2Asset:
+      type: object
+      required: [ id, name, symbol, decimals ]
+      properties:
+        id:
+          type: string
+          example: ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe
+        name:
+          type: string
+        symbol:
+          type: string
+        decimals:
+          type: integer
+        image:
+          type: string
+        chain:
+          type: string
+          nullable: true
+          description: null for battery, which is not chain-scoped
+
+    GaslessV2ErrorBody:
+      type: object
+      required: [ code, message ]
+      properties:
+        code:
+          type: string
+          description: >-
+            unsupported_chain | unsupported_asset | unsupported_payload | insufficient_funds |
+            emulation_failed | emulation_expired | payload_mismatch | invalid_signature |
+            broadcast_failed | operation_not_found | already_sent | bad_request | unauthorized |
+            not_implemented | internal_error
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    GaslessV2Chain:
+      type: object
+      required: [ chain_id, payload_types, assets ]
+      properties:
+        chain_id:
+          type: string
+        payload_types:
+          type: array
+          items:
+            type: string
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaslessV2Asset'
+
+    GaslessV2Config:
+      type: object
+      required: [ chains ]
+      properties:
+        chains:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaslessV2Chain'
+
+    GaslessV2Estimation:
+      type: object
+      required: [ asset, available ]
+      properties:
+        asset:
+          $ref: '#/components/schemas/GaslessV2Asset'
+        available:
+          type: boolean
+        fee:
+          $ref: '#/components/schemas/GaslessV2Fee'
+        error:
+          $ref: '#/components/schemas/GaslessV2ErrorBody'
+
+    GaslessV2EstimateRequest:
+      type: object
+      required: [ chain_id, sender_address, payload ]
+      properties:
+        chain_id:
+          type: string
+        sender_address:
+          type: string
+        payload:
+          $ref: '#/components/schemas/GaslessV2Payload'
+
+    GaslessV2EstimateResponse:
+      type: object
+      required: [ chain_id, sender_address, created_at, expires_at, estimations ]
+      properties:
+        chain_id:
+          type: string
+        sender_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        estimations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaslessV2Estimation'
+
+    GaslessV2EmulateRequest:
+      type: object
+      required: [ chain_id, sender_address, type, gasless_asset, payloads ]
+      properties:
+        chain_id:
+          type: string
+        sender_address:
+          type: string
+        type:
+          type: string
+          description: The operation type, echoed back in operation.type.
+        gasless_asset:
+          type: string
+          example: battery/mainnet
+        payloads:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/GaslessV2Payload'
+
+    GaslessV2EmulateResponse:
+      type: object
+      required: [ chain_id, sender_address, created_at, expires_at, asset_id, fee, operation ]
+      properties:
+        chain_id:
+          type: string
+        sender_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        asset_id:
+          type: string
+        fee:
+          $ref: '#/components/schemas/GaslessV2Fee'
+        account:
+          $ref: '#/components/schemas/EvmAccountState'
+        gas:
+          $ref: '#/components/schemas/EvmGas'
+        operation:
+          $ref: '#/components/schemas/GaslessV2Operation'
+
+    GaslessV2SendRequest:
+      type: object
+      required: [ operation ]
+      properties:
+        operation:
+          $ref: '#/components/schemas/GaslessV2SignedOperation'
+
+    GaslessV2SendResponse:
+      type: object
+      required: [ operation_id, status ]
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ ok, failed ]
+        tx_hash:
+          type: string
+          description: |
+            The transaction that was sent. EVM: the transaction hash, 0x-prefixed. TON: the
+            normalized hash of the external message, hex.
+
+    TonPurchaseReassignment:
+      type: object
+      required: [ purchase_id, target_account_id, from_user_id, to_user_id, balance_increase, from_balance, to_balance, dry_run ]
+      properties:
+        purchase_id:
+          type: integer
+          format: int64
+        target_account_id:
+          type: string
+        from_user_id:
+          type: integer
+          format: int64
+        to_user_id:
+          type: integer
+          format: int64
+        balance_increase:
+          type: string
+          description: What the purchase added, in the units of the balance.
+        from_balance:
+          type: string
+          description: The public-key user's balance after the move.
+        to_balance:
+          type: string
+          description: The wallet-id user's balance after the move.
+        dry_run:
+          type: boolean
+
+    # The variants below leave `chain` out of their own properties on purpose. ogen writes the
+    # discriminator itself before a variant's fields, so a variant that also declares it put the key
+    # in the response twice: {"chain":"eth","chain":"eth",...}.
+    EstimateResponse:
+      oneOf:
+        - $ref: '#/components/schemas/TonEstimateResponse'
+        - $ref: '#/components/schemas/TronEstimateResponse'
+        - $ref: '#/components/schemas/EvmEstimateResponse'
+      discriminator:
+        propertyName: chain
+        mapping:
+          ton: '#/components/schemas/TonEstimateResponse'
+          tron: '#/components/schemas/TronEstimateResponse'
+          eth: '#/components/schemas/EvmEstimateResponse'
+
+    # The variants below leave `chain` out of their own properties on purpose. ogen writes the
+    # discriminator itself before a variant's fields, so a variant that also declares it put the key
+    # in the response twice: {"chain":"eth","chain":"eth",...}.
+    SendResponse:
+      oneOf:
+        - $ref: '#/components/schemas/TonSendResponse'
+        - $ref: '#/components/schemas/TronSendResponse'
+        - $ref: '#/components/schemas/EvmSendResponse'
+      discriminator:
+        propertyName: chain
+        mapping:
+          ton: '#/components/schemas/TonSendResponse'
+          tron: '#/components/schemas/TronSendResponse'
+          eth: '#/components/schemas/EvmSendResponse'
+
+    TonEstimateRequest:
+      type: object
+      required: [ chain, boc ]
+      properties:
+        chain:
+          type: string
+          enum: [ ton ]
+        boc:
+          type: string
+          description: bag-of-cells serialized to base64
+          example: te6ccgECBQEAARUAAkWIAWTtae+KgtbrX26Bep8JSq8lFLfGOoyGR/xwdjfvpvEaHg
+        enable_validation:
+          type: boolean
+          default: false
+          description: Refuse the estimate when the balance would not cover it.
+
+    TonEstimateResponse:
+      type: object
+      required: [ allowed_by_battery, supported_by_battery, excess ]
+      properties:
+        allowed_by_battery:
+          type: boolean
+        supported_by_battery:
+          type: boolean
+        reject_reason:
+          type: string
+        excess:
+          type: integer
+          format: int64
+        protocol_name:
+          type: string
+        emulation:
+          type: object
+          additionalProperties: true
+          description: The emulated event, as /wallet/emulate returns it.
+
+    TonSendRequest:
+      type: object
+      required: [ chain, boc ]
+      properties:
+        chain:
+          type: string
+          enum: [ ton ]
+        boc:
+          type: string
+          description: bag-of-cells serialized to base64
+        proof:
+          type: string
+          minLength: 130
+          maxLength: 130
+          pattern: '^[a-f0-9]{130}$'
+          description: >-
+            The wallet's consent to spend charges, exactly as on /message: a recoverable secp256k1
+            signature over LP("keeper.battery.send.v1") | LP(wallet_id) | LP(chain) |
+            LP(blake2b256(boc)).
+
+    TonSendResponse:
+      type: object
+      properties:
+        protocol_name:
+          type: string
+
+    TronEstimateRequest:
+      type: object
+      required: [ chain, wallet ]
+      properties:
+        chain:
+          type: string
+          enum: [ tron ]
+        wallet:
+          type: string
+        energy:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+        bandwidth:
+          type: integer
+          minimum: 0
+          maximum: 2000
+        enable_validation:
+          type: boolean
+          default: false
+          description: Enable balance validation for battery charges
+
+    TronEstimateResponse:
+      type: object
+      required: [ estimate ]
+      properties:
+        estimate:
+          $ref: '#/components/schemas/EstimatedTronTx'
+
+    TronSendRequest:
+      type: object
+      required: [ chain, wallet ]
+      properties:
+        chain:
+          type: string
+          enum: [ tron ]
+        wallet:
+          type: string
+        tx:
+          type: string
+        energy:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+        bandwidth:
+          type: integer
+          minimum: 0
+          maximum: 2000
+        instant_fee_tx:
+          type: string
+          description: base64 encoded payment transaction in the TON network
+        user_public_key:
+          type: string
+          description: >-
+            User public key for commission payments, required when instant_fee_tx is provided.
+        proof:
+          type: string
+          minLength: 130
+          maxLength: 130
+          pattern: '^[a-f0-9]{130}$'
+          description: >-
+            Not enforced yet. The wallet's consent to spend charges, exactly as on /v0/tron/send:
+            a recoverable secp256k1 signature over LP("keeper.battery.send.v1") | LP(wallet_id) |
+            LP(chain) | LP(blake2b256(LP(tx) | LP(energy) | LP(bandwidth) | LP(instant_fee_tx))),
+            with chain "tron". The digest covers the cost-bearing fields, not just the tx.
+
+    TronSendResponse:
+      type: object
+      required: [ status ]
+      properties:
+        status:
+          type: string
+
+    EvmChain:
+      type: string
+      enum: [ eth, bsc, arb, base, sepolia, local ]
+      description: >-
+        Which EVM network the operation runs on. "sepolia" and "local" are test networks — the
+        public Ethereum testnet and a hardhat dev chain — and exist so the flow can be exercised end
+        to end without spending real gas. A deployment only serves the networks named in EVM_CHAINS,
+        and production names neither.
+
+    EvmCall:
+      type: object
+      description: One call the user wants executed.
+      required: [ to ]
+      properties:
+        to:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{40}$'
+        value:
+          type: string
+          description: Wei, decimal or 0x-hex; defaults to 0.
+        data:
+          type: string
+          pattern: '^0x([0-9a-fA-F]{2})*$'
+          description: Calldata; defaults to 0x.
+
+    EvmEstimateRequest:
+      type: object
+      description: >-
+        Quote an EVM operation. The answer carries the batch(es) to sign and a uuid to echo back to
+        /send. Quotes are short-lived: expires_at is when the signature deadline runs out.
+      required: [ chain, evm_chain, type, from, payloads ]
+      properties:
+        chain:
+          type: string
+          enum: [ eth ]
+        evm_chain:
+          $ref: '#/components/schemas/EvmChain'
+        type:
+          type: string
+          enum: [ battery, gasless ]
+          description: >-
+            battery pays the gas from the user's charges; gasless takes an ERC20 fee named by asset.
+        path:
+          type: string
+          enum: [ direct, delegate ]
+          default: direct
+          description: gasless delivery mechanism; ignored for battery.
+        asset:
+          type: string
+          description: >-
+            gasless only, "<chain>/<network>/erc20/<tokenAddress>"; must be an accepted fee token.
+          example: eth/mainnet/erc20/0xdAC17F958D2ee523a2206206994597C13D831ec7
+        from:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{40}$'
+          description: The delegated EOA the batch runs on.
+        payloads:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/EvmCall'
+
+    EvmEstimateResponse:
+      type: object
+      required: [ evm_chain, uuid, expires_at, type, account, gas, sign ]
+      properties:
+        evm_chain:
+          $ref: '#/components/schemas/EvmChain'
+        uuid:
+          type: string
+          format: uuid
+          description: Echo this to /send together with the signed artifacts.
+        expires_at:
+          type: integer
+          format: int64
+          description: Unix seconds. Past this the quote is refused and has to be asked for again.
+        type:
+          type: string
+          enum: [ battery, gasless ]
+        path:
+          type: string
+          enum: [ direct, delegate ]
+          description: gasless only.
+        charges:
+          type: integer
+          format: int64
+          description: >-
+            battery only: what /send will debit. Absent for gasless, which is paid on-chain in the
+            fee token and moves no charges.
+        fee:
+          $ref: '#/components/schemas/EvmFee'
+        fee_options:
+          type: array
+          description: >-
+            gasless only: every accepted fee token priced for this operation, from the same
+            emulation, so a client can offer the choice without asking again.
+          items:
+            $ref: '#/components/schemas/EvmFee'
+        account:
+          $ref: '#/components/schemas/EvmAccountState'
+        gas:
+          $ref: '#/components/schemas/EvmGas'
+        sign:
+          type: object
+          description: >-
+            What the wallet has to sign, keyed by role. battery and gasless-delegate quote a "user"
+            batch, gasless-delegate also a "fee" one, gasless-direct a single "combined" batch. Send
+            back exactly the roles named here.
+          additionalProperties:
+            $ref: '#/components/schemas/EvmSignable'
+
+    EvmSignable:
+      type: object
+      required: [ typed_data, digest ]
+      properties:
+        typed_data:
+          type: object
+          additionalProperties: true
+          description: EIP-712 typed data to sign, echoed back to /send unchanged.
+        digest:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{64}$'
+          description: The EIP-712 digest of typed_data, for clients that prefer to check it.
+
+    EvmFee:
+      type: object
+      required: [ asset, amount, amount_formatted, symbol, decimals ]
+      properties:
+        asset:
+          type: string
+          description: '"<chain>/<network>/erc20/<tokenAddress>", the form /estimate accepts back.'
+          example: eth/mainnet/erc20/0xdAC17F958D2ee523a2206206994597C13D831ec7
+        amount:
+          type: string
+          description: Base units, decimal.
+        amount_formatted:
+          type: string
+          description: Human-readable amount, decimals applied.
+        symbol:
+          type: string
+        decimals:
+          type: integer
+
+    EvmAccountState:
+      type: object
+      required: [ address, delegated, requires_authorization ]
+      properties:
+        address:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{40}$'
+        delegated:
+          type: boolean
+          description: Whether the account already delegates to the relay's Hermes implementation.
+        delegated_to:
+          type: string
+          description: The implementation it currently delegates to, if any.
+        requires_authorization:
+          type: boolean
+          description: >-
+            When true, /send needs a signed EIP-7702 authorization alongside the batch. Sign the
+            template in authorization.
+        authorization:
+          $ref: '#/components/schemas/EvmAuthorizationTemplate'
+
+    EvmAuthorizationTemplate:
+      type: object
+      description: The EIP-7702 authorization to sign when the account is not delegated yet.
+      required: [ chain_id, address, nonce ]
+      properties:
+        chain_id:
+          type: integer
+          format: int64
+        address:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{40}$'
+        nonce:
+          type: integer
+          format: int64
+
+    EvmGas:
+      type: object
+      required: [ estimated, charged, gas_price_wei ]
+      properties:
+        estimated:
+          type: string
+          description: Gas the emulation measured.
+        charged:
+          type: string
+          description: Gas the quote is priced on, the estimate plus the fee buffer.
+        authorization_gas:
+          type: string
+          description: Extra gas for the EIP-7702 authorization, when one is needed.
+        gas_price_wei:
+          type: string
+        source:
+          type: string
+          enum: [ estimateGas, gasMeter, heuristic ]
+          description: >-
+            Where the gas figure came from. "estimateGas" is the node pricing the whole transaction
+            and "gasMeter" is a measurement inside eth_call — both are real. "heuristic" is a
+            constant: the emulation could not be run, so the number is a guess and the quote should
+            be treated as indicative rather than binding.
+        gas_price_source:
+          type: string
+          enum: [ chain, config ]
+          description: >-
+            "config" means the node could not be reached and the quote fell back to a constant.
+        fee_native_wei:
+          type: string
+          description: charged gas at the quoted price, in wei.
+
+    EvmSendRequest:
+      type: object
+      description: >-
+        Echoes the signed artifacts matching the quote's path: gasless direct sends combined,
+        gasless delegate sends fee and user, battery sends user.
+      required: [ chain, uuid ]
+      properties:
+        chain:
+          type: string
+          enum: [ eth ]
+        uuid:
+          type: string
+          format: uuid
+          description: Identifies the quote returned by /estimate.
+        combined:
+          $ref: '#/components/schemas/EvmSignedBatch'
+        fee:
+          $ref: '#/components/schemas/EvmSignedBatch'
+        user:
+          $ref: '#/components/schemas/EvmSignedBatch'
+        authorization:
+          $ref: '#/components/schemas/EvmSignedAuthorization'
+        proof:
+          type: string
+          minLength: 130
+          maxLength: 130
+          pattern: '^[a-f0-9]{130}$'
+          description: >-
+            Not enforced until clients have shipped it: when present it is verified, when absent the
+            send proceeds. The wallet's consent to spend charges, in the same shape as on the other chains: a
+            recoverable secp256k1 signature over LP("keeper.battery.send.v1") | LP(wallet_id) |
+            LP(chain) | LP(blake2b256(uuid)), hex-encoded, 65 bytes laid out R | S | V.
+            chain here is "eth:<evm_chain>", not the bare "eth" of the chain field — the network
+            has to be inside the signature, or a proof made for one EVM network replays on another.
+            The digest is over the quote uuid alone: the quote already pins the cost and the calls,
+            so consenting to the uuid is consenting to what it priced. Requires a format 2
+            wallet_id.
+
+    EvmSignedBatch:
+      type: object
+      description: An echoed artifact plus its signature.
+      required: [ typed_data, signature ]
+      properties:
+        typed_data:
+          type: object
+          additionalProperties: true
+        signature:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{130}$'
+          description: 65-byte ECDSA signature of the artifact's EIP-712 digest by the user.
+
+    EvmSignedAuthorization:
+      type: object
+      description: Signed EIP-7702 authorization.
+      required: [ chain_id, address, nonce, y_parity, r, s ]
+      properties:
+        chain_id:
+          type: string
+        address:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{40}$'
+        nonce:
+          type: string
+        y_parity:
+          type: integer
+          enum: [ 0, 1 ]
+        r:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{64}$'
+        s:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{64}$'
+
+    EvmSendResponse:
+      type: object
+      required: [ evm_chain, tx_hash, mode ]
+      properties:
+        evm_chain:
+          $ref: '#/components/schemas/EvmChain'
+        tx_hash:
+          type: string
+          pattern: '^0x[0-9a-fA-F]{64}$'
+        mode:
+          type: string
+          enum: [ direct, proxy ]
+          description: >-
+            direct = a call straight to the user's account; proxy = the relay self-call used by
+            gasless delegate.
+        authorization_included:
+          type: boolean
+          description: True when the transaction carried the EIP-7702 authorization.
+        charged:
+          type: boolean
+          description: >-
+            Whether the ledger recorded the send. False with a tx_hash present means the transaction
+            is on chain but its ledger row could not be written: a reconciliation problem, and not a
+            reason to send again.
+        charges:
+          type: integer
+          format: int64
+          description: battery only, charges debited.
+
+    EstimatedTronTx:
+      type: object
+      required:
+        - energy_charges
+        - bandwidth_charges
+        - activation_charges
+        - total_charges
+        - instant_fee
+      properties:
+        energy_charges:
+          type: integer
+        bandwidth_charges:
+          type: integer
+        activation_charges:
+          type: integer
+        total_charges:
+          type: integer
+        instant_fee:
+          type: object
+          required:
+            - fee_address
+            - accepted_assets
+          properties:
+            fee_address:
+              type: string
+            accepted_assets:
+              type: array
+              items:
+                type: object
+                required:
+                  - type
+                  - amount_nano
+                  - name
+                  - decimals
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - jetton
+                      - ton
+                  name:
+                    type: string
+                  jetton_master_id:
+                    type: string
+                  amount_nano:
+                    type: string
+                    example: "10.250"
+                  decimals:
+                    type: integer
+    SentTronTx:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+    TronTransactionsList:
+      type: object
+      required:
+        - transactions
+      properties:
+        transactions:
+          type: array
+          items:
+            type: object
+            required:
+              - txid
+              - timestamp
+              - from_account
+              - to_account
+              - amount
+              - is_pending
+              - is_failed
+              - battery_charges
+            properties:
+              txid:
+                type: string
+              from_account:
+                type: string
+              to_account:
+                type: string
+              amount:
+                type: string
+              is_pending:
+                type: boolean
+              is_failed:
+                type: boolean
+              battery_charges:
+                type: integer
+              timestamp:
+                type: integer
+                format: int64
+              trongrid_result:
+                type: integer
+              fee_type:
+                type: string
+                description: Type of fee used for this transaction (battery, ton, etc.)
+              fee_ton_nano:
+                type: integer
+                description: Fee amount in TON nano units
+              is_free_pro:
+                type: boolean
+                description: Whether this transaction was made using free pro transfers
+    TronAvailableTransfers:
+      type: object
+      required:
+        - available_transfers
+        - type
+      properties:
+        available_transfers:
+          type: integer
+          description: Number of available free TRON transfers
+          example: 3
+        type:
+          type: string
+          description: Availability type. 'inactive' if source is telegram.
+          example: inactive
+        next_reset_date:
+          type: integer
+          format: int64
+          description: Unix timestamp of next free transfers reset date (either next month after last reset or next charge date, whichever is closer)
+          example: 1678275313
+    AndroidBatteryPurchaseStatus:
+      type: object
+      required:
+        - purchases
+      properties:
+        purchases:
+          type: array
+          items:
+            type: object
+            required:
+              - product_id
+              - token
+              - success
+            properties:
+              product_id:
+                type: string
+                example: "1000000790000000"
+              token:
+                type: string
+                example: "1000000790000000"
+              success:
+                type: boolean
+                example: true
+              error:
+                type: object
+                required:
+                  - msg
+                  - code
+                properties:
+                  msg:
+                    type: string
+                    example: "Temporary error. Try again later."
+                  code:
+                    type: string
+                    example: "invalid-product-id"
+                    enum:
+                      - invalid-product-id
+                      - user-not-found
+                      - purchase-is-already-used
+                      - temporary-error
+                      - unknown
+
+    appStoreResponse:
+      type: object
+    iOSBatteryPurchaseStatus:
+      type: object
+      required:
+        - transactions
+      properties:
+        transactions:
+          type: array
+          items:
+            type: object
+            required:
+              - transaction_id
+              - success
+            properties:
+              transaction_id:
+                type: string
+                example: "1000000790000000"
+              success:
+                type: boolean
+                example: true
+              error:
+                type: object
+                required:
+                  - msg
+                  - code
+                properties:
+                  msg:
+                    type: string
+                    example: "Temporary error. Try again later."
+                  code:
+                    type: string
+                    example: "invalid-bundle-id"
+                    enum:
+                      - invalid-bundle-id
+                      - invalid-product-id
+                      - user-not-found
+                      - purchase-is-already-used
+                      - temporary-error
+                      - unknown
+    promoCodeBatteryPurchaseStatus:
+      type: object
+      required:
+        - success
+        - balance_change
+      properties:
+        balance_change:
+          type: string
+          example: "10.250"
+        success:
+          type: boolean
+          example: true
+        error:
+          type: object
+          required:
+            - msg
+            - code
+          properties:
+            msg:
+              type: string
+              example: "Temporary error. Try again later."
+            code:
+              type: string
+              example: "promo-code-not-found"
+              enum:
+                - promo-code-not-found
+                - promo-exceeded-attempts
+                - temporary-error
+    Transactions:
+      type: object
+      required:
+        - transactions
+        - total_transactions
+      properties:
+        total_transactions:
+          type: integer
+          example: 1
+        next_offset:
+          type: integer
+          description: if set, then there are more transactions to be loaded. Use this value as offset parameter in the next request.
+          example: 10
+        transactions:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - paid_amount
+              - status
+              - created_at
+            properties:
+              id:
+                type: string
+              paid_amount:
+                type: string
+                description: represents the amount of money paid by the user for this transaction.
+                example: "10.250"
+              status:
+                type: string
+                example: "10.250"
+                enum:
+                  - pending
+                  - completed
+                  - failed
+              created_at:
+                type: string
+                example: "2006-01-02T15:04:05Z07:00"
+  responses:
+    GaslessV2Error:
+      description: >-
+        An error in the gasless 2.0 format. Declared under 4XX only, but server-side failures (5xx)
+        come in the same shape: ogen 1.1 cannot map one response to both ranges.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ error ]
+            properties:
+              error:
+                $ref: '#/components/schemas/GaslessV2ErrorBody'
+    Error:
+      description: Some error during request processing
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+              error-key:
+                type: string
+              error-details:
+                type: string

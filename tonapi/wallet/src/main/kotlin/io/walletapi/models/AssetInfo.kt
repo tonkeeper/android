@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class AssetInfo(
@@ -40,7 +45,7 @@ data class AssetInfo(
     @SerialName(value = "verification")
     val verification: Verification,
 
-    /* Chain slug parsed from asset_id (ton, eth, base, arb, bsc, btc, tron, sol). Exposed explicitly so clients don't need to parse asset_id for chain badge rendering. */
+    /* Chain slug parsed from asset_id (ton, eth, base, arb, bsc, avax, polygon, robinhood, btc, tron, sol). Exposed explicitly so clients don't need to parse asset_id for chain badge rendering. */
     @SerialName(value = "chain")
     val chain: String? = null,
 
@@ -59,13 +64,28 @@ data class AssetInfo(
     /**
      * Union of verify and is_scam
      *
-     * Values: blacklist,none,whitelist,trusted
+     * Values: blacklist,none,whitelist,trusted,unknown
      */
-    @Serializable
+    @Serializable(with = VerificationSerializer::class)
     enum class Verification(val value: String) {
         @SerialName(value = "blacklist") blacklist("blacklist"),
         @SerialName(value = "none") none("none"),
         @SerialName(value = "whitelist") whitelist("whitelist"),
-        @SerialName(value = "trusted") trusted("trusted");
+        @SerialName(value = "trusted") trusted("trusted"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object VerificationSerializer : KSerializer<Verification> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Verification {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Verification.entries.firstOrNull { it.value == value }
+                ?: Verification.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Verification) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

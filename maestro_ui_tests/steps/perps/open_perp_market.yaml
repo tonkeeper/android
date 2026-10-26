@@ -1,0 +1,76 @@
+# Trade -> Trending Perpetuals -> one market's asset page.
+# Caller must already be on Trade (steps/trade/open_multichain_trade.yaml).
+# Requires: SYMBOL (e.g. SOL). Tickers are not localized, so the text anchor is safe.
+#
+# Why the shelf, and what was tried instead
+#
+# The shelf means this step depends on live editorial data: the market has to be
+# in "Trending Perpetuals". That is a real weakness — if US100 drops out of
+# trending, the nightly goes red for a reason unrelated to our code.
+#
+# The replacement attempt was search + the asset-type filter ("Perpetuals"),
+# which gives the full catalogue instead of a curated subset. It reached the
+# right screen with the right list, but the tap was not reliable: with BTC as
+# the first visible row, the finger repeatedly landed about four rows lower and
+# opened SOL. Neither dropping centerElement nor settling for three seconds
+# before the tap fixed it, so the route is parked rather than shipped half
+# working. Making it work needs either a testTag on the search field (so the
+# ticker can be typed and the list collapses to one row, removing list geometry
+# from the picture entirely) or a testTag on the rows themselves.
+#
+# Until then the shelf stays, and the ticker assertion at the bottom is what
+# keeps a wrong market from passing silently.
+appId: com.ton_keeper.debug
+---
+- assertTrue:
+    condition: ${SYMBOL != null && SYMBOL != ''}
+    label: "SYMBOL is required (-e SYMBOL=SOL)"
+
+# The Trade tab may still be loading its catalog when the flow arrives; one
+# scroll-and-check round costs ~5 s on the emulator (see the skill's lessons).
+- extendedWaitUntil:
+    visible: "Search by ticker or name"
+    timeout: 30000
+
+- scrollUntilVisible:
+    element:
+      text: "Trending Perpetuals"
+    direction: DOWN
+    timeout: 30000
+
+# Scroll to the ticker itself, not just to the shelf header. The header being on
+# screen said nothing about the row: a ticker below the fold failed the tap.
+- scrollUntilVisible:
+    element:
+      text: "^${SYMBOL}$"
+      below:
+        text: "Trending Perpetuals"
+    direction: DOWN
+    timeout: 30000
+    visibilityPercentage: 60
+    centerElement: true
+
+- tapOn:
+    text: "^${SYMBOL}$"
+    below:
+      text: "Trending Perpetuals"
+
+- extendedWaitUntil:
+    visible: "^Perpetual$"
+    timeout: 15000
+
+# Readiness anchor: the timeframe row, not "24h Volume". The latter lives in the
+# Info block below the chart, and an open position pushes that block off screen
+# entirely — every position case then failed on a page that was perfectly fine.
+- extendedWaitUntil:
+    visible: "^1H$"
+    timeout: 30000
+
+# The market that actually opened is the one we asked for.
+#
+# Without this the step was silent about its single most important outcome:
+# "^Perpetual$" and "^1H$" are true on ANY perps market, so chart_smoke,
+# chart_markets and chart_timeframes all passed while sitting on the wrong
+# ticker during the search-route experiment. The mocked cases caught it only
+# indirectly, by rejecting candles whose ticker did not match the fixture.
+- assertVisible: "^${SYMBOL}$"

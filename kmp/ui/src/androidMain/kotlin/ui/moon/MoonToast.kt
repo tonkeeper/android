@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -32,6 +33,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -45,13 +47,19 @@ import androidx.annotation.DrawableRes
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import ui.theme.Dimens
 import ui.theme.UIKit
 import kotlin.coroutines.resume
 
 private const val AnimationDuration = 160
 private const val AutoDismissDelay = 2000L
 private val ToastShape = RoundedCornerShape(24.dp)
+private val ToastTopOffset = 8.dp
+private val ToastMinHeight = 48.dp
+private val ToastElevation = 4.dp
+private val ToastVerticalPadding = 14.dp
+private val ToastHorizontalPadding = 24.dp
+private val ToastHorizontalPaddingWithIcon = 16.dp
+private val ToastIconSpacing = 8.dp
 
 data class MoonToastData internal constructor(
     val text: CharSequence,
@@ -152,7 +160,7 @@ fun MoonToastHost(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = statusBarPadding + 24.dp),
+            .padding(top = statusBarPadding + ToastTopOffset),
         contentAlignment = Alignment.TopCenter,
     ) {
         AnimatedVisibility(
@@ -183,11 +191,23 @@ fun MoonToastContent(
         data.color
     }
 
+    val startPadding = if (data.loading || data.icon != null) {
+        ToastHorizontalPaddingWithIcon
+    } else {
+        ToastHorizontalPadding
+    }
     Row(
         modifier = modifier
+            .shadow(ToastElevation, ToastShape)
             .clip(ToastShape)
             .background(backgroundColor)
-            .padding(horizontal = 24.dp, vertical = Dimens.offsetMedium),
+            .heightIn(min = ToastMinHeight)
+            .padding(
+                start = startPadding,
+                end = ToastHorizontalPadding,
+                top = ToastVerticalPadding,
+                bottom = ToastVerticalPadding,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -198,7 +218,7 @@ fun MoonToastContent(
                 trackColor = Color.White.copy(alpha = 0.32f),
                 strokeWidth = 2.dp,
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(ToastIconSpacing))
         } else if (data.icon != null) {
             Icon(
                 modifier = Modifier.size(16.dp),
@@ -206,7 +226,7 @@ fun MoonToastContent(
                 contentDescription = null,
                 tint = data.iconColor,
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(ToastIconSpacing))
         }
         Text(
             text = data.text.toString(),

@@ -1,12 +1,11 @@
 package com.tonapps.portfolio.screens.raffle
 
-import com.tonapps.wallet.data.raffle.RaffleClock
 import com.tonapps.wallet.data.raffle.RaffleRepository
-import com.tonapps.wallet.data.raffle.debug.RaffleDebugStore
 import com.tonapps.wallet.data.raffle.entities.RaffleEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.delay
 import java.time.Duration
+import java.time.OffsetDateTime
 
 /**
  * Promo story auto-show: once per story, for multichain wallets while the
@@ -17,24 +16,16 @@ import java.time.Duration
 class RaffleStoryAutoShow(
     private val raffleRepository: RaffleRepository,
     private val settingsRepository: SettingsRepository,
-    private val debugStore: RaffleDebugStore,
     private val session: StoryAutoShowSession,
 ) {
 
     private val shownStoryIds = mutableSetOf<String>()
-    private var seenDedupeResetCount = 0
 
     suspend fun prefetch(walletId: String) {
         raffleRepository.prefetch(walletId)
     }
 
     suspend fun showOnce(walletId: String, show: suspend (raffleId: String) -> Boolean) {
-        val resetCount = debugStore.storyDedupeResetCount.value
-        if (resetCount != seenDedupeResetCount) {
-            seenDedupeResetCount = resetCount
-            shownStoryIds.clear()
-            session.reset()
-        }
         val raffle = awaitStartedRaffle(walletId) ?: return
         val running = raffle.status == RaffleEntity.Status.NotJoined ||
             raffle.status == RaffleEntity.Status.Joined
@@ -63,7 +54,7 @@ class RaffleStoryAutoShow(
         while (true) {
             val raffle = raffleRepository.getRaffle(walletId, raffleId = null, forced = crossedStart)
                 ?: return null
-            val now = RaffleClock.now()
+            val now = OffsetDateTime.now()
             if (raffle.hasStarted(now)) {
                 return raffle
             }

@@ -12,11 +12,16 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * Values: pending,confirmed,failed,dropped
+ * Values: pending,confirmed,failed,dropped,unknown
  */
-@Serializable
+@Serializable(with = ActivityStatusSerializer::class)
 enum class ActivityStatus(val value: String) {
     @SerialName(value = "pending")
     pending("pending"),
@@ -25,7 +30,9 @@ enum class ActivityStatus(val value: String) {
     @SerialName(value = "failed")
     failed("failed"),
     @SerialName(value = "dropped")
-    dropped("dropped");
+    dropped("dropped"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -51,6 +58,20 @@ enum class ActivityStatus(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ActivityStatusSerializer : KSerializer<ActivityStatus> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ActivityStatus {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ActivityStatus.entries.firstOrNull { it.value == value }
+            ?: ActivityStatus.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ActivityStatus) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

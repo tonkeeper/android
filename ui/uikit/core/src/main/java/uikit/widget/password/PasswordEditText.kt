@@ -3,6 +3,7 @@ package uikit.widget.password
 import android.content.Context
 import android.os.Build
 import android.text.Editable
+import android.text.TextUtils
 import android.util.AttributeSet
 import androidx.annotation.RequiresApi
 import androidx.appcompat.R
@@ -30,8 +31,10 @@ class PasswordEditText @JvmOverloads constructor(
     fun getPassword(): CharArray {
         val size = length()
         val value = CharArray(size)
+        val text = text
         if (size > 0 && text != null) {
-            text?.getChars(0, size, value, 0)
+            // SDK 37 adds CharSequence.getChars, which hides Editable.getChars from Kotlin.
+            TextUtils.getChars(text, 0, size, value, 0)
         }
         return value
     }

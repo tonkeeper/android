@@ -5,24 +5,22 @@
 # Usage:
 #   ./generate_event_delegate.sh [openapi_dir]
 #
-# If openapi_dir is not provided, the script clones the repo into a temp dir.
+# If openapi_dir is not provided, the script uses the analytics-schemas checkout shared
+# with iOS (.context/ at the repository root), cloning or updating it first.
 # Output:
 #   lib/bus/src/main/kotlin/com/tonapps/bus/generated/EventDelegate1.kt
 #   lib/bus/src/main/kotlin/com/tonapps/bus/generated/DefaultEventDelegate1.kt
 
 set -euo pipefail
 
-PROJECT_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 OUTPUT_DIR="$PROJECT_ROOT/lib/bus/src/main/kotlin/com/tonapps/bus/generated"
 
 OPENAPI_DIR="${1:-}"
-TEMP_DIR=""
-
 if [ -z "$OPENAPI_DIR" ]; then
-    TEMP_DIR="$(mktemp -d)"
-    echo "Cloning analytics-schemas..."
-    git clone --depth 1 git@github.com:tonkeeper/analytics-schemas.git "$TEMP_DIR/analytics-schemas"
-    OPENAPI_DIR="$TEMP_DIR/analytics-schemas/openapi-client"
+    SHARED_TOOLS="$PROJECT_ROOT/tools"
+    [ -f "$SHARED_TOOLS/analytics_schemas.sh" ] || SHARED_TOOLS="$PROJECT_ROOT/../shared/tools"
+    OPENAPI_DIR="$("$SHARED_TOOLS/analytics_schemas.sh")/openapi-client"
 fi
 
 if [ ! -d "$OPENAPI_DIR" ]; then
@@ -32,10 +30,5 @@ fi
 
 echo "Generating from $OPENAPI_DIR..."
 python3 "$PROJECT_ROOT/tools/scripts/generators/analytic/generate_event_delegate.py" "$OPENAPI_DIR" "$OUTPUT_DIR"
-
-# Clean up temp dir if we created one
-if [ -n "$TEMP_DIR" ]; then
-    rm -rf "$TEMP_DIR"
-fi
 
 echo "Done."

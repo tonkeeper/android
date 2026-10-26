@@ -17,11 +17,15 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.bus.generated.Events
+import com.tonapps.deposit.multicoin.analytics.asDepositFlowFrom
+import com.tonapps.extensions.getEnum
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.isPositive
+import com.tonapps.extensions.putEnum
 import com.tonapps.extensions.shortTron
 import com.tonapps.extensions.uri
 import com.tonapps.icu.Coins
@@ -95,6 +99,7 @@ import uikit.widget.LoadableButton
 import uikit.widget.ProcessTaskView
 import uikit.widget.SlideBetweenView
 import java.util.UUID
+import uikit.extensions.setMoonOnClickListener
 
 class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_send, wallet),
     BaseFragment.BottomSheet {
@@ -112,9 +117,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         drawable
     }
 
-    private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
-        InsufficientFundsDialog(this)
-    }
+    private var insufficientFundsDialog: InsufficientFundsDialog? = null
 
     private val feeMethodSelector: ActionSheet by lazy {
         ActionSheet(requireContext())
@@ -151,9 +154,19 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
     private lateinit var commentErrorView: AppCompatTextView
     private lateinit var reviewHeaderView: HeaderView
 
+    override val predictiveBackPreviewEnabled: Boolean
+        get() = ::slidesView.isInitialized && slidesView.isFirst
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        initializeBus(args.from)
+        if (savedInstanceState == null) {
+            initializeBus(args.from, args.utm)
+        } else {
+            viewModel.restoreBus(
+                from = savedInstanceState.getEnum(STATE_ANALYTICS_FROM, args.from),
+                utm = savedInstanceState.getParcelableCompat<UtmParameters>(STATE_ANALYTICS_UTM) ?: args.utm,
+            )
+        }
 
         navigation?.setFragmentResultListener(contractsRequestKey) { bundle ->
             val contact = bundle.getParcelableCompat<SendContact>("contact")
@@ -162,8 +175,14 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         }
     }
 
-    fun initializeBus(from: Events.SendNative.SendNativeFrom) {
-        viewModel.initializeBus(from)
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putEnum(STATE_ANALYTICS_FROM, viewModel.analyticsFrom)
+        outState.putParcelable(STATE_ANALYTICS_UTM, viewModel.analyticsUtm)
+    }
+
+    fun initializeBus(from: Events.SendNative.SendNativeFrom, utm: UtmParameters) {
+        viewModel.initializeBus(from, utm)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -187,14 +206,20 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             reviewRecipientFeeView.setLoading()
             addressInput.loading = true
             viewModel.userInputAddress(text)
-            addressActionsView.visibility = if (text.isBlank()) View.VISIBLE else View.GONE
+            addressActionsView.visibility = if (text.isBlank()) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         }
 
-        view.findViewById<View>(R.id.paste).setOnClickListener {
+        val pasteView = view.findViewById<View>(R.id.paste)
+        pasteView.setMoonOnClickListener {
             addressInput.text = requireContext().clipboardText()
         }
 
-        view.findViewById<View>(R.id.address_book).setOnClickListener { openAddressBook() }
+        val addressBookView = view.findViewById<View>(R.id.address_book)
+        addressBookView.setMoonOnClickListener { openAddressBook() }
 
         amountView = view.findViewById(R.id.amount)
         amountView.setWallet(wallet)
@@ -205,15 +230,15 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         amountView.setOnDoneActionListener { commentInput.requestFocus() }
 
         convertedView = view.findViewById(R.id.converted)
-        convertedView.setOnClickListener { viewModel.swap() }
+        convertedView.setMoonOnClickListener { viewModel.swap() }
 
         swapView = view.findViewById(R.id.swap)
-        swapView.setOnClickListener { viewModel.swap() }
+        swapView.setMoonOnClickListener { viewModel.swap() }
 
         statusView = view.findViewById(R.id.status)
 
         maxView = view.findViewById(R.id.max)
-        maxView.setOnClickListener { setMax() }
+        maxView.setMoonOnClickListener { setMax() }
 
         commentInput = view.findViewById(R.id.comment)
 
@@ -244,11 +269,11 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         }
 
         button = view.findViewById(R.id.button)
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             lifecycleScope.launch {
                 val token = viewModel.uiInputTokenFlow.firstOrNull() ?: return@launch
-                AnalyticsHelper.Default.events.sendNative.sendClick(
-                    from = args.from,
+                AnalyticsHelper.Default.eventsTaggedWith(viewModel.analyticsUtm).sendNative.sendClick(
+                    from = viewModel.analyticsFrom,
                     asset = token.analyticsAssetId(),
                     amount = viewModel.currentAmountDouble,
                 )
@@ -289,12 +314,12 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             taskContainerView.translationY = -offset.toFloat()
         }
 
-        confirmButton.setOnClickListener {
+        confirmButton.setMoonOnClickListener {
             lifecycleScope.launch {
                 val token = viewModel.uiInputTokenFlow.firstOrNull() ?: return@launch
 
-                AnalyticsHelper.Default.events.sendNative.sendConfirm(
-                    from = args.from,
+                AnalyticsHelper.Default.eventsTaggedWith(viewModel.analyticsUtm).sendNative.sendConfirm(
+                    from = viewModel.analyticsFrom,
                     asset = token.analyticsAssetId(),
                     amount = viewModel.currentAmountDouble,
                     feeAsset = viewModel.currentFeeAsset,
@@ -303,7 +328,13 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             }
             signAndSend()
         }
-        confirmButton.setText(if (wallet.hasPrivateKey) Localization.confirm else Localization.continue_action)
+        confirmButton.setText(
+            if (wallet.hasPrivateKey) {
+                Localization.confirm
+            } else {
+                Localization.continue_action
+            }
+        )
 
         collectFlow(viewModel.uiInputAddressErrorFlow) {
             addressInput.error = it
@@ -331,7 +362,11 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         }
 
         collectFlow(viewModel.uiCommentAvailable) {
-            commentInput.visibility = if (it) View.VISIBLE else View.GONE
+            commentInput.visibility = if (it) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         }
 
         collectFlow(viewModel.uiInputCommentErrorFlow) { errorResId ->
@@ -434,7 +469,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             )
             addressErrorView.setTextColor(requireContext().textSecondaryColor)
             addressErrorView.text = spannableString
-            addressErrorView.setOnClickListener {
+            addressErrorView.setMoonOnClickListener {
                 BrowserHelper.open(requireContext(), swapUrl)
             }
         } else {
@@ -594,6 +629,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             navigation?.add(
                 TronFeesScreen.newInstance(
                     wallet = wallet,
+                    analyticsFrom = viewModel.analyticsFrom.asDepositFlowFrom(),
                     type = TronFeesScreenType.InsufficientBalance,
                     emulation = event.tronFeesEmulation
                 )
@@ -714,14 +750,14 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 reviewRecipientView.visibility = View.GONE
                 reviewRecipientView.orientation = LinearLayoutCompat.VERTICAL
                 reviewRecipientView.value = destination.displayAddress
-                reviewRecipientView.setOnClickListener {
+                reviewRecipientView.setMoonOnClickListener {
                     requireContext().copyToClipboard(destination.displayAddress)
                 }
 
                 reviewRecipientAddressView.visibility = View.VISIBLE
                 reviewRecipientAddressTitle().setText(Localization.recipient)
                 reviewRecipientAddressValue().text = destination.displayAddress
-                reviewRecipientAddressView.setOnClickListener {
+                reviewRecipientAddressView.setMoonOnClickListener {
                     requireContext().copyToClipboard(
                         destination.displayAddress
                     )
@@ -729,14 +765,14 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             } else {
                 reviewRecipientView.orientation = LinearLayoutCompat.HORIZONTAL
                 reviewRecipientView.value = destination.displayName
-                reviewRecipientView.setOnClickListener {
+                reviewRecipientView.setMoonOnClickListener {
                     requireContext().copyToClipboard(destination.displayName!!)
                 }
 
                 reviewRecipientAddressView.visibility = View.VISIBLE
                 reviewRecipientAddressTitle().setText(Localization.recipient_address)
                 reviewRecipientAddressValue().text = destination.displayAddress
-                reviewRecipientAddressView.setOnClickListener {
+                reviewRecipientAddressView.setMoonOnClickListener {
                     requireContext().copyToClipboard(
                         destination.displayAddress
                     )
@@ -744,7 +780,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             }
         } else if (destination is SendDestination.TronAccount) {
             reviewRecipientView.value = destination.address.shortTron
-            reviewRecipientView.setOnClickListener {
+            reviewRecipientView.setMoonOnClickListener {
                 requireContext().copyToClipboard(destination.address)
             }
 
@@ -759,16 +795,19 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
         singleWallet: Boolean? = null,
         type: InsufficientBalanceType
     ) {
-        if (!insufficientFundsDialog.isShowing) {
-            insufficientFundsDialog.show(
-                wallet = wallet,
-                balance = balance,
-                required = required,
-                withRechargeBattery = withRechargeBattery,
-                singleWallet = singleWallet ?: false,
-                type = type
-            )
+        if (insufficientFundsDialog?.isShowing == true) {
+            return
         }
+        val dialog = InsufficientFundsDialog(this, viewModel.analyticsFrom.asDepositFlowFrom())
+        insufficientFundsDialog = dialog
+        dialog.show(
+            wallet = wallet,
+            balance = balance,
+            required = required,
+            withRechargeBattery = withRechargeBattery,
+            singleWallet = singleWallet ?: false,
+            type = type
+        )
     }
 
     private fun setFee(event: SendEvent.Fee?) {
@@ -830,7 +869,7 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
             if (event.showToggle) {
                 reviewRecipientFeeView.subtitle = getString(Localization.edit_full)
-                reviewRecipientFeeView.setOnClickListener {
+                reviewRecipientFeeView.setMoonOnClickListener {
                     showFeeMethods(event.fee, reviewRecipientFeeView)
                 }
                 reviewRecipientFeeView.subtitleView.expandTouchArea(8.dp)
@@ -1035,7 +1074,14 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
 
     companion object {
 
-        class Builder(val wallet: WalletEntity) {
+        private const val STATE_ANALYTICS_FROM = "analytics_from"
+        private const val STATE_ANALYTICS_UTM = "analytics_utm"
+
+        class Builder(
+            val wallet: WalletEntity,
+            private val from: Events.SendNative.SendNativeFrom,
+            private val utm: UtmParameters = UtmParameters.Empty,
+        ) {
             private var targetAddress: String? = null
             private var tokenAddress: String? = null
             private var amount: Coins? = null
@@ -1043,8 +1089,6 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             private var nftAddress: String? = null
             private var type: Type = Type.Default
             private var bin: Cell? = null
-            private var from: Events.SendNative.SendNativeFrom =
-                Events.SendNative.SendNativeFrom.WalletScreen
 
             fun setTargetAddress(targetAddress: String) = apply {
                 this.targetAddress = targetAddress
@@ -1074,10 +1118,6 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 this.bin = bin
             }
 
-            fun setFrom(from: Events.SendNative.SendNativeFrom) = apply {
-                this.from = from
-            }
-
             fun build() = newInstance(
                 wallet,
                 targetAddress,
@@ -1087,7 +1127,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 nftAddress,
                 type,
                 bin,
-                from
+                from,
+                utm,
             )
         }
 
@@ -1104,7 +1145,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
             nftAddress: String? = null,
             type: Type,
             bin: Cell? = null,
-            from: Events.SendNative.SendNativeFrom = Events.SendNative.SendNativeFrom.WalletScreen
+            from: Events.SendNative.SendNativeFrom,
+            utm: UtmParameters = UtmParameters.Empty,
         ): SendScreen {
             val args = SendArgs(
                 targetAddress = targetAddress,
@@ -1113,7 +1155,8 @@ class SendScreen(wallet: WalletEntity) : WalletContextScreen(R.layout.fragment_s
                 text = text, nftAddress = nftAddress ?: "",
                 type = type,
                 bin = bin,
-                from = from
+                from = from,
+                utm = utm,
             )
             return SendScreen(wallet).apply {
                 setArgs(args)

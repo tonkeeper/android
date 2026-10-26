@@ -2,7 +2,6 @@ package com.tonapps.deposit.screens.provider
 
 import androidx.compose.runtime.Stable
 import com.tonapps.icu.Coins
-import io.exchangeapi.models.ExchangeMerchantInfoButton
 
 @Stable
 data class ProviderItem(
@@ -12,7 +11,6 @@ data class ProviderItem(
     val isBest: Boolean,
     val minAmount: Coins = Coins.ZERO,
     val maxAmount: Coins? = null,
-    val buttons: List<ExchangeMerchantInfoButton> = emptyList(),
 ) {
     companion object {
         val EMPTY = ProviderItem(id = "", title = "", imageUrl = "", isBest = false)

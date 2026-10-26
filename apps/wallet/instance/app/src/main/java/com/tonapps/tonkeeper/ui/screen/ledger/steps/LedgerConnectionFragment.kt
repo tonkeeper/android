@@ -66,6 +66,8 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
     private var displayFadeAnim: ObjectAnimator? = null
     private var translationX: ObjectAnimator? = null
 
+    private var bluetoothPermissionsAlert: AlertDialog? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -102,6 +104,12 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
         }
     }
 
+    override fun onDestroyView() {
+        bluetoothPermissionsAlert?.dismissAndDestroy()
+        bluetoothPermissionsAlert = null
+        super.onDestroyView()
+    }
+
     private fun openInstallTonApp() {
         if (startActivitySafe(Intent(Intent.ACTION_VIEW, LEDGER_LIVE_DEEPLINK.toUri()))) {
             return
@@ -126,17 +134,25 @@ class LedgerConnectionFragment : Fragment(R.layout.fragment_ledger_steps) {
     }
 
     private fun showBluetoothPermissionsAlert() {
+        if (view == null || bluetoothPermissionsAlert?.isShowing == true) {
+            return
+        }
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle(Localization.bluetooth_permissions_alert_title)
         builder.setMessage(Localization.bluetooth_permissions_alert_message)
         builder.setPositiveButton(Localization.bluetooth_permissions_alert_open_settings) {
+            if (!isAdded) {
+                return@setPositiveButton
+            }
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = Uri.fromParts("package", requireContext().packageName, null)
             }
             appSettingsLauncher.launch(intent)
         }
         builder.setNegativeButton(Localization.cancel)
-        builder.show()
+        val alert = builder.build()
+        bluetoothPermissionsAlert = alert
+        alert.show()
     }
 
     private fun promptEnableBluetooth() {

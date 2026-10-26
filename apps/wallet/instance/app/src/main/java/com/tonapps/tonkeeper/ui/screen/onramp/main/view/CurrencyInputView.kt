@@ -30,6 +30,7 @@ import androidx.core.view.isVisible
 import com.tonapps.uikit.color.fieldBackgroundColor
 import uikit.extensions.viewMoveTo
 import uikit.widget.RowLayout
+import uikit.extensions.setMoonOnClickListener
 
 class CurrencyInputView @JvmOverloads constructor(
     context: Context,
@@ -89,7 +90,7 @@ class CurrencyInputView @JvmOverloads constructor(
         setBackgroundColor(context.fieldBackgroundColor)
         setPadding(offsetMedium)
         setDefault()
-        setOnClickListener {
+        setMoonOnClickListener {
             focusWithKeyboard()
         }
 
@@ -102,7 +103,7 @@ class CurrencyInputView @JvmOverloads constructor(
         inputContainerView = findViewById(R.id.input_container)
 
         currencyEmptyView = findViewById(R.id.input_currency_empty)
-        currencyEmptyView.setOnClickListener { doOnCurrencyClick?.invoke() }
+        currencyEmptyView.setMoonOnClickListener { doOnCurrencyClick?.invoke() }
 
         valueView = findViewById(R.id.input_value)
         valueView.setOnFocusChangeListener { _, hasFocus ->
@@ -119,7 +120,7 @@ class CurrencyInputView @JvmOverloads constructor(
         }
 
         currencyPickerView = findViewById(R.id.input_currency)
-        currencyPickerView.setOnClickListener { doOnCurrencyClick?.invoke() }
+        currencyPickerView.setMoonOnClickListener { doOnCurrencyClick?.invoke() }
 
         context.useAttributes(attrs, R.styleable.CurrencyInputView) {
             titleView.text = it.getString(R.styleable.CurrencyInputView_android_title)
@@ -207,7 +208,7 @@ class CurrencyInputView @JvmOverloads constructor(
 
     private fun showMaxButton(fallbackValue: Coins? = null) {
         tokenBalanceMaxView.visibility = View.VISIBLE
-        tokenBalanceMaxView.setOnClickListener {
+        tokenBalanceMaxView.setMoonOnClickListener {
             val handler = doOnMaxClick
             if (handler != null) {
                 handler.invoke()

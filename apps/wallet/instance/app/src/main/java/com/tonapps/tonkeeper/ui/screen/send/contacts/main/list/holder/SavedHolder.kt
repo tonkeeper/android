@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.ui.screen.send.contacts.main.list.Item
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class SavedHolder(
     parent: ViewGroup,
@@ -25,13 +26,13 @@ class SavedHolder(
     }
 
     override fun onBind(item: Item.SavedContact) {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             onClick(item)
         }
         itemView.background = item.position.drawable(context)
 
         nameView.text = item.name
-        iconView.setOnClickListener { showMenu(item) }
+        iconView.setMoonOnClickListener { showMenu(item) }
     }
 
     private fun showMenu(item: Item.SavedContact) {

@@ -2,11 +2,9 @@ package com.tonapps.deposit.screens.method
 
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.bus.core.AnalyticsHelper
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.data.ExchangeRepository
 import com.tonapps.deposit.data.assetsOfType
+import com.tonapps.deposit.data.findCashAsset
 import com.tonapps.deposit.data.pairedCryptoNetworkInfos
 import com.tonapps.deposit.data.resolveAssetFromDeeplink
 import com.tonapps.deposit.screens.network.CryptoNetworkInfo
@@ -25,18 +23,17 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import io.exchangeapi.models.CreateP2PSessionRequest
 import io.exchangeapi.models.ExchangeLayout
 import io.exchangeapi.models.ExchangeLayoutItemType
-import io.exchangeapi.models.ExchangeMerchantInfo
+import kotlinx.coroutines.CancellationException
 
 sealed interface PaymentMethodAction : MviAction {
     data object Init : PaymentMethodAction
     data class SelectCurrency(val currency: WalletCurrency) : PaymentMethodAction
-    data object CheckP2PMethod : PaymentMethodAction
-    data class AllowP2P(val isDontShowAgain: Boolean) : PaymentMethodAction
+    data object OpenP2PMethod : PaymentMethodAction
 }
 
 sealed interface PaymentMethodEvent {
     data object ShowP2PError : PaymentMethodEvent
-    data class ShowP2PConfirmation(val merchant: ExchangeMerchantInfo) : PaymentMethodEvent
+    data object AssetUnavailable : PaymentMethodEvent
     data class OpenP2P(val url: String) : PaymentMethodEvent
     data class AutoNavigateCrypto(
         val resolvedAsset: RampAsset,
@@ -113,6 +110,7 @@ data class PaymentMethodFeatureData(
     val sectionFilter: PaymentMethodSectionFilter = PaymentMethodSectionFilter.All,
     val preferredCurrency: String? = null,
     val walletId: String? = null,
+    val assetId: String? = null,
 )
 
 class PaymentMethodFeature(
@@ -130,10 +128,17 @@ class PaymentMethodFeature(
     private lateinit var asset: RampAsset
 
     /** Resolved asset, available after loadData completes. Used by router for manual navigation. */
-    val resolvedAsset: RampAsset? get() = if (::asset.isInitialized) asset else null
+    val resolvedAsset: RampAsset?
+        get() = if (::asset.isInitialized) {
+            asset
+        } else {
+            null
+        }
 
     init {
-        if (data.initialAsset != null) asset = data.initialAsset
+        if (data.initialAsset != null) {
+            asset = data.initialAsset
+        }
     }
 
     private val relay = MviRelay<PaymentMethodEvent>()
@@ -149,34 +154,8 @@ class PaymentMethodFeature(
         when (action) {
             is PaymentMethodAction.Init -> loadData()
             is PaymentMethodAction.SelectCurrency -> applyCurrencySelection(action.currency)
-            is PaymentMethodAction.CheckP2PMethod -> {
-                trackP2PView()
+            is PaymentMethodAction.OpenP2PMethod -> {
                 val wallet = resolveWallet() ?: return
-                val shouldValidated =
-                    settingsRepository.isPurchaseOpenConfirm(wallet.id, P2P_OPEN_CONFIRM_ID)
-                if (shouldValidated) {
-                    val merchant = exchangeRepository.getMerchants()
-                        .firstOrNull { it.id == WALLET_MERCHANT_ID }
-                    if (merchant != null) {
-                        relay.emit(PaymentMethodEvent.ShowP2PConfirmation(merchant))
-                        return
-                    }
-                }
-
-                try {
-                    val url = createP2PSession(wallet.address)
-                    relay.emit(PaymentMethodEvent.OpenP2P(url))
-                } catch (e: Exception) {
-                    relay.emit(PaymentMethodEvent.ShowP2PError)
-                    L.e(e)
-                }
-            }
-
-            is PaymentMethodAction.AllowP2P -> {
-                val wallet = resolveWallet() ?: return
-                if (action.isDontShowAgain) {
-                    settingsRepository.disablePurchaseOpenConfirm(wallet.id, P2P_OPEN_CONFIRM_ID)
-                }
                 try {
                     val url = createP2PSession(wallet.address)
                     relay.emit(PaymentMethodEvent.OpenP2P(url))
@@ -218,9 +197,15 @@ class PaymentMethodFeature(
             val layout = exchangeRepository.getLayoutCurrency(rampType, selectedCurrency)
 
             if (!::asset.isInitialized) {
-                val currency = layout.resolveAssetFromDeeplink(data.ft, data.tn)
-                    ?: throw IllegalStateException("Cannot resolve asset from deeplink params ft=${data.ft} tn=${data.tn}")
-                asset = RampAsset.Currency(currency)
+                val currency = data.assetId?.let { layout.findCashAsset(it) }
+                    ?: layout.resolveAssetFromDeeplink(data.ft, data.tn)
+                if (currency == null && data.assetId != null) {
+                    relay.emit(PaymentMethodEvent.AssetUnavailable)
+                    return
+                }
+                asset = RampAsset.Currency(
+                    currency ?: throw IllegalStateException("Cannot resolve asset from ft=${data.ft} tn=${data.tn}")
+                )
             }
 
             val (paymentMethods, crypto, stablecoins, networks) = resolveLayout(layout)
@@ -239,6 +224,8 @@ class PaymentMethodFeature(
             }
 
             emitDeeplinkNavigation(layout, selectedCurrency)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             L.e(e)
             setState { PaymentMethodState.Empty }
@@ -337,27 +324,17 @@ class PaymentMethodFeature(
         return Triple(crypto, grouped, networks)
     }
 
-    // The migrated WithdrawFlow schema has no P2P event, so only the onramp direction reports here.
-    private fun trackP2PView() {
-        if (rampType != RampType.RampOn) {
-            return
-        }
-        AnalyticsHelper.Default.events.depositFlow.depositViewP2pAlert(
-            from = DepositFlowFrom.WalletScreen,
-            addFundsOption = DepositFlowAddFundsOption.BuyWithP2pMarket,
-        )
-    }
-
     companion object {
-        private val P2P_OPEN_CONFIRM_ID = "p2p"
-        private val WALLET_MERCHANT_ID = "wallet"
-
         private fun getSubtitle(type: String, country: String): String? {
             if (!type.equals("card", true)) {
                 return null
             }
 
-            return if (country.equals("ru", true)) "МИР" else "Visa, Mastercard"
+            return if (country.equals("ru", true)) {
+                "МИР"
+            } else {
+                "Visa, Mastercard"
+            }
         }
     }
 }

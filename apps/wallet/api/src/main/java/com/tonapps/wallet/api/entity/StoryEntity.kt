@@ -9,7 +9,8 @@ data class StoryEntity(
     val title: String,
     val description: String,
     val image: String,
-    val button: Button?
+    val button: Button?,
+    val links: List<Link> = emptyList()
 ): Parcelable {
 
     @Parcelize
@@ -33,10 +34,26 @@ data class StoryEntity(
         )
     }
 
+    @Parcelize
+    data class Link(
+        val text: String,
+        val url: String
+    ): Parcelable {
+
+        constructor(json: JSONObject) : this(
+            text = (json.opt("text") as? String).orEmpty(),
+            url = (json.opt("url") as? String).orEmpty()
+        )
+    }
+
     constructor(json: JSONObject) : this(
         title = json.getString("title"),
         description = json.getString("description"),
         image = json.getString("image"),
-        button = json.optJSONObject("button")?.let { Button(it) }
+        button = json.optJSONObject("button")?.let { Button(it) },
+        links = json.optJSONArray("links")
+            ?.let { array -> (0 until array.length()).mapNotNull { array.optJSONObject(it)?.let(::Link) } }
+            ?.filter { it.text.isNotBlank() && it.url.isNotBlank() }
+            .orEmpty()
     )
 }

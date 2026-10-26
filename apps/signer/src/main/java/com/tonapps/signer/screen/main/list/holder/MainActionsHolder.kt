@@ -8,6 +8,7 @@ import com.tonapps.signer.screen.camera.CameraFragment
 import com.tonapps.signer.screen.main.list.MainItem
 import com.tonapps.signer.screen.settings.SettingsFragment
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class MainActionsHolder(
     parent: ViewGroup
@@ -18,9 +19,9 @@ class MainActionsHolder(
     private val settingsView = findViewById<View>(R.id.settings)
 
     init {
-        scanView.setOnClickListener { Navigation.from(context)?.add(CameraFragment.newInstance()) }
-        addView.setOnClickListener { Navigation.from(context)?.add(AddFragment.newInstance()) }
-        settingsView.setOnClickListener { Navigation.from(context)?.add(SettingsFragment.newInstance()) }
+        scanView.setMoonOnClickListener { Navigation.from(context)?.add(CameraFragment.newInstance()) }
+        addView.setMoonOnClickListener { Navigation.from(context)?.add(AddFragment.newInstance()) }
+        settingsView.setMoonOnClickListener { Navigation.from(context)?.add(SettingsFragment.newInstance()) }
     }
 
     override fun onBind(item: MainItem.Actions) {

@@ -6,6 +6,7 @@ import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.tonkeeper.extensions.tonConnectSignMessageMaxMessages
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -34,6 +35,15 @@ internal object JsonBuilder {
     fun responseSendTransaction(id: Long, boc: String): JSONObject {
         val json = JSONObject()
         json.put("result", boc)
+        json.put("id", id)
+        return json
+    }
+
+    fun responseSignMessage(id: Long, internalBoc: String): JSONObject {
+        val json = JSONObject()
+        json.put("result", JSONObject().apply {
+            put("internalBoc", internalBoc)
+        })
         json.put("id", id)
         return json
     }
@@ -89,7 +99,7 @@ internal object JsonBuilder {
     ): JSONObject {
         val json = JSONObject()
         json.put("items", payloadItems(wallet, proof, proofError))
-        json.put("device", device(wallet.maxMessages, appVersion))
+        json.put("device", device(wallet.maxMessages, appVersion, wallet.tonConnectSignMessageMaxMessages()))
         return json
     }
 
@@ -152,22 +162,36 @@ internal object JsonBuilder {
         return json
     }
 
-    fun device(maxMessages: Int, appVersion: String): JSONObject {
+    /**
+     * [signMessageMaxMessages] is null when the wallet cannot sign internal messages for a relayer
+     * (not a W5 mnemonic wallet, or the feature is switched off): the feature is then not advertised.
+     */
+    fun device(maxMessages: Int, appVersion: String, signMessageMaxMessages: Int? = null): JSONObject {
         val json = JSONObject()
         json.put("platform", "android")
         json.put("appName", "Tonkeeper")
         json.put("appVersion", appVersion)
         json.put("maxProtocolVersion", 2)
-        json.put("features", features(maxMessages))
+        json.put("features", features(maxMessages, signMessageMaxMessages))
         return json
     }
 
-    private fun features(maxMessages: Int): JSONArray {
+    private fun features(maxMessages: Int, signMessageMaxMessages: Int?): JSONArray {
         val array = JSONArray()
         array.put("SendTransaction")
         array.put(signDataFeature())
         array.put(sendTransactionFeature(maxMessages))
+        signMessageMaxMessages?.let {
+            array.put(signMessageFeature(it))
+        }
         return array
+    }
+
+    private fun signMessageFeature(maxMessages: Int): JSONObject {
+        val json = JSONObject()
+        json.put("name", "SignMessage")
+        json.put("maxMessages", maxMessages)
+        return json
     }
 
     private fun sendTransactionFeature(maxMessages: Int): JSONObject {

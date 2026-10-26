@@ -7,6 +7,7 @@ dependencies {
     implementation(libs.chainkit.sdk)
     implementation(libs.chainkit.swap)
     implementation(libs.kotlin.bignum)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(projects.apps.wallet.api)
     implementation(projects.apps.wallet.data.multichain.wallet)

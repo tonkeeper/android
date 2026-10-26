@@ -11,6 +11,7 @@ import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.network.interceptor.LoggingInterceptor
 import com.tonapps.network.interceptor.RateLimitInterceptor
 import com.tonapps.network.interceptor.Tron429RetryInterceptor
+import com.tonapps.network.safeProxySelector
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.internal.DeviceAuthInterceptor
 import okhttp3.Cache
@@ -36,14 +37,6 @@ abstract class CoreAPI(
     @Volatile
     protected var deviceAuthProvider: DeviceAuthProvider? = null
         private set
-
-    fun setDeviceAuthProvider(provider: DeviceAuthProvider) {
-        deviceAuthProvider = provider
-    }
-
-    protected fun walletAuthToken(walletId: String, accessToken: String): String? {
-        return deviceAuthProvider?.walletAuthToken(walletId, accessToken)
-    }
 
 //    private var cronetEngine: CronetEngine? = null
 
@@ -71,6 +64,14 @@ abstract class CoreAPI(
         ),
         delegate = delegate,
     ).build()
+
+    fun setDeviceAuthProvider(provider: DeviceAuthProvider) {
+        deviceAuthProvider = provider
+    }
+
+    protected fun walletAuthToken(walletId: String, accessToken: String): String? {
+        return deviceAuthProvider?.walletAuthToken(walletId, accessToken)
+    }
 
     fun sseHttpClient(config: () -> ConfigEntity): OkHttpClient {
         return createTonAPIHttpClient(
@@ -150,6 +151,14 @@ abstract class CoreAPI(
             }
         }
 
+        private val ownHosts: Set<String> by lazy {
+            setOfNotNull(
+                Constants.SWAP_API.toHttpUrlOrNull()?.host,
+                Constants.TRADING_API.toHttpUrlOrNull()?.host,
+                Constants.MULTICHAIN_API.toHttpUrlOrNull()?.host,
+            )
+        }
+
         private fun baseOkHttpClientBuilder(
             timeoutSeconds: Long = 30,
             callTimeoutSeconds: Long = timeoutSeconds,
@@ -182,6 +191,7 @@ abstract class CoreAPI(
 //                )
                 .followSslRedirects(true)
                 .followRedirects(true)
+                .safeProxySelector()
 
             for (interceptor in interceptors) {
                 builder.addInterceptor(interceptor)
@@ -207,16 +217,10 @@ abstract class CoreAPI(
             return builder
         }
 
-        private val ownHosts: Set<String> by lazy {
-            setOfNotNull(
-                Constants.SWAP_API.toHttpUrlOrNull()?.host,
-                Constants.TRADING_API.toHttpUrlOrNull()?.host,
-                Constants.MULTICHAIN_API.toHttpUrlOrNull()?.host,
-            )
-        }
-
         private fun deviceAuthHosts(config: ConfigEntity): Set<String> {
             return ownHosts + listOfNotNull(
+                config.tradingApiUrl.toHttpUrlOrNull()?.host,
+                config.multichainApiUrl.toHttpUrlOrNull()?.host,
                 config.batteryHost.toHttpUrlOrNull()?.host,
                 config.batteryTestnetHost.toHttpUrlOrNull()?.host,
             )

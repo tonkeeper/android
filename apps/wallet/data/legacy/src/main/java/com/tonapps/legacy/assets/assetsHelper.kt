@@ -8,6 +8,7 @@ import com.tonapps.legacy.enteties.AssetsExtendedEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
+import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 
 // TODO remove
 suspend fun List<AssetsEntity>.sort(
@@ -22,6 +23,19 @@ suspend fun List<AssetsEntity>.sort(
         }
         AssetsExtendedEntity(asset, pref, wallet.accountId)
     }.filter { !it.hidden }.sortedWith(AssetsExtendedEntity.comparator).map { it.raw }
+}
+
+suspend fun List<AccountTokenEntity>.sortedByHomeOrder(
+    wallet: WalletEntity,
+    settingsRepository: SettingsRepository,
+): List<AccountTokenEntity> {
+    return map { token ->
+        token to AssetsExtendedEntity(
+            raw = Token(token),
+            prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
+            accountId = wallet.accountId,
+        )
+    }.sortedWith(compareBy(AssetsExtendedEntity.comparator) { it.second }).map { it.first }
 }
 
 fun List<AssetsEntity>.sumOfVerifiedFiat(): Coins {

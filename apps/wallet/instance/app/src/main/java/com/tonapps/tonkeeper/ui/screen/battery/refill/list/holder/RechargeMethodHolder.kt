@@ -9,6 +9,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class RechargeMethodHolder(
     parent: ViewGroup,
@@ -19,7 +20,7 @@ class RechargeMethodHolder(
 
     override fun onBind(item: Item.RechargeMethod) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { navigation?.add(BatteryRechargeScreen.newInstance(item.wallet, item.from, item.token)) }
+        itemView.setMoonOnClickListener { navigation?.add(BatteryRechargeScreen.newInstance(item.wallet, item.from, item.token, utm = item.utm)) }
         asyncImageView.setImageURI(item.imageUri, this)
         asyncImageView.visibility = View.VISIBLE
         titleView.text = context.getString(Localization.battery_refill_crypto, item.symbol)

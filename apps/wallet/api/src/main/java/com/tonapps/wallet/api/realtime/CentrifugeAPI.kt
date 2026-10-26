@@ -1,6 +1,7 @@
 package com.tonapps.wallet.api.realtime
 
 import com.tonapps.log.L
+import com.tonapps.network.safeProxySelector
 import io.github.centrifugal.centrifuge.Client
 import io.github.centrifugal.centrifuge.ConnectedEvent
 import io.github.centrifugal.centrifuge.ConnectingEvent
@@ -30,12 +31,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import java.util.concurrent.atomic.AtomicBoolean
 
 private const val CLIENT_NAME = "android"
 
 class CentrifugeAPI(
-    private val url: String,
+    private val url: () -> String,
     private val userAgent: String,
     private val scope: CoroutineScope,
     private val connectionToken: suspend () -> RealtimeTokenResult,
@@ -87,8 +89,9 @@ class CentrifugeAPI(
             name = CLIENT_NAME
             headers = mapOf("User-Agent" to userAgent)
             tokenGetter = connectionTokenGetter()
+            okHttpClient = OkHttpClient.Builder().safeProxySelector().build()
         }
-        return Client(url, options, clientListener())
+        return Client(url(), options, clientListener())
     }
 
     private fun connectionTokenGetter() = object : ConnectionTokenGetter() {

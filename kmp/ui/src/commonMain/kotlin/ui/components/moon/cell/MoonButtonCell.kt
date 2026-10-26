@@ -1,5 +1,6 @@
 package ui.components.moon.cell
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ui.components.moon.MoonLoader
 import ui.theme.UIKit
+import ui.theme.pressScale
 
 object MoonButtonCellDefaults {
 
@@ -94,16 +96,19 @@ fun MoonButtonCell(
     contentPadding: PaddingValues = remember { PaddingValues(horizontal = 16.dp, vertical = 8.dp) },
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Button(
         modifier = modifier
             .fillMaxWidth()
             .padding(contentPadding)
-            .height(56.dp),
+            .height(56.dp)
+            .pressScale(interactionSource),
         onClick = onClick,
         elevation = null,
         enabled = enabled && !loading,
         colors = colors,
         shape = UIKit.shapes.large,
+        interactionSource = interactionSource,
     ) {
         if (loading) {
             MoonLoader(Modifier.size(24.dp))

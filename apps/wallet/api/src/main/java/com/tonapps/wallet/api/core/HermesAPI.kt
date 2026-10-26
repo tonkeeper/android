@@ -10,6 +10,7 @@ class HermesAPI(
     private val url: String,
     okHttpClient: OkHttpClient,
     private val tokenProvider: () -> String?,
+    private val tokenRefresher: (String) -> String?,
 ) {
 
     // Protocol pings carry liveness; a push stream must never expire on a read timeout.
@@ -29,6 +30,10 @@ class HermesAPI(
 
     fun accessToken(): String? {
         return tokenProvider()
+    }
+
+    fun refreshAccessToken(expiredToken: String): String? {
+        return tokenRefresher(expiredToken)
     }
 
     private companion object {

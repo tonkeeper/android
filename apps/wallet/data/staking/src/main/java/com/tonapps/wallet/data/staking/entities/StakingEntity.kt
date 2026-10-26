@@ -29,7 +29,7 @@ data class StakingEntity(
     }
 
     fun findPoolByAddress(address: String): PoolEntity? {
-        return pools.map { it.pools }.flatten().find { it.address == address }
+        return pools.findPoolByAddress(address)
     }
 
     fun findPoolByTokenAddress(address: String): PoolEntity? {

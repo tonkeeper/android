@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Paint
 import android.text.TextPaint
 import android.util.AttributeSet
-import com.tonapps.log.L
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged
@@ -28,6 +27,7 @@ import uikit.extensions.setRightDrawable
 import uikit.widget.input.BaseInputView
 import uikit.widget.input.InputTextView
 import java.math.BigDecimal
+import uikit.extensions.setMoonOnClickListener
 
 class CoinInputView @JvmOverloads constructor(
     context: Context,
@@ -82,12 +82,12 @@ class CoinInputView @JvmOverloads constructor(
         editText.setRightDrawable(suffixDrawable)
 
         clearView = findViewById(R.id.coin_input_clear)
-        clearView.setOnClickListener { clear() }
+        clearView.setMoonOnClickListener { clear() }
 
         tokenPickerView = findViewById(R.id.coin_input_token)
         tokenPickerView.doOnValueChanged = ::onValueChanged
         onValueChanged(CurrencyPickerView.Value(tokenPickerView.token))
-        findViewById<View>(R.id.coin_input_container).setOnClickListener { focusWithKeyboard() }
+        findViewById<View>(R.id.coin_input_container).setMoonOnClickListener(scale = false) { focusWithKeyboard() }
     }
 
     fun setWallet(wallet: WalletEntity) {
@@ -129,7 +129,7 @@ class CoinInputView @JvmOverloads constructor(
             clear()
         } else {
             val text = value.stripTrailingZeros().toPlainString().removeSuffix(".0")
-            editText.setText(text.replace(".", CurrencyFormatter.monetaryDecimalSeparator))
+            editText.setText(text.replace(".", CurrencyFormatter.decimalSeparator))
         }
     }
 

@@ -16,6 +16,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.withDefaultBadge
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_domain_renew) {
 
@@ -25,7 +26,7 @@ class Holder(parent: ViewGroup): BaseListHolder<Item>(parent, R.layout.view_doma
 
     override fun onBind(item: Item) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             item.nft?.let { openNft(item.wallet, it) }
         }
         nameView.text = if (item.inSale) {

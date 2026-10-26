@@ -13,28 +13,45 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Account(
     @SerialName(value = "account_index")
     val accountIndex: Int? = null,
 
-    /* L1 (Ethereum) address keying this main account. */
+    /* L1 (Ethereum) address keying this main account. Present whenever the wallet has proved one, status not_registered included: the address is never sent by the caller, so this is the only place to read back what the wallet is bound to. Absent only while it has proved nothing at all. Always lowercase, whatever case Lighter reports, because it is signed over verbatim: an operation proof is checked against the address in the form recorded here, and the same address in two casings is two different statements. */
     @SerialName(value = "l1_address")
     val l1Address: String? = null,
 
     @Contextual @SerialName(value = "status")
     val status: AccountStatus? = null,
 
-    /* Whether an L2 signing key is registered (ChangePubKey done). Independent of status: it comes from the account's API keys, not from the account record. */
+    /* Whether an L2 signing key is registered (ChangePubKey done). Independent of status: it comes from the account's API keys, not from the account record. True exactly when api_keys below is non-empty. */
     @SerialName(value = "has_l2_key")
     val hasL2Key: Boolean? = null,
+
+    /* Whether a usable read-only token is in place for the account -- one stored here, not expired and not superseded, that Argus also holds unexpired. It is read from our own database and from Argus, not from Lighter, so it says what this service can do on the account's behalf and nothing about what tokens exist elsewhere. A token saved here stays false until Argus has taken it in. False is the answer to poll on: while it stays false the client has to submit or mint a token (POST /account/ro-token/issue) before anything that needs one. It is false for an account that does not exist yet too, for want of anything to hold a token against. */
+    @SerialName(value = "has_ro_token")
+    val hasRoToken: Boolean? = null,
+
+    /* The L2 signing keys registered on this account, one entry per occupied slot. Only occupied slots are listed, so an index absent here is one a client may register into, and an empty array means the account has no signing key at all. Absent while the wallet has no account. */
+    @SerialName(value = "api_keys")
+    val apiKeys: List<AccountAPIKey>? = null,
 
     /* Total collateral, human-unit decimal string. */
     @SerialName(value = "collateral")
     val collateral: String? = null,
 
-    /* Balance available for new orders, human-unit decimal string. */
+    /* What the account is worth: collateral plus the margin of isolated positions plus the unrealized PnL, human-unit decimal string. Lighter's own figure, the same as balance.equity in /portfolio, but read without a read-only token. This is the number to add to a wallet's total. */
+    @SerialName(value = "equity")
+    val equity: String? = null,
+
+    /* Balance available for new orders, human-unit decimal string. Net of the margin that resting orders hold, the same figure as balance.available_balance in /portfolio. The field is absent when the orders could not be read, for example when no read-only token is stored. Absent means unknown, not zero. It does not follow has_ro_token. That flag also waits for Argus to take the token in, and reading orders does not need Argus. So right after a token is saved the field can be present while has_ro_token is still false. */
     @SerialName(value = "available_balance")
     val availableBalance: String? = null,
 

@@ -1,0 +1,11 @@
+{
+  "quote_id": "e1e1e120-d089-4444-9d6f-d0374c31dc64",
+  "routes": [],
+  "provider_errors": [
+    {
+      "aggregator": "swapsxyz",
+      "code": "provider_error",
+      "message": "insufficient balance for source asset: The specified amount is too low."
+    }
+  ]
+}

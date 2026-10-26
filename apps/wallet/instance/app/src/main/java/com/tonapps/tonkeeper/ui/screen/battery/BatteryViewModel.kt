@@ -1,10 +1,11 @@
 package com.tonapps.tonkeeper.ui.screen.battery
 
 import android.app.Application
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
-import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeScreen
 import com.tonapps.wallet.data.account.AccountRepository
@@ -12,8 +13,8 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class BatteryViewModel(
@@ -21,22 +22,27 @@ class BatteryViewModel(
     private val wallet: WalletEntity,
     jetton: String,
     private val from: BatteryNativeFrom,
+    private val utm: UtmParameters,
     private val settingsRepository: SettingsRepository,
     private val batteryRepository: BatteryRepository,
     private val tokenRepository: TokenRepository,
     private val accountRepository: AccountRepository,
+    savedStateHandle: SavedStateHandle,
 ) : BaseWalletVM(app) {
 
-    private val _routeFlow = MutableEffectFlow<BatteryRoute>()
-    val routeFlow = _routeFlow.asSharedFlow().filterNotNull()
+    private val _routeFlow = Channel<BatteryRoute>(capacity = Channel.BUFFERED)
+    val routeFlow = _routeFlow.receiveAsFlow()
 
     val installId: String
         get() = settingsRepository.installId
 
     init {
-        routeToRefill()
-        if (jetton.isNotEmpty()) {
-            openRecharge(jetton)
+        if (savedStateHandle.get<Boolean>(KEY_INITIAL_ROUTE_OPENED) != true) {
+            savedStateHandle[KEY_INITIAL_ROUTE_OPENED] = true
+            routeToRefill()
+            if (jetton.isNotEmpty()) {
+                openRecharge(jetton)
+            }
         }
     }
 
@@ -50,16 +56,16 @@ class BatteryViewModel(
                     ?: return@launch
             val token =
                 tokens.firstOrNull { it.address.equalsAddress(rechargeToken) } ?: return@launch
-            openScreen(BatteryRechargeScreen.newInstance(wallet, from, token))
+            openScreen(BatteryRechargeScreen.newInstance(wallet, from, token, utm = utm))
         }
     }
 
     fun routeToSettings() {
-        _routeFlow.tryEmit(BatteryRoute.Settings)
+        _routeFlow.trySend(BatteryRoute.Settings)
     }
 
     private fun routeToRefill() {
-        _routeFlow.tryEmit(BatteryRoute.Refill)
+        _routeFlow.trySend(BatteryRoute.Refill)
     }
 
     fun setBatteryViewed() {
@@ -72,5 +78,9 @@ class BatteryViewModel(
                 )
             }
         }
+    }
+
+    private companion object {
+        private const val KEY_INITIAL_ROUTE_OPENED = "initial_route_opened"
     }
 }

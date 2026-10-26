@@ -19,6 +19,7 @@ import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import uikit.drawable.CellBackgroundDrawable
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class WalletHolder(
     parent: ViewGroup,
@@ -67,12 +68,12 @@ class WalletHolder(
 
     fun updateEditMode(item: Item.Wallet) {
         if (item.editMode) {
-            pencilView.setOnClickListener { navigation?.add(EditNameScreen.newInstance(item.wallet.id)) }
+            pencilView.setMoonOnClickListener { navigation?.add(EditNameScreen.newInstance(item.wallet.id)) }
             itemView.setOnClickListener(null)
             editView.visibility = View.VISIBLE
             checkView.visibility = View.GONE
         } else {
-            itemView.setOnClickListener { onClick(item.wallet) }
+            itemView.setMoonOnClickListener { onClick(item.wallet) }
             pencilView.setOnClickListener(null)
             editView.visibility = View.GONE
             checkView.visibility = View.VISIBLE

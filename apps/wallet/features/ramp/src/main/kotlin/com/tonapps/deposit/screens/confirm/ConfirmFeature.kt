@@ -19,7 +19,6 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
 import com.tonapps.core.helper.TransactionSentAnalytics
-import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.core.helper.nftAnalyticsAssetId
 import com.tonapps.deposit.screens.send.SendException
@@ -249,7 +248,7 @@ class ConfirmFeature(
             operation = Events.RedOperations.RedOperationsOperation.Emulate,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         try {
             if (params.selectedToken.blockchain == Blockchain.TRON) {
@@ -265,7 +264,6 @@ class ConfirmFeature(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
         } catch (e: Throwable) {
             L.e("ConfirmFeature", "Init error", e)
@@ -277,7 +275,6 @@ class ConfirmFeature(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             setState { ConfirmState.Error(e.message ?: "Unknown error") }
         }
@@ -549,13 +546,14 @@ class ConfirmFeature(
         setState<ConfirmState.Ready> { copy(signingState = SigningState.Loading) }
 
         val analyticsFrom = params.analyticsFrom
+        val analyticsEvents = AnalyticsHelper.Default.eventsTaggedWith(params.utm)
         val token = params.selectedToken.balance.token
         val amount = params.tokenAmount.value.toDouble()
         val readyState = obtainSpecificState<ConfirmState.Ready>()
         val feeAsset = getFeeAsset(readyState?.selectedFee)
         val assetId = token.analyticsAssetId()
 
-        AnalyticsHelper.Default.events.sendNative.sendConfirm(
+        analyticsEvents.sendNative.sendConfirm(
             from = analyticsFrom,
             asset = assetId,
             amount = amount,
@@ -564,8 +562,8 @@ class ConfirmFeature(
         )
 
         if (params.exchangeData != null) {
-            AnalyticsHelper.Default.events.withdrawFlow.withdrawSendConfirm(
-                from = Events.WithdrawFlow.WithdrawFlowFrom.WalletScreen,
+            analyticsEvents.withdrawFlow.withdrawSendConfirm(
+                from = params.withdrawFlowFrom,
                 withdrawOption = Events.WithdrawFlow.WithdrawFlowWithdrawOption.GetUsdtOtherNetworks,
                 sellAsset = assetId,
                 stablecoinSymbol = token.symbol,
@@ -583,7 +581,7 @@ class ConfirmFeature(
             operation = Events.RedOperations.RedOperationsOperation.Send,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
 
         try {
@@ -608,10 +606,9 @@ class ConfirmFeature(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = null,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
 
-            AnalyticsHelper.Default.events.sendNative.sendSuccess(
+            analyticsEvents.sendNative.sendSuccess(
                 from = analyticsFrom,
                 asset = assetId,
                 amount = amount,
@@ -640,11 +637,12 @@ class ConfirmFeature(
                 feeAsset = TransactionSentAnalytics.feeAsset(feeAsset),
                 initiatedBy = TransactionSentAnalytics.initiatedBy(analyticsFrom),
                 isMax = params.isMaxAmount,
+                utm = params.utm,
             )
 
             if (params.exchangeData != null) {
-                AnalyticsHelper.Default.events.withdrawFlow.withdrawSendSuccess(
-                    from = Events.WithdrawFlow.WithdrawFlowFrom.WalletScreen,
+                analyticsEvents.withdrawFlow.withdrawSendSuccess(
+                    from = params.withdrawFlowFrom,
                     withdrawOption = Events.WithdrawFlow.WithdrawFlowWithdrawOption.GetUsdtOtherNetworks,
                     sellAsset = assetId,
                     stablecoinSymbol = token.symbol,
@@ -665,12 +663,11 @@ class ConfirmFeature(
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             if (e is CancellationException) {
                 setState<ConfirmState.Ready> { copy(signingState = SigningState.Idle) }
             } else {
-                AnalyticsHelper.Default.events.sendNative.sendFailed(
+                analyticsEvents.sendNative.sendFailed(
                     from = analyticsFrom,
                     asset = assetId,
                     amount = amount,

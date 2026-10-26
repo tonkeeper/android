@@ -6,6 +6,7 @@ import com.tonapps.chainkit.core.chain.model.account.Account
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.log.L
 import com.tonapps.wc.models.WcAppData
+import com.tonapps.wc.exceptions.WalletConnectException
 import com.tonapps.wc.models.WcError
 import com.tonapps.wc.models.WcEvent
 import com.tonapps.wc.models.WcEventData
@@ -141,59 +142,72 @@ class WalletConnectManager {
     suspend fun approveRequest(
         requestId: String,
         data: String,
-    ): Result<String> = suspendCancellableCoroutine { cont ->
+    ): Result<String> {
         L.d("WalletConnect", "approveRequest", data)
-        val request = requestController.request(requestId) as WcEventData.SessionRequest
+        // Gone once it was answered.
+        val request = requestController.request(requestId) as? WcEventData.SessionRequest
+            ?: return Result.failure(WalletConnectException(WcError.UNKNOWN))
 
-        val result = Wallet.Params.SessionRequestResponse(
-            sessionTopic = request.data.topic,
-            jsonRpcResponse = Wallet.Model.JsonRpcResponse.JsonRpcResult(
-                id = request.data.request.id,
-                result = data,
-            ),
-        )
+        return suspendCancellableCoroutine { cont ->
+            val result = Wallet.Params.SessionRequestResponse(
+                sessionTopic = request.data.topic,
+                jsonRpcResponse = Wallet.Model.JsonRpcResponse.JsonRpcResult(
+                    id = request.data.request.id,
+                    result = data,
+                ),
+            )
 
-        WalletKit.respondSessionRequest(
-            params = result,
-            onError = { e ->
-                L.e("WalletConnect", e)
-                cont.resume(Result.failure(e.throwable))
-            },
-            onSuccess = {
-                L.d("WalletConnect", "request accepted")
-                cont.resume(Result.success(request.data.topic))
-            },
-        )
+            WalletKit.respondSessionRequest(
+                params = result,
+                onError = { e ->
+                    L.e("WalletConnect", e)
+                    cont.resume(Result.failure(e.throwable))
+                },
+                onSuccess = {
+                    L.d("WalletConnect", "request accepted")
+                    requestController.cleanup(requestId)
+                    cont.resume(Result.success(request.data.topic))
+                },
+            )
+        }
     }
 
     @OptIn(InternalCoroutinesApi::class)
     suspend fun rejectRequest(
         requestId: String,
         error: WcError = WcError.UNKNOWN,
-    ): Result<String> = suspendCancellableCoroutine { cont ->
+    ): Result<String> {
         L.d("WalletConnect", "rejectRequest")
-        val request = requestController.request(requestId) as WcEventData.SessionRequest
+        // Gone once it was answered.
+        val request = requestController.request(requestId) as? WcEventData.SessionRequest
+            ?: return Result.failure(WalletConnectException(WcError.UNKNOWN))
 
-        val result = Wallet.Params.SessionRequestResponse(
-            sessionTopic = request.data.topic,
-            jsonRpcResponse = Wallet.Model.JsonRpcResponse.JsonRpcError(
-                id = request.data.request.id,
-                code = error.code,
-                message = error.message,
-            ),
-        )
+        return suspendCancellableCoroutine { cont ->
+            val result = Wallet.Params.SessionRequestResponse(
+                sessionTopic = request.data.topic,
+                jsonRpcResponse = Wallet.Model.JsonRpcResponse.JsonRpcError(
+                    id = request.data.request.id,
+                    code = error.code,
+                    message = error.message,
+                ),
+            )
 
-        WalletKit.respondSessionRequest(
-            params = result,
-            onError = { e ->
-                L.e("WalletConnect", e)
-                cont.resume(Result.failure(e.throwable))
-            },
-            onSuccess = {
-                L.e("WalletConnect", "request rejected $error")
-                cont.resume(Result.success(request.data.topic))
-            },
-        )
+            WalletKit.respondSessionRequest(
+                params = result,
+                onError = { e ->
+                    L.e("WalletConnect", e)
+                    // Nothing answers it after a failed rejection: if WalletKit still holds it, it emits it
+                    // again and it has to come through as a new request.
+                    requestController.cleanup(requestId)
+                    cont.resume(Result.failure(e.throwable))
+                },
+                onSuccess = {
+                    L.e("WalletConnect", "request rejected $error")
+                    requestController.cleanup(requestId)
+                    cont.resume(Result.success(request.data.topic))
+                },
+            )
+        }
     }
     
     @OptIn(InternalCoroutinesApi::class)

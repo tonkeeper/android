@@ -4,6 +4,7 @@ import androidx.core.net.toUri
 import com.tonapps.blockchain.model.CommonTransactionData
 import com.tonapps.blockchain.model.ConfirmAction
 import com.tonapps.blockchain.model.ConfirmContext
+import com.tonapps.blockchain.model.ConfirmOperations
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.blockchain.model.DappConnectRequest
@@ -17,6 +18,9 @@ import com.tonapps.wc.WcRouteAdapter
 import com.tonapps.wc.chains.WcRequestData
 import com.tonapps.wc.chains.ethereum.WcEthSignMessage
 import com.tonapps.wc.chains.ethereum.WcEthTransaction
+import com.tonapps.wc.chains.solana.WcSolanaSignAllTransactions
+import com.tonapps.wc.chains.solana.WcSolanaSignMessage
+import com.tonapps.wc.chains.solana.WcSolanaSignTransaction
 import com.tonapps.wc.chains.tron.WcTronSignMessage
 import com.tonapps.wc.chains.tron.WcTronSignTransaction
 import com.tonapps.wc.models.WcConnection
@@ -26,6 +30,23 @@ import com.tonapps.wc.models.WcValidation
 import java.math.BigInteger
 
 class WcRequestParser : WcRouteAdapter {
+
+    // TODO
+    private val Chain.mainTokenType: TokenType get() {
+        return when (network.type) {
+            Network.Type.Arbitrum,
+            Network.Type.Base,
+            Network.Type.Robinhood,
+            Network.Type.Polygon,
+            Network.Type.Avalanche,
+            Network.Type.Ethereum -> TokenType.Erc20
+            Network.Type.Bitcoin -> TokenType.Brc20
+            Network.Type.Smartchain -> TokenType.Bep20
+            Network.Type.Tron -> TokenType.Trc20
+            Network.Type.Ton -> TokenType.Jetton
+            Network.Type.Solana -> TokenType.SPL
+        }
+    }
 
     override fun <T : WcRequestData> convertRequest(
         requestId: String,
@@ -70,6 +91,37 @@ class WcRequestParser : WcRouteAdapter {
                 walletId = walletId,
             )
 
+            // Solana
+            is WcSolanaSignMessage -> toConfirmRequest(
+                id = requestId,
+                chain = chain,
+                type = WcEthSignMessage.WcSignType.Default,
+                payload = rawRequest.message,
+                meta = meta,
+                walletId = walletId,
+            )
+            // solana_signAndSendTransaction comes as a signed transaction the wallet broadcasts.
+            is WcSolanaSignTransaction -> toConfirmRequest(
+                id = requestId,
+                chain = chain,
+                type = WcEthSignMessage.WcSignType.Transaction,
+                payload = rawRequest.transaction,
+                meta = meta,
+                walletId = walletId,
+                action = when (rawRequest.isSend) {
+                    true -> ConfirmAction.SignAndSend
+                    false -> ConfirmAction.Sign
+                },
+            )
+            is WcSolanaSignAllTransactions -> toConfirmRequest(
+                id = requestId,
+                chain = chain,
+                payload = WcSolanaAnswers.packTransactions(rawRequest.transactions),
+                messageType = ConfirmType.Message.Type.Transactions,
+                meta = meta,
+                walletId = walletId,
+            )
+
             else -> null
         }
     }
@@ -98,7 +150,8 @@ class WcRequestParser : WcRouteAdapter {
                 WcValidation.Unknown -> DappConnectRequest.DomainStatus.Unknown
             },
             source = wcConnection.toDappSource(),
-            chains = proposal.chains.map { it.value }
+            chains = proposal.chains.map { it.value },
+            requiredChains = proposal.chains.filter { it.isRequired }.map { it.value }.toSet(),
         )
     }
 
@@ -117,22 +170,43 @@ class WcRequestParser : WcRouteAdapter {
         type: WcEthSignMessage.WcSignType,
         walletId: String,
         meta: WcDappConnection,
+        action: ConfirmAction = ConfirmAction.Sign,
+    ): ConfirmRequest {
+        return toConfirmRequest(
+            id = id,
+            chain = chain,
+            payload = payload,
+            messageType = when (type) {
+                WcEthSignMessage.WcSignType.Message -> ConfirmType.Message.Type.Legacy
+                WcEthSignMessage.WcSignType.PersonalMessage -> ConfirmType.Message.Type.Personal
+                WcEthSignMessage.WcSignType.TypedMessage -> ConfirmType.Message.Type.Typed
+                WcEthSignMessage.WcSignType.Default -> ConfirmType.Message.Type.Default
+                WcEthSignMessage.WcSignType.Transaction -> ConfirmType.Message.Type.Transaction
+            },
+            walletId = walletId,
+            meta = meta,
+            action = action,
+        )
+    }
+
+    private fun toConfirmRequest(
+        id: String,
+        chain: Chain,
+        payload: String,
+        messageType: ConfirmType.Message.Type,
+        walletId: String,
+        meta: WcDappConnection,
+        action: ConfirmAction = ConfirmAction.Sign,
     ): ConfirmRequest {
         return ConfirmRequest(
             data = CommonTransactionData(
                 walletId = walletId,
                 assetId = chain.coinAssetId,
             ),
-            action = ConfirmAction.Sign,
+            action = action,
             type = ConfirmType.Message(
                 data = payload,
-                type = when (type) {
-                    WcEthSignMessage.WcSignType.Message -> ConfirmType.Message.Type.Legacy
-                    WcEthSignMessage.WcSignType.PersonalMessage -> ConfirmType.Message.Type.Personal
-                    WcEthSignMessage.WcSignType.TypedMessage -> ConfirmType.Message.Type.Typed
-                    WcEthSignMessage.WcSignType.Default -> ConfirmType.Message.Type.Default
-                    WcEthSignMessage.WcSignType.Transaction -> ConfirmType.Message.Type.Transaction
-                }
+                type = messageType,
             ),
             context = ConfirmContext.Dapp(
                 requestId = id,
@@ -152,6 +226,7 @@ class WcRequestParser : WcRouteAdapter {
     ): ConfirmRequest {
         val nonce = payload.nonce.hexToBigInteger().longValue()
         val transfer = EvmCall.decodeTransfer(payload.data)
+        val fee = getEthFee(chain, payload)
 
         return ConfirmRequest(
             data = CommonTransactionData(
@@ -163,7 +238,6 @@ class WcRequestParser : WcRouteAdapter {
                 },
                 walletId = walletId,
                 nonce = nonce,
-                fee = getEthFee(chain, payload),
             ),
             action = when (payload.isSend) {
                 true -> ConfirmAction.SignAndSend
@@ -171,17 +245,29 @@ class WcRequestParser : WcRouteAdapter {
             },
             type = when {
                 transfer != null -> ConfirmType.Transfer(
-                    to = transfer.to,
-                    amount = transfer.amount,
+                    operation = ConfirmOperations.transfer(
+                        chain = chain,
+                        to = transfer.to,
+                        amount = transfer.amount,
+                        fee = fee,
+                    ),
                 )
                 payload.data == "0x" -> ConfirmType.Transfer(
-                    to = payload.to ?: throw IllegalArgumentException("Contract calls require a 'to' address"),
-                    amount = payload.value.hexToBigInteger(),
+                    operation = ConfirmOperations.transfer(
+                        chain = chain,
+                        to = payload.to ?: throw IllegalArgumentException("Contract calls require a 'to' address"),
+                        amount = payload.value.hexToBigInteger(),
+                        fee = fee,
+                    ),
                 )
                 else -> ConfirmType.Call(
-                    contract = payload.to.orEmpty(),
-                    data = payload.data,
-                    amount = payload.value.hexToBigInteger(),
+                    operation = ConfirmOperations.call(
+                        chain = chain,
+                        contract = payload.to.orEmpty(),
+                        data = payload.data,
+                        amount = payload.value.hexToBigInteger(),
+                        fee = fee,
+                    ),
                 )
             },
             context = ConfirmContext.Dapp(
@@ -199,33 +285,22 @@ class WcRequestParser : WcRouteAdapter {
 
         return if (chian.supportsEip1559()) {
             Fee.Eip1559(
+                asset = chian.toAsset(),
                 limit = gasLimit,
                 networkPrice = gasPrice,
                 minerPrice = gasPrice,
                 maxPrice = gasPrice,
-                amount = gasPrice.multiply(gasLimit)
+                amount = gasPrice.multiply(gasLimit),
             )
         } else if (gasLimit != BigInteger.ZERO || gasPrice != BigInteger.ZERO) {
             Fee.Gas(
+                asset = chian.toAsset(),
                 limit = gasLimit,
                 price = gasPrice,
                 amount = gasPrice.multiply(gasLimit),
             )
         } else {
             null
-        }
-    }
-
-    // TODO
-    private val Chain.mainTokenType: TokenType get() {
-        return when (network.type) {
-            Network.Type.Arbitrum,
-            Network.Type.Base,
-            Network.Type.Ethereum -> TokenType.Erc20
-            Network.Type.Bitcoin -> TokenType.Erc20
-            Network.Type.Smartchain -> TokenType.Brc20
-            Network.Type.Tron -> TokenType.Trc20
-            Network.Type.Ton -> TokenType.Jetton
         }
     }
 
@@ -242,3 +317,4 @@ class WcRequestParser : WcRouteAdapter {
             else -> false
         }
 }
+

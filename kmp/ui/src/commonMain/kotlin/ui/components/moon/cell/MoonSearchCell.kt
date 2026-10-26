@@ -3,6 +3,7 @@ package ui.components.moon.cell
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,6 +43,7 @@ import com.wallet.crypto.trustapp.common.ui.components.MoonEditText
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import ui.theme.UIKit
+import ui.theme.pressScale
 import ui.theme.resources.Res
 import ui.theme.resources.cancel
 import ui.theme.resources.ic_magnifying_glass_16
@@ -81,6 +83,8 @@ fun MoonSearchCell(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp)
+                // clickable before border/clip/background so the press-scale covers the whole bar
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .border(
                     width = 1.5.dp,
                     color = when {
@@ -91,8 +95,7 @@ fun MoonSearchCell(
                     shape = UIKit.shapes.large
                 )
                 .clip(UIKit.shapes.large)
-                .background(UIKit.colorScheme.background.content)
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+                .background(UIKit.colorScheme.background.content),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start,
         ) {
@@ -129,11 +132,14 @@ fun MoonSearchCell(
                     ),
                     trailingIcon = if (text.isNotEmpty()) {
                         {
+                            val clearInteractionSource = remember { MutableInteractionSource() }
                             IconButton(
                                 onClick = {
                                     text = ""
                                     onChanged?.invoke(text)
-                                }
+                                },
+                                modifier = Modifier.pressScale(clearInteractionSource),
+                                interactionSource = clearInteractionSource,
                             ) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_xmark_circle_16),

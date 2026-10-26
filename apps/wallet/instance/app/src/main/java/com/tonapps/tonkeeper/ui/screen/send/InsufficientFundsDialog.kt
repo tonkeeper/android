@@ -11,6 +11,7 @@ import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
 import com.tonapps.blockchain.model.legacy.errors.InsufficientFundsException
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.DepositFragment
 import com.tonapps.deposit.DepositRoutes
 import com.tonapps.deposit.screens.method.RampAsset
@@ -30,8 +31,12 @@ import uikit.base.BaseFragment
 import uikit.dialog.modal.ModalDialog
 import uikit.navigation.Navigation
 import uikit.widget.TextHeaderView
+import uikit.extensions.setMoonOnClickListener
 
-class InsufficientFundsDialog(private val fragment: BaseFragment) :
+class InsufficientFundsDialog(
+    private val fragment: BaseFragment,
+    private val depositFrom: DepositFlowFrom,
+) :
     ModalDialog(fragment.requireContext(), R.layout.dialog_insufficient_funds) {
 
     private val navigation: Navigation?
@@ -44,7 +49,7 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
     private val tonButton = findViewById<Button>(R.id.ton)!!
 
     init {
-        findViewById<View>(R.id.close)!!.setOnClickListener { dismiss() }
+        findViewById<View>(R.id.close)!!.setMoonOnClickListener { dismiss() }
     }
 
     fun show(
@@ -53,19 +58,40 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
         super.show()
         applyWalletTitle(wallet.label, e.singleWallet, e.type)
         applyDescription(e.available, e.required, e.currency, e.withRechargeBattery, e.type)
-        batteryButton.visibility = if (e.withRechargeBattery) View.VISIBLE else View.GONE
+        batteryButton.visibility = if (e.withRechargeBattery) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         val isBattery = e.type == InsufficientBalanceType.InsufficientBatteryChargesForFee
 
-        tonButton.visibility = if (isBattery) View.GONE else View.VISIBLE
-        iconView.visibility = if (isBattery) View.GONE else View.VISIBLE
+        tonButton.visibility = if (isBattery) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+        iconView.visibility = if (isBattery) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
         batteryView.setBatteryLevel(BatteryView.MIN_LEVEL)
-        batteryView.visibility = if (isBattery) View.VISIBLE else View.GONE
+        batteryView.visibility = if (isBattery) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         tonButton.text = context.getString(Localization.buy_ton, e.currency.code)
-        tonButton.setOnClickListener {
+        tonButton.setMoonOnClickListener {
             if (e.currency == WalletCurrency.TON) {
-                navigation?.add(DepositFragment.create(DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON))))
+                navigation?.add(
+                    DepositFragment.create(
+                        DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON)),
+                        analyticsFrom = depositFrom,
+                    )
+                )
             } else {
                 fragment.finish()
                 navigation?.add(BrowserMoreScreen.newInstance(wallet, "defi"))
@@ -73,7 +99,7 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
             dismiss()
         }
 
-        batteryButton.setOnClickListener {
+        batteryButton.setMoonOnClickListener {
             navigation?.add(BatteryScreen.newInstance(wallet, from = BatteryNativeFrom.InsufficientFunds))
             dismiss()
         }
@@ -92,25 +118,46 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
         applyDescription(balance, required, withRechargeBattery, type)
         val isBatteryDisabled = context.api?.getConfig(wallet.network)?.flags?.disableBattery ?: false
         batteryButton.visibility =
-            if (withRechargeBattery && !isBatteryDisabled) View.VISIBLE else View.GONE
+            if (withRechargeBattery && !isBatteryDisabled) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         val isBattery = type == InsufficientBalanceType.InsufficientBatteryChargesForFee
 
-        tonButton.visibility = if (isBattery) View.GONE else View.VISIBLE
-        iconView.visibility = if (isBattery) View.GONE else View.VISIBLE
+        tonButton.visibility = if (isBattery) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+        iconView.visibility = if (isBattery) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
         batteryView.setBatteryLevel(BatteryView.MIN_LEVEL)
-        batteryView.visibility = if (isBattery) View.VISIBLE else View.GONE
+        batteryView.visibility = if (isBattery) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         tonButton.text = if (required.isTrx) {
             context.getString(Localization.get_token, TokenEntity.TRX.symbol)
         } else {
             context.getString(Localization.buy_ton, required.symbol)
         }
-        tonButton.setOnClickListener {
+        tonButton.setMoonOnClickListener {
             if (required.isTon) {
-                navigation?.add(DepositFragment.create(DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON))))
+                navigation?.add(
+                    DepositFragment.create(
+                        DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON)),
+                        analyticsFrom = depositFrom,
+                    )
+                )
             } else if (required.isTrx) {
-                navigation?.add(QrAssetFragment.newInstance(TokenEntity.TRX))
+                navigation?.add(QrAssetFragment.newInstance(TokenEntity.TRX, analyticsFrom = depositFrom))
             } else {
                 fragment.finish()
                 navigation?.add(BrowserMoreScreen.newInstance(wallet, "defi"))
@@ -118,7 +165,7 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
             dismiss()
         }
 
-        batteryButton.setOnClickListener {
+        batteryButton.setMoonOnClickListener {
             navigation?.add(BatteryScreen.newInstance(wallet, from = BatteryNativeFrom.InsufficientFunds))
             dismiss()
         }
@@ -166,7 +213,11 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
                     .withCustomSymbol(context)
 
             val resId =
-                if (withRechargeBattery || type == InsufficientBalanceType.InsufficientBalanceForFee) Localization.insufficient_balance_fees else Localization.insufficient_balance_default
+                if (withRechargeBattery || type == InsufficientBalanceType.InsufficientBalanceForFee) {
+                    Localization.insufficient_balance_fees
+                } else {
+                    Localization.insufficient_balance_default
+                }
             textView.descriptionView.text = context.getString(resId, requiredFormat, balanceFormat)
         }
     }
@@ -192,7 +243,11 @@ class InsufficientFundsDialog(private val fragment: BaseFragment) :
                 CurrencyFormatter.format(currency.code, required.value).withCustomSymbol(context)
 
             val resId =
-                if (withRechargeBattery || type == InsufficientBalanceType.InsufficientBalanceForFee) Localization.insufficient_balance_fees else Localization.insufficient_balance_default
+                if (withRechargeBattery || type == InsufficientBalanceType.InsufficientBalanceForFee) {
+                    Localization.insufficient_balance_fees
+                } else {
+                    Localization.insufficient_balance_default
+                }
             textView.descriptionView.text = context.getString(resId, requiredFormat, balanceFormat)
         }
     }

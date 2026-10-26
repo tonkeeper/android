@@ -15,7 +15,12 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.perpsapi.models.Account
+import io.perpsapi.models.AccountTier
+import io.perpsapi.models.BindAccountRequest
+import io.perpsapi.models.ChangeAccountTierRequest
 import io.perpsapi.models.ErrorResponse
+import io.perpsapi.models.IssueRoTokenRequest
+import io.perpsapi.models.IssuedRoToken
 import io.perpsapi.models.SaveRoTokenRequest
 
 import kotlinx.serialization.SerialName
@@ -45,8 +50,8 @@ class AccountApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAccount(xWalletID: String): Account {
-        val localVarResponse = getAccountWithHttpInfo(xWalletID = xWalletID)
+    fun bindAccount(bindAccountRequest: BindAccountRequest, xWalletId: String? = null): Account {
+        val localVarResponse = bindAccountWithHttpInfo(bindAccountRequest = bindAccountRequest, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Account
@@ -65,36 +70,37 @@ class AccountApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getAccountWithHttpInfo(xWalletID: String): ApiResponse<Account?> {
-        val localVariableConfig = getAccountRequestConfig(xWalletID = xWalletID)
+    fun bindAccountWithHttpInfo(bindAccountRequest: BindAccountRequest, xWalletId: String?): ApiResponse<Account?> {
+        val localVariableConfig = bindAccountRequestConfig(bindAccountRequest = bindAccountRequest, xWalletId = xWalletId)
 
-        return request<Unit, Account>(
+        return request<BindAccountRequest, Account>(
             localVariableConfig
         )
     }
 
-    fun getAccountRequestConfig(xWalletID: String): RequestConfig<Unit> {
-        val localVariableBody = null
+    fun bindAccountRequestConfig(bindAccountRequest: BindAccountRequest, xWalletId: String?): RequestConfig<BindAccountRequest> {
+        val localVariableBody = bindAccountRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/account",
+            method = RequestMethod.POST,
+            path = "/account/bind",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun saveRoToken(xWalletID: String, saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String? = null): Unit {
-        val localVarResponse = saveRoTokenWithHttpInfo(xWalletID = xWalletID, saveRoTokenRequest = saveRoTokenRequest, lighterAuth = lighterAuth)
+    fun changeAccountTier(changeAccountTierRequest: ChangeAccountTierRequest, xWalletId: String? = null): Unit {
+        val localVarResponse = changeAccountTierWithHttpInfo(changeAccountTierRequest = changeAccountTierRequest, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> Unit
@@ -112,20 +118,221 @@ class AccountApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
     }
 
     @Throws(IllegalStateException::class, IOException::class)
-    fun saveRoTokenWithHttpInfo(xWalletID: String, saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String?): ApiResponse<Unit?> {
-        val localVariableConfig = saveRoTokenRequestConfig(xWalletID = xWalletID, saveRoTokenRequest = saveRoTokenRequest, lighterAuth = lighterAuth)
+    fun changeAccountTierWithHttpInfo(changeAccountTierRequest: ChangeAccountTierRequest, xWalletId: String?): ApiResponse<Unit?> {
+        val localVariableConfig = changeAccountTierRequestConfig(changeAccountTierRequest = changeAccountTierRequest, xWalletId = xWalletId)
+
+        return request<ChangeAccountTierRequest, Unit>(
+            localVariableConfig
+        )
+    }
+
+    fun changeAccountTierRequestConfig(changeAccountTierRequest: ChangeAccountTierRequest, xWalletId: String?): RequestConfig<ChangeAccountTierRequest> {
+        val localVariableBody = changeAccountTierRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/account/tier",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getAccount(xWalletId: String? = null): Account {
+        val localVarResponse = getAccountWithHttpInfo(xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Account
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getAccountWithHttpInfo(xWalletId: String?): ApiResponse<Account?> {
+        val localVariableConfig = getAccountRequestConfig(xWalletId = xWalletId)
+
+        return request<Unit, Account>(
+            localVariableConfig
+        )
+    }
+
+    fun getAccountRequestConfig(xWalletId: String?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/account",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getAccountTier(xWalletId: String? = null): AccountTier {
+        val localVarResponse = getAccountTierWithHttpInfo(xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as AccountTier
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getAccountTierWithHttpInfo(xWalletId: String?): ApiResponse<AccountTier?> {
+        val localVariableConfig = getAccountTierRequestConfig(xWalletId = xWalletId)
+
+        return request<Unit, AccountTier>(
+            localVariableConfig
+        )
+    }
+
+    fun getAccountTierRequestConfig(xWalletId: String?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/account/tier",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun issueRoToken(issueRoTokenRequest: IssueRoTokenRequest, xWalletId: String? = null): IssuedRoToken {
+        val localVarResponse = issueRoTokenWithHttpInfo(issueRoTokenRequest = issueRoTokenRequest, xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as IssuedRoToken
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun issueRoTokenWithHttpInfo(issueRoTokenRequest: IssueRoTokenRequest, xWalletId: String?): ApiResponse<IssuedRoToken?> {
+        val localVariableConfig = issueRoTokenRequestConfig(issueRoTokenRequest = issueRoTokenRequest, xWalletId = xWalletId)
+
+        return request<IssueRoTokenRequest, IssuedRoToken>(
+            localVariableConfig
+        )
+    }
+
+    fun issueRoTokenRequestConfig(issueRoTokenRequest: IssueRoTokenRequest, xWalletId: String?): RequestConfig<IssueRoTokenRequest> {
+        val localVariableBody = issueRoTokenRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/account/ro-token/issue",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    @Deprecated(message = "This operation is deprecated.")
+    fun saveRoToken(saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String? = null, xWalletId: String? = null): Unit {
+        @Suppress("DEPRECATION")
+        val localVarResponse = saveRoTokenWithHttpInfo(saveRoTokenRequest = saveRoTokenRequest, lighterAuth = lighterAuth, xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> Unit
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Throws(IllegalStateException::class, IOException::class)
+    @Deprecated(message = "This operation is deprecated.")
+    fun saveRoTokenWithHttpInfo(saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String?, xWalletId: String?): ApiResponse<Unit?> {
+        @Suppress("DEPRECATION")
+        val localVariableConfig = saveRoTokenRequestConfig(saveRoTokenRequest = saveRoTokenRequest, lighterAuth = lighterAuth, xWalletId = xWalletId)
 
         return request<SaveRoTokenRequest, Unit>(
             localVariableConfig
         )
     }
 
-    fun saveRoTokenRequestConfig(xWalletID: String, saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String?): RequestConfig<SaveRoTokenRequest> {
+    @Deprecated(message = "This operation is deprecated.")
+    fun saveRoTokenRequestConfig(saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String?, xWalletId: String?): RequestConfig<SaveRoTokenRequest> {
         val localVariableBody = saveRoTokenRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
         lighterAuth?.apply { localVariableHeaders["X-Lighter-Auth"] = this }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -136,7 +343,7 @@ class AccountApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

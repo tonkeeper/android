@@ -13,6 +13,11 @@ package io.batteryapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class TronSendRequest(
@@ -27,7 +32,11 @@ data class TronSendRequest(
 
     /* base64 encoded payment transaction in the TON network */
     @SerialName(value = "instant_fee_tx")
-    val instantFeeTx: String? = null
+    val instantFeeTx: String? = null,
+
+    /* Not enforced yet: the value is accepted and validated when present, and a request without it is still served. Signature made with the wallet's root key over LP(\"keeper.battery.send.v1\") | LP(wallet_id) | LP(chain) | LP(blake2b256(digest)), hex-encoded, exactly as on /message. chain is \"tron\" for this endpoint. Unlike TON, where the boc alone fixes the cost, the charges spent here also depend on the fields travelling beside the tx, so the digest covers all of them: blake2b256(LP(tx) | LP(energy) | LP(bandwidth) | LP(instant_fee_tx)), where every field is its exact request value and an omitted one is the empty string. energy and bandwidth are their decimal representations. Recoverable secp256k1 signature over blake2b-256 of that message: 65 bytes laid out R | S | V in the EVM ordering, 130 hex. The key is not sent — it is recovered from the signature, and the wallet_id derived from it has to equal the one the request came with. Requires a format 2 wallet_id. */
+    @SerialName(value = "proof")
+    val proof: String? = null
 ) {
 }
 

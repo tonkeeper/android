@@ -14,7 +14,9 @@ import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.chainkit.core.secure.mnemonic.Mnemonic
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import org.ton.kotlin.crypto.PublicKeyEd25519
 
 class InitModelState(private val savedStateHandle: SavedStateHandle) {
@@ -45,6 +47,10 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
     }
 
     val labelFlow = savedStateHandle.getStateFlow<Wallet.Label?>(LABEL_KEY, null).filterNotNull()
+
+    val hasMnemonicFlow = savedStateHandle.getStateFlow<ByteArray?>(MNEMONIC_KEY, null)
+        .map { it != null }
+        .distinctUntilChanged()
 
     var passcode: String?
         get() = savedStateHandle[PASSCODE_KEY]

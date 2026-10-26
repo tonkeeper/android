@@ -22,7 +22,7 @@ sealed interface RampAsset : Parcelable {
     @Parcelize
     data class Currency(val currency: WalletCurrency) : RampAsset {
         override val currencyCode: String get() = currency.code
-        override val isTon: Boolean get() = false
+        override val isTon: Boolean get() = (currency.chain as? WalletCurrency.Chain.TON)?.address == WalletCurrency.TON_CHAIN_KEY
         override val isUsdt: Boolean get() = currency.isUSDT
         override val imageUrl: Uri? get() = currency.iconUri
         override val network: String? get() = currency.network

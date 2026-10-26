@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import uikit.R
 import uikit.extensions.useAttributes
+import uikit.extensions.setMoonOnClickListener
 
 class EmptyLayout @JvmOverloads constructor(
     context: Context,
@@ -17,8 +18,8 @@ class EmptyLayout @JvmOverloads constructor(
     var doOnButtonClick: ((first: Boolean) -> Unit)? = null
         set(value) {
             field = value
-            firstButton.setOnClickListener { value?.invoke(true) }
-            secondButton.setOnClickListener { value?.invoke(false) }
+            firstButton.setMoonOnClickListener { value?.invoke(true) }
+            secondButton.setMoonOnClickListener { value?.invoke(false) }
         }
 
     private val titleView: AppCompatTextView

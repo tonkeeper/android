@@ -22,15 +22,11 @@ import uikit.extensions.getDrawable
 import uikit.extensions.inflate
 import uikit.extensions.round
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 open class ActionSheet(
     val context: Context
 ) : PopupWindow() {
-
-    companion object {
-        private val singleLineItemHeight = 48.dp
-        private val subtitleLineItemHeight = 68.dp
-    }
 
     data class Item(
         val id: Long,
@@ -44,6 +40,15 @@ open class ActionSheet(
 
     private val container: LinearLayoutCompat
     private val items = mutableListOf<Item>()
+    private var trackedAnchor: View? = null
+
+    private val anchorDetachListener = object : View.OnAttachStateChangeListener {
+        override fun onViewAttachedToWindow(v: View) = Unit
+
+        override fun onViewDetachedFromWindow(v: View) {
+            dismiss()
+        }
+    }
 
     var doOnItemClick: ((Item) -> Unit)? = null
 
@@ -58,6 +63,8 @@ open class ActionSheet(
         container = contentView.findViewById(R.id.action_sheet_content)
         width = 220.dp
         isOutsideTouchable = true
+        isFocusable = true
+        inputMethodMode = INPUT_METHOD_NOT_NEEDED
     }
 
     fun clearItems() {
@@ -98,6 +105,7 @@ open class ActionSheet(
         } else {
             buildView()
             showAsDropDown(target, offsetX, 8.dp, gravity)
+            dismissOnAnchorDetach(target)
         }
     }
 
@@ -121,6 +129,22 @@ open class ActionSheet(
         val y = -popupHeight - marginBottom
 
         showAsDropDown(target, x, y, Gravity.NO_GRAVITY)
+        dismissOnAnchorDetach(target)
+    }
+
+    override fun dismiss() {
+        stopTrackingAnchor()
+        super.dismiss()
+    }
+
+    private fun dismissOnAnchorDetach(target: View) {
+        trackedAnchor = target
+        target.addOnAttachStateChangeListener(anchorDetachListener)
+    }
+
+    private fun stopTrackingAnchor() {
+        trackedAnchor?.removeOnAttachStateChangeListener(anchorDetachListener)
+        trackedAnchor = null
     }
 
     private fun buildView() {
@@ -132,7 +156,7 @@ open class ActionSheet(
         for ((index, item) in items.withIndex()) {
             val position = ListCell.getPosition(items.size, index)
             val itemView = createItemView(item)
-            itemView.setOnClickListener {
+            itemView.setMoonOnClickListener {
                 item.onClick?.invoke(item)
                 doOnItemClick?.invoke(item)
                 dismiss()
@@ -195,4 +219,8 @@ open class ActionSheet(
         return itemView
     }
 
+    companion object {
+        private val singleLineItemHeight = 48.dp
+        private val subtitleLineItemHeight = 68.dp
+    }
 }

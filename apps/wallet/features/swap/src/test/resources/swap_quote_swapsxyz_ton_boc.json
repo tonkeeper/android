@@ -1,0 +1,62 @@
+{
+    "quote_id": "9da3e079-b643-40a0-8421-033f63675380",
+    "routes": [
+        {
+            "route_id": "1b0f6921-ce41-461c-8c46-022ebdc710bf",
+            "provider_route_id": "0x04908e44f88541015e40eb587144d31b640e0b7867e4c4c8a4b8f99f26bf1e6c",
+            "aggregator": "swapsxyz",
+            "route_type": "cross_chain_swap",
+            "source_amount": "5000000000",
+            "estimated_destination_amount": "6999676",
+            "minimum_destination_amount": "6929679",
+            "estimated_time": {
+                "inbound_seconds": 0,
+                "swap_seconds": 0,
+                "outbound_seconds": 0,
+                "total_seconds": 1
+            },
+            "total_slippage_bps": 100,
+            "source_usd_price": 1.41,
+            "destination_usd_price": 0.99989,
+            "fees": [
+                {
+                    "type": "protocol",
+                    "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "chain_id": "999000337",
+                    "amount": "7056",
+                    "amount_usd": "0.01"
+                },
+                {
+                    "type": "application",
+                    "asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                    "chain_id": "999000337",
+                    "amount": "49393",
+                    "amount_usd": "0.05"
+                }
+            ],
+            "legs": [],
+            "date_expire": "2026-09-07T14:06:42Z",
+            "risk_level": "medium",
+            "payloads": [
+                {
+                    "payload_id": "ecf9acf1-9a75-48cb-94be-7a565a24b408",
+                    "kind": "main",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "payload_type": "ton_boc",
+                    "calldata_payload_type": "exact",
+                    "payload": "[{\"address\":\"EQAH4MY1EbqP7Gg2wJkoZvoCG4BYPsEG5lVBXPZn0UqXNz4y\",\"amount\":\"5280000000\",\"payload\":\"te6cckECBQEAAWsAAiOlp8v49b0fy2xilt9QEqBfIAgBAgAZxEJQDzab0QAAAAAAAQHTgB4cvF14lzyCzYbIPpNZEuRocSH7FOrcbJObwJRBFQtZaBV1KgFAC1zHXDFDKegQmkRuPjT9G6mZ+9pDVp89zUWrXA3WfyqAIAWuY64YoZT0CE0iNx8afo3UzP3tIatPnuai1a4G6z+VRAMB0Ro8L8OAFrmOuGKGU9AhNIjcfGn6N1Mz97SGrT57motWuBus/lUQAtcx1wxQynoEJpEbj40/RupmfvaQ1afPc1Fq1wN1n8qiAFrmOuGKGU9AhNIjcfGn6N1Mz97SGrT57motWuBus/lUQAQA1YAJSXjfr3w20MbnZHRJtOZ/Sr4G6UtbO0omZtUas93HuMAKEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAKfaRHg==\"}]",
+                    "human_summary": {
+                        "action": "Swap GRAM for USDT",
+                        "spend_asset": "ton/mainnet/coin",
+                        "spend_amount": "5000000000",
+                        "receive_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                        "receive_amount": "6999676"
+                    },
+                    "validation_status": "validated",
+                    "date_expire": "2026-09-07T14:06:42Z"
+                }
+            ]
+        }
+    ]
+}

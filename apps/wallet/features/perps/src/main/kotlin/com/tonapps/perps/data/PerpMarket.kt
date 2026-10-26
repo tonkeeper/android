@@ -26,9 +26,19 @@ data class PerpsMarketDetails(
 data class PerpsTradingState(
     val flags: PerpsTradingFlags,
     val limitOrders: List<PerpsLimitOrder>,
+    val availableBalance: BigDecimal?,
+    val rules: PerpsMarketRules?,
 ) {
+    val hasAccount: Boolean
+        get() = availableBalance != null
+
     companion object {
-        val PUBLIC = PerpsTradingState(flags = PerpsTradingFlags.ALL_ENABLED, limitOrders = emptyList())
+        val PUBLIC = PerpsTradingState(
+            flags = PerpsTradingFlags.ALL_ENABLED,
+            limitOrders = emptyList(),
+            availableBalance = null,
+            rules = null,
+        )
     }
 }
 

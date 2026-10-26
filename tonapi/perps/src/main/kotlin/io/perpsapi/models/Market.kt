@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Market(
@@ -90,7 +95,7 @@ data class Market(
     @Contextual @SerialName(value = "next_funding_at")
     val nextFundingAt: java.time.OffsetDateTime? = null,
 
-    /* Open interest in USD, human-unit decimal string. */
+    /* Open interest in USD, human-unit decimal string. Both sides (longs plus shorts), valued at the mark price, as Lighter's own UI shows it. Empty when the mark is missing.  */
     @SerialName(value = "open_interest_usd")
     val openInterestUsd: String? = null,
     @SerialName(value = "volume_24h_usd")

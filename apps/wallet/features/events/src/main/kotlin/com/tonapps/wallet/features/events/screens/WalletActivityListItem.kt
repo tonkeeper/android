@@ -11,15 +11,16 @@ sealed class WalletActivityListItem {
 
     @Immutable
     data class DateHeader(
-        val sectionKey: String,
+        val firstActivityKey: String,
         val title: String,
     ) : WalletActivityListItem() {
-        override val listKey: String get() = "header_$sectionKey"
+        override val listKey: String get() = "header_$firstActivityKey"
     }
 
     @Immutable
     data class Entry(
         val activity: HistoryEventEntity,
+        val hiddenBalance: Boolean,
     ) : WalletActivityListItem() {
         override val listKey: String get() = activity.txIds.joinToString(",").ifEmpty { "no_tx" }
     }

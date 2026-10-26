@@ -3,6 +3,7 @@ package com.tonapps.wallet.features.events.data
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.chainkit.core.chain.model.num.BaseUnit
 import com.tonapps.extensions.lazyUnsafe
+import com.tonapps.icu.Coins
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import io.walletapi.models.ActivityDirection
 import io.walletapi.models.ActivityStatus
@@ -21,8 +22,8 @@ data class HistoryEventEntity(
     val walletAddress: String?,
     val fromAddress: String?,
     val toAddress: String?,
-    val fromChain: Chain,
-    val toChain: Chain,
+    val fromChain: Chain?,
+    val toChain: Chain?,
     val inAmount: String?,
     val outAmount: String?,
     val inAmountUsd: Double?,
@@ -40,6 +41,9 @@ data class HistoryEventEntity(
     val direction: ActivityDirection,
     val isSpam: Boolean = false,
     val tronResource: TronResourceEntity? = null,
+    val batteryCharges: Int? = null,
+    val perps: PerpsMetaEntity? = null,
+    val encryptedComment: EncryptedCommentEntity? = null,
 ) {
     val isPending: Boolean
         get() = status == ActivityStatus.pending
@@ -68,6 +72,7 @@ data class HistoryEventEntity(
             val asset = when (direction) {
                 ActivityDirection.`in` -> inAsset
                 ActivityDirection.out, ActivityDirection.self -> outAsset
+                ActivityDirection.unknown -> null
             } ?: return null
             return asset.id.takeIf(::isTonNftAssetId)
         }
@@ -87,13 +92,74 @@ data class HistoryEventEntity(
         get() = inAsset?.id?.let(::isTonNftAssetId) == true ||
             outAsset?.id?.let(::isTonNftAssetId) == true
 
+    val isPerps: Boolean
+        get() = perpsKind != null
+
+    val perpsKind: PerpsEventKind? by lazyUnsafe {
+        when (activityType) {
+            ActivityType.perpsPeriodPosition_opened -> PerpsEventKind.Opened(perps?.side)
+            ActivityType.perpsPeriodPosition_increased -> PerpsEventKind.Increased(perps?.side)
+            ActivityType.perpsPeriodPosition_reduced -> perpsClosingKind(isFullClose = false)
+            ActivityType.perpsPeriodPosition_closed -> perpsClosingKind(isFullClose = true)
+            ActivityType.perpsPeriodBalance_deposit -> PerpsEventKind.Deposit
+            ActivityType.perpsPeriodBalance_withdrawal -> PerpsEventKind.Withdrawal
+            else -> null
+        }
+    }
+
+    private val perpsResultLeg: Pair<AssetEntity, PerpsResultEntity>? by lazyUnsafe {
+        if (!isPerps) {
+            return@lazyUnsafe null
+        }
+        val incoming = inAmount?.let { amount ->
+            inAsset?.let { it to perpsResult(amount, it, incoming = true) }
+        }
+        val outgoing = outAmount?.let { amount ->
+            outAsset?.let { it to perpsResult(amount, it, incoming = false) }
+        }
+        val leg = if (perpsKind == PerpsEventKind.Withdrawal) {
+            outgoing?.let { (asset, result) -> asset to result.withFeeIn(asset) } ?: incoming
+        } else {
+            incoming ?: outgoing
+        } ?: return@lazyUnsafe null
+        if (isPerpsBalanceChange) {
+            leg.first to leg.second.copy(isPositive = perpsKind == PerpsEventKind.Deposit)
+        } else {
+            leg
+        }
+    }
+
+    val perpsResult: PerpsResultEntity?
+        get() = perpsResultLeg?.second
+
+    val perpsResultAsset: AssetEntity?
+        get() = perpsResultLeg?.first
+
+    val isPerpsBalanceChange: Boolean
+        get() = perpsKind == PerpsEventKind.Deposit || perpsKind == PerpsEventKind.Withdrawal
+
+    val isPerpsOpenOrIncrease: Boolean
+        get() = perpsKind is PerpsEventKind.Opened || perpsKind is PerpsEventKind.Increased
+
+    val perpsFee: PerpsResultEntity? by lazyUnsafe {
+        if (!isPerpsBalanceChange) {
+            return@lazyUnsafe null
+        }
+        val amount = feeAmount ?: return@lazyUnsafe null
+        val asset = feeAsset ?: return@lazyUnsafe null
+        perpsResult(amount, asset, incoming = false).takeIf { it.value.isPositive }
+    }
+
     val isIncomingLike: Boolean
-        get() = when (activityType) {
-            ActivityType.receive, ActivityType.mint -> true
-            ActivityType.send, ActivityType.stake, ActivityType.unstake, ActivityType.burn,
-            ActivityType.dns_renew -> false
-            ActivityType.swap -> isIncoming
-            else -> isIncoming
+        get() = when {
+            isPerps -> perpsResult?.isPositive ?: true
+            else -> when (activityType) {
+                ActivityType.receive, ActivityType.mint -> true
+                ActivityType.send, ActivityType.stake, ActivityType.unstake, ActivityType.burn,
+                ActivityType.dns_renew -> false
+                ActivityType.swap -> isIncoming
+                else -> isIncoming
+            }
         }
 
     val counterpartyAddress: String?
@@ -126,6 +192,31 @@ data class HistoryEventEntity(
         UUID.randomUUID().toString()
 //        txIds.joinToString(",")
 //            .ifEmpty { "no_tx" } + "_" + activityType + "_" + blockNumber
+    }
+
+    private fun perpsClosingKind(isFullClose: Boolean): PerpsEventKind = when (perps?.reason) {
+        PerpsCloseReason.Liquidation -> PerpsEventKind.Liquidated(perps.side)
+        PerpsCloseReason.TakeProfit -> PerpsEventKind.TakeProfit
+        PerpsCloseReason.StopLoss -> PerpsEventKind.StopLoss
+        PerpsCloseReason.Manual, null -> if (isFullClose) {
+            PerpsEventKind.Closed(perps?.side)
+        } else {
+            PerpsEventKind.Reduced(perps?.side)
+        }
+    }
+
+    private fun PerpsResultEntity.withFeeIn(asset: AssetEntity): PerpsResultEntity {
+        val fee = perpsFee?.takeIf { feeAsset?.id.equals(asset.id, ignoreCase = true) } ?: return this
+        return copy(value = value + fee.value)
+    }
+
+    private fun perpsResult(amount: String, asset: AssetEntity, incoming: Boolean): PerpsResultEntity {
+        val negative = amount.startsWith("-")
+        return PerpsResultEntity(
+            value = Coins.ofNano(amount.removePrefix("-"), asset.decimals),
+            symbol = asset.symbol,
+            isPositive = incoming != negative,
+        )
     }
 }
 

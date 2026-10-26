@@ -1,6 +1,7 @@
 package com.tonapps.deposit.multicoin.analytics
 
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFeeAsset
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
@@ -11,15 +12,16 @@ import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowWithdrawOption
 class WithdrawAnalytics(
     private val from: WithdrawFlowFrom,
     private val withdrawOption: WithdrawFlowWithdrawOption = WithdrawFlowWithdrawOption.SendTokens,
+    private val utm: UtmParameters = UtmParameters.Empty,
 ) : RampAnalytics {
 
     private val events: Events.WithdrawFlow
-        get() = AnalyticsHelper.Default.events.withdrawFlow
+        get() = AnalyticsHelper.Default.eventsTaggedWith(utm).withdrawFlow
 
     fun started(availableOptions: List<WithdrawFlowWithdrawOption>) {
         events.withdrawStarted(
             from = from,
-            availableOptions = availableOptions.joinToString(separator = ",") { it.key },
+            availableOptions = availableOptions.toAnalyticsOptions { it.key },
         )
     }
 
@@ -31,7 +33,7 @@ class WithdrawAnalytics(
         events.withdrawViewChooseAsset(
             from = from,
             withdrawOption = withdrawOption,
-            availableOptions = availableOptions.joinToString(separator = ","),
+            availableOptions = availableOptions.toAnalyticsOptions(),
         )
     }
 
@@ -47,7 +49,7 @@ class WithdrawAnalytics(
         events.withdrawViewFiatChooseAsset(
             from = from,
             withdrawOption = withdrawOption,
-            availableOptions = availableOptions.joinToString(separator = ","),
+            availableOptions = availableOptions.toAnalyticsOptions(),
         )
     }
 
@@ -69,7 +71,7 @@ class WithdrawAnalytics(
             withdrawOption = withdrawOption,
             sellAsset = cryptoAsset,
             buyAsset = fiatCode,
-            availableOptions = availableOptions.joinToString(separator = ","),
+            availableOptions = availableOptions.toAnalyticsOptions(),
         )
     }
 
@@ -111,24 +113,6 @@ class WithdrawAnalytics(
         amount: Double,
     ) {
         events.withdrawClickRampInsertAmountContinue(
-            from = from,
-            withdrawOption = withdrawOption,
-            sellAsset = cryptoAsset,
-            buyAsset = fiatCode,
-            paymentMethod = paymentMethod,
-            providerName = providerName,
-            amount = amount,
-        )
-    }
-
-    override fun viewRampAlert(
-        cryptoAsset: String,
-        fiatCode: String,
-        paymentMethod: String,
-        providerName: String,
-        amount: Double,
-    ) {
-        events.withdrawViewRampAlert(
             from = from,
             withdrawOption = withdrawOption,
             sellAsset = cryptoAsset,
@@ -202,13 +186,5 @@ class WithdrawAnalytics(
             amount = amount,
             feeAsset = WithdrawFlowFeeAsset.Coin,
         )
-    }
-
-    companion object {
-
-        fun fromKeyOrDefault(key: String?): WithdrawFlowFrom {
-            return WithdrawFlowFrom.entries.firstOrNull { it.key == key }
-                ?: WithdrawFlowFrom.WalletScreen
-        }
     }
 }

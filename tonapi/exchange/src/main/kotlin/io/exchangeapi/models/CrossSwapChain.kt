@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 /**
  * Source chain identifier used across cross-swap requests
  *
- * Values: ton,eth,btc,sol,bsc,arb,op,base,polygon,avax,tron,near,ltc,doge,xrp,ada
+ * Values: ton,eth,btc,sol,bsc,arb,op,base,polygon,avax,robinhood,tron,near,ltc,doge,xrp,ada
  */
 @Serializable
 enum class CrossSwapChain(val value: String) {
@@ -40,6 +40,8 @@ enum class CrossSwapChain(val value: String) {
     polygon("polygon"),
     @SerialName(value = "avax")
     avax("avax"),
+    @SerialName(value = "robinhood")
+    robinhood("robinhood"),
     @SerialName(value = "tron")
     tron("tron"),
     @SerialName(value = "near")

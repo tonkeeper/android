@@ -1,0 +1,13 @@
+# Bring the app back to home between cases of one batch run, so the next case
+# does not need a cold start (a cold start costs ~14 s, Back costs ~1 s).
+appId: com.ton_keeper.debug
+---
+- repeat:
+    times: 6
+    while:
+      notVisible: "Add Funds"
+    commands:
+      - pressKey: Back
+- extendedWaitUntil:
+    visible: "Add Funds"
+    timeout: 20000

@@ -2,6 +2,7 @@ package com.tonapps.wallet.api.core
 
 import io.batteryapi.apis.DefaultApi
 import io.batteryapi.apis.EmulationApi
+import io.batteryapi.apis.GaslessApi
 import io.batteryapi.apis.WalletApi
 import okhttp3.OkHttpClient
 
@@ -15,4 +16,6 @@ class BatteryAPI(
     val default: DefaultApi by lazy { DefaultApi(basePath, okHttpClient) }
 
      val wallet: WalletApi by lazy { WalletApi(basePath, okHttpClient) }
+
+    val gasless: GaslessApi by lazy { GaslessApi(basePath, okHttpClient) }
 }

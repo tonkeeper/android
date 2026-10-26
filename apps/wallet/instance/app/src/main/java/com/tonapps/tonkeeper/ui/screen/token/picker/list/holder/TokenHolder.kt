@@ -13,6 +13,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.withDefaultBadge
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class TokenHolder(
     parent: ViewGroup,
@@ -26,7 +27,7 @@ class TokenHolder(
     private val checkView = findViewById<View>(R.id.check)
 
     override fun onBind(item: Item.Token) {
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUri, this)
 

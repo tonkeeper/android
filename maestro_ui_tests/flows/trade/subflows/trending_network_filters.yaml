@@ -6,9 +6,15 @@ appId: com.ton_keeper.debug
 
 - runFlow: "../../../steps/trade/open_multichain_trade.yaml"
 
+# 30 s, above the house default, for the same reason the other trade steps are:
+# the shelves come from GET /api/v2/trading/shelves/config, and TradingRepository
+# caches them (cache.getOrLoad). On a warm device the shelf is there in about
+# 30 ms; on a freshly installed one the config has to be fetched first, and 10 s
+# was not enough in Cloud — the flow failed on `"Trending" is visible` while the
+# shelf was merely still on its way.
 - extendedWaitUntil:
     visible: Trending
-    timeout: 10000
+    timeout: 30000
 - assertVisible: All
 
 - tapOn:

@@ -45,11 +45,11 @@ fun MoonBadgeButton(
 ) {
     Row(
         modifier = modifier
+            .modifyIf {
+                onClick?.let { onClick -> clickable(onClick = onClick) }
+            }
             .clip(CircleShape)
             .background(UIKit.colorScheme.background.contentTint)
-            .modifyIf {
-                onClick?.let { clickable(onClick = onClick) }
-            }
             .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)

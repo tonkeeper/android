@@ -12,13 +12,18 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Табы на экране Assets. Актуальные значения: all, tokens, perpetuals. all — все активы (perp-рынки только при show_perps=true); tokens — все активы кроме perp-рынков; perpetuals — только perp-рынки (lighter/...). stocks/etfs/commodities оставлены для обратной совместимости и работают как раньше; новые клиенты вместо них используют tab=all|tokens вместе с filter. 
  *
- * Values: all,tokens,stocks,etfs,commodities,perpetuals
+ * Values: all,tokens,stocks,etfs,commodities,perpetuals,unknown
  */
-@Serializable
+@Serializable(with = AssetsTabSerializer::class)
 enum class AssetsTab(val value: String) {
     @SerialName(value = "all")
     all("all"),
@@ -31,7 +36,9 @@ enum class AssetsTab(val value: String) {
     @SerialName(value = "commodities")
     commodities("commodities"),
     @SerialName(value = "perpetuals")
-    perpetuals("perpetuals");
+    perpetuals("perpetuals"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -57,6 +64,20 @@ enum class AssetsTab(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AssetsTabSerializer : KSerializer<AssetsTab> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AssetsTab {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AssetsTab.entries.firstOrNull { it.value == value }
+            ?: AssetsTab.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AssetsTab) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

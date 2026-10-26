@@ -13,6 +13,7 @@ import com.tonapps.tonkeeperx.R
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
+import uikit.extensions.setMoonOnClickListener
 
 class SnackBarView @JvmOverloads constructor(
     context: Context,
@@ -34,7 +35,7 @@ class SnackBarView @JvmOverloads constructor(
     }
 
     fun setButtonOnClickListener(onClickListener: OnClickListener) {
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             startHideAnimation()
             onClickListener.onClick(it)
         }

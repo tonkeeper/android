@@ -7,7 +7,6 @@ import io.exchangeapi.models.ExchangeLayoutAsset
 import io.exchangeapi.models.ExchangeLayoutCryptoMethod
 import io.exchangeapi.models.ExchangeLayoutItemType
 
-
 /**
  * Flattens all assets from all layout items into a single list.
  */
@@ -26,6 +25,13 @@ fun ExchangeLayoutAsset.toWalletCurrency(): WalletCurrency {
 
 fun ExchangeLayoutCryptoMethod.toWalletCurrency(): WalletCurrency {
     return buildWalletCurrency(symbol, networkName, network,"", decimals, image, stablecoin)
+}
+
+fun ExchangeLayout.cryptoMethodAssetId(currency: WalletCurrency): String? {
+    return allAssets.asSequence()
+        .flatMap { it.cryptoMethods }
+        .firstOrNull { it.toWalletCurrency() == currency }
+        ?.assetId
 }
 
 fun ExchangeLayoutCryptoMethod.toCryptoNetworkInfo(): CryptoNetworkInfo {
@@ -69,30 +75,35 @@ private fun buildWalletCurrency(
 
 private fun networkToChain(network: String, address: String?, decimals: Int): WalletCurrency.Chain {
     return when (network.lowercase()) {
-        "native", "jetton" -> if (address != null) WalletCurrency.Chain.TON(
-            address,
-            decimals
-        ) else WalletCurrency.Chain.TON(decimals = decimals)
+        "native", "jetton" -> if (address != null) {
+            WalletCurrency.Chain.TON(address, decimals)
+        } else {
+            WalletCurrency.Chain.TON(decimals = decimals)
+        }
 
-        "trc-20" -> if (address != null) WalletCurrency.Chain.TRON(
-            address,
-            decimals
-        ) else WalletCurrency.Chain.TRON(decimals = decimals)
+        "trc-20" -> if (address != null) {
+            WalletCurrency.Chain.TRON(address, decimals)
+        } else {
+            WalletCurrency.Chain.TRON(decimals = decimals)
+        }
 
-        "erc-20" -> if (address != null) WalletCurrency.Chain.ETHEREUM(
-            address,
-            decimals
-        ) else WalletCurrency.Chain.ETHEREUM(decimals = decimals)
+        "erc-20" -> if (address != null) {
+            WalletCurrency.Chain.ETHEREUM(address, decimals)
+        } else {
+            WalletCurrency.Chain.ETHEREUM(decimals = decimals)
+        }
 
-        "bep-20" -> if (address != null) WalletCurrency.Chain.BNB(
-            address,
-            decimals
-        ) else WalletCurrency.Chain.BNB(decimals = decimals)
+        "bep-20" -> if (address != null) {
+            WalletCurrency.Chain.BNB(address, decimals)
+        } else {
+            WalletCurrency.Chain.BNB(decimals = decimals)
+        }
 
-        "spl" -> if (address != null) WalletCurrency.Chain.Solana(
-            address,
-            decimals
-        ) else WalletCurrency.Chain.Solana(decimals = decimals)
+        "spl" -> if (address != null) {
+            WalletCurrency.Chain.Solana(address, decimals)
+        } else {
+            WalletCurrency.Chain.Solana(decimals = decimals)
+        }
 
         else -> WalletCurrency.Chain.Unknown(
             type = network,
@@ -135,14 +146,18 @@ fun ExchangeLayout.resolveAssetFromDeeplink(
     token: String?,
     network: String?,
 ): WalletCurrency? {
-    if (token == null) return null
+    if (token == null) {
+        return null
+    }
 
     // Try by symbol + network
     val bySymbol = allAssets.find {
         it.symbol.equals(token, ignoreCase = true) &&
                 (network == null || it.network.equals(network, ignoreCase = true))
     }
-    if (bySymbol != null) return bySymbol.toWalletCurrency()
+    if (bySymbol != null) {
+        return bySymbol.toWalletCurrency()
+    }
 
     // Fallback to well-known tokens
     return resolveWellKnownToken(token, network)
@@ -165,6 +180,12 @@ private fun resolveWellKnownToken(token: String, network: String?): WalletCurren
 fun ExchangeLayout.cashAssets(): List<WalletCurrency> {
     return assetsOfType(ExchangeLayoutItemType.fiat)
         .map { it.toWalletCurrency() }
+}
+
+fun ExchangeLayout.findCashAsset(assetId: String): WalletCurrency? {
+    return assetsOfType(ExchangeLayoutItemType.fiat)
+        .firstOrNull { it.assetId.equals(assetId, ignoreCase = true) }
+        ?.toWalletCurrency()
 }
 
 fun ExchangeLayout.stablecoinAssets(): List<WalletCurrency> {

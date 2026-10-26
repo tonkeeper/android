@@ -14,8 +14,6 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
-import io.walletapi.models.ForcePickRaffleWinners200Response
-import io.walletapi.models.ForcePickRaffleWinnersRequest
 import io.walletapi.models.GetWalletRaffles200Response
 import io.walletapi.models.Healthcheck500Response
 import io.walletapi.models.MarkWalletRaffleImportRequest
@@ -94,55 +92,8 @@ class RafflesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun forcePickRaffleWinners(raffleId: String, forcePickRaffleWinnersRequest: ForcePickRaffleWinnersRequest? = null): ForcePickRaffleWinners200Response {
-        val localVarResponse = forcePickRaffleWinnersWithHttpInfo(raffleId = raffleId, forcePickRaffleWinnersRequest = forcePickRaffleWinnersRequest)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as ForcePickRaffleWinners200Response
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun forcePickRaffleWinnersWithHttpInfo(raffleId: String, forcePickRaffleWinnersRequest: ForcePickRaffleWinnersRequest?): ApiResponse<ForcePickRaffleWinners200Response?> {
-        val localVariableConfig = forcePickRaffleWinnersRequestConfig(raffleId = raffleId, forcePickRaffleWinnersRequest = forcePickRaffleWinnersRequest)
-
-        return request<ForcePickRaffleWinnersRequest, ForcePickRaffleWinners200Response>(
-            localVariableConfig
-        )
-    }
-
-    fun forcePickRaffleWinnersRequestConfig(raffleId: String, forcePickRaffleWinnersRequest: ForcePickRaffleWinnersRequest?): RequestConfig<ForcePickRaffleWinnersRequest> {
-        val localVariableBody = forcePickRaffleWinnersRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/api/v1/raffles/{raffle_id}/pick-winners".replace("{"+"raffle_id"+"}", encodeURIComponent(raffleId.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = true,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getWalletRaffles(walletId: String, lang: String? = "en", ids: List<String>? = null, debugNow: java.time.OffsetDateTime? = null, isNew: Boolean? = false, xWalletId: String? = walletId): GetWalletRaffles200Response {
-        val localVarResponse = getWalletRafflesWithHttpInfo(walletId = walletId, lang = lang, ids = ids, debugNow = debugNow, isNew = isNew, xWalletId = xWalletId)
+    fun getWalletRaffles(walletId: String, lang: String? = "en", ids: List<String>? = null, isNew: Boolean? = false, xWalletId: String? = walletId): GetWalletRaffles200Response {
+        val localVarResponse = getWalletRafflesWithHttpInfo(walletId = walletId, lang = lang, ids = ids, isNew = isNew, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GetWalletRaffles200Response
@@ -161,15 +112,15 @@ class RafflesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getWalletRafflesWithHttpInfo(walletId: String, lang: String?, ids: List<String>?, debugNow: java.time.OffsetDateTime?, isNew: Boolean?, xWalletId: String?): ApiResponse<GetWalletRaffles200Response?> {
-        val localVariableConfig = getWalletRafflesRequestConfig(walletId = walletId, lang = lang, ids = ids, debugNow = debugNow, isNew = isNew, xWalletId = xWalletId)
+    fun getWalletRafflesWithHttpInfo(walletId: String, lang: String?, ids: List<String>?, isNew: Boolean?, xWalletId: String?): ApiResponse<GetWalletRaffles200Response?> {
+        val localVariableConfig = getWalletRafflesRequestConfig(walletId = walletId, lang = lang, ids = ids, isNew = isNew, xWalletId = xWalletId)
 
         return request<Unit, GetWalletRaffles200Response>(
             localVariableConfig
         )
     }
 
-    fun getWalletRafflesRequestConfig(walletId: String, lang: String?, ids: List<String>?, debugNow: java.time.OffsetDateTime?, isNew: Boolean?, xWalletId: String?): RequestConfig<Unit> {
+    fun getWalletRafflesRequestConfig(walletId: String, lang: String?, ids: List<String>?, isNew: Boolean?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -178,9 +129,6 @@ class RafflesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
                 if (ids != null) {
                     put("ids", toMultiValue(ids.toList(), "csv"))
-                }
-                if (debugNow != null) {
-                    put("_debug_now", listOf(parseDateToQueryString(debugNow)))
                 }
                 if (isNew != null) {
                     put("is_new", listOf(isNew.toString()))

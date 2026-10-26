@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.doKeyboardAnimation
+import uikit.extensions.setMoonOnClickListener
 import uikit.widget.HeaderView
 import uikit.widget.PhraseWords
 import uikit.widget.TextHeaderView
@@ -98,22 +99,22 @@ class PhraseScreen : BaseWalletScreen<ScreenContext.None>(R.layout.fragment_phra
         }
 
         copyButton = view.findViewById(R.id.copy)
-        copyButton.setOnClickListener {
+        copyButton.setMoonOnClickListener {
             requireContext().copyToClipboard(args.words.joinToString(" "), true)
             copiedPhrase = true
         }
 
         tronButton = view.findViewById(R.id.tron)
-        tronButton.setOnClickListener {
+        tronButton.setMoonOnClickListener {
             lifecycleScope.launch {
                 val legacyId = viewModel.legacyWalletIdOrNull() ?: return@launch
                 val tronWords = requireContext().accountRepository?.getTronMnemonic(legacyId) ?: return@launch
-                navigation?.add(newInstance(tronWords, isTron = true))
+                navigation?.add(newInstance(tronWords, isTron = true, source = args.source))
             }
         }
 
         checkButton = view.findViewById(R.id.check)
-        checkButton.setOnClickListener {
+        checkButton.setMoonOnClickListener {
             navigation?.add(BackupCheckScreen.newInstance(args.words, args.backupId, args.source))
             finish()
         }
@@ -177,7 +178,7 @@ class PhraseScreen : BaseWalletScreen<ScreenContext.None>(R.layout.fragment_phra
             backup: Boolean = false,
             backupId: Long = 0,
             isTron: Boolean = false,
-            source: WalletFlowSource = WalletFlowSource.Settings,
+            source: WalletFlowSource,
         ): PhraseScreen {
             val fragment = PhraseScreen()
             fragment.setArgs(PhraseArgs(words, backup, backupId, isTron, source))

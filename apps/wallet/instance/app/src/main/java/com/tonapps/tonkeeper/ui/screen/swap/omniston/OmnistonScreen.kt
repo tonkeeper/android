@@ -10,8 +10,12 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.errors.InsufficientFundsException
+import com.tonapps.bus.core.contract.EventDelegate
+import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.deposit.multicoin.analytics.asDepositFlowFrom
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.extensions.addFeeItem
@@ -66,6 +70,7 @@ import uikit.widget.item.ItemLineView
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.concurrent.CancellationException
+import uikit.extensions.setMoonOnClickListener
 
 class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_omniston, wallet), BaseFragment.BottomSheet {
 
@@ -74,7 +79,11 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     }
 
     private val insufficientFundsDialog: InsufficientFundsDialog by lazy {
-        InsufficientFundsDialog(this)
+        InsufficientFundsDialog(this, OmnistonArgs(requireArguments()).initiator.asDepositFlowFrom())
+    }
+
+    private val swapAnalytics: EventDelegate? by lazy {
+        analytics?.eventDelegateTaggedWith(OmnistonArgs(requireArguments()).utm)
     }
 
     private val feeMethodSelector: ActionSheet by lazy {
@@ -106,14 +115,17 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     private lateinit var disclaimerView: AppCompatTextView
     private lateinit var actionContainerDrawable: FooterDrawable
 
+    override val predictiveBackPreviewEnabled: Boolean
+        get() = ::slidesView.isInitialized && slidesView.isFirst
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        analytics?.swapOpen(viewModel.swapUri, true)
+        swapAnalytics?.swapOpen(viewModel.swapUri, true)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<View>(R.id.edit).setOnClickListener {
+        view.findViewById<View>(R.id.edit).setMoonOnClickListener {
             reset()
             sendInputView.focusWithKeyboard()
         }
@@ -151,7 +163,7 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
         valueDifferenceView.setInfoIcon(
             requireContext().drawable(UIKitIcon.ic_information_circle_16, requireContext().textSecondaryColor)
         )
-        valueDifferenceView.setOnClickListener {
+        valueDifferenceView.setMoonOnClickListener {
             context?.showToast(Localization.value_difference_info)
         }
 
@@ -181,13 +193,13 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
             viewModel.pickCurrency(TwinInput.Type.Receive)
         }
 
-        view.findViewById<View>(R.id.switch_button).setOnClickListener(::switch)
+        view.findViewById<View>(R.id.switch_button).setMoonOnClickListener { switch(it) }
 
-        reviewReceiveView.setOnClickListener {
+        reviewReceiveView.setMoonOnClickListener {
             receiveInputView.focusWithKeyboard()
             reset()
         }
-        reviewSendView.setOnClickListener {
+        reviewSendView.setMoonOnClickListener {
             sendInputView.focusWithKeyboard()
             reset()
         }
@@ -197,7 +209,7 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
         applyDisclaimer()
 
         continueButton = view.findViewById(R.id.continue_button)
-        continueButton.setOnClickListener { next() }
+        continueButton.setMoonOnClickListener { next() }
 
         actionContainerDrawable = FooterDrawable(requireContext())
         actionContainerDrawable.setColor(requireContext().backgroundPageColor)
@@ -385,7 +397,7 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
     }
 
     private fun signSuccess() {
-        analytics?.swapSuccess(
+        swapAnalytics?.swapSuccess(
             jettonSymbolFrom = viewModel.jettonSymbolFrom,
             jettonSymbolTo = viewModel.jettonSymbolTo,
             providerName = viewModel.providerName,
@@ -410,7 +422,7 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
 
     private fun sign() {
         signLoading()
-        analytics?.swapConfirm(
+        swapAnalytics?.swapConfirm(
             jettonSymbolFrom = viewModel.jettonSymbolFrom,
             jettonSymbolTo = viewModel.jettonSymbolTo,
             providerName = viewModel.providerName,
@@ -470,7 +482,7 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
                 continueButton.isLoading = false
             }
         }
-        analytics?.swapClick(
+        swapAnalytics?.swapClick(
             jettonSymbolFrom = viewModel.jettonSymbolFrom,
             jettonSymbolTo = viewModel.jettonSymbolTo,
             native = true,
@@ -504,7 +516,11 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
 
         val percent = BigDecimal(bps).divide(BigDecimal(100), 4, RoundingMode.HALF_UP)
         val formatted = CurrencyFormatter.formatPercent(percent)
-        valueDifferenceView.value = if (bps > 0) "+$formatted" else formatted
+        valueDifferenceView.value = if (bps > 0) {
+            "+$formatted"
+        } else {
+            formatted
+        }
 
         val context = requireContext()
         val iconRes: Int?
@@ -537,7 +553,7 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
         setLineValue(R.id.details_fee, state.getFeeFormat(requireContext()))
         if (state.canUseBattery && state.canEditFeeMethod) {
             feeView.name = getString(Localization.fee).withInterpunct().withClickable(requireContext(), Localization.edit)
-            feeView.setOnClickListener { selectFeeMethod(state) }
+            feeView.setMoonOnClickListener { selectFeeMethod(state) }
         } else {
             feeView.name = getString(Localization.fee)
             feeView.setOnClickListener(null)
@@ -574,9 +590,11 @@ class OmnistonScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragmen
             wallet: WalletEntity,
             fromToken: String = "TON",
             toToken: String? = null,
+            initiator: ConfirmInitiator = ConfirmInitiator.User,
+            utm: UtmParameters = UtmParameters.Empty,
         ): OmnistonScreen {
             val screen = OmnistonScreen(wallet)
-            screen.setArgs(OmnistonArgs(fromToken, toToken))
+            screen.setArgs(OmnistonArgs(fromToken, toToken, initiator, utm))
             return screen
         }
     }

@@ -6,7 +6,10 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
@@ -18,6 +21,13 @@ class QRImageAnalyzer: ImageAnalysis.Analyzer {
     val flow = _flow.asStateFlow().filterNotNull().distinctUntilChangedBy {
         it.rawValue
     }
+
+    private val _scanFlow = MutableSharedFlow<String>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    val scanFlow = _scanFlow.asSharedFlow()
 
     val barcodeScanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -40,6 +50,7 @@ class QRImageAnalyzer: ImageAnalysis.Analyzer {
     private fun handleBarcodes(barcode: List<Barcode>) {
         for (b in barcode) {
             _flow.tryEmit(b)
+            b.rawValue?.let(_scanFlow::tryEmit)
         }
     }
 

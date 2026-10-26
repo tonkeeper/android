@@ -1,0 +1,22 @@
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonContentPolymorphicSerializer
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
+@Serializable(with = {{classname}}.{{classname}}Serializer::class)
+{{#nonPublicApi}}internal {{/nonPublicApi}}{{^nonPublicApi}}{{#explicitApi}}public {{/explicitApi}}{{/nonPublicApi}}sealed interface {{classname}} {
+
+    object {{classname}}Serializer : JsonContentPolymorphicSerializer<{{classname}}>({{classname}}::class) {
+        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<{{classname}}> {
+            return when (val value = element.jsonObject["{{{discriminator.propertyBaseName}}}"]?.jsonPrimitive?.content) {
+                {{#discriminator.mappedModels}}
+                "{{{mappingName}}}" -> {{modelName}}.serializer()
+                {{/discriminator.mappedModels}}
+                else -> throw SerializationException("Unknown {{classname}} {{{discriminator.propertyBaseName}}}: $value")
+            }
+        }
+    }
+}

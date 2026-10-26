@@ -7,10 +7,13 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.security.KeyStoreException as AndroidKeyStoreException
+import android.security.keystore.UserNotAuthenticatedException
 import androidx.security.crypto.EncryptedSharedPreferences
 import com.tonapps.bus.core.IssueHelper
 import com.tonapps.extensions.getByteArray
 import com.tonapps.log.L
+import java.security.GeneralSecurityException
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -20,6 +23,9 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+
+private const val OPERATION_REQUIRES_AUTHORIZATION = "Operation requires authorization"
+private const val MAX_CAUSE_DEPTH = 16
 
 sealed class KeyHelperException(message: String? = null, e: Throwable? = null) : Throwable(message, e) {
     class GetMnemonic: KeyHelperException("Can't get mnemonic", null)
@@ -31,39 +37,12 @@ sealed class KeyHelperException(message: String? = null, e: Throwable? = null) :
     class Create(message: String? = null, e: Throwable? = null) : KeyHelperException(message, e)
 }
 
+class DeviceCredentialRequiredException(cause: Throwable) :
+    GeneralSecurityException("Key requires the device credential", cause)
+
 class SecurityStorageBox(
     private val prefs: SharedPreferences
 ) {
-    companion object {
-
-        private val locker = ReentrantReadWriteLock() // TODO make for different names
-
-        fun create(context: Context, keyAlias: String, name: String) : SecurityStorageBox {
-            locker.write {
-
-                try {
-                    KeyHelper.createIfNotExists(keyAlias)
-
-                    val prefs = EncryptedSharedPreferences.create(
-                        name,
-                        keyAlias,
-                        context,
-                        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-                    )
-
-                    return SecurityStorageBox(prefs)
-                } catch (e: Throwable) {
-                    IssueHelper
-                        .recordException(KeyHelperException.Create("Can't create new KeyStore", e))
-
-                    throw e
-                }
-            }
-        }
-    }
-
-
     fun put(key: String, value: String?) {
         locker.write {
             prefs.editor {
@@ -131,6 +110,54 @@ class SecurityStorageBox(
         action(editor)
         return editor.commit()
     }
+
+    companion object {
+
+        private val locker = ReentrantReadWriteLock() // TODO make for different names
+
+        fun create(context: Context, keyAlias: String, name: String) : SecurityStorageBox {
+            locker.write {
+                try {
+                    KeyHelper.createIfNotExists(keyAlias)
+
+                    val prefs = EncryptedSharedPreferences.create(
+                        name,
+                        keyAlias,
+                        context,
+                        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                    )
+
+                    return SecurityStorageBox(prefs)
+                } catch (e: Throwable) {
+                    if (e is GeneralSecurityException && e.requiresDeviceCredential()) {
+                        throw DeviceCredentialRequiredException(e).also {
+                            IssueHelper.recordException(it)
+                        }
+                    }
+
+                    IssueHelper
+                        .recordException(KeyHelperException.Create("Can't create new KeyStore", e))
+
+                    throw e
+                }
+            }
+        }
+    }
+}
+
+private fun Throwable.requiresDeviceCredential(): Boolean {
+    return generateSequence(this) { it.cause }.take(MAX_CAUSE_DEPTH).any { error ->
+        error is UserNotAuthenticatedException ||
+            error.isUserAuthenticationRequired() ||
+            error.message == OPERATION_REQUIRES_AUTHORIZATION
+    }
+}
+
+private fun Throwable.isUserAuthenticationRequired(): Boolean {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        this is AndroidKeyStoreException &&
+        numericErrorCode == AndroidKeyStoreException.ERROR_USER_AUTHENTICATION_REQUIRED
 }
 
 object Security {

@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeperx.R
 import uikit.dialog.modal.ModalDialog
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class UpdateAvailableDialog(
     context: Context,
@@ -15,13 +16,13 @@ class UpdateAvailableDialog(
 ): ModalDialog(context, R.layout.dialog_update_available) {
 
     init {
-        findViewById<View>(R.id.later)!!.setOnClickListener { closeAndClick() }
+        findViewById<View>(R.id.later)!!.setMoonOnClickListener { closeAndClick() }
         findViewById<HeaderView>(R.id.header)!!.doOnActionClick = { closeAndClick() }
     }
 
     fun show(callback: () -> Unit) {
         super.show()
-        findViewById<View>(R.id.update)!!.setOnClickListener {
+        findViewById<View>(R.id.update)!!.setMoonOnClickListener {
             callback()
             dismiss()
         }

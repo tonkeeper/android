@@ -7,15 +7,16 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import android.view.View
 import com.tonapps.uikit.color.fieldActiveBorderColor
 import com.tonapps.uikit.color.fieldBackgroundColor
 import com.tonapps.uikit.color.fieldErrorBackgroundColor
 import com.tonapps.uikit.color.fieldErrorBorderColor
 import uikit.ArgbEvaluator
-import uikit.HapticHelper
 import uikit.R
 import uikit.base.BaseDrawable
 import uikit.extensions.dp
+import uikit.extensions.hapticReject
 import uikit.extensions.getDimension
 
 class InputDrawable(
@@ -55,7 +56,7 @@ class InputDrawable(
                 field = value
                 updateState()
                 if (value) {
-                    HapticHelper.warning(context)
+                    (callback as? View)?.hapticReject()
                 }
             }
         }

@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.ton_keeper"
         versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1000000000 // more than github
-        versionName = System.getenv("VERSION_NAME") ?: "26.09.3" // Format is "yy.mm.iteration" (e.g. "26.02.0") and only numbers are allowed
+        versionName = System.getenv("VERSION_NAME") ?: "26.10.1" // Format is "yy.mm.iteration" (e.g. "26.02.0") and only numbers are allowed
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -141,6 +141,7 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.config)
+    implementation(libs.firebase.messaging)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
@@ -153,6 +154,8 @@ dependencies {
 
     implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.lifecycleProcess)
+    implementation(libs.androidx.startup)
+    implementation(libs.chainkit.os)
     baselineProfile(project(":baselineprofile:main"))
 
 //    debugImplementation(libs.leakcanary)
@@ -180,6 +183,7 @@ dependencies {
     implementation(projects.apps.wallet.data.tokens)
     implementation(projects.apps.wallet.data.account)
     implementation(projects.apps.wallet.data.cache)
+    implementation(projects.apps.wallet.data.attribution)
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.multichain.exchange)
     implementation(projects.apps.wallet.data.rates)
@@ -188,6 +192,7 @@ dependencies {
     implementation(projects.apps.wallet.data.browser)
     implementation(projects.apps.wallet.data.banner)
     implementation(projects.apps.wallet.data.raffle)
+    implementation(projects.apps.wallet.data.earn)
     implementation(projects.apps.wallet.data.backup)
     implementation(projects.apps.wallet.data.rn)
     implementation(projects.apps.wallet.data.multichain.wallet)
@@ -200,6 +205,7 @@ dependencies {
     implementation(projects.lib.wc)
     implementation(projects.lib.extensions)
     implementation(projects.lib.log)
+    implementation(projects.lib.network)
     implementation(projects.lib.wallet)
 
     implementation(projects.kmp.async)

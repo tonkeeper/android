@@ -5,6 +5,7 @@ import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.tonkeeper.Environment
@@ -67,6 +68,7 @@ class BatteryRefillViewModel(
     app: Application,
     private val wallet: WalletEntity,
     private val from: BatteryNativeFrom,
+    private val utm: UtmParameters,
     private val api: API,
     private val accountRepository: AccountRepository,
     private val unifiedAccountRepository: UnifiedAccountRepository,
@@ -125,7 +127,7 @@ class BatteryRefillViewModel(
         val batteryConfig = getBatteryConfig(tonWallet)
 
         val uiItems = mutableListOf<Item>()
-        uiItems.add(uiItemBattery(batteryBalance, batteryConfig))
+        uiItems.add(uiItemBattery(batteryBalance, batteryConfig, isMultichain))
         uiItems.add(Item.Space)
 
         if (!config.batteryPromoDisable && !isBatteryDisabled) {
@@ -134,7 +136,17 @@ class BatteryRefillViewModel(
         }
 
         if (!batteryBalance.balance.isZero) {
-            uiItems.add(Item.Settings(settingsRepository.getBatteryTxEnabled(tonWallet.accountId)))
+            uiItems.add(
+                Item.Settings(
+                    supportedTransactions = settingsRepository.getBatteryTxEnabled(tonWallet.accountId),
+                    // The battery pays EVM fees for a multichain wallet only: a legacy one keeps the TON and TRON caption.
+                    captionRes = if (isMultichain) {
+                        Localization.battery_settings_caption_multichain
+                    } else {
+                        Localization.battery_refill_subtitle
+                    },
+                )
+            )
             uiItems.add(Item.Space)
         }
 
@@ -274,6 +286,7 @@ class BatteryRefillViewModel(
     private fun uiItemBattery(
         balance: BatteryBalanceEntity,
         batteryConfig: BatteryConfigEntity,
+        isMultichain: Boolean,
     ): Item.Battery {
         val charges = BatteryMapper.convertToSignedCharges(balance.balance, batteryConfig.chargeCost)
         val formattedAbsCharges = CurrencyFormatter.format(value = charges.absoluteValue.toBigDecimal())
@@ -284,11 +297,16 @@ class BatteryRefillViewModel(
         }
 
         return Item.Battery(
-            balance = balance.balance.value.toFloat(),
+            balance = BatteryMapper.convertToBatteryLevel(balance.balance),
             beta = false, // config.batteryBeta,
             changes = charges,
             formattedChanges = formattedChanges,
             isNegative = balance.balance.isNegative,
+            captionRes = if (isMultichain) {
+                Localization.battery_empty_caption_multichain
+            } else {
+                Localization.battery_refill_subtitle
+            },
         )
     }
 
@@ -309,12 +327,12 @@ class BatteryRefillViewModel(
             val position = ListCell.getPosition(itemsCount, index)
             uiItems.add(
                 Item.RechargeMethod(
-                    wallet = wallet, position = position, token = supportToken, from = from
+                    wallet = wallet, position = position, token = supportToken, from = from, utm = utm
                 )
             )
         }
         if (uiItems.isNotEmpty() && giftEnabled) {
-            uiItems.add(Item.Gift(wallet, position = ListCell.Position.LAST, from = from))
+            uiItems.add(Item.Gift(wallet, position = ListCell.Position.LAST, from = from, utm = utm))
         }
         return uiItems.toList()
     }
@@ -422,7 +440,7 @@ class BatteryRefillViewModel(
                         ignoreCache = true,
                     )
                     withContext(Dispatchers.Main) {
-                        analytics.events.batteryNative.batterySuccess(
+                        analytics.eventsTaggedWith(utm).batteryNative.batterySuccess(
                             from = from,
                             type = BatteryNativeType.Fiat,
                             size = batterySize(purchase.products.first()),
@@ -458,7 +476,7 @@ class BatteryRefillViewModel(
             return
         }
         promoStateFlow.take(1).collectFlow { promoState ->
-            analytics.events.batteryNative.batterySelect(
+            analytics.eventsTaggedWith(utm).batteryNative.batterySelect(
                 from = from,
                 type = BatteryNativeType.Fiat,
                 size = batterySize(productId),

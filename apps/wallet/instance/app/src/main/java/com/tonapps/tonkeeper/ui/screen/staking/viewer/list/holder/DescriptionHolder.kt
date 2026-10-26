@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.wallet.localization.Localization
+import uikit.extensions.setMoonOnClickListener
 
 class DescriptionHolder(parent: ViewGroup) :
     Holder<Item.Description>(parent, R.layout.view_staking_description) {
@@ -31,7 +32,7 @@ class DescriptionHolder(parent: ViewGroup) :
         if (item.uri == null) {
             textView.setOnClickListener(null)
         } else {
-            textView.setOnClickListener {
+            textView.setMoonOnClickListener {
                 BrowserHelper.open(context, item.uri)
             }
         }

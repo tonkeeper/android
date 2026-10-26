@@ -49,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.tonapps.blockchain.ton.extensions.equalsAddress
+import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.core.extensions.iconExternalUrl
 import com.tonapps.core.helper.rememberClipboardManager
@@ -156,7 +157,11 @@ private fun SendInputContent(
         isLedger = state.isLedger,
     )
 
-    val amountDecimals = if (state.amountCurrency) Coins.DEFAULT_DECIMALS else state.selectedToken.decimals
+    val amountDecimals = if (state.amountCurrency) {
+        Coins.DEFAULT_DECIMALS
+    } else {
+        state.selectedToken.decimals
+    }
     val amountState = rememberSendAmountState(amountDecimals)
 
     val expiredMessage = stringResource(Localization.expired_link)
@@ -193,6 +198,11 @@ private fun SendInputContent(
             transfer.text?.let {
                 commentState.onTextChange(it)
                 onCommentInput(it)
+            }
+        } else {
+            DeepLinkBuilder.plainAddressOrNull(value)?.let { address ->
+                addressState.onTextChange(address)
+                onAddressInput(address)
             }
         }
     }
@@ -683,7 +693,7 @@ private fun SendInputContent(
 }
 
 @Composable
-private fun CommentEncryptionHint(
+internal fun CommentEncryptionHint(
     isEncrypted: Boolean,
     onToggle: () -> Unit,
 ) {

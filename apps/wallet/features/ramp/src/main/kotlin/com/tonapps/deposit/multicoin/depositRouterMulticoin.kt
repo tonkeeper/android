@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.core.navigation.LocalResultStore
@@ -71,7 +72,8 @@ fun DepositMulticoinRouter(
     initial: DepositMulticoinRoutes?,
     onBack: () -> Unit,
     rampType: RampType = RampType.RampOn,
-    analyticsFrom: DepositFlowFrom = DepositFlowFrom.WalletScreen,
+    analyticsFrom: DepositFlowFrom,
+    utm: UtmParameters = UtmParameters.Empty,
     onOpenWidget: (String) -> Unit = {},
 ) {
     val backStack = rememberNestedNavBackStack(initial ?: DepositMulticoinRoutes.Ramp, onBack)
@@ -84,7 +86,7 @@ fun DepositMulticoinRouter(
             when (key) {
                 is DepositMulticoinRoutes.Ramp -> NavEntry(key) {
                     val feature = koinViewModel<RampFeature> {
-                        parametersOf(rampType, analyticsFrom)
+                        parametersOf(rampType, analyticsFrom, utm)
                     }
                     RampScreen(
                         feature = feature,
@@ -108,7 +110,7 @@ fun DepositMulticoinRouter(
 
                 is DepositMulticoinRoutes.Receive -> NavEntry(key) {
                     val feature = koinViewModel<ReceiveFeature> {
-                        parametersOf(rampType, analyticsFrom)
+                        parametersOf(rampType, analyticsFrom, utm)
                     }
                     ReceiveScreen(
                         feature = feature,
@@ -128,6 +130,7 @@ fun DepositMulticoinRouter(
                                 rampType = rampType,
                                 analyticsFrom = analyticsFrom,
                                 preferredCurrency = key.preferredCurrency,
+                                utm = utm,
                             )
                         )
                     }
@@ -154,6 +157,7 @@ fun DepositMulticoinRouter(
                                 assetId = key.assetId,
                                 analyticsFrom = analyticsFrom,
                                 preferredCurrency = key.preferredCurrency,
+                                utm = utm,
                             )
                         )
                     }
@@ -209,6 +213,7 @@ fun DepositMulticoinRouter(
                                 paymentMethodType = key.paymentMethodType,
                                 analyticsFrom = analyticsFrom,
                                 fiat = key.fiat,
+                                utm = utm,
                             )
                         )
                     }

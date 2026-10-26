@@ -14,7 +14,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Values: no_route,asset_not_supported,min_amount_not_met,country_blocked,provider_unavailable,provider_error
+ * Why an aggregator produced no route, in our own vocabulary. The aggregator's own code is not passed through; it stays in `message`, which carries the upstream text verbatim after our prefix.  swapsxyz answers with `{\"success\": false, \"error\": {\"code\", \"name\", \"message\", \"statusCode\", \"details\"}}`, and its codes fold in as follows:  * `no_route` — `NO_AVAILABLE_ROUTE`, `INSUFFICIENT_LIQUIDITY`,   `UNSUPPORTED_NETWORK`, `UNSUPPORTED_NETWORK_PAIR`,   `UNSUPPORTED_NETWORK_TOKEN_PAIR`, `UNSUPPORTED_SWAP_DIRECTION`,   `INVALID_SOURCE_TOKEN`, `INVALID_DESTINATION_TOKEN`. The pair, the   direction or the size has nothing to route; another aggregator may   still answer. * `min_amount_not_met` — `AMOUNT_TOO_LOW`, and `AMOUNT_TOO_HIGH`,   `AMOUNT_INVALID`, `INVALID_AMOUNT_ZERO`, `EXCESSIVE_FEE`,   `EXCESSIVE_RELAYER_FEE` when upstream words them as a bound on the   amount. They otherwise arrive as `provider_error`, so treat the   message as the detail. * `country_blocked` — `GEO_BLOCKED`, a 403 keyed on the caller's IP.   Since we call swapsxyz server-side that is our egress, not the   user's location, so it means the aggregator is unreachable for   everyone rather than for this user. * `provider_unavailable` — HTTP 429 and any 5xx, including   `INTERNAL_SERVER_ERROR`, plus transport timeouts. Retryable. * `provider_error` — everything else: `INVALID_ADDRESS_FORMAT`,   `INVALID_PARAMETER`, `CROSS_VM_RECEIVER_REQUIRED`,   `MISSING_REQUIRED_FIELD`, `METHOD_NOT_ALLOWED`, `INVALID_API_KEY`,   `MISSING_API_KEY`.  * `insufficient_balance` — the sender holds less of the source asset   than the quote spends. Only a quote that reads the sender's balance   reports it: today relay's Bitcoin quote, which builds its   transaction out of the sender's own outputs and so has nothing to   spend from an empty address. More funds or a smaller amount fixes   it; a retry does not.  * `wallet_screened` — `WALLET_SCREENED`, the aggregator's compliance   check refusing the sender or the recipient. An AML block on the   wallet itself, not a malformed address: the user cannot fix it by   correcting anything, and a retry, another route or another   aggregator is refused the same way. Terminal — send the user to   support rather than to a retry.    It reaches a quote only with `include_payload: true`, because   swapsxyz prices against placeholder addresses and screens the real   ones only when it builds the transaction. The route is still listed,   since it priced, but it arrives with no `payloads` and cannot be   signed. Without `include_payload` the refusal surfaces on   `POST /v2/crosschain/routes/{route_id}/prepare` as a `400` with the   same code.  Except for `wallet_screened`, these codes are reported by a quote only. Prepare fails the whole request instead: the address family (`GEO_BLOCKED`, `INVALID_ADDRESS_FORMAT`, `INVALID_PARAMETER`, `CROSS_VM_RECEIVER_REQUIRED`) becomes `invalid_address`, the amount family `insufficient_balance`, 429 and 5xx `provider_unavailable`. 
+ *
+ * Values: no_route,asset_not_supported,min_amount_not_met,country_blocked,wallet_screened,insufficient_balance,provider_unavailable,provider_error
  */
 @Serializable
 enum class CrossSwapProviderErrorCode(val value: String) {
@@ -26,6 +28,10 @@ enum class CrossSwapProviderErrorCode(val value: String) {
     min_amount_not_met("min_amount_not_met"),
     @SerialName(value = "country_blocked")
     country_blocked("country_blocked"),
+    @SerialName(value = "wallet_screened")
+    wallet_screened("wallet_screened"),
+    @SerialName(value = "insufficient_balance")
+    insufficient_balance("insufficient_balance"),
     @SerialName(value = "provider_unavailable")
     provider_unavailable("provider_unavailable"),
     @SerialName(value = "provider_error")

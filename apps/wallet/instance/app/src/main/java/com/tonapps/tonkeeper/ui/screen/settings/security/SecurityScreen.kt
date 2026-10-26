@@ -2,7 +2,9 @@ package com.tonapps.tonkeeper.ui.screen.settings.security
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
@@ -19,11 +21,13 @@ import kotlinx.coroutines.flow.launchIn
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
+import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.HeaderView
 import uikit.widget.item.ItemIconView
 import uikit.widget.item.ItemSwitchView
+import uikit.extensions.setMoonOnClickListener
 
 class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_security, ScreenContext.Wallet(wallet)), BaseFragment.SwipeBack {
 
@@ -37,6 +41,9 @@ class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
     private lateinit var headerView: HeaderView
     private lateinit var biometricView: ItemSwitchView
     private lateinit var biometricDescriptionView: View
+    private lateinit var lockScreenView: ItemSwitchView
+    private lateinit var lockScreenDescriptionView: View
+    private var turnOffLockScreenDialog: TurnOffLockScreenDialog? = null
     private lateinit var changePasscodeView: ItemIconView
     private lateinit var setPasscodeView: ItemIconView
     private lateinit var setPasscodeDescriptionView: View
@@ -58,11 +65,21 @@ class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
 
         biometricDescriptionView = view.findViewById(R.id.biometric_description)
 
+        lockScreenView = view.findViewById(R.id.lock_screen)
+        lockScreenView.setChecked(viewModel.lockScreenEnabled, false)
+        lockScreenView.doOnCheckedChanged = { checked, byUser ->
+            if (byUser) {
+                setLockScreenEnabled(checked)
+            }
+        }
+
+        lockScreenDescriptionView = view.findViewById(R.id.lock_screen_description)
+
         changePasscodeView = view.findViewById(R.id.change_passcode)
-        changePasscodeView.setOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }
+        changePasscodeView.setMoonOnClickListener { navigation?.add(ChangePasscodeScreen.newInstance()) }
 
         setPasscodeView = view.findViewById(R.id.set_passcode)
-        setPasscodeView.setOnClickListener {
+        setPasscodeView.setMoonOnClickListener {
             navigation?.addForResult(ChangePasscodeScreen.newInstance(create = true)) {
                 viewModel.refreshPasscodeState()
             }
@@ -84,13 +101,13 @@ class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
 
         safeModeDisabledView = view.findViewById(R.id.safe_mode_disabled)
         safeModeDisabledView.text = requireContext().getSpannable(Localization.safe_mode_disabled)
-        safeModeDisabledView.setOnClickListener {
+        safeModeDisabledView.setMoonOnClickListener {
             viewModel.setSafeModeState(wallet, SafeModeState.DisabledPermanently)
         }
 
         val safeModeDescriptionView = view.findViewById<AppCompatTextView>(R.id.safe_mode_description)
         safeModeDescriptionView.text = requireContext().getSpannable(Localization.safe_mode_description)
-        safeModeDescriptionView.setOnClickListener {
+        safeModeDescriptionView.setMoonOnClickListener {
             navigation?.add(SafeModeStoriesScreen.newInstance())
         }
 
@@ -100,6 +117,13 @@ class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
         } else {
             ListCell.Position.SINGLE
         }
+        changePasscodeView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            bottomMargin = if (biometricAvailable) {
+                0
+            } else {
+                requireContext().getDimensionPixelSize(uikit.R.dimen.offsetMedium)
+            }
+        }
 
         collectFlow(viewModel.hasPasscodeFlow) { hasPasscode ->
             if (hasPasscode && biometricAvailable) {
@@ -108,6 +132,14 @@ class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
             } else {
                 biometricView.visibility = View.GONE
                 biometricDescriptionView.visibility = View.GONE
+            }
+
+            if (hasPasscode && viewModel.isLockScreenOptional) {
+                lockScreenView.visibility = View.VISIBLE
+                lockScreenDescriptionView.visibility = View.VISIBLE
+            } else {
+                lockScreenView.visibility = View.GONE
+                lockScreenDescriptionView.visibility = View.GONE
             }
 
             if (hasPasscode) {
@@ -133,6 +165,25 @@ class SecurityScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
     override fun onResume() {
         super.onResume()
         viewModel.refreshPasscodeState()
+    }
+
+    private fun setLockScreenEnabled(enabled: Boolean) {
+        if (enabled) {
+            viewModel.lockScreenEnabled = true
+            return
+        }
+
+        lockScreenView.setChecked(newChecked = true, byUser = false)
+        if (turnOffLockScreenDialog?.isShowing == true) {
+            return
+        }
+
+        val dialog = TurnOffLockScreenDialog(requireContext()) {
+            viewModel.lockScreenEnabled = false
+            lockScreenView.setChecked(newChecked = false, byUser = false)
+        }
+        turnOffLockScreenDialog = dialog
+        dialog.show()
     }
 
     private fun enableBiometric(value: Boolean) {

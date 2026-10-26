@@ -42,6 +42,21 @@ env:
 - tapOn: Amount
 - inputText: ${AMOUNT}
 
+# Every send-to-self case sends the network's native coin, so the fee comes
+# out of the same balance: it has to be above AMOUNT. Each run burns a fee, and
+# the Cloud wallet ran out of BTC this way; say so instead of failing later on
+# a disabled Continue or a failed broadcast.
+- runFlow:
+    when:
+      visible: "Balance: .*"
+    commands:
+      - copyTextFrom:
+          text: "Balance: .*"
+      - evalScript: ${output.sendBalance = parseFloat(maestro.copiedText.replace(/[^0-9.]/g, ''))}
+      - assertTrue:
+          condition: ${output.sendBalance > parseFloat(AMOUNT)}
+          label: "Enough ${TOKEN_SYMBOL} to send ${AMOUNT} plus the fee (if not: top up the test wallet)"
+
 - extendedWaitUntil:
     visible:
       text: Continue

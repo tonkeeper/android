@@ -8,6 +8,7 @@ import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.iconPrimaryColor
+import uikit.extensions.setMoonOnClickListener
 
 class EmojiAdapter(
     private val listener: (CharSequence) -> Unit
@@ -31,7 +32,7 @@ class EmojiAdapter(
         private val emojiView = itemView.findViewById<EmojiView>(R.id.emoji)
 
         fun bind(emoji: CharSequence) {
-            itemView.setOnClickListener {
+            itemView.setMoonOnClickListener {
                 listener(emoji)
             }
             emojiView.setEmoji(emoji, context.iconPrimaryColor)

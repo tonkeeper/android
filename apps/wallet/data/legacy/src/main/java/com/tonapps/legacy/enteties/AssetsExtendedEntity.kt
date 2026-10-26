@@ -12,20 +12,6 @@ data class AssetsExtendedEntity(
     val accountId: String
 ) {
 
-    companion object {
-        val comparator = compareByDescending<AssetsExtendedEntity> {
-            it.fiat
-        }.thenBy {
-            !it.isTon
-        }.thenBy {
-            !it.pinned
-        }.thenBy {
-            !it.verified
-        }.thenBy {
-            it.index
-        }
-    }
-
     private val token: AccountTokenEntity
         get() = when (raw) {
             is AssetsEntity.Token -> raw.token
@@ -92,9 +78,45 @@ data class AssetsExtendedEntity(
     val index: Int
         get() = prefs.index
 
+    private val pinnedOrder: Int
+        get() = when {
+            !pinned -> Int.MAX_VALUE
+            index >= 0 -> index
+            isTon -> TON_DEFAULT_PINNED_ORDER
+            else -> Int.MAX_VALUE
+        }
+
+    private val groupOrder: Int
+        get() = when {
+            raw is AssetsEntity.Staked -> STAKED_GROUP
+            isTrc20Usdt -> TRC20_USDT_GROUP
+            isUsdt -> TON_USDT_GROUP
+            verified -> VERIFIED_GROUP
+            else -> OTHER_GROUP
+        }
+
     val isTon: Boolean
         get() = (raw as? AssetsEntity.Token)?.token?.isTon ?: false
 
     val isTrx: Boolean
         get() = token.isTrx
+
+    companion object {
+        private const val TRC20_USDT_GROUP = 0
+        private const val TON_USDT_GROUP = 1
+        private const val STAKED_GROUP = 2
+        private const val VERIFIED_GROUP = 3
+        private const val OTHER_GROUP = 4
+        private const val TON_DEFAULT_PINNED_ORDER = -1
+
+        val comparator = compareBy<AssetsExtendedEntity> {
+            !it.pinned
+        }.thenBy {
+            it.pinnedOrder
+        }.thenBy {
+            it.groupOrder
+        }.thenByDescending {
+            it.fiat
+        }
+    }
 }

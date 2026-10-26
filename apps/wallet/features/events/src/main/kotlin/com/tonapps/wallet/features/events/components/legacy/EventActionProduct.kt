@@ -1,5 +1,6 @@
 package com.tonapps.wallet.features.events.components.legacy
 
+import uikit.widget.image.hiddenBalanceBlur
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -36,8 +36,16 @@ internal fun EventActionProduct(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val title = if (hiddenBalances) MASKED_TEXT_VALUE_PLACEHOLDER else product.title
-    val subtitle = if (hiddenBalances) MASKED_TEXT_VALUE_PLACEHOLDER else product.subtitle
+    val title = if (hiddenBalances) {
+        MASKED_TEXT_VALUE_PLACEHOLDER
+    } else {
+        product.title
+    }
+    val subtitle = if (hiddenBalances) {
+        MASKED_TEXT_VALUE_PLACEHOLDER
+    } else {
+        product.subtitle
+    }
 
     Row(
         modifier = modifier
@@ -63,7 +71,11 @@ internal fun EventActionProduct(
         EventActionProductTitles(
             title = title,
             subtitle = subtitle,
-            subtitleColor = if (product.wrong && !hiddenBalances) UIKit.colorScheme.accent.orange else UIKit.colorScheme.text.secondary,
+            subtitleColor = if (product.wrong && !hiddenBalances) {
+                UIKit.colorScheme.accent.orange
+            } else {
+                UIKit.colorScheme.text.secondary
+            },
             verifiedIcon = product.verified && !hiddenBalances
         )
     }
@@ -75,13 +87,16 @@ private fun EventActionProductIcon(
     hiddenBalances: Boolean
 ) {
     MoonAsyncImage(
-        modifier = Modifier
-            .then(
-                if (hiddenBalances) Modifier.blur(16.dp) else Modifier
-            ),
         image = imageUrl,
         size = 64.dp,
-        crossfadeDuration = 0
+        crossfadeDuration = 0,
+        builder = {
+            if (hiddenBalances) {
+                hiddenBalanceBlur()
+            } else {
+                this
+            }
+        },
     )
 }
 

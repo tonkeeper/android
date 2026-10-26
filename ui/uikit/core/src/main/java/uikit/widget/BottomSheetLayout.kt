@@ -34,6 +34,8 @@ class BottomSheetLayout @JvmOverloads constructor(
     private companion object {
         private const val parentScale = .92f
         private const val parentAlpha = .8f
+        private const val PREDICTIVE_PEEK = 0.2f
+        private const val PREDICTIVE_CANCEL_DURATION = 180L
         private val defaultTopMargin = 22.dp
         private val interpolator = PathInterpolator(.2f, 0f, 0f, 1f)
     }
@@ -151,6 +153,23 @@ class BottomSheetLayout @JvmOverloads constructor(
             behavior.isHideable = true
         }
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
+    }
+
+    fun onPredictiveStart() {
+        contentView.animate().cancel()
+    }
+
+    fun onPredictiveProgress(progress: Float) {
+        contentView.translationY = progress.coerceIn(0f, 1f) * contentView.measuredHeight * PREDICTIVE_PEEK
+    }
+
+    fun onPredictiveCancel() {
+        contentView.animate()
+            .translationY(0f)
+            .setDuration(PREDICTIVE_CANCEL_DURATION)
+            .setInterpolator(interpolator)
+            .withLayer()
+            .start()
     }
 
     private fun onAnimationUpdateParent(progress: Float) {

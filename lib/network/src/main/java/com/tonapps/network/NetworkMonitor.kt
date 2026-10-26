@@ -5,6 +5,8 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import com.tonapps.bus.core.IssueHelper
+import com.tonapps.log.L
 import kotlinx.coroutines.flow.Flow
 import android.net.Network
 import kotlinx.coroutines.CoroutineScope
@@ -32,9 +34,14 @@ class NetworkMonitor(
         val request = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
-        connectivityManager.registerNetworkCallback(request, this)
-        val isOnline = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-        _isOnlineFlow.value = isOnline == true
+        try {
+            connectivityManager.registerNetworkCallback(request, this)
+            val isOnline = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            _isOnlineFlow.value = isOnline == true
+        } catch (e: SecurityException) {
+            L.w(e, "NetworkMonitor: network callback is unavailable")
+            IssueHelper.recordException(e)
+        }
     }
 
     override fun onAvailable(network: Network) {

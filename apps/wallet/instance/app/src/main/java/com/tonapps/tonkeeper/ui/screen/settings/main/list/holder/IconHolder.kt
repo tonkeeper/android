@@ -9,6 +9,7 @@ import com.tonapps.uikit.color.accentBlueColor
 import com.tonapps.uikit.color.iconSecondaryColor
 import uikit.extensions.drawable
 import uikit.widget.item.ItemIconView
+import uikit.extensions.setMoonOnClickListener
 
 class IconHolder(
     parent: ViewGroup,
@@ -19,7 +20,7 @@ class IconHolder(
 
     override fun onBind(item: Item.Icon) {
         itemIconView.background = item.position.drawable(context)
-        itemIconView.setOnClickListener { onClick.invoke(item) }
+        itemIconView.setMoonOnClickListener { onClick.invoke(item) }
         if (item.secondaryIcon) {
             itemIconView.setIconTintColor(context.iconSecondaryColor)
         } else {

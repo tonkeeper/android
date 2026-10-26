@@ -11,6 +11,7 @@ import com.tonapps.wallet.localization.Plurals
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class CollectionHolder(
     parent: ViewGroup,
@@ -36,7 +37,7 @@ class CollectionHolder(
             actionView.visibility = View.GONE
             actionView.setOnClickListener(null)
             chevronView.visibility = View.VISIBLE
-            itemView.setOnClickListener { onClick(item) }
+            itemView.setMoonOnClickListener { onClick(item) }
         } else {
             chevronView.visibility = View.GONE
             actionView.visibility = View.VISIBLE
@@ -45,7 +46,7 @@ class CollectionHolder(
             } else {
                 UIKitIcon.ic_plus
             })
-            actionView.setOnClickListener { onClick(item) }
+            actionView.setMoonOnClickListener { onClick(item) }
             itemView.setOnClickListener(null)
         }
     }

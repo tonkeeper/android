@@ -10,6 +10,7 @@ sealed class TransportStatusException(message: String) : Exception(message) {
     class LockedDevice : TransportStatusException("Locked device")
     class AppNotInstalled : TransportStatusException("App is not installed on the device")
     class BlindSigningDisabled : TransportStatusException("Blind signing is disabled")
+    class TxParsingFailed : TransportStatusException("Transaction parsing failed")
     class InternalError : TransportStatusException("Internal error, please report")
     class UnknownError(code: Int) : TransportStatusException("Unknown error with status code: $code")
 
@@ -27,6 +28,7 @@ sealed class TransportStatusException(message: String) : Exception(message) {
                 0x6984 -> AppNotInstalled()
                 0x6807 -> AppNotInstalled()
                 0xBD00 -> BlindSigningDisabled()
+                0xB010 -> TxParsingFailed()
                 in 0x6f00..0x6fff -> InternalError()
                 else -> UnknownError(statusCode)
             }

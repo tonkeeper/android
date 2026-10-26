@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tonapps.deposit.components.AssetCell
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.localization.Localization
@@ -40,7 +39,7 @@ fun TokenPickerScreen(
         is TokenPickerState.Loading -> MoonSurface { MoonLoaderCell() }
         is TokenPickerState.Data -> {
             TokenPickerContent(
-                tokens = s.tokens,
+                items = s.tokens,
                 selectedTokenAddress = selectedTokenAddress,
                 onTokenSelected = onTokenSelected,
                 onBack = onBack,
@@ -52,7 +51,7 @@ fun TokenPickerScreen(
 
 @Composable
 private fun TokenPickerContent(
-    tokens: List<AccountTokenEntity>,
+    items: List<TokenPickerItem>,
     selectedTokenAddress: String?,
     onTokenSelected: (AccountTokenEntity) -> Unit,
     onBack: () -> Unit,
@@ -60,14 +59,14 @@ private fun TokenPickerContent(
 ) {
     val searchText = remember { mutableStateOf("") }
 
-    val filteredTokens by remember(tokens) {
+    val filteredTokens by remember(items) {
         derivedStateOf {
             if (searchText.value.isBlank()) {
-                tokens
+                items
             } else {
-                tokens.filter {
-                    it.symbol.contains(searchText.value, ignoreCase = true) ||
-                            it.name.contains(searchText.value, ignoreCase = true)
+                items.filter {
+                    it.token.symbol.contains(searchText.value, ignoreCase = true) ||
+                            it.token.name.contains(searchText.value, ignoreCase = true)
                 }
             }
         }
@@ -95,23 +94,20 @@ private fun TokenPickerContent(
             ) {
                 itemsIndexed(
                     items = filteredTokens,
-                    key = { _, token -> token.address },
-                    contentType = { _, token -> token::class }
-                ) { index, token ->
-                    if (index > 0) MoonItemDivider()
-
-                    val balance = remember(token.token) {
-                        CurrencyFormatter.format(token.symbol.take(6), token.balance.uiBalance, compact = true)
-                            .toString()
+                    key = { _, item -> item.token.address },
+                    contentType = { _, item -> item::class }
+                ) { index, item ->
+                    if (index > 0) {
+                        MoonItemDivider()
                     }
 
                     AssetCell(
                         position = defaultBundleType(filteredTokens.size, index),
-                        entity = token.token,
-                        description = balance,
-                        isSelected = token.address == selectedTokenAddress,
+                        entity = item.token.token,
+                        description = item.balanceFormat,
+                        isSelected = item.token.address == selectedTokenAddress,
                         onClick = {
-                            onTokenSelected(token)
+                            onTokenSelected(item.token)
                             onBack()
                         },
                     )

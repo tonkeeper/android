@@ -11,13 +11,14 @@ import androidx.core.view.isGone
 import androidx.core.view.updateLayoutParams
 import com.google.firebase.Firebase
 import com.google.firebase.perf.performance
+import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
-import com.tonapps.core.helper.WalletRedMetadata
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.currentTimeMillis
 import com.tonapps.extensions.currentTimeSecondsInt
@@ -39,10 +40,13 @@ import uikit.extensions.applyNavBottomPadding
 import uikit.extensions.getDimensionPixelSize
 import uikit.widget.webview.WebViewFixed
 import uikit.widget.webview.bridge.BridgeWebView
+import uikit.extensions.setMoonOnClickListener
 
 class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_swap, wallet), BaseFragment.BottomSheet {
 
     override val fragmentName: String = "SwapScreen"
+
+    override val predictiveBackPreviewEnabled: Boolean = false
 
     private val args: SwapArgs by lazy { SwapArgs(requireArguments()) }
 
@@ -82,13 +86,13 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        analytics?.swapOpen(args.uri, false)
+        analytics?.eventDelegateTaggedWith(args.utm)?.swapOpen(args.uri, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         closeView = view.findViewById(R.id.close)
-        closeView.setOnClickListener { finish() }
+        closeView.setMoonOnClickListener { finish() }
 
         webView = view.findViewById(R.id.web)
         webView.addCallback(webViewCallback)
@@ -130,14 +134,19 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
             builder.appendQueryParameter("tt", it)
         }
         val theme = settingsRepository.theme
-        builder.appendQueryParameter("theme", if (theme.isSystem) "dark" else theme.key)
+        val themeKey = if (theme.isSystem) {
+            "dark"
+        } else {
+            theme.key
+        }
+        builder.appendQueryParameter("theme", themeKey)
         return builder.build()
     }
 
     private suspend fun sing(
         request: SignRequestEntity
     ): String {
-        analytics?.simpleTrackEvent("swap_click")
+        analytics?.simpleTrackEvent("swap_click", HashMap(args.utm.toEventProps()))
         val operationId = generateUuid()
         val startedAtMs = currentTimeMillis()
         AnalyticsHelper.Default.events.redOperations.opAttempt(
@@ -146,12 +155,12 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
             operation = Events.RedOperations.RedOperationsOperation.Send,
             attemptSource = null,
             startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = WalletRedMetadata.walletKit(),
+            otherMetadata = null,
         )
         return try {
-            val boc = SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP)
+            val boc = SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP, utm = args.utm)
             if (boc.isNotBlank()) {
-                analytics?.simpleTrackEvent("swap_success")
+                analytics?.simpleTrackEvent("swap_success", HashMap(args.utm.toEventProps()))
                 val finishedAtMs = currentTimeMillis()
                 AnalyticsHelper.Default.events.redOperations.opTerminal(
                     operationId = operationId,
@@ -160,7 +169,6 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
                     finishedAtMs = currentTimeSecondsInt(),
                     error = null,
-                    otherMetadata = WalletRedMetadata.walletKit(),
                 )
             }
             boc
@@ -173,7 +181,6 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
                 finishedAtMs = currentTimeSecondsInt(),
                 error = e,
-                otherMetadata = WalletRedMetadata.walletKit(),
             )
             ""
         }
@@ -204,12 +211,16 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
             uri: Uri,
             fromTokenRaw: String? = null,
             toTokenRaw: String? = null,
+            initiator: ConfirmInitiator = ConfirmInitiator.User,
+            utm: UtmParameters = UtmParameters.Empty,
         ): BaseFragment {
             if (nativeSwap) {
                 return OmnistonScreen.newInstance(
                     wallet = wallet,
                     fromToken = fromTokenRaw ?: fromToken.code,
                     toToken = toTokenRaw ?: (toToken ?: bestToToken(fromToken.address)).code,
+                    initiator = initiator,
+                    utm = utm,
                 )
             }
             val screen = SwapScreen(wallet)
@@ -217,7 +228,8 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
                 uri = uri,
                 address = wallet.address,
                 fromToken = fromTokenRaw ?: fromToken.address,
-                toToken = toTokenRaw ?: (toToken ?: bestToToken(fromToken.address)).address
+                toToken = toTokenRaw ?: (toToken ?: bestToToken(fromToken.address)).address,
+                utm = utm,
             ))
             return screen
         }

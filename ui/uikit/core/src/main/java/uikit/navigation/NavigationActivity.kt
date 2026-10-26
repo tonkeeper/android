@@ -15,6 +15,7 @@ import androidx.fragment.app.commitNow
 import uikit.R
 import uikit.base.BaseActivity
 import uikit.base.BaseFragment
+import uikit.base.PredictiveBackGesture
 import uikit.extensions.primaryFragment
 import uikit.extensions.roundTop
 import uikit.extensions.scale
@@ -39,6 +40,8 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
 
     private val nextFragmentRequestCode = AtomicInteger()
 
+    private lateinit var backCallback: OnBackPressedCallback
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
@@ -53,10 +56,10 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
 
         toastView = findViewById(R.id.toast)
 
-        val callback = object : OnBackPressedCallback(true) {
+        backCallback = object : OnBackPressedCallback(false) {
 
-            private val target: BaseFragment.PredictiveBackGesture?
-                get() = supportFragmentManager.fragments.lastOrNull() as? BaseFragment.PredictiveBackGesture
+            private val target: PredictiveBackGesture?
+                get() = supportFragmentManager.fragments.lastOrNull() as? PredictiveBackGesture
 
             override fun handleOnBackCancelled() {
                 super.handleOnBackCancelled()
@@ -77,7 +80,38 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
                 onBackPress()
             }
         }
-        onBackPressedDispatcher.addCallback(this, callback)
+        onBackPressedDispatcher.addCallback(this, backCallback)
+
+        supportFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+                updateBackCallbackState()
+            }
+
+            override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
+                updateBackCallbackState()
+            }
+        }, true)
+        updateBackCallbackState()
+    }
+
+    // When nothing on top of the root wants to handle back, the callback is disabled so the
+    // system performs the back gesture itself (e.g. the Android 14+ shrink-to-home animation).
+    fun updateBackCallbackState() {
+        if (isDestroyed || supportFragmentManager.isDestroyed) {
+            return
+        }
+        backCallback.isEnabled = hasConsumableBack()
+    }
+
+    private fun hasConsumableBack(): Boolean {
+        val top = supportFragmentManager.fragments.lastOrNull() ?: return false
+        if (!top.isAdded) {
+            return false
+        }
+        if (top != supportFragmentManager.primaryNavigationFragment) {
+            return true
+        }
+        return (top as? BaseFragment)?.handlesRootBack == true
     }
 
     private fun onBackPress() {
@@ -168,6 +202,9 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         if (fragment is BaseFragment.BottomSheet || fragment is BaseFragment.Modal) {
             transaction.add(hostSheetId, fragment)
         } else {
+            if (fragment !is BaseFragment.SwipeBack) {
+                fragment.startScreenAnimation = true
+            }
             transaction.add(hostFragmentId, fragment)
         }
         if (removeModals) {
@@ -280,8 +317,10 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         message: String,
         loading: Boolean,
         color: Int,
-        duration: Long
+        duration: Long,
+        iconRes: Int,
+        iconTint: Int
     ) {
-        toastView.show(message, loading, color, duration)
+        toastView.show(message, loading, color, duration, iconRes, iconTint)
     }
 }

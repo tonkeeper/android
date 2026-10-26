@@ -160,7 +160,8 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
          @SerialName(value = "market_cap") market_cap("market_cap"),
          @SerialName(value = "volume") volume("volume"),
          @SerialName(value = "price_diff_asc") price_diff_asc("price_diff_asc"),
-         @SerialName(value = "price_diff_desc") price_diff_desc("price_diff_desc");
+         @SerialName(value = "price_diff_desc") price_diff_desc("price_diff_desc"),
+         @SerialName(value = "unknown") unknown("unknown");
 
         /**
          * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -184,7 +185,11 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
          @SerialName(value = "arb") arb("arb"),
          @SerialName(value = "bsc") bsc("bsc"),
          @SerialName(value = "sol") sol("sol"),
-         @SerialName(value = "perps") perps("perps");
+         @SerialName(value = "avax") avax("avax"),
+         @SerialName(value = "polygon") polygon("polygon"),
+         @SerialName(value = "robinhood") robinhood("robinhood"),
+         @SerialName(value = "perps") perps("perps"),
+         @SerialName(value = "unknown") unknown("unknown");
 
         /**
          * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -198,8 +203,8 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun searchAssets(currencies: List<String>, sort: SortSearchAssets, chain: ChainSearchAssets? = null, search: String? = null, limit: Int? = 25, cursor: String? = null, verifiedOnly: Boolean? = false, showPerps: Boolean? = false, F: String? = null): SearchAssets200Response {
-        val localVarResponse = searchAssetsWithHttpInfo(currencies = currencies, sort = sort, chain = chain, search = search, limit = limit, cursor = cursor, verifiedOnly = verifiedOnly, showPerps = showPerps, F = F)
+    fun searchAssets(currencies: List<String>, sort: SortSearchAssets, chain: ChainSearchAssets? = null, search: String? = null, limit: Int? = 25, cursor: String? = null, verifiedOnly: Boolean? = false, showPerps: Boolean? = false, omitSwappable: Boolean? = false, F: String? = null): SearchAssets200Response {
+        val localVarResponse = searchAssetsWithHttpInfo(currencies = currencies, sort = sort, chain = chain, search = search, limit = limit, cursor = cursor, verifiedOnly = verifiedOnly, showPerps = showPerps, omitSwappable = omitSwappable, F = F)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as SearchAssets200Response
@@ -218,15 +223,15 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun searchAssetsWithHttpInfo(currencies: List<String>, sort: SortSearchAssets, chain: ChainSearchAssets?, search: String?, limit: Int?, cursor: String?, verifiedOnly: Boolean?, showPerps: Boolean?, F: String?): ApiResponse<SearchAssets200Response?> {
-        val localVariableConfig = searchAssetsRequestConfig(currencies = currencies, sort = sort, chain = chain, search = search, limit = limit, cursor = cursor, verifiedOnly = verifiedOnly, showPerps = showPerps, F = F)
+    fun searchAssetsWithHttpInfo(currencies: List<String>, sort: SortSearchAssets, chain: ChainSearchAssets?, search: String?, limit: Int?, cursor: String?, verifiedOnly: Boolean?, showPerps: Boolean?, omitSwappable: Boolean?, F: String?): ApiResponse<SearchAssets200Response?> {
+        val localVariableConfig = searchAssetsRequestConfig(currencies = currencies, sort = sort, chain = chain, search = search, limit = limit, cursor = cursor, verifiedOnly = verifiedOnly, showPerps = showPerps, omitSwappable = omitSwappable, F = F)
 
         return request<Unit, SearchAssets200Response>(
             localVariableConfig
         )
     }
 
-    fun searchAssetsRequestConfig(currencies: List<String>, sort: SortSearchAssets, chain: ChainSearchAssets?, search: String?, limit: Int?, cursor: String?, verifiedOnly: Boolean?, showPerps: Boolean?, F: String?): RequestConfig<Unit> {
+    fun searchAssetsRequestConfig(currencies: List<String>, sort: SortSearchAssets, chain: ChainSearchAssets?, search: String?, limit: Int?, cursor: String?, verifiedOnly: Boolean?, showPerps: Boolean?, omitSwappable: Boolean?, F: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -249,6 +254,9 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
                 }
                 if (showPerps != null) {
                     put("show_perps", listOf(showPerps.toString()))
+                }
+                if (omitSwappable != null) {
+                    put("omit_swappable", listOf(omitSwappable.toString()))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()

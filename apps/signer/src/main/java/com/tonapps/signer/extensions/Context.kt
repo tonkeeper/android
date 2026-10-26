@@ -4,15 +4,11 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.PersistableBundle
 import android.provider.Settings
-import androidx.security.crypto.EncryptedSharedPreferences
 import com.tonapps.signer.R
-import com.tonapps.security.KeyHelper
-import uikit.HapticHelper
 import uikit.navigation.Navigation.Companion.navigation
 
 fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
@@ -29,9 +25,7 @@ fun Context.copyToClipboard(text: String, sensitive: Boolean = false) {
     }
     clipboard.setPrimaryClip(clip)
 
-    HapticHelper.selection(this)
-
-    navigation?.toast(getString(R.string.copied))
+    navigation?.confirmedToast(getString(R.string.copied))
 }
 
 fun Context.fromClipboard(): String? {

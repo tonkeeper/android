@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.settings.SettingsRepository
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class W5BannerHolder(parent: ViewGroup): Holder<Item.W5Banner>(parent, R.layout.view_token_w5_banner) {
 
@@ -19,11 +20,11 @@ class W5BannerHolder(parent: ViewGroup): Holder<Item.W5Banner>(parent, R.layout.
     private val hideButton = findViewById<View>(R.id.hide)
 
     override fun onBind(item: Item.W5Banner) {
-        hideButton.setOnClickListener {
+        hideButton.setMoonOnClickListener {
             settingsRepository?.disableUSDTW5(item.wallet.id)
             itemView.visibility = View.GONE
         }
-        storiesButton.setOnClickListener {
+        storiesButton.setMoonOnClickListener {
             Navigation.from(context)?.add(W5StoriesScreen.newInstance(item.addButton))
         }
     }

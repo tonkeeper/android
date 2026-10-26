@@ -19,7 +19,7 @@ maestro_ui_tests/tools/qa_run_mock.sh battery_negative_two_refunds emulator-5554
   -e OUT=build/maestro-qa/$(date +%F)/tk-2894/two_refunds
 
 # record real responses of a host into mocks/_recorded/ to start a new fixture
-mitmdump -q -s maestro_ui_tests/mocks/mock.py --set record=battery.tonkeeper.com
+mitmdump -q -s ../shared/tools/maestro/mock.py --set record=battery.tonkeeper.com
 ```
 
 `mitm.log` in the case folder lists every `MOCK HIT` so the report can prove the

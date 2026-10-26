@@ -12,13 +12,18 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Фильтр по типу актива внутри таба. all — без фильтра (по умолчанию); tokens — только крипто-токены (type=crypto); stocks — токенизированные акции; etfs — токенизированные ETF; commodities — активы с type=commodities (perp-рынки на золото, нефть и т.п.) плюс pin-лист секции commodities (спотовые токены на золото, серебро, нефть). Тип perp-рынков берётся из tokenlist Lighter, так что фильтры работают и на tab=perpetuals. 
  *
- * Values: all,tokens,stocks,etfs,commodities
+ * Values: all,tokens,stocks,etfs,commodities,unknown
  */
-@Serializable
+@Serializable(with = AssetsFilterSerializer::class)
 enum class AssetsFilter(val value: String) {
     @SerialName(value = "all")
     all("all"),
@@ -29,7 +34,9 @@ enum class AssetsFilter(val value: String) {
     @SerialName(value = "etfs")
     etfs("etfs"),
     @SerialName(value = "commodities")
-    commodities("commodities");
+    commodities("commodities"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -55,6 +62,20 @@ enum class AssetsFilter(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AssetsFilterSerializer : KSerializer<AssetsFilter> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AssetsFilter {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AssetsFilter.entries.firstOrNull { it.value == value }
+            ?: AssetsFilter.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AssetsFilter) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

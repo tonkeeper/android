@@ -9,7 +9,6 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.VectorDrawable
 import androidx.annotation.ColorRes
 import androidx.core.graphics.createBitmap
@@ -53,6 +52,3 @@ fun Drawable.asCircle(): Drawable {
         return this
     }
 }
-
-val RippleDrawable.contentDrawable: Drawable?
-    get() = findDrawableByLayerId(0)

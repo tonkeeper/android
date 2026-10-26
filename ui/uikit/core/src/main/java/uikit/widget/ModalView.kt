@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.WindowInsets
+import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.WindowInsetsCompat
@@ -31,6 +32,9 @@ class ModalView @JvmOverloads constructor(
     companion object {
         private const val parentScale = .92f
         private const val parentAlpha = .8f
+        private const val PREDICTIVE_PEEK = 0.2f
+        private const val PREDICTIVE_CANCEL_DURATION = 180L
+        private val predictiveInterpolator = PathInterpolator(.2f, 0f, 0f, 1f)
     }
 
     var doOnHide: (() -> Unit)? = null
@@ -124,6 +128,23 @@ class ModalView @JvmOverloads constructor(
             behavior.isHideable = true
         }
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
+    }
+
+    fun onPredictiveStart() {
+        bottomSheetView.animate().cancel()
+    }
+
+    fun onPredictiveProgress(progress: Float) {
+        bottomSheetView.translationY = progress.coerceIn(0f, 1f) * bottomSheetView.measuredHeight * PREDICTIVE_PEEK
+    }
+
+    fun onPredictiveCancel() {
+        bottomSheetView.animate()
+            .translationY(0f)
+            .setDuration(PREDICTIVE_CANCEL_DURATION)
+            .setInterpolator(predictiveInterpolator)
+            .withLayer()
+            .start()
     }
 
     override fun onDetachedFromWindow() {

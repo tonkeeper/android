@@ -8,7 +8,8 @@ data class DappConnectRequest(
     val info: Info,
     val source: Source,
     val domainStatus: DomainStatus? = null,
-    val chains: List<Chain>, // TODO filter required
+    val chains: List<Chain>,
+    val requiredChains: Set<Chain> = emptySet(),
 ) {
 
     class Info(

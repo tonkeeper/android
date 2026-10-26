@@ -7,29 +7,48 @@ enum class WcMethod(
 ) {
     // TRON
     @SerialName("tron_signMessage")
-    TRON_SIGN_MESSAGE("tron_signMessage"),
+    TronSignMessage("tron_signMessage"),
 
     @SerialName("tron_signTransaction")
-    TRON_SIGN_TRANSACTION("tron_signTransaction"),
+    TronSignTransaction("tron_signTransaction"),
 
     // ETH
     @SerialName("personal_sign")
-    ETH_PERSONAL_SIGN("personal_sign"),
+    EthPersonalSign("personal_sign"),
 
     @SerialName("eth_signTypedData_v4")
-    ETH_SIGN_TYPE_DATA_V4("eth_signTypedData_v4"),
+    EthSignTypedDataV4("eth_signTypedData_v4"),
 
     @SerialName("eth_signTransaction")
-    ETH_SIGN_TRANSACTION( "eth_signTransaction"),
+    EthSignTransaction("eth_signTransaction"),
 
     @SerialName("eth_sendTransaction")
-    ETH_SEND_TRANSACTION( "eth_sendTransaction"),
+    EthSendTransaction("eth_sendTransaction"),
 
     @SerialName("wallet_getCapabilities")
-    WALLET_GET_CAPABILITIES("wallet_getCapabilities"),
+    WalletGetCapabilities("wallet_getCapabilities"),
 
     @SerialName("wallet_watchAsset")
-    WALLET_WATCH_ASSET("wallet_watchAsset"),
+    WalletWatchAsset("wallet_watchAsset"),
+
+    // SOLANA
+    @SerialName("solana_getAccounts")
+    SolanaGetAccounts("solana_getAccounts"),
+
+    @SerialName("solana_requestAccounts")
+    SolanaRequestAccounts("solana_requestAccounts"),
+
+    @SerialName("solana_signMessage")
+    SolanaSignMessage("solana_signMessage"),
+
+    @SerialName("solana_signTransaction")
+    SolanaSignTransaction("solana_signTransaction"),
+
+    @SerialName("solana_signAllTransactions")
+    SolanaSignAllTransactions("solana_signAllTransactions"),
+
+    @SerialName("solana_signAndSendTransaction")
+    SolanaSignAndSendTransaction("solana_signAndSendTransaction"),
     ;
 
     companion object {

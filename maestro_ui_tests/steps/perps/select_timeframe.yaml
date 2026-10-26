@@ -1,0 +1,56 @@
+# Taps one timeframe on the perps asset page and checks the chart stays rendered.
+# Requires: TIMEFRAME (1M | 5M | 15M | 1H | 4H | 12H | 1D).
+# Labels are anchored: a bare "1M" also matches inside "15M" and "12H".
+appId: com.ton_keeper.debug
+---
+- assertTrue:
+    condition: ${TIMEFRAME != null && TIMEFRAME != ''}
+    label: "TIMEFRAME is required (-e TIMEFRAME=1H)"
+
+# The row scrolls horizontally and the last label (1D) sits past the right edge
+# on a 390 dp screen, behind the candle/line toggle. scrollUntilVisible with
+# direction RIGHT does not reach it — it pans the chart instead — so the row is
+# swiped directly. The swipe stays inside the row: y is the timeframe strip,
+# well below the WebView chart.
+- runFlow:
+    when:
+      notVisible: "^${TIMEFRAME}$"
+    commands:
+      - swipe:
+          start: "45%,57%"
+          end: "12%,57%"
+      - waitForAnimationToEnd:
+          timeout: 1500
+
+# The swipe above only ever uncovers the RIGHT end of the row. If the label we
+# want sits to the LEFT — the row is already scrolled, e.g. 1H after a jump to
+# 1D — repeating it pushes the row further away and the step fails on a screen
+# where the label exists. So go back the other way: once to undo the swipe
+# above, and once more to reach the left end.
+- runFlow:
+    when:
+      notVisible: "^${TIMEFRAME}$"
+    commands:
+      - swipe:
+          start: "12%,57%"
+          end: "45%,57%"
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - runFlow:
+          when:
+            notVisible: "^${TIMEFRAME}$"
+          commands:
+            - swipe:
+                start: "12%,57%"
+                end: "45%,57%"
+            - waitForAnimationToEnd:
+                timeout: 1500
+
+- tapOn:
+    text: "^${TIMEFRAME}$"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- assertVisible: "^${TIMEFRAME}$"
+- assertNotVisible: "Couldn’t load chart"
+- assertVisible: "24h Volume"

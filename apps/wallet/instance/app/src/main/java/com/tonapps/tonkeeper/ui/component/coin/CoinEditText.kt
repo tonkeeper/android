@@ -44,6 +44,7 @@ class CoinEditText @JvmOverloads constructor(
 
     private val suffixDrawable = SuffixDrawable(context)
     private val _sizeStateFlow = MutableStateFlow(SizeState())
+
     @OptIn(FlowPreview::class)
     private val sizeStateFlow = _sizeStateFlow.asStateFlow()
 
@@ -94,7 +95,11 @@ class CoinEditText @JvmOverloads constructor(
     private val availableWidth: Float
         get() {
             val containerWidth = maxWidthConstraint - paddingLeft - paddingRight
-            val suffixWidth = if (suffix.isNullOrEmpty()) 0f else (suffixDrawable.intrinsicWidth + compoundDrawablePadding).toFloat()
+            val suffixWidth = if (suffix.isNullOrEmpty()) {
+                0f
+            } else {
+                (suffixDrawable.intrinsicWidth + compoundDrawablePadding).toFloat()
+            }
             return (containerWidth - suffixWidth).coerceAtLeast(0f)
         }
 
@@ -200,7 +205,11 @@ class CoinEditText @JvmOverloads constructor(
         notifyByUser: Boolean = false,
         customValueScale: Int = valueScale
     ) {
-        val string = if (customValueScale == 0) value.asString() else value.setScale(customValueScale, RoundingMode.HALF_EVEN).asString()
+        val string = if (customValueScale == 0) {
+            value.asString()
+        } else {
+            value.setScale(customValueScale, RoundingMode.HALF_EVEN).asString()
+        }
         if (string.isNullOrBlank() && value != BigDecimal.ZERO) {
             val newCustomValueScale = CurrencyFormatter.getScale(value)
             if (newCustomValueScale != customValueScale) {
@@ -250,11 +259,9 @@ class CoinEditText @JvmOverloads constructor(
         val specMode = MeasureSpec.getMode(widthMeasureSpec)
         val specSize = MeasureSpec.getSize(widthMeasureSpec)
 
-        if (specMode == MeasureSpec.EXACTLY || specMode == MeasureSpec.AT_MOST) {
-            if (specSize > 0) {
-                maxWidthConstraint = specSize
-                checkTextSize()
-            }
+        if ((specMode == MeasureSpec.EXACTLY || specMode == MeasureSpec.AT_MOST) && specSize > 0) {
+            maxWidthConstraint = specSize
+            checkTextSize()
         }
 
         if (initMeasuredHeight > 0) {
@@ -308,7 +315,7 @@ class CoinEditText @JvmOverloads constructor(
             val string = stripTrailingZeros()
                 .toPlainString()
                 .removeSuffix(".0")
-                .replace(".", CurrencyFormatter.monetaryDecimalSeparator)
+                .replace(".", CurrencyFormatter.decimalSeparator)
                 .trim()
 
             if (string.isEmpty() || string == "0") {
@@ -320,7 +327,11 @@ class CoinEditText @JvmOverloads constructor(
         fun BigDecimal.asString2(
             customValueScale: Int = 0,
         ): String {
-            val string = if (customValueScale == 0) asString() else setScale(customValueScale, RoundingMode.HALF_EVEN).asString()
+            val string = if (customValueScale == 0) {
+                asString()
+            } else {
+                setScale(customValueScale, RoundingMode.HALF_EVEN).asString()
+            }
             if (string.isNullOrBlank() && this != BigDecimal.ZERO) {
                 val newCustomValueScale = CurrencyFormatter.getScale(this)
                 if (newCustomValueScale != customValueScale) {

@@ -8,6 +8,7 @@ import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.wallet.localization.Language
 import com.tonapps.wallet.localization.Localization
 import uikit.widget.item.ItemIconView
+import uikit.extensions.setMoonOnClickListener
 
 class Holder(
     parent: ViewGroup,
@@ -24,7 +25,7 @@ class Holder(
     }
 
     override fun onBind(item: Item) {
-        itemIconView.setOnClickListener { onClick(item) }
+        itemIconView.setMoonOnClickListener { onClick(item) }
         itemIconView.position = item.position
         if (item.code == Language.DEFAULT) {
             itemIconView.text = getString(Localization.system)

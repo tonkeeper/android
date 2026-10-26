@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.holder
 
+import android.view.View
 import android.view.ViewGroup
 import androidx.viewpager2.widget.ViewPager2
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.banners.BannerAppItem
@@ -10,18 +11,23 @@ import uikit.extensions.dp
 
 class ExploreBannersExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.Banners>(parent, R.layout.view_browser_banners) {
 
-    private companion object {
-        private var currentPosition = 0
-        private var interval = 3000L
-    }
-
     private val offsetHorizontal = 20.dp
     private val nextRunnable = Runnable { nextCurrentItem() }
 
     private val adapter = BannersAdapter()
     private val pagerView = findViewById<ViewPager2>(R.id.pager)
 
+    private var currentPosition = 0
+    private var interval = 3000L
+
+    private val isAutoScrollAllowed: Boolean
+        get() = pagerView.isShown
+            && pagerView.windowVisibility == View.VISIBLE
+            && pagerView.scrollState == ViewPager2.SCROLL_STATE_IDLE
+            && !pagerView.isLayoutRequested
+
     init {
+        pagerView.layoutDirection = parent.layoutDirection
         pagerView.offscreenPageLimit = 3
         pagerView.adapter = adapter
         pagerView.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -54,8 +60,10 @@ class ExploreBannersExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.
     }
 
     private fun nextCurrentItem() {
-        currentPosition += 1
-        setCurrentItem(currentPosition, true)
+        if (isAutoScrollAllowed) {
+            currentPosition += 1
+            setCurrentItem(currentPosition, true)
+        }
         nextCurrentItemDelayed()
     }
 

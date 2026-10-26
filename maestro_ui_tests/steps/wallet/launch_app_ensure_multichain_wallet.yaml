@@ -1,11 +1,7 @@
-# Cold start to a funded multichain wallet home.
-# Forces every gate: Firebase android_is_multichain_enabled and
-# android_is_import_multichain_wallet (featureFlags) AND keys/all
-# flags.multichain_enabled (bootFlags). The import key matters since TK-3647:
-# the debug build no longer forces it, and the fetched remote value is false,
-# so without it import_wallet would create a legacy TON wallet (TK-3691).
+# Cold start to a funded multichain wallet home. Multichain has no feature
+# flags anymore, so no launch extras are needed.
 #
-# Per-case recovery for shard subflows: stopApp + extras + pin. Never
+# Per-case recovery for shard subflows: stopApp + pin. Never
 # clearState — a mid-shard relaunch must keep the already-imported wallet.
 # Import runs only if the app is empty (import_wallet, no pin).
 #
@@ -22,13 +18,30 @@ appId: com.ton_keeper.debug
 - stopApp
 # Local Maestro can fail launchApp (multiple LAUNCHER aliases). Cloud still
 # starts the activity. optional + Home / launcher icon recovers locally.
-- launchApp:
-    optional: true
-    permissions:
-      notifications: allow
-    arguments:
-      featureFlags: '{"android_is_multichain_enabled": true, "android_is_import_multichain_wallet": true}'
-      bootFlags: '{"multichain_enabled": true}'
+#
+# Optional FEATURE_FLAGS: a JSON object handed to FeatureManager's static
+# overrides, e.g. '{"android_is_perps_enabled": true}'. Callers that do not set
+# it get exactly the launch this step has always done. The branch exists only
+# because launchApp cannot take a conditional `arguments` block; it replaces
+# launch_app_ensure_perps.yaml, which was a 131-line copy of this file.
+- runFlow:
+    when:
+      true: ${FEATURE_FLAGS == null || FEATURE_FLAGS == ''}
+    commands:
+      - launchApp:
+          optional: true
+          permissions:
+            notifications: allow
+- runFlow:
+    when:
+      true: ${FEATURE_FLAGS != null && FEATURE_FLAGS != ''}
+    commands:
+      - launchApp:
+          optional: true
+          permissions:
+            notifications: allow
+          arguments:
+            featureFlags: ${FEATURE_FLAGS}
 
 - waitForAnimationToEnd:
     timeout: 3000
@@ -63,7 +76,37 @@ appId: com.ton_keeper.debug
     when:
       visible:
         id: pin_title
-    file: ../password/enter_password.yaml
+    commands:
+      # The keypad animates in after pin_title appears; typing into the
+      # half-built overlay drops digits and leaves "Enter passcode" with one dot
+      # filled. This guard came from launch_app_ensure_perps.yaml, where a pack
+      # run launches the app 15 times in a row and hit the race regularly — the
+      # gap was always here too, it just surfaced less often.
+      - extendedWaitUntil:
+          visible:
+            id: num_pad
+          timeout: 10000
+      - waitForAnimationToEnd:
+          timeout: 4000
+      - runFlow: ../password/enter_password.yaml
+      # The keypad can be on screen but not yet interactive: every digit misses
+      # and the overlay stays with no dots filled. One retry is enough.
+      # Retry keys on num_pad, not pin_title: the title lingers through the
+      # dismiss animation, and enter_password hard-fails ("Parent element not
+      # found: num_pad") if the keypad has already gone.
+      - runFlow:
+          when:
+            visible:
+              id: num_pad
+          commands:
+            - waitForAnimationToEnd:
+                timeout: 3000
+            - runFlow:
+                when:
+                  visible:
+                    id: num_pad
+                commands:
+                  - runFlow: ../password/enter_password.yaml
 
 - runFlow:
     when:
@@ -96,7 +139,10 @@ appId: com.ton_keeper.debug
 - extendedWaitUntil:
     visible: Send
     timeout: 45000
+# 10 s, not the 5 s this used to be: the pin overlay can outlive the Compose
+# home by several seconds on a loaded host, and a pack run launches the app 15
+# times in a row. A longer wait only costs time when something is already wrong.
 - extendedWaitUntil:
     notVisible:
       id: pin_title
-    timeout: 5000
+    timeout: 10000

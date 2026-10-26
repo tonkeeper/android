@@ -2,7 +2,6 @@ package com.tonapps.tonkeeper.manager.push
 
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
-import com.tonapps.extensions.locale
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
@@ -10,6 +9,8 @@ import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.dapps.DAppsRepository
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.wallet.data.multichain.device.SecureDeviceRepository
+import com.tonapps.wallet.data.settings.MultichainPushSyncState
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.walletapi.models.SubscribeDevicePushRequest
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 class PushManager(
     private val context: Context,
@@ -30,6 +32,7 @@ class PushManager(
     private val accountRepository: AccountRepository,
     private val unifiedAccountRepository: UnifiedAccountRepository,
     private val dAppsRepository: DAppsRepository,
+    private val secureDeviceRepository: SecureDeviceRepository,
 ) {
 
     enum class State(val code: Int) {
@@ -45,6 +48,8 @@ class PushManager(
     private val notificationManager = NotificationManagerCompat.from(context)
 
     private val multichainPushMutex = Mutex()
+
+    private val reconcileMutex = Mutex()
 
     fun clearNotifications() {
         notificationManager.cancelAll()
@@ -65,6 +70,16 @@ class PushManager(
 
                 legacyTask.await()
                 multichainTask.await()
+            }
+        }
+    }
+
+    suspend fun reconcile() = withContext(Dispatchers.IO) {
+        reconcileMutex.withLock {
+            supervisorScope {
+                val legacyTask = async { runCatching { reconcileLegacyPush() }.getOrDefault(false) }
+                val multichainTask = async { runCatching { reconcileMultichainPush() }.getOrDefault(false) }
+                legacyTask.await() && multichainTask.await()
             }
         }
     }
@@ -124,8 +139,56 @@ class PushManager(
         }
     }
 
-    private suspend fun syncMultichainPush(): Boolean = multichainPushMutex.withLock {
-        sendMultichainPush(enabledMultichainWalletIds())
+    suspend fun syncMultichainPush(): Boolean = withContext(Dispatchers.IO) {
+        multichainPushMutex.withLock {
+            val walletIds = enabledMultichainWalletIds()
+            if (walletIds.isEmpty() && settingsRepository.multichainPushSyncState == null) {
+                return@withLock true
+            }
+            sendMultichainPush(walletIds)
+        }
+    }
+
+    private suspend fun reconcileMultichainPush(): Boolean = multichainPushMutex.withLock {
+        val walletIds = enabledMultichainWalletIds().toSet()
+        val recorded = settingsRepository.multichainPushSyncState
+        if (walletIds.isEmpty()) {
+            return@withLock recorded == null || sendMultichainPush(emptyList())
+        }
+        val token = getFirebaseToken() ?: return@withLock false
+        val desired = MultichainPushSyncState(
+            token = token,
+            deviceId = secureDeviceRepository.getDeviceId(),
+            locale = settingsRepository.getPushLocale().toPushCode(),
+            walletIds = walletIds,
+        )
+        if (desired == recorded) {
+            return@withLock true
+        }
+        sendMultichainPush(walletIds.toList())
+    }
+
+    private suspend fun reconcileLegacyPush(): Boolean {
+        val locale = settingsRepository.getPushLocale()
+        if (settingsRepository.legacyPushLocale == locale.toString()) {
+            return true
+        }
+        val wallets = unifiedAccountRepository.getTonWallets()
+            .filter { it.type != WalletType.Multichain && !it.testnet && isPushEnabled(it) }
+        if (wallets.isEmpty()) {
+            return true
+        }
+        val firebaseToken = getFirebaseToken() ?: return false
+        val successful = api.pushSubscribe(
+            locale = locale,
+            firebaseToken = firebaseToken,
+            deviceId = settingsRepository.installId,
+            accounts = wallets.map { it.accountId },
+        )
+        if (successful) {
+            settingsRepository.legacyPushLocale = locale.toString()
+        }
+        return successful
     }
 
     private suspend fun enabledMultichainWalletIds(): List<String> {
@@ -138,19 +201,31 @@ class PushManager(
         return try {
             if (walletIds.isEmpty()) {
                 api.multichain.auth.unsubscribeDevicePush()
+                settingsRepository.multichainPushSyncState = null
             } else {
                 val firebaseToken = getFirebaseToken()
                     ?: throw IllegalStateException("Firebase token not found")
+                val deviceId = secureDeviceRepository.getDeviceId()
+                val locale = settingsRepository.getPushLocale().toPushCode()
                 api.multichain.auth.subscribeDevicePush(
                     SubscribeDevicePushRequest(
                         pushToken = firebaseToken,
-                        locale = context.locale.toLanguageTag(),
+                        locale = locale,
                         walletIds = walletIds,
                     )
+                )
+                settingsRepository.multichainPushSyncState = MultichainPushSyncState(
+                    token = firebaseToken,
+                    deviceId = deviceId,
+                    locale = locale,
+                    walletIds = walletIds.toSet(),
                 )
             }
             true
         } catch (e: Throwable) {
+            if (walletIds.isNotEmpty()) {
+                settingsRepository.multichainPushSyncState = null
+            }
             false
         }
     }
@@ -167,8 +242,9 @@ class PushManager(
 
             val firebaseToken = getFirebaseToken() ?: throw IllegalStateException("Firebase token not found")
             val accounts = wallets.map { it.accountId }
+            val locale = settingsRepository.getPushLocale()
             val successful = api.pushSubscribe(
-                locale = context.locale,
+                locale = locale,
                 firebaseToken = firebaseToken,
                 deviceId = settingsRepository.installId,
                 accounts = accounts,
@@ -177,6 +253,7 @@ class PushManager(
             if (!successful) {
                 throw IllegalStateException("Failed to subscribe")
             }
+            settingsRepository.legacyPushLocale = locale.toString()
 
             for (wallet in wallets) {
                 val apps = dAppsRepository.getConnections(wallet.accountId, wallet.network)
@@ -319,3 +396,5 @@ class PushManager(
     }
 
 }
+
+private fun Locale.toPushCode(): String = toLanguageTag().substringBefore('-')

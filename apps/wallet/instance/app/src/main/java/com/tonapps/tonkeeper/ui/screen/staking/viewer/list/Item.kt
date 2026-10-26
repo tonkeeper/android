@@ -13,14 +13,15 @@ sealed class Item(type: Int): BaseListItem(type) {
 
     companion object {
         const val TYPE_BALANCE = 0
-        const val TYPE_ACTIONS = 1
         const val TYPE_DETAILS = 3
         const val TYPE_LINKS = 4
         const val TYPE_TOKEN = 5
         const val TYPE_SPACE = 6
         const val TYPE_DESCRIPTION = 7
         const val TYPE_ETHENA_DETAILS = 8
-        const val TYPE_PENDING_UNSTAKE = 9
+        const val TYPE_STAKE_STATUS = 9
+        const val TYPE_REWARDS = 10
+        const val TYPE_TITLE = 11
     }
 
     data class Balance(
@@ -51,23 +52,6 @@ sealed class Item(type: Int): BaseListItem(type) {
                         EthenaEntity.Method.Type.AFFLUENT -> R.drawable.affluent
                         null -> null
                     }
-                }
-            }
-    }
-
-    data class Actions(
-        val wallet: WalletEntity,
-        val stakeDisabled: Boolean = false,
-        val unstakeDisabled: Boolean = false,
-        val poolAddress: String? = null,
-        val ethenaMethod: EthenaEntity.Method? = null,
-    ): Item(TYPE_ACTIONS) {
-        val iconRes: Int?
-            get() {
-                return when (ethenaMethod?.type) {
-                    EthenaEntity.Method.Type.STONFI -> R.drawable.stonfi
-                    EthenaEntity.Method.Type.AFFLUENT -> R.drawable.affluent
-                    null -> null
                 }
             }
     }
@@ -120,7 +104,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         val faqUrl: String,
     ): Item(TYPE_ETHENA_DETAILS)
 
-    data class PendingUnstake(
+    data class StakeStatus(
         val balance: Coins,
         val balanceFormat: CharSequence,
         val fiat: Coins,
@@ -128,6 +112,24 @@ sealed class Item(type: Int): BaseListItem(type) {
         val hiddenBalance: Boolean,
         val titleRes: Int,
         val subtitleRes: Int,
-    ): Item(TYPE_PENDING_UNSTAKE)
+        val collectTarget: CollectTarget? = null,
+    ): Item(TYPE_STAKE_STATUS)
+
+    data class Rewards(
+        val monthlyFormat: CharSequence,
+        val monthlyFiatFormat: CharSequence,
+        val yearlyFormat: CharSequence,
+        val yearlyFiatFormat: CharSequence,
+        val hiddenBalance: Boolean,
+    ): Item(TYPE_REWARDS)
+
+    data class Title(
+        val titleRes: Int,
+    ): Item(TYPE_TITLE)
+
+    data class CollectTarget(
+        val wallet: WalletEntity,
+        val poolAddress: String,
+    )
 
 }

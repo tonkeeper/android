@@ -2,6 +2,7 @@ package com.tonapps.deposit.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -46,6 +47,8 @@ import com.tonapps.wallet.data.multichain.account.AccountEntity
 import com.tonapps.wallet.data.multichain.account.toChainAssetEntity
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonItemImage
+import ui.components.moon.MoonLabel
+import ui.components.moon.MoonLabelColors
 import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonTextContentCell
 import ui.components.moon.container.BadgeDirection
@@ -53,7 +56,7 @@ import ui.components.moon.container.MoonCutBadgedBox
 import ui.components.moon.container.MoonSurface
 import ui.theme.Dimens
 import ui.theme.UIKit
-import ui.utils.uppercased
+import ui.theme.pressScale
 
 @Composable
 fun QrDialog(
@@ -175,16 +178,6 @@ fun QrContent(
     onShareClick: () -> Unit,
     onCopyClick: () -> Unit,
 ) {
-    val accentOrangeColor = UIKit.colorScheme.accent.orange
-    val backgroundContentTintColor = UIKit.colorScheme.background.contentTint
-
-    val walletSpecificColor = remember(walletType, accentOrangeColor, backgroundContentTintColor) {
-        when (walletType) {
-            WalletType.Watch -> accentOrangeColor
-            else -> backgroundContentTintColor
-        }
-    }
-
     Column(
         modifier = Modifier
             .widthIn(max = 380.dp)
@@ -221,23 +214,10 @@ fun QrContent(
                 }
         )
 
-        if (walletType == WalletType.Watch) {
-            Spacer(modifier = Modifier.height(Dimens.offsetMedium))
-
-            Text(
-                text = stringResource(id = Localization.watch_only).uppercased(),
-                style = UIKit.typography.body4CAPS,
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .height(20.dp)
-                    .background(
-                        color = walletSpecificColor,
-                        shape = RoundedCornerShape(Dimens.cornerExtraSmall)
-                    )
-                    .padding(Dimens.offsetExtraSmall)
-            )
-        }
+        WalletTypeLabel(
+            walletType = walletType,
+            modifier = Modifier.padding(top = Dimens.offsetMedium),
+        )
     }
 
     Spacer(modifier = Modifier.height(Dimens.offsetMedium))
@@ -249,16 +229,47 @@ fun QrContent(
 }
 
 @Composable
+private fun WalletTypeLabel(
+    walletType: WalletType,
+    modifier: Modifier = Modifier,
+) {
+    val orangeTag = MoonLabelColors(
+        textColor = Color.Black,
+        backgroundColor = UIKit.colorScheme.accent.orange,
+    )
+    val purpleTag = MoonLabelColors(textColor = UIKit.colorScheme.accent.purple)
+
+    val (textResId, colors) = when (walletType) {
+        WalletType.Watch -> Localization.watch_only to orangeTag
+        WalletType.Testnet -> Localization.testnet to orangeTag
+        WalletType.Signer, WalletType.SignerQR -> Localization.signer to purpleTag
+        WalletType.Ledger -> Localization.ledger to purpleTag
+        WalletType.Keystone -> Localization.keystone to purpleTag
+        WalletType.Default, WalletType.Lockup, WalletType.Multichain -> return
+    }
+
+    MoonLabel(
+        text = stringResource(id = textResId),
+        modifier = modifier,
+        colors = colors,
+    )
+}
+
+@Composable
 private fun QrActions(
     onShareClick: () -> Unit,
     onCopyClick: () -> Unit
 ) {
+    val copyInteractionSource = remember { MutableInteractionSource() }
+    val shareInteractionSource = remember { MutableInteractionSource() }
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Button(
-            onClick = { onCopyClick() },
-            modifier = Modifier.height(48.dp),
+            onClick = onCopyClick,
+            modifier = Modifier
+                .height(48.dp)
+                .pressScale(copyInteractionSource, hapticOnClick = false),
             shape = RoundedCornerShape(24.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = UIKit.colorScheme.buttonSecondary.primaryBackground,
@@ -269,7 +280,8 @@ private fun QrActions(
                 )
             ),
             elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
-            contentPadding = PaddingValues(horizontal = 20.dp)
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            interactionSource = copyInteractionSource,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -288,10 +300,12 @@ private fun QrActions(
         Spacer(modifier = Modifier.width(12.dp))
 
         IconButton(
-            onClick = { onShareClick() },
+            onClick = onShareClick,
             modifier = Modifier
                 .size(48.dp)
                 .background(UIKit.colorScheme.buttonSecondary.primaryBackground, CircleShape)
+                .pressScale(shareInteractionSource),
+            interactionSource = shareInteractionSource,
         ) {
             Icon(
                 painter = painterResource(id = UIKitIcon.ic_share_box_16),

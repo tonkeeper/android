@@ -27,6 +27,7 @@ import uikit.extensions.setPaddingTop
 import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
 import kotlin.math.abs
+import uikit.extensions.setMoonOnClickListener
 
 class WalletHeaderView @JvmOverloads constructor(
     context: Context,
@@ -91,25 +92,26 @@ class WalletHeaderView @JvmOverloads constructor(
     var onScanClick: (() -> Unit)? = null
         set(value) {
             field = value
-            scanView.setOnClickListener { value?.invoke() }
+            scanView.setMoonOnClickListener { value?.invoke() }
         }
 
     var onHistoryClick: (() -> Unit)? = null
         set(value) {
             field = value
-            historyView.setOnClickListener { value?.invoke() }
+            historyView.setMoonOnClickListener { value?.invoke() }
         }
 
     var onSettingsClick: (() -> Unit)? = null
         set(value) {
             field = value
-            settingsView.setOnClickListener { value?.invoke() }
+            settingsView.setMoonOnClickListener { value?.invoke() }
         }
 
     var onWalletClick: (() -> Unit)? = null
         set(value) {
             field = value
-            walletView.setOnClickListener { value?.invoke() }
+            // scale = false: walletView has its own swipe GestureDetector (touch listener in init).
+            walletView.setMoonOnClickListener(scale = false) { value?.invoke() }
         }
 
     init {

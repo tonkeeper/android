@@ -2,9 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.notifications
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.manager.push.PushManager
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.notifications.list.Item
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
@@ -15,17 +14,16 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 class NotificationsManageViewModel(
     app: Application,
     private val wallet: WalletEntity,
-    private val tonConnectBridge: ITonConnectBridge,
+    private val tonConnectManager: TonConnectManager,
     private val settingsRepository: SettingsRepository,
     private val pushManager: PushManager,
 ): BaseWalletVM(app) {
 
-    val uiItemsFlow = tonConnectBridge.walletAppsFlow(wallet).map { apps ->
+    val uiItemsFlow = tonConnectManager.walletAppsFlow(wallet).map { apps ->
         val uiItems = mutableListOf<Item>()
         uiItems.add(
             Item.Wallet(
@@ -38,7 +36,7 @@ class NotificationsManageViewModel(
             uiItems.add(Item.Space)
             for ((index, entity) in apps.withIndex()) {
                 val position = ListCell.getPosition(apps.size, index)
-                val pushEnabled = tonConnectBridge.isPushEnabled(wallet, entity.url)
+                val pushEnabled = tonConnectManager.isPushEnabled(wallet, entity.url)
                 uiItems.add(
                     Item.App(
                     app = entity,

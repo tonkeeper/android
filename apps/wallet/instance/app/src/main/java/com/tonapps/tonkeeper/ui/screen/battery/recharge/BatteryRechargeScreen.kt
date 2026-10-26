@@ -9,6 +9,7 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.getParcelableCompat
@@ -30,25 +31,26 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
-import com.tonapps.wallet.features.events.screens.EventsFragment
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
-import uikit.extensions.circle
 import uikit.extensions.collectFlow
 import uikit.extensions.setPaddingBottom
 import uikit.widget.AsyncImageView
 import uikit.widget.InputView
 import java.util.UUID
+import uikit.extensions.setMoonOnClickListener
 
 class BatteryRechargeScreen(wallet: WalletEntity) :
     BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)),
@@ -119,7 +121,7 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
         tokenIconView.setCircular()
         tokenTitleView = rightContentView.findViewById(R.id.token_title)
         rightContentView.findViewById<LinearLayoutCompat>(R.id.token)
-            .setOnClickListener { openTokenSelector() }
+            .setMoonOnClickListener { openTokenSelector() }
 
         headerView.hideCloseIcon()
         headerView.setRightContent(rightContentView)
@@ -199,9 +201,13 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
 
     private fun sign(request: SignRequestEntity, forceRelayer: Boolean) {
         viewModel.sign(request, forceRelayer).catch {
+            if (it is CancellationException) {
+                throw it
+            }
             showError(it.bestMessage)
         }.onEach {
-            postDelayed(1000) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(1000)
                 onSuccess()
             }
         }.launchIn(lifecycleScope)
@@ -227,10 +233,11 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
             wallet: WalletEntity,
             from: BatteryNativeFrom,
             token: AccountTokenEntity? = null,
-            isGift: Boolean = false
+            isGift: Boolean = false,
+            utm: UtmParameters = UtmParameters.Empty,
         ): BatteryRechargeScreen {
             val fragment = BatteryRechargeScreen(wallet)
-            fragment.setArgs(RechargeArgs(token, isGift, from))
+            fragment.setArgs(RechargeArgs(token, isGift, from, utm))
             return fragment
         }
     }

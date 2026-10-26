@@ -10,6 +10,7 @@ import com.tonapps.uikit.color.backgroundContentTintColor
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class ExploreAppExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.App>(parent, R.layout.view_browser_app) {
 
@@ -24,8 +25,8 @@ class ExploreAppExploreHolder(parent: ViewGroup): ExploreHolder<ExploreItem.App>
     }
 
     override fun onBind(item: ExploreItem.App) {
-        itemView.setOnClickListener {
-            item.app.openDApp(context, item.wallet, "browser", item.country, item.multichain)
+        itemView.setMoonOnClickListener {
+            item.app.openDApp(context, item.wallet, "browser", item.multichain)
         }
         iconView.setImageURIWithResize(item.icon, ResizeOptions.forSquareSize(172))
         networkIconView.bindBrowserNetworkIcon(item.app.chains)

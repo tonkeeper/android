@@ -36,6 +36,8 @@ data class JettonOperation(
     val source: AccountAddress? = null,
     @SerialName(value = "destination")
     val destination: AccountAddress? = null,
+    @SerialName(value = "owner")
+    val owner: AccountAddress? = null,
 
     @Contextual @SerialName(value = "payload")
     val payload: kotlin.Any? = null

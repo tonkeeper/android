@@ -25,7 +25,9 @@ data class JettonBurnAction(
     @SerialName(value = "amount")
     val amount: String,
     @SerialName(value = "jetton")
-    val jetton: JettonPreview
+    val jetton: JettonPreview,
+    @SerialName(value = "owner")
+    val owner: AccountAddress? = null
 ) {
 }
 

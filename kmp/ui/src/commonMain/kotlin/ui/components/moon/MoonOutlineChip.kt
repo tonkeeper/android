@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,7 +29,7 @@ fun MoonOutlineChip(
             .clip(UIKit.shapes.large)
             .clickable(onClick = onClick)
             .border(
-                width = 2.dp,
+                width = 1.5.dp,
                 color = UIKit.colorScheme.buttonTertiary.primaryBackground,
                 shape = UIKit.shapes.large
             )
@@ -40,7 +39,7 @@ fun MoonOutlineChip(
                     false -> UIKit.colorScheme.background.page
                 },
             )
-            .padding(vertical = 8.dp, horizontal = 12.dp)
+            .padding(vertical = 6.dp, horizontal = 12.dp)
             .then(modifier),
         contentAlignment = Alignment.Center,
     ) {

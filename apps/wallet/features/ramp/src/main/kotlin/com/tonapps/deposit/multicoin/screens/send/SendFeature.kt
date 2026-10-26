@@ -2,30 +2,40 @@ package com.tonapps.deposit.multicoin.screens.send
 
 import com.tonapps.blockchain.model.CommonTransactionData
 import com.tonapps.blockchain.model.ConfirmInitiator
+import com.tonapps.blockchain.model.ConfirmOperations
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.bus.core.contract.TonAddressTags
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.blockchain.utils.isWeb3DomainName
+import com.tonapps.chainkit.chain.ton.utils.TonMessageEncryptor
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.chainkit.core.chain.model.num.BaseUnit
 import com.tonapps.core.components.AmountInputConverter
+import com.tonapps.core.deeplink.DeepLinkBuilder
+import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.deposit.multicoin.analytics.WithdrawAnalytics
+import com.tonapps.extensions.toUriOrNull
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.mvi.MviRelay
 import com.tonapps.mvi.flow.mapLatestCatching
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
+import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountStatus
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,13 +44,15 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val FORMAT_DECIMALS = 3
 
 class SendData(
     val initAssetId: String,
     val presetAddress: String? = null,
-    val analyticsFrom: WithdrawFlowFrom = WithdrawFlowFrom.WalletScreen,
+    val analyticsFrom: WithdrawFlowFrom,
+    val utm: UtmParameters = UtmParameters.Empty,
     val presetAmount: String? = null,
     val presetComment: String? = null,
 )
@@ -56,6 +68,7 @@ sealed interface AddressStatus {
         val to: String,
         val domain: String? = null,
         val memoRequired: Boolean = false,
+        val publicKey: String? = null,
     ) : AddressStatus
     data object Invalid : AddressStatus
     data object Scam : AddressStatus
@@ -64,7 +77,7 @@ sealed interface AddressStatus {
 private sealed interface AddressCandidate {
     val addr: String
     data class Final(override val addr: String, val status: AddressStatus) : AddressCandidate
-    data class Resolve(override val addr: String) : AddressCandidate
+    data class Resolve(override val addr: String, val fetchPublicKey: Boolean) : AddressCandidate
 }
 
 sealed interface AmountError {
@@ -75,6 +88,8 @@ sealed interface AmountError {
 sealed interface SendEvent {
     data class Continue(val request: ConfirmRequest, val txInfo: SendTxInfo) : SendEvent
     data class ShowError(val message: String) : SendEvent
+    data object ExpiredLink : SendEvent
+    data object UnsupportedLink : SendEvent
     data class UpdateAmount(val displayString: String) : SendEvent
 }
 
@@ -84,6 +99,7 @@ class SendFeature(
     private val oldAccount: AccountRepository,
     private val accountRepo: McAccountRepository,
     private val api: API,
+    private val settingsRepository: SettingsRepository,
 ) : AsyncViewModel() {
 
     private val relay = MviRelay<SendEvent>()
@@ -93,6 +109,16 @@ class SendFeature(
     private val selectedWallet = MutableStateFlow<McWalletEntity?>(null)
     val selectedAccount: StateFlow<AccountWithDetails?> field = MutableStateFlow(null)
     val accountNotFound: StateFlow<Boolean> field = MutableStateFlow(false)
+
+    val balanceText: StateFlow<String?> = selectedAccount
+        .map { account ->
+            when {
+                account == null -> null
+                settingsRepository.hiddenBalances -> HIDDEN_BALANCE
+                else -> "${account.displayBalance.fmt()} ${account.asset.symbol}"
+            }
+        }
+        .cacheState()
 
     // --- Address ---
     val isAddressLocked: Boolean = data.presetAddress != null
@@ -111,7 +137,7 @@ class SendFeature(
             when (candidate) {
                 null -> null
                 is AddressCandidate.Final -> candidate.addr to candidate.status
-                is AddressCandidate.Resolve -> candidate.addr to resolveTonAccount(candidate.addr)
+                is AddressCandidate.Resolve -> candidate.addr to resolveTonAccount(candidate.addr, candidate.fetchPublicKey)
             }
         }
         .cacheState()
@@ -180,9 +206,30 @@ class SendFeature(
 
     // --- Comment ---
     val comment: StateFlow<String> field = MutableStateFlow(data.presetComment ?: "")
-    private val normalizedComment: StateFlow<String?> = comment
-        .map { it.trim().ifBlank { null } }
+
+    val commentAvailable: StateFlow<Boolean> = selectedAccount
+        .map { account ->
+            val chain = account?.asset?.value?.chain
+            chain != null && (chain.isTvm || chain is Chain.Tron)
+        }
+        .cacheState(initialValue = false)
+
+    private val normalizedComment: StateFlow<String?> = combine(comment, commentAvailable) { value, available ->
+        value.trim().ifBlank { null }?.takeIf { available }
+    }
         .cacheState()
+
+    val commentEncrypted: StateFlow<Boolean> field = MutableStateFlow(false)
+
+    val encryptionAvailable: StateFlow<Boolean> = addressStatus
+        .map { (it as? AddressStatus.Valid)?.publicKey != null }
+        .cacheState(initialValue = false)
+
+    val commentTooLong: StateFlow<Boolean> = combine(commentEncrypted, encryptionAvailable, normalizedComment)
+        { on, available, memo ->
+            on && available && memo != null && memo.encodeToByteArray().size > TonMessageEncryptor.MAX_MEMO_BYTES
+        }
+        .cacheState(initialValue = false)
 
     // --- Max flag ---
     private val isMaxFlow = MutableStateFlow(false)
@@ -193,9 +240,12 @@ class SendFeature(
             status is AddressStatus.Valid && amount != null && error == null && !loading &&
                 !(status.memoRequired && memo == null)
         }
+        .combine(commentTooLong) { enabled, tooLong -> enabled && !tooLong }
         .cacheState(initialValue = false)
 
-    private val analytics = WithdrawAnalytics(data.analyticsFrom)
+    private val utm = data.utm
+
+    private val analytics = WithdrawAnalytics(data.analyticsFrom, utm = utm)
 
     private val confirmInitiator = when (data.analyticsFrom) {
         WithdrawFlowFrom.DeepLink -> ConfirmInitiator.DeepLink
@@ -223,13 +273,7 @@ class SendFeature(
             analytics.viewInsertAmount(sellAsset = account.asset.id, symbol = account.asset.symbol)
 
             val rawAmount = presetAmount ?: return@launch
-            val preset = runCatching { account.asset.value.decimals.toDisplayUnit(rawAmount) }.getOrNull()
-            if (preset == null || !preset.isPositive) {
-                return@launch
-            }
-            val text = preset.fmt()
-            amount.tryEmit(text)
-            relay.emit(SendEvent.UpdateAmount(text))
+            setAmountFromBaseUnits(account, rawAmount)
         }
     }
 
@@ -239,7 +283,7 @@ class SendFeature(
             when {
                 asset.chain is Chain.Ton ->
                     if (asset.isValidRecipientAddress(addr) || addr.isWeb3DomainName()) {
-                        AddressCandidate.Resolve(addr)
+                        AddressCandidate.Resolve(addr, fetchPublicKey = asset is Asset.Coin)
                     } else {
                         AddressCandidate.Final(addr, AddressStatus.Invalid)
                     }
@@ -252,16 +296,30 @@ class SendFeature(
         }
     }
 
-    private suspend fun resolveTonAccount(addr: String): AddressStatus {
+    private suspend fun resolveTonAccount(addr: String, fetchPublicKey: Boolean): AddressStatus {
         return runCatching {
             val isAddressInput = addr.isValidTonAddress()
             val resolved = api.resolveAccount(addr, TonNetwork.MAINNET)
+            val canEncrypt = resolved != null && fetchPublicKey && resolved.isScam != true &&
+                resolved.memoRequired != true &&
+                (resolved.status == AccountStatus.active || resolved.status == AccountStatus.frozen)
+            val publicKey = if (canEncrypt) {
+                runCatching {
+                    withContext(Dispatchers.IO) { api.getPublicKey(resolved.address, TonNetwork.MAINNET) }?.hex()
+                }.getOrElse {
+                    verifyError(it)
+                    null
+                }
+            } else {
+                null
+            }
             when {
                 resolved == null -> AddressStatus.Invalid
                 resolved.isScam == true -> AddressStatus.Scam
                 isAddressInput -> AddressStatus.Valid(
                     to = addr,
                     memoRequired = resolved.memoRequired == true,
+                    publicKey = publicKey,
                 )
                 else -> AddressStatus.Valid(
                     to = resolved.address.toUserFriendly(
@@ -271,6 +329,7 @@ class SendFeature(
                     ),
                     domain = addr.trim().lowercase(),
                     memoRequired = resolved.memoRequired == true,
+                    publicKey = publicKey,
                 )
             }
         }.getOrElse {
@@ -288,6 +347,72 @@ class SendFeature(
         address.tryEmit(value)
     }
 
+    fun applyScannedValue(value: String) {
+        val route = value.toUriOrNull()?.let { DeepLinkRoute.resolve(it) }
+        when (route) {
+            is DeepLinkRoute.Transfer -> applyTransferLink(route)
+            is DeepLinkRoute.EvmTransfer -> applyEvmTransferLink(route)
+            is DeepLinkRoute.SolanaTransfer -> applySolanaTransferLink(route)
+            else -> setAddress(DeepLinkBuilder.plainAddressOrNull(value) ?: value)
+        }
+    }
+
+    private fun applyTransferLink(route: DeepLinkRoute.Transfer) {
+        if (route.isExpired) {
+            relay.emit(SendEvent.ExpiredLink)
+            return
+        }
+        if (route.bin != null || route.initStateBase64 != null) {
+            relay.emit(SendEvent.UnsupportedLink)
+            return
+        }
+
+        setAddress(route.address)
+        route.text?.let { setComment(it) }
+
+        val account = selectedAccount.value ?: return
+        val amount = route.amount ?: return
+        if (route.targetAssetId(account.isTestnet) == account.asset.id) {
+            setAmountFromBaseUnits(account, amount.toString())
+        }
+    }
+
+    private fun applyEvmTransferLink(route: DeepLinkRoute.EvmTransfer) {
+        setAddress(route.recipient)
+
+        val account = selectedAccount.value ?: return
+        val amount = route.amount ?: return
+        val chain = route.chain ?: account.asset.value.chain as? Chain.Evm ?: return
+        if (route.assetId(chain) == account.asset.id) {
+            setAmountFromBaseUnits(account, amount.toString())
+        }
+    }
+
+    private fun applySolanaTransferLink(route: DeepLinkRoute.SolanaTransfer) {
+        setAddress(route.recipient)
+
+        val account = selectedAccount.value ?: return
+        if (route.assetId != account.asset.id) {
+            return
+        }
+
+        val amount = route.baseUnits(account.asset.value.decimals.value) ?: return
+        setAmountFromBaseUnits(account, amount.toString())
+    }
+
+    private fun setAmountFromBaseUnits(account: AccountWithDetails, baseUnits: String) {
+        val parsed = runCatching { account.asset.value.decimals.toDisplayUnit(baseUnits) }.getOrNull()
+        if (parsed == null || !parsed.isPositive) {
+            return
+        }
+
+        val text = parsed.fmt()
+        inputInFiat.tryEmit(false)
+        isMaxFlow.tryEmit(false)
+        amount.tryEmit(text)
+        relay.emit(SendEvent.UpdateAmount(text))
+    }
+
     fun setAmount(value: String) {
         isMaxFlow.tryEmit(false)
         amount.tryEmit(value)
@@ -295,6 +420,10 @@ class SendFeature(
 
     fun setComment(value: String) {
         comment.tryEmit(value)
+    }
+
+    fun setCommentEncrypted(value: Boolean) {
+        commentEncrypted.tryEmit(value)
     }
 
     fun setMax() {
@@ -347,9 +476,10 @@ class SendFeature(
             }
             val status = resolved as? AddressStatus.Valid ?: return@launch
             val memo = normalizedComment.value
-            if (status.memoRequired && memo == null) {
+            if ((status.memoRequired && memo == null) || commentTooLong.value) {
                 return@launch
             }
+            val encryptionKey = status.publicKey?.takeIf { commentEncrypted.value && memo != null }
 
             val wallet = selectedWallet.value ?: return@launch
             val amt = validatedAmount.value ?: return@launch
@@ -361,13 +491,18 @@ class SendFeature(
                     walletId = wallet.id,
                 ),
                 type = ConfirmType.Transfer(
-                    amount = amt.value,
-                    to = status.to,
+                    operation = ConfirmOperations.transfer(
+                        chain = account.asset.value.chain,
+                        to = status.to,
+                        amount = amt.value,
+                        comment = memo,
+                    ),
                     domain = status.domain,
                     isMax = isMaxFlow.value,
-                    meta = memo,
+                    commentEncryptionKey = encryptionKey,
                 ),
                 initiator = confirmInitiator,
+                utm = utm,
             )
 
             val txInfo = SendTxInfo(
@@ -385,6 +520,9 @@ class SendFeature(
         }
     }
 }
+
+private val AccountWithDetails.isTestnet: Boolean
+    get() = asset.value.chain.network.mode == Network.Mode.Testnet
 
 private fun Asset.isValidRecipientAddress(address: String): Boolean {
     val addressNetworkMode = address.tonNetworkModeOrNull()

@@ -2,6 +2,7 @@ package com.tonapps.core.flags
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import androidx.core.content.edit
 import org.json.JSONObject
@@ -16,12 +17,13 @@ object FeatureManager {
 
     private var staticOverrides: Map<String, Boolean> = emptyMap()
 
-    private val prefs by lazy {
-        context.getSharedPreferences(
+    // Read through [context] rather than cached: getSharedPreferences already returns the same
+    // instance per name, and holding it here would pin the Context of whoever initialized first.
+    private val prefs: SharedPreferences
+        get() = context.getSharedPreferences(
             PREFERENCES_NAME,
             Context.MODE_PRIVATE
         )
-    }
 
     fun initialize(context: Context, remote: RemoteConfigProvider) {
         this.context = context
@@ -84,6 +86,14 @@ object FeatureManager {
 
     fun isDisabled(feature: FeatureKey): Boolean {
         return isEnabled(feature).not()
+    }
+
+    fun source(feature: FeatureKey): FeatureSource {
+        return when {
+            isStaticOverridden(feature) || isOverridden(feature) -> FeatureSource.Override
+            remote.isRemoteResolved(feature) -> FeatureSource.Remote
+            else -> FeatureSource.Default
+        }
     }
 
     fun optValue(feature: FeatureKey): String? {

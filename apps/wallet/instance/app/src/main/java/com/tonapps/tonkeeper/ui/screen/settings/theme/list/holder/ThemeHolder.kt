@@ -6,6 +6,7 @@ import com.tonapps.tonkeeper.extensions.capitalized
 import com.tonapps.tonkeeper.ui.screen.settings.theme.list.Item
 import com.tonapps.uikit.icon.UIKitIcon
 import uikit.widget.item.ItemIconView
+import uikit.extensions.setMoonOnClickListener
 
 class ThemeHolder(
     parent: ViewGroup,
@@ -22,7 +23,7 @@ class ThemeHolder(
     }
 
     override fun onBind(item: Item.Theme) {
-        itemIconView.setOnClickListener { onClickTheme(item) }
+        itemIconView.setMoonOnClickListener { onClickTheme(item) }
         itemIconView.position = item.position
         itemIconView.text = item.title.capitalized
         itemIconView.iconRes = if (item.selected) {

@@ -12,6 +12,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.drawable.DotDrawable
 import uikit.extensions.drawable
 import uikit.extensions.setEndDrawable
+import uikit.extensions.setMoonOnClickListener
 
 class MigrationHolder(
     parent: ViewGroup,
@@ -24,7 +25,7 @@ class MigrationHolder(
 
     override fun onBind(item: Item.Migration) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
 
         titleView.text = getString(Localization.migration)
         titleView.setEndDrawable(

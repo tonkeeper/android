@@ -1,0 +1,59 @@
+{
+    "quote_id": "3f2854f8-7bec-4f90-970a-1a58dc4b8924",
+    "routes": [
+        {
+            "route_id": "b1e83f7e-fe8c-4ae5-9e9c-229dc16ce92c",
+            "provider_route_id": "8a81b89d32fa34ab119ed73f4b235a71db6dc701eaa4f35e8f248e7e3bd4ad48",
+            "aggregator": "omniston",
+            "protocol": "omniston",
+            "route_type": "cross_chain_swap",
+            "source_amount": "100000000",
+            "estimated_destination_amount": "64571300835",
+            "minimum_destination_amount": "63925587826",
+            "total_slippage_bps": 100,
+            "price_impact_bps": 38,
+            "source_usd_price": 0.9996001599360256,
+            "destination_usd_price": 1.5353858456617353,
+            "fees": [
+                {
+                    "type": "gas",
+                    "asset": "ton/mainnet/coin",
+                    "amount": "40500000",
+                    "amount_usd": "0.062183"
+                },
+                {
+                    "type": "integrator",
+                    "asset": "ton/mainnet/coin",
+                    "amount": "455185403",
+                    "amount_usd": "0.698885"
+                }
+            ],
+            "legs": [],
+            "date_expire": "2026-09-30T13:15:34Z",
+            "risk_level": "low",
+            "payloads": [
+                {
+                    "payload_id": "79e931da-9663-47af-b88d-efcc081fb898",
+                    "kind": "main",
+                    "chain_id": "ton/mainnet",
+                    "chain_family": "TON",
+                    "payload_type": "ton_boc",
+                    "calldata_payload_type": "exact",
+                    "payload": "[{\"address\":\"EQC9bXRVHLtdjSa4EOcLlD8pNKhNWLeRGLFF0nNTDfl13uwH\",\"amount\":\"330000000\",\"payload\":\"te6cckECBgEAAboAAbAPin6ljySOfjvUrUhAX14QCAAPwYxqI3Uf2NBtgTJQzfQENwCwfYINzKqCuezPopUubwAnujmZTRR11gWouVdws2LHTuvMmUdhjHTGFjujSdcGIsghYOwBAQIIy8M5SQIDAB3EQlAPUO4kMPcwAAAAAAEB04AeHLxdeJc8gs2GyD6TWRLkaHEh+xTq3GyTm8CUQRULWWgVdSoBQAnujmZTRR11gWouVdws2LHTuvMmUdhjHTGFjujSdcGIsCAE90czKaKOusC1FyruFmxY6d15kyjsMY6Ywsd0aTrgxFwEAdEaPC/DgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAJ7o5mU0UddYFqLlXcLNix07rzJlHYYx0xhY7o0nXBiLgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAFANWABEgOe5D6IgBsJE2zQ5nVUTo3BJN7NzZFjAJ2a6QuH2lgCNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQOPDZe4=\"}]",
+                    "human_summary": {
+                        "action": "Swap on TON",
+                        "spend_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                        "spend_amount": "100000000",
+                        "receive_asset": "ton/mainnet/coin",
+                        "receive_amount": "64571300835",
+                        "recipient_address": "UQCe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYi5PA",
+                        "protocol": "omniston"
+                    },
+                    "validation_status": "validated",
+                    "date_expire": "2026-09-30T13:15:34Z"
+                }
+            ],
+            "execution_id": "b012679f-afd6-41de-a825-d94000c52dbf"
+        }
+    ]
+}

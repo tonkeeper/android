@@ -28,10 +28,10 @@ import uikit.extensions.round
 import uikit.extensions.roundBottom
 import uikit.extensions.scrollDown
 import uikit.extensions.scrollView
-import uikit.extensions.setOnClickListener
 import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import java.util.concurrent.atomic.AtomicBoolean
+import uikit.extensions.setMoonOnClickListener
 
 abstract class QRSignScreen: QRCameraScreen(R.layout.fragment_external_qr_sign), BaseFragment.BottomSheet {
 
@@ -44,7 +44,7 @@ abstract class QRSignScreen: QRCameraScreen(R.layout.fragment_external_qr_sign),
         val headerView = view.findViewById<View>(R.id.header)
         headerView.background = headerDrawable
 
-        view.setOnClickListener(R.id.close) { finish() }
+        view.setMoonOnClickListener(R.id.close) { finish() }
 
         val scrollView = view.findViewById<NestedScrollView>(R.id.scroll)
         scrollView.applyNavBottomPadding()

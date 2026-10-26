@@ -8,6 +8,7 @@ import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.widget.InputView
 import uikit.widget.RowLayout
+import uikit.extensions.setMoonOnClickListener
 
 class PromoHolder(
     parent: ViewGroup,
@@ -47,7 +48,7 @@ class PromoHolder(
             applyPromoCode(item)
         }
 
-        pasteView.setOnClickListener {
+        pasteView.setMoonOnClickListener {
             inputView.text = context.clipboardText()
             inputView.hideKeyboard()
             onSubmitPromo(inputView.text)

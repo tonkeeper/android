@@ -7,6 +7,7 @@ enum class AssetCapability(val id: String) {
     Onramp("onramp"),
     Offramp("offramp"),
     P2p("p2p"),
+    PerpDeposit("perp_deposit"),
 }
 
 internal fun AssetCapability.toApi(): CapabilitiesGetWalletAssets = when (this) {
@@ -14,4 +15,5 @@ internal fun AssetCapability.toApi(): CapabilitiesGetWalletAssets = when (this) 
     AssetCapability.Onramp -> CapabilitiesGetWalletAssets.onramp
     AssetCapability.Offramp -> CapabilitiesGetWalletAssets.offramp
     AssetCapability.P2p -> CapabilitiesGetWalletAssets.p2p
+    AssetCapability.PerpDeposit -> CapabilitiesGetWalletAssets.perp_deposit
 }

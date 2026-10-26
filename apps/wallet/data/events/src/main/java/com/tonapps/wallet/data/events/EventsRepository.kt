@@ -223,12 +223,13 @@ class EventsRepository(
         accountId: String,
         network: TonNetwork,
         eventId: String,
-    ) = withContext(Dispatchers.IO) {
-        val events = getSingle(eventId, network) ?: return@withContext
-        localDataSource.addSpam(accountId, network.isTestnet, events)
+    ): Boolean = withContext(Dispatchers.IO) {
+        val event = remoteDataSource.getAccountEvent(accountId, network, eventId) ?: return@withContext false
+        localDataSource.addSpam(accountId, network.isTestnet, listOf(event))
         _hiddenTxIdsFlow.update {
             it.plus(eventId)
         }
+        true
     }
 
     suspend fun removeSpam(

@@ -24,11 +24,11 @@ import com.tonapps.uikit.color.tabBarActiveIconColor
 import com.tonapps.uikit.color.tabBarInactiveIconColor
 import uikit.R
 import uikit.drawable.FooterDrawable
-import uikit.extensions.createRipple
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingBottom
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.useAttributes
+import uikit.extensions.setMoonOnClickListener
 
 @SuppressLint("RestrictedApi")
 class BottomTabsView @JvmOverloads constructor(
@@ -157,6 +157,15 @@ class BottomTabsView @JvmOverloads constructor(
         return null
     }
 
+    fun indexOfItem(itemId: Int): Int {
+        for (i in 0 until childCount) {
+            if (getChildAt(i).tag == itemId) {
+                return i
+            }
+        }
+        return -1
+    }
+
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
         val compatInsets = WindowInsetsCompat.toWindowInsetsCompat(insets)
         val navigationInsets = compatInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
@@ -220,7 +229,6 @@ class BottomTabsView @JvmOverloads constructor(
     private fun addMenu(menuItem: MenuItem) {
         val view = inflate(context, R.layout.view_bottom_tab, null)
         view.tag = menuItem.itemId
-        view.background = context.createRipple()
         view.visibility = if (menuItem.isVisible) {
             View.VISIBLE
         } else {
@@ -232,7 +240,7 @@ class BottomTabsView @JvmOverloads constructor(
         titleView.text = menuItem.title!!
 
         if (menuItem.isCheckable) {
-            view.setOnClickListener {
+            view.setMoonOnClickListener {
                 val icon = view.findViewById<ImageView>(R.id.icon)
                 if (icon is LottieAnimationView) {
                     icon.cancelAnimation()

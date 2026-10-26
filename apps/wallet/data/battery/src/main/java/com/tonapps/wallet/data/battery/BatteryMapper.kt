@@ -10,6 +10,9 @@ object BatteryMapper {
 
     private const val IAP_REFUNDS_LIMIT = 2
 
+    // A full battery icon is 4 TON (~1540 charges).
+    private val FULL_BATTERY_BALANCE = BigDecimal(4)
+
     fun convertToCharges(
         balance: Coins,
         meanFees: String
@@ -28,6 +31,9 @@ object BatteryMapper {
         }
         return balance.value.divide(meanFeesBigDecimal, 0, RoundingMode.UP).toInt()
     }
+
+    fun convertToBatteryLevel(balance: Coins): Float =
+        balance.value.divide(FULL_BATTERY_BALANCE).toFloat()
 
     fun isIapDisabledByRefunds(purchases: List<BatteryPurchaseEntity>): Boolean {
         return purchases.count { it.isStorePurchase && it.isRefunded } >= IAP_REFUNDS_LIMIT

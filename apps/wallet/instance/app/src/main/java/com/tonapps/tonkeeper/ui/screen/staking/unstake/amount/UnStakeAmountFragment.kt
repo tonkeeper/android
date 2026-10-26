@@ -18,6 +18,7 @@ import uikit.extensions.doKeyboardAnimation
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen, UnStakeViewModel>(R.layout.fragment_unstake_amount) {
 
@@ -43,9 +44,10 @@ class UnStakeAmountFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen,
         availableView = view.findViewById(R.id.available)
 
         button = view.findViewById(R.id.next_button)
-        button.setOnClickListener { primaryViewModel.confirm() }
+        button.setMoonOnClickListener { primaryViewModel.confirm() }
 
-        view.findViewById<View>(R.id.max).setOnClickListener { applyMax() }
+        val maxView = view.findViewById<View>(R.id.max)
+        maxView.setMoonOnClickListener { applyMax() }
 
         collectFlow(primaryViewModel.availableUiStateFlow, ::applyAvailableState)
         collectFlow(primaryViewModel.cycleEndFormatFlow) { date ->

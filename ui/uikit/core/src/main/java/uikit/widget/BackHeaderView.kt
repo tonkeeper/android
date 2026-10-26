@@ -10,6 +10,7 @@ import uikit.extensions.dp
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.useAttributes
+import uikit.extensions.setMoonOnClickListener
 
 class BackHeaderView @JvmOverloads constructor(
     context: Context,
@@ -33,7 +34,7 @@ class BackHeaderView @JvmOverloads constructor(
         titleView = findViewById(R.id.title)
         actionView = findViewById(R.id.action)
 
-        backView.setOnClickListener {
+        backView.setMoonOnClickListener {
             doOnBackClick?.invoke()
         }
 

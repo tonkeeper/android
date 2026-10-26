@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class RaffleProgress(
@@ -27,7 +32,7 @@ data class RaffleProgress(
     @SerialName(value = "prize_delivery_days")
     val prizeDeliveryDays: Int? = null,
 
-    /* Zero-fee perk expiry; only set for wallets first registered during the raffle's first 7 days */
+    /* Zero-fee perk expiry; set for every wallet while the perk window is open */
     @Contextual @SerialName(value = "zero_fee_ends_at")
     val zeroFeeEndsAt: java.time.OffsetDateTime? = null
 ) {

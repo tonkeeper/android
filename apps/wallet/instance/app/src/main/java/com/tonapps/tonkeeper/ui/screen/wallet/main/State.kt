@@ -9,7 +9,6 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.tonkeeper.App
-import com.tonapps.tonkeeper.core.BalanceType
 import com.tonapps.legacy.assets.sumOfVerifiedFiat
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
@@ -23,7 +22,6 @@ import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.isAvailableBiometric
 import com.tonapps.wallet.data.dapps.entities.AppPushEntity
-import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.Plurals
 import io.tonapi.models.WalletPlugin
@@ -59,7 +57,6 @@ sealed class State {
         val currency: WalletCurrency,
         val list: List<AssetsEntity>,
         val fromCache: Boolean,
-        val rates: RatesEntity,
     ): State() {
 
         val size: Int
@@ -67,16 +64,10 @@ sealed class State {
 
         fun getTotalBalanceFiat(wallet: WalletEntity): Coins {
             return if (wallet.testnet) {
-                list.first().fiat
+                list.firstOrNull { (it as? AssetsEntity.Token)?.token?.isTon == true }?.fiat ?: Coins.ZERO
             } else {
                 list.sumOfVerifiedFiat()
             }
-        }
-
-        fun getBalanceType(wallet: WalletEntity): Int {
-            val balanceFiat = getTotalBalanceFiat(wallet)
-            val balanceTON = rates.convertFromFiat(TokenEntity.TON.address, balanceFiat)
-            return BalanceType.getBalanceType(balanceTON)
         }
 
         fun getTotalBalanceFormat(
@@ -107,9 +98,6 @@ sealed class State {
 
         private val totalBalanceFormat: CharSequence
             get() = assets.getTotalBalanceFormat(wallet)
-
-        private val balanceType: Int
-            get() = assets.getBalanceType(wallet)
 
         private fun uiItemsTokens(
             hiddenBalance: Boolean,
@@ -203,14 +191,13 @@ sealed class State {
             status: Item.Status,
             lastUpdatedFormat: String,
             prefixYourAddress: Boolean,
+            balanceStale: Boolean,
         ): Item.Balance {
             return Item.Balance(
                 balance = totalBalanceFormat,
                 wallet = wallet,
                 status = status,
                 hiddenBalance = hiddenBalance,
-                hasBackup = hasBackup,
-                balanceType = balanceType,
                 lastUpdatedFormat = lastUpdatedFormat,
                 batteryBalance = battery.balance,
                 showBattery = !battery.disabled,
@@ -219,7 +206,8 @@ sealed class State {
                     battery.viewed -> BatteryView.EmptyState.SECONDARY
                     else -> BatteryView.EmptyState.ACCENT
                 },
-                prefixYourAddress = prefixYourAddress
+                prefixYourAddress = prefixYourAddress,
+                stale = balanceStale,
             )
         }
 
@@ -257,7 +245,7 @@ sealed class State {
                         link = "tonkeeper://backups",
                         blue = false,
                         walletId = wallet.id,
-                        settingsType = Item.SetupLink.TYPE_NONE
+                        settingsType = Item.SetupLink.TYPE_BACKUP
                     )
                     SetupType.Telegram -> Item.SetupLink(
                         position = position,
@@ -347,6 +335,7 @@ sealed class State {
             prefixYourAddress: Boolean,
             renewDomains: List<DnsExpiringEntity>,
             assetsExpanded: Boolean,
+            balanceStale: Boolean,
         ): List<Item> {
             val uiItems = mutableListOf<Item>()
             if (apkStatus != APKManager.Status.Default && apkStatus !is APKManager.Status.UpdateAvailable) {
@@ -368,7 +357,7 @@ sealed class State {
                     uiItems.add(Item.Space(true))
                 }
             }
-            uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat, prefixYourAddress))
+            uiItems.add(uiItemBalance(hiddenBalance, status, lastUpdatedFormat, prefixYourAddress, balanceStale))
             uiItems.add(uiItemActions(config))
             if (banners.isNotEmpty()) {
                 uiItems.add(Item.Banners(walletId = wallet.id, banners = banners))
@@ -395,6 +384,7 @@ sealed class State {
                         wallet = wallet,
                         nfts = collectibles,
                         allHidden = allCollectiblesHidden,
+                        hiddenBalance = hiddenBalance,
                     )
                 )
             }
@@ -418,6 +408,7 @@ sealed class State {
     data class Settings(
         val hiddenBalance: Boolean,
         val config: ConfigEntity,
-        val status: Item.Status
+        val status: Item.Status,
+        val balanceStale: Boolean,
     ): State()
 }

@@ -12,13 +12,18 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Per-wallet relationship to the raffle
  *
- * Values: not_joined,joined,ended_pending,won,lost
+ * Values: not_joined,joined,ended_pending,won,lost,unknown
  */
-@Serializable
+@Serializable(with = RaffleStatusSerializer::class)
 enum class RaffleStatus(val value: String) {
     @SerialName(value = "not_joined")
     not_joined("not_joined"),
@@ -29,7 +34,9 @@ enum class RaffleStatus(val value: String) {
     @SerialName(value = "won")
     won("won"),
     @SerialName(value = "lost")
-    lost("lost");
+    lost("lost"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -55,6 +62,20 @@ enum class RaffleStatus(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object RaffleStatusSerializer : KSerializer<RaffleStatus> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): RaffleStatus {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return RaffleStatus.entries.firstOrNull { it.value == value }
+            ?: RaffleStatus.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: RaffleStatus) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

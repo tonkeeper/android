@@ -12,18 +12,25 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * UI/domain order side. The proxy maps this to Lighter is_ask internally.
  *
- * Values: long,short
+ * Values: long,short,unknown
  */
-@Serializable
+@Serializable(with = OrderSideSerializer::class)
 enum class OrderSide(val value: String) {
     @SerialName(value = "long")
     long("long"),
     @SerialName(value = "short")
-    short("short");
+    short("short"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -49,6 +56,20 @@ enum class OrderSide(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object OrderSideSerializer : KSerializer<OrderSide> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): OrderSide {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return OrderSide.entries.firstOrNull { it.value == value }
+            ?: OrderSide.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: OrderSide) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

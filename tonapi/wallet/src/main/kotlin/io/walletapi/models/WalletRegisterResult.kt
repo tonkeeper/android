@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class WalletRegisterResult(
@@ -31,11 +36,26 @@ data class WalletRegisterResult(
     val error: String? = null
 ) {
     /**
-     * Values: ok,failed
+     * Values: ok,failed,unknown
      */
-    @Serializable
+    @Serializable(with = StatusSerializer::class)
     enum class Status(val value: String) {
         @SerialName(value = "ok") ok("ok"),
-        @SerialName(value = "failed") failed("failed");
+        @SerialName(value = "failed") failed("failed"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object StatusSerializer : KSerializer<Status> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Status {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Status.entries.firstOrNull { it.value == value }
+                ?: Status.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Status) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

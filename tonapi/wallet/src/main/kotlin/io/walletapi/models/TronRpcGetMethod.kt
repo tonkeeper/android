@@ -12,20 +12,27 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * java-tron methods the proxy also serves over GET — the no-arg reads (getnowblock, getchainparameters) plus listwitnesses, which takes only query params.
  *
- * Values: listwitnesses,getnowblock,getchainparameters
+ * Values: listwitnesses,getnowblock,getchainparameters,unknown
  */
-@Serializable
+@Serializable(with = TronRpcGetMethodSerializer::class)
 enum class TronRpcGetMethod(val value: String) {
     @SerialName(value = "listwitnesses")
     listwitnesses("listwitnesses"),
     @SerialName(value = "getnowblock")
     getnowblock("getnowblock"),
     @SerialName(value = "getchainparameters")
-    getchainparameters("getchainparameters");
+    getchainparameters("getchainparameters"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -51,6 +58,20 @@ enum class TronRpcGetMethod(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object TronRpcGetMethodSerializer : KSerializer<TronRpcGetMethod> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): TronRpcGetMethod {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return TronRpcGetMethod.entries.firstOrNull { it.value == value }
+            ?: TronRpcGetMethod.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: TronRpcGetMethod) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Raffle(
@@ -46,6 +51,7 @@ data class Raffle(
     @SerialName(value = "cta")
     val cta: RaffleCTA,
 
+    /* When prizes are revealed; a campaign may serve another date here */
     @Contextual @SerialName(value = "prizes_reveal_at")
     val prizesRevealAt: java.time.OffsetDateTime? = null,
 

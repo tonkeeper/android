@@ -12,13 +12,18 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * Classified activity kind emitted by the indexer. Kept as a closed enum so clients can build exhaustive rendering / filters; new values require a coordinated backend release.
+ * Classified activity kind emitted by the indexer. Kept as a closed enum so clients can build exhaustive rendering / filters; new values require a coordinated backend release. The `perps.*` kinds only appear with `show_perps=true` or `activity_type=perps`. A `perps.position_reduced` row can become `perps.position_closed` under the same id, when a later fill of the same order closes the position.
  *
- * Values: send,receive,swap,approve,revoke,bridge,stake,unstake,claim,wrap,unwrap,deploy,contract_call,nft_purchase,auction_bid,mint,burn,dns_renew,subscribe,unsubscribe,freeze,unfreeze,`delegate`,undelegate,vote,supply,withdraw,borrow,repay,airdrop
+ * Values: send,receive,swap,approve,revoke,bridge,stake,unstake,claim,wrap,unwrap,deploy,contract_call,nft_purchase,auction_bid,mint,burn,dns_renew,subscribe,unsubscribe,freeze,unfreeze,`delegate`,undelegate,vote,supply,withdraw,borrow,repay,airdrop,perpsPeriodPosition_opened,perpsPeriodPosition_increased,perpsPeriodPosition_reduced,perpsPeriodPosition_closed,perpsPeriodBalance_deposit,perpsPeriodBalance_withdrawal,unknown
  */
-@Serializable
+@Serializable(with = ActivityTypeSerializer::class)
 enum class ActivityType(val value: String) {
     @SerialName(value = "send")
     send("send"),
@@ -79,7 +84,21 @@ enum class ActivityType(val value: String) {
     @SerialName(value = "repay")
     repay("repay"),
     @SerialName(value = "airdrop")
-    airdrop("airdrop");
+    airdrop("airdrop"),
+    @SerialName(value = "perps.position_opened")
+    perpsPeriodPosition_opened("perps.position_opened"),
+    @SerialName(value = "perps.position_increased")
+    perpsPeriodPosition_increased("perps.position_increased"),
+    @SerialName(value = "perps.position_reduced")
+    perpsPeriodPosition_reduced("perps.position_reduced"),
+    @SerialName(value = "perps.position_closed")
+    perpsPeriodPosition_closed("perps.position_closed"),
+    @SerialName(value = "perps.balance_deposit")
+    perpsPeriodBalance_deposit("perps.balance_deposit"),
+    @SerialName(value = "perps.balance_withdrawal")
+    perpsPeriodBalance_withdrawal("perps.balance_withdrawal"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -105,6 +124,20 @@ enum class ActivityType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ActivityTypeSerializer : KSerializer<ActivityType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ActivityType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ActivityType.entries.firstOrNull { it.value == value }
+            ?: ActivityType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ActivityType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

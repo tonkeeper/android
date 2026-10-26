@@ -16,17 +16,17 @@ internal enum class HistoryStakingProvider(
 ) {
     LiquidTF(
         protocol = StakingPool.Implementation.LiquidTF.title,
-        iconRes = StakingR.drawable.ic_tonstakers,
+        iconRes = StakingR.drawable.staking_tonstakers,
         titleRes = StakingR.string.stake_tonstakers,
     ),
     Whales(
         protocol = StakingPool.Implementation.Whales.title,
-        iconRes = StakingR.drawable.whales,
+        iconRes = StakingR.drawable.staking_whales,
         titleRes = StakingR.string.stake_whales,
     ),
     TF(
         protocol = StakingPool.Implementation.TF.title,
-        iconRes = StakingR.drawable.tf,
+        iconRes = StakingR.drawable.staking_ton_nominators,
         titleRes = StakingR.string.stake_nominators,
     ),
     ;

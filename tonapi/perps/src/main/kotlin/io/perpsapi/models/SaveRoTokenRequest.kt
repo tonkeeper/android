@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class SaveRoTokenRequest(
@@ -28,11 +33,11 @@ data class SaveRoTokenRequest(
     @SerialName(value = "name")
     val name: String? = null,
 
-    /* Unix seconds past which the signature below is refused, capped by the service at ten minutes ahead. Travels with signature: one without the other is a 400, because a missing deadline would otherwise be reported as a signature that has expired. */
+    /* Unix seconds, signed inside the EIP-712 message. Not checked against the clock: a device clock running behind would otherwise refuse every bind, and the signature binds nothing without the operation proof. Travels with signature: one without the other is a 400. */
     @SerialName(value = "deadline")
     val deadline: Long? = null,
 
-    /* EIP-712 signature over LinkWallet(string walletId,uint64 deadline), under domain {name: TonkeeperPerps, version: \"1\", chainId: 1} with no verifyingContract. Encoded as 65 bytes of r‖s‖v hex; v may be 27/28 or 0/1, and the high-s form of a signature is refused so one proof has one encoding. Read only while the wallet has proved no L1 address yet, which for most callers happened on their first deposit. Send it when you can: the client cannot tell when it is needed, and missing when it is answers 400 address_proof_required. */
+    /* EIP-712 signature over LinkWallet(string walletId,uint64 deadline), under domain {name: TonkeeperPerps, version: \"1\", chainId: 1} with no verifyingContract. Encoded as 65 bytes of r‖s‖v hex; v may be 27/28 or 0/1, and the high-s form of a signature is refused so one proof has one encoding. Read only while the wallet has proved no L1 address yet, which for most callers happened before their first deposit, on POST /account/bind. Send it when you can: the client cannot tell when it is needed, and missing when it is answers 400 address_proof_required. */
     @SerialName(value = "signature")
     val signature: String? = null
 ) {

@@ -11,6 +11,7 @@ import com.tonapps.tonkeeperx.R
 import uikit.dialog.modal.ModalDialog
 import uikit.widget.AsyncImageView
 import uikit.widget.ModalHeader
+import uikit.extensions.setMoonOnClickListener
 
 class CollectionSpamDialog(context: Context): ModalDialog(context, R.layout.dialog_token_spam) {
 
@@ -30,11 +31,11 @@ class CollectionSpamDialog(context: Context): ModalDialog(context, R.layout.dial
         nameView.text = item.title
         iconView.setImageURI(item.imageUri, null)
         addressView.text = item.address.short8
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             notSpamCallback()
             dismiss()
         }
-        rowAddressView.setOnClickListener {
+        rowAddressView.setMoonOnClickListener {
             context.copyToClipboard(item.address)
         }
     }

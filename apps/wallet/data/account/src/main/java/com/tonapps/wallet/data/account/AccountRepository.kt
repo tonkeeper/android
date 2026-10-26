@@ -49,12 +49,14 @@ import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import java.math.BigInteger
+import java.security.GeneralSecurityException
 import java.util.UUID
 
 class AccountRepository(
     private val context: Context,
     private val api: API,
     private val rnLegacy: RNLegacy,
+    private val multichainWalletResolver: Lazy<MultichainWalletResolver>,
 ) {
 
     sealed class SelectedState {
@@ -178,7 +180,11 @@ class AccountRepository(
             emoji = RNWallet.fixEmoji(wallet.label.emoji),
             identifier = wallet.id,
             pubkey = wallet.publicKey.hex(),
-            network = if (wallet.testnet) RNWallet.Network.Testnet else RNWallet.Network.Mainnet,
+            network = if (wallet.testnet) {
+                RNWallet.Network.Testnet
+            } else {
+                RNWallet.Network.Mainnet
+            },
             type = type,
             version = walletVersion(wallet.version),
             workchain = wallet.contract.workchain,
@@ -271,6 +277,10 @@ class AccountRepository(
         return vaultSource.getVaultKeys()
     }
 
+    fun openVault() {
+        vaultSource
+    }
+
     suspend fun getMnemonic(id: String): Array<String>? {
         val wallet = database.getAccount(id) ?: return null
         return vaultSource.getMnemonic(wallet.publicKey)
@@ -282,7 +292,12 @@ class AccountRepository(
     }
 
     private suspend fun getTrxAccountsProvider(id: String): KeychainTrxAccountsProvider? {
-        val mnemonic = getMnemonic(id)?.toList() ?: return null
+        val wallet = database.getAccount(id) ?: return null
+        return getTrxAccountsProvider(wallet)
+    }
+
+    private fun getTrxAccountsProvider(wallet: WalletEntity): KeychainTrxAccountsProvider? {
+        val mnemonic = vaultSource.getMnemonic(wallet.publicKey)?.toList() ?: return null
         if (MnemonicHelper.isValidStandardTonMnemonic(mnemonic)) {
             val entropy = Mnemonic(mnemonic).toEntropy()
             return KeychainTrxAccountsProvider.fromEntropy(entropy)
@@ -297,12 +312,23 @@ class AccountRepository(
     }
 
     suspend fun getTronAddress(id: String): String? {
-        val trxAccountsProvider = getTrxAccountsProvider(id) ?: return null
-        return trxAccountsProvider.getAddress()
+        val wallet = database.getAccount(id) ?: return null
+        storageSource.getTronAddress(wallet.publicKey)?.let { return it }
+        val address = getTrxAccountsProvider(wallet)?.getAddress() ?: return null
+        storageSource.setTronAddress(wallet.publicKey, address)
+        return address
     }
 
-    suspend fun getTronBlockchainAddress(id: String): BlockchainAddress? {
-        val address = getTronAddress(id) ?: return null
+    suspend fun getTronAddressOrNull(id: String): String? {
+        return try {
+            getTronAddress(id)
+        } catch (_: GeneralSecurityException) {
+            null
+        }
+    }
+
+    suspend fun getTronBlockchainAddressOrNull(id: String): BlockchainAddress? {
+        val address = getTronAddressOrNull(id) ?: return null
         return BlockchainAddress(
             value = address,
             network = TonNetwork.MAINNET,
@@ -349,7 +375,11 @@ class AccountRepository(
         qr: Boolean,
         initialized: List<Boolean>
     ): List<WalletEntity> {
-        val type = if (qr) WalletType.SignerQR else WalletType.Signer
+        val type = if (qr) {
+            WalletType.SignerQR
+        } else {
+            WalletType.Signer
+        }
         return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type, initialized = initialized)
     }
 
@@ -488,25 +518,72 @@ class AccountRepository(
         return storageSource.getSelectedId()
     }
 
+    // An id that resolves to no wallet (unknown, or an MC wallet without a TON account) selects the default one.
     suspend fun setSelectedWallet(id: String?) {
-        storageSource.setSelectedId(id)
-        if (id == null) {
+        val wallet = try {
+            id?.let { findWallet(it) ?: findDefaultWallet() }
+        } catch (e: MultichainWalletResolver.LookupException) {
+            recordException(e)
+            keepSelection()
+            return
+        }
+        select(wallet)
+    }
+
+    suspend fun selectDefaultWallet() {
+        val wallet = try {
+            findDefaultWallet()
+        } catch (e: MultichainWalletResolver.LookupException) {
+            recordException(e)
+            findLegacyDefaultWallet()
+        }
+        select(wallet)
+    }
+
+    // A failed lookup keeps the saved id so the next launch can restore it; cold start must still leave Initialization.
+    private suspend fun keepSelection() {
+        if (_selectedStateFlow.value != SelectedState.Initialization) {
+            return
+        }
+        _selectedStateFlow.value = findLegacyDefaultWallet()?.let { SelectedState.Wallet(it) } ?: SelectedState.Empty
+    }
+
+    private suspend fun select(wallet: WalletEntity?) {
+        storageSource.setSelectedId(wallet?.id)
+        if (wallet == null) {
             _selectedStateFlow.value = SelectedState.Empty
             return
         }
 
-        val entity = database.getAccount(id) ?: WalletEntity.EMPTY.copy(id = id)
-        _selectedStateFlow.value = SelectedState.Wallet(entity)
-        rnLegacy.setSelectedWallet(id)
+        _selectedStateFlow.value = SelectedState.Wallet(wallet)
+        rnLegacy.setSelectedWallet(wallet.id)
+    }
+
+    private suspend fun findWallet(id: String): WalletEntity? {
+        return database.getAccount(id) ?: resolveMultichain { getTonWallet(id) }
+    }
+
+    private suspend fun findDefaultWallet(): WalletEntity? {
+        return resolveMultichain { getDefaultTonWallet() } ?: findLegacyDefaultWallet()
+    }
+
+    private suspend fun findLegacyDefaultWallet(): WalletEntity? {
+        return database.getAccounts().firstOrNull()
+    }
+
+    private suspend fun resolveMultichain(
+        block: suspend MultichainWalletResolver.() -> WalletEntity?,
+    ): WalletEntity? {
+        val resolver = try {
+            multichainWalletResolver.value
+        } catch (e: Throwable) {
+            throw MultichainWalletResolver.LookupException(e)
+        }
+        return resolver.block()
     }
 
     suspend fun deleteAccount(id: String) = withContext(scope.coroutineContext) {
         database.deleteAccount(id)
-    }
-
-    suspend fun logout() = withContext(scope.coroutineContext) {
-        database.clearAccounts()
-        setSelectedWallet(null)
     }
 
     suspend fun getWalletsByAccountId(accountId: String, network: TonNetwork): List<WalletEntity> {
@@ -581,7 +658,11 @@ class AccountRepository(
         return messageBody(
             wallet = wallet,
             seqNo = seqNo,
-            validUntil = if (validUntil > 0) validUntil else getValidUntil(wallet.network),
+            validUntil = if (validUntil > 0) {
+                validUntil
+            } else {
+                getValidUntil(wallet.network)
+            },
             transfers = transfers
         )
     }

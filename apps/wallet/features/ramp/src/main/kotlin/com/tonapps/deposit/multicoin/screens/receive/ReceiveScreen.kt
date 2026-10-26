@@ -45,13 +45,14 @@ fun ReceiveScreen(
         ) {
             itemsIndexed(
                 items = accounts,
-                key = { _, account -> account.id },
-                contentType = { _, account -> account::class }
-            ) { index, account ->
+                key = { _, item -> item.account.id },
+                contentType = { _, item -> item::class }
+            ) { index, item ->
                 QrAccountCell(
-                    account = account,
+                    account = item.account,
+                    isNew = item.isNew,
                     position = MoonBundlePosition.default(accounts.size, index),
-                    onOpenQr = { feature.selectAccount(account) }
+                    onOpenQr = { feature.selectAccount(item.account) }
                 )
             }
         }

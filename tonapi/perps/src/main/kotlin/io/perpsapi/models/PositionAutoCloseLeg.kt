@@ -13,6 +13,11 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class PositionAutoCloseLeg(
@@ -51,7 +56,7 @@ data class PositionAutoCloseLeg(
     @SerialName(value = "projected_equity")
     val projectedEquity: String? = null,
 
-    /* The same outcome against the margin invested, in percentage points. */
+    /* The same outcome on the base of the position's roi_pct, the margin at entry, in percentage points cut toward zero. A trigger at the price the position is counted at projects its roi_pct. Empty when the leverage cannot be derived. */
     @SerialName(value = "projected_roi_pct")
     val projectedRoiPct: String? = null
 ) {

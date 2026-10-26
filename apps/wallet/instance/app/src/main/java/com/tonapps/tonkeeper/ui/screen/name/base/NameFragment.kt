@@ -25,7 +25,7 @@ import com.tonapps.blockchain.model.legacy.WalletColor
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
-import uikit.HapticHelper
+import uikit.extensions.hapticTick
 import uikit.extensions.bottomBarsOffset
 import uikit.extensions.collectFlow
 import uikit.extensions.doKeyboardAnimation
@@ -36,6 +36,7 @@ import uikit.extensions.withAlpha
 import uikit.widget.InputView
 import uikit.widget.LoaderView
 import androidx.core.view.isGone
+import uikit.extensions.setMoonOnClickListener
 
 abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None>(R.layout.fragment_name, ScreenContext.None) {
 
@@ -86,7 +87,7 @@ abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None
         walletColor = view.findViewById(R.id.wallet_color)
 
         walletEmoji = view.findViewById(R.id.wallet_emoji)
-        walletEmoji.setOnClickListener { walletName.hideKeyboard() }
+        walletEmoji.setMoonOnClickListener { walletName.hideKeyboard() }
 
         colorView = view.findViewById(R.id.color)
         colorView.adapter = colorAdapter
@@ -96,13 +97,13 @@ abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None
 
         overView = view.findViewById(R.id.over)
         overView.setBackgroundColor(requireContext().backgroundPageColor.withAlpha(.68f))
-        overView.setOnClickListener { walletName.hideKeyboard() }
+        overView.setMoonOnClickListener { walletName.hideKeyboard() }
 
         actionView = view.findViewById(R.id.action)
         actionView.doOnLayout { applyEmojiMargin() }
 
         nextButton = view.findViewById(R.id.next)
-        nextButton.setOnClickListener { sendData() }
+        nextButton.setMoonOnClickListener { sendData() }
         nextButton.setText(if (mode == NameModeCreate) Localization.continue_action else Localization.save)
 
         loaderView = view.findViewById(R.id.loader)
@@ -184,7 +185,7 @@ abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None
         if (oldEmoji.isEmpty()) {
             walletEmoji.setEmoji(newEmoji, Color.TRANSPARENT)
         } else if (oldEmoji != newEmoji) {
-            HapticHelper.selection(requireContext())
+            view?.hapticTick()
             walletEmoji.runAnimation(uikit.R.anim.scale_switch)
             walletEmoji.setEmoji(newEmoji, Color.TRANSPARENT)
         }

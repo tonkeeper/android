@@ -3,9 +3,15 @@ package com.tonapps.tonkeeper.ui.component.coin.format
 import com.tonapps.icu.CurrencyFormatter
 
 data class CoinFormattingConfig(
-    val separator: String = CurrencyFormatter.monetaryDecimalSeparator,
+    val separator: String = CurrencyFormatter.decimalSeparator,
     val decimals: Int = 9
 ) {
+
+    val zeroNanoPrefix = ZERO + separator
+
+    fun isUnsupportedSeparator(value: CharSequence): Boolean {
+        return value != separator && (value == COMA || value == SPACE || value == DOT)
+    }
 
     companion object {
         const val DOT = "."
@@ -13,11 +19,5 @@ data class CoinFormattingConfig(
         const val SPACE = " "
         const val ZERO = "0"
         const val DOUBLE_ZERO = "00"
-    }
-
-    val zeroNanoPrefix = ZERO + separator
-
-    fun isUnsupportedSeparator(value: CharSequence): Boolean {
-        return value != separator && (value == COMA || value == SPACE || value == DOT)
     }
 }

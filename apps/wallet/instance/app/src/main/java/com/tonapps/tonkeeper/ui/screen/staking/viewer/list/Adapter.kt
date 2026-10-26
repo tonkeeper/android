@@ -1,14 +1,15 @@
 package com.tonapps.tonkeeper.ui.screen.staking.viewer.list
 
 import android.view.ViewGroup
-import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.ActionsHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.BalanceHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.DetailsHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.DescriptionHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.EthenaDetailsHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.LinksHolder
-import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.PendingUnstakeHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.RewardsHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.SpaceHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.StakeStatusHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.TitleHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.TokenHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
@@ -19,14 +20,15 @@ class Adapter: BaseListAdapter() {
     override fun createHolder(parent: ViewGroup, viewType: Int): BaseListHolder<out BaseListItem> {
         return when(viewType) {
             Item.TYPE_BALANCE -> BalanceHolder(parent)
-            Item.TYPE_ACTIONS -> ActionsHolder(parent)
             Item.TYPE_DETAILS -> DetailsHolder(parent)
             Item.TYPE_LINKS -> LinksHolder(parent)
             Item.TYPE_TOKEN -> TokenHolder(parent)
             Item.TYPE_SPACE -> SpaceHolder(parent)
             Item.TYPE_DESCRIPTION -> DescriptionHolder(parent)
             Item.TYPE_ETHENA_DETAILS -> EthenaDetailsHolder(parent)
-            Item.TYPE_PENDING_UNSTAKE -> PendingUnstakeHolder(parent)
+            Item.TYPE_STAKE_STATUS -> StakeStatusHolder(parent)
+            Item.TYPE_REWARDS -> RewardsHolder(parent)
+            Item.TYPE_TITLE -> TitleHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

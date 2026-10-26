@@ -1,105 +1,105 @@
 [versions]
 # Android & Kotlin Core
-cronetOkhttp = "0.1.1"
-kotlin = "2.3.20"
-android-plugin = "9.1.0"
-android-sdk-tools = "36.0.0"
+cronetOkhttp = "0.1.2"
+kotlin = "2.4.21"
+android-plugin = "9.4.1"
+android-sdk-tools = "37.0.0"
 android-sdk-min = "26"
-android-sdk-compile = "36"
+android-sdk-compile = "37"
 android-sdk-target = "36"
-android-ndk = "29.0.13599879"
-ksp = "2.3.4"
+android-ndk = "30.0.16248370"
+ksp = "2.3.12"
 desugar_jdk_libs = "2.1.5"
 kotlin-bignum = "0.3.10"
 
 # KotlinX
-kotlinx-coroutines = "1.10.2"
-kotlinx-serialization = "1.10.0"
-kotlinx-datetime = "0.7.1"
-kotlinx-io = "0.9.0"
-kotlinx-collections-immutable = "0.4.0"
+kotlinx-coroutines = "1.11.0"
+kotlinx-serialization = "1.11.0"
+kotlinx-datetime = "0.8.0"
+kotlinx-io = "0.9.1"
+kotlinx-collections-immutable = "0.5.2"
 
 # Compose
-compose = "2026.03.01"
-compose-multiplatform = "1.10.3"
-compose-paging = "3.4.2"
+compose = "2026.09.00"
+compose-multiplatform = "1.12.2"
+compose-paging = "3.5.3"
 jetbrains-material3 = "1.9.0"
-jetbrains-lifecycle = "2.10.0"
+jetbrains-lifecycle = "2.11.0"
 
 # AndroidX
-androidx-core = "1.18.0"
+androidx-core = "1.19.1"
 androidx-shortcuts = "1.1.0"
-androidx-appcompat = "1.7.1"
+androidx-appcompat = "1.8.0"
 androidx-activity = "1.13.0"
-androidx-fragment = "1.8.9"
+androidx-fragment = "1.9.1"
 androidx-recyclerview = "1.4.0"
 androidx-viewpager2 = "1.1.0"
 androidx-security = "1.1.0"
-androidx-workmanager = "2.11.2"
+androidx-workmanager = "2.12.0"
 androidx-biometric = "1.1.0"
-androidx-annotation = "1.9.1"
+androidx-annotation = "1.11.0"
 androidx-splashscreen = "1.2.0"
-androidx-constraintlayout = "2.2.1"
+androidx-constraintlayout = "2.2.2"
 androidx-customview = "1.2.0"
 androidx-browser = "1.10.0"
 androidx-swiperefreshlayout = "1.2.0"
 androidx-profileinstaller = "1.4.1"
-androidx-webkit = "1.15.0"
-androidx-lifecycle = "2.10.0"
-androidx-emoji = "1.6.0"
-androidx-benchmark = "1.4.1"
+androidx-webkit = "1.17.1"
+androidx-lifecycle = "2.11.0"
+androidx-emoji = "1.7.0"
+androidx-startup = "1.2.0"
+androidx-benchmark = "1.5.0"
 androidx-metrics-performance = "1.0.0"
 
 # AndroidX Room & SQLite
-room = "2.8.4"
-sqlite = "2.6.2"
+room = "2.8.5"
+sqlite = "2.7.1"
 
 # AndroidX CameraX
-camerax = "1.6.0"
+camerax = "1.6.2"
 
 # AndroidX Testing
 androidx-test = "1.7.0"
 androidx-test-junit = "1.3.0"
 androidx-test-espresso = "3.7.0"
-androidx-test-uiautomator = "2.3.0"
-androidx-annotations = "1.9.1"
+androidx-test-uiautomator = "2.4.0"
+androidx-annotations = "1.11.0"
 
 # Google Play Services
-google-play-base = "18.10.0"
+google-play-base = "18.11.1"
 google-play-cronet = "18.1.1"
 google-play-review = "2.0.2"
-google-play-billing = "8.3.0"
+google-play-billing = "9.1.0"
 google-play-update = "2.1.0"
 google-play-installreferrer = "2.2"
 
 # Firebase
-firebase-bom = "34.11.0"
-firebase-config = "23.0.1"
-firebase-services-plugin = "4.4.4"
-firebase-crashlytics-plugin = "3.0.6"
+firebase-bom = "35.0.2"
+firebase-config = "24.0.0"
+firebase-services-plugin = "4.5.0"
+firebase-crashlytics-plugin = "3.0.8"
 firebase-performance-plugin = "2.0.2"
 
 # Networking
-okhttp = "5.3.2"
-okio = "3.17.0"
+okhttp = "5.5.0"
+okio = "3.18.2"
 centrifuge = "0.7.0"
-coil = "3.4.0"
+coil = "3.6.3"
 
 # TON
-chainkit = "0.3.22"
-walletCoreKotlin = "4.6.0"
+chainkit = "26.10.8"
+walletCoreKotlin = "4.8.4"
 ton = "0.5.0"
-ton-walletkit = "0.0.6"
 
 # DI
-koin = "4.2.0"
+koin = "4.2.2"
 
 # UI
-material = "1.13.0"
+material = "1.14.0"
 flexbox = "3.0.0"
 
 # Crypto & Security
-bcprov = "1.80"
+bcprov = "1.86"
 web3j = "5.0.0"
 
 # Utilities
@@ -109,23 +109,26 @@ cbor = "0.9"
 lottie = "6.7.1"
 
 # Navigation
-nav3 = "1.0.1"
-nav3ViewModel = "2.10.0"
+nav3 = "1.2.0"
+nav3ViewModel = "2.11.0"
 
 # ML
 barcode-scanning = "17.3.0"
 
 # Analytics
-aptabase = "0.0.8"
+aptabase = "0.1.0"
+branch = "5.21.3"
+linkrunner = "4.3.0"
 
 # Testing
 junit = "4.13.2"
+org-json = "20260814"
 leakcanary = "2.14"
-mockk = "1.13.13"
+mockk = "1.14.11"
 
 # Baseline Profile
-baselineprofile = "1.5.0-alpha03"
-runtime = "1.10.3"
+baselineprofile = "1.5.0"
+runtime = "1.12.1"
 
 
 [libraries]
@@ -158,6 +161,7 @@ kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collec
 # TON
 chainkit-sdk = { module = "com.tonapps.chainkit:lib-sdk", version.ref = "chainkit" }
 chainkit-models = { module = "com.tonapps.chainkit:core-chain-model", version.ref = "chainkit" }
+chainkit-op = { module = "com.tonapps.chainkit:core-op", version.ref = "chainkit" }
 chainkit-chain-ethereum = { module = "com.tonapps.chainkit:chain-ethereum", version.ref = "chainkit" }
 chainkit-chain-ton = { module = "com.tonapps.chainkit:chain-ton", version.ref = "chainkit" }
 chainkit-api = { module = "com.tonapps.chainkit:core-chain-api", version.ref = "chainkit" }
@@ -165,9 +169,9 @@ chainkit-swap = { module = "com.tonapps.chainkit:features-swap", version.ref = "
 chainkit-mnemonic = { module = "com.tonapps.chainkit:core-mnemonic", version.ref = "chainkit" }
 chainkit-net-json = { module = "com.tonapps.chainkit:core-net-json-rpc", version.ref = "chainkit" }
 chainkit-net-provider = { module = "com.tonapps.chainkit:core-net-provider", version.ref = "chainkit" }
+chainkit-os = { module = "com.tonapps.chainkit:core-os", version.ref = "chainkit" }
 walletcore = { module = "com.trustwallet:wallet-core-kotlin", version.ref = "walletCoreKotlin" }
 
-ton-walletkit = { module = "org.ton:walletkit", version.ref = "ton-walletkit" }
 ton-tvm = { module = "org.ton.kotlin:ton-kotlin-tvm", version.ref = "ton" }
 ton-crypto = { module = "org.ton.kotlin:ton-kotlin-crypto", version.ref = "ton" }
 ton-tlb = { module = "org.ton.kotlin:ton-kotlin-tlb", version.ref = "ton" }
@@ -223,6 +227,7 @@ androidx-lifecycle = { module = "androidx.lifecycle:lifecycle-runtime-ktx", vers
 androidx-lifecycleProcess = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycle" }
 androidx-lifecycleSavedState = { module = "androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "androidx-lifecycle" }
 androidx-emoji = { module = "androidx.emoji2:emoji2", version.ref = "androidx-emoji" }
+androidx-startup = { module = "androidx.startup:startup-runtime", version.ref = "androidx-startup" }
 androidx-benchmark = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "androidx-benchmark" }
 androidx-metrics-performance = { module = "androidx.metrics:metrics-performance", version.ref = "androidx-metrics-performance" }
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3" }
@@ -304,10 +309,13 @@ barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref =
 
 # Analytics
 aptabase = { module = "com.github.aptabase:aptabase-kotlin", version.ref = "aptabase" }
+branch-sdk = { module = "io.branch.sdk.android:library", version.ref = "branch" }
+linkrunner-sdk = { module = "io.linkrunner:android-sdk", version.ref = "linkrunner" }
 
 # Testing
-wallet-core-jvm = { module = "com.trustwallet:wallet-core-kotlin-jvm", version = "4.6.0" }
+wallet-core-jvm = { module = "com.trustwallet:wallet-core-kotlin-jvm", version.ref = "walletCoreKotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
+org-json = { module = "org.json:json", version.ref = "org-json" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }

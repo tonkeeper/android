@@ -17,7 +17,6 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
     private companion object {
         private const val SORT_PREFIX = "sort_"
         private const val PUSH_PREFIX = "push_"
-        private const val PURCHASE_PREFIX = "purchase_"
         private const val SETUP_HIDDEN_PREFIX = "setup_hidden_"
         private const val MIGRATION_OPENED_PREFIX = "migration_opened_"
         private const val LAST_UPDATED_PREFIX = "last_updated_"
@@ -113,15 +112,6 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         putBoolean(keyTelegramChannel(walletId), true)
     }
 
-    fun isPurchaseOpenConfirm(walletId: String, id: String): Boolean {
-        val key = keyPurchaseOpenConfirm(walletId, id)
-        return getInt(key, 0) == 0
-    }
-
-    fun disablePurchaseOpenConfirm(walletId: String, id: String) {
-        putInt(keyPurchaseOpenConfirm(walletId, id), 1)
-    }
-
     fun isDAppOpenConfirm(walletId: String, appHost: String): Boolean {
         return getBoolean(key(DAPP_CONFIRM_PREFIX, walletId, appHost), true)
     }
@@ -200,11 +190,6 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
 
     private fun keySpamStateTransaction(walletId: String, id: String): String {
         val key = key(SPAM_STATE_TRANSACTION_PREFIX, walletId)
-        return "$key$id"
-    }
-
-    private fun keyPurchaseOpenConfirm(walletId: String, id: String): String {
-        val key = key(PURCHASE_PREFIX, walletId)
         return "$key$id"
     }
 

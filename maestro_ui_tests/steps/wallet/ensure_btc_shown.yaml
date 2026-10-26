@@ -1,0 +1,35 @@
+# Leaves BTC shown on the home asset list, turning it back on in Manage when a
+# run that hid it failed before showing it again. The hidden flag lives on the
+# backend for the whole wallet, so one such run broke portfolio, swap and send
+# on every later night, on both platforms (Android and iOS share the Cloud
+# wallet).
+#
+# Home is the only readable state (the Manage eye has none), so BTC counts as
+# hidden when a full scroll of the expanded list does not reach it. The check
+# after flipping catches a wrong guess instead of leaving BTC hidden silently.
+appId: com.ton_keeper.debug
+---
+- runFlow: launch_app_ensure_multichain_wallet.yaml
+- runFlow: expand_home_assets.yaml
+# 30 s: ~5 s per scroll round trip on an emulator; BTC sits past the fold.
+- scrollUntilVisible:
+    element:
+      text: "^BTC$"
+    direction: DOWN
+    timeout: 30000
+    optional: true
+
+- runFlow:
+    when:
+      notVisible: "^BTC$"
+    commands:
+      - runFlow: launch_app_ensure_multichain_wallet.yaml
+      - runFlow: toggle_btc_in_manage.yaml
+      - runFlow: launch_app_ensure_multichain_wallet.yaml
+      - runFlow: expand_home_assets.yaml
+      - scrollUntilVisible:
+          element:
+            text: "^BTC$"
+          direction: DOWN
+          timeout: 30000
+          label: "BTC is back on home after turning it on in Manage"

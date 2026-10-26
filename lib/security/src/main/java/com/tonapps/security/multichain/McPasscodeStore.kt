@@ -22,6 +22,9 @@ class McPasscodeStore(
     val isSessionUnlocked: Boolean
         get() = sessionKeyStore.isUnlocked
 
+    val canRestoreSession: Boolean
+        get() = sessionKeyCipher.isSupported
+
     suspend fun hasVault(): Boolean = mutex.withLock {
         withContext(Dispatchers.IO) {
             storage.getEncryptedMasterKey() != null

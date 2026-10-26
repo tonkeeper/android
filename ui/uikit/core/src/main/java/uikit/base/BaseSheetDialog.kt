@@ -9,6 +9,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import uikit.R
+import uikit.extensions.setMoonOnClickListener
 
 @Deprecated("Use BaseFragment with BottomSheet interface instead")
 open class BaseSheetDialog(
@@ -31,7 +32,7 @@ open class BaseSheetDialog(
         titleView = super.findViewById(R.id.header_title)!!
 
         closeView = super.findViewById(R.id.close)!!
-        closeView.setOnClickListener {
+        closeView.setMoonOnClickListener {
             dismiss()
         }
 

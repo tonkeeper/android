@@ -23,7 +23,7 @@ class WcSessionsFragment : ComposableFragment(), BaseFragment.BottomSheet {
                 onExploreApps = {
                     val delegate = context?.navigationDelegate
                     navigation?.popToRoot()
-                    delegate?.onProcessDeeplink("tonkeeper://browser")
+                    delegate?.onProcessDeeplink("tonkeeper://browser?from=connected_apps")
                 },
             )
         }

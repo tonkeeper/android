@@ -22,7 +22,6 @@ import com.tonapps.extensions.writeEnum
 import com.tonapps.extensions.writeNullableInt
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.lib.blockchain.R
 import com.tonapps.tonkeeper.manager.apk.APKManager
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
@@ -146,13 +145,12 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val wallet: WalletEntity,
         val status: Status,
         val hiddenBalance: Boolean,
-        val hasBackup: Boolean,
-        val balanceType: Int,
         val lastUpdatedFormat: String,
         val batteryBalance: Coins,
         val showBattery: Boolean,
         val batteryEmptyState: BatteryView.EmptyState,
-        val prefixYourAddress: Boolean
+        val prefixYourAddress: Boolean,
+        val stale: Boolean = false,
     ): Item(TYPE_BALANCE) {
 
         val address: String
@@ -169,8 +167,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             parcel.readParcelableCompat()!!,
             parcel.readEnum(Status::class.java)!!,
             parcel.readBooleanCompat(),
-            parcel.readBooleanCompat(),
-            parcel.readInt(),
             parcel.readString()!!,
             parcel.readParcelableCompat()!!,
             parcel.readBooleanCompat(),
@@ -183,8 +179,6 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeParcelable(wallet, flags)
             dest.writeEnum(status)
             dest.writeBooleanCompat(hiddenBalance)
-            dest.writeBooleanCompat(hasBackup)
-            dest.writeInt(balanceType)
             dest.writeString(lastUpdatedFormat)
             dest.writeParcelable(batteryBalance, flags)
             dest.writeBooleanCompat(showBattery)
@@ -265,11 +259,13 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
         val wallet: WalletEntity,
         val nfts: List<NftEntity>,
         val allHidden: Boolean = false,
+        val hiddenBalance: Boolean,
     ): Item(TYPE_COLLECTIBLES) {
 
         constructor(parcel: Parcel) : this(
             parcel.readParcelableCompat()!!,
             parcel.readArrayCompat(NftEntity::class.java)?.toList() ?: emptyList(),
+            parcel.readBooleanCompat(),
             parcel.readBooleanCompat(),
         )
 
@@ -277,6 +273,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             dest.writeParcelable(wallet, flags)
             dest.writeArrayCompat(nfts.toTypedArray())
             dest.writeBooleanCompat(allHidden)
+            dest.writeBooleanCompat(hiddenBalance)
         }
 
         companion object CREATOR : Parcelable.Creator<Collectibles> {
@@ -461,7 +458,11 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             balance = token.balance.value,
             balanceFormat = CurrencyFormatter.format(value = token.balance.uiBalance, compact = true),
             fiat = token.fiat,
-            fiatFormat = if (testnet) "" else CurrencyFormatter.formatFiat(currencyCode, token.fiat, compact = true),
+            fiatFormat = if (testnet) {
+                ""
+            } else {
+                CurrencyFormatter.formatFiat(currencyCode, token.fiat, compact = true)
+            },
             rate = if (token.isUsdt || token.isTrc20) {
                 CurrencyFormatter.formatFiat(
                     currency = currencyCode,
@@ -695,6 +696,7 @@ sealed class Item(type: Int): BaseListItem(type), Parcelable {
             const val TYPE_TELEGRAM_CHANNEL = 2
             const val TYPE_SAFE_MODE = 3
             const val TYPE_STORIES = 4
+            const val TYPE_BACKUP = 5
 
             @JvmField
             val CREATOR = object : Parcelable.Creator<SetupLink> {

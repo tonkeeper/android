@@ -11,6 +11,9 @@ import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.Constants
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONObject
 
 @Parcelize
@@ -36,7 +39,6 @@ data class ConfigEntity(
     val faqUrl: String,
     val aptabaseEndpoint: String,
     val aptabaseAppKey: String,
-    val scamEndpoint: String,
     val batteryHost: String,
     val batteryTestnetHost: String,
     val batteryBeta: Boolean,
@@ -53,7 +55,6 @@ data class ConfigEntity(
     val toncenterSSETestnetEndpoint: String,
     val iapPackages: List<IAPPackageEntity>,
     val burnZeroDomain: String,
-    val scamAPIURL: String,
     val reportAmount: Coins,
     val stories: List<String>,
     val apkDownloadUrl: String?,
@@ -70,7 +71,12 @@ data class ConfigEntity(
     val termsOfUseUrl: String,
     val webSwapsUrl: String,
     val tronFeeFaqUrl: String,
+    val earnUrl: String,
+    val earnFeaturedVaults: String,
     val explorers: List<ExplorerEntity> = ExplorerEntity.defaults,
+    val multichainDomain: String = Constants.MULTICHAIN_API,
+    val multichainRealtime: String = Constants.REALTIME_WS,
+    val tradingDomain: String = Constants.TRADING_API,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -80,6 +86,37 @@ data class ConfigEntity(
     @IgnoredOnParcel
     val domains: List<String> by lazy {
         listOf(tonapiMainnetHost, tonapiTestnetHost, tonapiSSEEndpoint, tonapiSSETestnetEndpoint, tonConnectBridgeHost, "https://tonapi.io/", "https://toncenterproxy.tonapi.io/")
+    }
+
+    @IgnoredOnParcel
+    val multichainApiUrl: String by lazy {
+        multichainDomain.httpsUrlOr(Constants.MULTICHAIN_API).toString().removeSuffix("/")
+    }
+
+    @IgnoredOnParcel
+    val multichainOrigin: String by lazy {
+        multichainDomain.httpsUrlOr(Constants.MULTICHAIN_API).newBuilder()
+            .encodedPath("/")
+            .query(null)
+            .fragment(null)
+            .build()
+            .toString()
+            .removeSuffix("/")
+    }
+
+    @IgnoredOnParcel
+    val tradingApiUrl: String by lazy {
+        tradingDomain.httpsUrlOr(Constants.TRADING_API).toString().removeSuffix("/")
+    }
+
+    @IgnoredOnParcel
+    val realtimeUrl: String by lazy {
+        val uri = multichainRealtime.toUri()
+        if (uri.scheme == "wss" && !uri.host.isNullOrBlank()) {
+            multichainRealtime
+        } else {
+            Constants.REALTIME_WS
+        }
     }
 
     @IgnoredOnParcel
@@ -115,7 +152,6 @@ data class ConfigEntity(
         faqUrl = json.getString("faq_url"),
         aptabaseEndpoint = json.getString("aptabaseEndpoint"),
         aptabaseAppKey = json.getString("aptabaseAppKey"),
-        scamEndpoint = json.optString("scamEndpoint", "https://scam.tonkeeper.com"),
         batteryHost = json.optString("batteryHost", "https://battery.tonkeeper.com"),
         batteryTestnetHost = json.optString("batteryTestnetHost", "https://testnet-battery.tonkeeper.com"),
         batteryBeta = json.optBoolean("battery_beta", true),
@@ -134,7 +170,6 @@ data class ConfigEntity(
             (0 until array.length()).map { IAPPackageEntity(array.getJSONObject(it)) }
         } ?: emptyList(),
         burnZeroDomain = json.optString("burnZeroDomain", "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"), // tonkeeper-zero.ton
-        scamAPIURL = json.optString("scam_api_url", "https://scam.tonkeeper.com"),
         reportAmount = Coins.of(json.optString("reportAmount") ?: "0.03"),
         stories = json.getJSONArray("stories").toStringList(),
         apkDownloadUrl = json.optString("apk_download_url"),
@@ -147,7 +182,7 @@ data class ConfigEntity(
             QRScannerExtendsEntity.of(array)
         } ?: emptyList(),
         region = json.getString("region"),
-        tonkeeperApiUrl = json.optString("tonkeeper_api_url", "https://api.tonkeeper.com"),
+        tonkeeperApiUrl = json.optString("tonkeeper_api_url", Constants.TONKEEPER_API),
         tronSwapUrl = json.optString("tron_swap_url", "https://widget.letsexchange.io/en?affiliate_id=ffzymmunvvyxyypo&coin_from=ton&coin_to=USDT-TRC20&is_iframe=true"),
         tronSwapTitle = json.optString("tron_swap_title", "LetsExchange"),
         // tronApiKey = json.optString("tron_api_key"),
@@ -155,7 +190,12 @@ data class ConfigEntity(
         termsOfUseUrl = json.getString("terms_of_use"),
         webSwapsUrl = json.optString("web_swaps_url", Constants.SWAP_API),
         tronFeeFaqUrl = json.getString("faq_tron_fee_url"),
+        earnUrl = json.optString("earn_url", ""),
+        earnFeaturedVaults = json.optJSONArray("earn_featured_vaults")?.toString() ?: "[]",
         explorers = ExplorerEntity.of(json.optJSONArray("explorers")),
+        multichainDomain = json.optJSONObject("multichain")?.optString("domain").orEmpty(),
+        multichainRealtime = json.optJSONObject("multichain")?.optString("realtime").orEmpty(),
+        tradingDomain = json.optJSONObject("trading")?.optString("domain").orEmpty(),
     )
 
     constructor() : this(
@@ -180,7 +220,6 @@ data class ConfigEntity(
         faqUrl = "https://tonkeeper.helpscoutdocs.com/",
         aptabaseEndpoint = "https://anonymous-analytics.tonkeeper.com",
         aptabaseAppKey = "A-SH-4314447490",
-        scamEndpoint = "https://scam.tonkeeper.com",
         batteryHost = "https://battery.tonkeeper.com",
         batteryTestnetHost = "https://testnet-battery.tonkeeper.com",
         batteryBeta = true,
@@ -197,7 +236,6 @@ data class ConfigEntity(
         toncenterSSETestnetEndpoint = "https://testnet.tonapi.io/streaming/v2/sse",
         iapPackages = emptyList(),
         burnZeroDomain = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ",
-        scamAPIURL = "https://scam.tonkeeper.com",
         reportAmount = Coins.of("0.03"),
         stories = emptyList(),
         apkDownloadUrl = null,
@@ -206,14 +244,19 @@ data class ConfigEntity(
         enabledStaking = emptyList(),
         qrScannerExtends = emptyList(),
         region = "US",
-        tonkeeperApiUrl = "https://api.tonkeeper.com",
+        tonkeeperApiUrl = Constants.TONKEEPER_API,
         tronSwapUrl = "https://widget.letsexchange.io/en?affiliate_id=ffzymmunvvyxyypo&coin_from=ton&coin_to=USDT-TRC20&is_iframe=true",
         tronSwapTitle = "LetsExchange",
         privacyPolicyUrl = "https://tonkeeper.com/privacy",
         termsOfUseUrl = "https://tonkeeper.com/terms",
         webSwapsUrl = Constants.SWAP_API,
         tronFeeFaqUrl = "https://tonkeeper.helpscoutdocs.com/article/137-multichain",
+        earnUrl = "",
+        earnFeaturedVaults = "[]",
         explorers = ExplorerEntity.defaults,
+        multichainDomain = Constants.MULTICHAIN_API,
+        multichainRealtime = Constants.REALTIME_WS,
+        tradingDomain = Constants.TRADING_API,
     )
 
     fun explorerFor(chain: Chain): ExplorerEntity? =
@@ -224,6 +267,7 @@ data class ConfigEntity(
         return when (asset) {
             is Asset.Token -> explorer.formatToken(asset.contract.display)
             is Asset.Coin -> accountAddress?.let { explorer.formatAccount(it.display) }
+            is Asset.Battery -> null
         }
     }
 
@@ -244,4 +288,8 @@ data class ConfigEntity(
     companion object {
         val default = ConfigEntity()
     }
+}
+
+private fun String.httpsUrlOr(fallback: String): HttpUrl {
+    return toHttpUrlOrNull()?.takeIf { it.isHttps } ?: fallback.toHttpUrl()
 }

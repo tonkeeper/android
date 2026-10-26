@@ -9,6 +9,7 @@ import com.tonapps.signer.R
 import com.tonapps.signer.screen.create.CreateFragment
 import uikit.base.BaseFragment
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setMoonOnClickListener
 
 class IntroFragment: BaseFragment(R.layout.fragment_intro) {
 
@@ -30,10 +31,10 @@ class IntroFragment: BaseFragment(R.layout.fragment_intro) {
         }
 
         newKeyButton = view.findViewById(R.id.new_key)
-        newKeyButton.setOnClickListener { openCreateFragment(false) }
+        newKeyButton.setMoonOnClickListener { openCreateFragment(false) }
 
         importKeyButton = view.findViewById(R.id.import_key)
-        importKeyButton.setOnClickListener { openCreateFragment(true) }
+        importKeyButton.setMoonOnClickListener { openCreateFragment(true) }
     }
 
     private fun openCreateFragment(import: Boolean) {

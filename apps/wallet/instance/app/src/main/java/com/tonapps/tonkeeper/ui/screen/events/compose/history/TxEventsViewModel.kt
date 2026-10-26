@@ -8,6 +8,7 @@ import androidx.paging.cachedIn
 import androidx.paging.filter
 import androidx.paging.insertSeparators
 import androidx.paging.map
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.DepositFragment
 import com.tonapps.deposit.DepositRoutes
 import com.tonapps.deposit.screens.method.RampAsset
@@ -245,13 +246,18 @@ class TxEventsViewModel(
 
     fun openBuyTon() {
         viewModelScope.launch {
-            openScreen(DepositFragment.create(DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON))))
+            openScreen(
+                DepositFragment.create(
+                    DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON)),
+                    analyticsFrom = DepositFlowFrom.HistoryScreen,
+                )
+            )
         }
     }
 
     fun openReceive() {
         viewModelScope.launch {
-            openScreen(QrAssetFragment.newInstance())
+            openScreen(QrAssetFragment.newInstance(analyticsFrom = DepositFlowFrom.HistoryScreen))
         }
     }
 

@@ -7,6 +7,7 @@ import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowBuyAsset
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowNetwork
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 
 /**
  * Auto-generated from OpenAPI analytics schemas.
@@ -26,8 +27,17 @@ class DepositFlowImpl(
      * User entered the Add Funds screen
      */
     @AnyThread
-    override fun depositStarted(from: DepositFlowFrom, availableOptions: String) {
-        trackEvent("deposit_started", hashMapOf("from" to from.key, "available_options" to availableOptions))
+    override fun depositStarted(
+        from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
+        availableOptions: String
+    ) {
+        val props = hashMapOf(
+            "from" to from.key,
+            "wallet_mode" to walletMode.key,
+            "available_options" to availableOptions
+        )
+        trackEvent("deposit_started", props)
     }
 
     /**
@@ -36,8 +46,17 @@ class DepositFlowImpl(
      * User tapped an option on the Add Funds screen
      */
     @AnyThread
-    override fun depositOptionClick(from: DepositFlowFrom, addFundsOption: DepositFlowAddFundsOption) {
-        trackEvent("deposit_option_click", hashMapOf("from" to from.key, "add_funds_option" to addFundsOption.key))
+    override fun depositOptionClick(
+        from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
+        addFundsOption: DepositFlowAddFundsOption
+    ) {
+        val props = hashMapOf(
+            "from" to from.key,
+            "wallet_mode" to walletMode.key,
+            "add_funds_option" to addFundsOption.key
+        )
+        trackEvent("deposit_option_click", props)
     }
 
     /**
@@ -48,11 +67,13 @@ class DepositFlowImpl(
     @AnyThread
     override fun depositViewReceiveTokens(
         from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
         addFundsOption: DepositFlowAddFundsOption,
         network: DepositFlowNetwork
     ) {
         val props = hashMapOf(
             "from" to from.key,
+            "wallet_mode" to walletMode.key,
             "add_funds_option" to addFundsOption.key,
             "network" to network.key
         )
@@ -75,8 +96,17 @@ class DepositFlowImpl(
      * User was sent to the external Wallet P2P flow
      */
     @AnyThread
-    override fun depositContinueToP2pMarket(from: DepositFlowFrom, addFundsOption: DepositFlowAddFundsOption) {
-        trackEvent("deposit_continue_to_p2p_market", hashMapOf("from" to from.key, "add_funds_option" to addFundsOption.key))
+    override fun depositContinueToP2pMarket(
+        from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
+        addFundsOption: DepositFlowAddFundsOption
+    ) {
+        val props = hashMapOf(
+            "from" to from.key,
+            "wallet_mode" to walletMode.key,
+            "add_funds_option" to addFundsOption.key
+        )
+        trackEvent("deposit_continue_to_p2p_market", props)
     }
 
     /**
@@ -110,12 +140,14 @@ class DepositFlowImpl(
     @AnyThread
     override fun depositViewSendAsset(
         from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
         addFundsOption: DepositFlowAddFundsOption,
         sellAsset: String,
         buyAsset: String
     ) {
         val props = hashMapOf(
             "from" to from.key,
+            "wallet_mode" to walletMode.key,
             "add_funds_option" to addFundsOption.key,
             "sell_asset" to sellAsset,
             "buy_asset" to buyAsset
@@ -132,12 +164,14 @@ class DepositFlowImpl(
     @AnyThread
     override fun depositViewQrCode(
         from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
         addFundsOption: DepositFlowAddFundsOption,
         sellAsset: String,
         buyAsset: String
     ) {
         val props = hashMapOf(
             "from" to from.key,
+            "wallet_mode" to walletMode.key,
             "add_funds_option" to addFundsOption.key,
             "sell_asset" to sellAsset,
             "buy_asset" to buyAsset
@@ -320,6 +354,7 @@ class DepositFlowImpl(
     @AnyThread
     override fun depositContinueToRampProvider(
         from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
         addFundsOption: DepositFlowAddFundsOption,
         buyAsset: String,
         sellAsset: String,
@@ -330,6 +365,7 @@ class DepositFlowImpl(
     ) {
         val props = hashMapOf(
             "from" to from.key,
+            "wallet_mode" to walletMode.key,
             "add_funds_option" to addFundsOption.key,
             "buy_asset" to buyAsset,
             "sell_asset" to sellAsset,

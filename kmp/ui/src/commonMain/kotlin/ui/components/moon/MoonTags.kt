@@ -33,9 +33,9 @@ fun MoonTag(
     val colors = UIKit.colorScheme
     Row(
         modifier = modifier
-            .clip(Shapes.medium)
             .clickable(onClick = { onClick?.invoke() })
             .height(Dimens.sizeAction)
+            .clip(Shapes.medium)
             .background(colors.buttonSecondary.primaryBackground)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

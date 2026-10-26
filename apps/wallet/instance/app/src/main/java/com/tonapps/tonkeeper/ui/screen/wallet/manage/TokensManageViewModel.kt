@@ -41,7 +41,7 @@ class TokensManageViewModel(
                 prefs = settingsRepository.getTokenPrefs(wallet.id, token.address, token.blacklist),
                 accountId = wallet.accountId,
             )
-        }.filter { !it.isTon }
+        }
     }
 
     private val _uiItemsFlow = MutableStateFlow<List<Item>>(emptyList())
@@ -50,10 +50,10 @@ class TokensManageViewModel(
     init {
         tokensFlow.map { tokens ->
             val hiddenBalance = settingsRepository.hiddenBalances
-            val pinnedTokens = tokens.filter { it.pinned }.sortedBy {
-                it.index
-            }
+            val pinnedTokens = tokens.filter { it.pinned }
+                .sortedWith(AssetsExtendedEntity.comparator)
             val otherTokens = tokens.filter { !it.pinned }
+                .sortedWith(AssetsExtendedEntity.comparator)
 
             val items = mutableListOf<Item>()
             if (pinnedTokens.isNotEmpty()) {

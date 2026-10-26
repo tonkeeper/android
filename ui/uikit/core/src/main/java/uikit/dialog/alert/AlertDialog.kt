@@ -15,6 +15,8 @@ import uikit.base.BaseDialog
 import uikit.extensions.dp
 import uikit.extensions.scale
 import uikit.extensions.setTextOrGone
+import uikit.extensions.setMoonOnClickListener
+import uikit.extensions.swallowClicks
 
 class AlertDialog private constructor(
     context: Context,
@@ -49,10 +51,10 @@ class AlertDialog private constructor(
         rootView = findViewById(R.id.alert_root)
 
         outsideView = findViewById(R.id.alert_outside)
-        outsideView.setOnClickListener { dismiss() }
+        outsideView.setMoonOnClickListener(scale = false) { dismiss() }
 
         bodyView = findViewById(R.id.alert_body)
-        bodyView.setOnClickListener {  }
+        bodyView.swallowClicks()
 
         titleView = findViewById(R.id.alert_title)
         titleView.setTextOrGone(params.title)
@@ -88,7 +90,7 @@ class AlertDialog private constructor(
         }
         view.visibility = View.VISIBLE
         view.text = button.title
-        view.setOnClickListener {
+        view.setMoonOnClickListener {
             if (isShowing) {
                 button.action?.invoke(this)
                 dismiss()

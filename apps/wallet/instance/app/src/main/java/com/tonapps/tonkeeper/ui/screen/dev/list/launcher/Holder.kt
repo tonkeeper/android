@@ -7,6 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListHolder
 import uikit.widget.RadioView
+import uikit.extensions.setMoonOnClickListener
 
 class Holder(
     parent: ViewGroup,
@@ -18,7 +19,7 @@ class Holder(
     private val radio = findViewById<RadioView>(R.id.radio)
 
     init {
-        itemView.setOnClickListener { radio.toggle() }
+        itemView.setMoonOnClickListener { radio.toggle() }
     }
 
     override fun onBind(item: Item) {

@@ -12,6 +12,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class EthenaMethodHolder(parent: ViewGroup) :
     Holder<Item.EthenaMethod>(parent, R.layout.view_ethena_method) {
@@ -24,8 +25,8 @@ class EthenaMethodHolder(parent: ViewGroup) :
     override fun onBind(item: Item.EthenaMethod) {
         itemView.background = item.position.drawable(context)
 
-        itemView.setOnClickListener { openDapp(item) }
-        openButtonView.setOnClickListener { openDapp(item) }
+        itemView.setMoonOnClickListener { openDapp(item) }
+        openButtonView.setMoonOnClickListener { openDapp(item) }
 
         titleView.text = getString(Localization.deposit_and_stake)
         apyView.text = context.getString(Localization.ethena_operated_by, item.name)

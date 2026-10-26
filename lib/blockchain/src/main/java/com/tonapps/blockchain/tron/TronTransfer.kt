@@ -10,27 +10,27 @@ data class TronTransfer(
     val from: String,
     val to: String,
     val amount: BigInteger,
-    val function: String,
-    val contractAddress: String
+    val contractAddress: String,
 ) {
-    val data: String
+    val function: String
+        get() = "$NAME(address,uint256)"
+
+    val callData: String
         get() {
             val function = Function(
-                "transfer",
+                NAME,
                 listOf(Address(to.toEvmHex()), Uint256(amount)),
                 emptyList()
             )
 
-            val encoded = FunctionEncoder.encode(function)
-            return encoded.removePrefix("0x").substring(8)
+            return FunctionEncoder.encode(function).removePrefix("0x")
         }
 
+    val data: String
+        get() = callData.substring(8)
 
-    constructor(from: String, to: String, amount: BigInteger, contractAddress: String) : this(
-        from = from,
-        to = to,
-        amount = amount,
-        function = "transfer(address,uint256)",
-        contractAddress = contractAddress
-    )
+    private companion object {
+
+        const val NAME = "transfer"
+    }
 }

@@ -10,6 +10,7 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class FooterHolder(parent: ViewGroup): Holder<Item.SafeMode>(parent, R.layout.view_item_safemode) {
 
@@ -29,7 +30,7 @@ class FooterHolder(parent: ViewGroup): Holder<Item.SafeMode>(parent, R.layout.vi
     }
 
     override fun onBind(item: Item.SafeMode) {
-        view.setOnClickListener { openSecurityScreen(item.wallet) }
+        view.setMoonOnClickListener { openSecurityScreen(item.wallet) }
     }
 
 }

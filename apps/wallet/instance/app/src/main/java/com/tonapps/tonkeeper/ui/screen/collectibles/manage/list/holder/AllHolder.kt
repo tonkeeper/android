@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.tonapps.tonkeeper.ui.screen.collectibles.manage.list.Item
 import com.tonapps.tonkeeperx.R
+import uikit.extensions.setMoonOnClickListener
 
 class AllHolder(
     parent: ViewGroup,
@@ -13,7 +14,7 @@ class AllHolder(
     private val button = findViewById<View>(R.id.button)
 
     init {
-        button.setOnClickListener { showAllClick() }
+        button.setMoonOnClickListener { showAllClick() }
     }
 
     override fun onBind(item: Item.All) {

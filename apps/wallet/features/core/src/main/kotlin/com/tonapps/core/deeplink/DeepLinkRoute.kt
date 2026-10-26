@@ -9,6 +9,7 @@ import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
+import com.tonapps.chainkit.core.chain.model.account.TokenType
 import com.tonapps.core.components.tokenAssetId
 import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.fullPathOrNull
@@ -23,6 +24,7 @@ import com.tonapps.wallet.data.multichain.account.jettonAssetId
 import com.tonapps.wallet.data.multichain.account.tonCoinAssetId
 import org.ton.cell.Cell
 import org.ton.kotlin.crypto.PublicKeyEd25519
+import java.math.BigDecimal
 import java.math.BigInteger
 
 private const val MYSTERY_RAFFLE_SLUG = "mystery_raffle"
@@ -276,6 +278,34 @@ sealed class DeepLinkRoute {
         }
     }
 
+    data class SolanaTransfer(
+        val recipient: String,
+        val mint: String?,
+        val amount: BigDecimal?,
+    ): DeepLinkRoute() {
+
+        val assetId: String
+            get() {
+                val chain = Chain.Solana.Mainnet
+                // A mint is base58, so unlike an EVM contract its case is part of it.
+                return if (mint == null) {
+                    chain.coinAssetId
+                } else {
+                    "${chain.network.type.id}/${chain.network.mode.id}/${TokenType.SPL.id}/$mint"
+                }
+            }
+
+        /** [amount] in base units, or null when it has more fraction digits than the asset carries. */
+        fun baseUnits(decimals: Int): BigInteger? {
+            val value = amount ?: return null
+            return try {
+                value.movePointRight(decimals).toBigIntegerExact()
+            } catch (e: ArithmeticException) {
+                null
+            }
+        }
+    }
+
     data class PickWallet(val walletId: String): DeepLinkRoute() {
 
         constructor(uri: Uri) : this(
@@ -308,6 +338,39 @@ sealed class DeepLinkRoute {
             id = uri.pathOrNull ?: throw IllegalArgumentException("Story id is required")
         )
 
+    }
+
+    sealed class Perps : DeepLinkRoute() {
+
+        abstract val fromBanner: Boolean
+
+        data class Home(override val fromBanner: Boolean = false) : Perps()
+
+        data class Market(val marketIndex: Int, override val fromBanner: Boolean = false) : Perps()
+
+        data class AutoClose(val marketIndex: Int, override val fromBanner: Boolean = false) : Perps()
+
+        companion object {
+
+            const val ENTRY_POINT_QUERY = "entry_point"
+            const val MAIN_BANNER = "main_banner"
+
+            fun of(uri: Uri): Perps {
+                val fromBanner = uri.query(ENTRY_POINT_QUERY) == MAIN_BANNER
+                val segments = uri.pathSegments
+                if (segments.isEmpty()) {
+                    return Home(fromBanner)
+                }
+                require(segments.first() == "market" && segments.size >= 2) { "Unknown perps path" }
+                val marketIndex = segments[1].toIntOrNull()?.takeIf { it >= 0 }
+                    ?: throw IllegalArgumentException("Invalid market id")
+                return if (segments.getOrNull(2) == "auto-close") {
+                    AutoClose(marketIndex, fromBanner)
+                } else {
+                    Market(marketIndex, fromBanner)
+                }
+            }
+        }
     }
 
     data class AddWallet(val raffleSourceWalletId: String? = null): DeepLinkRoute() {
@@ -400,6 +463,9 @@ sealed class DeepLinkRoute {
     companion object {
 
         private const val PREFIX = "tonkeeper://"
+        private const val KEEPER_PREFIX = "keeper://"
+        private val UNIVERSAL_HOSTS = setOf("app.tonkeeper.com", "app.keeperwallet.com")
+        private val IN_APP_SCHEMES = setOf("tonkeeper", "keeper", "ton", "tc")
 
         fun resolve(input: Uri): DeepLinkRoute {
             if (input.scheme.equals("wc", ignoreCase = true)) {
@@ -407,6 +473,7 @@ sealed class DeepLinkRoute {
             }
 
             EthereumTransferLink.parse(input.toString())?.let { return it }
+            SolanaTransferLink.parse(input.toString())?.let { return it }
 
             val uri = normalize(input)
             val from = input.query("from") ?: "deep-link"
@@ -462,6 +529,7 @@ sealed class DeepLinkRoute {
                     "asset", "assets" -> Asset(uri)
                     "story", "stories" -> Story(uri)
                     "raffle", "raffles" -> Raffle(uri)
+                    "perps" -> Perps.of(uri)
                     "migrate" -> Migrate(from)
                     "add-wallet" -> AddWallet(uri)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
@@ -472,11 +540,18 @@ sealed class DeepLinkRoute {
         }
 
         fun normalize(uri: Uri): Uri {
-            return uri.toString()
-                .replace("ton://", PREFIX)
-                .replace("https://app.tonkeeper.com/", PREFIX)
-                .replace("http://app.tonkeeper.com/", PREFIX)
-                .replace("app://tonkeeper.com/", PREFIX)
+            val raw = uri.toString()
+            val tonkeeperValue = if (raw.startsWith(KEEPER_PREFIX, ignoreCase = true)) {
+                PREFIX + raw.substring(KEEPER_PREFIX.length)
+            } else {
+                raw
+            }
+            return UNIVERSAL_HOSTS.fold(tonkeeperValue.replace("ton://", PREFIX)) { value, host ->
+                value
+                    .replace("https://$host/", PREFIX)
+                    .replace("http://$host/", PREFIX)
+                    .replace("app://${host.removePrefix("app.")}/", PREFIX)
+            }
                 .replace("tc://", "${PREFIX}/ton-connect")
                 .replace("///", "//")
                 .toUri()
@@ -484,9 +559,32 @@ sealed class DeepLinkRoute {
 
         fun isAppLink(url: String): Boolean {
             return url.startsWith(PREFIX) ||
+                url.startsWith(KEEPER_PREFIX) ||
                 url.startsWith("ton://") ||
                 url.startsWith("wc:") ||
-                url.startsWith("https://app.tonkeeper.com")
+                UNIVERSAL_HOSTS.any { url.startsWith("https://$it") }
+        }
+
+        fun isUniversalHost(host: String?): Boolean {
+            return host != null && host.lowercase() in UNIVERSAL_HOSTS
+        }
+
+        fun isInApp(uri: Uri): Boolean {
+            return uri.scheme in IN_APP_SCHEMES || isUniversalHost(uri.host)
+        }
+
+        // Perps pushes (TK-4064) send a bare path such as "/perps/market/1".
+        fun pushLink(data: (String) -> String?): Uri? {
+            return listOfNotNull(data("link"), data("deeplink"))
+                .map { link ->
+                    if (link.startsWith("/")) {
+                        PREFIX + link.removePrefix("/")
+                    } else {
+                        link
+                    }
+                }
+                .firstOrNull(::isAppLink)
+                ?.toUriOrNull()
         }
 
         private fun normalizeNetwork(value: String?): String? {

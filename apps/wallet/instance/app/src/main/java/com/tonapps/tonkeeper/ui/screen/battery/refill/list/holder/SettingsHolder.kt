@@ -6,8 +6,8 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.screen.battery.refill.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
-import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class SettingsHolder(
     parent: ViewGroup,
@@ -18,12 +18,12 @@ class SettingsHolder(
 
     override fun onBind(item: Item.Settings) {
         itemView.background = ListCell.Position.SINGLE.drawable(context)
-        itemView.setOnClickListener { openSettings() }
+        itemView.setMoonOnClickListener { openSettings() }
         if (item.supportedTransactions.isEmpty()) {
             subtitleView.visibility = View.GONE
         } else {
             subtitleView.visibility = View.VISIBLE
-            subtitleView.text = context.getString(Localization.battery_refill_subtitle)
+            subtitleView.text = context.getString(item.captionRes)
         }
     }
 }

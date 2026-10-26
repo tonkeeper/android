@@ -60,6 +60,7 @@ data class PriceLevelMarkersOptions(
     val crosshairHorizontalVisible: Boolean? = null,
     val crosshairLabelVisible: Boolean? = null,
     val crosshairDotOnSeries: Boolean? = null,
+    val pinnedTagsBottomY: Double? = null,
 ) {
 
     @Serializable

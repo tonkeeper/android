@@ -2,7 +2,6 @@ package com.tonapps.blockchain.tron
 
 import com.google.protobuf.ByteString
 import com.tonapps.blockchain.tron.proto.Chain.Transaction
-import com.tonapps.blockchain.tron.proto.Contract
 import org.json.JSONArray
 import org.json.JSONObject
 import org.web3j.crypto.ECKeyPair
@@ -10,29 +9,16 @@ import org.web3j.crypto.Sign
 import java.math.BigInteger
 import java.security.MessageDigest
 
-data class TronTransaction(private val tx: Transaction) {
-    companion object {
-        private fun parseTransactionFromJson(json: JSONObject): Transaction {
-            val rawDataHex = json.getString("raw_data_hex")
+class TronTransaction private constructor(private val tx: Transaction) {
 
-            val rawBytes = rawDataHex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-            val rawData = Transaction.raw.parseFrom(rawBytes)
-
-            return Transaction.newBuilder()
-                .setRawData(rawData)
-                .build()
-        }
-    }
-
-    constructor(json: JSONObject) : this(
-        tx = parseTransactionFromJson(json),
-    )
+    val contract: TronContract
+        get() = tx.rawData.toTronContract()
 
     val txId: String
         get() {
             val rawBytes = tx.rawData.toByteArray()
             val hash = MessageDigest.getInstance("SHA-256").digest(rawBytes)
-            return toHex(hash)
+            return hash.toTronHex()
         }
 
     val json: JSONObject
@@ -42,74 +28,56 @@ data class TronTransaction(private val tx: Transaction) {
 
     val rawDataHex: String
         get() {
-            return toHex(tx.rawData.toByteArray())
+            return tx.rawData.toByteArray().toTronHex()
         }
-
-    private fun toHex(array: ByteArray): String {
-        return array.joinToString("") { "%02x".format(it) }
-    }
 
     private fun toJSON(): JSONObject {
         val json = JSONObject()
 
         val rawData = tx.rawData
+        val contract = this.contract
 
         val rawJson = JSONObject().apply {
-            put("ref_block_bytes", toHex(rawData.refBlockBytes.toByteArray()))
-            put("ref_block_hash", toHex(rawData.refBlockHash.toByteArray()))
+            put("ref_block_bytes", rawData.refBlockBytes.toTronHex())
+            put("ref_block_hash", rawData.refBlockHash.toTronHex())
             put("expiration", rawData.expiration)
             put("timestamp", rawData.timestamp)
             if (rawData.feeLimit > 0) {
                 put("fee_limit", rawData.feeLimit)
             }
 
-            val contracts = JSONArray()
-            for (contract in rawData.contractList) {
-                val contractJson = JSONObject()
-                contractJson.put("type", contract.type.name)
-
-                val (parameter, typeUrl) = when (contract.type) {
-                    Transaction.Contract.ContractType.TriggerSmartContract -> {
-                        val unpacked =
-                            Contract.TriggerSmartContract.parseFrom(contract.parameter.value)
-                        JSONObject().apply {
-                            put("owner_address", toHex(unpacked.ownerAddress.toByteArray()))
-                            put("contract_address", toHex(unpacked.contractAddress.toByteArray()))
-                            put("data", toHex(unpacked.data.toByteArray()))
-                        } to "type.googleapis.com/protocol.TriggerSmartContract"
-                    }
-
-                    Transaction.Contract.ContractType.TransferContract -> {
-                        val unpacked =
-                            Contract.TransferContract.parseFrom(contract.parameter.value)
-                        JSONObject().apply {
-                            put("owner_address", toHex(unpacked.ownerAddress.toByteArray()))
-                            put("to_address", toHex(unpacked.toAddress.toByteArray()))
-                            put("amount", unpacked.amount)
-                        } to "type.googleapis.com/protocol.TransferContract"
-                    }
-
-                    else -> {
-                        throw IllegalArgumentException("Unsupported contract type: ${contract.type}")
-                    }
+            val parameter = when (contract) {
+                is TronContract.SmartContractCall -> JSONObject().apply {
+                    put("owner_address", contract.ownerAddress)
+                    put("contract_address", contract.contractAddress)
+                    put("data", contract.callData)
                 }
-                contractJson.put("parameter", JSONObject().apply {
-                    put("value", parameter)
-                    put("type_url", typeUrl)
-                })
-                contracts.put(contractJson)
+
+                is TronContract.Transfer -> JSONObject().apply {
+                    put("owner_address", contract.ownerAddress)
+                    put("to_address", contract.toAddress)
+                    put("amount", contract.amount)
+                }
             }
 
-            put("contract", contracts)
+            val contractJson = JSONObject().apply {
+                put("type", contract.typeName)
+                put("parameter", JSONObject().apply {
+                    put("value", parameter)
+                    put("type_url", contract.typeUrl)
+                })
+            }
+
+            put("contract", JSONArray().put(contractJson))
         }
 
         json.put("raw_data", rawJson)
-        json.put("raw_data_hex", toHex(rawData.toByteArray()))
+        json.put("raw_data_hex", rawData.toByteArray().toTronHex())
 
         if (tx.signatureCount > 0) {
             val signatures = JSONArray()
             for (sig in tx.signatureList) {
-                signatures.put(toHex(sig.toByteArray()))
+                signatures.put(sig.toTronHex())
             }
             json.put("signature", signatures)
         }
@@ -144,5 +112,27 @@ data class TronTransaction(private val tx: Transaction) {
         return TronTransaction(
             tx = tx.toBuilder().addSignature(ByteString.copyFrom(signatureBytes)).build()
         )
+    }
+
+    companion object {
+
+        fun fromNodeResponse(json: JSONObject, request: TronTransactionRequest): TronTransaction {
+            return fromRawDataHex(json.getString("raw_data_hex"), request)
+        }
+
+        fun fromRawDataHex(rawDataHex: String, request: TronTransactionRequest): TronTransaction {
+            val rawBytes = rawDataHex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+            val rawData = Transaction.raw.parseFrom(rawBytes)
+
+            val transaction = TronTransaction(
+                tx = Transaction.newBuilder()
+                    .setRawData(rawData)
+                    .build()
+            )
+
+            request.requireMatches(transaction.contract)
+
+            return transaction
+        }
     }
 }

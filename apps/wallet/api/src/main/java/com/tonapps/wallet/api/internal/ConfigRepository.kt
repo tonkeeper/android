@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private const val CONFIG_FILE_NAME = "config_all"
+private const val CONFIG_FILE_NAME = "config_all_v4"
+private val OLD_CONFIG_FILE_NAMES = listOf("config_all", "config_all_v2", "config_all_v3")
 
 internal class ConfigRepository(
     private val context: Context,
@@ -37,15 +38,16 @@ internal class ConfigRepository(
     var configTestnetEntity: ConfigEntity = ConfigEntity.default
         private set
 
-    var configTetraEntity: ConfigEntity = ConfigEntity.default
-        private set
-
     init {
         scope.launch(Dispatchers.IO) {
             val cached = readCache()
             if (cached != null) {
                 setConfig(cached)
             } else {
+                for (name in OLD_CONFIG_FILE_NAMES) {
+                    File(context.filesDir, name).delete()
+                    File(context.cacheDir, name).delete()
+                }
                 initConfig()
             }
         }
@@ -54,7 +56,6 @@ internal class ConfigRepository(
     private suspend fun setConfig(config: ConfigResponseEntity) = withContext(Dispatchers.Main) {
         configMainnetEntity = config.mainnet
         configTestnetEntity = config.testnet
-        configTetraEntity = config.tetra
         _stream.value = configMainnetEntity
     }
 
@@ -97,7 +98,6 @@ internal class ConfigRepository(
         val base = when (network) {
             TonNetwork.MAINNET -> configMainnetEntity
             TonNetwork.TESTNET -> configTestnetEntity
-            TonNetwork.TETRA -> configTetraEntity
         }
         return BootConfigOverrides.applyTo(base)
     }

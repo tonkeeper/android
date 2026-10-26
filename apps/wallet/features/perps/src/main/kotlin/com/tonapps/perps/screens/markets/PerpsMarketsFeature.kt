@@ -29,7 +29,6 @@ import java.math.BigDecimal
 
 interface PerpsMarketsViewState : MviViewState {
     val filter: StateFlow<PerpsMarketFilter>
-    val debouncedQuery: StateFlow<String>
     val sort: StateFlow<PerpsSort>
     val markets: Flow<PagingData<PerpMarket>>
     val livePrices: StateFlow<Map<String, BigDecimal>>
@@ -52,10 +51,10 @@ class PerpsMarketsFeature(
 
     private val query = actions
         .on<PerpsMarketsAction.SetQuery>()
-        .map { it.value }
+        .map { it.value.trim() }
         .cacheState(initialValue = "")
 
-    override val debouncedQuery = query
+    private val debouncedQuery = query
         .debounce { value ->
             if (value.isBlank()) {
                 0L

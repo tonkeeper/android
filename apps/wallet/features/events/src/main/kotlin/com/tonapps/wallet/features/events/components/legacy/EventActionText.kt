@@ -58,16 +58,14 @@ internal fun EventActionText(
 }
 
 @Composable
-private fun EventActionEncryptedText(
+internal fun EventActionEncryptedText(
     modifier: Modifier = Modifier,
     placeholder: String,
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-
     Box(
         modifier = modifier
-            .clip(Shapes.medium12)
             .then(
                 if (enabled) {
                     Modifier.clickable(onClick = onClick)
@@ -75,6 +73,7 @@ private fun EventActionEncryptedText(
                     Modifier
                 }
             )
+            .clip(Shapes.medium12)
             .background(UIKit.colorScheme.background.contentTint)
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
@@ -119,7 +118,6 @@ private fun EventActionPlainText(
     text: String,
     buttonTitle: String,
 ) {
-
     val backgroundColor = UIKit.colorScheme.background.contentTint
     val moreButtonColor = UIKit.colorScheme.accent.blue
 
@@ -136,7 +134,13 @@ private fun EventActionPlainText(
         modifier = modifier
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(if (overflow) longRadius else shortRadius)
+                shape = RoundedCornerShape(
+                    if (overflow) {
+                        longRadius
+                    } else {
+                        shortRadius
+                    }
+                )
             )
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
@@ -151,7 +155,11 @@ private fun EventActionPlainText(
                 if (overflow != hasVisualOverflow) {
                     overflow = hasVisualOverflow
                 }
-                val idx = if (result.lineCount > 1) 1 else 0
+                val idx = if (result.lineCount > 1) {
+                    1
+                } else {
+                    0
+                }
                 val lineHeight = (result.getLineBottom(idx) - result.getLineTop(idx))
                 if (lineHeight > 0 && lastLineHeightPx != lineHeight) {
                     lastLineHeightPx = lineHeight
@@ -183,7 +191,6 @@ private fun EventActionPlainTextMore(
     backgroundColor: Color,
     moreButtonColor: Color,
 ) {
-
     val fadeBrush = remember(backgroundColor) {
         Brush.horizontalGradient(
             0f to Color.Transparent,

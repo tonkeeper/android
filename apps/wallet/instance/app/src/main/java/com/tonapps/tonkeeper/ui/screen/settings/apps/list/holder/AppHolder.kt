@@ -9,6 +9,7 @@ import com.tonapps.wallet.data.dapps.entities.AppEntity
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class AppHolder(
     parent: ViewGroup,
@@ -20,12 +21,15 @@ class AppHolder(
     private val hostView = findViewById<AppCompatTextView>(R.id.host)
     private val disconnectButton = findViewById<Button>(R.id.disconnect)
 
+    init {
+    }
+
     override fun onBind(item: Item.App) {
         itemView.background = item.position.drawable(context)
         iconView.setImageURI(item.iconUrl, ResizeOptions.forSquareSize(44))
         titleView.text = item.title
         hostView.text = item.host
-        disconnectButton.setOnClickListener {
+        disconnectButton.setMoonOnClickListener {
             disconnectApp(item.app)
         }
     }

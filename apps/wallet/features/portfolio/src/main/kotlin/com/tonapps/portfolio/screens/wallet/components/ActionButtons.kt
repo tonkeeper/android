@@ -2,7 +2,6 @@ package com.tonapps.portfolio.screens.wallet.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -31,6 +29,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import ui.painterResource
 import ui.theme.UIKit
+import ui.theme.pressScale
 
 @Composable
 internal fun ActionButtons(
@@ -98,13 +97,10 @@ private fun ActionButton(
         Box(
             modifier = Modifier
                 .padding(horizontal = 16.dp)
+                .pressScale(interactionSource)
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(UIKit.colorScheme.buttonSecondary.primaryBackground)
-                .indication(
-                    interactionSource = interactionSource,
-                    indication = ripple()
-                ),
+                .background(UIKit.colorScheme.buttonSecondary.primaryBackground),
             contentAlignment = Alignment.Center
         ) {
             Icon(

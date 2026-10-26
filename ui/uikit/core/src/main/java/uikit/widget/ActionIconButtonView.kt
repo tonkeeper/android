@@ -7,7 +7,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.uikit.color.stateList
 import uikit.R
-import uikit.extensions.createRipple
+import uikit.extensions.applyPressScale
 import uikit.extensions.useAttributes
 
 class ActionIconButtonView @JvmOverloads constructor(
@@ -18,11 +18,10 @@ class ActionIconButtonView @JvmOverloads constructor(
 
     private val iconView: AppCompatImageView
     private val titleView: AppCompatTextView
-    private val ripple = context.createRipple()
 
     init {
         inflate(context, R.layout.view_action_icon_button, this)
-        background = ripple
+        applyPressScale()
 
         iconView = findViewById(R.id.icon)
         titleView = findViewById(R.id.title)
@@ -38,11 +37,6 @@ class ActionIconButtonView @JvmOverloads constructor(
                 titleView.setTextColor(tintColor)
             }
         }
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        ripple.radius = measuredHeight / 2
     }
 
     override fun setEnabled(enabled: Boolean) {

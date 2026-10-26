@@ -30,12 +30,13 @@ data class BlockchainAccountInspect(
     val source: Source? = null
 ) {
     /**
-     * Values: func,fift,tact
+     * Values: func,fift,tact,tolk
      */
     @Serializable
     enum class Compiler(val value: String) {
         @SerialName(value = "func") func("func"),
         @SerialName(value = "fift") fift("fift"),
-        @SerialName(value = "tact") tact("tact");
+        @SerialName(value = "tact") tact("tact"),
+        @SerialName(value = "tolk") tolk("tolk");
     }
 }

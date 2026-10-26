@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     id("target.android.library")
 }
@@ -11,5 +9,6 @@ dependencies {
     implementation(libs.okhttp.sse)
 
     implementation(projects.lib.log)
+    implementation(projects.lib.bus)
     implementation(projects.kmp.async)
 }

@@ -10,6 +10,7 @@ import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.screens.qr.QrAssetFragment
 import com.tonapps.tonkeeper.extensions.isLightTheme
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
@@ -33,6 +34,7 @@ import uikit.extensions.setRightDrawable
 import uikit.extensions.topScrolled
 import uikit.widget.EmptyLayout
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class CollectiblesScreen : BaseWalletScreen<ScreenContext.None>(
     R.layout.fragment_main_list,
@@ -41,7 +43,7 @@ class CollectiblesScreen : BaseWalletScreen<ScreenContext.None>(
 
     override val fragmentName: String = "CollectiblesScreen"
 
-    private val from: String by lazy { requireArguments().getString(ARG_FROM) ?: "unknown" }
+    private val from: String by lazy { requireNotNull(requireArguments().getString(ARG_FROM)) }
 
     override val viewModel: CollectiblesViewModel by viewModel()
 
@@ -143,7 +145,7 @@ class CollectiblesScreen : BaseWalletScreen<ScreenContext.None>(
         subtitleView.setRightDrawable(icon)
         subtitleView.compoundDrawablePadding = 4.dp
         subtitleView.isClickable = true
-        subtitleView.setOnClickListener { showTonOnlyInfoDialog() }
+        subtitleView.setMoonOnClickListener { showTonOnlyInfoDialog() }
     }
 
     private fun clearTonOnlySubtitleAction() {
@@ -183,7 +185,7 @@ class CollectiblesScreen : BaseWalletScreen<ScreenContext.None>(
     }
 
     private fun openQRCode() {
-        navigation?.add(QrAssetFragment.newInstance())
+        navigation?.add(QrAssetFragment.newInstance(analyticsFrom = DepositFlowFrom.Collectibles))
     }
 
     private fun setEmptyState() {
@@ -206,7 +208,7 @@ class CollectiblesScreen : BaseWalletScreen<ScreenContext.None>(
 
         private const val ARG_FROM = "from"
 
-        fun newInstance(from: String = "unknown"): CollectiblesScreen {
+        fun newInstance(from: String): CollectiblesScreen {
             val screen = CollectiblesScreen()
             screen.putStringArg(ARG_FROM, from)
             return screen

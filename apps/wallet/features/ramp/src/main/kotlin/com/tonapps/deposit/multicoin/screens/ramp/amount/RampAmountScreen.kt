@@ -43,16 +43,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tonapps.deposit.screens.provider.ProviderConfirmDialog
 import com.tonapps.deposit.screens.provider.ProviderItem
 import com.tonapps.deposit.screens.provider.SelectProviderDialog
 import com.tonapps.deposit.utils.AmountError
@@ -78,7 +73,6 @@ import ui.theme.UIKit
 import ui.theme.modifiers.rememberShimmerPhase
 import ui.theme.modifiers.shimmer
 import ui.theme.outlineStoke
-import ui.utils.toRichSpanStyle
 import ui.utils.uppercased
 
 @Composable
@@ -89,16 +83,11 @@ fun RampAmountScreen(
     onContinue: (String) -> Unit,
 ) {
     val state by feature.state.collectAsState()
-    var confirmProvider by remember { mutableStateOf<ProviderItem?>(null) }
 
     LaunchedEffect(feature) {
         feature.events.collect { event ->
             when (event) {
-                is RampAmountEvent.ShowConfirmation -> confirmProvider = event.provider
-                is RampAmountEvent.Continue -> {
-                    confirmProvider = null
-                    onContinue(event.widgetUrl)
-                }
+                is RampAmountEvent.Continue -> onContinue(event.widgetUrl)
             }
         }
     }
@@ -116,18 +105,8 @@ fun RampAmountScreen(
                     state = current,
                     onAmountInput = feature::onAmountInput,
                     onProviderSelected = feature::selectProvider,
-                    onContinue = feature::checkProvider,
+                    onContinue = feature::continueWithProvider,
                 )
-
-                confirmProvider?.let { provider ->
-                    ConfirmDialog(
-                        provider = provider,
-                        onClose = { confirmProvider = null },
-                        onConfirm = { doNotShowAgain ->
-                            feature.allowProvider(provider.id, doNotShowAgain)
-                        },
-                    )
-                }
             }
         }
     }
@@ -421,35 +400,4 @@ private fun ProviderCell(
             },
         )
     }
-}
-
-@Composable
-private fun ConfirmDialog(
-    provider: ProviderItem,
-    onClose: () -> Unit,
-    onConfirm: (doNotShowAgain: Boolean) -> Unit,
-) {
-    val style = UIKit.typography.body1
-    val color = UIKit.colorScheme.text.accent
-    val buttons = provider.buttons
-    val description = remember(color, buttons) {
-        if (buttons.isEmpty()) return@remember null
-        buildAnnotatedString {
-            val linkStyle = style.toRichSpanStyle(color = color)
-            buttons.forEachIndexed { index, button ->
-                if (index > 0) append(" · ")
-                withLink(LinkAnnotation.Url(url = button.url, styles = TextLinkStyles(linkStyle))) {
-                    append(button.title)
-                }
-            }
-        }
-    }
-
-    ProviderConfirmDialog(
-        title = provider.title,
-        icon = provider.imageUrl,
-        description = description,
-        onClose = onClose,
-        onConfirm = onConfirm,
-    )
 }

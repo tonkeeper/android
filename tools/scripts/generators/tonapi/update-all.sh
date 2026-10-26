@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -6,10 +7,7 @@ echo "🔄 Regenerating Tonapi APIs..."
 echo ""
 
 echo "📦 Generating Tonapi Tonkeeper..."
-bash "$SCRIPT_DIR/generate-tonapi.sh" \
-  "https://raw.githubusercontent.com/tonkeeper/opentonapi/master/api/openapi.yml" \
-  "tonapi" \
-  "tonapi:tonkeeper"
+bash "$SCRIPT_DIR/tonapi.sh"
 
 echo ""
 echo "🔋 Generating Battery API..."
@@ -30,6 +28,10 @@ bash "$SCRIPT_DIR/generate-perps.sh"
 echo ""
 echo "🕯️ Generating Kandelabr API..."
 bash "$SCRIPT_DIR/generate-kandelabr.sh"
+
+echo ""
+echo "🌐 Generating Multichain API..."
+bash "$SCRIPT_DIR/generate-multichain.sh"
 
 echo ""
 echo "✅ All APIs generated successfully!"

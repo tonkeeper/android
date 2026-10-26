@@ -29,6 +29,7 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.core.components.tokenChainImageUrl
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenButton
+import com.tonapps.trading.AssetPerpMarket
 import com.tonapps.trading.asTokenEntity
 import com.tonapps.trading.displayChainName
 import com.tonapps.trading.omnistonBuyTokens
@@ -64,6 +65,7 @@ internal fun CryptoAssetDetailsScreen(
     onOpenTxDetails: (tx: TxEvent, actionIndex: Int) -> Unit,
     onOpenExplorer: () -> Unit,
     onOpenStaking: () -> Unit,
+    onOpenEarnVault: (network: String, vaultId: String) -> Unit,
     onOpenUnverifiedInfo: () -> Unit,
     onSellToCard: (assetId: String) -> Unit = {},
     onBuyWithCard: (assetId: String) -> Unit = {},
@@ -72,6 +74,7 @@ internal fun CryptoAssetDetailsScreen(
     onToggleFavorite: () -> Unit = {},
     onTrackButtonClick: (AssetScreenButton) -> Unit = {},
     onRefresh: () -> Unit = {},
+    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
     onBack: () -> Unit,
 ) {
     val data = state as? AssetDetailsState.Data
@@ -89,7 +92,7 @@ internal fun CryptoAssetDetailsScreen(
     val (headerSubtitle, headerSubtitleColor) = when (asset?.verification) {
         null, Verification.whitelist -> chainName to UIKit.colorScheme.text.secondary
         Verification.trusted -> chainName to UIKit.colorScheme.text.secondary
-        Verification.none -> stringResource(Localization.unverified_token) to UIKit.colorScheme.accent.orange
+        Verification.none, Verification.unknown -> stringResource(Localization.unverified_token) to UIKit.colorScheme.accent.orange
         Verification.blacklist -> stringResource(Localization.scam) to UIKit.colorScheme.accent.red
     }
     val showVerifiedBadge = asset?.verification == Verification.trusted
@@ -150,13 +153,16 @@ internal fun CryptoAssetDetailsScreen(
                             .verticalScroll(scrollState)
                             .padding(bottom = bottomOverlayHeight),
                         sections = data?.sections,
+                        isBalanceStale = data?.isBalanceStale == true,
                         asset = asset,
                         imageUrl = imageUrl,
                         chainImageUrl = chainImageUrl,
                         currencyCode = data?.currencyCode ?: "",
                         chartData = data?.chartData,
                         chartPeriod = data?.chartPeriod ?: AssetDetailsFeature.InitialChartPeriod,
-                        maxStakingApyFormatted = data?.maxStakingApyFormatted,
+                        perps = data?.perps ?: AssetPerpsState.Hidden,
+                        assetSymbol = asset?.symbol.orEmpty(),
+                        apyBadge = data?.apyBadge,
                         showSend = hasBalance,
                         showCashBuy = data?.buyWithCardAvailable == true,
                         showCashSell = hasBalance && data?.sellToCardAvailable == true,
@@ -165,8 +171,10 @@ internal fun CryptoAssetDetailsScreen(
                         onChartPeriodChange = onChartPeriodChange,
                         onOpenTxDetails = onOpenTxDetails,
                         onOpenStaking = onOpenStaking,
+                        onOpenEarnVault = onOpenEarnVault,
                         onOpenUnverifiedInfo = onOpenUnverifiedInfo,
                         onSeeAllActivities = onSeeAllActivities,
+                        onOpenPerpMarket = onOpenPerpMarket,
                         onSendClick = {
                             onTrackButtonClick(AssetScreenButton.Send)
                             asset?.let { onOpenSend(it.id, it.asTokenEntity.address) }
@@ -208,14 +216,16 @@ internal fun CryptoAssetDetailsScreen(
 private fun CryptoAssetDetailsData(
     modifier: Modifier = Modifier,
     sections: AssetDetailsSections?,
+    isBalanceStale: Boolean = false,
     asset: AssetRef? = null,
     imageUrl: String,
     chainImageUrl: String?,
     currencyCode: String,
     chartData: List<ChartPoint>?,
     chartPeriod: ChartPeriod,
-    showPerps: Boolean = false,
-    maxStakingApyFormatted: String? = null,
+    perps: AssetPerpsState = AssetPerpsState.Hidden,
+    assetSymbol: String,
+    apyBadge: AssetApyBadge? = null,
     showSend: Boolean = false,
     showCashBuy: Boolean = false,
     showCashSell: Boolean = false,
@@ -224,8 +234,10 @@ private fun CryptoAssetDetailsData(
     onChartPeriodChange: (ChartPeriod) -> Unit,
     onOpenTxDetails: (tx: TxEvent, actionIndex: Int) -> Unit,
     onOpenStaking: () -> Unit,
+    onOpenEarnVault: (network: String, vaultId: String) -> Unit,
     onOpenUnverifiedInfo: () -> Unit = {},
     onSeeAllActivities: () -> Unit = {},
+    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit = { _, _ -> },
     onSendClick: () -> Unit = {},
     onReceiveClick: () -> Unit = {},
     onCashBuyClick: () -> Unit = {},
@@ -235,12 +247,13 @@ private fun CryptoAssetDetailsData(
         ChartSection(
             imageUrl = imageUrl,
             chainImageUrl = chainImageUrl,
-            maxStakingApyFormatted = maxStakingApyFormatted,
+            apyBadge = apyBadge,
             currencyCode = currencyCode,
             chartData = chartData,
             chartPeriod = chartPeriod,
             onPeriodChange = onChartPeriodChange,
             onOpenStaking = onOpenStaking,
+            onOpenEarnVault = onOpenEarnVault,
         )
         CryptoDisclaimerSection(
             asset = asset,
@@ -250,6 +263,7 @@ private fun CryptoAssetDetailsData(
             if (sections.balance != null) {
                 DetailsBalanceSection(
                     balance = sections.balance,
+                    isStale = isBalanceStale,
                     imageUrl = imageUrl,
                     chainImageUrl = chainImageUrl,
                 )
@@ -270,9 +284,12 @@ private fun CryptoAssetDetailsData(
             DetailsBalanceSectionShimmer()
         }
 
-        if (showPerps) {
-            PerpsSection()
-        }
+        PerpsSection(
+            state = perps,
+            assetSymbol = assetSymbol,
+            imageUrl = imageUrl,
+            onOpenMarket = onOpenPerpMarket,
+        )
 
         sections?.recentEvents?.let {
             EventsSection(
@@ -335,7 +352,8 @@ private fun CryptoAssetDetailsScreenPreview() {
                     sections = previewAssetDetailsSections,
                     imageUrl = "",
                     chainImageUrl = null,
-                    showPerps = true,
+                    perps = AssetPerpsState.Banner(AssetPerpMarket(1, "TON", 10)),
+                    assetSymbol = "TON",
                     currencyCode = "USD",
                     chartData = previewChartData,
                     chartPeriod = ChartPeriod.month,
@@ -347,6 +365,7 @@ private fun CryptoAssetDetailsScreenPreview() {
                     onChartPeriodChange = {},
                     onOpenTxDetails = { _, _ -> },
                     onOpenStaking = {},
+                    onOpenEarnVault = { _, _ -> },
                 )
                 AssetDetailsBottomBar(
                     modifier = Modifier.align(Alignment.BottomCenter),

@@ -24,6 +24,16 @@
                     android:textAppearance="@style/TextAppearance.Body1"
                     android:textColor="?attr/textSecondaryColor" />
 
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/title_info"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_information_circle_16"
+                    android:tint="?attr/iconSecondaryColor"
+                    android:visibility="gone" />
+
                 <androidx.appcompat.widget.LinearLayoutCompat
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"

@@ -8,5 +8,7 @@ sealed interface WcEvent {
     data class SessionError(val requestId: String, val topic: String, val error: WcError) : WcEvent
     data class RequestError(val requestId: String, val topic: String?, val error: WcError) : WcEvent
 
+    data class RequestExpired(val requestId: String) : WcEvent
+
     data class Error(val cause: Throwable) : WcEvent
 }

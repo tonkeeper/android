@@ -13,10 +13,15 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class OpenDepositRequest(
-    /* Opaque client-side identifier for this deposit attempt, never parsed here. Retrying the same attempt must reuse it — that is what makes this call idempotent — and a genuinely new deposit must carry a new one. Reusing it with a different amount is a conflict, not an update. A write key only. Progress is read by deposit_id, and this value is not a lookup key: recording the same transaction under a second operation_id returns the record created under the first one, keeping the first one's value. */
+    /* Opaque client-side identifier for this deposit attempt, never parsed here. Retrying the same attempt must reuse it — that is what makes this call idempotent — and a genuinely new deposit must carry a new one. Reusing it with a different amount is a conflict, not an update. A write key only. Progress is read by deposit_id, and this value is not a lookup key: recording the same transaction or the same execution_id under a second operation_id returns the record created under the first one, keeping the first one's value. */
     @SerialName(value = "operation_id")
     val operationId: String,
 
@@ -28,25 +33,13 @@ data class OpenDepositRequest(
     @SerialName(value = "amount")
     val amount: String,
 
-    /* The Ethereum transaction that called Lighter's gateway. Required: it is the only handle this service can confirm a deposit with — Lighter resolves it to the credit, the amount and the account index, and does so without a read-only token, which a first deposit could not have anyway since the account does not exist yet. Only the Ethereum hash counts. A caller that paid from another chain holds a source-chain hash, which Lighter has never seen; it has to wait for the aggregator to deliver and record the deposit then. That restriction is temporary and will be lifted once execution_id can be resolved to the delivered hash server-side. */
-    @SerialName(value = "l1_tx_hash")
-    val l1TxHash: String,
-
-    /* The wallet's consent to this deposit, signed with its own root key: hex of a 65-byte recoverable secp256k1 signature (R | S | V) over LP(\"perps.deposit.register.v1\") | LP(wallet_id) | LP(l1_address) | LP(operation_id) | LP(amount) | LP(asset_id) | LP(l1_tx_hash) | LP(execution_id), in the same length-prefixed framing custodial-battery uses for its send proof. Every term as this service records it: as sent here with surrounding whitespace trimmed and l1_tx_hash lowercased, execution_id an empty string when omitted, l1_address lowercase with its 0x. Note that l1_address is named here and nowhere in the body. signature only proves that somebody holds the key to an address; this is the wallet saying which address is its own. Both are needed on a first deposit: without this one an EIP-712 signature captured anywhere could bind this wallet to a stranger's Lighter account. Required on every deposit, and absent answers 401 operation_proof_required. Requires a format 2 wallet_id, which every multichain wallet has. */
-    @SerialName(value = "proof")
-    val proof: String,
-
-    /* The swap this deposit is funded by, as the swap backend named it. Optional, kept for correlation and support: it is what a failed swap is told apart by, and what a server-side resolver will one day turn into the Ethereum hash so that l1_tx_hash stops being required. Nothing reads it yet. */
+    /* The swap this deposit is funded by: tracking.execution_id from POST /funding/quote. Required when l1_tx_hash is absent. Send it before broadcasting the source transaction: this service follows the swap by it, takes the Ethereum hash once the aggregator delivers, and confirms the deposit by that hash from then on. A swap that fails, is refunded or is never paid closes the deposit as failed, refunded or expired. While this service cannot reach swaps-backend by configuration, a deposit named by execution_id alone is refused with 503 rather than recorded and left to expire. A `funxyz` quote's execution_id is followed at Lighter's bridge instead, and is accepted only as a quote handed it out, within a day, for the address this wallet bound -- anything else is 400 invalid_execution_id. One transfer to the deposit address credits one deposit. One execution funds one deposit per address, so sending it again under another operation_id returns the deposit it already names. */
     @SerialName(value = "execution_id")
     val executionId: String? = null,
 
-    /* Unix seconds past which the signature below is refused, capped by the service at ten minutes ahead. Travels with signature: one without the other is a 400, because a missing deadline would otherwise be reported as a signature that has expired. */
-    @SerialName(value = "deadline")
-    val deadline: Long? = null,
-
-    /* EIP-712 signature proving the caller holds the key to the L1 address this deposit is recorded against, over LinkWallet(string walletId,uint64 deadline) under domain {name: TonkeeperPerps, version: \"1\", chainId: 1} with no verifyingContract. Encoded as 65 bytes of r‖s‖v hex; v may be 27/28 or 0/1, and the high-s form is refused. Send it every time, signed in the same vault unlock as the deposit transaction: it is read only while the wallet has proved no address yet, and the client cannot tell when that is. Missing when it is needed answers 400 address_proof_required. */
-    @SerialName(value = "signature")
-    val signature: String? = null
+    /* The Ethereum transaction that called Lighter's gateway. Required when execution_id is absent, which is a direct deposit: the wallet signs the gateway call itself and knows its hash before broadcasting. Lighter resolves it to the credit, the amount and the account index, without a read-only token, which a first deposit could not have anyway since the account does not exist yet. Only the Ethereum hash counts, never a source-chain one: Lighter has never seen those. A deposit paid from another chain sends execution_id instead and may leave this out. Omitting both is 400 deposit_reference_required. */
+    @SerialName(value = "l1_tx_hash")
+    val l1TxHash: String? = null
 ) {
 }
 

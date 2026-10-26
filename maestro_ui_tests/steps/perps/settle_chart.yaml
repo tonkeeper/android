@@ -1,0 +1,25 @@
+# Wait for the chart section to reach a terminal state before asserting on it.
+#
+# "No chart data" and "Couldn't load chart" are the texts of the empty and the
+# failed states. Neither is on screen while the chart is still loading, so
+# `assertNotVisible` on them passes instantly and proves nothing unless the
+# screen has settled first.
+#
+# Six seconds, as two rounds: `waitForAnimationToEnd` returns as soon as the
+# screen stops changing, and the chart redraws in bursts, so a single round can
+# return between them.
+#
+# What this does NOT give you is a guarantee that bars were drawn. There is no
+# positive signal for that — the chart is a canvas inside a WebView and nothing
+# in it reaches the accessibility tree, and the loading placeholder in
+# PerpsChart.kt has no testTag either. A chart stuck in LOADING forever still
+# passes the asserts that follow. Proving the drawing happened is the job of the
+# crosshair cases, which read the selected candle back as text, and of the wire
+# checkers. A testTag on that placeholder (proposed in TK-4025) is what would
+# let a flow fail on a chart that never finished loading.
+appId: com.ton_keeper.debug
+---
+- waitForAnimationToEnd:
+    timeout: 3000
+- waitForAnimationToEnd:
+    timeout: 3000

@@ -11,6 +11,7 @@ import uikit.extensions.drawable
 import uikit.extensions.withBlueBadge
 import uikit.widget.AsyncImageView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class TokenHolder(
     parent: ViewGroup,
@@ -30,7 +31,7 @@ class TokenHolder(
     }
 
     override fun onBind(item: Item.Token) {
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
         itemView.background = item.position.drawable(context)
         imageView.setPlaceholder(null)
         imageView.setImageURIWithResize(item.iconUri, ResizeOptions.forSquareSize(72))

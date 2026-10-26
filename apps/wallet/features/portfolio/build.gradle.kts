@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.kotlin.bignum)
     implementation(libs.compose.paging)
     implementation(libs.compose.paging.runtime)
+    implementation(libs.coil.compose)
 
     implementation(projects.apps.wallet.localization)
 
@@ -30,6 +31,7 @@ dependencies {
     implementation(projects.apps.wallet.data.banner)
     implementation(projects.apps.wallet.data.battery)
     implementation(projects.apps.wallet.data.raffle)
+    implementation(projects.apps.wallet.data.earn)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.data.collectibles)
     implementation(projects.apps.wallet.data.staking)

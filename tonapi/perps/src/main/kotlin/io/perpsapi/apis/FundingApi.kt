@@ -15,8 +15,13 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.perpsapi.models.Deposit
+import io.perpsapi.models.DepositQuote
+import io.perpsapi.models.DepositQuoteRequest
 import io.perpsapi.models.ErrorResponse
+import io.perpsapi.models.FundingStatus
 import io.perpsapi.models.OpenDepositRequest
+import io.perpsapi.models.WithdrawQuote
+import io.perpsapi.models.WithdrawQuoteRequest
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -45,8 +50,8 @@ class FundingApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getDeposit(xWalletID: String, depositId: String): Deposit {
-        val localVarResponse = getDepositWithHttpInfo(xWalletID = xWalletID, depositId = depositId)
+    fun getDeposit(depositId: String, xWalletId: String? = null): Deposit {
+        val localVarResponse = getDepositWithHttpInfo(depositId = depositId, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Deposit
@@ -65,19 +70,19 @@ class FundingApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getDepositWithHttpInfo(xWalletID: String, depositId: String): ApiResponse<Deposit?> {
-        val localVariableConfig = getDepositRequestConfig(xWalletID = xWalletID, depositId = depositId)
+    fun getDepositWithHttpInfo(depositId: String, xWalletId: String?): ApiResponse<Deposit?> {
+        val localVariableConfig = getDepositRequestConfig(depositId = depositId, xWalletId = xWalletId)
 
         return request<Unit, Deposit>(
             localVariableConfig
         )
     }
 
-    fun getDepositRequestConfig(xWalletID: String, depositId: String): RequestConfig<Unit> {
+    fun getDepositRequestConfig(depositId: String, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -87,15 +92,64 @@ class FundingApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun openDeposit(xWalletID: String, openDepositRequest: OpenDepositRequest): Deposit {
-        val localVarResponse = openDepositWithHttpInfo(xWalletID = xWalletID, openDepositRequest = openDepositRequest)
+    fun getFundingStatus(executionId: String, xWalletId: String? = null): FundingStatus {
+        val localVarResponse = getFundingStatusWithHttpInfo(executionId = executionId, xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as FundingStatus
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getFundingStatusWithHttpInfo(executionId: String, xWalletId: String?): ApiResponse<FundingStatus?> {
+        val localVariableConfig = getFundingStatusRequestConfig(executionId = executionId, xWalletId = xWalletId)
+
+        return request<Unit, FundingStatus>(
+            localVariableConfig
+        )
+    }
+
+    fun getFundingStatusRequestConfig(executionId: String, xWalletId: String?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/funding/status/{execution_id}".replace("{"+"execution_id"+"}", encodeURIComponent(executionId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun openDeposit(openDepositRequest: OpenDepositRequest, xWalletId: String? = null): Deposit {
+        val localVarResponse = openDepositWithHttpInfo(openDepositRequest = openDepositRequest, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as Deposit
@@ -114,19 +168,19 @@ class FundingApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun openDepositWithHttpInfo(xWalletID: String, openDepositRequest: OpenDepositRequest): ApiResponse<Deposit?> {
-        val localVariableConfig = openDepositRequestConfig(xWalletID = xWalletID, openDepositRequest = openDepositRequest)
+    fun openDepositWithHttpInfo(openDepositRequest: OpenDepositRequest, xWalletId: String?): ApiResponse<Deposit?> {
+        val localVariableConfig = openDepositRequestConfig(openDepositRequest = openDepositRequest, xWalletId = xWalletId)
 
         return request<OpenDepositRequest, Deposit>(
             localVariableConfig
         )
     }
 
-    fun openDepositRequestConfig(xWalletID: String, openDepositRequest: OpenDepositRequest): RequestConfig<OpenDepositRequest> {
+    fun openDepositRequestConfig(openDepositRequest: OpenDepositRequest, xWalletId: String?): RequestConfig<OpenDepositRequest> {
         val localVariableBody = openDepositRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -137,7 +191,107 @@ class FundingApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun quoteDeposit(depositQuoteRequest: DepositQuoteRequest, xWalletId: String? = null): DepositQuote {
+        val localVarResponse = quoteDepositWithHttpInfo(depositQuoteRequest = depositQuoteRequest, xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as DepositQuote
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun quoteDepositWithHttpInfo(depositQuoteRequest: DepositQuoteRequest, xWalletId: String?): ApiResponse<DepositQuote?> {
+        val localVariableConfig = quoteDepositRequestConfig(depositQuoteRequest = depositQuoteRequest, xWalletId = xWalletId)
+
+        return request<DepositQuoteRequest, DepositQuote>(
+            localVariableConfig
+        )
+    }
+
+    fun quoteDepositRequestConfig(depositQuoteRequest: DepositQuoteRequest, xWalletId: String?): RequestConfig<DepositQuoteRequest> {
+        val localVariableBody = depositQuoteRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/funding/quote",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun quoteWithdraw(withdrawQuoteRequest: WithdrawQuoteRequest, xWalletId: String? = null): WithdrawQuote {
+        val localVarResponse = quoteWithdrawWithHttpInfo(withdrawQuoteRequest = withdrawQuoteRequest, xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as WithdrawQuote
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun quoteWithdrawWithHttpInfo(withdrawQuoteRequest: WithdrawQuoteRequest, xWalletId: String?): ApiResponse<WithdrawQuote?> {
+        val localVariableConfig = quoteWithdrawRequestConfig(withdrawQuoteRequest = withdrawQuoteRequest, xWalletId = xWalletId)
+
+        return request<WithdrawQuoteRequest, WithdrawQuote>(
+            localVariableConfig
+        )
+    }
+
+    fun quoteWithdrawRequestConfig(withdrawQuoteRequest: WithdrawQuoteRequest, xWalletId: String?): RequestConfig<WithdrawQuoteRequest> {
+        val localVariableBody = withdrawQuoteRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/funding/withdraw/quote",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

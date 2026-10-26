@@ -29,7 +29,7 @@ fun AssetInfo.toAssetEntity(): AssetEntity {
         verification = when (verification) {
             AssetInfo.Verification.trusted -> AssetEntity.Verification.trusted
             AssetInfo.Verification.whitelist -> AssetEntity.Verification.whitelist
-            AssetInfo.Verification.none -> AssetEntity.Verification.none
+            AssetInfo.Verification.none, AssetInfo.Verification.unknown -> AssetEntity.Verification.none
             AssetInfo.Verification.blacklist -> AssetEntity.Verification.blacklist
         },
     )

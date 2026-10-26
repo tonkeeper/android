@@ -40,16 +40,11 @@ class PostTransactionRefreshSchedule(
     }
 
     private suspend fun refreshAccountsAfterTransaction(walletId: String) {
-        val currency = settings.currency.code
-        val previous = getCachedAccountsOrNull(walletId, currency)
+        val previous = getCachedAccountsOrNull(walletId)
         val fresh = try {
-            // hideDust has to match the wallet pager, or this fetch caches under a key nothing
-            // reads. verifiedOnly still differs for safe-mode wallets, so priming is not guaranteed.
             accountRepo.fetchAccounts(
                 walletId = walletId,
-                currency = currency,
                 limit = WALLET_ASSETS_PAGE_SIZE,
-                hideDust = settings.hideDustAssets,
             )
         } catch (e: CancellationException) {
             throw e
@@ -65,13 +60,9 @@ class PostTransactionRefreshSchedule(
         return accounts.map { it.data.id to it.balance.available }
     }
 
-    private suspend fun getCachedAccountsOrNull(walletId: String, currency: String): AccountsWithTotal? {
+    private suspend fun getCachedAccountsOrNull(walletId: String): AccountsWithTotal? {
         return try {
-            accountRepo.getCachedAccounts(
-                walletId = walletId,
-                currency = currency,
-                hideDust = settings.hideDustAssets,
-            )
+            accountRepo.getCachedAccounts(walletId)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {

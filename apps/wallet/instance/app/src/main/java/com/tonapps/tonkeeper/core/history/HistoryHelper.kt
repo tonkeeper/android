@@ -204,10 +204,15 @@ class HistoryHelper(
         val feeFiatFormat: CharSequence
     )
 
+    /**
+     * [includeFee] false leaves the network fee row out: a message signed for a relayer
+     * (TON Connect `signMessage`) is paid for by the relayer, not by this wallet.
+     */
     suspend fun create(
         wallet: WalletEntity,
         emulated: Emulated,
         fee: SendFee,
+        includeFee: Boolean = true,
     ): Details {
         val items = mapping(
             wallet = wallet,
@@ -228,6 +233,21 @@ class HistoryHelper(
             )
         }
 
+        val feeFormat = "≈ " + CurrencyFormatter.format("TON", emulated.extra.value)
+        val feeFiatFormat =
+            CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
+
+        if (!includeFee) {
+            return Details(
+                accountId = wallet.accountId,
+                items = items.toList(),
+                fee = emulated.extra.value,
+                feeFormat = feeFormat,
+                feeFiat = emulated.extra.fiat,
+                feeFiatFormat = feeFiatFormat
+            )
+        }
+
         val lastIndex = items.lastIndex
         val lastFixedPosition = if (items.size == 1) {
             ListCell.Position.FIRST
@@ -240,10 +260,6 @@ class HistoryHelper(
         lastItem?.let {
             items[lastIndex] = it
         }
-
-        val feeFormat = "≈ " + CurrencyFormatter.format("TON", emulated.extra.value)
-        val feeFiatFormat =
-            CurrencyFormatter.formatFiat(emulated.currency.code, emulated.extra.fiat)
 
         val value = if (fee is SendFee.Battery) {
             "≈ " + context.resources.getQuantityString(

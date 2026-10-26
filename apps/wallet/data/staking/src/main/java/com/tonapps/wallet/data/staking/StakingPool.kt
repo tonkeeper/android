@@ -4,6 +4,8 @@ import com.tonapps.apps.wallet.data.staking.R
 import com.tonapps.icu.Coins
 import io.tonapi.models.PoolImplementationType
 
+private val GAS_RESERVE = Coins.of(0.1)
+
 object StakingPool {
 
     enum class Implementation(
@@ -12,12 +14,12 @@ object StakingPool {
         Whales("whales"), TF("tf"), LiquidTF("liquidTF")
     }
 
-    fun implementation(type: PoolImplementationType): Implementation {
+    fun implementation(type: PoolImplementationType): Implementation? {
         return when (type) {
             PoolImplementationType.whales -> Implementation.Whales
             PoolImplementationType.tf -> Implementation.TF
             PoolImplementationType.liquidTF -> Implementation.LiquidTF
-            else -> throw IllegalArgumentException("Unknown PoolImplementationType: $type")
+            else -> null
         }
     }
 
@@ -31,18 +33,48 @@ object StakingPool {
 
     fun getIcon(implementation: Implementation): Int {
         return when (implementation) {
-            Implementation.Whales -> R.drawable.whales
-            Implementation.TF -> R.drawable.tf
-            Implementation.LiquidTF -> R.drawable.ic_tonstakers
+            Implementation.Whales -> R.drawable.staking_whales
+            Implementation.TF -> R.drawable.staking_ton_nominators
+            Implementation.LiquidTF -> R.drawable.staking_tonstakers
         }
     }
 
     fun getTotalFee(fee: Coins, implementation: Implementation): Coins {
+        return fee.abs() + getFeeSurcharge(implementation)
+    }
+
+    fun isReserveIncludedInFee(implementation: Implementation): Boolean {
+        return !getFeeSurcharge(implementation).isZero
+    }
+
+    private fun getFeeSurcharge(implementation: Implementation): Coins {
         return when (implementation) {
-            Implementation.Whales -> fee.abs() + Coins.of(0.2) // TODO fees: hardcoded formated
-            Implementation.TF -> fee.abs() + Coins.ONE // TODO fees: hardcoded formated
-            else -> fee.abs()
+            Implementation.Whales -> Coins.of(0.2) // TODO fees: hardcoded formated
+            Implementation.TF -> Coins.ONE // TODO fees: hardcoded formated
+            Implementation.LiquidTF -> Coins.ZERO
         }
+    }
+
+    fun getStakeTemporaryReserve(implementation: Implementation): Coins {
+        return when (implementation) {
+            Implementation.LiquidTF -> Coins.ONE
+            Implementation.Whales, Implementation.TF -> Coins.ZERO
+        }
+    }
+
+    fun hasStakeTemporaryReserve(implementation: Implementation): Boolean {
+        return !getStakeTemporaryReserve(implementation).isZero
+    }
+
+    fun getUnstakeTemporaryReserve(implementation: Implementation): Coins {
+        return when (implementation) {
+            Implementation.LiquidTF, Implementation.TF -> Coins.ONE
+            Implementation.Whales -> Coins.of(0.2)
+        }
+    }
+
+    fun getStakeMinRemaining(implementation: Implementation): Coins {
+        return getStakeTemporaryReserve(implementation) + GAS_RESERVE
     }
 
 }

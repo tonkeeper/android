@@ -72,14 +72,19 @@ internal fun volumeOptions(): RoundedHistogramSeriesOptions {
 }
 
 internal fun volumeScaleOptions(): PriceScaleOptions {
-    return PriceScaleOptions(scaleMargins = PriceScaleMargins(top = 0.86, bottom = 0.02))
+    return PriceScaleOptions(scaleMargins = PriceScaleMargins(top = PERPS_VOLUME_SCALE_TOP, bottom = 0.02))
 }
 
-internal fun PerpsChartPalette.areaOptions(priceDecimals: Int): AreaSeriesOptions {
+internal fun PerpsChartPalette.areaOptions(priceDecimals: Int, rising: Boolean): AreaSeriesOptions {
+    val color = if (rising) {
+        green
+    } else {
+        red
+    }
     return AreaSeriesOptions(
-        lineColor = ChartColor(green),
-        topColor = ChartColor(green.copy(alpha = AREA_TOP_ALPHA)),
-        bottomColor = ChartColor(green.copy(alpha = 0f)),
+        lineColor = ChartColor(color),
+        topColor = ChartColor(color.copy(alpha = AREA_TOP_ALPHA)),
+        bottomColor = ChartColor(color.copy(alpha = 0f)),
         lineWidth = 2,
         priceFormat = priceFormat(priceDecimals),
         priceLineVisible = false,
@@ -87,29 +92,19 @@ internal fun PerpsChartPalette.areaOptions(priceDecimals: Int): AreaSeriesOption
     )
 }
 
-internal fun PerpsChartPalette.rightPriceScaleOptions(mode: PerpsChartMode): PriceScaleOptions {
-    val isLine = mode == PerpsChartMode.LINE
+internal fun PerpsChartPalette.rightPriceScaleOptions(): PriceScaleOptions {
     return PriceScaleOptions(
-        // A zero-width visible scale still reserves label room, so line mode hides it outright.
-        visible = !isLine,
+        visible = true,
         borderVisible = false,
         // The markers plugin draws its own axis labels; the scale only reserves width for them.
         textColor = ChartColor(textSecondary.copy(alpha = 0f)),
         ticksVisible = false,
-        minimumWidth = if (isLine) {
-            0
-        } else {
-            PERPS_PRICE_AXIS_MIN_WIDTH
-        },
-        scaleMargins = PriceScaleMargins(top = 0.1, bottom = 0.22),
+        minimumWidth = PERPS_PRICE_AXIS_MIN_WIDTH,
+        scaleMargins = PriceScaleMargins(top = 0.125, bottom = 0.208),
     )
 }
 
-internal fun PerpsChartPalette.markersOptions(
-    mode: PerpsChartMode,
-    priceDecimals: Int,
-): PriceLevelMarkersOptions {
-    val isLine = mode == PerpsChartMode.LINE
+internal fun PerpsChartPalette.markersOptions(priceDecimals: Int, mode: PerpsChartMode): PriceLevelMarkersOptions {
     return PriceLevelMarkersOptions(
         priceDecimals = priceDecimals,
         currentPriceUpLabelColor = ChartColor(green),
@@ -123,14 +118,12 @@ internal fun PerpsChartPalette.markersOptions(
         crosshairLabelColor = ChartColor(Color.White),
         crosshairLabelBackgroundColor = ChartColor(labelBackground(Color.White)),
         gridColor = ChartColor(separator),
-        axisLabelMode = if (isLine) {
-            PriceLevelMarkersOptions.AxisLabelMode.Bounds
+        crosshairDotOnSeries = mode == PerpsChartMode.LINE,
+        pinnedTagsBottomY = if (mode == PerpsChartMode.CANDLE) {
+            PERPS_VOLUME_SCALE_TOP
         } else {
-            PriceLevelMarkersOptions.AxisLabelMode.Ladder
+            null
         },
-        crosshairHorizontalVisible = !isLine,
-        crosshairLabelVisible = !isLine,
-        crosshairDotOnSeries = isLine,
     )
 }
 
@@ -144,6 +137,8 @@ internal fun priceFormat(priceDecimals: Int): PriceFormat {
 }
 
 internal const val PERPS_PRICE_AXIS_MIN_WIDTH = 88
+
+internal const val PERPS_VOLUME_SCALE_TOP = 0.86
 
 internal val PERPS_VOLUME_COLOR = Color(0xFF2E3847)
 

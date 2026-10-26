@@ -16,6 +16,9 @@ fun MoonRefresh(
     state: PullToRefreshState = rememberPullToRefreshState()
 ) {
     val fraction = state.distanceFraction.coerceIn(0f, 1f)
+    if (fraction == 0f) {
+        return
+    }
     val scale = fraction * fraction
 
     PullToRefreshDefaults.Indicator(

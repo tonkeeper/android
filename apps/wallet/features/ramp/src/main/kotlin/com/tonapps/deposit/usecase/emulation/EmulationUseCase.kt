@@ -46,12 +46,18 @@ class EmulationUseCase(
 
     private val contractExecution = EmulationContractExecution(api)
 
+    /**
+     * [capTonRiskToBalance] counts the TON leaving the wallet only up to its own balance. Used when
+     * the emulated balance is overridden for a relayed message: the relayer brings the rest, and
+     * the wallet cannot lose more TON than it holds.
+     */
     suspend operator fun invoke(
         message: MessageBodyEntity,
         useBattery: Boolean = false,
         forceRelayer: Boolean = false,
         checkTonBalance: Boolean = false,
         params: Boolean = false,
+        capTonRiskToBalance: Boolean = false,
     ): Emulated {
         return try {
             if (forceRelayer || useBattery) {
@@ -60,7 +66,7 @@ class EmulationUseCase(
                     forceRelayer = forceRelayer,
                 )
             } else {
-                emulate(message, params, checkTonBalance)
+                emulate(message, params, checkTonBalance, capTonRiskToBalance)
             }
         } catch (e: Throwable) {
             Emulated(
@@ -161,7 +167,8 @@ class EmulationUseCase(
     private suspend fun emulate(
         message: MessageBodyEntity,
         params: Boolean,
-        checkTonBalance: Boolean
+        checkTonBalance: Boolean,
+        capTonRiskToBalance: Boolean = false,
     ): Emulated {
         val wallet = message.wallet
         val boc = createMessage(message, false)
@@ -191,7 +198,7 @@ class EmulationUseCase(
                 safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
             )
         }) ?: throw IllegalArgumentException("Emulation failed")
-        return parseEmulated(wallet, consequences, TransferType.Default)
+        return parseEmulated(wallet, consequences, TransferType.Default, capTonRiskToBalance = capTonRiskToBalance)
     }
 
     private suspend fun parseEmulated(
@@ -199,8 +206,9 @@ class EmulationUseCase(
         consequences: MessageConsequences,
         transferType: TransferType,
         currency: WalletCurrency = settingsRepository.currency,
+        capTonRiskToBalance: Boolean = false,
     ): Emulated {
-        val total = getTotal(wallet, consequences.risk, currency)
+        val total = getTotal(wallet, consequences.risk, currency, capTonRiskToBalance)
         val extra = getExtra(wallet.network, consequences.event.extra, currency)
         return Emulated(
             consequences = consequences,
@@ -215,11 +223,15 @@ class EmulationUseCase(
         wallet: WalletEntity,
         risk: Risk,
         currency: WalletCurrency,
+        capTonRiskToBalance: Boolean = false,
     ): Emulated.Total {
         val balanceFiat = delegate.getTotalBalance(wallet, currency) ?: Coins.ZERO
         val ton = tokenRepository.getTON(currency, wallet.accountId, wallet.network, true)
+        val tonBalance = ton?.balance?.value?.toLong()
         val tonValue = if (risk.transferAllRemainingBalance) {
-            ton?.balance?.value?.toLong() ?: risk.gram
+            tonBalance ?: risk.gram
+        } else if (capTonRiskToBalance && tonBalance != null) {
+            minOf(risk.gram, tonBalance)
         } else {
             risk.gram
         }

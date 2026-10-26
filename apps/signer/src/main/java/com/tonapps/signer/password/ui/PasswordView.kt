@@ -11,6 +11,7 @@ import com.tonapps.signer.password.Password
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.LoaderView
 import uikit.widget.password.PasswordInputView
+import uikit.extensions.setMoonOnClickListener
 
 class PasswordView @JvmOverloads constructor(
     context: Context,
@@ -36,7 +37,7 @@ class PasswordView @JvmOverloads constructor(
         actionView.pinToBottomInsets()
 
         doneButton = findViewById(R.id.password_button)
-        doneButton.setOnClickListener { sendPassword() }
+        doneButton.setMoonOnClickListener { sendPassword() }
 
         loaderView = findViewById(R.id.password_loader)
         successView = findViewById(R.id.password_success)

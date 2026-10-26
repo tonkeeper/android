@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Jwk(
@@ -36,31 +41,91 @@ data class Jwk(
     val use: Use
 ) {
     /**
-     * Values: EC
+     * Values: EC,unknown
      */
-    @Serializable
+    @Serializable(with = KtySerializer::class)
     enum class Kty(val value: String) {
-        @SerialName(value = "EC") EC("EC");
+        @SerialName(value = "EC") EC("EC"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object KtySerializer : KSerializer<Kty> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Kty {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Kty.entries.firstOrNull { it.value == value }
+                ?: Kty.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Kty) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
     /**
-     * Values: PMinus256
+     * Values: PMinus256,unknown
      */
-    @Serializable
+    @Serializable(with = CrvSerializer::class)
     enum class Crv(val value: String) {
-        @SerialName(value = "P-256") PMinus256("P-256");
+        @SerialName(value = "P-256") PMinus256("P-256"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object CrvSerializer : KSerializer<Crv> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Crv {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Crv.entries.firstOrNull { it.value == value }
+                ?: Crv.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Crv) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
     /**
-     * Values: ES256
+     * Values: ES256,unknown
      */
-    @Serializable
+    @Serializable(with = AlgSerializer::class)
     enum class Alg(val value: String) {
-        @SerialName(value = "ES256") ES256("ES256");
+        @SerialName(value = "ES256") ES256("ES256"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object AlgSerializer : KSerializer<Alg> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Alg {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Alg.entries.firstOrNull { it.value == value }
+                ?: Alg.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Alg) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
     /**
-     * Values: sig
+     * Values: sig,unknown
      */
-    @Serializable
+    @Serializable(with = UseSerializer::class)
     enum class Use(val value: String) {
-        @SerialName(value = "sig") sig("sig");
+        @SerialName(value = "sig") sig("sig"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object UseSerializer : KSerializer<Use> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Use {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Use.entries.firstOrNull { it.value == value }
+                ?: Use.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Use) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

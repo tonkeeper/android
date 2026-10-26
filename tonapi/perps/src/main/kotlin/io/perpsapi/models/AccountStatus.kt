@@ -12,20 +12,27 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Registration/activity status of the caller's Lighter account. not_registered is this service's own answer for a wallet with no account bound to it yet; active and inactive are Lighter's account status. None of the three is derived from has_l2_key.
  *
- * Values: active,inactive,not_registered
+ * Values: active,inactive,not_registered,unknown
  */
-@Serializable
+@Serializable(with = AccountStatusSerializer::class)
 enum class AccountStatus(val value: String) {
     @SerialName(value = "active")
     active("active"),
     @SerialName(value = "inactive")
     inactive("inactive"),
     @SerialName(value = "not_registered")
-    not_registered("not_registered");
+    not_registered("not_registered"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -51,6 +58,20 @@ enum class AccountStatus(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AccountStatusSerializer : KSerializer<AccountStatus> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AccountStatus {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AccountStatus.entries.firstOrNull { it.value == value }
+            ?: AccountStatus.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AccountStatus) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

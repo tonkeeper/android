@@ -9,22 +9,16 @@ import uikit.base.BaseArgs
 
 data class TonConnectArgs(
     val app: AppEntity,
+    val manifestUrl: String,
     val proofPayload: String?,
     val returnUri: Uri?,
     val wallet: WalletEntity?,
     val fromPackageName: String?
 ): BaseArgs() {
 
-    private companion object {
-        private const val ARG_APP = "app"
-        private const val ARG_PROOF_PAYLOAD = "proofPayload"
-        private const val ARG_RETURN_URI = "returnUri"
-        private const val ARG_WALLET = "wallet"
-        private const val ARG_FROM_PACKAGE_NAME = "fromPackageName"
-    }
-
     constructor(bundle: Bundle) : this(
         app = bundle.getParcelableCompat(ARG_APP)!!,
+        manifestUrl = bundle.getString(ARG_MANIFEST_URL)!!,
         proofPayload = bundle.getString(ARG_PROOF_PAYLOAD),
         returnUri = bundle.getParcelableCompat(ARG_RETURN_URI),
         wallet = bundle.getParcelableCompat(ARG_WALLET),
@@ -34,10 +28,20 @@ data class TonConnectArgs(
     override fun toBundle(): Bundle {
         val bundle = Bundle()
         bundle.putParcelable(ARG_APP, app)
+        bundle.putString(ARG_MANIFEST_URL, manifestUrl)
         bundle.putString(ARG_PROOF_PAYLOAD, proofPayload)
         bundle.putParcelable(ARG_RETURN_URI, returnUri)
         bundle.putParcelable(ARG_WALLET, wallet)
         bundle.putString(ARG_FROM_PACKAGE_NAME, fromPackageName)
         return bundle
+    }
+
+    private companion object {
+        private const val ARG_APP = "app"
+        private const val ARG_MANIFEST_URL = "manifestUrl"
+        private const val ARG_PROOF_PAYLOAD = "proofPayload"
+        private const val ARG_RETURN_URI = "returnUri"
+        private const val ARG_WALLET = "wallet"
+        private const val ARG_FROM_PACKAGE_NAME = "fromPackageName"
     }
 }

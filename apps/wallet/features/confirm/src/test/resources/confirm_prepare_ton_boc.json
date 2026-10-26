@@ -1,0 +1,24 @@
+{
+  "route_id": "278db96e-9feb-46fe-b486-bb2a7c932e12",
+  "aggregator": "swapsxyz",
+  "payloads": [
+    {
+      "payload_id": "eac8754a-308d-4fb8-9bf7-b85c35dab9a8",
+      "kind": "main",
+      "chain_id": "ton/mainnet",
+      "chain_family": "TON",
+      "payload_type": "ton_boc",
+      "calldata_payload_type": "exact",
+      "payload": "[{\"address\":\"EQAH4MY1EbqP7Gg2wJkoZvoCG4BYPsEG5lVBXPZn0UqXNz4y\",\"amount\":\"1280000000\",\"payload\":\"te6cckECBQEAAWoAAiGlp8v4yalVrqrebcVDuaygCAECABnEQlAPMVIIkAAAAAABAdOAHhy8XXiXPILNhsg+k1kS5GhxIfsU6txsk5vAlEEVC1loFXUqAUALXMdcMUMp6BCaRG4+NP0bqZn72kNWnz3NRatcDdZ/KoAgBa5jrhihlPQITSI3Hxp+jdTM/e0hq0+e5qLVrgbrP5VEAwHRGjwvw4AWuY64YoZT0CE0iNx8afo3UzP3tIatPnuai1a4G6z+VRAC1zHXDFDKegQmkRuPjT9G6mZ+9pDVp89zUWrXA3WfyqIAWuY64YoZT0CE0iNx8afo3UzP3tIatPnuai1a4G6z+VRABADVgAlJeN+vfDbQxudkdEm05n9KvgbpS1s7SiZm1Rqz3ce4wAoQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEA1+Apc\"}]",
+      "human_summary": {
+        "action": "Swap GRAM for USDT",
+        "spend_asset": "ton/mainnet/coin",
+        "spend_amount": "1000000000",
+        "receive_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+        "receive_amount": "1398570"
+      },
+      "validation_status": "validated",
+      "date_expire": "2026-09-07T07:41:59Z"
+    }
+  ]
+}

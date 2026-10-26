@@ -14,18 +14,23 @@ import com.tonapps.ledger.ble.BleManager
 import com.tonapps.ledger.ble.BleManagerFactory
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.WalletVersion
+import com.tonapps.blockchain.ton.extensions.equalsRawAddress
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toWalletAddress
+import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.LedgerException
 import com.tonapps.ledger.ble.BleTransport
 import com.tonapps.ledger.ble.ConnectedDevice
+import com.tonapps.ledger.devices.DeviceModelId
 import com.tonapps.ledger.devices.Devices
 import com.tonapps.ledger.ton.AccountPath
+import com.tonapps.ledger.ton.KnownJetton
 import com.tonapps.ledger.ton.LedgerAccount
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.ledger.ton.LedgerKnownJettons
 import com.tonapps.ledger.ton.OpenAppResult
 import com.tonapps.ledger.ton.TonPayloadFormat
 import com.tonapps.ledger.ton.TonTransport
@@ -33,8 +38,11 @@ import com.tonapps.ledger.ton.Transaction
 import com.tonapps.ledger.transport.TransportStatusException
 import com.tonapps.ledger.usb.LedgerUsb
 import com.tonapps.tonkeeper.extensions.isVersionLowerThan
+import com.tonapps.tonkeeper.ui.screen.init.WalletImportAnalytics
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.list.Item
+import com.tonapps.tonkeeper.ui.screen.ledger.toTransactionSentLedgerModel
+import com.tonapps.tonkeeper.ui.screen.ledger.toWalletFlowLedgerModel
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
@@ -66,10 +74,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.ton.block.AddrStd
 import uikit.extensions.collectFlow
 import uikit.extensions.context
 import java.math.BigDecimal
 import java.math.BigInteger
+
+private const val TAG = "LEDGER"
 
 class LedgerConnectionViewModel(
     app: Application,
@@ -78,6 +89,7 @@ class LedgerConnectionViewModel(
     private val collectiblesRepository: CollectiblesRepository,
     private val settingsRepository: SettingsRepository,
     private val api: API,
+    private val importAnalytics: WalletImportAnalytics,
 ) : AndroidViewModel(app) {
     private val bleManager: BleManager = BleManagerFactory.newInstance(context)
     private val usbLedger = LedgerUsb(context)
@@ -149,6 +161,12 @@ class LedgerConnectionViewModel(
 
     private val isBluetooth: Boolean
         get() = _connectionType.value == LedgerConnectionType.BLUETOOTH
+
+    private val isPairing: Boolean
+        get() = _walletId == null
+
+    val connectedLedgerModel: DeviceModelId?
+        get() = _connectedDevice?.model?.id
 
     init {
         collectFlow(connectionType) { type ->
@@ -300,14 +318,14 @@ class LedgerConnectionViewModel(
             return
         }
 
-        L.d("LEDGER", "Connecting to device $deviceId")
+        L.d(TAG, "Connecting to device $deviceId")
 
         bleManager.connect(address = deviceId, onConnectError = {
             pollTonAppJob?.cancel()
 
             viewModelScope.launch {
                 delay(1000)
-                L.d("LEDGER", "Reconnecting to device $deviceId")
+                L.d(TAG, "Reconnecting to device $deviceId")
                 connectBle(deviceId)
             }
 
@@ -320,8 +338,13 @@ class LedgerConnectionViewModel(
             }
         }, onConnectSuccess = {
             disconnectTimeoutJob?.cancel()
-            setConnectedDevice(ConnectedDevice(deviceId, Devices.fromServiceUuid(it.serviceId!!)))
+            val device = ConnectedDevice(deviceId, Devices.fromServiceUuid(it.serviceId!!))
+            setConnectedDevice(device)
             _connectionState.tryEmit(ConnectionState.Connected)
+            if (isPairing) {
+                val ledgerModel = device.model.id.toWalletFlowLedgerModel()
+                viewModelScope.launch { importAnalytics.trackLedgerBluetoothConnected(ledgerModel) }
+            }
 
             val tonTransport = TonTransport(BleTransport(bleManager))
 
@@ -372,6 +395,10 @@ class LedgerConnectionViewModel(
 
         if (transport != null) {
             _connectionState.tryEmit(ConnectionState.TonAppOpened)
+            if (isPairing) {
+                val ledgerModel = connectedLedgerModel?.toWalletFlowLedgerModel()
+                viewModelScope.launch { importAnalytics.trackLedgerAppOpened(ledgerModel) }
+            }
         }
         _tonTransport = transport
 
@@ -434,7 +461,7 @@ class LedgerConnectionViewModel(
                 _connectionState.tryEmit(ConnectionState.Signed)
                 _eventFlow.tryEmit(LedgerEvent.SignedProof(proof))
             } catch (e: Exception) {
-                L.d("LEDGER", "Error signing transaction", e)
+                L.d(TAG, "Error signing transaction", e)
                 if (e.instanceOf(TransportStatusException.DeniedByUser::class)) {
                     _eventFlow.tryEmit(LedgerEvent.Rejected)
                 } else {
@@ -464,17 +491,28 @@ class LedgerConnectionViewModel(
                     return@launch
                 }
 
+                val wallet = getWallet()
                 val ledgerConfig = getLedgerConfig()
+                val path = AccountPath(ledgerConfig.accountIndex)
+                val transaction = withKnownJetton(_transaction!!, wallet, version)
 
-                val signedBody = _tonTransport!!.signTransaction(
-                    AccountPath(ledgerConfig.accountIndex),
-                    _transaction!!
+                val signedBody = try {
+                    _tonTransport!!.signTransaction(path, transaction)
+                } catch (e: TransportStatusException.TxParsingFailed) {
+                    if (transaction === _transaction) {
+                        throw e
+                    }
+                    _tonTransport!!.signTransaction(path, _transaction!!)
+                }
+
+                TransactionSentAnalytics.rememberLedgerModel(
+                    walletId = wallet.id,
+                    ledgerModel = connectedLedgerModel?.toTransactionSentLedgerModel(),
                 )
-
                 _connectionState.tryEmit(ConnectionState.Signed)
                 _eventFlow.tryEmit(LedgerEvent.SignedTransaction(signedBody))
             } catch (e: Exception) {
-                L.d("LEDGER", "Error signing transaction", e)
+                L.d(TAG, "Error signing transaction", e)
                 if (e.instanceOf(TransportStatusException.DeniedByUser::class)) {
                     _eventFlow.tryEmit(LedgerEvent.Rejected)
                 } else if (e.instanceOf(TransportStatusException.BlindSigningDisabled::class)) {
@@ -517,12 +555,52 @@ class LedgerConnectionViewModel(
         }
     }
 
-    private suspend fun getLedgerConfig(): WalletEntity.Ledger {
-        val wallet = accountRepository.getWallets().find { it.id == _walletId }
+    private suspend fun getWallet(): WalletEntity {
+        return accountRepository.getWallets().find { it.id == _walletId }
             ?: throw IllegalStateException("Wallet not found")
-        val ledgerConfig = wallet.ledger
+    }
+
+    private suspend fun getLedgerConfig(): WalletEntity.Ledger {
+        return getWallet().ledger
             ?: throw IllegalStateException("Ledger data not found")
-        return ledgerConfig
+    }
+
+    private suspend fun withKnownJetton(
+        transaction: Transaction,
+        wallet: WalletEntity,
+        appVersion: String
+    ): Transaction {
+        val payload = transaction.payload as? TonPayloadFormat.JettonTransfer ?: return transaction
+        if (payload.knownJetton != null) {
+            return transaction
+        }
+        if (_connectedDevice?.model?.id == DeviceModelId.NANO_S) {
+            return transaction
+        }
+        val jettonWalletAddress = transaction.destination as? AddrStd ?: return transaction
+        val jettonId = try {
+            resolveKnownJettonId(wallet, jettonWalletAddress)
+        } catch (e: Exception) {
+            L.d(TAG, "Failed to resolve known jetton", e)
+            null
+        } ?: return transaction
+        if (appVersion.isVersionLowerThan(LedgerKnownJettons.minAppVersion(jettonId))) {
+            return transaction
+        }
+        val knownJetton = KnownJetton(jettonId, wallet.contract.workchain)
+        return transaction.copy(payload = payload.copy(knownJetton = knownJetton))
+    }
+
+    private suspend fun resolveKnownJettonId(wallet: WalletEntity, jettonWalletAddress: AddrStd): Int? {
+        val jettonWalletId = jettonWalletAddress.toAccountId()
+        val currency = settingsRepository.currency
+        val tokens = tokenRepository.getLocal(currency, wallet.accountId, wallet.network).ifEmpty {
+            tokenRepository.get(currency, wallet.accountId, wallet.network) ?: emptyList()
+        }
+        val token = tokens.firstOrNull {
+            !it.isTon && it.balance.walletAddress.equalsRawAddress(jettonWalletId)
+        } ?: return null
+        return LedgerKnownJettons.jettonId(AddrStd.parse(token.address))
     }
 
     private suspend fun resolveWallets(ledgerData: LedgerConnectData) =
@@ -603,7 +681,7 @@ class LedgerConnectionViewModel(
                         null
                     }
                     if (app == null) {
-                        L.d("LEDGER", "Waiting for device to respond")
+                        L.d(TAG, "Waiting for device to respond")
                     } else if (app.isTonApp) {
                         setTonTransport(tonTransport, type)
                         return@launch
@@ -620,7 +698,7 @@ class LedgerConnectionViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                L.d("LEDGER", "Error waiting for TON app", e)
+                L.d(TAG, "Error waiting for TON app", e)
                 _connectionState.tryEmit(ConnectionState.Disconnected())
             }
         }
@@ -640,7 +718,7 @@ class LedgerConnectionViewModel(
             _connectionState.tryEmit(ConnectionState.Connected)
             false
         } catch (e: Exception) {
-            L.d("LEDGER", "Error opening TON app", e)
+            L.d(TAG, "Error opening TON app", e)
             _connectionState.tryEmit(ConnectionState.Connected)
             true
         }
@@ -652,7 +730,7 @@ class LedgerConnectionViewModel(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            L.d("LEDGER", "Error quitting current app", e)
+            L.d(TAG, "Error quitting current app", e)
         }
     }
 

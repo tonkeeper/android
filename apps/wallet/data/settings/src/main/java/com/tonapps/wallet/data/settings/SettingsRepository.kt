@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.icu.util.Currency
-import androidx.core.content.edit
+import androidx.core.app.LocaleManagerCompat
 import androidx.core.os.LocaleListCompat
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.ton.TonNetwork
@@ -49,34 +49,6 @@ class SettingsRepository(
     private val api: API,
 ) {
 
-    private companion object {
-        private const val NAME = "settings"
-        private const val CURRENCY_CODE_KEY = "currency_code"
-        private const val LOCK_SCREEN_KEY = "lock_screen"
-        private const val BIOMETRIC_KEY = "biometric"
-        private const val COUNTRY_KEY = "country"
-        private const val LANGUAGE_CODE_KEY = "language_code"
-        private const val THEME_KEY = "theme"
-        private const val HIDDEN_BALANCES_KEY = "hidden_balances"
-        private const val FIREBASE_TOKEN_KEY = "firebase_token"
-        private const val INSTALL_ID_KEY = "install_id"
-        private const val SEARCH_ENGINE_KEY = "search_engine"
-        private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
-        private const val BATTERY_VIEWED_KEY = "battery_viewed"
-        private const val CHART_PERIOD_KEY = "chart_period"
-        private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
-        private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
-        private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
-        private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
-        private const val LEDGER_CONNECT_USB = "ledger_connect_usb"
-        private const val SEND_TOOLTIP_SHOWN_KEY = "send_tooltip_shown"
-        private const val HAD_WALLETS_ON_MULTICHAIN_RELEASE_KEY =
-            "had_wallets_on_multichain_release"
-        private const val PUSH_PERMISSION_REQUESTED_KEY = "push_permission_requested"
-        private const val HIDE_DUST_ACTIVITIES_KEY = "hide_dust_activities"
-        private const val HIDE_DUST_ASSETS_KEY = "hide_dust_assets"
-    }
-
     private val _currencyFlow = MutableEffectFlow<WalletCurrency>()
     val currencyFlow = _currencyFlow.stateIn(scope, SharingStarted.Eagerly, null).filterNotNull()
         .distinctUntilChanged()
@@ -112,10 +84,6 @@ class SettingsRepository(
 
     private val _isMigratedFlow = MutableStateFlow<Boolean?>(null)
     val isMigratedFlow = _isMigratedFlow.asStateFlow().filterNotNull()
-
-    fun notifyWalletPush() {
-        _walletPush.tryEmit(Unit)
-    }
 
     val prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
     private val tokenPrefsFolder = TokenPrefsFolder(context, scope)
@@ -212,6 +180,30 @@ class SettingsRepository(
             }
         }
 
+    var multichainPushSyncState: MultichainPushSyncState?
+        get() {
+            val token = prefs.getString(MULTICHAIN_PUSH_TOKEN_KEY, null) ?: return null
+            val locale = prefs.getString(MULTICHAIN_PUSH_LOCALE_KEY, null) ?: return null
+            return MultichainPushSyncState(
+                token = token,
+                deviceId = prefs.getString(MULTICHAIN_PUSH_DEVICE_ID_KEY, null),
+                locale = locale,
+                walletIds = prefs.getStringSet(MULTICHAIN_PUSH_WALLET_IDS_KEY, null).orEmpty(),
+            )
+        }
+        set(value) {
+            prefs.edit()
+                .putString(MULTICHAIN_PUSH_TOKEN_KEY, value?.token)
+                .putString(MULTICHAIN_PUSH_DEVICE_ID_KEY, value?.deviceId)
+                .putString(MULTICHAIN_PUSH_LOCALE_KEY, value?.locale)
+                .putStringSet(MULTICHAIN_PUSH_WALLET_IDS_KEY, value?.walletIds)
+                .apply()
+        }
+
+    var legacyPushLocale: String?
+        get() = prefs.getString(LEGACY_PUSH_LOCALE_KEY, null)
+        set(value) = prefs.putString(LEGACY_PUSH_LOCALE_KEY, value)
+
     var currency: WalletCurrency =
         WalletCurrency.ofOrDefault(prefs.getString(CURRENCY_CODE_KEY, null))
         set(value) {
@@ -255,8 +247,18 @@ class SettingsRepository(
             }
         }
 
+    var lockScreenDisabled: Boolean
+        get() = prefs.getBoolean(LOCK_SCREEN_DISABLED_KEY, false)
+        set(value) {
+            prefs.putBoolean(LOCK_SCREEN_DISABLED_KEY, value)
+        }
+
     var biometric: Boolean =
-        if (isAvailableBiometric(context)) prefs.getBoolean(BIOMETRIC_KEY, false) else false
+        if (isAvailableBiometric(context)) {
+            prefs.getBoolean(BIOMETRIC_KEY, false)
+        } else {
+            false
+        }
         set(value) {
             if (value != field) {
                 prefs.putBoolean(BIOMETRIC_KEY, value)
@@ -337,6 +339,47 @@ class SettingsRepository(
             }
         }
 
+    init {
+        scope.launch(Dispatchers.IO) {
+            if (rnLegacy.isRequestMigration()) {
+                prefs.clear()
+                tokenPrefsFolder.clear()
+                walletPrefsFolder.clear()
+
+                val legacyValues = importFromLegacy()
+                biometric = legacyValues.biometric
+                lockScreen = legacyValues.lockScreen
+                currency = if (legacyValues.currency.code.isBlank()) {
+                    WalletCurrency.DEFAULT
+                } else {
+                    legacyValues.currency
+                }
+                theme = legacyValues.theme
+                language = legacyValues.language
+                hiddenBalances = legacyValues.hiddenBalances
+                country = legacyValues.country
+                searchEngine = legacyValues.searchEngine
+            }
+
+            tokenPrefsFolder.resetTronPrefs()
+            seedLockScreenDisabled()
+
+            _isMigratedFlow.value = true
+            _currencyFlow.tryEmit(currency)
+            _languageFlow.tryEmit(language)
+            _hiddenBalancesFlow.tryEmit(hiddenBalances)
+            _countryFlow.tryEmit(country)
+            _searchEngineFlow.tryEmit(searchEngine)
+            _biometricFlow.tryEmit(biometric)
+            _lockscreenFlow.tryEmit(lockScreen)
+            _walletPush.tryEmit(Unit)
+        }
+    }
+
+    fun notifyWalletPush() {
+        _walletPush.tryEmit(Unit)
+    }
+
     fun getSafeModeState(walletId: String): SafeModeState {
         val disabledUnix = walletPrefsFolder.getSafeModeDisabledUnix(walletId)
             ?: prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, -5)
@@ -371,13 +414,6 @@ class SettingsRepository(
         prefs.putBoolean(STORIES_VIEWED_PREFIX + storyId, true)
     }
 
-    fun resetStoriesViewed() {
-        val viewed = prefs.all.keys.filter { it.startsWith(STORIES_VIEWED_PREFIX) }
-        prefs.edit {
-            viewed.forEach { remove(it) }
-        }
-    }
-
     fun setSafeModeState(walletId: String, state: SafeModeState) {
         val value = when (state) {
             SafeModeState.Enabled -> 1L
@@ -402,12 +438,6 @@ class SettingsRepository(
 
     fun isSpamTransaction(walletId: String, id: String) =
         getSpamStateTransaction(walletId, id) == SpamTransactionState.SPAM
-
-    fun isPurchaseOpenConfirm(walletId: String, id: String) =
-        walletPrefsFolder.isPurchaseOpenConfirm(walletId, id)
-
-    fun disablePurchaseOpenConfirm(walletId: String, id: String) =
-        walletPrefsFolder.disablePurchaseOpenConfirm(walletId, id)
 
     fun isDAppOpenConfirm(walletId: String, appHost: String) =
         walletPrefsFolder.isDAppOpenConfirm(walletId, appHost)
@@ -503,6 +533,13 @@ class SettingsRepository(
         return language.locale
     }
 
+    fun getPushLocale(): Locale {
+        if (language.code == Language.DEFAULT) {
+            return LocaleManagerCompat.getSystemLocales(context).get(0) ?: context.locale
+        }
+        return language.locale
+    }
+
     fun getDeviceCurrency(): WalletCurrency {
         val locale = context.locale
         val deviceCurrency = Currency.getInstance(locale)
@@ -573,40 +610,12 @@ class SettingsRepository(
         tokenPrefsFolder.get(walletId, tokenAddress, blacklist)
     }
 
-    init {
-        scope.launch(Dispatchers.IO) {
-            if (rnLegacy.isRequestMigration()) {
-                prefs.clear()
-                tokenPrefsFolder.clear()
-                walletPrefsFolder.clear()
-
-                val legacyValues = importFromLegacy()
-                biometric = legacyValues.biometric
-                lockScreen = legacyValues.lockScreen
-                currency = if (legacyValues.currency.code.isBlank()) {
-                    WalletCurrency.DEFAULT
-                } else {
-                    legacyValues.currency
-                }
-                theme = legacyValues.theme
-                language = legacyValues.language
-                hiddenBalances = legacyValues.hiddenBalances
-                country = legacyValues.country
-                searchEngine = legacyValues.searchEngine
-            }
-
-            tokenPrefsFolder.resetTronPrefs()
-
-            _isMigratedFlow.value = true
-            _currencyFlow.tryEmit(currency)
-            _languageFlow.tryEmit(language)
-            _hiddenBalancesFlow.tryEmit(hiddenBalances)
-            _countryFlow.tryEmit(country)
-            _searchEngineFlow.tryEmit(searchEngine)
-            _biometricFlow.tryEmit(biometric)
-            _lockscreenFlow.tryEmit(lockScreen)
-            _walletPush.tryEmit(Unit)
+    private fun seedLockScreenDisabled() {
+        if (prefs.contains(LOCK_SCREEN_DISABLED_KEY)) {
+            return
         }
+
+        lockScreenDisabled = prefs.contains(LOCK_SCREEN_KEY) && !prefs.getBoolean(LOCK_SCREEN_KEY, false)
     }
 
     private data class LegacyValues(
@@ -682,5 +691,39 @@ class SettingsRepository(
         } else {
             code
         }
+    }
+
+    private companion object {
+        private const val NAME = "settings"
+        private const val CURRENCY_CODE_KEY = "currency_code"
+        private const val LOCK_SCREEN_KEY = "lock_screen"
+        private const val LOCK_SCREEN_DISABLED_KEY = "lock_screen_disabled"
+        private const val BIOMETRIC_KEY = "biometric"
+        private const val COUNTRY_KEY = "country"
+        private const val LANGUAGE_CODE_KEY = "language_code"
+        private const val THEME_KEY = "theme"
+        private const val HIDDEN_BALANCES_KEY = "hidden_balances"
+        private const val FIREBASE_TOKEN_KEY = "firebase_token"
+        private const val MULTICHAIN_PUSH_TOKEN_KEY = "multichain_push_token"
+        private const val MULTICHAIN_PUSH_DEVICE_ID_KEY = "multichain_push_device_id"
+        private const val MULTICHAIN_PUSH_LOCALE_KEY = "multichain_push_locale"
+        private const val MULTICHAIN_PUSH_WALLET_IDS_KEY = "multichain_push_wallet_ids"
+        private const val LEGACY_PUSH_LOCALE_KEY = "legacy_push_locale"
+        private const val INSTALL_ID_KEY = "install_id"
+        private const val SEARCH_ENGINE_KEY = "search_engine"
+        private const val ENCRYPTED_COMMENT_MODAL_KEY = "encrypted_comment_modal"
+        private const val BATTERY_VIEWED_KEY = "battery_viewed"
+        private const val CHART_PERIOD_KEY = "chart_period"
+        private const val SAFE_MODE_DISABLED_UNIX_KEY = "safe_mode_disabled_unix"
+        private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
+        private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
+        private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
+        private const val LEDGER_CONNECT_USB = "ledger_connect_usb"
+        private const val SEND_TOOLTIP_SHOWN_KEY = "send_tooltip_shown"
+        private const val HAD_WALLETS_ON_MULTICHAIN_RELEASE_KEY =
+            "had_wallets_on_multichain_release"
+        private const val PUSH_PERMISSION_REQUESTED_KEY = "push_permission_requested"
+        private const val HIDE_DUST_ACTIVITIES_KEY = "hide_dust_activities"
+        private const val HIDE_DUST_ASSETS_KEY = "hide_dust_assets"
     }
 }

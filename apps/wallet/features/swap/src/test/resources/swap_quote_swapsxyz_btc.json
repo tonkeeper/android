@@ -1,0 +1,81 @@
+{
+    "quote_id": "4254db48-d16c-4579-b001-d50a4985482d",
+    "routes": [
+        {
+            "route_id": "1aceda0b-e1fc-4723-92cf-96f4c40e9575",
+            "provider_route_id": "0x9b8e2c13e13394786fb3d3e5b7e1aab7601c5ab7156615df8b6e53bdbc67ae89",
+            "aggregator": "swapsxyz",
+            "protocol": "alt-vm-2",
+            "route_type": "cross_chain_swap",
+            "source_amount": "200000",
+            "estimated_destination_amount": "110814000000",
+            "minimum_destination_amount": "109705860000",
+            "estimated_time": {
+                "inbound_seconds": 0,
+                "swap_seconds": 0,
+                "outbound_seconds": 0,
+                "total_seconds": 2511
+            },
+            "total_slippage_bps": 100,
+            "source_usd_price": 79384,
+            "destination_usd_price": 1.41,
+            "fees": [
+                {
+                    "type": "protocol",
+                    "asset": "btc/mainnet/coin",
+                    "chain_id": "999000313",
+                    "amount": "200",
+                    "amount_usd": "0.16"
+                },
+                {
+                    "type": "bridge",
+                    "asset": "btc/mainnet/coin",
+                    "chain_id": "999000313",
+                    "amount": "201",
+                    "amount_usd": "0.16"
+                },
+                {
+                    "type": "application",
+                    "asset": "btc/mainnet/coin",
+                    "chain_id": "999000313",
+                    "amount": "1400",
+                    "amount_usd": "1.11"
+                }
+            ],
+            "legs": [
+                {
+                    "leg_index": 0,
+                    "type": "bridge",
+                    "chain_id": "btc/mainnet",
+                    "chain_family": "UTXO",
+                    "from_asset": "btc/mainnet/coin",
+                    "to_asset": "ton/mainnet/coin",
+                    "protocol": "alt-vm-2"
+                }
+            ],
+            "date_expire": "2026-09-07T13:57:08Z",
+            "risk_level": "medium",
+            "payloads": [
+                {
+                    "payload_id": "92648a41-fd0b-4182-ba11-a988d9e699b8",
+                    "kind": "main",
+                    "chain_id": "btc/mainnet",
+                    "chain_family": "UTXO",
+                    "payload_type": "alt_vm_deposit",
+                    "calldata_payload_type": "flex",
+                    "payload": "{\"to\":\"bc1qzteau5ppgl69lkr8mk7qm4ss993e4t89kw9tp2\",\"toExtra\":null,\"value\":\"200000\",\"chainId\":999000313,\"chainKey\":\"btc\"}",
+                    "human_summary": {
+                        "action": "Swap BTC for GRAM",
+                        "spend_asset": "btc/mainnet/coin",
+                        "spend_amount": "200000",
+                        "receive_asset": "ton/mainnet/coin",
+                        "receive_amount": "110814000000",
+                        "protocol": "alt-vm-2"
+                    },
+                    "validation_status": "validated",
+                    "date_expire": "2026-09-07T13:57:08Z"
+                }
+            ]
+        }
+    ]
+}

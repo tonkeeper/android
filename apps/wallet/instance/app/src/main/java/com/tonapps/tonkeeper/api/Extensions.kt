@@ -4,12 +4,12 @@ import android.icu.util.Currency
 import com.tonapps.icu.Coins
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.extensions.max18
-import com.tonapps.tonkeeperx.R
+import com.tonapps.apps.wallet.data.staking.R as StakingR
+import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.tonapi.models.AccountAddress
 import io.tonapi.models.AccountEvent
-import io.tonapi.models.Action
 import io.tonapi.models.ImagePreview
 import io.tonapi.models.JettonBalance
 import io.tonapi.models.JettonBurnAction
@@ -69,10 +69,10 @@ private fun getCurrencyByCountry(country: String): String? {
 val PoolImplementationType.icon: Int
     get() {
         return when (this) {
-            PoolImplementationType.tf -> R.drawable.ic_staking_tf
-            PoolImplementationType.whales -> R.drawable.ic_staking_whales
-            PoolImplementationType.liquidTF -> R.drawable.ic_staking_tonstakers
-            else -> throw IllegalArgumentException("Unknown PoolImplementationType: $this")
+            PoolImplementationType.tf -> StakingR.drawable.staking_ton_nominators
+            PoolImplementationType.whales -> StakingR.drawable.staking_whales
+            PoolImplementationType.liquidTF -> StakingR.drawable.staking_tonstakers
+            else -> UIKitIcon.ic_staking_outline_28
         }
     }
 
@@ -106,10 +106,10 @@ fun AccountAddress.getNameOrAddress(testnet: Boolean, short: Boolean = false): S
             wallet = isWallet,
             testnet = testnet
         )
-        return if (short) value.shortAddress else value
+        return if (short) { value.shortAddress } else { value }
     }
     val value = name!!
-    return if (short) value.max18 else value
+    return if (short) { value.max18 } else { value }
 }
 
 fun AccountAddress.getWalletAddress(testnet: Boolean): String {
@@ -124,13 +124,13 @@ val AccountAddress.iconURL: String?
 
 val String.shortAddress: String
     get() {
-        if (length < 8) return this
+        if (length < 8) { return this }
         return substring(0, 4) + "…" + substring(length - 4, length)
     }
 
 val String.shortHash: String
     get() {
-        if (length < 16) return this
+        if (length < 16) { return this }
         return substring(0, 8) + "…" + substring(length - 8, length)
     }
 

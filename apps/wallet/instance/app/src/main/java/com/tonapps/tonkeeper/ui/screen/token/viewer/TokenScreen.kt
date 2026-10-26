@@ -37,6 +37,7 @@ import uikit.extensions.dp
 import uikit.extensions.drawable
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.setRightDrawable
+import uikit.extensions.setMoonOnClickListener
 
 class TokenScreen(wallet: WalletEntity) :
     BaseListWalletScreen<ScreenContext.Wallet>(ScreenContext.Wallet(wallet)),
@@ -129,7 +130,7 @@ class TokenScreen(wallet: WalletEntity) :
         headerView.subtitleView.setTextColor(color)
         headerView.subtitleView.compoundDrawablePadding = 8.dp
         headerView.subtitleView.setRightDrawable(icon)
-        headerView.setOnClickListener { navigation?.add(TokenUnverifiedScreen.newInstance()) }
+        headerView.setMoonOnClickListener { navigation?.add(TokenUnverifiedScreen.newInstance()) }
     }
 
     private fun actionMenu(view: View, token: AccountTokenEntity) {

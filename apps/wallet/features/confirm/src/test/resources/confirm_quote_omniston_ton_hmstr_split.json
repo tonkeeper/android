@@ -1,0 +1,60 @@
+{
+  "quote_id": "4b4da60a-1d40-4c2d-b730-cc9ca17a2fce",
+  "routes": [
+    {
+      "route_id": "01a31288-26a4-433c-b748-339bc4a35967",
+      "provider_route_id": "3f4c5def7927bf0473d051a2d9a454a932642cfe35170262c15e51ae456965c3",
+      "aggregator": "omniston",
+      "protocol": "omniston",
+      "route_type": "cross_chain_swap",
+      "source_amount": "10000000000",
+      "estimated_destination_amount": "86136046813377",
+      "minimum_destination_amount": "85274686345243",
+      "total_slippage_bps": 100,
+      "value_difference_bps": 721,
+      "price_impact_bps": 120,
+      "source_usd_price": 1.391330403515781,
+      "destination_usd_price": 0.00017317606148768892,
+      "fees": [
+        {
+          "type": "gas",
+          "asset": "ton/mainnet/coin",
+          "amount": "136500000",
+          "amount_usd": "0.189917"
+        },
+        {
+          "type": "integrator",
+          "asset": "ton/mainnet/jetton/0:09f2e59dec406ab26a5259a45d7ff23ef11f3e5c7c21de0b0d2a1cbe52b76b3d",
+          "amount": "607202746920",
+          "amount_usd": "0.105153"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-10-16T12:25:32Z",
+      "risk_level": "low",
+      "payloads": [
+        {
+          "payload_id": "813d23dc-cc96-4f08-b976-56976a8d6e75",
+          "kind": "main",
+          "chain_id": "ton/mainnet",
+          "chain_family": "TON",
+          "payload_type": "ton_boc",
+          "calldata_payload_type": "exact",
+          "payload": "[{\"address\":\"EQClcxRtn7nhZ3zzwsLk_itGaSe0r1r0Dj8fBLAxonkKNsZh\",\"amount\":\"1824000000\",\"payload\":\"te6cckEBAwEA+AABZAHzg13BXlGuRWllw0X5sZAIAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLBAQHhZmTeKoAUUNRnMRjp961obpRcXFlpmRi54S1Np6+/OoUMVE8BhdADOI6S+YNiPryMJjH6qFh2B2zGdQR+FAu4fvFoQi+EBYIAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLAAAAAAf////8ACAJlgxur56QAYAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLAAAAjQAIkBz3IfREANhIm2aHM6qidG4JJvZubIsYBOzXSFw+0uCsKsFk=\"},{\"address\":\"EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_\",\"amount\":\"3012000000\",\"payload\":\"te6cckECBQEAAYgAAXHqBhhdwV5RrkVpZcNKLXAwCAG/x9fY1zB9RtX1CJjJs50k7IA4toaSYFf/qfT15Fg+0mFS5aIAj+QBAksAAAAAgB4cvF14lzyCzYbIPpNZEuRocSH7FOrcbJObwJRBFQtZZwIDAdEaPC/DgBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsEAM4jpL5g2I+vIwmMfqoWHYHbMZ1BH4UC7h+8WhCL4QFggBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsEAEAI08N9fpgBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsEAM4jpL5g2I+vIwmMfqoWHYHbMZ1BH4UC7h+8WhCL4QFggDVgARIDnuQ+iIAbCRNs0OZ1VE6NwSTezc2RYwCdmukLh9pYAjQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAzIUOc\"},{\"address\":\"EQDa4VOnTYlLvDJ0gZjNYm5PXfSmmtL6Vs6A_CZEtXCNICq_\",\"amount\":\"2920000000\",\"payload\":\"te6cckECBgEAAd8AAWvqBhhdwV5RrkVpZcNJUC+QCAB8v/lRu/nm2G2T/o3mKsVVajcyKQi1rYTZe8yTqxSrEDNQ6yQBAksAAAAAgAyj+c4qGpCVDwzlD53SOrQ/ix8LYzy1F3SRJ7wc1bYNBwIDAdkDz9GbgBnEdJfMGxH15GExj9VCw7A7ZjOoI/CgXcP3i0IRfCAsEAM4jpL5g2I+vIwmMfqoWHYHbMZ1BH4UC7h+8WhCL4QFggAofqAoXo+15KRlB4RR20RZZQNbLS/ZEzdMeQS6SfDhw6BkIsQEBACNPDfX6YAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLBADOI6S+YNiPryMJjH6qFh2B2zGdQR+FAu4fvFoQi+EBYIB4WZk3iqACrs8dxHfSXCNX2GrVFUhbSu/TEhgyZbjOBMC2svPv43QAziOkvmDYj68jCYx+qhYdgdsxnUEfhQLuH7xaEIvhAWCAGcR0l8wbEfXkYTGP1ULDsDtmM6gj8KBdw/eLQhF8ICwAAAAAH/////ABQCZYTbEIpMEaAGcR0l8wbEfXkYTGP1ULDsDtmM6gj8KBdw/eLQhF8ICwAAAI0ACJAc9yH0RADYSJtmhzOqonRuCSb2bmyLGATs10hcPtLiE9ptl\"},{\"address\":\"EQACuz151snlY46PKdUOkyiCf0zzcxMsN6XmKQkSKZjkvyFH\",\"amount\":\"3384000000\",\"payload\":\"te6cckEBAwEA+AABZAHzg13BXlGuRWllw0vJbPAIAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLBAQHhZmTeKoAAj6owHAaKM0v+f5lohXi3ibR5Z+EaLptiRZJJZh2Gk1ADOI6S+YNiPryMJjH6qFh2B2zGdQR+FAu4fvFoQi+EBYIAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLAAAAAAf////8ACAJlhiFQ3uG2IAZxHSXzBsR9eRhMY/VQsOwO2YzqCPwoF3D94tCEXwgLAAAAjQAIkBz3IfREANhIm2aHM6qidG4JJvZubIsYBOzXSFw+0uLLiuOc=\"}]",
+          "human_summary": {
+            "action": "Swap on TON",
+            "spend_asset": "ton/mainnet/coin",
+            "spend_amount": "10000000000",
+            "receive_asset": "ton/mainnet/jetton/0:09f2e59dec406ab26a5259a45d7ff23ef11f3e5c7c21de0b0d2a1cbe52b76b3d",
+            "receive_amount": "86136046813377",
+            "recipient_address": "UQDOI6S-YNiPryMJjH6qFh2B2zGdQR-FAu4fvFoQi-EBYFwm",
+            "protocol": "omniston"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-10-16T12:25:32Z"
+        }
+      ],
+      "execution_id": "83a6e9e3-3d1a-45ad-8fec-618029348c4d"
+    }
+  ]
+}

@@ -12,13 +12,18 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Тип ассета. commodities сейчас выставляется только perp-рынкам (золото, нефть, ...), спотовые товарные токены остаются asset.
  *
- * Values: asset,stocks,etfs,commodities,perpetuals
+ * Values: asset,stocks,etfs,commodities,perpetuals,unknown
  */
-@Serializable
+@Serializable(with = AssetTypeSerializer::class)
 enum class AssetType(val value: String) {
     @SerialName(value = "asset")
     asset("asset"),
@@ -29,7 +34,9 @@ enum class AssetType(val value: String) {
     @SerialName(value = "commodities")
     commodities("commodities"),
     @SerialName(value = "perpetuals")
-    perpetuals("perpetuals");
+    perpetuals("perpetuals"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -55,6 +62,20 @@ enum class AssetType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object AssetTypeSerializer : KSerializer<AssetType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): AssetType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return AssetType.entries.firstOrNull { it.value == value }
+            ?: AssetType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: AssetType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

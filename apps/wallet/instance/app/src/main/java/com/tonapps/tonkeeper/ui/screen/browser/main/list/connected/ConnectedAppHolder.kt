@@ -10,6 +10,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListHolder
 import uikit.navigation.Navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class ConnectedAppHolder(
     parent: ViewGroup,
@@ -20,8 +21,11 @@ class ConnectedAppHolder(
     private val networkIconView = findViewById<AsyncImageView>(R.id.network_icon)
     private val nameView = findViewById<AppCompatTextView>(R.id.name)
 
+    init {
+    }
+
     override fun onBind(item: ConnectedItem) {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             Navigation.from(context)?.add(
                 DAppScreen.newInstance(
                     wallet = item.wallet,

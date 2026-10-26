@@ -45,6 +45,7 @@ import ui.theme.MoonTheme
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.runAnimation
+import uikit.extensions.swallowClicks
 import uikit.extensions.withAlpha
 import uikit.widget.BottomSheetLayout
 import uikit.widget.HeaderView
@@ -59,15 +60,26 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
 
     override val viewModel: InitViewModel by viewModel { parametersOf(args) }
 
+    private var currentRouteName: String? = null
+
     private val backStackChangedListener = FragmentManager.OnBackStackChangedListener {
+        val currentFragment = childFragmentManager.fragments.lastOrNull()
+        currentRouteName = currentFragment?.tag
         updateHeaderNavigation()
-        childFragmentManager.fragments.lastOrNull()?.let { onChildFragment(it) }
+        currentFragment?.let { onChildFragment(it) }
     }
 
     private lateinit var headerView: HeaderView
     private lateinit var loaderContainerView: View
     private lateinit var loaderIconView: View
     private lateinit var syncLoaderComposeView: ComposeView
+
+    override val predictiveBackPreviewEnabled: Boolean
+        get() = childFragmentManager.backStackEntryCount <= 1
+
+    private val isBackLockedOnBackupStart: Boolean
+        get() = childFragmentManager.backStackEntryCount > 1 &&
+            childFragmentManager.fragments.lastOrNull() is BackupStartScreen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +100,9 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
         if (childFragmentManager.backStackEntryCount <= 1) {
             headerView.setIcon(0)
             headerView.setAction(UIKitIcon.ic_close_16)
+        } else if (isBackLockedOnBackupStart) {
+            headerView.setIcon(0)
+            headerView.setAction(0)
         } else {
             headerView.setIcon(UIKitIcon.ic_chevron_left_16)
             headerView.setAction(0)
@@ -114,7 +129,7 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
         updateHeaderNavigation()
 
         loaderContainerView = view.findViewById(R.id.loader_container)
-        loaderContainerView.setOnClickListener { }
+        loaderContainerView.swallowClicks()
         loaderContainerView.setBackgroundColor(requireContext().backgroundPageColor.withAlpha(.64f))
 
         loaderIconView = view.findViewById(R.id.loader_icon)
@@ -139,6 +154,7 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
         // guard in popBackStack and could cancel wallet creation mid-write.
         collectFlow(viewModel.loaderState) { updateDraggable() }
 
+        currentRouteName = childFragmentManager.fragments.lastOrNull()?.tag
         childFragmentManager.addOnBackStackChangedListener(backStackChangedListener)
     }
 
@@ -170,6 +186,15 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             return
         }
 
+        if (childFragmentManager.fragments.lastOrNull() is BackupCheckInitScreen) {
+            childFragmentManager.popBackStackImmediate()
+        }
+
+        if (currentRouteName == route.toString()) {
+            return
+        }
+        currentRouteName = route.toString()
+
         val fragment = when (route) {
             InitRoute.SelectType -> SelectTypeScreen.newInstance(args.withNew)
             InitRoute.CreatePasscode -> PasscodeScreen.newInstance(PasscodeScreen.Mode.Create)
@@ -187,18 +212,14 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             InitRoute.BackupCheck -> BackupCheckInitScreen.newInstance()
         }
 
-        if (childFragmentManager.fragments.lastOrNull() is BackupCheckInitScreen) {
-            childFragmentManager.popBackStackImmediate()
-        }
-
         val transaction = childFragmentManager.beginTransaction()
         // The sheet itself slides up when opening; animating the first step from the right on
         // top of that reads as a diagonal enter. Only animate step-to-step transitions.
         if (childFragmentManager.fragments.isNotEmpty()) {
             transaction.setCustomAnimations(uikit.R.anim.fragment_enter_from_right, uikit.R.anim.fragment_exit_to_left, uikit.R.anim.fragment_enter_from_left, uikit.R.anim.fragment_exit_to_right)
         }
-        transaction.replace(R.id.step_container, fragment, fragment.toString())
-        transaction.addToBackStack(fragment.toString())
+        transaction.replace(R.id.step_container, fragment, route.toString())
+        transaction.addToBackStack(route.toString())
         transaction.commit()
     }
 
@@ -218,7 +239,10 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
     }
 
     override fun onBackPressed(): Boolean {
-        viewModel.routePopBackStack()
+        childFragmentManager.executePendingTransactions()
+        if (!isBackLockedOnBackupStart) {
+            viewModel.routePopBackStack()
+        }
         return false
     }
 
@@ -250,7 +274,8 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             watchRecoveryAccountId: String? = null,
             withNew: Boolean = true,
             raffleSourceWalletId: String? = null,
-        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts, keystone, watchRecoveryAccountId, withNew, raffleSourceWalletId))
+            importStartedTracked: Boolean = false,
+        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts, keystone, watchRecoveryAccountId, withNew, raffleSourceWalletId, importStartedTracked))
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()

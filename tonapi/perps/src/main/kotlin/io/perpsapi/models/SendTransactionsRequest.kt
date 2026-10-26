@@ -13,10 +13,15 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class SendTransactionsRequest(
-    /* In submission order. Lighter caps a batch at fifty and answers one as a whole, so a refusal refuses all of them; the cap is enforced there rather than restated here. */
+    /* In submission order. Lighter caps a batch at fifty and answers one as a whole, so a refusal refuses all of them. More than fifty is refused here as batch_not_accepted. */
     @SerialName(value = "transactions")
     val transactions: List<SignedTransaction>
 ) {

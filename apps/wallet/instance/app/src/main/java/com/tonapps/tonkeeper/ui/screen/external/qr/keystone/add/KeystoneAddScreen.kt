@@ -28,6 +28,7 @@ import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.withAlpha
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setMoonOnClickListener
 
 class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFragment.BottomSheet {
 
@@ -52,19 +53,19 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
         val constantWhiteColor = requireContext().constantWhiteColor.withAlpha(.08f).stateList
 
         val closeView = view.findViewById<View>(R.id.close)
-        closeView.setOnClickListener { finish() }
+        closeView.setMoonOnClickListener { finish() }
         closeView.backgroundTintList = constantWhiteColor
 
         val aboutView = view.findViewById<View>(R.id.about)
         aboutView.backgroundTintList = constantWhiteColor
-        aboutView.setOnClickListener {
+        aboutView.setMoonOnClickListener {
             BrowserHelper.open(requireActivity(), "https://keyst.one/")
         }
 
         cameraView = view.findViewById(R.id.camera)
 
         flashView = view.findViewById(R.id.flash)
-        flashView.setOnClickListener { toggleFlash() }
+        flashView.setMoonOnClickListener { toggleFlash() }
 
         val keystoneDataFlow = urFlow(CryptoHDKey::class.java, ::onScanError).map { cryptoHDKey ->
             val name = if (cryptoHDKey.name.isNullOrBlank()) {
@@ -104,12 +105,14 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
         )
     }
 
-    private fun addAccount(data: KeystoneData) {
+    private suspend fun addAccount(data: KeystoneData) {
+        importAnalytics.trackKeystoneScanned()
         navigation?.add(InitScreen.newInstance(
             type = InitArgs.Type.Keystone,
             publicKeyEd25519 = data.publicKey,
             name = data.name,
-            keystone = WalletEntity.Keystone(data.xfp, data.path)
+            keystone = WalletEntity.Keystone(data.xfp, data.path),
+            importStartedTracked = true,
         ))
         finish()
     }

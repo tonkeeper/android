@@ -22,7 +22,15 @@ data class CrossSwapPrepare(
     @Contextual @SerialName(value = "aggregator")
     val aggregator: CrossSwapAggregator,
     @SerialName(value = "payloads")
-    val payloads: List<CrossSwapPayload>
+    val payloads: List<CrossSwapPayload>,
+
+    /* The aggregator's own identifier for this route, as the built transaction carries it. For swapsxyz this is the `txId` that `/getAction` minted, which is the id its own dashboards and `/getStatus` know the swap by; a quote that was not prepared inline carries an id of ours instead, so this is where the upstream one first appears. Omitted when the provider exposes none.  */
+    @SerialName(value = "provider_route_id")
+    val providerRouteId: String? = null,
+
+    /* The execution opened for this route, when the provider can follow it before a payload is submitted (a `relay` deposit). Absent otherwise: submit the signed payload to get one.  */
+    @SerialName(value = "execution_id")
+    val executionId: String? = null
 ) {
 }
 

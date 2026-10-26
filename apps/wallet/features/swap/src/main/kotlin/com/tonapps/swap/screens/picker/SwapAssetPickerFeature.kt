@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import androidx.paging.map
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.core.paging.AccountsPagingCacheSession
 import com.tonapps.core.paging.AccountsPagingSource
@@ -11,6 +12,7 @@ import com.tonapps.wallet.data.multichain.account.AssetCapability
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.swap.SwapRoutes
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,6 +22,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+
+data class SwapAssetPickerAccount(
+    val account: AccountWithDetails,
+    val hiddenBalance: Boolean,
+)
 
 class SwapAssetPickerFeature(
     private val side: SwapRoutes.SelectAsset.Side,
@@ -63,12 +71,17 @@ class SwapAssetPickerFeature(
                         availableOnly = availableOnly,
                         showHidden = showAll,
                         showAll = showAll,
+                        verifiedOnly = false,
+                        hideDust = false,
                         cacheSession = accountsPagingCacheSession,
                         scope = viewModelScope,
                         capabilities = listOf(AssetCapability.Swap),
                     )
                 },
-            ).flow
+            ).flow.map { pagingData ->
+                val hiddenBalance = settingsRepository.hiddenBalances
+                pagingData.map { SwapAssetPickerAccount(account = it, hiddenBalance = hiddenBalance) }
+            }
         }
         .cachedIn(viewModelScope)
 

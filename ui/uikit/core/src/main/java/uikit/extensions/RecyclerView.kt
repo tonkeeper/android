@@ -49,6 +49,11 @@ fun RecyclerView.hideKeyboardWhenScroll() {
     })
 }
 
+fun RecyclerView.smoothScrollToTop() {
+    stopScroll()
+    smoothScrollToPosition(0)
+}
+
 fun RecyclerView.smartScrollTo(position: Int) {
     val layoutManager = layoutManager as? LinearLayoutManager ?: return
     val firstVisible = layoutManager.findFirstVisibleItemPosition()

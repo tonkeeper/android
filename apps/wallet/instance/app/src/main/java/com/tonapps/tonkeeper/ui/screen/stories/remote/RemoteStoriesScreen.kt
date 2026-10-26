@@ -1,18 +1,40 @@
 package com.tonapps.tonkeeper.ui.screen.stories.remote
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
+import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.extensions.containsQuery
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
-import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
 import org.koin.android.ext.android.inject
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.stories.BaseStoriesScreen
+
+private const val FROM_QUERY = "from"
+private const val STORY_SOURCE = "story"
+
+private fun Uri.withStorySource(): Uri {
+    if (isOpaque) {
+        return this
+    }
+    if (!containsQuery(FROM_QUERY)) {
+        return buildUpon().appendQueryParameter(FROM_QUERY, STORY_SOURCE).build()
+    }
+    if (DeepLinkRoute.resolve(this) !is DeepLinkRoute.Tabs.Browser) {
+        return this
+    }
+    val query = encodedQuery.orEmpty()
+        .split('&')
+        .filter { it.substringBefore('=') != FROM_QUERY }
+        .joinToString("&")
+        .ifEmpty { null }
+    return buildUpon().encodedQuery(query).appendQueryParameter(FROM_QUERY, STORY_SOURCE).build()
+}
 
 class RemoteStoriesScreen : BaseStoriesScreen() {
 
@@ -38,7 +60,8 @@ class RemoteStoriesScreen : BaseStoriesScreen() {
                 image = it.image.toUri(),
                 title = it.title,
                 subtitle = it.description,
-                button = it.button?.title
+                button = it.button?.title,
+                links = it.links.map { link -> Link(link.text, link.url) }
             )
         })
 
@@ -70,16 +93,23 @@ class RemoteStoriesScreen : BaseStoriesScreen() {
 
         if (button.type == "deeplink") {
             val uri = button.payload.toUriOrNull() ?: return
-            val builder = uri.buildUpon() ?: return
-            if (!uri.containsQuery("from")) {
-                builder.appendQueryParameter("from", "story")
-            }
-            navigation?.openURL(builder.build().toString())
+            navigation?.openURL(uri.withStorySource().toString())
             finish()
         } else if (button.type == "link") {
             val uri = button.payload.toUriOrNull() ?: return
             navigation?.openURL(uri.toString())
             finish()
+        }
+    }
+
+    override fun onStoryLink(url: String) {
+        super.onStoryLink(url)
+        val uri = url.toUriOrNull() ?: return
+        if (DeepLinkRoute.isInApp(uri)) {
+            navigation?.openURL(uri.withStorySource().toString())
+            finish()
+        } else {
+            navigation?.openURL(url)
         }
     }
 

@@ -3,27 +3,21 @@ package uikit.extensions
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.res.ColorStateList
-import android.content.res.Configuration
 import android.content.res.TypedArray
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.RippleDrawable
 import android.provider.Settings
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
-import com.tonapps.log.L
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.animation.AnimationUtils
 import android.widget.EditText
-import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.annotation.AnimRes
 import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
@@ -31,12 +25,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.annotation.StyleableRes
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.FragmentActivity
-import com.tonapps.uikit.color.backgroundHighlightedColor
-import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textTertiaryColor
-import uikit.navigation.Navigation.Companion.navigation
 import uikit.navigation.NavigationActivity
 
 val Context.navigationMode: Int
@@ -82,6 +71,10 @@ fun Context.getColorByAttr(name: String): Int {
     return color
 }
 
+fun Context.hapticConfirm() {
+    activity?.window?.decorView?.hapticConfirm()
+}
+
 val Context.activity: NavigationActivity?
     get() {
         var context = this
@@ -108,13 +101,6 @@ fun Context.useAttributes(
             recycle()
         }
     }
-}
-
-fun Context.createRipple(
-    content: Drawable? = null,
-    mask: Drawable? = null
-): RippleDrawable {
-    return RippleDrawable(backgroundHighlightedColor.stateList, content, mask)
 }
 
 fun Context.textWithLabel(text: String, label: CharSequence?): CharSequence {

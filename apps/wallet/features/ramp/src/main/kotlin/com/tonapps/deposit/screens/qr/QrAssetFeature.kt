@@ -6,6 +6,7 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.deposit.screens.qr.QrAssetFeature.Keys.Tokens
 import com.tonapps.extensions.CacheKey
@@ -55,6 +56,8 @@ data class QrAssetData(
     val token: TokenEntity? = null,
     val withBuyButton: Boolean = false,
     val walletId: String? = null,
+    val analyticsFrom: Events.DepositFlow.DepositFlowFrom,
+    val utm: UtmParameters = UtmParameters.Empty,
 )
 
 class QrAssetFeature(
@@ -76,8 +79,9 @@ class QrAssetFeature(
 
     init {
         AnalyticsHelper.Default.simpleTrackEvent("receive_open")
-        AnalyticsHelper.Default.events.depositFlow.depositViewReceiveTokens(
-            from = Events.DepositFlow.DepositFlowFrom.WalletScreen,
+        AnalyticsHelper.Default.eventsTaggedWith(data.utm).depositFlow.depositViewReceiveTokens(
+            from = data.analyticsFrom,
+            walletMode = Events.DepositFlow.DepositFlowWalletMode.Single,
             addFundsOption = Events.DepositFlow.DepositFlowAddFundsOption.ReceiveTokens,
             network = Events.DepositFlow.DepositFlowNetwork.TON,
         )

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -53,6 +54,8 @@ import com.tonapps.perps.screens.markets.perpsErrorDescription
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonActionSelector
+import ui.components.moon.cell.MoonBundlePosition
+import ui.components.moon.cell.MoonBundleTitleCell
 import ui.components.moon.cell.MoonRetryCell
 import ui.components.moon.cell.MoonSearchCell
 import ui.components.moon.cell.defaultBundleType
@@ -69,6 +72,7 @@ private const val ERROR_KEY = 4
 private const val APPEND_ERROR_KEY = 5
 private const val SEARCH_ASSET_TYPE = "search_asset"
 private const val PERP_ROW_TYPE = "perp_row"
+private const val SECTION_HEADER_TYPE = "section_header"
 
 @Composable
 fun SearchScreen(
@@ -90,7 +94,8 @@ fun SearchScreen(
     MoonScaffold(
         modifier = Modifier
             .nestedScroll(rememberNestedScrollInteropConnection())
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .imePadding(),
         title = stringResource(Localization.crypto),
         onBack = onBack,
     ) {
@@ -164,9 +169,8 @@ private fun SpotResults(
     val refresh = pagingItems.loadState.refresh
     val append = pagingItems.loadState.append
     val isLoading = refresh is LoadState.Loading || (pagingItems.itemCount == 0 && append is LoadState.Loading)
-    val isError = pagingItems.itemCount == 0 && (refresh is LoadState.Error || append is LoadState.Error)
+    val isError = refresh is LoadState.Error || (pagingItems.itemCount == 0 && append is LoadState.Error)
     val isEmpty = !isLoading && !isError && pagingItems.itemCount == 0
-    val showSkeleton = isLoading && pagingItems.itemCount == 0
 
     var scrollToTopPending by remember { mutableStateOf(false) }
     var filtersSeen by remember { mutableStateOf(false) }
@@ -198,7 +202,7 @@ private fun SpotResults(
         state = listState,
     ) {
         when {
-            showSkeleton -> {
+            isLoading -> {
                 val count = 10
                 items(
                     count,
@@ -225,37 +229,62 @@ private fun SpotResults(
             else -> {
                 items(
                     count = pagingItems.itemCount,
-                    key = pagingItems.itemKey { it.id },
+                    key = pagingItems.itemKey { it.key },
                     contentType = pagingItems.itemContentType { item ->
-                        if (item is CatalogSearchRow.Perp) {
-                            PERP_ROW_TYPE
-                        } else {
-                            SEARCH_ASSET_TYPE
+                        when {
+                            item is SearchListItem.Header -> SECTION_HEADER_TYPE
+                            item is SearchListItem.Row && item.row is CatalogSearchRow.Perp -> PERP_ROW_TYPE
+                            else -> SEARCH_ASSET_TYPE
                         }
                     },
                 ) { index ->
-                    when (val row = pagingItems[index] ?: return@items) {
-                        is CatalogSearchRow.Perp -> PerpMarketRow(
-                            market = row.market,
-                            position = defaultBundleType(pagingItems.itemCount, index),
-                            currencyCode = row.currencyCode,
-                            onClick = {
-                                keyboardController?.hide()
-                                focusManager.clearFocus()
-                                onOpenPerpMarket(row.market.marketIndex, row.market.symbol)
-                            },
-                            onVisibilityChange = {},
-                        )
+                    when (val listItem = pagingItems[index] ?: return@items) {
+                        is SearchListItem.Header -> {
+                            if (index > 0) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                            MoonBundleTitleCell(
+                                title = when (listItem.section) {
+                                    SearchSection.TOKENS -> stringResource(Localization.tokens)
+                                    SearchSection.PERPETUALS -> stringResource(Localization.perps_title)
+                                },
+                            )
+                        }
 
-                        is CatalogSearchRow.Spot -> SearchAssetCell(
-                            item = row.item,
-                            position = defaultBundleType(pagingItems.itemCount, index),
-                            onClick = {
-                                keyboardController?.hide()
-                                focusManager.clearFocus()
-                                onOpenAsset(row.item.asset)
-                            },
-                        )
+                        is SearchListItem.Row -> {
+                            val isFirst = index == 0 || pagingItems.peek(index - 1) is SearchListItem.Header
+                            val isLast = index == pagingItems.itemCount - 1 ||
+                                pagingItems.peek(index + 1) is SearchListItem.Header
+                            val position = when {
+                                isFirst && isLast -> MoonBundlePosition.Default
+                                isFirst -> MoonBundlePosition.Header
+                                isLast -> MoonBundlePosition.Footer
+                                else -> MoonBundlePosition.Middle
+                            }
+                            when (val row = listItem.row) {
+                                is CatalogSearchRow.Perp -> PerpMarketRow(
+                                    market = row.market,
+                                    position = position,
+                                    currencyCode = row.currencyCode,
+                                    onClick = {
+                                        keyboardController?.hide()
+                                        focusManager.clearFocus()
+                                        onOpenPerpMarket(row.market.marketIndex, row.market.symbol)
+                                    },
+                                    onVisibilityChange = {},
+                                )
+
+                                is CatalogSearchRow.Spot -> SearchAssetCell(
+                                    item = row.item,
+                                    position = position,
+                                    onClick = {
+                                        keyboardController?.hide()
+                                        focusManager.clearFocus()
+                                        onOpenAsset(row.item.asset)
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
                 if (append is LoadState.Loading) {
@@ -293,8 +322,7 @@ private fun PerpsResults(
     val refresh = pagingItems.loadState.refresh
     val append = pagingItems.loadState.append
     val isLoading = refresh is LoadState.Loading || (pagingItems.itemCount == 0 && append is LoadState.Loading)
-    val showSkeleton = isLoading && pagingItems.itemCount == 0
-    val isError = pagingItems.itemCount == 0 && (refresh is LoadState.Error || append is LoadState.Error)
+    val isError = refresh is LoadState.Error || (pagingItems.itemCount == 0 && append is LoadState.Error)
     val isEmpty = !isLoading && !isError && pagingItems.itemCount == 0
 
     var scrollToTopPending by remember { mutableStateOf(false) }
@@ -327,7 +355,7 @@ private fun PerpsResults(
         state = listState,
     ) {
         when {
-            showSkeleton -> {
+            isLoading -> {
                 val count = 10
                 items(
                     count,

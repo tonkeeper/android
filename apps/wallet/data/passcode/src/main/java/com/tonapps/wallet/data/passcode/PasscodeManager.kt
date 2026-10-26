@@ -4,24 +4,33 @@ import android.content.Context
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.core.tracer.AnalyticException
+import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.extensions.logError
+import com.tonapps.log.L
+import com.tonapps.security.DeviceCredentialRequiredException
 import com.tonapps.security.multichain.MnemonicCoder
 import com.tonapps.security.multichain.McPasscodeStore
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
 import com.tonapps.wallet.data.passcode.dialog.PasscodeDialog
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,6 +45,7 @@ class PasscodeManager(
     private val rnLegacy: RNLegacy,
     private val multichainVault: McPasscodeStore,
     private val mcAccountRepository: McAccountRepository,
+    private val perpetualRepository: PerpetualRepository,
     private val scope: CoroutineScope
 ) {
 
@@ -55,9 +65,32 @@ class PasscodeManager(
     val lockscreenHiddenFlow: StateFlow<Boolean> // TODO to state e.g. None, Shown, Passed
         get() = lockscreen.hiddenFlow
 
+    val isLockScreenOptional: Boolean
+        get() = multichainVault.canRestoreSession
+
+    // Drives the new networks screen shown after the lock screen. Null when there is nothing to show.
+    private val _newChainsFlow = MutableStateFlow<NewChainsSync?>(null)
+    val newChainsFlow: StateFlow<NewChainsSync?> = _newChainsFlow.asStateFlow()
+
+    internal val hasNewChains: Boolean
+        get() = _newChainsFlow.value != null
+
+    // Adding the chains the wallets miss is part of the lock screen: it needs the PIN, which only the
+    // lock screen has. The PIN stays here while the new networks screen is up, for "Try again", and
+    // is zeroed when the screen goes. Each sync works on its own copy, so closing the screen mid-sync
+    // doesn't pull the PIN from under it.
+    @Volatile
+    private var newChainsPin: CharArray? = null
+
+    // The chains the wallets miss, read once per lock screen and before the first unlock attempt: a
+    // valid PIN starts the binding sync, which may add them before the new networks screen gets to
+    // show them. Nothing changes them while the lock screen is up.
+    private val lockMissingChains = scope.async(start = CoroutineStart.LAZY) { missingChainsOrEmpty() }
+
     init {
         settingsRepository.isMigratedFlow.onEach {
             lockscreen.init()
+            lockMissingChains.start()
             ensureMultichainVault()
         }.launchIn(scope)
     }
@@ -65,7 +98,7 @@ class PasscodeManager(
     // Best-effort and detached from any UI lifecycle: a failure must never block the user, it is
     // retried on the next session start.
     @Synchronized
-    private fun syncWalletBindings(code: String) {
+    private fun syncWalletBindings(code: String?) {
         walletBindingsJob?.let { job ->
             if (job.isActive || walletBindingsSynced) {
                 return
@@ -74,10 +107,134 @@ class PasscodeManager(
 
         walletBindingsJob = scope.launch(Dispatchers.IO) {
             try {
-                mcAccountRepository.syncWalletBindings()
-                walletBindingsSynced = true
+                walletBindingsSynced = syncWallets(code)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Throwable) {
                 FirebaseCrashlytics.getInstance().recordException(e)
+            }
+        }
+    }
+
+    private suspend fun missingChainsOrEmpty(): List<Chain> {
+        return try {
+            mcAccountRepository.missingChains()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            emptyList()
+        }
+    }
+
+    // [missing] is read before the unlock: the unlock itself starts a binding sync that adds them.
+    private fun startNewChains(missing: List<Chain>, code: String): Boolean {
+        if (missing.isEmpty()) {
+            return false
+        }
+        val pin = code.toCharArray()
+        newChainsPin?.fill('\u0000')
+        newChainsPin = pin
+        _newChainsFlow.value = NewChainsSync.Running(missing)
+        scope.launch { addNewChains(missing, pin.copyOf()) }
+        return true
+    }
+
+    // Takes ownership of [pin] and zeroes it.
+    private suspend fun addNewChains(missing: List<Chain>, pin: CharArray) {
+        withContext(Dispatchers.IO) {
+            try {
+                syncWallets(pin)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                // syncWallets throws after registering what it could; the diff below tells what landed.
+                FirebaseCrashlytics.getInstance().recordException(e)
+            } finally {
+                pin.fill('\u0000')
+            }
+        }
+        val remaining = missingChainsOrEmpty().toSet()
+        // The screen may be closed while the sync runs (the close button): a late result must not
+        // bring it back.
+        _newChainsFlow.update { current ->
+            current?.let { NewChainsSync.Finished(missing, missing.filter { it !in remaining }) }
+        }
+    }
+
+    // No PIN: no lock screen, so the chains are checked right at start, with the vault's default key.
+    internal suspend fun startNewChainsWithoutPin(): Boolean {
+        val missing = missingChainsOrEmpty()
+        if (missing.isEmpty()) {
+            return false
+        }
+        ensureMultichainVault()
+        return startNewChains(missing, DEFAULT_PIN)
+    }
+
+    /** "Try again" on the new networks screen. */
+    fun retryNewChains() {
+        val pin = newChainsPin?.copyOf() ?: return
+        val missing = _newChainsFlow.value?.chains ?: run {
+            pin.fill('\u0000')
+            return
+        }
+        _newChainsFlow.value = NewChainsSync.Running(missing)
+        scope.launch { addNewChains(missing, pin) }
+    }
+
+    /** "Open wallet": closes the new networks screen and with it the lock screen. */
+    fun newChainsShown() {
+        newChainsPin?.fill('\u0000')
+        newChainsPin = null
+        _newChainsFlow.value = null
+        lockscreen.newChainsDone()
+    }
+
+    private suspend fun syncWallets(code: String?): Boolean {
+        if (code == null) {
+            val hasMissingChains = mcAccountRepository.hasMissingChains()
+            mcAccountRepository.syncWallets(mnemonicCoder = null, firstWalletId = accountRepository.getSelectedWalletId())
+            return !hasMissingChains
+        }
+
+        val pin = code.toCharArray()
+        try {
+            syncWallets(pin)
+        } finally {
+            pin.fill('\u0000')
+        }
+        return true
+    }
+
+    // The vault is unlocked only when a wallet misses chains or its Lighter key: deriving either
+    // needs its mnemonic. The caller keeps ownership of [pin].
+    private suspend fun syncWallets(pin: CharArray) {
+        val firstWalletId = accountRepository.getSelectedWalletId()
+        val withoutTradingKey = perpetualRepository.walletsWithoutTradingKey(mcAccountRepository.getWallets().map { it.id })
+        if (!mcAccountRepository.hasMissingChains() && withoutTradingKey.isEmpty()) {
+            mcAccountRepository.syncWallets(mnemonicCoder = null, firstWalletId = firstWalletId)
+            return
+        }
+
+        vaultMutex.withLock { multichainVault.unlock(pin) }
+            .use { coder ->
+                keepTradingKeys(withoutTradingKey, coder)
+                mcAccountRepository.syncWallets(coder, firstWalletId)
+            }
+    }
+
+    // A key that fails to keep is tried again on the next entry: the unlock itself goes on, since
+    // what fails here is perps, not the wallets the lock screen opens.
+    private suspend fun keepTradingKeys(walletIds: List<String>, coder: MnemonicCoder) {
+        for (walletId in walletIds) {
+            try {
+                val wallet = mcAccountRepository.getCryptoWallet(walletId, coder) ?: continue
+                perpetualRepository.saveTradingKey(walletId, wallet)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                L.e(e)
             }
         }
     }
@@ -116,7 +273,9 @@ class PasscodeManager(
                 val code = helper.getPinCode()
                     ?: throw IllegalStateException("biometric unlock without a stored pin")
 
+                val missingChains = lockMissingChains.await()
                 startMultichainSession(code)
+                startNewChains(missingChains, code)
                 lockscreen.biometric()
             } catch (e: Throwable) {
                 AnalyticsHelper.Default.captureException(
@@ -126,20 +285,69 @@ class PasscodeManager(
         }
     }
 
-    fun deleteAll() {
-        settingsRepository.biometric = false
-        scope.launch {
-            reset()
-        }
-    }
-
     fun lockscreenHidden() {
         lockscreen.hidden()
     }
 
+    suspend fun lockscreenRetryWithoutPasscode(): Boolean {
+        return lockscreen.retryWithoutPasscode()
+    }
+
+    internal suspend fun restoreSessionWithoutPasscode(): Boolean = withContext(Dispatchers.IO) {
+        if (!settingsRepository.lockScreenDisabled) {
+            return@withContext false
+        }
+
+        // A Lighter key is derived from the mnemonic, which only the PIN opens: a wallet with none
+        // kept yet takes this one entry, and the unlock keeps it.
+        if (owesTradingKey()) {
+            return@withContext false
+        }
+
+        // The chains a wallet misses are derived from its mnemonic too: the PIN entry adds them and
+        // shows the new networks screen, as it does with the lock screen on.
+        if (lockMissingChains.await().isNotEmpty()) {
+            return@withContext false
+        }
+
+        val restored = try {
+            vaultMutex.withLock {
+                multichainVault.restoreSession()
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            AnalyticsHelper.Default.captureException(
+                AnalyticException.Vault("vault session restore failed", e)
+            )
+            false
+        }
+
+        if (restored) {
+            syncWalletBindings(code = null)
+        }
+
+        restored
+    }
+
+    // Runs under LockScreen.init, where a throw leaves the lock screen without a state: a read that
+    // fails counts as owing, and the PIN entry is the way through.
+    private suspend fun owesTradingKey(): Boolean {
+        return try {
+            val walletIds = mcAccountRepository.getWallets().map { it.id }
+            perpetualRepository.walletsWithoutTradingKey(walletIds).isNotEmpty()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            true
+        }
+    }
+
     fun lockscreenCheck(context: Context, code: String) {
         scope.launch {
-            lockscreen.check(context, code)
+            val missingChains = lockMissingChains.await()
+            lockscreen.check(context, code, onValid = { startNewChains(missingChains, code) })
         }
     }
 
@@ -161,6 +369,10 @@ class PasscodeManager(
     }
 
     suspend fun requestValidPasscode(context: Context): String = withContext(Dispatchers.Main) {
+        if (!unlockSecureStorage(context, withVault = false)) {
+            throw CancellationException("device credential request cancelled")
+        }
+
         // Dismissing the dialog is a user cancellation, not a failure: callers must be able to tell
         // it apart from a wrong passcode to avoid showing an error.
         val code = requestPasscodeByBiometric(context)
@@ -241,6 +453,10 @@ class PasscodeManager(
     }
 
     suspend fun isValid(context: Context, code: String): Boolean = withContext(Dispatchers.IO) {
+        if (!unlockSecureStorage(context, withVault = false)) {
+            return@withContext false
+        }
+
         val valid = if (!isRequestMigration()) {
             helper.isValid(code)
         } else {
@@ -434,6 +650,7 @@ class PasscodeManager(
 
     suspend fun reset() = withContext(Dispatchers.IO) {
         settingsRepository.lockScreen = false
+        settingsRepository.lockScreenDisabled = false
         settingsRepository.biometric = false
         helper.reset()
         rnLegacy.clearMnemonic()
@@ -489,6 +706,10 @@ class PasscodeManager(
         context: Context,
         title: String
     ): Boolean = withContext(Dispatchers.Main) {
+        if (!unlockSecureStorage(context, withVault = true)) {
+            return@withContext false
+        }
+
         if (isRequestMigration()) {
             return@withContext confirmationMigration(context)
         }
@@ -553,6 +774,32 @@ class PasscodeManager(
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             context.logError(e)
+            false
+        }
+    }
+
+    private suspend fun unlockSecureStorage(context: Context, withVault: Boolean): Boolean {
+        if (!requiresDeviceCredential(withVault)) {
+            return true
+        }
+        if (!DeviceCredential.confirm(context, context.getString(Localization.app_name))) {
+            return false
+        }
+        return !requiresDeviceCredential(withVault)
+    }
+
+    private suspend fun requiresDeviceCredential(withVault: Boolean): Boolean = withContext(Dispatchers.IO) {
+        requiresDeviceCredential { helper.hasPinCode } ||
+            (withVault && requiresDeviceCredential { accountRepository.openVault() })
+    }
+
+    private fun requiresDeviceCredential(open: () -> Unit): Boolean {
+        return try {
+            open()
+            false
+        } catch (_: DeviceCredentialRequiredException) {
+            true
+        } catch (_: Exception) {
             false
         }
     }

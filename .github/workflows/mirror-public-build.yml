@@ -1,3 +1,7 @@
+# Runs in the public tonkeeper/android mirror, where the project sits at the
+# repository root (mirror-public-push.yml publishes the android/ subtree and
+# grafts this file in). Paths here are therefore relative to the flat layout,
+# not to android/.
 name: Mirror APK release build
 
 on:

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/offsetMedium">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/close"
+        android:layout_width="@dimen/actionSize"
+        android:layout_height="@dimen/actionSize"
+        android:layout_gravity="end|center"
+        android:background="@drawable/bg_oval_button_secondary"
+        android:backgroundTint="?attr/buttonSecondaryBackgroundColor"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_close_16"
+        android:tint="?attr/buttonSecondaryForegroundColor" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_faceid_84"
+        android:tint="?attr/accentBlueColor" />
+
+    <uikit.widget.TextHeaderView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/offsetMedium"
+        android:layout_marginTop="@dimen/gap"
+        android:title="@string/lock_screen_turn_off_title"
+        android:description="@string/lock_screen_turn_off_description" />
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/offsetLarge"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/turn_off"
+            style="@style/Widget.App.Button.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/lock_screen_turn_off_anyway"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+        <Button
+            android:id="@+id/keep_on"
+            style="@style/Widget.App.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/gap"
+            android:layout_weight="1"
+            android:text="@string/lock_screen_keep_on"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</uikit.widget.ColumnLayout>

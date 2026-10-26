@@ -289,8 +289,8 @@ class AuthApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun registerDevice(registerDeviceRequest: RegisterDeviceRequest): DeviceTokens {
-        val localVarResponse = registerDeviceWithHttpInfo(registerDeviceRequest = registerDeviceRequest)
+    fun registerDevice(registerDeviceRequest: RegisterDeviceRequest, F: String? = null): DeviceTokens {
+        val localVarResponse = registerDeviceWithHttpInfo(registerDeviceRequest = registerDeviceRequest, F = F)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as DeviceTokens
@@ -309,18 +309,19 @@ class AuthApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun registerDeviceWithHttpInfo(registerDeviceRequest: RegisterDeviceRequest): ApiResponse<DeviceTokens?> {
-        val localVariableConfig = registerDeviceRequestConfig(registerDeviceRequest = registerDeviceRequest)
+    fun registerDeviceWithHttpInfo(registerDeviceRequest: RegisterDeviceRequest, F: String?): ApiResponse<DeviceTokens?> {
+        val localVariableConfig = registerDeviceRequestConfig(registerDeviceRequest = registerDeviceRequest, F = F)
 
         return request<RegisterDeviceRequest, DeviceTokens>(
             localVariableConfig
         )
     }
 
-    fun registerDeviceRequestConfig(registerDeviceRequest: RegisterDeviceRequest): RequestConfig<RegisterDeviceRequest> {
+    fun registerDeviceRequestConfig(registerDeviceRequest: RegisterDeviceRequest, F: String?): RequestConfig<RegisterDeviceRequest> {
         val localVariableBody = registerDeviceRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        F?.apply { localVariableHeaders["F"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 

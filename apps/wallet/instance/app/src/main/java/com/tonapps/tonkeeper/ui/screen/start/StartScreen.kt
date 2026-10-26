@@ -17,6 +17,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomPadding
 import uikit.navigation.Navigation.Companion.navigation
+import uikit.extensions.setMoonOnClickListener
 
 class StartScreen : BaseFragment(R.layout.fragment_intro) {
 
@@ -34,7 +35,7 @@ class StartScreen : BaseFragment(R.layout.fragment_intro) {
         }
 
         val logoView = view.findViewById<LottieAnimationView>(R.id.logo)
-        logoView.setOnClickListener {
+        logoView.setMoonOnClickListener {
             logoView.playAnimation()
         }
         logoView.setOnLongClickListener {
@@ -43,21 +44,21 @@ class StartScreen : BaseFragment(R.layout.fragment_intro) {
         }
 
         val newWalletButton = view.findViewById<Button>(R.id.new_wallet)
-        newWalletButton.setOnClickListener {
+        newWalletButton.setMoonOnClickListener {
             navigation?.add(InitScreen.newInstance(InitArgs.Type.New))
         }
 
         val importWalletButton = view.findViewById<Button>(R.id.import_wallet)
-        importWalletButton.setOnClickListener {
+        importWalletButton.setMoonOnClickListener {
             navigation?.add(InitScreen.newInstance(InitArgs.Type.AddWallet, withNew = false))
         }
 
         val termsView = view.findViewById<AppCompatTextView>(R.id.terms)
         termsView.text = getSpannable(Localization.start_agree)
-        termsView.setOnClickListener {
+        termsView.setMoonOnClickListener {
             BrowserHelper.open(
                 requireContext(),
-                requireContext().serverConfig?.termsOfUseUrl ?: return@setOnClickListener
+                requireContext().serverConfig?.termsOfUseUrl ?: return@setMoonOnClickListener
             )
         }
     }

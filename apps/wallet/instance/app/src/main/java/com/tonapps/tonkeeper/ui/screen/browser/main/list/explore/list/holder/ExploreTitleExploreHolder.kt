@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreItem
 import com.tonapps.tonkeeperx.R
+import uikit.extensions.setMoonOnClickListener
 
 class ExploreTitleExploreHolder(
     parent: ViewGroup,
@@ -14,15 +15,22 @@ class ExploreTitleExploreHolder(
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
     private val allView = findViewById<AppCompatTextView>(R.id.all)
 
+    init {
+    }
+
     override fun onBind(item: ExploreItem.Title) {
         titleView.text = item.title
 
         if (item.id.isNullOrBlank()) {
             allView.visibility = View.GONE
             itemView.setOnClickListener(null)
+            allView.setOnClickListener(null)
         } else {
             allView.visibility = View.VISIBLE
-            itemView.setOnClickListener {
+            itemView.setMoonOnClickListener {
+                onMoreClick(item.id)
+            }
+            allView.setMoonOnClickListener {
                 onMoreClick(item.id)
             }
         }

@@ -7,6 +7,7 @@ import com.tonapps.tonkeeperx.R
 import uikit.base.BaseFragment
 import uikit.extensions.applyNavBottomMargin
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class TokenUnverifiedScreen: BaseFragment(R.layout.fragment_token_unverified), BaseFragment.Modal {
 
@@ -17,7 +18,7 @@ class TokenUnverifiedScreen: BaseFragment(R.layout.fragment_token_unverified), B
         view.findViewById<HeaderView>(R.id.header).doOnActionClick = { finish() }
         view.findViewById<View>(R.id.button).apply {
             applyNavBottomMargin(marginBottom)
-            setOnClickListener { finish() }
+            setMoonOnClickListener { finish() }
         }
     }
 

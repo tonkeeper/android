@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.Migration.MigrationFrom
 import com.tonapps.core.ComposableFragment
 import com.tonapps.core.navigation.NavigationDelegate
@@ -92,6 +93,7 @@ class MigrationFragment : ComposableFragment(), BaseFragment.BottomSheet {
         navigation.add(
             DepositFragment.create(
                 walletId = wallet.id,
+                analyticsFrom = DepositFlowFrom.Migration,
             ),
         )
     }

@@ -25,13 +25,19 @@ fun <T : Any> MoonNav(
         rememberSaveableStateHolderNavEntryDecorator(),
         rememberViewModelStoreNavEntryDecorator(),
     ),
-    sceneStrategy: SceneStrategy<T> = SinglePaneSceneStrategy(),
+    sceneStrategies: List<SceneStrategy<T>> = listOf(SinglePaneSceneStrategy()),
     entryProvider: (key: T) -> NavEntry<T>,
 ) {
     NavDisplay(
         modifier = modifier,
         backStack = backStack,
-        sceneStrategy = sceneStrategy,
+        onBack = {
+            when {
+                backStack is NestedNavBackStack -> backStack.safeRemoveLastOrNull()
+                backStack is MutableList<T> && backStack.size > 1 -> backStack.removeLastOrNull()
+            }
+        },
+        sceneStrategies = sceneStrategies,
         entryDecorators = entryDecorators,
         transitionSpec = {
             slideInHorizontally(

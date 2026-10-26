@@ -8,10 +8,7 @@ import com.tonapps.core.flags.WalletFeature
 import com.tonapps.log.L
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.perps.data.PerpMarket
-import com.tonapps.perps.data.PerpsMarketFilter
 import com.tonapps.perps.data.PerpsRepository
-import com.tonapps.perps.data.PerpsSort
-import com.tonapps.perps.data.USD_CURRENCY
 import com.tonapps.trading.TradeEntryTracker
 import com.tonapps.trading.data.TradingRepository
 import com.tonapps.wallet.api.entity.BannerEntity
@@ -31,8 +28,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.launch
 
 data class ShelfSelection(
@@ -66,25 +66,15 @@ class ShelvesFeature(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    val perpsShelfMarkets: StateFlow<List<PerpMarket>> = refreshSignal
-        .onStart { emit(false) }
-        .flatMapLatest { soft ->
-            isPerpsVisible.flatMapLatest { visible ->
-                flow {
-                    if (!visible) {
-                        emit(emptyList())
-                        return@flow
-                    }
-                    if (!soft) {
-                        emit(emptyList())
-                    }
-                    val markets = perpsRepository.getMarkets("", PerpsMarketFilter.ALL, PerpsSort.VOLUME, USD_CURRENCY, cursor = null)
-                        .getOrNull()
-                        ?.markets
-                        .orEmpty()
-                        .take(PERPS_SHELF_SIZE)
-                    emit(markets)
-                }
+    val perpsShelfMarkets: StateFlow<List<PerpMarket>> = isPerpsVisible
+        .flatMapLatest { visible ->
+            if (visible) {
+                refreshSignal
+                    .onStart { emit(false) }
+                    .mapLatest { perpsRepository.getShelfMarkets() }
+                    .runningFold(emptyList<PerpMarket>()) { previous, loaded -> loaded.ifEmpty { previous } }
+            } else {
+                flowOf(emptyList())
             }
         }
         .cacheState(initialValue = emptyList())
@@ -187,9 +177,5 @@ class ShelvesFeature(
                 }
             }
         }
-    }
-
-    private companion object {
-        const val PERPS_SHELF_SIZE = 8
     }
 }

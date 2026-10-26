@@ -14,6 +14,7 @@ internal class StorageSource(context: Context) {
         private const val NAME = "account"
         private const val SELECTED_ID = "selected_id"
         private const val TON_PROOF_TOKEN_PREFIX = "ton_proof_token"
+        private const val TRON_ADDRESS_PREFIX = "tron_address"
         private const val KEY_ALIAS = "_com_tonapps_account_master_key_"
     }
 
@@ -28,6 +29,16 @@ internal class StorageSource(context: Context) {
     fun setTonProofToken(publicKey: PublicKeyEd25519, token: String) {
         val key = tonProofTokenKey(publicKey)
         encryptedPrefs.putIfNotExist(key, token)
+    }
+
+    fun getTronAddress(publicKey: PublicKeyEd25519): String? {
+        return prefs.string(tronAddressKey(publicKey))
+    }
+
+    fun setTronAddress(publicKey: PublicKeyEd25519, address: String) {
+        prefs.edit {
+            putString(tronAddressKey(publicKey), address)
+        }
     }
 
     fun getSelectedId(): String? {
@@ -50,6 +61,10 @@ internal class StorageSource(context: Context) {
 
     private fun tonProofTokenKey(publicKey: PublicKeyEd25519): String {
         return key(TON_PROOF_TOKEN_PREFIX, publicKey.hex())
+    }
+
+    private fun tronAddressKey(publicKey: PublicKeyEd25519): String {
+        return key(TRON_ADDRESS_PREFIX, publicKey.hex())
     }
 
     private fun key(prefix: String, id: String): String {

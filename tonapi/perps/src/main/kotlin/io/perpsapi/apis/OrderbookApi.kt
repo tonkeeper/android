@@ -47,7 +47,8 @@ class OrderbookApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
      */
      enum class SideGetTruncatedOrderBook(val value: String) {
          @SerialName(value = "buy") buy("buy"),
-         @SerialName(value = "sell") sell("sell");
+         @SerialName(value = "sell") sell("sell"),
+         @SerialName(value = "unknown") unknown("unknown");
 
         /**
          * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -61,8 +62,8 @@ class OrderbookApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getTruncatedOrderBook(market: Int, side: SideGetTruncatedOrderBook, feeRate: String, notional: String, xWalletID: String): TruncatedOrderBook {
-        val localVarResponse = getTruncatedOrderBookWithHttpInfo(market = market, side = side, feeRate = feeRate, notional = notional, xWalletID = xWalletID)
+    fun getTruncatedOrderBook(market: Int, side: SideGetTruncatedOrderBook, feeRate: String, notional: String, xWalletId: String? = null): TruncatedOrderBook {
+        val localVarResponse = getTruncatedOrderBookWithHttpInfo(market = market, side = side, feeRate = feeRate, notional = notional, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as TruncatedOrderBook
@@ -81,15 +82,15 @@ class OrderbookApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getTruncatedOrderBookWithHttpInfo(market: Int, side: SideGetTruncatedOrderBook, feeRate: String, notional: String, xWalletID: String): ApiResponse<TruncatedOrderBook?> {
-        val localVariableConfig = getTruncatedOrderBookRequestConfig(market = market, side = side, feeRate = feeRate, notional = notional, xWalletID = xWalletID)
+    fun getTruncatedOrderBookWithHttpInfo(market: Int, side: SideGetTruncatedOrderBook, feeRate: String, notional: String, xWalletId: String?): ApiResponse<TruncatedOrderBook?> {
+        val localVariableConfig = getTruncatedOrderBookRequestConfig(market = market, side = side, feeRate = feeRate, notional = notional, xWalletId = xWalletId)
 
         return request<Unit, TruncatedOrderBook>(
             localVariableConfig
         )
     }
 
-    fun getTruncatedOrderBookRequestConfig(market: Int, side: SideGetTruncatedOrderBook, feeRate: String, notional: String, xWalletID: String): RequestConfig<Unit> {
+    fun getTruncatedOrderBookRequestConfig(market: Int, side: SideGetTruncatedOrderBook, feeRate: String, notional: String, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -99,7 +100,7 @@ class OrderbookApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
                 put("notional", listOf(notional.toString()))
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -109,7 +110,7 @@ class OrderbookApi(basePath: String = defaultBasePath, client: Call.Factory = Ap
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

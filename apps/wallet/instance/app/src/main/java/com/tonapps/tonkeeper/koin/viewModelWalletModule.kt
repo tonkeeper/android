@@ -1,9 +1,13 @@
 package com.tonapps.tonkeeper.koin
 
+import com.tonapps.blockchain.model.ConfirmRequest
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events.DappBrowser.DappAppClickFrom
 import com.tonapps.dapp.screens.confirm.DAppConfirmFeature
 import com.tonapps.dapp.screens.session.WcSessionFeature
 import com.tonapps.dapp.screens.sessions.WcSessionsFeature
-import com.tonapps.settings.dev.raffle.RaffleDebugFeature
+import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualConfirmFeature
+import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualDepositConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.SwapConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.TxConfirmFeature
 import com.tonapps.deposit.multicoin.screens.assets.AssetsExtendedFeature
@@ -27,15 +31,18 @@ import com.tonapps.deposit.screens.ramp.amount.DepositAmountFeature
 import com.tonapps.deposit.screens.send.SendFeature
 import com.tonapps.onboading.screens.backup.BackupCheckFeature
 import com.tonapps.swap.screens.picker.SwapAssetPickerFeature
+import com.tonapps.swap.SwapRoutes
 import com.tonapps.swap.screens.swap.SwapFeature
 import com.tonapps.tonkeeper.ui.screen.backup.check.BackupCheckViewModel
 import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.earn.EarnDAppBridges
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.earn.EarnDAppViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreViewModel
 import com.tonapps.tonkeeper.ui.screen.card.CardViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesViewModel
@@ -77,6 +84,9 @@ import com.tonapps.onboading.screens.backup.BackupFeature
 import com.tonapps.portfolio.screens.search.SearchFeature
 import com.tonapps.portfolio.screens.search.SearchFeatureData
 import com.tonapps.wallet.features.events.screens.EventsFeature
+import com.tonapps.wallet.features.events.screens.EventsScreenMode
+import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsFeature
+import com.tonapps.wallet.features.events.screens.market.PerpsMarketHistoryFeature
 import com.tonapps.portfolio.screens.wallet.BiometryStatusProvider
 import com.tonapps.portfolio.screens.wallet.MigrationStatusProvider
 import com.tonapps.portfolio.screens.wallet.PushStatusProvider
@@ -89,13 +99,27 @@ import com.tonapps.trading.screens.assets.AssetsFeature
 import com.tonapps.trading.screens.details.AssetDetailsFeature
 import com.tonapps.trading.screens.shelves.ShelvesFeature
 import com.tonapps.perps.data.PerpsMarketFilter
+import com.tonapps.perps.data.PerpsOrderSide
+import com.tonapps.perps.data.PerpsSizeDirection
+import com.tonapps.perps.screens.deposit.PerpsDepositFeature
 import com.tonapps.perps.screens.details.PerpsAssetDetailsFeature
+import com.tonapps.perps.screens.details.PerpsPositionAutoCloseFeature
+import com.tonapps.perps.screens.margin.PerpsMarginChangeFeature
 import com.tonapps.perps.screens.markets.PerpsMarketsFeature
+import com.tonapps.perps.screens.order.PerpsCreateOrderFeature
+import com.tonapps.perps.screens.order.PerpsLimitPriceFeature
+import com.tonapps.perps.screens.review.PerpsReviewArgs
+import com.tonapps.perps.screens.review.PerpsReviewFeature
 import com.tonapps.perps.screens.portfolio.PerpsPortfolioFeature
+import com.tonapps.perps.screens.sizechange.PerpsSizeChangeFeature
+import com.tonapps.perps.screens.withdraw.PerpsWithdrawFeature
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
+import java.math.BigDecimal
 
 val viewModelWalletModule = module {
     viewModelOf(::WalletViewModel)
@@ -103,6 +127,10 @@ val viewModelWalletModule = module {
     viewModel { params -> EditNameViewModel(get(), get(), get(), get(), params.getOrNull()) }
     viewModelOf(::CollectiblesViewModel)
     viewModelOf(::DAppViewModel)
+    viewModel { (wallet: WalletEntity, from: DappAppClickFrom) ->
+        EarnDAppViewModel(get { parametersOf(wallet, from) })
+    }
+    factoryOf(::EarnDAppBridges)
     viewModelOf(::NotificationsManageViewModel)
     viewModelOf(::TokenViewModel)
     viewModelOf(::BackupViewModel)
@@ -198,12 +226,24 @@ val viewModelWalletModule = module {
             application = get(),
             eventsRepository = get(),
             nftResolver = get(),
+            perpsMarketResolver = get(),
             accountRepoLegacy = get(),
             accountRepo = get(),
             settingsRepository = get(),
             networkMonitor = get(),
             realtimeProvider = get(),
+            unifiedAccountRepository = get(),
             assetId = params.getOrNull(),
+            mode = params.getOrNull() ?: EventsScreenMode.General,
+            awaitsFundingActivity = params.getOrNull() ?: false,
+        )
+    }
+    viewModel { (walletId: String, marketIndex: Int) ->
+        PerpsMarketHistoryFeature(
+            walletId = walletId,
+            marketIndex = marketIndex,
+            eventsRepository = get(),
+            settingsRepository = get(),
         )
     }
 
@@ -211,8 +251,21 @@ val viewModelWalletModule = module {
     viewModelOf(::ReceiveFeature)
     viewModelOf(::ReceiveQrFeature)
     viewModelOf(::McSendFeature)
+    viewModelOf(::EncryptedCommentsFeature)
     viewModelOf(::TxConfirmFeature)
     viewModelOf(::SwapConfirmFeature)
+    viewModelOf(::PerpetualConfirmFeature)
+    viewModel { (request: ConfirmRequest) ->
+        PerpetualDepositConfirmFeature(
+            request = request,
+            provider = get(),
+            accountRepo = get(),
+            passcodeManager = get(),
+            postTransactionRefreshSchedule = get(),
+            tracker = getOrNull(),
+            authorizer = get(),
+        )
+    }
     viewModelOf(::AssetPickerFeature)
     viewModelOf(::AssetsExtendedFeature)
     viewModelOf(::McPaymentMethodFeature)
@@ -222,10 +275,22 @@ val viewModelWalletModule = module {
     viewModelOf(::AssetDetailsFeature)
     viewModelOf(::WcSessionFeature)
     viewModelOf(::WcSessionsFeature)
-    viewModelOf(::RaffleDebugFeature)
 
     viewModelOf(::SwapAssetPickerFeature)
-    viewModelOf(::SwapFeature)
+    viewModel { (route: SwapRoutes.Swap) ->
+        SwapFeature(
+            initialRoute = route,
+            context = get(),
+            oldAccount = get(),
+            accountRepo = get(),
+            swapRepo = get(),
+            raffleRepository = get(),
+            appLifecycle = get(),
+            settingsRepository = get(),
+            networkMonitor = get(),
+            legacyAccounts = get(),
+        )
+    }
 
     // Perps
     viewModel { (filter: PerpsMarketFilter) ->
@@ -236,13 +301,88 @@ val viewModelWalletModule = module {
         )
     }
     viewModelOf(::PerpsPortfolioFeature)
-    viewModel { (marketIndex: Int, symbol: String) ->
+    viewModelOf(::PerpsDepositFeature)
+    viewModelOf(::PerpsWithdrawFeature)
+    viewModel { (marketIndex: Int, symbol: String?) ->
         PerpsAssetDetailsFeature(
             marketIndex = marketIndex,
-            symbol = symbol,
+            initialSymbol = symbol,
             repository = get(),
             livePrices = get(),
             accountRefresh = get(),
+            executor = get(),
+            adapter = get(),
+            accountService = get(),
+            unifiedAccountRepository = get(),
+            passcodeManager = get(),
+            settingsRepository = get(),
+        )
+    }
+    viewModel { (marketIndex: Int) ->
+        PerpsPositionAutoCloseFeature(
+            marketIndex = marketIndex,
+            adapter = get(),
+            executor = get(),
+            accountService = get(),
+            unifiedAccountRepository = get(),
+        )
+    }
+    viewModel { (marketIndex: Int, symbol: String, side: PerpsOrderSide) ->
+        PerpsCreateOrderFeature(
+            marketIndex = marketIndex,
+            symbol = symbol,
+            side = side,
+            adapter = get(),
+            perpetualRepository = get(),
+            livePrices = get(),
+            unifiedAccountRepository = get(),
+            settingsRepository = get(),
+        )
+    }
+    viewModel { (marketIndex: Int, symbol: String, side: PerpsOrderSide, initialPrice: BigDecimal?) ->
+        PerpsLimitPriceFeature(
+            marketIndex = marketIndex,
+            symbol = symbol,
+            side = side,
+            initialPrice = initialPrice,
+            adapter = get(),
+            livePrices = get(),
+            unifiedAccountRepository = get(),
+        )
+    }
+    viewModel { (marketIndex: Int, symbol: String, side: PerpsOrderSide, direction: PerpsSizeDirection) ->
+        PerpsSizeChangeFeature(
+            marketIndex = marketIndex,
+            symbol = symbol,
+            side = side,
+            direction = direction,
+            repository = get(),
+            adapter = get(),
+            livePrices = get(),
+            unifiedAccountRepository = get(),
+            settingsRepository = get(),
+        )
+    }
+    viewModel { (marketIndex: Int, symbol: String, side: PerpsOrderSide, add: Boolean) ->
+        PerpsMarginChangeFeature(
+            marketIndex = marketIndex,
+            symbol = symbol,
+            side = side,
+            add = add,
+            repository = get(),
+            adapter = get(),
+            livePrices = get(),
+            unifiedAccountRepository = get(),
+            settingsRepository = get(),
+        )
+    }
+    viewModel { (args: PerpsReviewArgs) ->
+        PerpsReviewFeature(
+            args = args,
+            livePrices = get(),
+            adapter = get(),
+            executor = get(),
+            accountService = get(),
             unifiedAccountRepository = get(),
         )
     }

@@ -40,6 +40,7 @@ import androidx.lifecycle.flowWithLifecycle
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.core.extensions.iconExternalUrl
 import com.tonapps.core.helper.rememberClipboardManager
+import com.tonapps.deposit.multicoin.screens.confirm.SendConfirmShimmerBody
 import com.tonapps.deposit.screens.send.state.SendFee
 import com.tonapps.deposit.utils.formatDuration
 import com.tonapps.icu.CurrencyFormatter
@@ -54,7 +55,6 @@ import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonItemTitle
-import ui.components.moon.MoonLoadingPreviewImage
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonDescriptionCell
 import ui.components.moon.cell.MoonPropertyBigCell
@@ -149,7 +149,11 @@ private fun SendConfirmContent(
     MoonScaffold(
         Modifier
             .navigationBarsPadding(),
-        title = if (state.isExchangeMode) stringResource(Localization.withdraw) else stringResource(Localization.send),
+        title = if (state.isExchangeMode) {
+            stringResource(Localization.withdraw)
+        } else {
+            stringResource(Localization.send)
+        },
         onClose = onClose,
         onBack = onBack,
     ) {
@@ -171,7 +175,11 @@ private fun SendConfirmContent(
                 }
                 state.token != null -> {
                     val chainIcon = remember(state.token) {
-                        if (state.token.tokenType != null) state.token.asCurrency.chain.iconExternalUrl(context) else null
+                        if (state.token.tokenType != null) {
+                            state.token.asCurrency.chain.iconExternalUrl(context)
+                        } else {
+                            null
+                        }
                     }
 
                     MoonCutBadgedBox(
@@ -665,137 +673,6 @@ fun SendConfirmShimmer(
             onConfirm = {},
             onDone = {},
         )
-    }
-}
-
-/**
- * Placeholder body of the confirm sheet. Lives on its own so the multichain scaffold can show it
- * under the shared action slot instead of duplicating a second scaffold with a second slot.
- */
-@Composable
-fun SendConfirmShimmerBody(shimmer: Float) {
-    MoonLoadingPreviewImage(size = 96.dp)
-
-    Spacer(Modifier.height(16.dp))
-
-    Spacer(
-        Modifier
-            .fillMaxWidth(0.4f)
-            .height(20.dp)
-            .shimmer(shimmer)
-    )
-
-    Spacer(Modifier.height(4.dp))
-
-    Spacer(
-        Modifier
-            .fillMaxWidth(0.5f)
-            .height(28.dp)
-            .shimmer(shimmer)
-    )
-
-    Spacer(Modifier.height(16.dp))
-
-    MoonBundleCell {
-        Column {
-            MoonPropertyBigCell(
-                title = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.25f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-                content = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.3f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-            )
-
-            MoonItemDivider()
-
-            MoonPropertyBigCell(
-                title = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.25f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-                content = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.5f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-            )
-
-            MoonItemDivider()
-
-            MoonPropertyBigCell(
-                title = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.25f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-                content = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.3f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-                contentDescription = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.25f)
-                            .height(16.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-            )
-
-            MoonItemDivider()
-
-            MoonPropertyBigCell(
-                title = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.25f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-                content = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.3f)
-                            .height(20.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-                contentDescription = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth(0.25f)
-                            .height(16.dp)
-                            .shimmer(shimmer)
-                    )
-                },
-            )
-        }
     }
 }
 

@@ -9,6 +9,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
+import uikit.extensions.setMoonOnClickListener
 
 class ApkHolder(parent: ViewGroup): Holder<Item.ApkStatus>(parent, R.layout.view_wallet_apk) {
 
@@ -36,7 +37,7 @@ class ApkHolder(parent: ViewGroup): Holder<Item.ApkStatus>(parent, R.layout.view
         titleView.text = "%s %s".format(appTitle, status.apk.apkName.value)
         descriptionView.setText(Localization.tap_to_update)
         iconView.setImageResource(UIKitIcon.ic_update_24)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             apkManager?.install(context, status.file)
         }
     }
@@ -51,7 +52,7 @@ class ApkHolder(parent: ViewGroup): Holder<Item.ApkStatus>(parent, R.layout.view
     private fun failed(status: APKManager.Status.Failed) {
         titleView.text = "%s %s".format(appTitle, status.apk.apkName.value)
         descriptionView.setText(Localization.download_error)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             apkManager?.download(status.apk)
         }
     }

@@ -31,7 +31,6 @@ internal object StakingAssetsBridge {
         initializedAccount: Boolean,
         currencyCode: String,
         hiddenBalance: Boolean,
-        hideDust: Boolean,
         accountRepo: McAccountRepository,
         stakingRepository: StakingRepository,
         ignoreCache: Boolean = false,
@@ -43,19 +42,15 @@ internal object StakingAssetsBridge {
             initializedAccount = initializedAccount,
         )
 
-        // Nothing writes the unfiltered cache key while the dust filter is on, and the cache has no
-        // expiry, so reading it unfiltered would serve a frozen snapshot forever.
-        val accounts = accountRepo.getCachedAccounts(
-            walletId = walletId,
-            currency = currencyCode,
-            hideDust = hideDust,
-        )?.accounts.orEmpty()
+        val accounts = accountRepo.getCachedAccounts(walletId)?.accounts.orEmpty()
 
         val testnet = network.isTestnet
-        val tonAccount = accounts.firstOrNull { it.asset.isNativeTon() }
-            ?: runCatching {
-                accountRepo.findAccount(walletId, tonCoinAssetId(testnet), currencyCode)
-            }.getOrNull()
+        val tonAccount = resolveAccount(
+            cached = accounts.firstOrNull { it.asset.isNativeTon() },
+            forceRefresh = ignoreCache,
+        ) {
+            accountRepo.findAccount(walletId, tonCoinAssetId(testnet), currencyCode, forceRefresh = it)
+        }
 
         val liquid = loadLiquidRows(
             walletId = walletId,
@@ -66,6 +61,7 @@ internal object StakingAssetsBridge {
             tonAccount = tonAccount,
             staking = staking,
             accountRepo = accountRepo,
+            forceRefresh = ignoreCache,
         )
         val nominators = loadNominatorRows(
             currencyCode = currencyCode,
@@ -85,6 +81,7 @@ internal object StakingAssetsBridge {
         tonAccount: AccountWithDetails?,
         staking: StakingEntity,
         accountRepo: McAccountRepository,
+        forceRefresh: Boolean,
     ): List<StakedUi> {
         val tonPrice = tonAccount?.rate?.value?.value?.takeIf { it > BigDecimal.ZERO }
             ?: return emptyList()
@@ -95,7 +92,9 @@ internal object StakingAssetsBridge {
                 it.implementation == StakingPool.Implementation.LiquidTF &&
                     it.liquidJettonMaster != null
             }
-        if (liquidPools.isEmpty()) return emptyList()
+        if (liquidPools.isEmpty()) {
+            return emptyList()
+        }
 
         val rows = mutableListOf<StakedUi>()
         var tonstakersAdded = false
@@ -113,6 +112,7 @@ internal object StakingAssetsBridge {
                 tonPrice = tonPrice,
                 staking = staking,
                 accountRepo = accountRepo,
+                forceRefresh = forceRefresh,
             )
             if (row == null) {
                 continue
@@ -133,8 +133,12 @@ internal object StakingAssetsBridge {
         val seen = mutableSetOf<String>()
         for (info in staking.info) {
             val pool = staking.findPoolByAddress(info.pool) ?: continue
-            if (pool.implementation == StakingPool.Implementation.LiquidTF) continue
-            if (!seen.add(pool.address)) continue
+            if (pool.implementation == StakingPool.Implementation.LiquidTF) {
+                continue
+            }
+            if (!seen.add(pool.address)) {
+                continue
+            }
 
             val amount = staking.getAmount(pool)
             val readyWithdraw = staking.getReadyWithdraw(pool)
@@ -175,14 +179,16 @@ internal object StakingAssetsBridge {
         tonPrice: BigDecimal,
         staking: StakingEntity,
         accountRepo: McAccountRepository,
+        forceRefresh: Boolean,
     ): StakedUi? {
         val master = pool.liquidJettonMaster ?: return null
         val assetId = jettonAssetId(master, testnet)
-        val liquidAccount = accounts.firstOrNull { it.matchesJettonMaster(master) }
-            ?: runCatching {
-                accountRepo.findAccount(walletId, assetId, currencyCode)
-            }.getOrNull()
-            ?: return null
+        val liquidAccount = resolveAccount(
+            cached = accounts.firstOrNull { it.matchesJettonMaster(master) },
+            forceRefresh = forceRefresh,
+        ) {
+            accountRepo.findAccount(walletId, assetId, currencyCode, forceRefresh = it)
+        } ?: return null
 
         val jettonPrice = liquidAccount.rate?.value?.value?.takeIf { it > BigDecimal.ZERO }
             ?: return null
@@ -268,5 +274,16 @@ internal object StakingAssetsBridge {
             liquidAssetId = null,
             hiddenBalance = hiddenBalance,
         )
+    }
+
+    private suspend fun resolveAccount(
+        cached: AccountWithDetails?,
+        forceRefresh: Boolean,
+        fetch: suspend (forceRefresh: Boolean) -> AccountWithDetails?,
+    ): AccountWithDetails? {
+        if (!forceRefresh) {
+            return cached ?: runCatching { fetch(false) }.getOrNull()
+        }
+        return runCatching { fetch(true) }.getOrNull() ?: cached
     }
 }

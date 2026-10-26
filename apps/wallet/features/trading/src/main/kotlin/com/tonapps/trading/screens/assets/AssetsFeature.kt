@@ -16,6 +16,7 @@ sealed interface AssetsAction : MviAction {
     data object Init : AssetsAction
     data class Search(val query: String, val tab: AssetsTab) : AssetsAction
     data object LoadMore : AssetsAction
+    data class TrackAssetClick(val asset: AssetItem, val query: String) : AssetsAction
 }
 
 sealed interface AssetsState : MviState {
@@ -61,6 +62,7 @@ class AssetsFeature(
             }
 
             AssetsAction.LoadMore -> loadMore()
+            is AssetsAction.TrackAssetClick -> trackAssetClick(action.asset, action.query)
         }
     }
 
@@ -139,12 +141,11 @@ class AssetsFeature(
         }
     }
 
-    fun trackAssetClick(asset: AssetItem) {
-        val data = obtainSpecificState<AssetsState.Data>() ?: return
+    private fun trackAssetClick(asset: AssetItem, query: String) {
         AnalyticsHelper.Default.events.tradeUiFlow.tradeSearchClick(
             from = TradeEntryTracker.consumeFrom(),
             asset = asset.id,
-            query = data.query.ifBlank { null }
+            query = query.ifBlank { null }
         )
     }
 }

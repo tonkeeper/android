@@ -33,4 +33,11 @@ dependencies {
     implementation(projects.lib.network)
     implementation(projects.lib.base64)
     implementation(projects.kmp.async)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+}
+
+tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+    enabled = true
 }

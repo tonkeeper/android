@@ -5,6 +5,14 @@ plugins {
 
 android {
     namespace = "uikit"
+    val sharedResources = rootProject.file(
+        "${if (rootProject.file("resources").isDirectory) { "resources" } else { "../shared/resources" }}/Sources/KeeperResources/Resources"
+    )
+    sourceSets {
+        named("main") {
+            res.srcDirs(sharedResources.resolve("Fonts"), sharedResources.resolve("NativeLottie"))
+        }
+    }
 }
 
 dependencies {

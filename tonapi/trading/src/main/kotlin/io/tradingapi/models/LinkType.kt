@@ -12,13 +12,18 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Типы ссылок у ассетов.
  *
- * Values: unspecified,website,telegram,twitter,facebook,instagram,discord,github,getgems,other
+ * Values: unspecified,website,telegram,twitter,facebook,instagram,discord,github,getgems,other,unknown
  */
-@Serializable
+@Serializable(with = LinkTypeSerializer::class)
 enum class LinkType(val value: String) {
     @SerialName(value = "unspecified")
     unspecified("unspecified"),
@@ -39,7 +44,9 @@ enum class LinkType(val value: String) {
     @SerialName(value = "getgems")
     getgems("getgems"),
     @SerialName(value = "other")
-    other("other");
+    other("other"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -65,6 +72,20 @@ enum class LinkType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object LinkTypeSerializer : KSerializer<LinkType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): LinkType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return LinkType.entries.firstOrNull { it.value == value }
+            ?: LinkType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: LinkType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

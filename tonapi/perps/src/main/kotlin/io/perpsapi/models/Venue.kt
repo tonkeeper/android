@@ -12,16 +12,23 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * The exchange a position lives on. One value today; the field exists so a position id stays unambiguous when a second venue appears.
  *
- * Values: lighter
+ * Values: lighter,unknown
  */
-@Serializable
+@Serializable(with = VenueSerializer::class)
 enum class Venue(val value: String) {
     @SerialName(value = "lighter")
-    lighter("lighter");
+    lighter("lighter"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -47,6 +54,20 @@ enum class Venue(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object VenueSerializer : KSerializer<Venue> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): Venue {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return Venue.entries.firstOrNull { it.value == value }
+            ?: Venue.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: Venue) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

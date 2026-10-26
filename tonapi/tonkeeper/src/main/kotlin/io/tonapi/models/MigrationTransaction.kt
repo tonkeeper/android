@@ -34,7 +34,7 @@ data class MigrationTransaction(
     @SerialName(value = "gas_spent")
     val gasSpent: Long,
 
-    /* true — the Battery relay pays gas for this transaction; submit it via /v2/gasless/send. false — self-paid; sign and broadcast via /v2/blockchain/message as usual (e.g. the final TON sweep).  */
+    /* true — the Battery relay pays gas for this transaction; submit it via /v2/gasless/send. false — self-paid; sign and broadcast via /v2/blockchain/message as usual. The final TON sweep is always self-paid, whatever gas_payer says: the relay does not sponsor a TON-only batch, and gasless has no jetton balance left to bill a commission against.  */
     @SerialName(value = "sponsored")
     val sponsored: Boolean? = false,
 

@@ -3,10 +3,14 @@ package com.tonapps.wallet.features.events.components
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import com.tonapps.wallet.features.events.data.HistoryNft
+import com.tonapps.wallet.features.events.data.PerpsCloseReason
+import com.tonapps.wallet.features.events.data.PerpsMetaEntity
+import com.tonapps.wallet.features.events.data.PerpsSide
 import io.walletapi.models.ActivityDirection
 import io.walletapi.models.ActivityStatus
 import io.walletapi.models.ActivityType
 import io.walletapi.models.Chain
+import java.math.BigDecimal
 import java.time.OffsetDateTime
 
 private const val PREVIEW_TON_ASSET_ID = "ton/mainnet/coin"
@@ -16,6 +20,7 @@ private const val PREVIEW_LP_ASSET_ID =
     "ton/mainnet/jetton/0:1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809"
 private const val PREVIEW_SPAM_ASSET_ID =
     "ton/mainnet/jetton/0:9f8e7d6c5b4a39281706f5e4d3c2b1a09f8e7d6c5b4a39281706f5e4d3c2b1a0"
+private const val PREVIEW_PERPS_USDC_ASSET_ID = "lighter/mainnet/usdc"
 private const val PREVIEW_NFT_ASSET_ID =
     "ton/mainnet/nft/0:5c4b3a2918f7e6d5c4b3a2918f7e6d5c4b3a2918f7e6d5c4b3a2918f7e6d5c4b"
 private const val PREVIEW_FROM_ADDRESS = "UQAjKz9pQ8xVn2sT4bLmR7dYfH3kW6cX1uZaE5gJvNqT_ZxP"
@@ -54,6 +59,14 @@ private val PREVIEW_SPAM_ASSET = AssetEntity(
     decimals = 9,
     imageUrl = "",
     verification = AssetEntity.Verification.blacklist,
+)
+
+private val PREVIEW_PERPS_USDC_ASSET = AssetEntity(
+    id = PREVIEW_PERPS_USDC_ASSET_ID,
+    name = "USD Coin",
+    symbol = "USDC",
+    decimals = 6,
+    imageUrl = "",
 )
 
 private val PREVIEW_UNVERIFIED_ASSET = AssetEntity(
@@ -95,6 +108,7 @@ private fun previewActivity(
     feeAsset: AssetEntity? = null,
     feeAmount: String? = null,
     protocol: String? = null,
+    perps: PerpsMetaEntity? = null,
 ): HistoryEventEntity {
     val direction = when (activityType) {
         ActivityType.receive, ActivityType.mint -> ActivityDirection.`in`
@@ -126,6 +140,7 @@ private fun previewActivity(
         comment = comment,
         direction = direction,
         isSpam = isSpam,
+        perps = perps,
     )
 }
 
@@ -215,4 +230,93 @@ internal fun previewDomainRenew() = previewActivity(
     feeAsset = PREVIEW_TON_ASSET,
     feeAmount = "52000000",
     protocol = "tonkeepertesttesttest.ton",
+)
+
+internal fun previewPerpsOpenedLong() = previewActivity(
+    activityType = ActivityType.perpsPeriodPosition_opened,
+    perps = PerpsMetaEntity(
+        symbol = "TON",
+        side = PerpsSide.Long,
+        reason = null,
+        marginUsd = BigDecimal("0.995"),
+    ),
+)
+
+internal fun previewPerpsIncreasedLong() = previewActivity(
+    activityType = ActivityType.perpsPeriodPosition_increased,
+    perps = PerpsMetaEntity(
+        symbol = "TON",
+        side = PerpsSide.Long,
+        reason = null,
+        marginUsd = BigDecimal("0.5"),
+    ),
+)
+
+internal fun previewPerpsReducedLong() = previewActivity(
+    activityType = ActivityType.perpsPeriodPosition_reduced,
+    inAsset = PREVIEW_PERPS_USDC_ASSET,
+    inAmount = "1250000",
+    perps = PerpsMetaEntity(
+        symbol = "TON",
+        side = PerpsSide.Long,
+        reason = PerpsCloseReason.Manual,
+    ),
+)
+
+internal fun previewPerpsClosedLong() = previewActivity(
+    activityType = ActivityType.perpsPeriodPosition_closed,
+    inAsset = PREVIEW_PERPS_USDC_ASSET,
+    inAmount = "10250000",
+    perps = PerpsMetaEntity(
+        symbol = "TON",
+        side = PerpsSide.Long,
+        reason = PerpsCloseReason.Manual,
+    ),
+)
+
+internal fun previewPerpsLiquidatedShort() = previewActivity(
+    activityType = ActivityType.perpsPeriodPosition_closed,
+    outAsset = PREVIEW_PERPS_USDC_ASSET,
+    outAmount = "10250000",
+    perps = PerpsMetaEntity(
+        symbol = "TON",
+        side = PerpsSide.Short,
+        reason = PerpsCloseReason.Liquidation,
+    ),
+)
+
+internal fun previewPerpsDeposit() = previewActivity(
+    activityType = ActivityType.perpsPeriodBalance_deposit,
+    inAsset = PREVIEW_PERPS_USDC_ASSET,
+    inAmount = "50000000",
+    perps = PerpsMetaEntity(
+        symbol = null,
+        side = null,
+        reason = null,
+    ),
+)
+
+internal fun previewPerpsFailedDeposit() = previewActivity(
+    activityType = ActivityType.perpsPeriodBalance_deposit,
+    inAsset = PREVIEW_PERPS_USDC_ASSET,
+    inAmount = "1130000",
+    status = ActivityStatus.failed,
+    perps = PerpsMetaEntity(
+        symbol = null,
+        side = null,
+        reason = null,
+    ),
+)
+
+internal fun previewPerpsWithdrawal() = previewActivity(
+    activityType = ActivityType.perpsPeriodBalance_withdrawal,
+    outAsset = PREVIEW_PERPS_USDC_ASSET,
+    outAmount = "12400000",
+    inAsset = PREVIEW_TON_ASSET,
+    inAmount = "7960000000",
+    perps = PerpsMetaEntity(
+        symbol = null,
+        side = null,
+        reason = null,
+    ),
 )

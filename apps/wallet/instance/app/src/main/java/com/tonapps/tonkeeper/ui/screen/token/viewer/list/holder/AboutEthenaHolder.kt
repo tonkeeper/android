@@ -10,6 +10,7 @@ import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.textAccentColor
 import com.tonapps.wallet.localization.Localization
+import uikit.extensions.setMoonOnClickListener
 
 class AboutEthenaHolder(parent: ViewGroup) :
     Holder<Item.AboutEthena>(parent, R.layout.view_about_usde) {
@@ -17,7 +18,7 @@ class AboutEthenaHolder(parent: ViewGroup) :
     private val descriptionView = findViewById<AppCompatTextView>(R.id.description)
 
     override fun onBind(item: Item.AboutEthena) {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             BrowserHelper.open(context, item.url)
         }
 

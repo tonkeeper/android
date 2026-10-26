@@ -1,6 +1,7 @@
 package com.tonapps.deposit.multicoin.screens.qr
 
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.deposit.multicoin.analytics.DepositAnalytics
 import com.tonapps.deposit.multicoin.domain.ReceiveAccountsInteractor
 import com.tonapps.deposit.screens.ramp.RampType
@@ -34,7 +35,7 @@ class ReceiveQrFeature(
 
     val state: StateFlow<State> field = MutableStateFlow<State>(State.Loading)
 
-    private val analytics = DepositAnalytics(RampType.RampOn, data.analyticsFrom)
+    private val analytics = DepositAnalytics(RampType.RampOn, data.analyticsFrom, DepositFlowWalletMode.Multi)
 
     init {
         bgScope.launch {

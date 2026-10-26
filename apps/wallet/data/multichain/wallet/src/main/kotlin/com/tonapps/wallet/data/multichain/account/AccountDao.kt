@@ -18,6 +18,9 @@ interface AccountDao {
     @Query("SELECT * FROM account WHERE wallet_id = :walletId")
     suspend fun getAccountsByWalletId(walletId: String): List<AccountEntity>
 
+    @Query("SELECT * FROM account")
+    suspend fun getAllAccounts(): List<AccountEntity>
+
     @Query("SELECT * FROM account WHERE network = :network AND mode = :mode")
     suspend fun getAccounts(network: String, mode: String): List<AccountEntity>
 
@@ -30,4 +33,11 @@ interface AccountDao {
 
     @Query("DELETE FROM account WHERE wallet_id = :walletId")
     suspend fun deleteByWalletId(walletId: String)
+
+    @Query("DELETE FROM account WHERE wallet_id = :walletId AND network = :network AND mode = :mode")
+    suspend fun deleteAccounts(walletId: String, network: String, mode: String)
+
+    suspend fun deleteAccounts(walletId: String, chain: Chain) {
+        deleteAccounts(walletId, chain.network.type.id, chain.network.mode.id)
+    }
 }

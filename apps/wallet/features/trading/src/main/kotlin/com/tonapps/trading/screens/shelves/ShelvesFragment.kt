@@ -5,24 +5,36 @@ import android.view.View
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenFrom
+import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.core.ComposableFragment
 import com.tonapps.core.navigation.NavigationDelegate
 import com.tonapps.perps.PerpsFragment
 import com.tonapps.trading.AssetsFragment
 import io.tradingapi.models.AssetsTab
 import io.tradingapi.models.MarketListKey
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.androidx.compose.koinViewModel
+import uikit.base.TabScreen
 import uikit.extensions.activity
 import uikit.navigation.Navigation.Companion.navigation
 
-class ShelvesFragment : ComposableFragment() {
+class ShelvesFragment : ComposableFragment(), TabScreen {
 
     private val scrollToShelfFlow = MutableStateFlow<MarketListKey?>(null)
+    private val scrollToTopEvents = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
     fun scrollToShelf(key: String) {
         val parsed = MarketListKey.decode(key) ?: return
         scrollToShelfFlow.value = parsed
+    }
+
+    override fun smoothScrollToTop() {
+        scrollToTopEvents.tryEmit(Unit)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -37,6 +49,7 @@ class ShelvesFragment : ComposableFragment() {
                 feature = viewModel,
                 scrollToShelfKey = scrollToShelfKey,
                 onScrollToShelfHandled = { scrollToShelfFlow.value = null },
+                scrollToTop = scrollToTopEvents,
                 onOpenSearch = {
                     if (isMultichainWallet) {
                         delegate?.onOpenPortfolioSearch()
@@ -64,9 +77,10 @@ class ShelvesFragment : ComposableFragment() {
                         )
                     )
                 },
-                onOpenPerps = { navigation?.add(PerpsFragment.newInstance()) },
+                onOpenPerps = { navigation?.add(PerpsFragment.newInstance(PerpsEntryPoint.TradeTab)) },
+                onOpenSearchCategory = { category -> delegate?.onOpenPortfolioSearch(initialAssetType = category) },
                 onOpenPerpMarket = { marketIndex, symbol ->
-                    navigation?.add(PerpsFragment.newInstance(marketIndex, symbol))
+                    navigation?.add(PerpsFragment.newInstance(marketIndex, symbol, PerpsEntryPoint.TradeTab))
                 },
                 onOpenLink = { url -> delegate?.onOpenLink(url) },
             )

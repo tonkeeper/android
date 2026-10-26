@@ -17,6 +17,7 @@ import com.tonapps.wallet.localization.Plurals
 import uikit.extensions.hideKeyboard
 import uikit.extensions.withAlpha
 import uikit.span.ClickableSpanCompat
+import uikit.extensions.setMoonOnClickListener
 import kotlin.math.absoluteValue
 
 class BatteryHolder(
@@ -34,7 +35,7 @@ class BatteryHolder(
     }
 
     override fun onBind(item: Item.Battery) {
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             context.hideKeyboard()
         }
         batteryView.emptyState = if (item.isNegative) {
@@ -58,7 +59,7 @@ class BatteryHolder(
         if (item.isNegative || item.balance > 0) {
             subtitleView.text = context.resources.getQuantityString(Plurals.battery_charges, item.changes.absoluteValue, item.formattedChanges)
         } else {
-            val subtitleText = context.getString(Localization.battery_refill_subtitle)
+            val subtitleText = context.getString(item.captionRes)
             val clickText = context.getString(Localization.battery_supported_transaction)
             val text = "$subtitleText $clickText"
 

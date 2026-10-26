@@ -8,6 +8,8 @@ import io.walletapi.models.Chain
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.ZoneId
 
 internal class EventsPagingSource(
     private val repository: McEventsRepository,
@@ -16,9 +18,12 @@ internal class EventsPagingSource(
     private val assetId: String?,
     private val typeFilter: EventsTypeFilter,
     private val hideDust: Boolean,
+    private val showPerps: Boolean,
     private val onInitialLoad: (hasAnyActivity: Boolean) -> Unit,
     private val onPageLoaded: (activities: List<HistoryEventEntity>, isInitialLoad: Boolean) -> Unit = { _, _ -> },
 ) : PagingSource<String, HistoryEventEntity>() {
+
+    private val heldPendingActivities = mutableListOf<HistoryEventEntity>()
 
     override suspend fun load(
         params: LoadParams<String>,
@@ -43,6 +48,7 @@ internal class EventsPagingSource(
                     assetId = assetId,
                     isSpam = typeFilter.apiIsSpam,
                     hideDust = hideDust,
+                    showPerps = showPerps,
                 )
                 if (isInitialLoad && !initialLoadReported && page.activities.isNotEmpty()) {
                     initialLoadReported = true
@@ -51,7 +57,7 @@ internal class EventsPagingSource(
                 items += page.activities
                 cursor = page.cursor?.takeIf { it.isNotBlank() && it != requestCursor }
                 pagesConsumed++
-            } while (items.isEmpty() && cursor != null && pagesConsumed < MAX_PAGES_PER_LOAD)
+            } while (items.all { it.isPending } && cursor != null && pagesConsumed < MAX_PAGES_PER_LOAD)
 
             if (isInitialLoad && !initialLoadReported) {
                 onInitialLoad(
@@ -74,7 +80,7 @@ internal class EventsPagingSource(
             }
 
             LoadResult.Page(
-                data = items,
+                data = placePendingAtTopOfTheirDay(items, isLastPage = cursor == null),
                 prevKey = null,
                 nextKey = cursor,
             )
@@ -83,6 +89,36 @@ internal class EventsPagingSource(
         } catch (e: Throwable) {
             LoadResult.Error(e)
         }
+    }
+
+    private fun placePendingAtTopOfTheirDay(
+        activities: List<HistoryEventEntity>,
+        isLastPage: Boolean,
+    ): List<HistoryEventEntity> {
+        val (pending, confirmed) = activities.partition { it.isPending }
+        heldPendingActivities += pending
+        if (heldPendingActivities.isEmpty()) {
+            return activities
+        }
+        val zone = ZoneId.systemDefault()
+        heldPendingActivities.sortByDescending { it.localDay(zone) }
+        val placed = ArrayList<HistoryEventEntity>(confirmed.size + heldPendingActivities.size)
+        for (activity in confirmed) {
+            val day = activity.localDay(zone)
+            while (heldPendingActivities.isNotEmpty() && heldPendingActivities[0].localDay(zone) >= day) {
+                placed += heldPendingActivities.removeAt(0)
+            }
+            placed += activity
+        }
+        if (isLastPage) {
+            placed += heldPendingActivities
+            heldPendingActivities.clear()
+        }
+        return placed
+    }
+
+    private fun HistoryEventEntity.localDay(zone: ZoneId): LocalDate {
+        return blockTime.atZoneSameInstant(zone).toLocalDate()
     }
 
     override fun getRefreshKey(state: PagingState<String, HistoryEventEntity>): String? = null

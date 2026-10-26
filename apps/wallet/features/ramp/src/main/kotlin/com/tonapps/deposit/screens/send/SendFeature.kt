@@ -10,6 +10,7 @@ import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.data.ExchangeRepository
@@ -113,7 +114,9 @@ data class SendFeatureData(
     val presetCurrency: WalletCurrency? = null,
     val presetAddress: String? = null,
     val sendExchangeData: SendExchangeData? = null,
-    val analyticsFrom: Events.SendNative.SendNativeFrom = Events.SendNative.SendNativeFrom.WalletScreen,
+    val analyticsFrom: Events.SendNative.SendNativeFrom,
+    val withdrawFlowFrom: Events.WithdrawFlow.WithdrawFlowFrom,
+    val utm: UtmParameters = UtmParameters.Empty,
 )
 
 @OptIn(FlowPreview::class)
@@ -187,7 +190,7 @@ class SendFeature(
 
     // region Action Handlers
     private suspend fun handleInit() {
-        AnalyticsHelper.Default.events.sendNative.sendOpen(from = data.analyticsFrom)
+        AnalyticsHelper.Default.eventsTaggedWith(data.utm).sendNative.sendOpen(from = data.analyticsFrom)
 
         val initData = withContext(Dispatchers.IO) {
             wallet = accountRepository.getSelectedWallet() ?: return@withContext null
@@ -315,7 +318,7 @@ class SendFeature(
 
         val input = obtainState()
 
-        AnalyticsHelper.Default.events.sendNative.sendClick(
+        AnalyticsHelper.Default.eventsTaggedWith(data.utm).sendNative.sendClick(
             from = data.analyticsFrom,
             asset = input.selectedToken.balance.token.analyticsAssetId(),
             amount = input.amount.value.toDouble(),
@@ -344,6 +347,8 @@ class SendFeature(
                     )
                 },
                 analyticsFrom = data.analyticsFrom,
+                withdrawFlowFrom = data.withdrawFlowFrom,
+                utm = data.utm,
             )
 
             relay.emit(SendModel.Event.NavigateToConfirm(params))
@@ -418,6 +423,8 @@ class SendFeature(
                     withdrawalFee = data.sendExchangeData.withdrawalFee,
                 ),
                 analyticsFrom = data.analyticsFrom,
+                withdrawFlowFrom = data.withdrawFlowFrom,
+                utm = data.utm,
             )
 
             setState { copy(isProcessing = false) }

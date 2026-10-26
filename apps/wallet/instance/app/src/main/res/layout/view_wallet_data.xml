@@ -19,7 +19,7 @@
             android:layout_gravity="center"
             android:paddingHorizontal="@dimen/offsetMedium">
 
-            <androidx.appcompat.widget.AppCompatTextView
+            <uikit.widget.ShimmerTextView
                 android:id="@+id/wallet_balance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -30,29 +30,12 @@
                 android:singleLine="true"
                 android:textColor="?attr/textPrimaryColor"
                 android:textSize="44sp" />
-            
-            <FrameLayout
-                android:id="@+id/backup_icon_container"
-                android:layout_width="wrap_content"
-                android:layout_height="56dp"
-                android:layout_marginLeft="6dp"
-                android:visibility="gone">
-
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:id="@+id/backup_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="bottom"
-                    android:layout_marginBottom="12dp"
-                    android:src="@drawable/ic_information_circle_24"/>
-
-            </FrameLayout>
 
             <uikit.widget.BatteryView
                 style="@style/Battery.Medium"
                 android:id="@+id/wallet_battery"
                 android:layout_gravity="center"
-                android:layout_marginLeft="8dp"
+                android:layout_marginStart="8dp"
                 app:emptyState="accent"
                 android:visibility="gone" />
             

@@ -12,18 +12,25 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Тип разметки полки.
  *
- * Values: grid,list
+ * Values: grid,list,unknown
  */
-@Serializable
+@Serializable(with = ShelfTypeSerializer::class)
 enum class ShelfType(val value: String) {
     @SerialName(value = "grid")
     grid("grid"),
     @SerialName(value = "list")
-    list("list");
+    list("list"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -49,6 +56,20 @@ enum class ShelfType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ShelfTypeSerializer : KSerializer<ShelfType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ShelfType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ShelfType.entries.firstOrNull { it.value == value }
+            ?: ShelfType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ShelfType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

@@ -45,4 +45,14 @@ dependencies {
     implementation(projects.apps.wallet.data.features)
 
     testImplementation(libs.junit)
+    testImplementation(libs.wallet.core.jvm)
 }
+
+tasks.withType<Test>().configureEach {
+    enabled = true
+}
+
+configurations.matching { it.name.startsWith("testDebug") || it.name.startsWith("testRelease") }
+    .configureEach {
+        exclude(group = "com.trustwallet", module = "wallet-core-kotlin-android")
+    }

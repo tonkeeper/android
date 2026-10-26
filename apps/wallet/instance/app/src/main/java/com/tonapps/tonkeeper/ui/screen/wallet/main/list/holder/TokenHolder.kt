@@ -27,6 +27,7 @@ import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 import uikit.widget.BadgeTextView
 import uikit.widget.ResizeOptions
+import uikit.extensions.setMoonOnClickListener
 
 class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_cell_jetton) {
 
@@ -41,7 +42,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
 
     override fun onBind(item: Item.Token) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             openToken(item)
         }
         if (item.blacklist) {
@@ -87,7 +88,7 @@ class TokenHolder(parent: ViewGroup): Holder<Item.Token>(parent, R.layout.view_c
         if (item.isUSDe && item.balance.isZero) {
             balanceContainerView.visibility = View.GONE
             openButtonView.visibility = View.VISIBLE
-            openButtonView.setOnClickListener {
+            openButtonView.setMoonOnClickListener {
                 openToken(item)
             }
         } else {

@@ -12,11 +12,16 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
- * Values: ton,eth,base,btc,tron,arb,bsc,sol
+ * Values: ton,eth,base,btc,tron,arb,bsc,sol,avax,polygon,robinhood,unknown
  */
-@Serializable
+@Serializable(with = ChainSerializer::class)
 enum class Chain(val value: String) {
     @SerialName(value = "ton")
     ton("ton"),
@@ -33,7 +38,15 @@ enum class Chain(val value: String) {
     @SerialName(value = "bsc")
     bsc("bsc"),
     @SerialName(value = "sol")
-    sol("sol");
+    sol("sol"),
+    @SerialName(value = "avax")
+    avax("avax"),
+    @SerialName(value = "polygon")
+    polygon("polygon"),
+    @SerialName(value = "robinhood")
+    robinhood("robinhood"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -59,6 +72,20 @@ enum class Chain(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ChainSerializer : KSerializer<Chain> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): Chain {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return Chain.entries.firstOrNull { it.value == value }
+            ?: Chain.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: Chain) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

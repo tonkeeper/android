@@ -1,7 +1,6 @@
 package com.tonapps.wallet.api
 
 import android.os.SystemClock
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.bus.core.IssueHelper
 import com.tonapps.log.L
 import com.tonapps.network.OkHttpError
@@ -11,6 +10,7 @@ import io.infrastructure.ClientException
 import io.infrastructure.ServerError
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
+import kotlinx.serialization.SerializationException
 import okhttp3.Response
 import java.net.SocketTimeoutException
 
@@ -31,6 +31,10 @@ fun <R> withRetry(
             return null
         } catch (e: IOException) {
             L.e("RetryLogNew", "IOException occurred: ${e.message}", e)
+            return null
+        } catch (e: SerializationException) {
+            L.e("RetryLogNew", "SerializationException occurred: ${e.message}", e)
+            IssueHelper.recordException(e)
             return null
         } catch (e: Throwable) {
             L.e("RetryLogNew", "Error occurred: ${e.message}", e)

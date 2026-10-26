@@ -15,6 +15,7 @@ import uikit.extensions.drawable
 import uikit.extensions.setRightDrawable
 import uikit.extensions.getDrawable
 import uikit.widget.RadioView
+import uikit.extensions.setMoonOnClickListener
 
 class RechargePackHolder(
     parent: ViewGroup,
@@ -29,14 +30,14 @@ class RechargePackHolder(
 
     override fun onBind(item: Item.RechargePack) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener { onPackSelect(item.packType) }
+        itemView.setMoonOnClickListener { onPackSelect(item.packType) }
         itemView.isEnabled = item.isEnabled
 
         titleView.text = context.resources.getQuantityString(
             Plurals.battery_charges, item.charges, item.charges
         )
         titleView.setRightDrawable(itemView.getDrawable(UIKitIcon.ic_information_circle_16))
-        titleView.setOnClickListener {
+        titleView.setMoonOnClickListener {
             detailsView.visibility = if (detailsView.visibility == View.VISIBLE) {
                 View.GONE
             } else {
@@ -52,7 +53,7 @@ class RechargePackHolder(
 
         radioView.checked = item.selected
         radioView.isEnabled = item.isEnabled
-        radioView.setOnClickListener { onPackSelect(item.packType) }
+        radioView.setMoonOnClickListener { onPackSelect(item.packType) }
 
 
     }

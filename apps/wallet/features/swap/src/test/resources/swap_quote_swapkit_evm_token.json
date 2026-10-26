@@ -1,0 +1,258 @@
+{
+  "quote_id": "7d09cc12-c9d2-4ec2-a17a-c89f660481b4",
+  "routes": [
+    {
+      "route_id": "8bdde425-68cd-40b5-8c20-825c8359caae",
+      "provider_route_id": "90714620-2191-4c05-9040-59b3aea7ba27",
+      "aggregator": "swapkit",
+      "protocol": "chainflip",
+      "route_type": "cross_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "24009",
+      "minimum_destination_amount": "23769",
+      "estimated_time": {
+        "inbound_seconds": 12,
+        "swap_seconds": 48,
+        "outbound_seconds": 600,
+        "total_seconds": 660
+      },
+      "total_slippage_bps": -413,
+      "value_difference_bps": -414,
+      "source_usd_price": 0.999875,
+      "destination_usd_price": 79845,
+      "tags": [
+        "recommended"
+      ],
+      "warnings": [],
+      "fees": [
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "amount": "32321"
+        },
+        {
+          "type": "liquidity",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "500000"
+        },
+        {
+          "type": "affiliate",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "0"
+        },
+        {
+          "type": "service",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "29213"
+        },
+        {
+          "type": "outbound",
+          "asset": "btc/mainnet/coin",
+          "amount": "352"
+        },
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/coin",
+          "amount": "3732698549000"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "from_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "to_asset": "btc/mainnet/coin",
+          "protocol": "chainflip"
+        }
+      ],
+      "date_expire": "2026-09-07T06:44:45Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "dea6a8fb-37a4-426a-853c-970ecfac4ed9",
+          "kind": "main",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "payload_type": "evm_tx",
+          "calldata_payload_type": "flex",
+          "payload": "{\"to\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"from\":\"0x0eE3CdEE4f010BF6c49aF86E9e67ef2bc80a508b\",\"gas\":\"0x186a0\",\"gasPrice\":\"0x3223423\",\"value\":\"0x0\",\"data\":\"0xa9059cbb00000000000000000000000006b1258ec67880c56b34c1ec78030108efb3ba880000000000000000000000000000000000000000000000000000000001312d00\"}",
+          "human_summary": {
+            "action": "Swap USDT for BTC",
+            "spend_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+            "spend_amount": "20000000",
+            "receive_asset": "btc/mainnet/coin",
+            "receive_amount": "24009",
+            "deposit_address": "0x06b1258ec67880c56b34c1ec78030108efb3ba88",
+            "protocol": "chainflip"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-07T05:45:50Z"
+        }
+      ]
+    },
+    {
+      "route_id": "78dbd16c-2c29-4734-a54c-c3d8fe9758ec",
+      "provider_route_id": "7a48bf13-ee13-469f-a20e-1e993bc77d5f",
+      "aggregator": "swapkit",
+      "protocol": "flashnet",
+      "route_type": "cross_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "23447",
+      "minimum_destination_amount": "23213",
+      "estimated_time": {
+        "inbound_seconds": 12,
+        "swap_seconds": 30,
+        "outbound_seconds": 600,
+        "total_seconds": 642
+      },
+      "total_slippage_bps": -638,
+      "value_difference_bps": -638,
+      "source_usd_price": 0.999875,
+      "destination_usd_price": 79845,
+      "tags": [
+        "fastest"
+      ],
+      "warnings": [],
+      "fees": [
+        {
+          "type": "liquidity",
+          "asset": "sol/mainnet/spl/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "amount": "19955"
+        },
+        {
+          "type": "service",
+          "asset": "sol/mainnet/spl/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "amount": "29902"
+        },
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/coin",
+          "amount": "3732698549000"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "from_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "to_asset": "btc/mainnet/coin",
+          "protocol": "flashnet"
+        }
+      ],
+      "date_expire": "2026-09-07T05:59:45Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "0795ee65-ac4e-43fc-897d-8889269b6767",
+          "kind": "main",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "payload_type": "evm_tx",
+          "calldata_payload_type": "flex",
+          "payload": "{\"to\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"from\":\"0x0eE3CdEE4f010BF6c49aF86E9e67ef2bc80a508b\",\"gas\":\"0x186a0\",\"gasPrice\":\"0x3223423\",\"value\":\"0x0\",\"data\":\"0xa9059cbb000000000000000000000000625187c00386ead60ae74fc94a37b4ea8e7845a80000000000000000000000000000000000000000000000000000000001312d00\"}",
+          "human_summary": {
+            "action": "Swap USDT for BTC",
+            "spend_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+            "spend_amount": "20000000",
+            "receive_asset": "btc/mainnet/coin",
+            "receive_amount": "23233",
+            "deposit_address": "0x625187c00386ead60ae74fc94a37b4ea8e7845a8",
+            "protocol": "flashnet"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-07T05:45:45Z"
+        }
+      ]
+    },
+    {
+      "route_id": "9caa07c7-1a92-45e0-b98a-d99a1ad1b5af",
+      "provider_route_id": "5f8e161b-58d1-475a-89d8-9bd6c4d29ee8",
+      "aggregator": "swapkit",
+      "protocol": "near_intents",
+      "route_type": "cross_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "23126",
+      "minimum_destination_amount": "22895",
+      "estimated_time": {
+        "inbound_seconds": 25,
+        "swap_seconds": 192,
+        "outbound_seconds": 600,
+        "total_seconds": 817
+      },
+      "total_slippage_bps": -766,
+      "value_difference_bps": -766,
+      "source_usd_price": 0.999875,
+      "destination_usd_price": 79845,
+      "warnings": [],
+      "fees": [
+        {
+          "type": "affiliate",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "amount": "0"
+        },
+        {
+          "type": "service",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "amount": "30000"
+        },
+        {
+          "type": "outbound",
+          "asset": "btc/mainnet/coin",
+          "amount": "1900"
+        },
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/coin",
+          "amount": "3732698549000"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "from_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "to_asset": "btc/mainnet/coin",
+          "protocol": "near_intents"
+        }
+      ],
+      "date_expire": "2026-09-07T06:44:44Z",
+      "risk_level": "medium",
+      "payloads": [
+        {
+          "payload_id": "d2afb602-155a-42fa-b9b8-de03e8e6bcd9",
+          "kind": "main",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "payload_type": "evm_tx",
+          "calldata_payload_type": "flex",
+          "payload": "{\"to\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"from\":\"0x0eE3CdEE4f010BF6c49aF86E9e67ef2bc80a508b\",\"gas\":\"0x186a0\",\"gasPrice\":\"0x3223423\",\"value\":\"0x0\",\"data\":\"0xa9059cbb0000000000000000000000008bd4583011bea6f06f0cc99901be96f8a4c003ef0000000000000000000000000000000000000000000000000000000001312d00\"}",
+          "human_summary": {
+            "action": "Swap USDT for BTC",
+            "spend_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+            "spend_amount": "20000000",
+            "receive_asset": "btc/mainnet/coin",
+            "receive_amount": "23126",
+            "deposit_address": "0x8Bd4583011bEa6F06F0cC99901BE96f8a4c003ef",
+            "protocol": "near_intents"
+          },
+          "validation_status": "validated",
+          "date_expire": "2026-09-07T05:45:45Z"
+        }
+      ]
+    }
+  ],
+  "provider_errors": [
+    {
+      "aggregator": "swapkit",
+      "protocol": "chainflip_streaming",
+      "code": "min_amount_not_met",
+      "message": "sellAssetAmountTooSmall: Sell asset amount too small for provider CHAINFLIP_STREAMING."
+    }
+  ]
+}

@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class AssetPrice(
@@ -28,9 +33,9 @@ data class AssetPrice(
     @SerialName(value = "diff_7d")
     val diff7d: Map<String, String>? = null,
 
-    /* Price change over 30d per currency, e.g. {\"USD\": \"-0.06%\"} */
-    @SerialName(value = "diff_30d")
-    val diff30d: Map<String, String>? = null
+    /* Price change over 14d per currency, e.g. {\"USD\": \"-0.06%\"} */
+    @SerialName(value = "diff_14d")
+    val diff14d: Map<String, String>? = null
 ) {
 }
 

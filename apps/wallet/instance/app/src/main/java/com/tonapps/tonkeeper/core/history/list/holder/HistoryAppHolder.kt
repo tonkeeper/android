@@ -10,6 +10,7 @@ import com.tonapps.uikit.list.ListCell
 import uikit.extensions.drawable
 import uikit.navigation.Navigation
 import uikit.widget.AsyncImageView
+import uikit.extensions.setMoonOnClickListener
 
 class HistoryAppHolder(
     parent: ViewGroup
@@ -28,7 +29,7 @@ class HistoryAppHolder(
     override fun onBind(item: HistoryItem.App) {
         itemView.isClickable = item.isClickable
         if (item.isClickable) {
-            itemView.setOnClickListener {
+            itemView.setMoonOnClickListener {
                 navigation?.add(
                 DAppScreen.newInstance(
                     wallet = item.wallet,

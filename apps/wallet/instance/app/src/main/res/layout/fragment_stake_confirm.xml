@@ -50,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="@dimen/offsetLarge"
                 android:layout_marginHorizontal="@dimen/offsetMedium"
-                android:background="@drawable/bg_content_tint_16">
+                android:background="@drawable/bg_content">
 
                 <com.tonapps.tonkeeper.view.TransactionDetailView
                     android:id="@+id/review_wallet"
@@ -81,6 +81,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:title="@string/fee"/>
+
+                <com.tonapps.tonkeeper.view.TransactionDetailView
+                    android:id="@+id/review_reserve"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:title="@string/staking_temporary_reserve"/>
 
             </uikit.widget.ColumnLayout>
 

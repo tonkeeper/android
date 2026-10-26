@@ -12,16 +12,23 @@ package io.walletapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * `es256_raw` — ECDSA P-256 over SHA-256(M), signature as raw r‖s. Attested schemes are added later as new values.
  *
- * Values: es256_raw
+ * Values: es256_raw,unknown
  */
-@Serializable
+@Serializable(with = ProofTypeSerializer::class)
 enum class ProofType(val value: String) {
     @SerialName(value = "es256_raw")
-    es256_raw("es256_raw");
+    es256_raw("es256_raw"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -47,6 +54,20 @@ enum class ProofType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ProofTypeSerializer : KSerializer<ProofType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ProofType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ProofType.entries.firstOrNull { it.value == value }
+            ?: ProofType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ProofType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.text.method.ScrollingMovementMethod
 import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.LinearLayoutCompat
 import com.tonapps.tonkeeperx.R
@@ -30,6 +31,7 @@ class TransactionDetailView @JvmOverloads constructor(
         }
 
     private val titleView: AppCompatTextView
+    val titleInfoView: AppCompatImageView
     val subtitleView: AppCompatTextView
     val valueView: AppCompatTextView
     private val descriptionView: AppCompatTextView
@@ -77,6 +79,7 @@ class TransactionDetailView @JvmOverloads constructor(
         orientation = HORIZONTAL
 
         titleView = findViewById(R.id.title)
+        titleInfoView = findViewById(R.id.title_info)
         subtitleView = findViewById(R.id.subtitle)
         valueView = findViewById(R.id.value)
         valueView.movementMethod = ScrollingMovementMethod()

@@ -8,6 +8,7 @@ import com.tonapps.qr.ui.QRView
 import com.tonapps.signer.R
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class EmulateFragment: BaseFragment(R.layout.fragment_emulate), BaseFragment.Modal {
 
@@ -16,7 +17,7 @@ class EmulateFragment: BaseFragment(R.layout.fragment_emulate), BaseFragment.Mod
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<HeaderView>(R.id.header).doOnActionClick = { finish() }
-        view.findViewById<Button>(R.id.done).setOnClickListener { finish() }
+        view.findViewById<Button>(R.id.done).setMoonOnClickListener { finish() }
 
         val qrView = view.findViewById<QRView>(R.id.qr)
         qrView.setCorrectionLevelL()

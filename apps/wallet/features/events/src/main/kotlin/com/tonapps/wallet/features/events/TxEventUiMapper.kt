@@ -6,6 +6,7 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.core.extensions.externalDrawableUrl
 import com.tonapps.extensions.locale
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.TransactionDateFormatter
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.EventsRepository
@@ -18,10 +19,6 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.collections.immutable.toImmutableList
 import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import ui.uiPosition
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class TxEventUiMapper(
     private val context: Context,
@@ -138,7 +135,11 @@ class TxEventUiMapper(
                 feeFormatted = feeFormatted.takeIf { index == feeOwnerIndex }
             )
 
-            val badge = if (event.isTron) context.getString(Localization.trc20) else null
+            val badge = if (event.isTron) {
+                context.getString(Localization.trc20)
+            } else {
+                null
+            }
             val state = state(event, action)
 
             val title = if (isSpam) {
@@ -159,7 +160,11 @@ class TxEventUiMapper(
                 subtitle = action.subtitle ?: context.getString(Localization.unknown),
                 incomingAmount = incomingFormatted,
                 outgoingAmount = outgoingFormatted,
-                date = formatTransactionTime(event.timestamp.toLong(), context.locale),
+                date = TransactionDateFormatter.format(
+                    epochMillis = event.timestamp.toLong(),
+                    locale = context.locale,
+                    dateFrom = TransactionDateFormatter.DateFrom.ThisMonth,
+                ),
                 imageUrl = action.imageUrl,
                 iconUrl = iconUrl,
                 product = product(action),
@@ -167,8 +172,16 @@ class TxEventUiMapper(
                 text = action.text?.let {
                     text(event.hash, it)
                 },
-                warningText = if (action.isFailed) context.getString(Localization.failed) else null,
-                rightDescription = if (action.hasUnverifiedToken) context.getString(Localization.unverified_token) else null,
+                warningText = if (action.isFailed) {
+                    context.getString(Localization.failed)
+                } else {
+                    null
+                },
+                rightDescription = if (action.hasUnverifiedToken) {
+                    context.getString(Localization.unverified_token)
+                } else {
+                    null
+                },
                 spam = isSpam,
                 position = uiPosition(index, event.actions.size)
             )
@@ -182,30 +195,6 @@ class TxEventUiMapper(
             spam = actions.any { it.spam },
             progress = event.inProgress
         )
-    }
-
-    private fun formatTransactionTime(epochMillis: Long, locale: Locale): String {
-        if (epochMillis <= 0) {
-            return ""
-        }
-        val instant = Instant.ofEpochMilli(epochMillis)
-        val zone = ZoneId.systemDefault()
-        val zdt = instant.atZone(zone)
-        val now = java.time.ZonedDateTime.now(zone)
-        val shortMonth = DateTimeFormatter.ofPattern("MMM", locale).format(zdt).replace(".", "") + ","
-        val month = if (locale.language == "en") {
-            shortMonth.replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
-        } else {
-            shortMonth
-        }
-        val time = DateTimeFormatter.ofPattern("HH:mm", locale).format(zdt)
-        val day = DateTimeFormatter.ofPattern("d", locale).format(zdt)
-        val isThisMonth = zdt.year == now.year && zdt.month == now.month
-        return if (isThisMonth) {
-            time
-        } else {
-            "$day $month $time"
-        }
     }
 }
 

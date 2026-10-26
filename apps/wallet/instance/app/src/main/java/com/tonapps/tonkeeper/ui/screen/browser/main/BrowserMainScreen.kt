@@ -27,15 +27,18 @@ import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreScreen
 import com.tonapps.tonkeeperx.R
 import kotlinx.coroutines.flow.filterNotNull
 import org.koin.android.ext.android.inject
+import uikit.base.TabScreen
 import uikit.drawable.HeaderDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.isMaxScrollReached
+import uikit.extensions.smoothScrollToTop
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.utils.RecyclerVerticalScrollListener
 import uikit.widget.SlideBetweenView
+import uikit.extensions.setMoonOnClickListener
 
-class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_main, wallet) {
+class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_main, wallet), TabScreen {
 
     override val fragmentName: String = "BrowserMainScreen"
 
@@ -101,7 +104,11 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     private lateinit var exploreListView: RecyclerView
 
     private val activeListView: RecyclerView
-        get() = if (exploreTabView.background != null) exploreListView else connectedListView
+        get() = if (exploreTabView.background != null) {
+            exploreListView
+        } else {
+            connectedListView
+        }
 
     private val isConnectedTabActive: Boolean
         get() = connectedTabView.background != null
@@ -113,10 +120,10 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         headerView.background = headerDrawable
 
         exploreTabView = view.findViewById(R.id.explore_tab)
-        exploreTabView.setOnClickListener { clickTab(it as AppCompatTextView, userInitiated = true) }
+        exploreTabView.setMoonOnClickListener { clickTab(it as AppCompatTextView, userInitiated = true) }
 
         connectedTabView = view.findViewById(R.id.connected_tab)
-        connectedTabView.setOnClickListener { clickTab(it as AppCompatTextView, userInitiated = true) }
+        connectedTabView.setMoonOnClickListener { clickTab(it as AppCompatTextView, userInitiated = true) }
 
         slideView = view.findViewById(R.id.slide)
 
@@ -208,7 +215,14 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
         exploreTabView.isVisible = !viewModel.isDappsDisabled
 
-        clickTab(if (viewModel.isDappsDisabled) connectedTabView else exploreTabView, animated = false)
+        clickTab(
+            if (viewModel.isDappsDisabled) {
+                connectedTabView
+            } else {
+                exploreTabView
+            },
+            animated = false,
+        )
     }
 
     private fun onApplyWindowInsets(insets: WindowInsetsCompat) {
@@ -216,6 +230,10 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
         headerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
             topMargin = statusInsets.top
         }
+    }
+
+    override fun smoothScrollToTop() {
+        activeListView.smoothScrollToTop()
     }
 
     private fun updateScrollHandler() {
@@ -308,7 +326,7 @@ class BrowserMainScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     }
 
     companion object {
-        private const val CONNECTED_APPS_LOTTIE = "ic_apps_28_opt.json"
+        private const val CONNECTED_APPS_LOTTIE = "composeResources/ui.theme.resources/files/lottie/ic_apps_28_opt.json"
 
         fun newInstance(wallet: WalletEntity) = BrowserMainScreen(wallet)
     }

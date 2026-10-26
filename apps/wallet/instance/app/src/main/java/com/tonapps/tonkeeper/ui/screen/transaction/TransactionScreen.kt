@@ -21,7 +21,6 @@ import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.wallet.features.events.nameRes
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.extensions.toastLoading
 import com.tonapps.tonkeeper.extensions.withVerificationIcon
 import com.tonapps.tonkeeper.koin.serverConfig
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -52,6 +51,7 @@ import uikit.extensions.setColor
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.AsyncImageView
 import uikit.widget.ColumnLayout
+import uikit.extensions.setMoonOnClickListener
 
 @Suppress("ClassOrdering")
 class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragment.Modal {
@@ -89,11 +89,6 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
     private val isSimplePreview: Boolean
         get() = actionArgs?.action == ActionType.Unknown
 
-    private val comment: String?
-        get() = actionArgs?.let { action ->
-            viewModel.getComment(action.txId) ?: action.comment?.body
-        }
-
     private val historyHelper: HistoryHelper by inject()
 
     private lateinit var iconContainerView: View
@@ -127,7 +122,7 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<View>(R.id.close).setOnClickListener {
+        view.findViewById<View>(R.id.close).setMoonOnClickListener {
             finish()
         }
 
@@ -149,7 +144,7 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
         currencyView = view.findViewById(R.id.currency)
         dateView = view.findViewById(R.id.date)
         unverifiedView = view.findViewById(R.id.unverified)
-        unverifiedView.setOnClickListener {
+        unverifiedView.setMoonOnClickListener {
             navigation?.add(TokenUnverifiedScreen.newInstance())
         }
 
@@ -200,19 +195,22 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
     }
 
     private fun initArgs(actionArgs: HistoryItem.Event) {
-        spamView.visibility = if (isScam) View.VISIBLE else View.GONE
-        feeView.title =
-            if (actionArgs.refund == null) getString(Localization.fee) else getString(Localization.refund)
+        spamView.isVisible = isScam
+        feeView.title = if (actionArgs.refund == null) {
+            getString(Localization.fee)
+        } else {
+            getString(Localization.refund)
+        }
         unverifiedView.visibility = if (actionArgs.unverifiedToken) {
             View.VISIBLE
         } else {
             View.GONE
         }
-        moreView.setOnClickListener { openMore(it, actionArgs) }
+        moreView.setMoonOnClickListener { openMore(it, actionArgs) }
 
-        reportSpamButton.setOnClickListener { reportSpamWithDialog(true, actionArgs) }
-        explorerButton.setOnClickListener { openExplorer(actionArgs) }
-        notSpamButton.setOnClickListener { reportSpamWithDialog(false, actionArgs) }
+        reportSpamButton.setMoonOnClickListener { reportSpam(true, actionArgs) }
+        explorerButton.setMoonOnClickListener { openExplorer(actionArgs) }
+        notSpamButton.setMoonOnClickListener { reportSpam(false, actionArgs) }
 
         failedView.visibility = if (actionArgs.failed) {
             View.VISIBLE
@@ -329,46 +327,24 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
         updateDataView()
     }
 
-    private fun reportSpamWithDialog(spam: Boolean, actionArgs: HistoryItem.Event) {
-        val isEncryptedComment =
-            actionArgs.comment?.isEncrypted == true || actionArgs.comment?.type == HistoryItem.Event.Comment.Type.OriginalEncrypted
-        if (isEncryptedComment && spam) {
-            CommentReportDialog(requireContext()).show {
-                reportEncryptedComment(actionArgs)
-            }
-        } else {
-            reportSpam(spam, actionArgs)
-        }
-    }
-
-    private fun reportEncryptedComment(actionArgs: HistoryItem.Event) {
-        if (actionArgs.comment?.isEncrypted == true) {
-            decryptComment(actionArgs, actionArgs.comment) {
-                applyComment(actionArgs, actionArgs.comment)
-                reportSpam(true, actionArgs)
-            }
-        } else {
-            reportSpam(true, actionArgs)
-        }
-    }
-
     private fun reportSpam(spam: Boolean, actionArgs: HistoryItem.Event) {
-        if (spam) {
-            navigation?.toastLoading(true)
-        }
         viewModel.reportSpam(
             wallet = actionArgs.wallet,
             txId = actionArgs.txId,
-            comment = comment,
             spam = spam
-        ) {
-            localIsScam = spam
-            spamView.visibility = if (spam) View.VISIBLE else View.GONE
-            initArgs(actionArgs)
-            if (spam) {
-                navigation?.toastLoading(false)
+        ) { isApplied ->
+            if (isApplied) {
+                localIsScam = spam
+                spamView.isVisible = spam
+                initArgs(actionArgs)
             }
-            navigation?.toast(if (spam) Localization.tx_marked_as_spam else Localization.tx_marked_as_not_spam)
+            navigation?.toast(
+                when {
+                    !isApplied -> Localization.unknown_error
+                    spam -> Localization.tx_marked_as_spam
+                    else -> Localization.tx_marked_as_not_spam
+                }
+            )
         }
     }
 
@@ -397,8 +373,8 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
         actionSheet.addItem(OPEN_EXPLORER_ID, explorerTitleRes, UIKitIcon.ic_globe_16)
         actionSheet.doOnItemClick = { item ->
             when (item.id) {
-                REPORT_SPAM_ID -> reportSpamWithDialog(true, actionArgs)
-                NOT_SPAM_ID -> reportSpamWithDialog(false, actionArgs)
+                REPORT_SPAM_ID -> reportSpam(true, actionArgs)
+                NOT_SPAM_ID -> reportSpam(false, actionArgs)
                 OPEN_EXPLORER_ID -> openExplorer(actionArgs)
             }
         }
@@ -454,17 +430,16 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
         if (!comment.isEncrypted) {
             val text = comment.body
             commentView.setData(text, "")
-            commentView.setOnClickListener { context?.copyWithToast(text) }
+            commentView.setMoonOnClickListener { context?.copyWithToast(text) }
         } else {
             commentView.setData(getString(Localization.encrypted_comment), "", lockDrawable)
-            commentView.setOnClickListener { decryptComment(action, comment) }
+            commentView.setMoonOnClickListener { decryptComment(action, comment) }
         }
     }
 
     private fun decryptComment(
         action: HistoryItem.Event,
         comment: HistoryItem.Event.Comment,
-        callback: ((comment: String) -> Unit)? = null
     ) {
         historyHelper.requestDecryptComment(
             requireContext(),
@@ -475,7 +450,6 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
             context?.logError(it)
             commentView.reject()
         }.onEach {
-            callback?.invoke(it.body)
             applyComment(action, it)
         }.launchIn(lifecycleScope)
     }
@@ -501,7 +475,7 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
                 address.shortAddress
             }*/
             accountAddressValue().text = address
-            accountAddressView.setOnClickListener {
+            accountAddressView.setMoonOnClickListener {
                 context?.copyWithToast(address)
             }
         } else {
@@ -513,7 +487,7 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
         accountNameView.visibility = View.VISIBLE
         accountNameView.title = getAccountTitle(out)
         accountNameView.setData(name.max24, "")
-        accountNameView.setOnClickListener {
+        accountNameView.setMoonOnClickListener {
             context?.copyWithToast(name)
         }
 
@@ -526,7 +500,7 @@ class TransactionScreen : BaseFragment(R.layout.dialog_transaction), BaseFragmen
             }
         )
         accountAddressValue().text = address
-        accountAddressView.setOnClickListener {
+        accountAddressView.setMoonOnClickListener {
             context?.copyWithToast(address)
         }
     }

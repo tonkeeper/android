@@ -22,6 +22,17 @@ appId: com.ton_keeper.debug
       - runFlow: subflows/hide_show_btc_in_wallet.yaml
       - evalScript: ${output.portfolio_hide_btc_ok = true}
 
+# The case above can die between Hide and Show. BTC visibility is stored per
+# wallet on the backend, so a leftover hide breaks swap and send on later runs
+# too. Runs only after a failed case.
+- runFlow:
+    when:
+      true: ${output.portfolio_hide_btc_ok !== true}
+    optional: true
+    label: "Multichain — leave BTC shown after hide/show"
+    commands:
+      - runFlow: ../../steps/wallet/ensure_btc_shown.yaml
+
 - evalScript: ${var f = []; if (output.portfolio_receive_ok !== true) f.push('receive'); if (output.portfolio_hide_btc_ok !== true) f.push('hide/show BTC'); output.portfolio_failed = f.join(', ');}
 
 - assertTrue:

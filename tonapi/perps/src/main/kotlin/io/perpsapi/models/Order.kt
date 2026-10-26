@@ -13,13 +13,25 @@ package io.perpsapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Order(
-    @SerialName(value = "order_id")
-    val orderId: String? = null,
-    @SerialName(value = "client_order_id")
-    val clientOrderId: String? = null,
+    /* Identifies the order for the detail endpoint. Opaque -- read it from here and hand it back, do not parse it. It names the venue and the venue's own order number. */
+    @SerialName(value = "id")
+    val id: String? = null,
+
+    /* Lighter's own number for the order, assigned when it entered the book. A cancel or a modify is addressed by `market_index` plus this. */
+    @SerialName(value = "order_index")
+    val orderIndex: Long? = null,
+
+    /* The number whoever created the order chose for it: Lighter stores and echoes it back, and never assigns one itself. Zero means nobody chose one -- it is a real value in the payload rather than an absent field. Match an order to your own record of placing it, and treat it as opaque otherwise. */
+    @SerialName(value = "client_order_index")
+    val clientOrderIndex: Long? = null,
     @SerialName(value = "market_index")
     val marketIndex: Int? = null,
     @SerialName(value = "symbol")

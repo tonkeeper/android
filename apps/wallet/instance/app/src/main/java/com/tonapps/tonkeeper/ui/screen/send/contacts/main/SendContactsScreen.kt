@@ -25,6 +25,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.topScrolled
 import uikit.widget.HeaderView
 import uikit.widget.SimpleRecyclerView
+import uikit.extensions.setMoonOnClickListener
 
 class SendContactsScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_send_contacts, wallet), BaseFragment.BottomSheet {
 
@@ -57,7 +58,7 @@ class SendContactsScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fra
         listView.insideBottomSheet = true
 
         button = view.findViewById(R.id.button)
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             navigation?.add(AddContactScreen.newInstance(wallet))
         }
 

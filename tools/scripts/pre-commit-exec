@@ -10,6 +10,7 @@ set -euo pipefail
 # Configuration
 DETEKT_VERSION="1.23.8"
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+ANDROID_ROOT="$PROJECT_ROOT/android"
 # Use git-common-dir for worktree support - stores JARs in shared location
 GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"
 TOOLS_BUILD_DIR="$GIT_COMMON_DIR/detekt-cache"
@@ -60,8 +61,9 @@ download_if_missing "$DETEKT_FORMATTING_URL" "$DETEKT_FORMATTING_JAR" "detekt-fo
 # Get list of staged Kotlin files (excluding deleted files)
 # --diff-filter=d excludes deleted files
 # --name-only shows only file names
-# Filter for .kt and .kts extensions (exclusions are handled in detekt.yml)
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(kt|kts)$' || true)
+# Filter for .kt and .kts extensions, leaving out generated API models and endpoints:
+# detekt.yml's config.excludes only names config keys, it does not filter input files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(kt|kts)$' | grep -vE '^android/tonapi/[^/]+/src/(main|commonMain)/kotlin/io/[^/]+/(apis|models)/' || true)
 
 # If no Kotlin files are staged, exit successfully
 if [ -z "$STAGED_FILES" ]; then
@@ -72,6 +74,40 @@ fi
 # Count staged files
 FILE_COUNT=$(echo "$STAGED_FILES" | wc -l | tr -d ' ')
 echo -e "${YELLOW}Processing $FILE_COUNT staged Kotlin file(s)...${NC}"
+
+# --- Press-scale click gate (TK-2230) ---------------------------------------------------------
+# Every clickable View must go through View.setMoonOnClickListener, which bundles the press-scale +
+# tick-haptic feedback that replaced the ripple in TK-1851. Block newly staged bare
+# setOnClickListener calls so new ripple-less clicks can't creep back in.
+#
+# This is a grep gate: the pre-commit hook runs the plain detekt CLI without type resolution, so a
+# detekt ForbiddenMethodCall rule can't tell View.setOnClickListener from any other. If grep starts
+# producing false positives, upgrade it to a syntactic detekt rule loaded via --plugins.
+#
+# Exemptions: the extension file that defines the wrapper; the setOnClickListener(null) clear;
+# fun/override declarations and method references; super-forwarding; and any line the author
+# explicitly opts out of with a trailing "// no-press-scale" comment.
+CLICK_GATE_EXTENSION_FILE="android/ui/uikit/core/src/main/java/uikit/extensions/PressScale.kt"
+CLICK_GATE_FILES=$(echo "$STAGED_FILES" | grep -E '\.(kt|kts)$' | grep -vxF "$CLICK_GATE_EXTENSION_FILE" | sed "s#^#$PROJECT_ROOT/#" || true)
+CLICK_GATE_VIOLATIONS=""
+if [ -n "$CLICK_GATE_FILES" ]; then
+    CLICK_GATE_VIOLATIONS=$(printf '%s\n' "$CLICK_GATE_FILES" | tr '\n' '\0' \
+        | xargs -0 grep -nHE 'setOnClickListener' 2>/dev/null \
+        | grep -vE 'setOnClickListener\(null\)' \
+        | grep -vE '(fun|::)[[:space:]]*setOnClickListener' \
+        | grep -vE 'super\.setOnClickListener' \
+        | grep -vE 'no-press-scale' || true)
+fi
+
+if [ -n "$CLICK_GATE_VIOLATIONS" ]; then
+    echo -e "${RED}✗ Bare setOnClickListener is not allowed (TK-2230).${NC}" >&2
+    echo -e "${YELLOW}Use View.setMoonOnClickListener { ... } — it adds the standard press-scale + haptic feedback.${NC}" >&2
+    echo -e "${YELLOW}For a container whose children draw their own feedback, pass scale = false.${NC}" >&2
+    echo -e "${YELLOW}If a bare call is genuinely required, add a \"// no-press-scale\" comment on that line.${NC}" >&2
+    echo -e "${RED}Offending staged lines:${NC}$CLICK_GATE_VIOLATIONS" >&2
+    echo -e "${YELLOW}Or bypass all pre-commit checks with 'git commit --no-verify'.${NC}" >&2
+    exit 1
+fi
 
 # Convert newline-separated files to comma-separated for detekt --input
 # Prepend project root to relative paths - detekt needs absolute paths
@@ -84,8 +120,8 @@ echo -e "${YELLOW}Running detekt with auto-correct...${NC}"
 java -jar "$DETEKT_CLI_JAR" \
     --input "$DETEKT_INPUT_ABSOLUTE" \
     --plugins "$DETEKT_FORMATTING_JAR" \
-    --config "$PROJECT_ROOT/detekt/detekt.yml" \
-    --report "xml:$PROJECT_ROOT/build/reports/detekt-report.xml" \
+    --config "$ANDROID_ROOT/detekt/detekt.yml" \
+    --report "xml:$ANDROID_ROOT/build/reports/detekt-report.xml" \
     --auto-correct
 
 DETEKT_EXIT_CODE=$?

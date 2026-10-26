@@ -25,18 +25,14 @@ class RemoteConfig : RemoteConfigProvider {
 
         val defaults = mapOf(
             FeatureFlag.ONBOARDING_STORIES_ENABLED.key to true,
-            WalletFeatureKey.IS_MULTICHAIN_ENABLED.featureKey to true,
-            WalletFeatureKey.IS_IMPORT_MULTICHAIN_WALLET.featureKey to true,
             WalletFeatureKey.IS_SWAPKIT_HARD_SWITCH_ENABLED.featureKey to false,
             WalletFeatureKey.IS_SWAP_EXACT_OUTPUT_ENABLED.featureKey to false,
-            WalletFeatureKey.IS_WALLETKIT_ENABLED.featureKey to false,
-            WalletFeatureKey.IS_MIGRATION_ENABLED.featureKey to true,
-            WalletFeatureKey.IS_MIGRATION_BATTERY_ENABLED.featureKey to false,
-            WalletFeatureKey.IS_RAFFLES_ENABLED.featureKey to false,
             WalletFeatureKey.IS_PERPS_ENABLED.featureKey to false,
-            WalletFeatureKey.IS_REALTIME_ENABLED.featureKey to true,
+            WalletFeatureKey.IS_EARN_ENABLED.featureKey to false,
             WalletFeatureKey.LOG_DEFAULT_ON.featureKey to false,
             WalletFeatureKey.IS_IN_APP_REVIEW_ENABLED.featureKey to false,
+            WalletFeatureKey.ANALYTICS_PERSISTENT_CACHE.featureKey to false,
+            WalletFeatureKey.TONCONNECT_SIGN_MESSAGE_ENABLED.featureKey to true,
         )
 
         remoteConfig.setDefaultsAsync(defaults)
@@ -60,6 +56,10 @@ class RemoteConfig : RemoteConfigProvider {
     override fun optFeatureValue(feature: FeatureKey): String? {
         val value = remoteConfig.getString(feature.featureKey)
         return value.ifEmpty { null }
+    }
+
+    override fun isRemoteResolved(feature: FeatureKey): Boolean {
+        return remoteConfig.getValue(feature.featureKey).source == FirebaseRemoteConfig.VALUE_SOURCE_REMOTE
     }
 
     fun fetchAndActivate() {

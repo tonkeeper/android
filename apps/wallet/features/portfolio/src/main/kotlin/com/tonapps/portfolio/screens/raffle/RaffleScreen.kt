@@ -62,7 +62,6 @@ import com.tonapps.portfolio.screens.raffle.components.RaffleConfetti
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.Plurals
-import com.tonapps.wallet.data.raffle.RaffleClock
 import com.tonapps.wallet.data.raffle.entities.RaffleEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -92,8 +91,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val RAFFLE_LIST_BOTTOM_PADDING = 104.dp
-
-private const val RAFFLE_DEEPLINK_FROM = "raffle"
 
 // Figma 8305:43944: tapping the next (first not-done) milestone leads into swap to build
 // volume; milestones carry no deeplink in the API, so the destination lives client-side.
@@ -403,11 +400,11 @@ private fun heroBadgeIconRes(raffle: RaffleEntity, kind: RaffleKind): Int =
 @Composable
 private fun CountdownRow(target: OffsetDateTime, onExpired: () -> Unit) {
     var remaining by remember(target) {
-        mutableStateOf(Duration.between(RaffleClock.now(), target))
+        mutableStateOf(Duration.between(OffsetDateTime.now(), target))
     }
     LaunchedEffect(target) {
         while (true) {
-            val value = Duration.between(RaffleClock.now(), target)
+            val value = Duration.between(OffsetDateTime.now(), target)
             if (value.isNegative || value.isZero) {
                 remaining = Duration.ZERO
                 onExpired()

@@ -1,0 +1,21 @@
+# Land on an unlocked home without spending taps.
+# Locally tools/unlock_adb.sh types the passcode through adb before Maestro
+# starts (4 adb taps ~0.2 s vs 4 Maestro taps ~10 s). The guard below is the
+# safety net for when those taps missed or the run started cold: it costs ~2.6 s
+# when the pin is absent and ~10 s when it has to type the passcode itself.
+# In Maestro Cloud it is the only path, and it just works.
+# Env: PASSWORD_KEY
+appId: com.ton_keeper.debug
+---
+- runFlow:
+    when:
+      visible:
+        id: pin_title
+    file: ../password/enter_password.yaml
+- extendedWaitUntil:
+    notVisible:
+      id: pin_title
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "Add Funds"
+    timeout: 60000

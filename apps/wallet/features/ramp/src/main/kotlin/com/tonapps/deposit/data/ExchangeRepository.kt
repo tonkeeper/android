@@ -144,17 +144,9 @@ class ExchangeRepository(
         walletId: String?,
     ): List<WalletCurrency> {
         return cache.getOrLoad(Keys.Currencies, payload = walletId) {
-            val result = api.getCurrencies(network, locale, walletId)
-            buildList {
-                for (i in 0 until result.length()) {
-                    val item = result.getJSONObject(i)
-                    val code = item.getString("code")
-                    val type = item.getString("type")
-                    if (type.equals("fiat", ignoreCase = true)) {
-                        add(WalletCurrency.fiat(code))
-                    }
-                }
-            }
+            api.getCurrencies(network, locale, walletId)
+                .filter { it.isFiat }
+                .map { WalletCurrency.fiat(it.code) }
                 .let { WalletCurrency.sort(it) }
         }
     }

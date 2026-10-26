@@ -1,0 +1,27 @@
+{
+    "route_id": "f57c3790-fcb1-407f-a22a-f11325cbfc36",
+    "aggregator": "omniston",
+    "payloads": [
+        {
+            "payload_id": "b4c3e804-3ff3-467b-bf6b-fdb7f7bf3cba",
+            "kind": "main",
+            "chain_id": "ton/mainnet",
+            "chain_family": "TON",
+            "payload_type": "ton_boc",
+            "calldata_payload_type": "exact",
+            "payload": "[{\"address\":\"EQC9bXRVHLtdjSa4EOcLlD8pNKhNWLeRGLFF0nNTDfl13uwH\",\"amount\":\"185000000\",\"payload\":\"te6cckEBAgEAywABsA+KfqV2xXO3Pd/HGEQhuF4IAO87mQKicbKgHIk4pSPP4k5xhHqutqYgAB7USnesDnCdACe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYiyBAX34EBANslk4VhgAIqFqMWTE1aoxM/MRD/EEluAMqKyKvv/FAn4CTTNIDD60uXMPFRACe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYi8ACJAc9yH0RADYSJtmhzOqonRuCSb2bmyLGATs10hcPtLmSt3fY=\"},{\"address\":\"EQC9bXRVHLtdjSa4EOcLlD8pNKhNWLeRGLFF0nNTDfl13uwH\",\"amount\":\"330000000\",\"payload\":\"te6cckECBgEAAdYAAbAPin6ldsVztz3fxxhBMvzeCAAxVRxd2qLo+1wGeA83JxB7KDlbHsqLPl3TmujpbXHauwAnujmZTRR11gWouVdws2LHTuvMmUdhjHTGFjujSdcGIsghYOwBAQFX46DUgoAHy/+VG7+ebYbZP+jeYqxVVqNzIpCLWthNl7zJOrFKsQUv3Sg9Z0ACAksAAAAAgB4cvF14lzyCzYbIPpNZEuRocSH7FOrcbJObwJRBFQtZZwMEAdEaPC/DgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAJ7o5mU0UddYFqLlXcLNix07rzJlHYYx0xhY7o0nXBiLgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAFAI08N9fpgBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRcAJ7o5mU0UddYFqLlXcLNix07rzJlHYYx0xhY7o0nXBiLgDVgARIDnuQ+iIAbCRNs0OZ1VE6NwSTezc2RYwCdmukLh9pYAjQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAED21EGi\"},{\"address\":\"EQC9bXRVHLtdjSa4EOcLlD8pNKhNWLeRGLFF0nNTDfl13uwH\",\"amount\":\"260000000\",\"payload\":\"te6cckECAwEAAR0AAbAPin6ldsVztz3fxxhF2FCkCAElwoI1yo0SXmdlkVE9Ugchsf6Z93IvTIdyPOfuDftzowAnujmZTRR11gWouVdws2LHTuvMmUdhjHTGFjujSdcGIsgZCLEBAQHhZmTeKoASRBgwNNn9WaI29x7EJxvjdzmQVt2kzDpev13ECWffZBACe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYi4AT3RzMpoo66wLUXKu4WbFjp3XmTKOwxjpjCx3RpOuDEWAAAAAf////8ACAJdektsIU9gBPdHMymijrrAtRcq7hZsWOndeZMo7DGOmMLHdGk64MRYAACNAAiQHPch9EQA2EibZoczqqJ0bgkm9m5sixgE7NdIXD7S47uVrbQ==\"}]",
+            "human_summary": {
+                "action": "Swap on TON",
+                "spend_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+                "spend_amount": "3000000000",
+                "receive_asset": "ton/mainnet/coin",
+                "receive_amount": "1938538544430",
+                "recipient_address": "UQCe6OZlNFHXWBai5V3CzYsdO68yZR2GMdMYWO6NJ1wYi5PA",
+                "protocol": "omniston"
+            },
+            "validation_status": "validated",
+            "date_expire": "2026-09-30T13:08:11Z"
+        }
+    ],
+    "execution_id": "a8e82975-cab8-4b6c-bb9f-07fda7dcc30d"
+}

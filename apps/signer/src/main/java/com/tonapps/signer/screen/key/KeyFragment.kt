@@ -34,6 +34,7 @@ import uikit.extensions.topScrolled
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.ActionCellView
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
@@ -78,17 +79,17 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
         nameView = view.findViewById(R.id.name)
         nameView.background = ListCell.Position.FIRST.drawable(requireContext())
-        nameView.setOnClickListener { openNameEditor() }
+        nameView.setMoonOnClickListener { openNameEditor() }
 
         hexAddressView = view.findViewById(R.id.hex)
         hexAddressView.background = ListCell.Position.MIDDLE.drawable(requireContext())
 
         phraseView = view.findViewById(R.id.phrase)
         phraseView.background = ListCell.Position.LAST.drawable(requireContext())
-        phraseView.setOnClickListener { openRecoveryPhrase() }
+        phraseView.setMoonOnClickListener { openRecoveryPhrase() }
 
         deleteView = view.findViewById(R.id.delete_key)
-        deleteView.setOnClickListener { openDeleteDialog() }
+        deleteView.setMoonOnClickListener { openDeleteDialog() }
 
         scrollView = view.findViewById(R.id.scroll)
         scrollView.applyNavBottomPadding()
@@ -110,7 +111,7 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
 
     private fun setHex(hex: String) {
         hexAddressView.subtitle = hex.short8
-        hexAddressView.setOnClickListener {
+        hexAddressView.setMoonOnClickListener {
             requireContext().copyToClipboard(hex)
         }
     }
@@ -118,11 +119,11 @@ class KeyFragment: BaseFragment(R.layout.fragment_key), BaseFragment.SwipeBack {
     private fun setExportByUri(publicKey: PublicKeyEd25519, name: String) {
         qrView.setContent(TKDeepLink.buildLinkUri(publicKey, name, false).toString())
 
-        exportTonkeeperView.setOnClickListener {
+        exportTonkeeperView.setMoonOnClickListener {
             TKDeepLink.openOrInstall(requireContext(), TKDeepLink.buildLinkUri(publicKey, name, true))
         }
 
-        exportTonkeeperWebView.setOnClickListener {
+        exportTonkeeperWebView.setMoonOnClickListener {
             navigation?.openURL(TKDeepLink.buildLinkUriWeb(publicKey, name).toString())
         }
     }

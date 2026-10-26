@@ -28,7 +28,7 @@ internal class TxTronParamsProvider(
     @OptIn(ExperimentalAtomicApi::class)
     private suspend fun create(): TxTronParams? {
         val params = TxTronParams(
-            address = accountRepository.getTronBlockchainAddress(wallet.id),
+            address = accountRepository.getTronBlockchainAddressOrNull(wallet.id),
             walletId = wallet.id,
         )
         if (params.isEmtpy) {

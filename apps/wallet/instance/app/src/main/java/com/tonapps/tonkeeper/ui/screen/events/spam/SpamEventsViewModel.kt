@@ -48,14 +48,6 @@ class SpamEventsViewModel(
     private val _tronEventsList: List<TronEventEntity>
         get() = _tronEventsFlow.value ?: emptyList()
 
-    private fun getTronLastTimestamp(): Timestamp? {
-        val lt = _tronEventsFlow.value?.lastOrNull { !it.inProgress }?.timestamp ?: return null
-        if (Timestamp.zero >= lt) {
-            return null
-        }
-        return lt
-    }
-
     private val uiItemsFlow = combine(eventsFlow, tronEventsFlow) { events, tronEvents ->
         (historyHelper.mapping(
             wallet = wallet,
@@ -98,12 +90,22 @@ class SpamEventsViewModel(
         }
     }
 
+    private fun getTronLastTimestamp(): Timestamp? {
+        val lt = _tronEventsFlow.value?.lastOrNull { !it.inProgress }?.timestamp ?: return null
+        if (Timestamp.zero >= lt) {
+            return null
+        }
+        return lt
+    }
+
     private suspend fun init() {
         _eventsFlow.value = getLocalSpam()
 
         val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
-            accountRepository.getTronAddress(wallet.id)
-        } else null
+            accountRepository.getTronAddressOrNull(wallet.id)
+        } else {
+            null
+        }
         _tronEventsFlow.value = emptyList()
 
         if (tronAddress != null) {
@@ -138,8 +140,10 @@ class SpamEventsViewModel(
 
     private suspend fun loadMoreTron() {
         val tronAddress = if (wallet.hasPrivateKey && !wallet.testnet) {
-            accountRepository.getTronAddress(wallet.id)
-        } else null
+            accountRepository.getTronAddressOrNull(wallet.id)
+        } else {
+            null
+        }
 
         if (tronAddress.isNullOrEmpty()) {
             return
@@ -155,7 +159,8 @@ class SpamEventsViewModel(
                     maxTimestamp = tronLastTimestamp.value
                 ) ?: throw IllegalStateException("Failed to load tron events")
                 val events = (currentEvents + tronEvents).distinctBy { it.transactionHash }
-                    .sortedBy { it.timestamp }.reversed()
+                    .sortedBy { it.timestamp }
+                    .reversed()
                 _tronEventsFlow.value = events
             }
         } catch (_: Throwable) {
@@ -181,7 +186,7 @@ class SpamEventsViewModel(
     )
 
     private suspend fun tronMapping(events: List<TronEventEntity>): List<HistoryItem> {
-        val tronAddress = accountRepository.getTronAddress(wallet.id) ?: ""
+        val tronAddress = accountRepository.getTronAddressOrNull(wallet.id) ?: ""
         val eventItems = historyHelper.tronMapping(
             wallet = wallet,
             events = events.map { it.copy() },

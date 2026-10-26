@@ -70,6 +70,7 @@ internal fun StockAssetDetailsScreen(
     onToggleFavorite: () -> Unit = {},
     onTrackButtonClick: (AssetScreenButton) -> Unit = {},
     onRefresh: () -> Unit = {},
+    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
     onBack: () -> Unit,
 ) {
     val data = state as? AssetDetailsState.Data // TODO TK-2103 move to feature
@@ -132,12 +133,15 @@ internal fun StockAssetDetailsScreen(
                             .verticalScroll(scrollState)
                             .padding(bottom = bottomOverlayHeight),
                         sections = data?.sections,
+                        isBalanceStale = data?.isBalanceStale == true,
                         asset = asset,
                         imageUrl = imageUrl,
                         chainImageUrl = chainImageUrl,
                         currencyCode = data?.currencyCode ?: "",
                         chartData = data?.chartData,
                         chartPeriod = data?.chartPeriod ?: AssetDetailsFeature.InitialChartPeriod,
+                        perps = data?.perps ?: AssetPerpsState.Hidden,
+                        assetSymbol = asset?.symbol.orEmpty(),
                         showSend = hasBalance,
                         showCashBuy = isMultichainWallet && data?.buyWithCardAvailable == true,
                         showCashSell = isMultichainWallet && hasBalance && data?.sellToCardAvailable == true,
@@ -146,6 +150,7 @@ internal fun StockAssetDetailsScreen(
                         onChartPeriodChange = onChartPeriodChange,
                         onOpenTxDetails = onOpenTxDetails,
                         onSeeAllActivities = onSeeAllActivities,
+                        onOpenPerpMarket = onOpenPerpMarket,
                         onSendClick = {
                             onTrackButtonClick(AssetScreenButton.Send)
                             asset?.let { onOpenSend(it.id, it.asTokenEntity.address) }
@@ -183,12 +188,15 @@ internal fun StockAssetDetailsScreen(
 private fun StockAssetDetailsData(
     modifier: Modifier = Modifier,
     sections: AssetDetailsSections?,
+    isBalanceStale: Boolean = false,
     asset: AssetRef? = null,
     imageUrl: String,
     chainImageUrl: String?,
     currencyCode: String,
     chartData: List<ChartPoint>?,
     chartPeriod: ChartPeriod,
+    perps: AssetPerpsState = AssetPerpsState.Hidden,
+    assetSymbol: String,
     showSend: Boolean = false,
     showCashBuy: Boolean = false,
     showCashSell: Boolean = false,
@@ -197,6 +205,7 @@ private fun StockAssetDetailsData(
     onChartPeriodChange: (ChartPeriod) -> Unit,
     onOpenTxDetails: (tx: TxEvent, actionIndex: Int) -> Unit,
     onSeeAllActivities: () -> Unit = {},
+    onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit = { _, _ -> },
     onSendClick: () -> Unit = {},
     onReceiveClick: () -> Unit = {},
     onCashBuyClick: () -> Unit = {},
@@ -211,12 +220,14 @@ private fun StockAssetDetailsData(
             chartPeriod = chartPeriod,
             onPeriodChange = onChartPeriodChange,
             onOpenStaking = {},
+            onOpenEarnVault = { _, _ -> },
         )
         StockDisclaimerSection(asset = asset)
         if (sections != null) {
             if (sections.balance != null) {
                 DetailsBalanceSection(
                     balance = sections.balance,
+                    isStale = isBalanceStale,
                     imageUrl = imageUrl,
                     chainImageUrl = chainImageUrl,
                 )
@@ -236,6 +247,13 @@ private fun StockAssetDetailsData(
         } else {
             DetailsBalanceSectionShimmer()
         }
+
+        PerpsSection(
+            state = perps,
+            assetSymbol = assetSymbol,
+            imageUrl = imageUrl,
+            onOpenMarket = onOpenPerpMarket,
+        )
 
         sections?.recentEvents?.let {
             EventsSection(
@@ -316,6 +334,7 @@ private fun StockAssetDetailsScreenPreview() {
                     sections = previewAssetDetailsSections,
                     imageUrl = "",
                     chainImageUrl = null,
+                    assetSymbol = "AAPL",
                     currencyCode = "USD",
                     chartData = previewChartData,
                     chartPeriod = ChartPeriod.month,

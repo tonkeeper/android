@@ -28,6 +28,7 @@ internal data class ErrorPayload(
 )
 
 internal const val HERMES_ERROR_ALREADY_SUBSCRIBED = "already.subscribed"
+internal const val HERMES_ERROR_INVALID_CREDENTIALS = "invalid.credentials"
 
 internal val hermesJson: Json = Json { ignoreUnknownKeys = true }
 

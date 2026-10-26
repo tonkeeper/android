@@ -52,7 +52,8 @@ class ActivityApi(basePath: String = defaultBasePath, client: Call.Factory = Api
          @SerialName(value = "withdrawal") withdrawal("withdrawal"),
          @SerialName(value = "liquidation") liquidation("liquidation"),
          @SerialName(value = "tp_executed") tp_executed("tp_executed"),
-         @SerialName(value = "sl_executed") sl_executed("sl_executed");
+         @SerialName(value = "sl_executed") sl_executed("sl_executed"),
+         @SerialName(value = "unknown") unknown("unknown");
 
         /**
          * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -66,8 +67,8 @@ class ActivityApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getActivity(xWalletID: String, type: TypeGetActivity? = null, market: Int? = null, cursor: String? = null, limit: Int? = 20): ActivityPage {
-        val localVarResponse = getActivityWithHttpInfo(xWalletID = xWalletID, type = type, market = market, cursor = cursor, limit = limit)
+    fun getActivity(type: TypeGetActivity? = null, market: Int? = null, cursor: String? = null, limit: Int? = 20, xWalletId: String? = null): ActivityPage {
+        val localVarResponse = getActivityWithHttpInfo(type = type, market = market, cursor = cursor, limit = limit, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as ActivityPage
@@ -86,15 +87,15 @@ class ActivityApi(basePath: String = defaultBasePath, client: Call.Factory = Api
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getActivityWithHttpInfo(xWalletID: String, type: TypeGetActivity?, market: Int?, cursor: String?, limit: Int?): ApiResponse<ActivityPage?> {
-        val localVariableConfig = getActivityRequestConfig(xWalletID = xWalletID, type = type, market = market, cursor = cursor, limit = limit)
+    fun getActivityWithHttpInfo(type: TypeGetActivity?, market: Int?, cursor: String?, limit: Int?, xWalletId: String?): ApiResponse<ActivityPage?> {
+        val localVariableConfig = getActivityRequestConfig(type = type, market = market, cursor = cursor, limit = limit, xWalletId = xWalletId)
 
         return request<Unit, ActivityPage>(
             localVariableConfig
         )
     }
 
-    fun getActivityRequestConfig(xWalletID: String, type: TypeGetActivity?, market: Int?, cursor: String?, limit: Int?): RequestConfig<Unit> {
+    fun getActivityRequestConfig(type: TypeGetActivity?, market: Int?, cursor: String?, limit: Int?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -112,7 +113,7 @@ class ActivityApi(basePath: String = defaultBasePath, client: Call.Factory = Api
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
@@ -122,7 +123,7 @@ class ActivityApi(basePath: String = defaultBasePath, client: Call.Factory = Api
             headers = localVariableHeaders,
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
-            walletId = xWalletID,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

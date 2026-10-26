@@ -5,6 +5,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.insertSeparators
+import androidx.paging.map
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.chainkit.core.chain.model.account.Network
@@ -12,6 +14,7 @@ import com.tonapps.core.flags.WalletFeature
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.perps.data.CATALOG_SEARCH_PAGE_SIZE
 import com.tonapps.perps.data.CatalogSearchRepository
+import com.tonapps.perps.data.CatalogSearchRow
 import com.tonapps.perps.data.CatalogSearchSort
 import com.tonapps.perps.data.PerpMarket
 import com.tonapps.perps.data.PerpsMarketFilter
@@ -47,11 +50,11 @@ class SearchFeature(
         MutableStateFlow(data.initialSort ?: CatalogSearchSort.MARKET_CAP)
     val queryFilter: StateFlow<String> field = MutableStateFlow("")
     val networkFilter: StateFlow<Network.Type?> field = MutableStateFlow(data.initialNetwork)
-    val assetType: StateFlow<SearchAssetType> field = MutableStateFlow(SearchAssetType.ALL)
+    val assetType: StateFlow<SearchAssetType> field = MutableStateFlow(data.initialAssetType ?: SearchAssetType.ALL)
     val perpsSort: StateFlow<PerpsSort> field = MutableStateFlow(PerpsSort.VOLUME)
 
     @OptIn(FlowPreview::class)
-    val debouncedQuery: StateFlow<String> = queryFilter.debounce(300).cacheState(initialValue = "")
+    val debouncedQuery: StateFlow<String> = queryFilter.map { it.trim() }.debounce(300).cacheState(initialValue = "")
 
     private val perpsGate: Flow<Boolean> = unifiedAccountRepository.selectedTonWalletFlow
         .map { wallet -> wallet?.type == WalletType.Multichain && WalletFeature.Perps.isEnabled }
@@ -60,7 +63,7 @@ class SearchFeature(
     val isPerpsVisible: StateFlow<Boolean> = perpsGate.cacheState(initialValue = false)
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    val assetsFlow = combine(
+    val assetsFlow: Flow<PagingData<SearchListItem>> = combine(
         sortOrder,
         debouncedQuery,
         combine(networkFilter, perpsGate, assetType) { network, showPerps, type ->
@@ -102,7 +105,16 @@ class SearchFeature(
                         verifiedOnly = request.verifiedOnly,
                     )
                 },
-            ).flow
+            ).flow.map { data ->
+                data.map { SearchListItem.Row(it) }
+                    .insertSeparators<SearchListItem.Row, SearchListItem> { before, after ->
+                        if (request.isSectioned) {
+                            sectionHeader(before?.row, after?.row)
+                        } else {
+                            null
+                        }
+                    }
+            }
         }
         .cachedIn(viewModelScope)
 
@@ -164,4 +176,17 @@ private data class SearchRequest(
     val filter: PerpsMarketFilter,
     val currency: String,
     val verifiedOnly: Boolean,
-)
+) {
+    val isSectioned: Boolean
+        get() = perps && network == null && filter == PerpsMarketFilter.ALL && query.isNotEmpty()
+}
+
+private fun sectionHeader(before: CatalogSearchRow?, after: CatalogSearchRow?): SearchListItem.Header? {
+    return when {
+        after is CatalogSearchRow.Perp && before !is CatalogSearchRow.Perp ->
+            SearchListItem.Header(SearchSection.PERPETUALS, after.id)
+        after is CatalogSearchRow.Spot && before == null ->
+            SearchListItem.Header(SearchSection.TOKENS, after.id)
+        else -> null
+    }
+}

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 
 class AppLifecycleProvider {
 
@@ -45,7 +46,12 @@ class AppLifecycleProvider {
             } else {
                 BACKGROUND_GRACE_MS
             }
-        }.distinctUntilChanged()
+        }
+        .distinctUntilChanged()
+
+    val observeWithoutGrace: Flow<Boolean> = ProcessLifecycleOwner.get().lifecycle.currentStateFlow
+        .map { state -> state.isAtLeast(Lifecycle.State.STARTED) }
+        .distinctUntilChanged()
 
     private companion object {
         private const val BACKGROUND_GRACE_MS = 15_000L

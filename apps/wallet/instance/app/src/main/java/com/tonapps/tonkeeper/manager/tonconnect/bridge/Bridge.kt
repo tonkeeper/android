@@ -57,6 +57,17 @@ internal class Bridge(private val api: API) {
         return message
     }
 
+    suspend fun sendSignMessageResponseSuccess(
+        connection: AppConnectEntity,
+        internalBoc: String,
+        id: Long
+    ): String {
+        val message = JsonBuilder.responseSignMessage(id, internalBoc).toString()
+        DevSettings.tonConnectLog("Send SignMessage Response to ${connection.clientId}\nMessage: $message")
+        send(connection, message)
+        return message
+    }
+
     suspend fun sendError(
         connection: AppConnectEntity,
         error: BridgeError,

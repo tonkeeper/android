@@ -35,15 +35,15 @@ class PerpsLivePrices(private val feed: PerpsPriceFeed) {
         .distinctUntilChanged()
         .debounce(UNION_DEBOUNCE_MS)
 
-    private val shared: StateFlow<Map<String, BigDecimal>> = merge(
+    private val shared: StateFlow<Map<String, PerpsMarkQuote>> = merge(
         union.map { it.isEmpty() }.distinctUntilChanged().filter { it }.map { StoreEvent.Reset },
         feed.stream(union).map { StoreEvent.Feed(it) },
     )
-        .scan(emptyMap<String, BigDecimal>()) { prices, storeEvent ->
+        .scan(emptyMap<String, PerpsMarkQuote>()) { quotes, storeEvent ->
             when (storeEvent) {
                 StoreEvent.Reset -> emptyMap()
                 is StoreEvent.Feed -> when (val event = storeEvent.event) {
-                    is PerpsPriceEvent.Snapshot -> event.prices
+                    is PerpsPriceEvent.Snapshot -> event.quotes
                     PerpsPriceEvent.Reconnecting -> emptyMap()
                     PerpsPriceEvent.Rejected -> emptyMap()
                 }
@@ -51,7 +51,11 @@ class PerpsLivePrices(private val feed: PerpsPriceFeed) {
         }
         .stateIn(Async.ioScope(), SharingStarted.WhileSubscribed(IDLE_TIMEOUT_MS), emptyMap())
 
-    fun observe(tickers: Flow<Set<String>>): Flow<Map<String, BigDecimal>> = channelFlow {
+    fun observe(tickers: Flow<Set<String>>): Flow<Map<String, BigDecimal>> {
+        return observeQuotes(tickers).map { quotes -> quotes.mapValues { (_, quote) -> quote.price } }
+    }
+
+    fun observeQuotes(tickers: Flow<Set<String>>): Flow<Map<String, PerpsMarkQuote>> = channelFlow {
         val id = nextId.incrementAndGet()
         launch {
             tickers.collect { requested -> interests.update { it + (id to requested) } }

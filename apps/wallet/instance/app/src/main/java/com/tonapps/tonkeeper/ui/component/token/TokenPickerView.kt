@@ -10,6 +10,7 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import uikit.extensions.hideKeyboard
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class TokenPickerView @JvmOverloads constructor(
     context: Context,
@@ -38,7 +39,7 @@ class TokenPickerView @JvmOverloads constructor(
     }
 
     fun setWallet(wallet: WalletEntity) {
-        setOnClickListener { openPicker(wallet) }
+        setMoonOnClickListener { openPicker(wallet) }
     }
 
     private fun openPicker(wallet: WalletEntity) {

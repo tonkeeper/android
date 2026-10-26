@@ -17,7 +17,6 @@ data class BlockchainAddress(
     val key: String by lazy {
         when (network) {
             TonNetwork.TESTNET -> "${blockchain.id}:$value:testnet"
-            TonNetwork.TETRA -> "${blockchain.id}:$value:tetra"
             TonNetwork.MAINNET -> "${blockchain.id}:$value"
         }
     }
@@ -37,7 +36,6 @@ data class BlockchainAddress(
                     value = split[2],
                     network = when (split[1]) {
                         "testnet" -> TonNetwork.TESTNET
-                        "tetra" -> TonNetwork.TETRA
                         else -> TonNetwork.MAINNET
                     },
                     blockchain = Blockchain.valueOf(split[0])

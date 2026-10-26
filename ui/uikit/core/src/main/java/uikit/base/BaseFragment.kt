@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import android.view.animation.PathInterpolator
 import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.activity.BackEventCompat
@@ -32,6 +33,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.tonapps.uikit.color.backgroundPageColor
 import uikit.extensions.atLeastApi34
+import uikit.extensions.dp
 import uikit.extensions.getSpannable
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.BottomSheetLayout
@@ -43,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 open class BaseFragment(
     @LayoutRes layoutId: Int
-): Fragment(layoutId) {
+): Fragment(layoutId), PredictiveBackGesture {
 
     interface ResultContract<I, O> {
         fun parseResult(bundle: Bundle): O
@@ -51,14 +53,6 @@ open class BaseFragment(
     }
 
     interface SingleTask
-
-    interface PredictiveBackGesture {
-        fun onPredictiveBackCancelled() { }
-
-        fun onPredictiveBackProgressed(backEvent: BackEventCompat) { }
-
-        fun onPredictiveOnBackStarted(backEvent: BackEventCompat) { }
-    }
 
     interface SwipeBack: PredictiveBackGesture {
 
@@ -119,6 +113,11 @@ open class BaseFragment(
 
     open val disableShowAnimation: Boolean = false
 
+    internal var startScreenAnimation = false
+
+    private var predictiveBackActive = false
+    private var predictiveBackDir = 1f
+
     open val secure: Boolean = false
 
     open val detectScreenCapture: Boolean = false
@@ -129,6 +128,16 @@ open class BaseFragment(
     private val screenCaptureCallback by lazy {
         Activity.ScreenCaptureCallback { onScreenCaptured() }
     }
+
+    // Whether this fragment consumes back while it is the root (nothing on top).
+    // Default false hands back to the system at the root (Android 14+ shrink-to-home).
+    open val handlesRootBack: Boolean
+        get() = false
+
+    // Whether the predictive-back preview animation should play for this screen.
+    // Return false on screens with internal navigation where back pages a step instead of closing.
+    open val predictiveBackPreviewEnabled: Boolean
+        get() = true
 
     private val isFinished = AtomicBoolean(false)
 
@@ -231,7 +240,7 @@ open class BaseFragment(
             when (this) {
                 is SwipeBack -> wrapInSwipeBack(inflater.context, contentView, savedInstanceState)
                 is BottomSheet -> wrapInBottomSheet(inflater.context, contentView, savedInstanceState)
-                else -> contentView
+                else -> setupScreenEnter(contentView, savedInstanceState)
             }
         }
         view.setOnClickListener {  }
@@ -252,6 +261,41 @@ open class BaseFragment(
             modalView.doOnLayout { onEndShowingAnimation() }
         }
         return modalView
+    }
+
+    // Cheap analog of SwipeBackLayout: gives plain screens the same slide + fade
+    // enter/exit animation (without the swipe-back gesture) so every screen animates.
+    private fun setupScreenEnter(contentView: View, savedInstanceState: Bundle?): View {
+        if (startScreenAnimation && savedInstanceState == null && !disableShowAnimation) {
+            contentView.translationX = screenAnimationOffset
+            contentView.alpha = 0f
+            contentView.doOnLayout {
+                contentView.animate()
+                    .translationX(0f)
+                    .alpha(1f)
+                    .setDuration(screenAnimationDuration)
+                    .setInterpolator(screenAnimationInterpolator)
+                    .withLayer()
+                    .start()
+            }
+        }
+        return contentView
+    }
+
+    // Exit counterpart of setupScreenEnter — cheap analog of SwipeBackLayout's hide.
+    private fun hideScreen(view: View) {
+        if (!startScreenAnimation || disableShowAnimation) {
+            finishInternal()
+            return
+        }
+        view.animate()
+            .translationX(screenAnimationOffset)
+            .alpha(0f)
+            .setDuration(screenAnimationDuration)
+            .setInterpolator(screenAnimationInterpolator)
+            .withLayer()
+            .withEndAction { finishInternal() }
+            .start()
     }
 
     private fun wrapInSwipeBack(context: Context, view: View, savedInstanceState: Bundle?): SwipeBackLayout {
@@ -291,6 +335,65 @@ open class BaseFragment(
         return false
     }
 
+    private val canPredictiveBack: Boolean
+        get() {
+            view ?: return false
+            if (isFinished.get()) {
+                return false
+            }
+            if (activity?.supportFragmentManager?.primaryNavigationFragment == this) {
+                return false
+            }
+            return predictiveBackPreviewEnabled
+        }
+
+    override fun onPredictiveOnBackStarted(backEvent: BackEventCompat) {
+        if (!canPredictiveBack) {
+            return
+        }
+        predictiveBackActive = true
+        predictiveBackDir = if (backEvent.swipeEdge == BackEventCompat.EDGE_LEFT) 1f else -1f
+        when (val view = view) {
+            is BottomSheetLayout -> view.onPredictiveStart()
+            is ModalView -> view.onPredictiveStart()
+            else -> view?.animate()?.cancel()
+        }
+    }
+
+    override fun onPredictiveBackProgressed(backEvent: BackEventCompat) {
+        if (!predictiveBackActive) {
+            return
+        }
+        val view = view ?: return
+        val progress = predictiveBackInterpolator.getInterpolation(backEvent.progress)
+        when (view) {
+            is BottomSheetLayout -> view.onPredictiveProgress(progress)
+            is ModalView -> view.onPredictiveProgress(progress)
+            else -> {
+                view.translationX = predictiveBackDir * progress * view.width * PREDICTIVE_BACK_PEEK
+                view.alpha = 1f - progress * PREDICTIVE_BACK_ALPHA
+            }
+        }
+    }
+
+    override fun onPredictiveBackCancelled() {
+        if (!predictiveBackActive) {
+            return
+        }
+        predictiveBackActive = false
+        when (val view = view) {
+            is BottomSheetLayout -> view.onPredictiveCancel()
+            is ModalView -> view.onPredictiveCancel()
+            else -> view?.animate()
+                ?.translationX(0f)
+                ?.alpha(1f)
+                ?.setDuration(PREDICTIVE_BACK_CANCEL_DURATION)
+                ?.setInterpolator(predictiveBackInterpolator)
+                ?.withLayer()
+                ?.start()
+        }
+    }
+
     open fun finish() {
         if (isFinished.get()) {
             return
@@ -299,13 +402,26 @@ open class BaseFragment(
         val view = view ?: return
 
         if (isFinished.compareAndSet(false, true)) {
+            val wasPredictive = predictiveBackActive
+            predictiveBackActive = false
             when (view) {
-                is SwipeBackLayout -> view.startHideAnimation()
                 is BottomSheetLayout -> view.hide(true)
                 is ModalView -> view.hide(true)
-                else -> finishInternal()
+                is SwipeBackLayout -> if (wasPredictive) finishWithPredictiveBack(view) else view.startHideAnimation()
+                else -> if (wasPredictive) finishWithPredictiveBack(view) else hideScreen(view)
             }
         }
+    }
+
+    private fun finishWithPredictiveBack(view: View) {
+        view.animate()
+            .translationX(predictiveBackDir * view.width.toFloat())
+            .alpha(0f)
+            .setDuration(PREDICTIVE_BACK_COMMIT_DURATION)
+            .setInterpolator(predictiveBackInterpolator)
+            .withLayer()
+            .withEndAction { finishInternal() }
+            .start()
     }
 
     override fun onDestroy() {
@@ -396,5 +512,14 @@ open class BaseFragment(
 
     private companion object {
         private const val ARG_RESULT_KEY = "_uikit_result_key_"
+        private const val screenAnimationDuration = 225L
+        private val screenAnimationOffset = 60f.dp
+        private val screenAnimationInterpolator = PathInterpolator(.42f, 0f, .58f, 1f)
+
+        private const val PREDICTIVE_BACK_PEEK = 0.30f
+        private const val PREDICTIVE_BACK_ALPHA = 0.15f
+        private const val PREDICTIVE_BACK_CANCEL_DURATION = 180L
+        private const val PREDICTIVE_BACK_COMMIT_DURATION = 220L
+        private val predictiveBackInterpolator = PathInterpolator(.42f, 0f, .58f, 1f)
     }
 }

@@ -22,7 +22,7 @@ class SwapsNativeImpl(
     /**
      * swap_open
      *
-     * User on WALLET screen clicked SWAP action button
+     * User opened the native swap flow
      */
     @AnyThread
     override fun swapOpen(type: SwapsNativeType, walletMode: SwapsNativeWalletMode) {

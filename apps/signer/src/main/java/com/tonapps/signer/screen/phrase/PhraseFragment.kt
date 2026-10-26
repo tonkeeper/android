@@ -8,6 +8,7 @@ import com.tonapps.signer.extensions.copyToClipboard
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import uikit.widget.PhraseWords
+import uikit.extensions.setMoonOnClickListener
 
 class PhraseFragment: BaseFragment(R.layout.fragment_phrase), BaseFragment.SwipeBack {
 
@@ -41,7 +42,7 @@ class PhraseFragment: BaseFragment(R.layout.fragment_phrase), BaseFragment.Swipe
         phraseWordsView.setWords(mnemonic)
 
         copyButton = view.findViewById(R.id.copy)
-        copyButton.setOnClickListener {
+        copyButton.setMoonOnClickListener {
             val content = mnemonic.joinToString(" ")
             requireContext().copyToClipboard(content, true)
         }

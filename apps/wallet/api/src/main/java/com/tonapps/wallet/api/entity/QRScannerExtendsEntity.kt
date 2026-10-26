@@ -1,13 +1,13 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
-import com.tonapps.log.L
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.regex.PatternSyntaxException
 
 @Parcelize
 data class QRScannerExtendsEntity(
@@ -17,8 +17,12 @@ data class QRScannerExtendsEntity(
 ): Parcelable {
 
     @IgnoredOnParcel
-    val regex: Regex by lazy {
-        Regex(regexp)
+    val regex: Regex? by lazy {
+        try {
+            Regex(regexp)
+        } catch (_: PatternSyntaxException) {
+            null
+        }
     }
 
     constructor(json: JSONObject) : this(
@@ -28,7 +32,7 @@ data class QRScannerExtendsEntity(
     )
 
     fun isMatch(input: String): Boolean {
-        return regex.containsMatchIn(input)
+        return regex?.containsMatchIn(input) == true
     }
 
     fun buildUrl(input: String): String? {

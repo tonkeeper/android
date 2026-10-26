@@ -9,6 +9,7 @@ import com.tonapps.wallet.api.AuthorizationProvider
 import com.tonapps.wallet.api.entity.EmulateWithBatteryResult
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
+import com.tonapps.wallet.data.battery.entity.GaslessChainsEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
 import com.tonapps.wallet.data.battery.source.LocalDataSource
 import com.tonapps.blockchain.model.legacy.WalletEntity
@@ -41,6 +42,9 @@ class BatteryRepository(
         _balanceUpdatedFlow.tryEmit(Unit)
         scope.launch(Dispatchers.IO) {
             getConfig(TonNetwork.MAINNET, ignoreCache = true)
+        }
+        scope.launch(Dispatchers.IO) {
+            getGaslessChains(TonNetwork.MAINNET, ignoreCache = true)
         }
     }
 
@@ -77,14 +81,32 @@ class BatteryRepository(
         return config
     }
 
+    /**
+     * The chains the gasless relayer carries, by its `chain_id` (`eth/mainnet`). Read from the cache, which
+     * a launch refreshes; when the relayer cannot be reached, the last list it gave stands.
+     */
+    suspend fun getGaslessChains(
+        network: TonNetwork,
+        ignoreCache: Boolean = false,
+    ): Set<String> = withContext(Dispatchers.IO) {
+        val entity = if (ignoreCache) {
+            fetchGaslessChains(network) ?: localDataSource.getGaslessChains(network)
+        } else {
+            localDataSource.getGaslessChains(network) ?: fetchGaslessChains(network)
+        }
+        entity?.chainIds?.toSet().orEmpty()
+    }
+
+    private suspend fun fetchGaslessChains(network: TonNetwork): GaslessChainsEntity? {
+        val entity = remoteDataSource.fetchGaslessChains(network) ?: return null
+        localDataSource.setGaslessChains(network, entity)
+        return entity
+    }
+
     suspend fun getBalance(
         wallet: WalletEntity,
         ignoreCache: Boolean = false,
     ): BatteryBalanceEntity = withContext(Dispatchers.IO) {
-        if (wallet.network.isTetra) {
-            return@withContext BatteryBalanceEntity.Empty
-        }
-
         val balance = if (ignoreCache) {
             fetchBalance(wallet)
         } else {
@@ -104,10 +126,6 @@ class BatteryRepository(
     }
 
     private suspend fun fetchBalance(wallet: WalletEntity): BatteryBalanceEntity? {
-        if (wallet.network.isTetra) {
-            return BatteryBalanceEntity.Empty
-        }
-
         val balance = remoteDataSource.fetchBalance(auth.getAuthBy(wallet.id), wallet.network)
             ?: return null
         localDataSource.setBalance(wallet, balance)
@@ -116,9 +134,6 @@ class BatteryRepository(
     }
 
     suspend fun isIapDisabledByRefunds(wallet: WalletEntity): Boolean = withContext(Dispatchers.IO) {
-        if (wallet.network.isTetra) {
-            return@withContext false
-        }
         remoteDataSource.fetchPurchases(auth.getAuthBy(wallet.id), wallet.network)
             ?.let(BatteryMapper::isIapDisabledByRefunds)
             ?: false

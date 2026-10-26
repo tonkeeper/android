@@ -13,6 +13,7 @@ import uikit.extensions.dp
 import uikit.extensions.focusWithKeyboard
 import uikit.extensions.hideKeyboard
 import uikit.extensions.useAttributes
+import uikit.extensions.setMoonOnClickListener
 
 class SearchInput @JvmOverloads constructor(
     context: Context,
@@ -51,7 +52,7 @@ class SearchInput @JvmOverloads constructor(
         }
 
         actionView = findViewById(R.id.action)
-        actionView.setOnClickListener {
+        actionView.setMoonOnClickListener {
             cancel()
         }
 

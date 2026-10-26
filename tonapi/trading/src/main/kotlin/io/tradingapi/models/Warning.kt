@@ -13,6 +13,11 @@ package io.tradingapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Warning(
@@ -31,13 +36,28 @@ data class Warning(
     /**
      * Код предупреждения.
      *
-     * Values: STALE_DATA,PARTIAL_DATA,DEPENDENCY_FAILURE,FILTER_NOT_SUPPORTED
+     * Values: STALE_DATA,PARTIAL_DATA,DEPENDENCY_FAILURE,FILTER_NOT_SUPPORTED,unknown
      */
-    @Serializable
+    @Serializable(with = CodeSerializer::class)
     enum class Code(val value: String) {
         @SerialName(value = "STALE_DATA") STALE_DATA("STALE_DATA"),
         @SerialName(value = "PARTIAL_DATA") PARTIAL_DATA("PARTIAL_DATA"),
         @SerialName(value = "DEPENDENCY_FAILURE") DEPENDENCY_FAILURE("DEPENDENCY_FAILURE"),
-        @SerialName(value = "FILTER_NOT_SUPPORTED") FILTER_NOT_SUPPORTED("FILTER_NOT_SUPPORTED");
+        @SerialName(value = "FILTER_NOT_SUPPORTED") FILTER_NOT_SUPPORTED("FILTER_NOT_SUPPORTED"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object CodeSerializer : KSerializer<Code> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Code {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Code.entries.firstOrNull { it.value == value }
+                ?: Code.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Code) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

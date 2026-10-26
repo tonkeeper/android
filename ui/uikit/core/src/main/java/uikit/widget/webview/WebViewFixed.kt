@@ -91,6 +91,7 @@ open class WebViewFixed @JvmOverloads constructor(
     private var onElementFocusRunnable: Runnable? = null
 
     private val jsExecuteQueue = LinkedList<String>()
+    private val newWindowDialogs = mutableListOf<NewWindowDialog>()
 
     init {
         super.setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -313,6 +314,8 @@ open class WebViewFixed @JvmOverloads constructor(
                 }
             })
         }
+        dialog.setOnDismissListener { newWindowDialogs.remove(dialog) }
+        newWindowDialogs.add(dialog)
         dialog.show()
 
         val transport = resultMsg.obj as? WebViewTransport ?: return false
@@ -326,15 +329,32 @@ open class WebViewFixed @JvmOverloads constructor(
 
         val webView = WebViewFixed(context)
 
+        private val isAttachedAndShowing: Boolean
+            get() = isShowing && window?.decorView?.isAttachedToWindow == true
+
         init {
             webView.setProfileName(profileName)
             webView.addCallback(object : Callback() {
                 override fun onWindowClose() {
-                    dismiss()
+                    if (isAttachedAndShowing) {
+                        dismiss()
+                    }
                 }
             })
             setContentView(webView)
             window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
+
+        override fun onStop() {
+            super.onStop()
+            webView.destroy()
+        }
+
+        fun destroy() {
+            when {
+                isAttachedAndShowing -> dismiss()
+                isShowing -> webView.destroy()
+            }
         }
     }
 
@@ -359,7 +379,9 @@ open class WebViewFixed @JvmOverloads constructor(
 
     private fun handleDeeplink(uri: Uri): Boolean {
         val scheme = uri.scheme?.lowercase() ?: return false
-        if (scheme == "http" || scheme == "https") return false
+        if (scheme == "http" || scheme == "https") {
+            return false
+        }
         return try {
             context.startActivity(
                 Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -411,6 +433,9 @@ open class WebViewFixed @JvmOverloads constructor(
     }
 
     override fun destroy() {
+        val openNewWindowDialogs = newWindowDialogs.toList()
+        newWindowDialogs.clear()
+        openNewWindowDialogs.forEach { it.destroy() }
         reset()
         try {
             removeAllViews()

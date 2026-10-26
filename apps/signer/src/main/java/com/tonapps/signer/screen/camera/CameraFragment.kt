@@ -22,7 +22,6 @@ import com.tonapps.signer.screen.root.RootViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
-import uikit.HapticHelper
 import uikit.base.BaseFragment
 import uikit.widget.HeaderView
 import com.tonapps.qr.QRImageAnalyzer
@@ -30,6 +29,7 @@ import com.tonapps.signer.deeplink.DeeplinkSource
 import uikit.extensions.applyBottomInsets
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import uikit.extensions.setMoonOnClickListener
 
 class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.BottomSheet {
 
@@ -78,7 +78,7 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
 
         buttonSettings = view.findViewById(R.id.button_settings)
         buttonSettings.applyBottomInsets()
-        buttonSettings.setOnClickListener {
+        buttonSettings.setMoonOnClickListener {
             requireContext().openAppSettings()
             finish()
         }
@@ -148,11 +148,9 @@ class CameraFragment: BaseFragment(R.layout.fragment_camera), BaseFragment.Botto
             } else {
                 flashDisabled()
             }
-
-            HapticHelper.impactLight(requireContext())
         }
 
-        flashView.setOnClickListener {
+        flashView.setMoonOnClickListener {
             val flashMode = cameraController.torchState.value == TorchState.ON
             cameraController.enableTorch(!flashMode)
         }

@@ -44,8 +44,13 @@ dependencies {
     "androidRuntimeClasspath"("org.jetbrains.compose.ui:ui-tooling:1.10.0")
 }
 
+val sharedUIKitResources = rootProject.layout.projectDirectory
+    .dir(if (rootProject.file("resources").isDirectory) { "resources" } else { "../shared/resources" })
+    .dir("Sources/KeeperResources/Resources")
+
 compose.resources {
     publicResClass = true
     packageOfResClass = "ui.theme.resources"
     generateResClass = auto
+    customDirectory("androidMain", provider { sharedUIKitResources.dir("ComposeLottie") })
 }

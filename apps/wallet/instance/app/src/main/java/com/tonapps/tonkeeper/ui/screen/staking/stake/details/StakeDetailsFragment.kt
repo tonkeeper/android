@@ -24,6 +24,7 @@ import uikit.extensions.inflate
 import uikit.extensions.setLeftDrawable
 import uikit.extensions.withGreenBadge
 import uikit.widget.HeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class StakeDetailsFragment :
     BaseHolderWalletScreen.ChildFragment<StakingScreen, StakingViewModel>(R.layout.fragment_stake_details) {
@@ -71,7 +72,7 @@ class StakeDetailsFragment :
         applyLinks(args.links)
 
         button = view.findViewById(R.id.choose_button)
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             primaryViewModel.selectPool(args.pool)
             popBackStack(StakeAmountFragment.TAG)
         }
@@ -86,7 +87,7 @@ class StakeDetailsFragment :
                 requireContext().inflate(R.layout.view_link, linksView) as AppCompatTextView
             linkView.text = host
             linkView.setLeftDrawable(linkDrawable)
-            linkView.setOnClickListener { BrowserHelper.open(requireContext(), link) }
+            linkView.setMoonOnClickListener { BrowserHelper.open(requireContext(), link) }
             linksView.addView(linkView)
         }
     }

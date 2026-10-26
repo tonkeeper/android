@@ -8,17 +8,21 @@ import com.tonapps.perps.data.CatalogSearchSort
 data class SearchFeatureData(
     val initialSort: CatalogSearchSort? = null,
     val initialNetwork: Network.Type? = null,
+    val initialAssetType: SearchAssetType? = null,
 ) {
 
     companion object {
         const val ARG_INITIAL_SORT = "initial_sort"
         const val ARG_INITIAL_NETWORK = "initial_network"
+        const val ARG_INITIAL_ASSET_TYPE = "initial_asset_type"
 
         fun from(arguments: Bundle?): SearchFeatureData = SearchFeatureData(
             initialSort = arguments?.getString(ARG_INITIAL_SORT)
                 ?.let { name -> runCatching { PortfolioSearchSort.valueOf(name) }.getOrNull() }
                 ?.toCatalogSearchSort(),
             initialNetwork = arguments?.getString(ARG_INITIAL_NETWORK)?.toNetworkTypeOrNull(),
+            initialAssetType = arguments?.getString(ARG_INITIAL_ASSET_TYPE)
+                ?.let { name -> runCatching { SearchAssetType.valueOf(name) }.getOrNull() },
         )
     }
 }

@@ -13,6 +13,7 @@ import uikit.extensions.collectFlow
 import uikit.extensions.pinToBottomInsets
 import uikit.widget.InputView
 import uikit.widget.ModalHeader
+import uikit.extensions.setMoonOnClickListener
 
 class AddContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_contact_add, wallet), BaseFragment.Modal {
 
@@ -40,7 +41,7 @@ class AddContactScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragm
         requireArguments().getString(ARG_ADDRESS)?.let { addressView.text = it }
 
         button = view.findViewById(R.id.button)
-        button.setOnClickListener {
+        button.setMoonOnClickListener {
             hideKeyboard()
             viewModel.save()
         }

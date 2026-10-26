@@ -26,7 +26,15 @@ data class CrossSwapProviderError(
 
     /* Underlying protocol or DEX that actually executes the swap (provider-driven, free-form). */
     @SerialName(value = "protocol")
-    val protocol: String? = null
+    val protocol: String? = null,
+
+    /* On `min_amount_not_met`, where the aggregator can price it: the smallest source amount it quotes the route at now, in US dollars, two places, rounded up -- with headroom for the price and the gas to move within a quote's life, so asking again with that much is quoted. Today only `relay` deposits into Lighter say.  */
+    @SerialName(value = "min_amount_usd")
+    val minAmountUsd: String? = null,
+
+    /* On `min_amount_not_met`, where known: what the source amount asked for would have delivered, in US dollars, two places, rounded down. \"0.00\" when it does not even cover the fixed costs.  */
+    @SerialName(value = "expected_amount_usd")
+    val expectedAmountUsd: String? = null
 ) {
 }
 

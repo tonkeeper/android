@@ -12,6 +12,7 @@ import androidx.navigation3.runtime.NavKey
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowWithdrawOption
@@ -19,6 +20,8 @@ import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.core.navigation.LocalResultStore
 import com.tonapps.core.navigation.rememberResultStore
 import com.tonapps.deposit.data.AssetFilter
+import com.tonapps.deposit.multicoin.analytics.asDepositFlowFrom
+import com.tonapps.deposit.multicoin.analytics.asSendNativeFrom
 import com.tonapps.deposit.screens.assets.AssetsCryptoExtendedFeature
 import com.tonapps.deposit.screens.assets.AssetsCryptoExtendedFeatureData
 import com.tonapps.deposit.screens.assets.AssetsExtendedScreen
@@ -89,6 +92,7 @@ sealed interface WithdrawRoutes : NavKey {
         val cm: String? = null,
         val sectionFilter: PaymentMethodSectionFilter = PaymentMethodSectionFilter.All,
         val preferredCurrency: String? = null,
+        val assetId: String? = null,
     ) : WithdrawRoutes
 
     @Serializable
@@ -115,6 +119,8 @@ sealed interface WithdrawRoutes : NavKey {
 @Composable
 fun WithdrawRouter(
     initial: WithdrawRoutes,
+    analyticsFrom: WithdrawFlowFrom,
+    utm: UtmParameters = UtmParameters.Empty,
     onBack: () -> Unit,
     onSendSuccess: () -> Unit = onBack,
     openProvider: (String) -> Unit,
@@ -127,6 +133,7 @@ fun WithdrawRouter(
     val backStack = rememberNestedNavBackStack(initial, onBack)
     val resultStore = rememberResultStore()
     var sendParams by remember { mutableStateOf<SendParams?>(null) } // TODO remove
+    val withdrawEvents = remember(utm) { AnalyticsHelper.Default.eventsTaggedWith(utm).withdrawFlow }
 
     CompositionLocalProvider(LocalResultStore provides resultStore) {
         MoonNav(
@@ -134,15 +141,15 @@ fun WithdrawRouter(
         ) { key ->
             when (key) {
                 is WithdrawRoutes.Ramp -> NavEntry(key) {
-                    val viewModel = koinViewModel<RampFeature> { parametersOf(RampType.RampOff) }
+                    val viewModel = koinViewModel<RampFeature> { parametersOf(RampType.RampOff, analyticsFrom.asDepositFlowFrom(), utm) }
                     RampScreen(
                         feature = viewModel,
                         rampType = RampType.RampOff,
                         onClose = onBack,
                         onQr = { },
                         onSend = {
-                            AnalyticsHelper.Default.events.withdrawFlow.withdrawOptionClick(
-                                from = WithdrawFlowFrom.WalletScreen,
+                            withdrawEvents.withdrawOptionClick(
+                                from = analyticsFrom,
                                 withdrawOption = WithdrawFlowWithdrawOption.SendTokens,
                             )
                             backStack.add(WithdrawRoutes.SendAmount(null))
@@ -159,7 +166,16 @@ fun WithdrawRouter(
 
                 is WithdrawRoutes.SendAmount -> NavEntry(key) {
                     val feature = koinViewModel<SendFeature> {
-                        parametersOf(SendFeatureData(key.currency, key.address, key.exchangeData))
+                        parametersOf(
+                            SendFeatureData(
+                                presetCurrency = key.currency,
+                                presetAddress = key.address,
+                                sendExchangeData = key.exchangeData,
+                                analyticsFrom = analyticsFrom.asSendNativeFrom(),
+                                withdrawFlowFrom = analyticsFrom,
+                                utm = utm,
+                            )
+                        )
                     }
 
                     LaunchedEffect(Unit) {
@@ -225,8 +241,8 @@ fun WithdrawRouter(
                         onSelected = { currency ->
                             when (key.filter) {
                                 AssetFilter.StablecoinRoot -> {
-                                    AnalyticsHelper.Default.events.withdrawFlow.withdrawClickFiatAsset(
-                                        from = WithdrawFlowFrom.WalletScreen,
+                                    withdrawEvents.withdrawClickFiatAsset(
+                                        from = analyticsFrom,
                                         withdrawOption = WithdrawFlowWithdrawOption.SellToCard,
                                         sellAsset = currency.analyticsAssetId(),
                                     )
@@ -245,8 +261,8 @@ fun WithdrawRouter(
                                     ))
                                 }
                                 else -> {
-                                    AnalyticsHelper.Default.events.withdrawFlow.withdrawClickFiatAsset(
-                                        from = WithdrawFlowFrom.WalletScreen,
+                                    withdrawEvents.withdrawClickFiatAsset(
+                                        from = analyticsFrom,
                                         withdrawOption = WithdrawFlowWithdrawOption.SellToCard,
                                         sellAsset = currency.analyticsAssetId(),
                                     )
@@ -264,7 +280,7 @@ fun WithdrawRouter(
 
                 is WithdrawRoutes.WithdrawMethod -> NavEntry(key) {
                     val viewModel = koinViewModel<PaymentMethodFeature> {
-                        parametersOf(PaymentMethodFeatureData(key.asset, RampType.RampOff, key.ft, key.tn, key.tt, key.fn, key.cm, key.sectionFilter, key.preferredCurrency))
+                        parametersOf(PaymentMethodFeatureData(key.asset, RampType.RampOff, key.ft, key.tn, key.tt, key.fn, key.cm, key.sectionFilter, key.preferredCurrency, assetId = key.assetId))
                     }
                     val currencyResult = resultStore.removeResult<WalletCurrency>(KEY_CURRENCY_SELECTION_RESULT)
 
@@ -321,6 +337,11 @@ fun WithdrawRouter(
                                     fiatCurrency = fiatCurrency,
                                 )
                             )
+                        },
+                        onAssetUnavailable = {
+                            if (backStack.lastOrNull() == key) {
+                                backStack[backStack.lastIndex] = WithdrawRoutes.Ramp
+                            }
                         },
                     )
                 }
@@ -396,6 +417,8 @@ fun WithdrawRouter(
                         assetFrom = key.asset,
                         assetTo = RampAsset.Currency(key.fiatCurrency),
                         paymentMethodType = key.paymentMethodType,
+                        analyticsFrom = analyticsFrom.asDepositFlowFrom(),
+                        utm = utm,
                     )
                     val viewModel = koinViewModel<DepositAmountFeature> {
                         parametersOf(amountData)

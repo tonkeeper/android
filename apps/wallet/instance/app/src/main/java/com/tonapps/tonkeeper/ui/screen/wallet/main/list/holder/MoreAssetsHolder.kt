@@ -7,6 +7,7 @@ import com.tonapps.tonkeeper.ui.screen.wallet.main.AssetsExpandState
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 import uikit.widget.AsyncImageView
 
 class MoreAssetsHolder(parent: ViewGroup): Holder<Item.MoreAssets>(parent, R.layout.view_wallet_more_assets) {
@@ -18,7 +19,7 @@ class MoreAssetsHolder(parent: ViewGroup): Holder<Item.MoreAssets>(parent, R.lay
 
     override fun onBind(item: Item.MoreAssets) {
         itemView.background = item.position.drawable(context)
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             AssetsExpandState.expand(item.wallet.id)
         }
         setIcons(item.iconUris)

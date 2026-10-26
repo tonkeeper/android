@@ -12,13 +12,18 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Collapsed public order status (Lighter internal sub-statuses are never leaked).
  *
- * Values: new,`open`,filled,partially_filled,canceled,rejected
+ * Values: new,`open`,filled,partially_filled,canceled,rejected,unknown
  */
-@Serializable
+@Serializable(with = OrderStatusSerializer::class)
 enum class OrderStatus(val value: String) {
     @SerialName(value = "new")
     new("new"),
@@ -31,7 +36,9 @@ enum class OrderStatus(val value: String) {
     @SerialName(value = "canceled")
     canceled("canceled"),
     @SerialName(value = "rejected")
-    rejected("rejected");
+    rejected("rejected"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -57,6 +64,20 @@ enum class OrderStatus(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object OrderStatusSerializer : KSerializer<OrderStatus> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): OrderStatus {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return OrderStatus.entries.firstOrNull { it.value == value }
+            ?: OrderStatus.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: OrderStatus) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

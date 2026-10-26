@@ -12,13 +12,18 @@ package io.tradingapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Ключ списка/полки.
  *
- * Values: top_gainers,top_losers,most_traded,core,rwa,market_cap,volume,commodities,stocks,etfs
+ * Values: top_gainers,top_losers,most_traded,core,rwa,market_cap,volume,commodities,stocks,etfs,unknown
  */
-@Serializable
+@Serializable(with = MarketListKeySerializer::class)
 enum class MarketListKey(val value: String) {
     @SerialName(value = "top_gainers")
     top_gainers("top_gainers"),
@@ -39,7 +44,9 @@ enum class MarketListKey(val value: String) {
     @SerialName(value = "stocks")
     stocks("stocks"),
     @SerialName(value = "etfs")
-    etfs("etfs");
+    etfs("etfs"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -65,6 +72,20 @@ enum class MarketListKey(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object MarketListKeySerializer : KSerializer<MarketListKey> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): MarketListKey {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return MarketListKey.entries.firstOrNull { it.value == value }
+            ?: MarketListKey.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: MarketListKey) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

@@ -11,6 +11,7 @@ import com.tonapps.uikit.icon.UIKitIcon
 import uikit.extensions.drawable
 import uikit.extensions.setRightDrawable
 import uikit.navigation.Navigation
+import uikit.extensions.setMoonOnClickListener
 
 class AlertHolder(parent: ViewGroup): Holder<Item.Alert>(parent, R.layout.view_wallet_alert) {
 
@@ -31,7 +32,7 @@ class AlertHolder(parent: ViewGroup): Holder<Item.Alert>(parent, R.layout.view_w
         actionView.visibility = View.VISIBLE
         actionTextView.text = item.buttonTitle
         if (item.buttonUrl != null) {
-            itemView.setOnClickListener {
+            itemView.setMoonOnClickListener {
                 Navigation.from(context)?.openURL(item.buttonUrl)
             }
         }

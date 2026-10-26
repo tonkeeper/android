@@ -8,7 +8,6 @@ import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.NonRestartableComposable
@@ -62,8 +61,9 @@ fun MoonTheme(
         CompositionLocalProvider(
             LocalAppColorScheme provides colorScheme,
             LocalTypography provides typography,
-            LocalRippleConfiguration provides colorScheme.rippleConfiguration,
-            LocalIndication provides ripple()
+            // No ripple anywhere; press feedback is the scale animation instead.
+            LocalRippleConfiguration provides null,
+            LocalIndication provides ScaleIndication
         ) {
             content()
         }

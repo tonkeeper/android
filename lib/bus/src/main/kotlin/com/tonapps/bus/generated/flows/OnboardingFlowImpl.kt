@@ -61,6 +61,17 @@ class OnboardingFlowImpl(
     }
 
     /**
+     * onboarding_view_notifications
+     *
+     * User sees the Get instant notifications screen during onboarding wallet creation, and only when push permission has not been requested yet. Optional funnel step: absence means the prompt was skipped, not a drop-off. The same screen in import does not emit this event.
+
+     */
+    @AnyThread
+    override fun onboardingViewNotifications() {
+        trackEvent("onboarding_view_notifications", emptyMap())
+    }
+
+    /**
      * onboarding_click_customize_continue
      *
      * User tapped Continue on the Customize Wallet screen during onboarding; the wallet is then created and wallet_create_success follows

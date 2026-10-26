@@ -4,12 +4,18 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -18,6 +24,7 @@ import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.tonapps.apps.wallet.features.core.R
 import com.tonapps.wallet.data.settings.SettingsRepository
 import org.koin.android.ext.android.inject
+import ui.platformNestedScrollInterop
 import ui.theme.AppColorScheme
 import ui.theme.MoonTheme
 import ui.theme.appColorSchemeBlue
@@ -91,13 +98,44 @@ abstract class ComposableFragment : BaseFragment(R.layout.fragment_compose_host)
         super.onDestroyView()
     }
 
+    // Bridges swipes on non-scrollable areas of a Compose bottom sheet to the classic
+    // BottomSheetBehavior around it. The behavior refuses raw drags that start over the
+    // ComposeView (it treats it as a nested-scrolling child), so without this a sheet whose
+    // content isn't scrollable under the finger (headers, empty states) can't be swiped away.
+    // The zero-consuming scrollable turns such drags into nested-scroll deltas and the interop
+    // connection forwards them to the behavior.
+    @Composable
+    private fun SheetDragBridge(fillSheet: Boolean, content: @Composable () -> Unit) {
+        // BottomSheet containers are full-height, so the bridge must cover the whole sheet
+        // (drags on the empty area below short content still dismiss). Modal sheets are
+        // measured wrap_content — forcing full size there would blow the sheet up to the
+        // whole screen, so the Box wraps the real content size instead.
+        Box(
+            modifier = (if (fillSheet) Modifier.fillMaxSize() else Modifier)
+                .platformNestedScrollInterop()
+                .scrollable(
+                    state = rememberScrollableState { 0f },
+                    orientation = Orientation.Vertical,
+                ),
+        ) {
+            content()
+        }
+    }
+
     fun setContent(content: @Composable () -> Unit) {
+        val isBottomSheet = this is BottomSheet
+        val isSheet = isBottomSheet || this is Modal
+        val wrappedContent: @Composable () -> Unit = if (isSheet) {
+            { SheetDragBridge(fillSheet = isBottomSheet, content = content) }
+        } else {
+            content
+        }
         view?.findViewById<ComposeView>(R.id.compose_view)?.setContent {
             MoonTheme(colorScheme = theme) {
                 val parent = LocalNavigationEventDispatcherOwner.current
                 if (parent == null) {
                     CompositionLocalProvider(LocalIsTopFragment provides isTopFragment) {
-                        content()
+                        wrappedContent()
                     }
                 } else {
                     val localDispatcherOwner = rememberNavigationEventDispatcherOwner(
@@ -108,7 +146,7 @@ abstract class ComposableFragment : BaseFragment(R.layout.fragment_compose_host)
                         LocalIsTopFragment provides isTopFragment,
                         LocalNavigationEventDispatcherOwner provides localDispatcherOwner,
                     ) {
-                        content()
+                        wrappedContent()
                     }
                 }
             }

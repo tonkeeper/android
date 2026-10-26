@@ -13,6 +13,11 @@ package io.walletapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class PendingTransaction(
@@ -27,7 +32,7 @@ data class PendingTransaction(
     @Contextual @SerialName(value = "activity_type")
     val activityType: ActivityType,
 
-    /* Activity-type-specific extras the client knows at broadcast time but that are not derivable from the transaction itself. */
+    /* Activity-type-specific extras the client knows at broadcast time but that are not derivable from the transaction itself. Read on a swap only. Known fields: `from_asset_id` and `to_asset_id` — catalog ids of the asset sold and the asset bought; `from_amount` and `to_amount` — their amounts in base units, as an integer string; `from_address` — the sending address, which is what attributes the swap to a wallet before it is indexed; `aggregator` — who routed the swap, of which only `swapsxyz` is registered with swaps.xyz; `provider_route_id` — the aggregator's own route id, for swaps.xyz its `txId`, which registers the broadcast hash and keys the pending swap so the webhook and this row converge; `route_id` — the swap backend's own id for the route, stored as sent and not interpreted here. */
     @Contextual @SerialName(value = "payload")
     val payload: Map<String, io.JsonAny>? = null
 ) {

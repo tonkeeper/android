@@ -12,6 +12,10 @@ internal sealed interface WcEventData {
         val data: Wallet.Model.Error,
     ) : WcEventData
 
+    data class RequestExpired(
+        val data: Wallet.Model.ExpiredRequest,
+    ) : WcEventData
+
     data class SessionDelete(
         val data: Wallet.Model.SessionDelete,
     ) : WcEventData

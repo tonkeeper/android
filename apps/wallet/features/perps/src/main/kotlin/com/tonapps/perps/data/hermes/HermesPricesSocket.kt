@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicLong
 sealed interface HermesPriceEvent {
     data object Opened : HermesPriceEvent
     data object Subscribed : HermesPriceEvent
+    data object LoggedIn : HermesPriceEvent
+    data object LoginRejected : HermesPriceEvent
     data class Prices(val prices: Map<String, BigDecimal>) : HermesPriceEvent
 
     /** The subscribe will never deliver on this connection — reconnecting cannot fix it. */
@@ -77,6 +79,10 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
         socket = hermes.connect(listener)
     }
 
+    fun login(token: String) {
+        send(CHANNEL_LOGIN, NAME_LOGIN, nextRequestId.incrementAndGet(), buildJsonObject { put("token", token) })
+    }
+
     fun subscribe(tickers: List<String>) {
         val payload = buildJsonObject {
             putJsonArray("tickers") {
@@ -118,6 +124,9 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
                     hermesJson.decodeFromJsonElement<PricesPush>(payload).toPrices()
                 )
             }
+            if (envelope.channel == CHANNEL_LOGIN && message.name == NAME_LOGIN_RESPONSE) {
+                return HermesPriceEvent.LoggedIn
+            }
             if (message.name == NAME_SUBSCRIBE_RESPONSE) {
                 val reqid = runCatching { message.reqid?.jsonPrimitive?.longOrNull }.getOrNull()
                 if (reqid == subscribeRequestId) {
@@ -128,10 +137,13 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
             if (message.name == NAME_ERROR_RESPONSE || message.name == NAME_ERROR_MESSAGE) {
                 val error = message.payload?.let { hermesJson.decodeFromJsonElement<ErrorPayload>(it) }
                 L.e("hermes prices ${envelope.channel} error: ${error?.code} ${error?.description}")
+                val code = error?.code.orEmpty()
+                if (envelope.channel == CHANNEL_LOGIN) {
+                    return HermesPriceEvent.LoginRejected.takeIf { code == HERMES_ERROR_INVALID_CREDENTIALS }
+                }
                 if (envelope.channel != CHANNEL_SUBSCRIBE) {
                     return null
                 }
-                val code = error?.code.orEmpty()
                 if (code == HERMES_ERROR_ALREADY_SUBSCRIBED) {
                     return HermesPriceEvent.Subscribed
                 }
@@ -173,10 +185,13 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
 
     private companion object {
         const val CHANNEL_PING = "ping"
+        const val CHANNEL_LOGIN = "login"
         const val CHANNEL_SUBSCRIBE = "subscribeMarkPrices"
         const val CHANNEL_PRICES = "markPrices"
 
         const val NAME_PING = "ping"
+        const val NAME_LOGIN = "loginRequest"
+        const val NAME_LOGIN_RESPONSE = "loginResponse"
         const val NAME_SUBSCRIBE = "subscribeMarkPricesRequest"
         const val NAME_SUBSCRIBE_RESPONSE = "subscribeMarkPricesResponse"
         const val NAME_PRICES_PUSH = "markPricesMessage"

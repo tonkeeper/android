@@ -8,6 +8,7 @@ import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.BatteryPackageEntity
 import com.tonapps.wallet.data.battery.entity.BatteryPurchaseEntity
+import com.tonapps.wallet.data.battery.entity.GaslessChainsEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
 import io.batteryapi.models.PurchasesPurchasesInner
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +37,7 @@ internal class RemoteDataSource(
     ): List<BatteryPurchaseEntity>? = withContext(Dispatchers.IO) {
         val response = api.getBatteryPurchases(auth, network) ?: return@withContext null
 
-        response.purchases.map { purchase ->
+        response.purchases.filter { it.type != PurchasesPurchasesInner.Type.unknown }.map { purchase ->
             BatteryPurchaseEntity(
                 id = purchase.purchaseId,
                 isStorePurchase = purchase.type == PurchasesPurchasesInner.Type.android ||
@@ -46,6 +47,13 @@ internal class RemoteDataSource(
                 } ?: false,
             )
         }
+    }
+
+    suspend fun fetchGaslessChains(
+        network: TonNetwork
+    ): GaslessChainsEntity? = withContext(Dispatchers.IO) {
+        val config = api.getBatteryGaslessConfig(network) ?: return@withContext null
+        GaslessChainsEntity(config.chains.map { it.chainId })
     }
 
     suspend fun fetchConfig(
@@ -60,7 +68,7 @@ internal class RemoteDataSource(
         BatteryConfigEntity(
             excessesAccount = config.excessAccount,
             fundReceiver = config.fundReceiver,
-            rechargeMethods = rechargeMethods.methods.map(::RechargeMethodEntity),
+            rechargeMethods = rechargeMethods.methods.mapNotNull(RechargeMethodEntity::of),
             gasProxy = config.gasProxy.map { it.address },
             meanPrices = BatteryConfigEntity.MeanPrices(
                 batteryMeanPriceSwap = config.meanPrices.batteryMeanPriceSwap,

@@ -6,6 +6,7 @@ import android.widget.TextView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import uikit.base.BaseFragment
+import uikit.extensions.setMoonOnClickListener
 
 class LedgerUpdateScreen : BaseFragment(R.layout.fragment_ledger_update_screen), BaseFragment.Modal {
 
@@ -17,8 +18,8 @@ class LedgerUpdateScreen : BaseFragment(R.layout.fragment_ledger_update_screen),
         super.onViewCreated(view, savedInstanceState)
 
 
-        view.findViewById<View>(R.id.close).setOnClickListener { finish() }
-        view.findViewById<View>(R.id.button_ok).setOnClickListener { finish() }
+        view.findViewById<View>(R.id.close).setMoonOnClickListener { finish() }
+        view.findViewById<View>(R.id.button_ok).setMoonOnClickListener { finish() }
 
         view.findViewById<TextView>(R.id.update_title).text = getString(Localization.ledger_update_title, args.requiredVersion)
     }

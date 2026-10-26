@@ -12,7 +12,7 @@
     const defaultOptions = {
         markers: [],
         priceDecimals: 2,
-        priceGroupingSeparator: " ",
+        priceGroupingSeparator: " ",
         lineWidth: 1,
         lineOpacity: 0.32,
         fontSize: 12,
@@ -26,6 +26,7 @@
         tagMinWidth: 0,
         axisFontSize: 12,
         axisLineHeight: 13,
+        axisWordSpacing: -5,
         axisFontFamily: "SFMono-Medium, SF Mono, SFMono-Regular, ui-monospace, monospace",
         axisFontWeight: "500",
         axisTagFontFamily: "SFMono-Semibold, SF Mono, SFMono-Regular, ui-monospace, monospace",
@@ -44,9 +45,8 @@
         axisLabelsVisible: true,
         axisLabelColor: "#8994A3",
         axisLabelTextRightInset: 16,
-        axisLabelMinStep: 58,
-        axisLabelOverlapPadding: 4,
-        // "ladder" draws nice-stepped price ticks in the axis gutter (candle mode);
+        axisLabelOverlapPadding: 0,
+        // "ladder" draws the price at each horizontal grid line in the axis gutter (candle mode);
         // "bounds" overlays only the top/bottom price over the full-width chart (line mode).
         axisLabelMode: "ladder",
         crosshairHorizontalVisible: true,
@@ -80,13 +80,18 @@
         gridFadeColor: null,
         markerLineStartX: 0,
         markerLineWidth: null,
-        markerLineDash: [3, 3],
+        markerLineDash: [],
         crosshairVerticalY: 0,
         crosshairVerticalHeight: null,
         crosshairHorizontalStartX: 0,
         crosshairHorizontalWidth: null,
         crosshairLabelColor: "#FFFFFF",
         crosshairLabelBackgroundColor: "#363B43",
+        pinnedArrowSize: 8,
+        pinnedArrowGap: 4,
+        pinnedArrowLineWidth: 1.5,
+        pinnedTagGap: 2,
+        pinnedTagsBottomY: 1,
     };
 
     function roundRect(ctx, x, y, width, height, radius) {
@@ -164,13 +169,16 @@
         return `${sign}${grouped}${parts[1] ? `.${parts[1]}` : ""}`;
     }
 
+    function tagHeightFor(options) {
+        const measuredTagHeight = Math.ceil(options.fontSize + options.tagPaddingTop + options.tagPaddingBottom);
+        return Math.max(measuredTagHeight, options.tagMinHeight || 0);
+    }
+
     function tagMetrics(ctx, cache, font, text, options) {
         const textWidth = cachedTextWidth(ctx, cache, font, text);
         const measuredTagWidth = Math.ceil(textWidth + options.tagPaddingX * 2);
         const tagWidth = Math.max(measuredTagWidth, options.tagMinWidth || 0);
-        const measuredTagHeight = Math.ceil(options.fontSize + options.tagPaddingTop + options.tagPaddingBottom);
-        const tagHeight = Math.max(measuredTagHeight, options.tagMinHeight || 0);
-        return { tagWidth, tagHeight };
+        return { tagWidth, tagHeight: tagHeightFor(options) };
     }
 
     function drawTag(context, x, centerY, title, color, backgroundColor, options, textWidthCache, font, textAlign) {
@@ -213,66 +221,24 @@
         return Math.max(0, mediaWidth - inset);
     }
 
-    function niceAxisStep(rawStep) {
-        if (!Number.isFinite(rawStep) || rawStep <= 0) {
-            return 1;
-        }
-        const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-        const normalized = rawStep / magnitude;
-        if (normalized <= 1) {
-            return magnitude;
-        }
-        if (normalized <= 2) {
-            return 2 * magnitude;
-        }
-        if (normalized <= 2.5) {
-            return 2.5 * magnitude;
-        }
-        if (normalized <= 5) {
-            return 5 * magnitude;
-        }
-        return 10 * magnitude;
-    }
-
     function labelOverlaps(y, height, occupiedRanges, padding) {
         const top = y - height / 2 - padding;
         const bottom = y + height / 2 + padding;
         return occupiedRanges.some(range => top <= range.bottom && bottom >= range.top);
     }
 
-    function axisValueLabels(series, mediaHeight, options, style, occupiedRanges) {
+    function axisValueLabels(series, mediaHeight, options, occupiedRanges) {
         if (!series || !options.axisLabelsVisible) {
             return [];
         }
-
-        const topPrice = series.coordinateToPrice(0);
-        const bottomPrice = series.coordinateToPrice(mediaHeight);
-        if (!Number.isFinite(topPrice) || !Number.isFinite(bottomPrice)) {
-            return [];
-        }
-
-        const minPrice = Math.min(topPrice, bottomPrice);
-        const maxPrice = Math.max(topPrice, bottomPrice);
-        const desiredTickCount = Math.max(2, Math.floor(mediaHeight / Math.max(1, options.axisLabelMinStep || 58)));
-        const step = niceAxisStep((maxPrice - minPrice) / desiredTickCount);
-        const firstTick = Math.ceil(minPrice / step) * step;
-        const lineHeight = options.axisLineHeight || style.axisFontSize || style.fontSize;
+        const lineHeight = options.axisLineHeight || options.axisFontSize;
         const padding = options.axisLabelOverlapPadding || 0;
-        const labels = [];
-
-        for (let value = firstTick; value <= maxPrice + step * 0.5; value += step) {
-            const y = series.priceToCoordinate(value);
-            if (y == null || y < 0 || y > mediaHeight || labelOverlaps(y, lineHeight, occupiedRanges, padding)) {
-                continue;
-            }
-            labels.push({ y, title: formatPrice(value, options) });
-            occupiedRanges.push({
-                top: y - lineHeight / 2,
-                bottom: y + lineHeight / 2,
-            });
-        }
-
-        return labels;
+        return options.gridHorizontalY
+            .map(fraction => {
+                const y = fraction * mediaHeight;
+                return { y, title: formatPrice(series.coordinateToPrice(y), options) };
+            })
+            .filter(label => label.title && !labelOverlaps(label.y, lineHeight, occupiedRanges, padding));
     }
 
     function drawBoundsLabels(context, mediaSize, options, series) {
@@ -286,6 +252,7 @@
         const edge = (options.axisLineHeight || options.axisFontSize) / 2 + 2;
 
         context.save();
+        context.wordSpacing = `${options.axisWordSpacing}px`;
         context.font = `${options.axisFontWeight} ${options.axisFontSize}px ${options.axisFontFamily}`;
         context.fillStyle = options.axisLabelColor;
         context.textAlign = "right";
@@ -355,6 +322,68 @@
         return result;
     }
 
+    function layoutLevelTags(items, plotBottom, tagHeight, gap) {
+        const half = tagHeight / 2;
+        const step = tagHeight + gap;
+        const byY = direction => (a, b) => direction * (a.y - b.y) || direction * a.title.localeCompare(b.title);
+        const top = items.filter(item => item.y < 0).sort(byY(1));
+        const bottom = items.filter(item => item.y > plotBottom).sort(byY(-1));
+        const layout = [];
+        top.forEach((item, index) => layout.push({ item, tagY: half + index * step, edge: "top" }));
+        bottom.forEach((item, index) => layout.push({ item, tagY: plotBottom - half - index * step, edge: "bottom" }));
+        const topEnd = top.length ? half + (top.length - 1) * step : null;
+        const bottomEnd = bottom.length ? plotBottom - half - (bottom.length - 1) * step : null;
+
+        const inRange = items
+            .filter(item => item.y >= 0 && item.y <= plotBottom)
+            .sort(byY(1))
+            .map(item => ({ item, tagY: Math.min(Math.max(item.y, half), plotBottom - half), edge: null }));
+
+        let floor = topEnd === null ? -Infinity : topEnd + step;
+        for (const entry of inRange) {
+            if (entry.tagY < floor) {
+                entry.tagY = floor;
+                floor = entry.tagY + step;
+            } else {
+                floor = -Infinity;
+            }
+        }
+        let ceiling = bottomEnd === null ? Infinity : bottomEnd - step;
+        for (let index = inRange.length - 1; index >= 0; index--) {
+            const entry = inRange[index];
+            if (entry.tagY > ceiling) {
+                entry.tagY = ceiling;
+                ceiling = entry.tagY - step;
+            } else {
+                ceiling = Infinity;
+            }
+        }
+        return layout.concat(inRange);
+    }
+
+    function drawEdgeArrow(context, x, centerY, edge, color, options) {
+        const size = options.pinnedArrowSize;
+        const head = size / 2;
+        const direction = edge === "top" ? -1 : 1;
+        const tipY = centerY + direction * size / 2;
+        const tailY = centerY - direction * size / 2;
+
+        context.save();
+        context.strokeStyle = color;
+        context.lineWidth = options.pinnedArrowLineWidth;
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.setLineDash([]);
+        context.beginPath();
+        context.moveTo(x, tailY);
+        context.lineTo(x, tipY);
+        context.moveTo(x - head, tipY - direction * head);
+        context.lineTo(x, tipY);
+        context.lineTo(x + head, tipY - direction * head);
+        context.stroke();
+        context.restore();
+    }
+
     class GridRenderer {
         constructor(data) {
             this._data = data;
@@ -419,9 +448,11 @@
                 context.font = font;
                 context.textBaseline = "middle";
 
+                const plotBottom = options.pinnedTagsBottomY * mediaSize.height;
                 for (const item of items) {
-                    const y = alignPixel(item.y);
-                    if (item.lineVisible !== false) {
+                    const inRange = item.y >= 0 && item.y <= plotBottom;
+                    if (item.lineVisible !== false && (item.align === "right" || inRange)) {
+                        const y = alignPixel(item.y);
                         context.save();
                         context.globalAlpha = options.lineOpacity;
                         context.strokeStyle = item.lineColor || item.color;
@@ -434,16 +465,33 @@
                         context.stroke();
                         context.restore();
                     }
+                }
 
-                    if (!item.title) {
-                        continue;
+                const levelItems = items.filter(item => item.title && item.align !== "right");
+                if (levelItems.length) {
+                    const { tagHeight } = tagMetrics(context, textWidthCache, font, levelItems[0].title, options);
+                    const layout = layoutLevelTags(levelItems, plotBottom, tagHeight, options.pinnedTagGap);
+                    for (const { item, tagY, edge } of layout) {
+                        const backgroundColor = item.backgroundColor || colorWithAlpha(item.color, 0.16);
+                        if (edge === null) {
+                            drawTag(context, options.leadingX, alignPixel(tagY), item.title, item.color, backgroundColor, options, textWidthCache, font);
+                            continue;
+                        }
+
+                        const textWidth = cachedTextWidth(context, textWidthCache, font, item.title);
+                        const arrowWidth = options.pinnedArrowGap + options.pinnedArrowSize;
+                        const tagWidth = Math.max(Math.ceil(textWidth + options.tagPaddingX * 2 + arrowWidth), options.tagMinWidth || 0);
+                        const top = Math.round(tagY - tagHeight / 2);
+                        const centerY = top + tagHeight / 2;
+                        const textX = options.leadingX + options.tagPaddingX;
+
+                        context.fillStyle = backgroundColor;
+                        fillRoundRect(context, options.leadingX, top, tagWidth, tagHeight, options.tagRadius);
+                        context.fillStyle = item.color;
+                        context.textAlign = "left";
+                        context.fillText(item.title, textX, centerY);
+                        drawEdgeArrow(context, textX + textWidth + options.pinnedArrowGap + options.pinnedArrowSize / 2, centerY, edge, item.color, options);
                     }
-
-                    if (item.align === "right") {
-                        continue;
-                    }
-
-                    drawTag(context, options.leadingX, y, item.title, item.color, item.backgroundColor || colorWithAlpha(item.color, 0.16), options, textWidthCache, font);
                 }
 
                 if (dot && options.crosshairVisible) {
@@ -501,6 +549,7 @@
                 const tagFont = `${style.fontWeight} ${style.fontSize}px ${style.fontFamily}`;
 
                 context.save();
+                context.wordSpacing = `${options.axisWordSpacing}px`;
                 context.font = tagFont;
                 context.textBaseline = "middle";
 
@@ -510,7 +559,14 @@
                 // "bounds" mode draws its two labels over the chart instead (see
                 // drawBoundsLabels in OverlayRenderer); the gutter ladder is candle-only.
                 if (options.axisLabelMode !== "bounds") {
-                    for (const label of axisValueLabels(series, mediaSize.height, options, style, [])) {
+                    const tagHeight = tagHeightFor(style);
+                    const tagRanges = axisItems
+                        .filter(item => item.title)
+                        .map(item => {
+                            const centerY = alignPixel(item.y);
+                            return { top: centerY - tagHeight / 2, bottom: centerY + tagHeight / 2 };
+                        });
+                    for (const label of axisValueLabels(series, mediaSize.height, options, tagRanges)) {
                         context.fillText(label.title, axisTextX(mediaSize.width, style), alignPixel(label.y));
                     }
                 }
@@ -607,6 +663,9 @@
                         y = coord;
                         price = value;
                     }
+                } else {
+                    y = Math.min(Math.max(param.point.y, 0), this._options.pinnedTagsBottomY * chart.paneSize().height);
+                    price = series.coordinateToPrice(y);
                 }
                 const title = formatPrice(price, this._options);
                 this._dot = x == null ? null : { x, y, title };

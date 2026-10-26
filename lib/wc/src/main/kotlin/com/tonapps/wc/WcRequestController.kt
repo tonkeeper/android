@@ -4,7 +4,6 @@ import com.reown.walletkit.client.Wallet
 import com.tonapps.async.Async
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.log.L
-import com.tonapps.wallet.ChainConfig
 import com.tonapps.wc.exceptions.WalletConnectException
 import com.tonapps.wc.models.WcAppData
 import com.tonapps.wc.models.WcChain
@@ -53,6 +52,13 @@ internal class WcRequestController(
                         ),
                     )
                 }
+                is WcEventData.RequestExpired -> {
+                    findRequestId(model.data.topic, model.data.id)?.let { id ->
+                        wcEvents.emit(WcEvent.RequestExpired(id))
+                        // WalletKit has dropped it: nothing can answer it anymore.
+                        cleanup(id)
+                    }
+                }
                 is WcEventData.SessionDelete -> if (model.data is Wallet.Model.SessionDelete.Success) {
                     wcEvents.emit(WcEvent.StateChanged(WcPendingEvent.Disconnected(model.data.topic)))
                 }
@@ -78,6 +84,11 @@ internal class WcRequestController(
                     }
                 }
                 is WcEventData.SessionRequest -> {
+                    // WalletKit re-emits its oldest unanswered request whenever a new one arrives,
+                    // and emits the new one only after that is answered.
+                    if (findRequestId(model.data.topic, model.data.request.id) != null) {
+                        return@onEach
+                    }
                     val id = generateId()
                     eventsStore[id] = model
 
@@ -134,6 +145,15 @@ internal class WcRequestController(
         eventsStore.remove(requestId)
     }
 
+    // WalletKit drops a request whose id it has already seen, so topic and id name one request.
+    private fun findRequestId(topic: String, wcRequestId: Long): String? {
+        return eventsStore.entries.firstOrNull { (_, event) ->
+            event is WcEventData.SessionRequest &&
+                event.data.topic == topic &&
+                event.data.request.id == wcRequestId
+        }?.key
+    }
+
     private fun Wallet.Model.SessionProposal.mapProposal(): WcSessionProposal? {
         return try {
             val required = requiredNamespaces.mapPermissions(isRequired = true)
@@ -164,7 +184,7 @@ internal class WcRequestController(
     ): List<WcChain> {
         return flatMap { (_, data) ->
             data.chains.orEmpty().mapNotNull { caip2 ->
-                val chain = Chain.fromCaip2(caip2)?.takeIf { ChainConfig.isWcSupported(it) }
+                val chain = Chain.fromCaip2(caip2)?.takeIf { it.isWcSupported() }
                 if (chain == null && isRequired) {
                     throw WalletConnectException(WcError.UNSUPPORTED_CHAIN)
                 }
@@ -173,9 +193,12 @@ internal class WcRequestController(
         }
     }
 
+    private fun Chain.isWcSupported(): Boolean {
+        return this is Chain.Tron || this is Chain.Evm || this is Chain.Solana
+    }
+
     @OptIn(ExperimentalUuidApi::class)
     private fun generateId(): String {
         return Uuid.generateV4().toString()
     }
 }
-

@@ -1,7 +1,7 @@
 # Maestro UI tests
 
 Android UI tests run with [Maestro](https://maestro.mobile.dev) against the
-Tonkeeper **debug** APK (`com.ton_keeper.debug`).
+Keeper **debug** APK (`com.ton_keeper.debug`).
 
 - **Local:** emulator (`maestro --device emulator-5554 test …`).
 - **CI:** Maestro Cloud (mobile.dev) on **1 device max** — every flow in
@@ -23,11 +23,12 @@ the rules for writing flows**. Update it as the setup evolves.
 | Add an API assertion (TonAPI, on-chain) | `scripts/api/**` + a `service/**` subflow |
 | Skip a flaky/broken flow but keep it green | wrap its body in `runFlow: { when: { true: "${false}" } }` |
 | Dismiss the keyboard after `inputText` | **do not** `hideKeyboard` — it closes the bottom sheet; tap the next control instead |
-| Enable / recover a multichain wallet | `steps/wallet/launch_app_ensure_multichain_wallet.yaml` (Firebase + `/keys/all`; no `clearState`) |
-| Change Cloud / nightly wiring | `.github/workflows/maestro-tests.yml` (called from `nightly.yaml`) |
-| Understand CI pass/fail | Maestro Cloud upload status in `maestro-tests.yml` — the whole listed suite is gating |
-| Verify a Linear task locally with video and a report | `$tk-qa-verify` skill (`.codex/skills/tk-qa-verify`) + `tools/qa_run.sh` (see **Local-only flows, mocks and tools**) |
+| Enable / recover a multichain wallet | `steps/wallet/launch_app_ensure_multichain_wallet.yaml` (no `clearState`) |
+| Change Cloud / nightly wiring | `.github/workflows/android-maestro-tests.yml` (called from `android-nightly.yaml`) |
+| Understand CI pass/fail | Maestro Cloud upload status in `android-maestro-tests.yml` — the whole listed suite is gating |
+| Verify a Linear task locally with video and a report | `$tk-qa-verify-android` skill (`.agents/skills/tk-qa-verify-android`) + `tools/qa_run.sh` (see **Local-only flows, mocks and tools**) |
 | Fake a backend state (refunds, provider errors, balances) | `mocks/` + `tools/qa_run_mock.sh` — mitmproxy, local only |
+| Re-run the perps chart regression (mocked states, overlays, crosshair) | `.agents/skills/tk-qa-verify-android/packs/perps-chart` — `install.sh`, then `tools/run_pack.sh` |
 | Check the machine/device before a local run | `tools/preflight.sh <serial>` |
 
 ---
@@ -49,6 +50,7 @@ flows:
   - flows/transactions/*
   - flows/tonconnect/*
   - flows/deeplinks/*
+  - flows/perps/*
   - flows/portfolio/*
   - flows/send/*
   - flows/staking/*
@@ -91,6 +93,7 @@ maestro_ui_tests/
 │   ├── send/send.yaml + subflows/
 │   ├── staking/staking.yaml + subflows/        # smoke → deposit → withdraw
 │   ├── portfolio/portfolio.yaml + subflows/
+│   ├── perps/perps.yaml + subflows/            # perps chart, live data only
 │   ├── trade/trade.yaml + subflows/
 │   ├── swap_common/swap_common.yaml + subflows/
 │   ├── tonconnect/tonconnect.yaml + subflows/
@@ -163,7 +166,7 @@ tonconnect `STON.fi` / `tc deeplink`.
 
 Each subflow **starts** with
 `steps/wallet/launch_app_ensure_multichain_wallet.yaml`: `stopApp` +
-extras + pin; import only if the app is empty; **no** `clearState`.
+pin; import only if the app is empty; **no** `clearState`.
 After a mid-fail (or a green case), the next case relaunches and unlocks;
 it does not re-import if a wallet exists. Do not add a home teardown —
 the next `launch_app_ensure` is the cleanup.
@@ -258,7 +261,7 @@ disconnects from the Connected tab at the end so the wallet is left clean.
 
 ### CI (Maestro Cloud)
 
-`.github/workflows/maestro-tests.yml` builds
+`.github/workflows/android-maestro-tests.yml` builds
 `:apps:wallet:instance:main:assembleDefaultDebug` (or reuses an APK artifact)
 and uploads workspace `maestro_ui_tests` to Cloud via
 `tools/ci/run-maestro-cloud.sh` (`maestro cloud --format junit`). The JUnit
@@ -286,7 +289,7 @@ share one device and run one after another, with a wipe/restart between
 them. A leftover sheet or a 180s waiter burns the whole remaining suite —
 shard **cases** `stopApp` via `launch_app_ensure`; keep waiters tight.
 
-Nightly (`nightly.yaml`) calls the same workflow. Manual dispatch can skip the
+Nightly (`android-nightly.yaml`) calls the same workflow. Manual dispatch can skip the
 build via `reuse_apk_artifact`.
 
 Videos/logs: `app.maestro.dev` (link in the job summary).
@@ -321,21 +324,18 @@ wrapper (`flows/<section>/x.yaml`) the steps dir is
 Every Cloud **top-level** flow (browser, deeplinks, …) and
 every **shard subflow** starts with
 **`steps/wallet/launch_app_ensure_multichain_wallet.yaml`**
-(or a `launchApp` that passes the same extras). Shard wrappers do **not**
+(or a plain `launchApp`). Shard wrappers do **not**
 launch; they only sequence cases. There is no separate non-multichain
 launch. Do **not** `clearState` — relaunch keeps the imported wallet.
 
 ```yaml
 - stopApp
-- launchApp:
-    arguments:
-      featureFlags: '{"android_is_multichain_enabled": true, "android_is_import_multichain_wallet": true}'
-      bootFlags: '{"multichain_enabled": true}'
+- launchApp
 ```
 
 1. `stopApp` — leftover sheets/tabs from the previous test are gone.
-2. `launchApp` with `featureFlags` + `bootFlags` (debug extras on `RootActivity`).
-3. If the launcher is still showing, tap **Keeper Dev** (process already has extras in memory).
+2. `launchApp` — multichain is always on; no feature-flag extras are needed.
+3. If the launcher is still showing, tap **Keeper Dev**.
 4. If **Import Existing Wallet** → import. If **Enter passcode** → pin.
    Otherwise wait for home **Send**.
 
@@ -349,9 +349,13 @@ lock. Always handle `Enter passcode` first, then assert `notVisible: Enter passc
 Do not treat `visible: Send` as “unlocked”.
 
 **Tap-through:** Compose sheets (Swap, Receive, Manage, Choose asset) leave
-home-list labels (`BTC`, `USDT`, `GRAM`) in the hierarchy. `tapOn: BTC` will
-hit the list behind the sheet. Prefer `id:` / a unique `below:`/`above:` pair
-with `index: 0`. If that is still ambiguous, add a `testTag` in the app.
+home-list labels (`BTC`, `USDT`, `GRAM`) and the short wallet address under
+the balance in the hierarchy. `tapOn: BTC` will hit the list behind the sheet.
+Prefer `id:` / a unique `below:`/`above:` pair with `index: 0`. When the sheet
+is a uikit bottom sheet, the cleanest fence is `childOf: id: sheet_content`
+(`ui/uikit/core/.../view_bottom_sheet.xml`): everything behind it hangs off
+`root_container` / `child_fragment` instead. `childOf` matches any ancestor,
+not just the direct parent. If that is still ambiguous, add a `testTag` in the app.
 
 ---
 
@@ -408,37 +412,6 @@ blocks **every later flow** on the same device. Rules:
 
 ---
 
-## Multichain flag
-
-The product gate is **AND** of two sources (see `API` / `InitViewModel`):
-
-1. Firebase: `android_is_multichain_enabled` (`WalletFeature.Multichain`) and, for
-   the import path, `android_is_import_multichain_wallet` (`WalletFeature.ImportMultichainWallet`)
-2. Boot config `/keys/all?`: `flags.multichain_enabled` (`FlagsEntity.multichainEnabled`)
-
-The whole suite (send, staking, portfolio, trade, swap_common, browser,
-transactions, tonconnect, deeplinks) starts with
-`launch_app_ensure_multichain_wallet.yaml`, which passes both as debug
-launch extras (all three keys — since TK-3647 the debug build no longer forces
-the import flag, and the fetched Firebase value is `false`, so without it
-`import_wallet.yaml` produces a legacy TON wallet, TK-3691):
-
-```yaml
-- launchApp:
-    arguments:
-      featureFlags: '{"android_is_multichain_enabled": true, "android_is_import_multichain_wallet": true}'
-      bootFlags: '{"multichain_enabled": true}'
-```
-
-`bootFlags` is applied by `BootConfigOverrides` on top of the fetched/cached
-`/keys/all` config (debug APK only). Both in-app defaults are `true`, so the
-extras only matter when the fetched Firebase or keys/all config explicitly
-disables multichain. Pass all of them to pin the gate regardless of remote state.
-
-Native ticker in the product is **GRAM** (not TON) on these builds.
-
----
-
 ## API scripts
 
 Flows assert on-chain state via `runScript` in `scripts/api/**`. Maestro has
@@ -478,8 +451,8 @@ exists in this repo.
 Everything in this section runs on a developer machine only. Maestro Cloud never
 sees `flows/*_local/`, `mocks/` or `tools/`. What Cloud cannot run is not
 pushed either: `flows/*_local/`, `mocks/scenarios/`, `mocks/_recorded/` and
-`secrets/` are gitignored; only the tooling, `mocks/mock.py` and
-`secrets/wallets.env.example` are versioned.
+`secrets/` are gitignored; only the tooling and `secrets/wallets.env.example`
+are versioned. The mitmproxy addon is shared with iOS: `../shared/tools/maestro/mock.py`.
 
 - **`flows/<area>_local/`** — cases that need `clearState`, a position tap, a
   mocked backend or device state (enrolled fingerprint). Each file header says
@@ -498,6 +471,17 @@ pushed either: `flows/*_local/`, `mocks/scenarios/`, `mocks/_recorded/` and
   screen recording (`qa_<case>_N.mp4`, 180 s segments), `logcat.txt`,
   `junit.xml`, screenshots and `console.txt` under `<out>/<case>/`. Use
   `build/maestro-qa/<date>/<ticket>` as `<out>` (gitignored).
+- **Local emulator gotchas** (neither happens on Cloud): the QA AVD has a
+  fingerprint enrolled, so a cold start raises `BiometricPrompt` — a secure
+  window Maestro cannot see through, so its pin-pad taps land behind it and the
+  app never unlocks (`pin_title is not visible`); answer it with
+  `adb -s <serial> emu finger touch 1`. And if the CLI dies with
+  `UNAVAILABLE: io exception` / `Connection refused: localhost/[0:0:0:0:0:0:0:1]:7001`,
+  `adb forward` is bound to IPv4 while the JVM resolves `localhost` to `::1` —
+  run with `MAESTRO_OPTS="-Djava.net.preferIPv4Stack=true"`. A wiped AVD has no
+  launcher shortcut, so `launch_app_ensure`'s Home + "Keeper Dev" fallback cannot
+  recover a slow cold start (12-16 s to the pin locally vs the 3 s + 10 s budget) —
+  start the app with `am start` first, or use `tools/unlock_adb.sh`.
 - **`tools/qa_run_mock.sh <scenario> …`** — the same behind a mitmproxy
   scenario from `mocks/scenarios/`; sets and resets the device proxy.
 - **`tools/preflight.sh [serial]`** — host tools, device, RAM, locale, keyguard,
@@ -506,7 +490,7 @@ pushed either: `flows/*_local/`, `mocks/scenarios/`, `mocks/_recorded/` and
   (aggregator per quote from NetLog), `bio_driver.sh` + `enroll_fingerprint_emulator.sh`
   (biometry branch), `tk1276_intent_injection.sh` (exported-activity checks via `am start`).
 - The end-to-end procedure (feasibility → approved plan → run → report) is the
-  `tk-qa-verify` skill in `.codex/skills/tk-qa-verify/`; its
+  `tk-qa-verify-android` skill in `.agents/skills/tk-qa-verify-android/`; its
   `references/lessons.md` lists the locator and timing gotchas found so far.
 
 ---
@@ -519,4 +503,7 @@ pushed either: `flows/*_local/`, `mocks/scenarios/`, `mocks/_recorded/` and
 | `flows/swap_common/subflows/btc_fiat_amount_too_low.yaml` | Swap send capsule / fiat toggle have no `testTag`; a `.*BTC.*` tap under Send opens the token picker. Wait for the quote error; do not tap Continue first. |
 | `flows/portfolio/subflows/hide_show_btc_in_wallet.yaml` | Details `…` menu has no id; Android path uses Manage + eye toggle. `text: BTC` matches the Bitcoin chip, search field, home row under the sheet, and WBTC. Use `^BTC$` below `Bitcoin` above `WBTC`. |
 | `flows/portfolio/subflows/recieve_smoke.yaml` | Android list order is TON, TRON, Ethereum, Bitcoin, Base, BSC, Arbitrum (iOS paints Base before Bitcoin and Arbitrum before BSC). Home `ARBITRUM` / `BASE` badges sit under the sheet and steal a bare network tap. |
+| `steps/recieve_modal/*` | TK-3667 put the wallet's own short address under the home balance, and home stays in the hierarchy under the sheet: that label matches `.*\.\.\..*` and sits *below* the TON/TRON anchors, so the tap landed on the next network (the TON case opened **Your TRON address**). Scope every row locator with `childOf: id: sheet_content` (uikit `view_bottom_sheet.xml`); home lives under `root_container` / `child_fragment`. |
+| `flows/browser/subflows/walletconnect_aave.yaml` | Aave renamed its header button `Connect wallet` -> `Connect` (2026-09) and replaced the `rcc-decline-button` cookie bar with a "We value your privacy" sheet (`Opt-out` / `Allow analytics`). dApp-side matches accept both spellings; both consent buttons are tapped `optional: true`. The ConnectKit path (`Other` -> `More`) is mobile-only — the desktop layout has no wallet grid. The Reown `All Wallets` search field is matched by its exposed hint `Search wallet` (26.09.3); the old box-in locator (below title / above `"<Name> <Name>"` tile / right of Back / left of title) died when the input grew to the full row. Every tap on the Aave WebView carries `waitToSettleTimeoutMs: 500`: Maestro's post-tap "did the UI change" hierarchy re-read ran 5 min 49 s (More) and 27 min (wallet tile) on a local emulator, and the wc: proposal expires 5 min after the picker opens — a late tap lands on the ConnectKit grid underneath (Coinbase -> `market://` -> Play Store). Never tap that sheet by coordinates. Locally every lookup on this page still costs 1-3 min, so the dApp-side `avatar 0x` assert cannot be reached within the TTL on an emulator; all locators up to the native `Connect to Aave?` sheet were verified there. |
+| `flows/perps/subflows/*` | The perps module has no `testTag` at all. Timeframe labels (`1M`…`1D`) are plain text and safe; the candle/line button is a Canvas glyph with neither text nor accessibility node, and `rightOf: "1D"` selects the row instead of the button — so mode switch and crosshair live in the local pack (`.agents/skills/tk-qa-verify-android/packs/perps-chart`) with a positional tap. Perps needs `featureFlags: android_is_perps_enabled` at launch (`steps/wallet/launch_app_ensure_perps.yaml`); without it the Trade tab has no Perpetuals entry. Chart states behind a mocked backend and position overlays cannot run in Cloud (no proxy). |
 | `flows/deeplinks/deeplinks.yaml` | `openLink` must use `browser: false` or Chrome Custom Tabs steal `ton://` / `tonkeeper://`. Multichain transfer without a jetton opens **Choose asset** first (`WithdrawMulticoinRoutes.Picker`); pick GRAM before asserting the address. |

@@ -21,20 +21,10 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val LEDGER_WALLET_ID = 5
         const val KEYSTONE_WALLET_ID = 6
         const val NEW_WALLET_ID = 7
-        const val TETRA_WALLET_ID = 8
-
-        val forDevelopersTitle = SectionTitle(titleResId = Localization.for_developers)
 
         val otherOptionsTitle = SectionTitle(titleResId = Localization.other_options)
 
         val new = Wallet(
-            id = NEW_WALLET_ID,
-            iconResId = R.drawable.ic_plus_circle_28,
-            titleResId = Localization.new_wallet,
-            subtitleResId = Localization.start_create_new_wallet,
-        )
-
-        val newMultichain = Wallet(
             id = NEW_WALLET_ID,
             iconResId = UIKitIcon.ic_plus_outline_28,
             titleResId = Localization.new_wallet,
@@ -43,13 +33,6 @@ sealed class Item(type: Int): BaseListItem(type) {
         )
 
         val import = Wallet(
-            id = IMPORT_WALLET_ID,
-            iconResId = UIKitIcon.ic_import_wallet_outline_28,
-            titleResId = Localization.existing_wallet,
-            subtitleResId = Localization.import_wallet_words,
-        )
-
-        val importMultichain = Wallet(
             id = IMPORT_WALLET_ID,
             iconResId = UIKitIcon.ic_import_wallet_outline_28,
             titleResId = Localization.existing_wallet,
@@ -83,13 +66,6 @@ sealed class Item(type: Int): BaseListItem(type) {
             iconResId = R.drawable.ic_ledger_28,
             titleResId = Localization.ledger_title,
             subtitleResId = Localization.ledger_subtitle
-        )
-
-        val tetra = Wallet(
-            id = TETRA_WALLET_ID,
-            iconResId = R.drawable.ic_tetra_24,
-            titleResId = Localization.tetra_title,
-            subtitleResId = Localization.tetra_subtitle
         )
 
         fun header(title: Int, subtitle: Int): Header {

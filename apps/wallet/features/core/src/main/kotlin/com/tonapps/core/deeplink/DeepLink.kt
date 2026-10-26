@@ -2,6 +2,7 @@ package com.tonapps.core.deeplink
 
 import android.net.Uri
 import androidx.core.net.toUri
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 
 data class DeepLink(
@@ -10,6 +11,7 @@ data class DeepLink(
     val referrer: Uri?,
     val connect: Connect? = null,
     val fromExternal: Boolean = false,
+    val utm: UtmParameters = UtmParameters.Empty,
 ) {
 
     enum class Connect {
@@ -53,6 +55,10 @@ data class DeepLink(
             else -> null
         },
         fromExternal = fromExternal,
+        utm = when {
+            fromQR -> UtmParameters.Empty
+            else -> UtmParameters.fromLink(uri.toString())
+        },
     )
 
     companion object {

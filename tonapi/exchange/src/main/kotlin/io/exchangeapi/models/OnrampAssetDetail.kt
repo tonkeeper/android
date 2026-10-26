@@ -26,6 +26,8 @@ data class OnrampAssetDetail(
     val stablecoin: Boolean,
     @SerialName(value = "extra_id_required")
     val extraIdRequired: Boolean,
+
+    /* Ordered for display; render as received */
     @SerialName(value = "payment_methods")
     val paymentMethods: List<OnrampPaymentMethod>,
     @SerialName(value = "network_name")

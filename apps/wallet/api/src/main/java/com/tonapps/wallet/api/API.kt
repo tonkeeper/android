@@ -16,8 +16,9 @@ import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
-import com.tonapps.core.flags.WalletFeature
 import com.tonapps.wallet.SecureProofProvider
+import com.tonapps.extensions.CacheKey
+import com.tonapps.extensions.TimedCacheMemory
 import com.tonapps.extensions.map
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
@@ -31,12 +32,9 @@ import com.tonapps.network.postJSON
 import com.tonapps.network.requestBuilder
 import com.tonapps.network.sse
 import com.tonapps.network.ssePost
-import com.tonapps.wallet.api.Constants.HERMES_WS
-import com.tonapps.wallet.api.Constants.MULTICHAIN_API
-import com.tonapps.wallet.api.Constants.PERPS_API
-import com.tonapps.wallet.api.Constants.REALTIME_WS
+import com.tonapps.wallet.api.Constants.HERMES_PATH
+import com.tonapps.wallet.api.Constants.PERPS_PATH
 import com.tonapps.wallet.api.Constants.SWAP_API
-import com.tonapps.wallet.api.Constants.TRADING_API
 import com.tonapps.wallet.api.configs.CountryConfig
 import com.tonapps.wallet.api.core.ExchangeAPI
 import com.tonapps.wallet.api.core.HermesAPI
@@ -47,6 +45,7 @@ import com.tonapps.wallet.api.core.TradingAPI
 import com.tonapps.wallet.api.realtime.CentrifugeAPI
 import com.tonapps.wallet.api.realtime.RealtimeTokenSource
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
+import com.tonapps.wallet.api.entity.CurrencyEntity
 import com.tonapps.wallet.api.entity.AccountEventEntity
 import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.api.entity.ChartEntity
@@ -54,8 +53,6 @@ import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.entity.EmulateWithBatteryResult
 import com.tonapps.wallet.api.entity.BannerEntity
 import com.tonapps.wallet.api.entity.EthenaEntity
-import com.tonapps.wallet.api.entity.OnRampArgsEntity
-import com.tonapps.wallet.api.entity.OnRampMerchantEntity
 import com.tonapps.wallet.api.entity.toncenter.ToncenterSSERequest
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.api.extensions.toTokenEntity
@@ -71,6 +68,7 @@ import io.batteryapi.models.AndroidBatteryPurchaseStatus
 import io.batteryapi.models.Balance
 import io.batteryapi.models.Config
 import io.batteryapi.models.EstimateGaslessCostRequest
+import io.batteryapi.models.GaslessV2Config
 import io.batteryapi.models.Purchases
 import io.batteryapi.models.RechargeMethods
 import io.batteryapi.models.SendMessageRequest
@@ -89,6 +87,7 @@ import io.tonapi.models.EmulateMessageToWalletRequest
 import io.tonapi.models.EmulateMessageToWalletRequestParamsInner
 import io.tonapi.models.GetBlockchainRawAccountsRequest
 import io.tonapi.models.GetWalletsByPublicKeyBulkRequest
+import io.tonapi.models.JettonBalance
 import io.tonapi.models.MessageConsequences
 import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
@@ -101,6 +100,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -122,7 +123,7 @@ import java.math.BigDecimal
 import java.util.Locale
 
 private const val BATTERY_PROOF_TON_CHAIN = "ton"
-private const val MULTICHAIN_FEATURE_FLAG = "multichain"
+private const val CURRENCIES_TTL = 60L * 60 * 1000
 
 @Suppress("LargeClass")
 class API(
@@ -137,6 +138,18 @@ class API(
         fun buildOverride(): String?
     }
 
+    private sealed interface Keys : CacheKey {
+        data class Currencies(
+            val network: TonNetwork,
+            val locale: String,
+            val walletId: String?,
+        ) : Keys {
+            override val ttl: Long = CURRENCIES_TTL
+        }
+    }
+
+    private val currenciesCache = TimedCacheMemory<Keys>()
+
     private val internalApi = InternalApi(
         context,
         defaultHttpClient,
@@ -144,16 +157,6 @@ class API(
     )
     private val swapApi = SwapApi(defaultHttpClient)
     private val configRepository = ConfigRepository(context, scope, internalApi)
-
-    init {
-        internalApi.setFeaturesProvider {
-            if (isMultichainAvailable()) {
-                listOf(MULTICHAIN_FEATURE_FLAG)
-            } else {
-                emptyList()
-            }
-        }
-    }
 
     val configFlow: Flow<ConfigEntity>
         get() = configRepository.stream.map { BootConfigOverrides.applyTo(it) }
@@ -180,33 +183,48 @@ class API(
         ExchangeAPI(SWAP_API, tonAPIHttpClient)
     }
 
-    val trading: TradingAPI by lazy {
-        TradingAPI(TRADING_API, tonAPIHttpClient)
+    private class HostApis(
+        val trading: TradingAPI,
+        val multichain: MultichainAPI,
+        val perps: PerpsAPI,
+        val kandelabr: KandelabrAPI,
+        val hermes: HermesAPI,
+    )
+
+    private data class Hosts(val trading: String, val multichain: String, val multichainOrigin: String)
+
+    private val _hostApisState: StateFlow<HostApis> = run {
+        val initialHosts = hostsOf(mainnetConfig)
+        configFlow
+            .map(::hostsOf)
+            .distinctUntilChanged()
+            .dropWhile { it == initialHosts }
+            .map(::buildHostApis)
+            .stateIn(scope, SharingStarted.Eagerly, buildHostApis(initialHosts))
     }
 
-    val multichain: MultichainAPI by lazy {
-        MultichainAPI(MULTICHAIN_API, tonAPIHttpClient)
-    }
+    val trading: TradingAPI
+        get() = _hostApisState.value.trading
 
-    val perps: PerpsAPI by lazy {
-        PerpsAPI(PERPS_API, tonAPIHttpClient)
-    }
+    val multichain: MultichainAPI
+        get() = _hostApisState.value.multichain
+
+    val perps: PerpsAPI
+        get() = _hostApisState.value.perps
 
     // The kandelabr spec's paths already carry the /kandelabr/public-api/v1 prefix.
-    val kandelabr: KandelabrAPI by lazy {
-        KandelabrAPI(MULTICHAIN_API, tonAPIHttpClient)
-    }
+    val kandelabr: KandelabrAPI
+        get() = _hostApisState.value.kandelabr
 
-    val hermes: HermesAPI by lazy {
-        HermesAPI(HERMES_WS, tonAPIHttpClient) { deviceAuthProvider?.accessToken() }
-    }
+    val hermes: HermesAPI
+        get() = _hostApisState.value.hermes
 
     val realtimeTokens: RealtimeTokenSource by lazy {
-        RealtimeTokenSource(multichain)
+        RealtimeTokenSource { multichain }
     }
 
     val centrifuge: CentrifugeAPI by lazy {
-        CentrifugeAPI(REALTIME_WS, userAgent, scope, realtimeTokens::connectionToken)
+        CentrifugeAPI({ mainnetConfig.realtimeUrl }, userAgent, scope, realtimeTokens::connectionToken)
     }
 
     //TODO TK-371
@@ -230,23 +248,37 @@ class API(
     private fun buildProvider() = Provider(
         mainnetHost = getConfig(TonNetwork.MAINNET).tonapiMainnetHost,
         testnetHost = getConfig(TonNetwork.TESTNET).tonapiTestnetHost,
-        tetraHost = getConfig(TonNetwork.TETRA).tonapiMainnetHost,
         okHttpClient = tonAPIHttpClient
     )
 
     private fun buildBatteryProvider() = BatteryProvider(
         mainnetHost = getConfig(TonNetwork.MAINNET).batteryHost,
         testnetHost = getConfig(TonNetwork.TESTNET).batteryTestnetHost,
-        tetraHost = getConfig(TonNetwork.TETRA).batteryHost,
         okHttpClient = tonAPIHttpClient
     )
 
-    fun getConfig(network: TonNetwork) = configRepository.getConfig(network)
+    private fun hostsOf(config: ConfigEntity) = Hosts(
+        trading = config.tradingApiUrl,
+        multichain = config.multichainApiUrl,
+        multichainOrigin = config.multichainOrigin,
+    )
 
-    fun isMultichainAvailable(): Boolean {
-        return WalletFeature.Multichain.isEnabled &&
-            (getConfig(TonNetwork.MAINNET).flags.multichainEnabled || WalletFeature.Multichain.isOverridden)
+    private fun buildHostApis(hosts: Hosts): HostApis {
+        return HostApis(
+            trading = TradingAPI(hosts.trading, tonAPIHttpClient),
+            multichain = MultichainAPI(hosts.multichain, tonAPIHttpClient),
+            perps = PerpsAPI(hosts.multichainOrigin + PERPS_PATH, tonAPIHttpClient),
+            kandelabr = KandelabrAPI(hosts.multichainOrigin, tonAPIHttpClient),
+            hermes = HermesAPI(
+                url = hosts.multichainOrigin + HERMES_PATH,
+                okHttpClient = tonAPIHttpClient,
+                tokenProvider = { deviceAuthProvider?.accessToken() },
+                tokenRefresher = { deviceAuthProvider?.refreshToken(it) },
+            ),
+        )
     }
+
+    fun getConfig(network: TonNetwork) = configRepository.getConfig(network)
 
     fun setCountryConfig(config: CountryConfig) = internalApi.setConfig(config)
 
@@ -333,8 +365,19 @@ class API(
 
     fun batteryEmulation(network: TonNetwork) = batteryProvider.emulation.get(network)
 
+    fun batteryGasless(network: TonNetwork) = batteryProvider.gasless.get(network)
+
     fun getBatteryConfig(network: TonNetwork): Config? {
         return withRetry { battery(network).getConfig() }
+    }
+
+    fun getBatteryGaslessConfig(network: TonNetwork): GaslessV2Config? {
+        return withRetry { batteryGasless(network).gaslessBatteryConfig() }
+    }
+
+    /** tonapi gasless relay: the jetton transfer to this address in a relayed message is the relayer's fee. */
+    fun getGaslessRelayAddress(network: TonNetwork): String? {
+        return withRetry { provider.gasless.get(network).gaslessConfig() }?.relayAddress
     }
 
     fun getBatteryRechargeMethods(network: TonNetwork): RechargeMethods? {
@@ -351,18 +394,6 @@ class API(
     fun getSwapAssets(): JSONArray = runCatching {
         swapApi.getSwapAssets(mainnetConfig.webSwapsUrl)?.let(::JSONArray)
     }.getOrNull() ?: JSONArray()
-
-    @Throws
-    suspend fun calculateOnRamp(args: OnRampArgsEntity): OnRampMerchantEntity.Data = withContext(Dispatchers.IO) {
-        val data = internalApi.calculateOnRamp(mainnetConfig.webSwapsUrl, args) ?: throw Exception("Empty response")
-        val json = JSONObject(data)
-        val items = json.getJSONArray("items").map { OnRampMerchantEntity(it) }
-        val suggested = json.optJSONArray("suggested")?.map { OnRampMerchantEntity(it) } ?: emptyList()
-        OnRampMerchantEntity.Data(
-            items = items,
-            suggested = suggested
-        )
-    }
 
     suspend fun getEthena(accountId: String, walletId: String?): EthenaEntity? = withContext(Dispatchers.IO) {
         withRetry { internalApi.getEthena(accountId, walletId) }
@@ -458,7 +489,6 @@ class API(
         val endpoint = when (network) {
             TonNetwork.TESTNET -> config.tonapiSSETestnetEndpoint
             TonNetwork.MAINNET -> config.tonapiSSEEndpoint
-            TonNetwork.TETRA -> config.tonapiSSEEndpoint
         }
         val url = "$endpoint/sse/traces?account=$accountId&token=${config.tonApiV2Key}"
         return sseHttpClient.sse(url, onFailure = onFailure)
@@ -473,7 +503,6 @@ class API(
         val endpoint = when (network) {
             TonNetwork.TESTNET -> config.toncenterSSETestnetEndpoint
             TonNetwork.MAINNET -> config.toncenterSSEEndpoint
-            TonNetwork.TETRA -> config.toncenterSSEEndpoint
         }
         val request = ToncenterSSERequest(
             addresses = listOf(accountId),
@@ -613,6 +642,14 @@ class API(
         }
     }
 
+    suspend fun getAccountEvent(
+        accountId: String,
+        network: TonNetwork,
+        eventId: String,
+    ): AccountEvent? = withContext(Dispatchers.IO) {
+        withRetry { accounts(network).getAccountEvent(accountId, eventId) }
+    }
+
     suspend fun getSingleEvent(
         eventId: String,
         network: TonNetwork
@@ -710,21 +747,39 @@ class API(
                 supportedExtensions = extensions,
             ).balances
         } ?: return null
-        return jettonsBalances.map { jb ->
-            BalanceEntity(
-                token = jb.jetton.toTokenEntity(jb.extensions, jb.lock),
-                value = Coins.of(
-                    BigDecimal(jb.balance).movePointLeft(jb.jetton.decimals),
-                    jb.jetton.decimals
-                ),
-                walletAddress = jb.walletAddress.address,
-                initializedAccount = true,
-                isRequestMinting = jb.extensions?.contains(TokenEntity.Extension.CustomPayload.value) == true,
-                isTransferable = jb.extensions?.contains(TokenEntity.Extension.NonTransferable.value) != true,
-                numerator = jb.jetton.scaledUi?.numerator?.toBigDecimal(),
-                denominator = jb.jetton.scaledUi?.denominator?.toBigDecimal()
-            ).also { it.rates = jb.price }
-        }.filter { it.value.isPositive }
+        return jettonsBalances.map { it.toBalanceEntity() }.filter { it.value.isPositive }
+    }
+
+    fun getJettonBalance(
+        accountId: String,
+        jettonMaster: String,
+        network: TonNetwork,
+        extensions: List<String>? = null,
+    ): BalanceEntity? {
+        val jettonBalance = withRetry {
+            accounts(network).getAccountJettonBalance(
+                accountId = accountId,
+                jettonId = jettonMaster,
+                supportedExtensions = extensions,
+            )
+        } ?: return null
+        return jettonBalance.toBalanceEntity()
+    }
+
+    private fun JettonBalance.toBalanceEntity(): BalanceEntity {
+        return BalanceEntity(
+            token = jetton.toTokenEntity(extensions, lock),
+            value = Coins.of(
+                BigDecimal(balance).movePointLeft(jetton.decimals),
+                jetton.decimals
+            ),
+            walletAddress = walletAddress.address,
+            initializedAccount = true,
+            isRequestMinting = extensions?.contains(TokenEntity.Extension.CustomPayload.value) == true,
+            isTransferable = extensions?.contains(TokenEntity.Extension.NonTransferable.value) != true,
+            numerator = jetton.scaledUi?.numerator?.toBigDecimal(),
+            denominator = jetton.scaledUi?.denominator?.toBigDecimal()
+        ).also { it.rates = price }
     }
 
     fun resolveAddressOrName(
@@ -847,7 +902,7 @@ class API(
         }
     }
 
-    private fun getPublicKey(
+    fun getPublicKey(
         accountId: String,
         network: TonNetwork
     ): PublicKeyEd25519? {
@@ -976,7 +1031,7 @@ class API(
             L.e(e)
             return null
         }
-        return EmulateWithBatteryResult(consequences, withBattery, excess)
+        return EmulateWithBatteryResult(consequences, withBattery, excess, supportedByBattery)
     }
 
     suspend fun emulate(
@@ -1265,8 +1320,13 @@ class API(
         return internalApi.getBanners(network, walletId, isNew)
     }
 
-    fun getCurrencies(network: TonNetwork, locale: Locale, walletId: String?): JSONArray {
-        return internalApi.getCurrencies(network, locale, walletId)
+    suspend fun getCurrencies(network: TonNetwork, locale: Locale, walletId: String?): List<CurrencyEntity> {
+        val key = Keys.Currencies(network, locale.toLanguageTag(), walletId)
+        return currenciesCache.getOrLoad(key) {
+            withContext(Dispatchers.IO) {
+                CurrencyEntity.parse(internalApi.getCurrencies(network, locale, walletId))
+            }
+        }
     }
 
     fun getFiatMethods(network: TonNetwork, locale: Locale, walletId: String?): JSONObject? {
@@ -1323,45 +1383,10 @@ class API(
 
     suspend fun resolveCountry(): String? = internalApi.resolveCountry()
 
-    suspend fun reportNtfSpam(
-        nftAddress: String,
-        scam: Boolean
-    ) = withContext(Dispatchers.IO) {
-        val url = mainnetConfig.scamEndpoint + "/v1/report/$nftAddress"
-        val data = "{\"is_scam\":$scam}"
-        val response = withRetry {
-            tonAPIHttpClient.postJSON(url, data)
-        } ?: throw Exception("Empty response")
-        if (!response.isSuccessful) {
-            throw Exception("Failed creating proof: ${response.code}")
-        }
-        response.body?.string() ?: throw Exception("Empty response")
-    }
-
-    suspend fun reportTX(
-        txId: String,
-        comment: String?,
-        recipient: String,
-    ) = withContext(Dispatchers.IO) {
-        val url = mainnetConfig.scamEndpoint + "/v1/report/tx/$txId"
-        val json = JSONObject()
-        json.put("recipient", recipient)
-        comment?.let { json.put("comment", it) }
-        val data = json.toString()
-        val response = withRetry {
-            tonAPIHttpClient.postJSON(url, data)
-        } ?: throw Exception("Empty response")
-        if (!response.isSuccessful) {
-            throw Exception("Failed creating proof: ${response.code}")
-        }
-        response.body?.string() ?: throw Exception("Empty response")
-    }
-
     private fun batteryHost(network: TonNetwork): String {
         return when (network) {
             TonNetwork.TESTNET -> mainnetConfig.batteryTestnetHost
             TonNetwork.MAINNET -> mainnetConfig.batteryHost
-            TonNetwork.TETRA -> mainnetConfig.batteryHost
         }
     }
 

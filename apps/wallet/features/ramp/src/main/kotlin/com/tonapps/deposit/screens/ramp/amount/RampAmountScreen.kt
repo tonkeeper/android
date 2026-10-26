@@ -39,18 +39,13 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
-import com.tonapps.deposit.screens.provider.ProviderConfirmDialog
 import com.tonapps.deposit.screens.provider.ProviderItem
 import com.tonapps.deposit.screens.provider.ProviderWithQuote
 import com.tonapps.deposit.screens.provider.SelectProviderDialog
@@ -80,7 +75,6 @@ import ui.theme.UIKit
 import ui.theme.modifiers.rememberShimmerPhase
 import ui.theme.modifiers.shimmer
 import ui.theme.outlineStoke
-import ui.utils.toRichSpanStyle
 import ui.utils.uppercased
 import java.math.RoundingMode
 
@@ -114,17 +108,12 @@ private fun DepositAmountContent(
 ) {
     val state by feature.state.global.observeSafeState()
     val lifecycle = LocalLifecycleOwner.current
-    var showConfirmationDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         feature.events.flowWithLifecycle(lifecycle.lifecycle)
             .collect {
                 when (it) {
-                    is DepositAmountEvent.ShowConfirmation -> showConfirmationDialog = true
-                    is DepositAmountEvent.Continue -> {
-                        showConfirmationDialog = false
-                        onContinue(it.providerUrl)
-                    }
+                    is DepositAmountEvent.Continue -> onContinue(it.providerUrl)
                 }
             }
     }
@@ -145,43 +134,6 @@ private fun DepositAmountContent(
                     onToggleInputCurrency = onToggleInputCurrency,
                     onContinue = { feature.sendAction(DepositAmountAction.CheckProvider(it)) },
                 )
-
-                val selected = state.selectedProvider
-                if (showConfirmationDialog && selected != null) {
-                    val style = UIKit.typography.body1
-                    val color = UIKit.colorScheme.text.accent
-                    val buttons = selected.info.buttons
-                    val description = remember(color, buttons) {
-                        if (buttons.isEmpty()) return@remember null
-                        buildAnnotatedString {
-                            val linkStyle = style.toRichSpanStyle(color = color)
-                            buttons.forEachIndexed { index, button ->
-                                if (index > 0) append(" · ")
-                                withLink(
-                                    LinkAnnotation.Url(
-                                        url = button.url,
-                                        styles = TextLinkStyles(linkStyle),
-                                    )
-                                ) { append(button.title) }
-                            }
-                        }
-                    }
-
-                    ProviderConfirmDialog(
-                        title = selected.info.title,
-                        icon = selected.info.imageUrl,
-                        description = description,
-                        onClose = { showConfirmationDialog = false },
-                        onConfirm = {
-                            feature.sendAction(
-                                DepositAmountAction.AllowProvider(
-                                    selected,
-                                    it
-                                )
-                            )
-                        }
-                    )
-                }
             }
         }
     }

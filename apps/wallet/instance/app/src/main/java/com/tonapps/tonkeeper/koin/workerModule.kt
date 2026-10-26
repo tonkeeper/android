@@ -3,8 +3,8 @@ package com.tonapps.tonkeeper.koin
 import com.tonapps.tonkeeper.worker.ApkDownloadWorker
 import com.tonapps.tonkeeper.worker.DAppPushToggleWorker
 import com.tonapps.tonkeeper.worker.PushToggleWorker
+import com.tonapps.tonkeeper.worker.TotalBalancesWorker
 import com.tonapps.tonkeeper.worker.WidgetUpdaterWorker
-import org.koin.androidx.workmanager.dsl.worker
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.dsl.module
 
@@ -13,4 +13,5 @@ val workerModule = module {
     workerOf(::PushToggleWorker)
     workerOf(::WidgetUpdaterWorker)
     workerOf(::ApkDownloadWorker)
+    workerOf(::TotalBalancesWorker)
 }

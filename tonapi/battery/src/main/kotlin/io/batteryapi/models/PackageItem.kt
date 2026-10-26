@@ -13,6 +13,11 @@ package io.batteryapi.models
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class PackageItem(
@@ -24,13 +29,28 @@ data class PackageItem(
     val charges: Int
 ) {
     /**
-     * Values: large,medium,small,other
+     * Values: large,medium,small,other,unknown
      */
-    @Serializable
+    @Serializable(with = NameSerializer::class)
     enum class Name(val value: String) {
         @SerialName(value = "large") large("large"),
         @SerialName(value = "medium") medium("medium"),
         @SerialName(value = "small") small("small"),
-        @SerialName(value = "other") other("other");
+        @SerialName(value = "other") other("other"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object NameSerializer : KSerializer<Name> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): Name {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return Name.entries.firstOrNull { it.value == value }
+                ?: Name.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: Name) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
     }
 }

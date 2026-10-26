@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import java.security.GeneralSecurityException
 import uikit.base.BaseDialog
+import uikit.extensions.swallowClicks
 import uikit.widget.HeaderView
 import kotlin.coroutines.resume
 
@@ -23,23 +25,6 @@ class PasscodeDialog(
     context: Context,
     private val callback: ((code: String?) -> Unit)
 ): BaseDialog(context) {
-
-    companion object {
-
-        fun request(context: Context, callback: ((code: String?) -> Unit)) {
-            PasscodeDialog(context, callback).show()
-        }
-
-        suspend fun request(context: Context): String? = suspendCancellableCoroutine { continuation ->
-            request(context) { code ->
-                continuation.resume(code)
-            }
-        }
-
-        suspend fun confirmation(context: Context): Boolean {
-            return request(context) != null
-        }
-    }
 
     private val windowInsetsController: WindowInsetsControllerCompat? by lazy {
         val window = window ?: return@lazy null
@@ -53,7 +38,7 @@ class PasscodeDialog(
 
     init {
         setContentView(R.layout.dialog_password)
-        findViewById<View>(R.id.container).setOnClickListener { }
+        findViewById<View>(R.id.container).swallowClicks()
         headerView = findViewById(R.id.header)
         headerView.doOnCloseClick = { dismiss() }
 
@@ -92,7 +77,11 @@ class PasscodeDialog(
     }
 
     private suspend fun isValid(code: String) = withContext(Dispatchers.IO) {
-        helper.isValid(code)
+        try {
+            helper.isValid(code)
+        } catch (_: GeneralSecurityException) {
+            false
+        }
     }
 
     private fun setResult(code: String?) {
@@ -110,4 +99,20 @@ class PasscodeDialog(
         }
     }
 
+    companion object {
+
+        fun request(context: Context, callback: ((code: String?) -> Unit)) {
+            PasscodeDialog(context, callback).show()
+        }
+
+        suspend fun request(context: Context): String? = suspendCancellableCoroutine { continuation ->
+            request(context) { code ->
+                continuation.resume(code)
+            }
+        }
+
+        suspend fun confirmation(context: Context): Boolean {
+            return request(context) != null
+        }
+    }
 }

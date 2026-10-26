@@ -24,6 +24,7 @@ import kotlinx.coroutines.withContext
 import uikit.extensions.drawable
 import uikit.widget.AsyncImageView
 import kotlin.time.Duration.Companion.seconds
+import uikit.extensions.setMoonOnClickListener
 
 class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_wallet_staked) {
 
@@ -65,7 +66,7 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
             item.fiatFormat.withCustomSymbol(context)
         }
 
-        itemView.setOnClickListener {
+        itemView.setMoonOnClickListener {
             navigation?.add(StakeViewerScreen.newInstance(wallet = item.wallet, address = item.poolAddress, name = item.poolName))
         }
 
@@ -74,7 +75,7 @@ class StakedHolder(parent: ViewGroup): Holder<Item.Stake>(parent, R.layout.view_
         if (item.readyWithdraw > Coins.ZERO) {
             messageView.visibility = View.VISIBLE
             messageView.text = context.getString(Localization.staking_ready_withdraw, item.readyWithdrawFormat)
-            messageView.setOnClickListener {
+            messageView.setMoonOnClickListener {
                 if (item.poolImplementation != StakingPool.Implementation.LiquidTF) {
                     navigation?.add(StakeWithdrawScreen.newInstance(item.wallet, item.poolAddress))
                 }

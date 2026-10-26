@@ -23,6 +23,7 @@ import io.exchangeapi.models.CrossSwapExecution
 import io.exchangeapi.models.CrossSwapPrepare
 import io.exchangeapi.models.CrossSwapQuote
 import io.exchangeapi.models.CrossSwapSlippage
+import io.exchangeapi.models.CrossSwapStoredRoute
 import io.exchangeapi.models.CrossSwapSubmit
 import io.exchangeapi.models.GetCrossSwapAsset404Response
 import io.exchangeapi.models.Healthcheck500Response
@@ -56,8 +57,8 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun createCrossSwapQuote(createCrossSwapQuoteRequest: CreateCrossSwapQuoteRequest, xWalletID: String? = null, F: String? = null, isNew: Boolean? = false): CrossSwapQuote {
-        val localVarResponse = createCrossSwapQuoteWithHttpInfo(createCrossSwapQuoteRequest = createCrossSwapQuoteRequest, xWalletID = xWalletID, F = F, isNew = isNew)
+    fun createCrossSwapQuote(createCrossSwapQuoteRequest: CreateCrossSwapQuoteRequest, xWalletID: String? = null, F: String? = null): CrossSwapQuote {
+        val localVarResponse = createCrossSwapQuoteWithHttpInfo(createCrossSwapQuoteRequest = createCrossSwapQuoteRequest, xWalletID = xWalletID, F = F)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapQuote
@@ -76,22 +77,17 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun createCrossSwapQuoteWithHttpInfo(createCrossSwapQuoteRequest: CreateCrossSwapQuoteRequest, xWalletID: String?, F: String?, isNew: Boolean?): ApiResponse<CrossSwapQuote?> {
-        val localVariableConfig = createCrossSwapQuoteRequestConfig(createCrossSwapQuoteRequest = createCrossSwapQuoteRequest, xWalletID = xWalletID, F = F, isNew = isNew)
+    fun createCrossSwapQuoteWithHttpInfo(createCrossSwapQuoteRequest: CreateCrossSwapQuoteRequest, xWalletID: String?, F: String?): ApiResponse<CrossSwapQuote?> {
+        val localVariableConfig = createCrossSwapQuoteRequestConfig(createCrossSwapQuoteRequest = createCrossSwapQuoteRequest, xWalletID = xWalletID, F = F)
 
         return request<CreateCrossSwapQuoteRequest, CrossSwapQuote>(
             localVariableConfig
         )
     }
 
-    fun createCrossSwapQuoteRequestConfig(createCrossSwapQuoteRequest: CreateCrossSwapQuoteRequest, xWalletID: String?, F: String?, isNew: Boolean?): RequestConfig<CreateCrossSwapQuoteRequest> {
+    fun createCrossSwapQuoteRequestConfig(createCrossSwapQuoteRequest: CreateCrossSwapQuoteRequest, xWalletID: String?, F: String?): RequestConfig<CreateCrossSwapQuoteRequest> {
         val localVariableBody = createCrossSwapQuoteRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (isNew != null) {
-                    put("is_new", listOf(isNew.toString()))
-                }
-            }
+        val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
         F?.apply { localVariableHeaders["F"] = this.toString() }
@@ -312,6 +308,52 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getCrossSwapStoredRoute(routeId: String): CrossSwapStoredRoute {
+        val localVarResponse = getCrossSwapStoredRouteWithHttpInfo(routeId = routeId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapStoredRoute
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getCrossSwapStoredRouteWithHttpInfo(routeId: String): ApiResponse<CrossSwapStoredRoute?> {
+        val localVariableConfig = getCrossSwapStoredRouteRequestConfig(routeId = routeId)
+
+        return request<Unit, CrossSwapStoredRoute>(
+            localVariableConfig
+        )
+    }
+
+    fun getCrossSwapStoredRouteRequestConfig(routeId: String): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/v2/crosschain/routes/{route_id}".replace("{"+"route_id"+"}", encodeURIComponent(routeId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = false,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
     fun listCrossSwapAssets(q: String? = null, limit: Int? = null, chain: String? = null, cursor: String? = null, F: String? = null): CrossSwapAssets {
         val localVarResponse = listCrossSwapAssetsWithHttpInfo(q = q, limit = limit, chain = chain, cursor = cursor, F = F)
 
@@ -373,8 +415,8 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun prepareCrossSwapRoute(routeId: String, xWalletID: String? = null, F: String? = null, isNew: Boolean? = false, prepareCrossSwapRouteRequest: PrepareCrossSwapRouteRequest? = null): CrossSwapPrepare {
-        val localVarResponse = prepareCrossSwapRouteWithHttpInfo(routeId = routeId, xWalletID = xWalletID, F = F, isNew = isNew, prepareCrossSwapRouteRequest = prepareCrossSwapRouteRequest)
+    fun prepareCrossSwapRoute(routeId: String, xWalletID: String? = null, F: String? = null, prepareCrossSwapRouteRequest: PrepareCrossSwapRouteRequest? = null): CrossSwapPrepare {
+        val localVarResponse = prepareCrossSwapRouteWithHttpInfo(routeId = routeId, xWalletID = xWalletID, F = F, prepareCrossSwapRouteRequest = prepareCrossSwapRouteRequest)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapPrepare
@@ -393,22 +435,17 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun prepareCrossSwapRouteWithHttpInfo(routeId: String, xWalletID: String?, F: String?, isNew: Boolean?, prepareCrossSwapRouteRequest: PrepareCrossSwapRouteRequest?): ApiResponse<CrossSwapPrepare?> {
-        val localVariableConfig = prepareCrossSwapRouteRequestConfig(routeId = routeId, xWalletID = xWalletID, F = F, isNew = isNew, prepareCrossSwapRouteRequest = prepareCrossSwapRouteRequest)
+    fun prepareCrossSwapRouteWithHttpInfo(routeId: String, xWalletID: String?, F: String?, prepareCrossSwapRouteRequest: PrepareCrossSwapRouteRequest?): ApiResponse<CrossSwapPrepare?> {
+        val localVariableConfig = prepareCrossSwapRouteRequestConfig(routeId = routeId, xWalletID = xWalletID, F = F, prepareCrossSwapRouteRequest = prepareCrossSwapRouteRequest)
 
         return request<PrepareCrossSwapRouteRequest, CrossSwapPrepare>(
             localVariableConfig
         )
     }
 
-    fun prepareCrossSwapRouteRequestConfig(routeId: String, xWalletID: String?, F: String?, isNew: Boolean?, prepareCrossSwapRouteRequest: PrepareCrossSwapRouteRequest?): RequestConfig<PrepareCrossSwapRouteRequest> {
+    fun prepareCrossSwapRouteRequestConfig(routeId: String, xWalletID: String?, F: String?, prepareCrossSwapRouteRequest: PrepareCrossSwapRouteRequest?): RequestConfig<PrepareCrossSwapRouteRequest> {
         val localVariableBody = prepareCrossSwapRouteRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (isNew != null) {
-                    put("is_new", listOf(isNew.toString()))
-                }
-            }
+        val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
         F?.apply { localVariableHeaders["F"] = this.toString() }

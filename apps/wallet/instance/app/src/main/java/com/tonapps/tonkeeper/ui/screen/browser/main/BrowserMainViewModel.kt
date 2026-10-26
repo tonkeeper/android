@@ -1,10 +1,9 @@
 package com.tonapps.tonkeeper.ui.screen.browser.main
 
 import android.app.Application
-import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.tonkeeper.Environment
-import com.tonapps.tonkeeper.manager.tonconnect.ITonConnectBridge
+import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.connected.ConnectedItem
 import com.tonapps.tonkeeper.ui.screen.browser.main.list.explore.list.ExploreItem
@@ -54,7 +53,7 @@ class BrowserMainViewModel(
     private val wallet: WalletEntity,
     private val settings: SettingsRepository,
     private val api: API,
-    private val tonConnectBridge: ITonConnectBridge,
+    private val tonConnectManager: TonConnectManager,
     private val browserRepository: BrowserRepository,
     private val mcAccountRepository: McAccountRepository,
     private val environment: Environment,
@@ -138,7 +137,7 @@ class BrowserMainViewModel(
                     }.awaitAll()
                 }
             } else {
-                tonConnectBridge.disconnect(
+                tonConnectManager.disconnect(
                     wallet = wallet,
                     appUrl = item.app.url,
                     type = AppConnectEntity.Type.Internal,
@@ -168,11 +167,21 @@ class BrowserMainViewModel(
         val categories = data.categories.filter { it.id != "featured" }
         val adsItem = resolveGlobalAds(categories, isMultichain)
         val nomadsIndex = categories.indexOfFirst { it.id == "digital_nomads" }
-        val beforeNomadsEnd = if (nomadsIndex >= 0) nomadsIndex else categories.size
-        val afterNomadsStart = if (nomadsIndex >= 0) nomadsIndex + 1 else categories.size
+        val beforeNomadsEnd = if (nomadsIndex >= 0) {
+            nomadsIndex
+        } else {
+            categories.size
+        }
+        val afterNomadsStart = if (nomadsIndex >= 0) {
+            nomadsIndex + 1
+        } else {
+            categories.size
+        }
 
         for (category in categories.subList(0, beforeNomadsEnd)) {
-            if (category.id == "ads") continue
+            if (category.id == "ads") {
+                continue
+            }
             appendResolvedCategory(
                 items = items,
                 category = category,
@@ -205,7 +214,9 @@ class BrowserMainViewModel(
             items.add(ExploreItem.ChainEmpty)
         } else {
             for (category in categories.subList(afterNomadsStart, categories.size)) {
-                if (category.id == "ads") continue
+                if (category.id == "ads") {
+                    continue
+                }
                 appendResolvedCategory(
                     items = items,
                     category = category,
@@ -229,7 +240,9 @@ class BrowserMainViewModel(
     ): ExploreItem.Ads? {
         val adsCategory = categories.find { it.id == "ads" } ?: return null
         val ads = adsCategory.apps.firstOrNull() ?: return null
-        if (ads.button == null) return null
+        if (ads.button == null) {
+            return null
+        }
         return ExploreItem.Ads(
             app = ads,
             wallet = wallet,
@@ -271,7 +284,11 @@ class BrowserMainViewModel(
         selectedChainId: String?,
         isMultichain: Boolean,
     ) {
-        val categoryApps = if (applyChainFilter) category.apps.filterByChain(selectedChainId) else category.apps
+        val categoryApps = if (applyChainFilter) {
+            category.apps.filterByChain(selectedChainId)
+        } else {
+            category.apps
+        }
         if (category.id == "ads" || categoryApps.isEmpty()) {
             return
         }
@@ -339,9 +356,8 @@ private fun List<AppConnectWithDetails>.toConnectedItem(wallet: WalletEntity): C
     )
 }
 
-private fun AppRow.toAppEntity(): AppEntity = AppEntity(
-    url = url.toUri(),
+private fun AppRow.toAppEntity(): AppEntity = AppEntity.sizeLimited(
+    url = url,
     name = name.orEmpty(),
     iconUrl = iconUrl.orEmpty(),
-    empty = false,
 )

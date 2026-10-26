@@ -10,10 +10,10 @@ import com.tonapps.tonkeeper.ui.screen.battery.settings.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.localization.Localization
-import com.tonapps.wallet.localization.Plurals
 import uikit.extensions.drawable
 import uikit.widget.SwitchView
+import uikit.extensions.MoonHaptic
+import uikit.extensions.setMoonOnClickListener
 
 class SupportedTransactionHolder(
     parent: ViewGroup
@@ -35,7 +35,7 @@ class SupportedTransactionHolder(
         itemView.background = item.position.drawable(context)
         if (item.showToggle) {
             val isToggleEnabled = item.supportedTransaction != BatteryTransaction.TRC20
-            itemView.setOnClickListener {
+            itemView.setMoonOnClickListener(haptic = MoonHaptic.None) {
                 if (isToggleEnabled) {
                     switchView.toggle(true)
                 }
@@ -65,7 +65,7 @@ class SupportedTransactionHolder(
         }
 
         subtitleView.text = context.resources.getQuantityString(
-            Plurals.battery_charges_per_action,
+            item.chargesRes,
             item.changes,
             chargesFormat,
             getString(item.typeTitleRes)

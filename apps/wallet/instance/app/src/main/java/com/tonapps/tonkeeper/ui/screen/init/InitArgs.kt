@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.init
 import android.os.Bundle
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.publicKeyFromBase64
-import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.getEnum
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.putEnum
@@ -23,23 +22,12 @@ data class InitArgs(
     val watchRecoveryAccountId: String? = null,
     val withNew: Boolean = true,
     val raffleSourceWalletId: String? = null,
+    val importStartedTracked: Boolean = false,
 ) : BaseArgs() {
 
     enum class Type {
         // AddWallet opens the flow on the type selector; the concrete type is picked there.
-        AddWallet, New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone, Tetra
-    }
-
-    private companion object {
-        private const val ARG_TYPE = "type"
-        private const val ARG_PUBLIC_KEY = "pk"
-        private const val ARG_NAME = "name"
-        private const val ARG_LEDGER_CONNECT_DATA = "ledger_connect_data"
-        private const val ARG_ACCOUNTS = "accounts"
-        private const val ARG_KEYSTONE = "keystone"
-        private const val ARG_WATCH_RECOVERY_ACCOUNT_ID = "watch_recovery_account_id"
-        private const val ARG_WITH_NEW = "with_new"
-        private const val ARG_RAFFLE_SOURCE_WALLET_ID = "raffle_source_wallet_id"
+        AddWallet, New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone
     }
 
     private val ledgerAccountName: String?
@@ -64,6 +52,7 @@ data class InitArgs(
         watchRecoveryAccountId = bundle.getString(ARG_WATCH_RECOVERY_ACCOUNT_ID),
         withNew = bundle.getBoolean(ARG_WITH_NEW, true),
         raffleSourceWalletId = bundle.getString(ARG_RAFFLE_SOURCE_WALLET_ID),
+        importStartedTracked = bundle.getBoolean(ARG_IMPORT_STARTED_TRACKED, false),
     )
 
     override fun toBundle(): Bundle = Bundle().apply {
@@ -76,6 +65,19 @@ data class InitArgs(
         watchRecoveryAccountId?.let { putString(ARG_WATCH_RECOVERY_ACCOUNT_ID, it) }
         putBoolean(ARG_WITH_NEW, withNew)
         raffleSourceWalletId?.let { putString(ARG_RAFFLE_SOURCE_WALLET_ID, it) }
+        putBoolean(ARG_IMPORT_STARTED_TRACKED, importStartedTracked)
     }
 
+    private companion object {
+        private const val ARG_TYPE = "type"
+        private const val ARG_PUBLIC_KEY = "pk"
+        private const val ARG_NAME = "name"
+        private const val ARG_LEDGER_CONNECT_DATA = "ledger_connect_data"
+        private const val ARG_ACCOUNTS = "accounts"
+        private const val ARG_KEYSTONE = "keystone"
+        private const val ARG_WATCH_RECOVERY_ACCOUNT_ID = "watch_recovery_account_id"
+        private const val ARG_WITH_NEW = "with_new"
+        private const val ARG_RAFFLE_SOURCE_WALLET_ID = "raffle_source_wallet_id"
+        private const val ARG_IMPORT_STARTED_TRACKED = "import_started_tracked"
+    }
 }

@@ -25,7 +25,7 @@ data class CrossSwapRoute(
     @Contextual @SerialName(value = "route_type")
     val routeType: CrossSwapRouteType,
 
-    /* Raw base-units amount the user is expected to receive. For `exact_output` it equals the requested `destination_amount`.  */
+    /* Raw base-units amount the user is expected to receive. For `exact_output` it equals the requested `destination_amount`, or within TON is at least it (see `CrossSwapExactType`).  */
     @SerialName(value = "estimated_destination_amount")
     val estimatedDestinationAmount: String,
     @SerialName(value = "minimum_destination_amount")
@@ -39,7 +39,7 @@ data class CrossSwapRoute(
     @Contextual @SerialName(value = "risk_level")
     val riskLevel: CrossSwapRiskLevel,
 
-    /* The aggregator's own identifier for this route, passed through verbatim: swapsxyz `txId`, swapkit `routeId`, omniston `quoteId`. Interpret it together with `aggregator`. Omitted when the provider does not expose one.  */
+    /* The aggregator's own identifier for this route, passed through verbatim: swapkit `routeId`, omniston `quoteId`. Interpret it together with `aggregator`. Omitted when the provider does not expose one.  swapsxyz and relay price a quote without an identifier, so at quote time this is an id of ours. The swapsxyz `txId` only exists once the transaction is built: with `include_payload: true` the route carries the `txId` here, otherwise it arrives as `provider_route_id` on the prepare response.  */
     @SerialName(value = "provider_route_id")
     val providerRouteId: String? = null,
 
@@ -87,7 +87,13 @@ data class CrossSwapRoute(
 
     /* Signing payloads for this route, prepared inline. Present only when the quote request had `include_payload: true` and the provider's prepare step succeeded. When present the client can sign and call `/v2/swap/payload/{payload_id}/submit` directly, skipping the separate `/v2/swap/route/{route_id}/prepare`.  */
     @SerialName(value = "payloads")
-    val payloads: List<CrossSwapPayload>? = null
+    val payloads: List<CrossSwapPayload>? = null,
+
+    /* The execution opened for this route by the inline prepare, when the provider can follow the route before a payload is submitted (a `relay` deposit, tracked by the id it was quoted under). Absent otherwise: submit the signed payload to get one.  */
+    @SerialName(value = "execution_id")
+    val executionId: String? = null,
+    @SerialName(value = "change_pub_key_signing")
+    val changePubKeySigning: CrossSwapChangePubKeySigning? = null
 ) {
 }
 

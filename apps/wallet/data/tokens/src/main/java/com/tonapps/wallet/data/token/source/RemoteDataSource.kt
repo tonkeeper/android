@@ -33,15 +33,25 @@ internal class RemoteDataSource(
                 accountId = accountId,
                 network = network,
                 currency = currency.code,
-                extensions = listOf(
-                    TokenEntity.Extension.CustomPayload.value,
-                    TokenEntity.Extension.NonTransferable.value
-                )
+                extensions = SUPPORTED_EXTENSIONS,
             )
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             null
         }
+    }
+
+    suspend fun loadJetton(
+        accountId: String,
+        jettonMaster: String,
+        network: TonNetwork,
+    ): BalanceEntity? = withContext(Dispatchers.IO) {
+        api.getJettonBalance(
+            accountId = accountId,
+            jettonMaster = jettonMaster,
+            network = network,
+            extensions = SUPPORTED_EXTENSIONS,
+        )
     }
 
     suspend fun loadTronUsdt(
@@ -56,4 +66,10 @@ internal class RemoteDataSource(
         api.tron.getTrxBalanceOrNull(tronAddress)
     }
 
+    private companion object {
+        private val SUPPORTED_EXTENSIONS = listOf(
+            TokenEntity.Extension.CustomPayload.value,
+            TokenEntity.Extension.NonTransferable.value,
+        )
+    }
 }

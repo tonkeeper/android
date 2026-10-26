@@ -39,16 +39,24 @@ fun BaseTextCell(
     minHeight: Dp = DefaultItemHeight,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 ) {
+    // Inside a standalone MoonBundleCell the whole island scales: feed that cell's interaction
+    // source and draw no indication of our own. Elsewhere (grouped cells) scale the row itself.
+    val islandSource = LocalMoonBundleScaleSource.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = minHeight)
             .clip(clip)
             .run {
-                if (onClick == null) {
-                    this
-                } else {
-                    combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                when {
+                    onClick == null -> this
+                    islandSource != null -> combinedClickable(
+                        interactionSource = islandSource,
+                        indication = null,
+                        onClick = onClick,
+                        onLongClick = onLongClick,
+                    )
+                    else -> combinedClickable(onClick = onClick, onLongClick = onLongClick)
                 }
             }
             .then(modifier)

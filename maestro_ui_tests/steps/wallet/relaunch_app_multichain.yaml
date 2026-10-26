@@ -1,12 +1,9 @@
-# Relaunch without clearing state, keeping both multichain gates.
+# Relaunch without clearing state.
 appId: com.ton_keeper.debug
 ---
 - launchApp:
     permissions:
       notifications: allow
-    arguments:
-      featureFlags: '{"android_is_multichain_enabled": true, "android_is_import_multichain_wallet": true}'
-      bootFlags: '{"multichain_enabled": true}'
 
 - runFlow:
     when:

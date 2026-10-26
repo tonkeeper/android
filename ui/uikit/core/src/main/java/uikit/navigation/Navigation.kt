@@ -3,7 +3,10 @@ package uikit.navigation
 import android.app.Dialog
 import android.content.Context
 import android.content.ContextWrapper
+import android.graphics.Color
 import android.os.Bundle
+import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
 import kotlinx.coroutines.Runnable
 import uikit.base.BaseFragment
@@ -32,7 +35,14 @@ interface Navigation {
 
     fun openURL(url: String)
 
-    fun toast(message: String, loading: Boolean, color: Int, duration: Long = ToastView.DURATION_DEFAULT)
+    fun toast(
+        message: String,
+        loading: Boolean,
+        color: Int,
+        duration: Long = ToastView.DURATION_DEFAULT,
+        @DrawableRes iconRes: Int = 0,
+        @ColorInt iconTint: Int = Color.TRANSPARENT
+    )
 
     fun run(fragment: BaseFragment) {
     }

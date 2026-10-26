@@ -39,6 +39,7 @@ import uikit.extensions.withAlpha
 import uikit.widget.ProcessTaskView
 import uikit.widget.SlideActionView
 import java.util.concurrent.CancellationException
+import uikit.extensions.setMoonOnClickListener
 
 class SignDataScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Wallet>(R.layout.fragment_signdata, ScreenContext.Wallet(wallet)), BaseFragment.Modal, BaseFragment.SingleTask {
 
@@ -60,7 +61,7 @@ class SignDataScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
         cellSchemaLayoutView = view.findViewById(R.id.cell_schema_layout)
         cellLayoutView = view.findViewById(R.id.cell_layout)
 
-        view.findViewById<View>(R.id.close).setOnClickListener { finish() }
+        view.findViewById<View>(R.id.close).setMoonOnClickListener { finish() }
         view.findViewById<AppCompatTextView>(R.id.title).text = args.appUrl.host
 
         slideView = view.findViewById(R.id.slide)
@@ -96,7 +97,7 @@ class SignDataScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
             text = payload.text
             movementMethod = ScrollingMovementMethod()
         }
-        textLayoutView.findViewById<View>(R.id.text_copy).setOnClickListener {
+        textLayoutView.findViewById<View>(R.id.text_copy).setMoonOnClickListener {
             context?.copyToClipboard(payload.text)
         }
         slideView.doOnDone = { signString(payload.text, "text") }

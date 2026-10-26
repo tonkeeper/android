@@ -4,9 +4,12 @@ import android.os.Bundle
 import android.view.View
 import com.tonapps.core.ComposableFragment
 import com.tonapps.core.navigation.NavigationDelegate
+import uikit.base.BaseFragment
 import uikit.extensions.activity
 
-class ScannerFragment : ComposableFragment() {
+// SwipeBack so the scanner can be dragged away and follows the predictive back
+// preview like the other stacked screens.
+class ScannerFragment : ComposableFragment(), BaseFragment.SwipeBack {
 
     override val fragmentName: String = "ScannerFragment"
 

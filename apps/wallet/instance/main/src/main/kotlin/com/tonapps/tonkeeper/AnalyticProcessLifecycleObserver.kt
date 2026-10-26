@@ -30,6 +30,7 @@ class AnalyticProcessLifecycleObserver(
     private val environment: Environment by inject()
 
     override fun onStart(owner: LifecycleOwner) {
+        AnalyticsHelper.Default.onAppForeground()
         Async.defaultScope().launch {
             api.configFlow.first { !it.empty }
             AnalyticsHelper.Default.events.launchApp.launchApp(
@@ -37,11 +38,13 @@ class AnalyticProcessLifecycleObserver(
                 appIcon = currentLaunchAppIcon(),
                 walletsCount = unifiedAccountRepository.getWalletsCount(),
                 pushPermission = currentLaunchAppPushPermission(),
-                featureFlags = WalletFeatureKey.asAnalyticsProps(
-                    mapOf(WalletFeatureKey.IS_MULTICHAIN_ENABLED to api.isMultichainAvailable())
-                ),
+                featureFlags = WalletFeatureKey.asAnalyticsProps(),
             )
         }
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        AnalyticsHelper.Default.onAppBackground()
     }
 
     private fun currentLaunchAppTheme(): LaunchAppTheme? {

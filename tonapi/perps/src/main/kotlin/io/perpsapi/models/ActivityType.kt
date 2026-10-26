@@ -12,18 +12,21 @@ package io.perpsapi.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Type of an account activity/history item.
  *
- * Values: fill,funding,deposit,withdrawal,liquidation,tp_executed,sl_executed
+ * Values: fill,deposit,withdrawal,liquidation,tp_executed,sl_executed,unknown
  */
-@Serializable
+@Serializable(with = ActivityTypeSerializer::class)
 enum class ActivityType(val value: String) {
     @SerialName(value = "fill")
     fill("fill"),
-    @SerialName(value = "funding")
-    funding("funding"),
     @SerialName(value = "deposit")
     deposit("deposit"),
     @SerialName(value = "withdrawal")
@@ -33,7 +36,9 @@ enum class ActivityType(val value: String) {
     @SerialName(value = "tp_executed")
     tp_executed("tp_executed"),
     @SerialName(value = "sl_executed")
-    sl_executed("sl_executed");
+    sl_executed("sl_executed"),
+    @SerialName(value = "unknown")
+    unknown("unknown");
 
     /**
      * Override [toString()] to avoid using the enum variable name as the value, and instead use
@@ -59,6 +64,20 @@ enum class ActivityType(val value: String) {
             it == value || normalizedData == "$value".lowercase()
           }
         }
+    }
+}
+
+internal object ActivityTypeSerializer : KSerializer<ActivityType> {
+    override val descriptor = String.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ActivityType {
+        val value = decoder.decodeSerializableValue(String.serializer())
+        return ActivityType.entries.firstOrNull { it.value == value }
+            ?: ActivityType.unknown
+    }
+
+    override fun serialize(encoder: Encoder, value: ActivityType) {
+        encoder.encodeSerializableValue(String.serializer(), value.value)
     }
 }
 

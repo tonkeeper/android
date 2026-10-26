@@ -1,6 +1,11 @@
 # Opens Receive for NETWORK_NAME and copies its full address into output.fullAddr.
 # Env: NETWORK_NAME, ADDRESS_TITLE, PREV_NETWORK (row above, or the list subtitle).
 # Do not default PREV_NETWORK here — Maestro env: overrides the caller.
+#
+# The row locators are scoped to the sheet (`childOf: id: sheet_content`):
+# TK-3667's short address under the home balance also matches `.*\.\.\..*`
+# and sits below the TON/TRON anchors, which made the tap open the next
+# network's card. See steps/recieve_modal/assert_multichain_network.yaml.
 appId: com.ton_keeper.debug
 ---
 - extendedWaitUntil:
@@ -21,12 +26,16 @@ appId: com.ton_keeper.debug
 - assertVisible:
     text: ${NETWORK_NAME}
     below: ${PREV_NETWORK}
+    childOf:
+      id: "sheet_content"
 
 - tapOn:
     text: ".*\\.\\.\\..*"
     below:
       text: ${NETWORK_NAME}
       below: ${PREV_NETWORK}
+    childOf:
+      id: "sheet_content"
 - waitForAnimationToEnd:
     timeout: 3000
 - extendedWaitUntil:

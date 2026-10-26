@@ -18,14 +18,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.tonapps.uikit.icon.UIKitIcon
 import ui.components.moon.MoonChevronRight
-import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonItemTitle
 import ui.components.moon.MoonLargeItemSubtitle
 import ui.components.popup.MoonIconTooltip
-import ui.painterResource
 import ui.theme.UIKit
 import ui.theme.modifiers.modifyIf
 
@@ -196,12 +193,15 @@ fun MoonPropertyBigCell(
 
         title()
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.width(8.dp))
 
         Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
+                modifier = Modifier.weight(1f, fill = false),
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {

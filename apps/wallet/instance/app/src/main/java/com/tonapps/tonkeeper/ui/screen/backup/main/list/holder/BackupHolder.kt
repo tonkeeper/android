@@ -6,6 +6,7 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
+import uikit.extensions.setMoonOnClickListener
 
 class BackupHolder(
     parent: ViewGroup,
@@ -15,7 +16,7 @@ class BackupHolder(
     private val dateView = findViewById<AppCompatTextView>(R.id.date)
 
     override fun onBind(item: Item.Backup) {
-        itemView.setOnClickListener { onClick(item) }
+        itemView.setMoonOnClickListener { onClick(item) }
         itemView.background = item.position.drawable(context)
         dateView.text = context.getString(Localization.manual_backup_date, item.date)
     }

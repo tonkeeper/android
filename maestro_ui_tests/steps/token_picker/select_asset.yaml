@@ -18,11 +18,21 @@ env:
           timeout: 600
 
 - inputText: ${SEARCH_QUERY}
+# The result row only: the search field above the chips reads the query too,
+# and the IME suggestion strip offers it as a word. Matching either made this
+# step pass on an empty "Can't find anything." list and tap the keyboard.
 - extendedWaitUntil:
-    visible: ${TOKEN_SYMBOL}
+    visible:
+      text: "^${TOKEN_SYMBOL}$"
+      below: "^All$"
+      childOf:
+        id: sheet_content
     timeout: 15000
+    label: "${TOKEN_SYMBOL} is listed in the token picker (if not: hidden in Manage or missing from the wallet)"
 - tapOn:
-    text: ${TOKEN_SYMBOL}
-    index: 1
+    text: "^${TOKEN_SYMBOL}$"
+    below: "^All$"
+    childOf:
+      id: sheet_content
 - waitForAnimationToEnd:
     timeout: 1000

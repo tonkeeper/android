@@ -6,6 +6,7 @@ import android.widget.Button
 import com.tonapps.tonkeeperx.R
 import uikit.dialog.modal.ModalDialog
 import uikit.widget.TextHeaderView
+import uikit.extensions.setMoonOnClickListener
 
 class SendTransactionTotalDialog(context: Context): ModalDialog(context, R.layout.dialog_send_transaction_total) {
 
@@ -14,8 +15,8 @@ class SendTransactionTotalDialog(context: Context): ModalDialog(context, R.layou
     private val buttonView = findViewById<Button>(R.id.button)!!
 
     init {
-        closeView.setOnClickListener { dismiss() }
-        buttonView.setOnClickListener { dismiss() }
+        closeView.setMoonOnClickListener { dismiss() }
+        buttonView.setMoonOnClickListener { dismiss() }
     }
 
     fun show(title: String, description: String) {

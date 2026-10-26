@@ -20,6 +20,7 @@ import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.deposit.usecase.emulation.Trc20TransferDefaultFees
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.multichain.legacy.LegacySwapAccounts
 import com.tonapps.wallet.api.entity.ChartEntity
 import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.blockchain.model.legacy.TokenEntity
@@ -67,6 +68,7 @@ class TokenViewModel(
     private val ratesRepository: RatesRepository,
     private val transactionManager: TransactionManager,
     private val emulationUseCase: EmulationUseCase,
+    private val legacySwapAccounts: LegacySwapAccounts,
 ) : BaseWalletVM(app) {
 
     val burnAddress: String by lazy {
@@ -104,7 +106,9 @@ class TokenViewModel(
         combine(tokenFlow, settingsRepository.currencyFlow) { token, currency ->
             if (token.isTrc20) {
                 emulationUseCase.getTrc20TransferDefaultFees(wallet, currency)
-            } else null
+            } else {
+                null
+            }
         }.flowOn(Dispatchers.IO)
 
     init {
@@ -134,7 +138,7 @@ class TokenViewModel(
     }
 
     private suspend fun getData(refresh: Boolean = false) {
-        tronAddress = accountRepository.getTronAddress(wallet.id)
+        tronAddress = accountRepository.getTronAddressOrNull(wallet.id)
 
         val list = tokenRepository.get(
             settingsRepository.currency, wallet.accountId, wallet.network, refresh = refresh
@@ -308,13 +312,17 @@ class TokenViewModel(
                 showNetwork = token.isUsdt || token.isTrc20,
                 blockchain = token.token.blockchain,
                 wallet = wallet,
-                availableTransfers = if (token.isTrc20) totalAvailableTransfers else null
+                availableTransfers = if (token.isTrc20) {
+                    totalAvailableTransfers
+                } else {
+                    null
+                }
             )
         )
         items.add(
             Item.Actions(
                 swapUri = api.getConfig(wallet.network).swapUri,
-                tronSwapUrl = if (token.isTrc20) api.getConfig(wallet.network).tronSwapUrl else null,
+                legacyTronSwap = token.isTrc20 && legacySwapAccounts.find(wallet.id) != null,
                 swapDisabled = api.getConfig(wallet.network).flags.disableSwap || ((token.isUSDe || token.isTsUSDe) && usdeDisabled),
                 tronTransfersDisabled = token.isTrc20 && trc20DefaultFees != null && totalAvailableTransfers == 0,
                 token = token.balance.token,
@@ -393,7 +401,6 @@ class TokenViewModel(
                 rateDiff24h = token.rateDiff24h
                 delta = ""
             } else {
-
                 val maxPrice = charts.maxOf { it.price }
                 val minPrice = charts.minOf { it.price }
 
@@ -476,6 +483,9 @@ class TokenViewModel(
         beforeLt: Long? = null
     ) = withContext(Dispatchers.IO) {
         if (tronAddress == null) {
+            if (beforeLt == null) {
+                setEmptyEvents()
+            }
             return@withContext
         }
 
@@ -593,9 +603,5 @@ class TokenViewModel(
         val endDateSeconds = System.currentTimeMillis() / 1000
         val startDateSeconds = endDateSeconds - 60 * 60 * 24 * 365
         loadChart(token, startDateSeconds, endDateSeconds)
-    }
-
-    private suspend fun getBatteryCharges(): Int = withContext(Dispatchers.IO) {
-        batteryRepository.getCharges(wallet, true)
     }
 }

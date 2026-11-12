@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    testImplementation(libs.junit)
     implementation(libs.koin.core)
 
     implementation(projects.tonapi.legacy)

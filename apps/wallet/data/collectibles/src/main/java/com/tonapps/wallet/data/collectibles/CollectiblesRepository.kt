@@ -10,6 +10,10 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.collectibles.entities.NftListResult
 import com.tonapps.wallet.data.collectibles.source.LocalDataSource
 import io.extensions.renderType
+import io.tonapi.models.NftItem
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import io.tonapi.models.TrustType
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
@@ -67,9 +71,12 @@ class CollectiblesRepository(
             }
 
             if (isOnline) {
-                val remote = getRemoteNftItems(address, network) ?: return@flow
+                val requestContext = currentCoroutineContext()
+                val remote = getRemoteNftItems(address, network) { requestContext.ensureActive() } ?: return@flow
                 emit(NftListResult(cache = false, list = remote))
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
         }
@@ -84,13 +91,19 @@ class CollectiblesRepository(
 
     fun getRemoteNftItems(
         address: String,
-        network: TonNetwork
+        network: TonNetwork,
+        checkCancelled: () -> Unit = {}
     ): List<NftEntity>? {
-        val nftItems = api.getNftItems(address, network) ?: return null
+        val nftItems = loadAllNftPages(
+            fetchPage = { offset, limit -> api.getNftItems(address, network, limit = limit, offset = offset) },
+            addressOf = NftItem::address,
+            checkCancelled = checkCancelled,
+        ) ?: return null
         val items = nftItems.filter {
             it.trust != TrustType.blacklist && it.renderType != "hidden"
         }.map { NftEntity(it, network) }
 
+        checkCancelled()
         localDataSource.save(address, network.isTestnet, items.toList())
         return items
     }

@@ -891,12 +891,14 @@ class API(
     fun getNftItems(
         address: String,
         network: TonNetwork,
-        limit: Int = 1000
+        limit: Int = 1000,
+        offset: Int = 0
     ): List<NftItem>? {
         return withRetry {
             accounts(network).getAccountNftItems(
                 accountId = address,
                 limit = limit,
+                offset = offset,
                 indirectOwnership = true,
             ).nftItems
         }

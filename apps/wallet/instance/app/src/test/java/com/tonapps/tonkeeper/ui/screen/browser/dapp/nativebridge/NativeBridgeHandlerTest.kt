@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge
 
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Effect
+import com.tonapps.webview.bridge.InAppBridgeContract.Effect
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol.Message
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol.Message.Request
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol.Response

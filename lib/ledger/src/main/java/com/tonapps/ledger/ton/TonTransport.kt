@@ -188,7 +188,7 @@ class TonTransport(private val transport: Transport) {
         var pkg =
             LedgerWriter.putUint8(0) + LedgerWriter.putUint32(transaction.seqno) + LedgerWriter.putUint32(
                 transaction.timeout
-            ) + LedgerWriter.putVarUInt(transaction.coins.amount.toLong()) + LedgerWriter.putAddress(
+            ) + LedgerWriter.putVarUInt(transaction.coins.amount) + LedgerWriter.putAddress(
                 transaction.destination
             ) + LedgerWriter.putUint8(
                 transaction.bounceable.asFlag()
@@ -221,17 +221,15 @@ class TonTransport(private val transport: Transport) {
             is TonPayloadFormat.JettonTransfer -> {
                 hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x01)
                 var cell = CellBuilder.beginCell().storeUInt(0x0f8a7ea5, 32)
-                var bytes = ByteArray(0)
-
                 val knownJetton = transaction.payload.knownJetton
                 var flags = 0
                 if (transaction.payload.queryId != null) {
-                    flags = flags or 1
+                    flags = flags or JETTON_FLAG_QUERY_ID
                 }
                 if (knownJetton != null) {
-                    flags = flags or 2
+                    flags = flags or JETTON_FLAG_KNOWN
                 }
-                bytes += LedgerWriter.putUint8(flags)
+                var bytes = LedgerWriter.putUint8(flags)
 
                 transaction.payload.queryId?.let { queryId ->
                     bytes += LedgerWriter.putUint64(queryId)
@@ -241,10 +239,10 @@ class TonTransport(private val transport: Transport) {
                 }
 
                 if (knownJetton != null) {
-                    bytes += LedgerWriter.putUint16(knownJetton.jettonId) + LedgerWriter.putUint8(knownJetton.workchain)
+                    bytes += LedgerWriter.putUint16(knownJetton.jettonId) + LedgerWriter.putUint8(knownJetton.workchain and 0xff)
                 }
 
-                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount.toLong()) + LedgerWriter.putAddress(
+                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount) + LedgerWriter.putAddress(
                     transaction.payload.receiverAddress
                 ) + LedgerWriter.putAddress(transaction.payload.excessesAddress)
                 cell = cell.storeTlb(Coins, transaction.payload.coins)
@@ -259,7 +257,7 @@ class TonTransport(private val transport: Transport) {
                     cell = cell.storeBit(false)
                 }
 
-                bytes += LedgerWriter.putVarUInt(transaction.payload.forwardAmount.amount.toLong())
+                bytes += LedgerWriter.putVarUInt(transaction.payload.forwardAmount.amount)
                 cell = cell.storeTlb(Coins, transaction.payload.forwardAmount)
 
                 if (transaction.payload.forwardPayload != null) {
@@ -301,7 +299,7 @@ class TonTransport(private val transport: Transport) {
                     cell = cell.storeBit(false)
                 }
 
-                bytes += LedgerWriter.putVarUInt(transaction.payload.forwardAmount.amount.toLong())
+                bytes += LedgerWriter.putVarUInt(transaction.payload.forwardAmount.amount)
                 cell = cell.storeTlb(Coins, transaction.payload.forwardAmount)
 
                 if (transaction.payload.forwardPayload != null) {
@@ -329,7 +327,7 @@ class TonTransport(private val transport: Transport) {
                     cell = cell.storeUInt(0, 64)
                 }
 
-                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount.toLong()) + LedgerWriter.putAddress(
+                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount) + LedgerWriter.putAddress(
                     transaction.payload.responseDestination
                 )
                 cell = cell.storeTlb(Coins, transaction.payload.coins)
@@ -479,7 +477,7 @@ class TonTransport(private val transport: Transport) {
                     cell = cell.storeUInt(0, 64)
                 }
 
-                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount.toLong())
+                bytes += LedgerWriter.putVarUInt(transaction.payload.coins.amount)
                 cell = cell.storeTlb(Coins, transaction.payload.coins)
 
                 payload = cell.endCell()
@@ -536,6 +534,22 @@ class TonTransport(private val transport: Transport) {
 
             is TonPayloadFormat.Unsafe -> {
                 payload = transaction.payload.message
+            }
+
+            is TonPayloadFormat.WhalesDeposit -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x0B)
+                payload = transaction.payload.toCell()
+                val bytes = LedgerWriter.putUint64(transaction.payload.queryId) + LedgerWriter.putVarUInt(transaction.payload.gasLimit.amount)
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
+            }
+
+            is TonPayloadFormat.WhalesWithdraw -> {
+                hints = LedgerWriter.putUint8(1) + LedgerWriter.putUint32(0x0C)
+                payload = transaction.payload.toCell()
+                val bytes = LedgerWriter.putUint64(transaction.payload.queryId) +
+                    LedgerWriter.putVarUInt(transaction.payload.gasLimit.amount) +
+                    LedgerWriter.putVarUInt(transaction.payload.amount.amount)
+                hints += LedgerWriter.putUint16(bytes.size) + bytes
             }
 
             is TonPayloadFormat.VoteForProposal -> {
@@ -654,6 +668,8 @@ class TonTransport(private val transport: Transport) {
         const val INS_ADDRESS = 0x05
         const val INS_SIGN_TX = 0x06
         const val INS_PROOF = 0x08
+        const val JETTON_FLAG_QUERY_ID = 0x01
+        const val JETTON_FLAG_KNOWN = 0x02
     }
 }
 

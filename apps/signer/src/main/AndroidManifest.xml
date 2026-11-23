@@ -33,7 +33,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:manageSpaceActivity=".screen.storage.StorageActivity"
+        android:manageSpaceActivity="com.tonapps.signer.screen.storage.StorageActivity"
         android:supportsRtl="false"
         android:theme="@style/Theme.Signer.Starting"
         android:hardwareAccelerated="true"
@@ -48,7 +48,8 @@
             android:theme="@style/Theme.Signer.Starting"
             android:largeHeap="true"
             android:screenOrientation="portrait"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode">
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
+            android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -66,14 +67,15 @@
             android:theme="@style/Theme.Signer"
             android:name=".screen.crash.CrashActivity"
             android:process=":crash_activity"
-            android:exported="false"/>
+            android:exported="false"
+            android:taskAffinity=""/>
         <activity
             android:theme="@style/Theme.Signer"
             android:name=".screen.storage.StorageActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustPan"
-            android:exported="true">
+            android:exported="false">
             <intent-filter
                 android:icon="@mipmap/ic_launcher"
                 android:roundIcon="@mipmap/ic_launcher_round">

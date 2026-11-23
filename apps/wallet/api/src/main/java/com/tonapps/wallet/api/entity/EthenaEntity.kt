@@ -1,9 +1,10 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
-import com.tonapps.extensions.map
+import io.tonendpointapi.models.GetStakingEthenaMethods200Response
+import io.tonendpointapi.models.GetStakingEthenaMethods200ResponseAbout
+import io.tonendpointapi.models.StakingEthenaMethod
 import kotlinx.parcelize.Parcelize
-import org.json.JSONObject
 import java.math.BigDecimal
 
 @Parcelize
@@ -21,13 +22,13 @@ data class EthenaEntity(
         val stakeTitle: String,
         val stakeDescription: String,
     ) : Parcelable {
-        constructor(json: JSONObject) : this(
-            description = json.getString("description"),
-            tsusdeDescription = json.getString("tsusde_description"),
-            faqUrl = json.getString("faq_url"),
-            aboutUrl = json.getString("about_url"),
-            stakeTitle = json.getString("tsusde_stake_title"),
-            stakeDescription = json.getString("tsusde_stake_description"),
+        constructor(about: GetStakingEthenaMethods200ResponseAbout) : this(
+            description = about.description,
+            tsusdeDescription = about.tsusdeDescription,
+            faqUrl = about.faqUrl,
+            aboutUrl = about.aboutUrl,
+            stakeTitle = about.tsusdeStakeTitle,
+            stakeDescription = about.tsusdeStakeDescription,
         )
     }
 
@@ -59,29 +60,26 @@ data class EthenaEntity(
             }
         }
 
-        constructor(json: JSONObject) : this(
-            type = Type.fromId(json.getString("type")),
-            name = json.getString("name"),
-            apy = BigDecimal.valueOf(json.getDouble("apy")),
-            apyTitle = json.getString("apy_title"),
-            apyDescription = json.getString("apy_description"),
-            bonusApy = json.optString("bonus_apy").takeIf { it.isNotEmpty() }?.let {
-                BigDecimal(it)
-            },
-            bonusTitle = json.optString("apy_bonus_title"),
-            bonusDescription = json.optString("apy_bonus_description"),
-            eligibleBonusUrl = json.optString("eligible_bonus_url"),
-            depositUrl = json.getString("deposit_url"),
-            withdrawalUrl = json.getString("withdrawal_url"),
-            jettonMaster = json.getString("jetton_master"),
-            links = json.optJSONArray("links")?.let { array ->
-                (0 until array.length()).map { array.getString(it) }
-            } ?: emptyList()
+        constructor(method: StakingEthenaMethod) : this(
+            type = Type.fromId(method.type),
+            name = method.name,
+            apy = BigDecimal.valueOf(method.apy),
+            apyTitle = method.apyTitle,
+            apyDescription = method.apyDescription,
+            // The spec has no bonus APY: the backend never sent `bonus_apy`.
+            bonusApy = null,
+            bonusTitle = method.apyBonusTitle,
+            bonusDescription = method.apyBonusDescription,
+            eligibleBonusUrl = method.eligibleBonusUrl,
+            depositUrl = method.depositUrl,
+            withdrawalUrl = method.withdrawalUrl,
+            jettonMaster = method.jettonMaster,
+            links = method.links
         )
     }
 
-    constructor(json: JSONObject) : this(
-        methods = json.getJSONArray("methods").map { Method(it) },
-        about = About(json.getJSONObject("about"))
+    constructor(response: GetStakingEthenaMethods200Response) : this(
+        methods = response.methods.map(::Method),
+        about = About(response.about)
     )
 }

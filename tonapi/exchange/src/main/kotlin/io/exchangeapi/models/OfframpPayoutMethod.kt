@@ -19,7 +19,7 @@ data class OfframpPayoutMethod(
     @Contextual @SerialName(value = "type")
     val type: ExchangePaymentMethodType,
 
-    /* Display name (e.g. \"Card\", \"SEPA\") */
+    /* Display name (e.g. \"Card\", \"SEPA\"), localized for generic types such as `card` */
     @SerialName(value = "name")
     val name: String,
 
@@ -27,7 +27,15 @@ data class OfframpPayoutMethod(
     @SerialName(value = "image")
     val image: String,
     @SerialName(value = "providers")
-    val providers: List<OfframpProvider>
+    val providers: List<OfframpProvider>,
+
+    /* Localized subtitle, e.g. the settlement speed \"Instant\", \"1–3 days\", or \"Buy from other users in Walt\" for `p2p`. Absent when there is none. */
+    @SerialName(value = "subtitle")
+    val subtitle: String? = null,
+
+    /* Localized badge text, e.g. \"Recommended\", \"For beginners\"; the badge is set by our config. Absent when there is none. */
+    @SerialName(value = "badge")
+    val badge: String? = null
 ) {
 }
 

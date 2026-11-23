@@ -8,6 +8,7 @@ import com.tonapps.wallet.testing.BaseUnitTest
 import io.exchangeapi.models.CrossSwapAggregator
 import io.exchangeapi.models.CrossSwapProviderError
 import io.exchangeapi.models.CrossSwapProviderErrorCode
+import io.exchangeapi.models.CrossSwapQuote
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -67,6 +68,47 @@ class SwapFeatureQuoteErrorsTest : BaseUnitTest() {
     @Test
     fun providerDownAsksToTryAgain() {
         assertNoRouteMessage(Localization.swap_error_provider_unavailable, CrossSwapProviderErrorCode.provider_unavailable)
+    }
+
+    @Test
+    fun screenedRouteSaysTheWalletCannotSwap() {
+        env.quoteAnswer = { screened(SwapFixtures.exactInputQuote) }
+
+        swapTest(env) {
+            val screened = after { sendAction(SwapAction.Amount.SetSell("1")) }
+
+            assertEquals(Localization.swap_error_wallet_screened, screened.quoteErrorMessageRes)
+            assertNull(screened.quote)
+            assertFalse(screened.continueEnabled)
+            assertTrue(env.prepareRequests.isEmpty())
+        }
+    }
+
+    @Test
+    fun routeOfAnotherAggregatorIsQuotedPastAScreenedOne() {
+        env.quoteAnswer = {
+            val quote = screened(SwapFixtures.exactInputQuote)
+            val route = quote.routes.single()
+            quote.copy(routes = listOf(route, route.copy(routeId = OTHER_ROUTE_ID, aggregator = CrossSwapAggregator.swapkit)))
+        }
+
+        swapTest(env) {
+            val quoted = after { sendAction(SwapAction.Amount.SetSell("1")) }
+
+            assertEquals(OTHER_ROUTE_ID, quoted.quote?.quote?.routeId)
+            assertFalse(quoted.quoteUnavailable)
+            assertTrue(quoted.continueEnabled)
+        }
+    }
+
+    @Test
+    fun walletScreeningOutranksEveryOtherReason() {
+        assertNoRouteMessage(
+            Localization.swap_error_wallet_screened,
+            CrossSwapProviderErrorCode.country_blocked,
+            CrossSwapProviderErrorCode.min_amount_not_met,
+            CrossSwapProviderErrorCode.wallet_screened,
+        )
     }
 
     @Test
@@ -292,6 +334,17 @@ class SwapFeatureQuoteErrorsTest : BaseUnitTest() {
         }
     }
 
+    private fun screened(quote: CrossSwapQuote): CrossSwapQuote = quote.copy(
+        routes = quote.routes.map { it.copy(payloads = null) },
+        providerErrors = listOf(
+            CrossSwapProviderError(
+                aggregator = CrossSwapAggregator.swapsxyz,
+                code = CrossSwapProviderErrorCode.wallet_screened,
+                message = "wallet blocked by the provider's compliance screening",
+            ),
+        ),
+    )
+
     private fun assertNoRouteMessage(expected: Int, vararg codes: CrossSwapProviderErrorCode) {
         env.quoteAnswer = {
             SwapFixtures.noRouteQuote.copy(
@@ -308,5 +361,9 @@ class SwapFeatureQuoteErrorsTest : BaseUnitTest() {
             assertNull(noRoute.quote)
             assertFalse(noRoute.continueEnabled)
         }
+    }
+
+    private companion object {
+        const val OTHER_ROUTE_ID = "swapkit-route"
     }
 }

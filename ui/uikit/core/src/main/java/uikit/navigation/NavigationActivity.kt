@@ -7,6 +7,7 @@ import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -19,6 +20,7 @@ import uikit.base.PredictiveBackGesture
 import uikit.extensions.primaryFragment
 import uikit.extensions.roundTop
 import uikit.extensions.scale
+import uikit.widget.ToastFeedback
 import uikit.widget.ToastView
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -29,6 +31,8 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
 
     open val isInitialized: Boolean
         get() = supportFragmentManager.fragments.isNotEmpty()
+
+    protected abstract val isLightNavigationBars: Boolean
 
     private val modals: List<BaseFragment.Modal>
         get() = supportFragmentManager.fragments.filterIsInstance<BaseFragment.Modal>()
@@ -45,7 +49,12 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
-        enableEdgeToEdge()
+        val navigationBarStyle = if (isLightNavigationBars) {
+            SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+        } else {
+            SystemBarStyle.dark(Color.TRANSPARENT)
+        }
+        enableEdgeToEdge(navigationBarStyle = navigationBarStyle)
         setContentView(R.layout.activity_navigation)
 
         hostFragmentView = findViewById(hostFragmentId)
@@ -309,7 +318,9 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
             return
         }
         for (modal in currentModals) {
-            transaction.remove(modal as Fragment)
+            if (modal.dismissedByScreens) {
+                transaction.remove(modal as Fragment)
+            }
         }
     }
 
@@ -319,8 +330,9 @@ abstract class NavigationActivity: BaseActivity(), Navigation, ViewTreeObserver.
         color: Int,
         duration: Long,
         iconRes: Int,
-        iconTint: Int
+        iconTint: Int,
+        feedback: ToastFeedback,
     ) {
-        toastView.show(message, loading, color, duration, iconRes, iconTint)
+        toastView.show(message, loading, color, duration, iconRes, iconTint, feedback)
     }
 }

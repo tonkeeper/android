@@ -1,6 +1,7 @@
 package com.tonapps.perps.funding
 
 import com.tonapps.async.Async
+import com.tonapps.perps.data.toWireDecimalOrNull
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -30,7 +31,6 @@ class LighterTransaction(
 )
 
 class LighterAssetMinimums(
-    val withdrawal: BigDecimal?,
     val transfer: BigDecimal?,
 )
 
@@ -39,12 +39,6 @@ class LighterPublicApi(
     private val baseUrl: String = LIGHTER_MAINNET_URL,
 ) {
 
-    suspend fun withdrawalDelaySeconds(): Long {
-        val body = get("/api/v1/withdrawalDelay")
-        return body.jsonObject["seconds"]?.jsonPrimitive?.longOrNull
-            ?: throw IOException("lighter: withdrawalDelay without seconds")
-    }
-
     suspend fun assetMinimums(assetId: Int): LighterAssetMinimums? {
         val body = get("/api/v1/assetDetails")
         val asset = body.jsonObject["asset_details"]?.jsonArray
@@ -52,8 +46,7 @@ class LighterPublicApi(
             ?.firstOrNull { it["asset_id"]?.jsonPrimitive?.longOrNull == assetId.toLong() }
             ?: return null
         return LighterAssetMinimums(
-            withdrawal = asset["min_withdrawal_amount"]?.jsonPrimitive?.content?.toBigDecimalOrNull(),
-            transfer = asset["min_transfer_amount"]?.jsonPrimitive?.content?.toBigDecimalOrNull(),
+            transfer = asset["min_transfer_amount"]?.jsonPrimitive?.content.toWireDecimalOrNull(),
         )
     }
 

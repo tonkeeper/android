@@ -66,6 +66,7 @@ sealed interface WithdrawMulticoinRoutes : NavKey {
 
 @Composable
 fun WithdrawMulticoinRouter(
+    walletId: String,
     initial: WithdrawMulticoinRoutes,
     onBack: () -> Unit,
     onTopUp: (assetId: String) -> Unit,
@@ -93,7 +94,7 @@ fun WithdrawMulticoinRouter(
             when (key) {
                 is WithdrawMulticoinRoutes.Picker -> NavEntry(key) {
                     val feature = koinViewModel<AssetPickerFeature> {
-                        parametersOf(analyticsFrom, utm)
+                        parametersOf(walletId, analyticsFrom, utm)
                     }
                     val group = remember(key.presetAddress) {
                         val presetAddress = key.presetAddress
@@ -127,6 +128,7 @@ fun WithdrawMulticoinRouter(
                     val feature = koinViewModel<SendFeature> {
                         parametersOf(
                             SendData(
+                                walletId = walletId,
                                 initAssetId = key.assetId,
                                 presetAddress = key.presetAddress,
                                 analyticsFrom = analyticsFrom,
@@ -186,7 +188,7 @@ fun WithdrawMulticoinRouter(
 
                 is WithdrawMulticoinRoutes.Scanner -> NavEntry(key) {
                     ScannerScreen(
-                        onResult = { value ->
+                        onResult = { value, _ ->
                             resultStore.setResult(KEY_SCANNER_RESULT, value)
                             backStack.safeRemoveLastOrNull(key)
                         },

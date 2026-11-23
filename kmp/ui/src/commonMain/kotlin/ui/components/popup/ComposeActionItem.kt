@@ -10,4 +10,5 @@ data class ComposeActionItem(
     val text: String,
     val icon: ComposeIcon? = null,
     val iconPainter: Painter? = null,
+    val leadingImage: String? = null,
 )

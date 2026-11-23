@@ -4,8 +4,9 @@ import android.os.Bundle
 import android.view.View
 import androidx.camera.view.PreviewView
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
+import com.tonapps.bus.walletimport.WalletImportPairingSession
+import com.tonapps.bus.walletimport.WalletImportPairingSessions
 import com.tonapps.tonkeeper.helper.BrowserHelper
-import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
 import com.tonapps.tonkeeper.ui.screen.external.qr.urFlow
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import org.ton.kotlin.crypto.PublicKeyEd25519
 import com.tonapps.security.hex
+import com.tonapps.tonkeeper.extensions.failureToast
 import kotlinx.io.bytestring.ByteString
 import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
@@ -46,6 +48,14 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
     private lateinit var flashView: CameraFlashIconView
 
     private val importAnalytics: WalletImportAnalytics by inject()
+
+    private val pairingSessions: WalletImportPairingSessions by inject()
+
+    private val pairingSession: WalletImportPairingSession? by lazy {
+        pairingSessions.active(WalletFlowWalletSource.Keystone)
+    }
+
+    private var isHandedOff = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -96,8 +106,23 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
         }
     }
 
+    override fun onCameraStarted() {
+        pairingSession?.cameraStarted()
+    }
+
+    override fun onCameraPermissionDenied() {
+        pairingSession?.setBlocked(WalletImportPairingSession.Blocker.CameraPermissionDenied)
+    }
+
+    override fun onDestroy() {
+        if (!isHandedOff && activity?.isChangingConfigurations != true) {
+            pairingSession?.exit()
+        }
+        super.onDestroy()
+    }
+
     private suspend fun onScanError(error: Throwable) {
-        navigation?.toast(Localization.unknown_error)
+        navigation?.failureToast(Localization.unknown_error)
         importAnalytics.trackError(
             walletSource = WalletFlowWalletSource.Keystone,
             errorType = "keystone_qr_scan_error",
@@ -106,7 +131,9 @@ class KeystoneAddScreen: QRCameraScreen(R.layout.fragment_add_keystone), BaseFra
     }
 
     private suspend fun addAccount(data: KeystoneData) {
+        pairingSession?.connected()
         importAnalytics.trackKeystoneScanned()
+        isHandedOff = true
         navigation?.add(InitScreen.newInstance(
             type = InitArgs.Type.Keystone,
             publicKeyEd25519 = data.publicKey,

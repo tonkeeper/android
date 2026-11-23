@@ -10,4 +10,8 @@ object Os {
             Build.MANUFACTURER.titlecase() + " " + Build.MODEL
         }
     }
+
+    fun tonkeeperUserAgent(versionName: String): String {
+        return "Tonkeeper/$versionName (Android; ${Build.VERSION.RELEASE}; ${deviceNameAndModel()})"
+    }
 }

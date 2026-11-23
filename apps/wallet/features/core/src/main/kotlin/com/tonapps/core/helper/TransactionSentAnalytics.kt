@@ -109,7 +109,7 @@ object TransactionSentAnalytics {
 
     private fun walletSource(wallet: WalletEntity): TransactionSentWalletSource {
         return when {
-            wallet.isLedger -> TransactionSentWalletSource.Ledger
+            wallet.signsWithLedger -> TransactionSentWalletSource.Ledger
             wallet.isKeystone -> TransactionSentWalletSource.Keystone
             wallet.signer -> TransactionSentWalletSource.Signer
             wallet.isWatchOnly -> TransactionSentWalletSource.Watchonly
@@ -128,6 +128,7 @@ object TransactionSentAnalytics {
             WalletVersion.V4R1 -> TransactionSentWalletInterface.V4R1
             WalletVersion.V3R2 -> TransactionSentWalletInterface.V3R2
             WalletVersion.V3R1 -> TransactionSentWalletInterface.V3R1
+            WalletVersion.WALLET_TG -> TransactionSentWalletInterface.WalletTg
             WalletVersion.UNKNOWN -> null
         }
     }

@@ -11,14 +11,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -29,7 +33,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -58,6 +66,9 @@ import com.tonapps.perps.data.formatPrice
 import com.tonapps.perps.data.formatSignedPercent
 import com.tonapps.perps.data.perpsTicker
 import com.tonapps.perps.data.withLivePrice
+import com.tonapps.perps.screens.common.PERPS_SKELETON_ROW_COUNT
+import com.tonapps.perps.screens.common.PerpsMarketSkeletonRow
+import com.tonapps.perps.screens.common.PerpsSkeletonRowsCard
 import com.tonapps.wallet.localization.Localization
 import kotlinx.collections.immutable.toPersistentList
 import ui.components.moon.MoonActionSelector
@@ -69,6 +80,7 @@ import ui.components.moon.MoonLabel
 import ui.components.moon.MoonLabelDefault
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
+import ui.components.moon.cell.MoonBundleTitleCell
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.MoonRetryCell
 import ui.components.moon.cell.MoonSearchCell
@@ -80,6 +92,7 @@ import ui.components.popup.ActionMenuHorizontalAlignment
 import ui.preview.ThemedPreview
 import ui.theme.Dimens
 import ui.theme.UIKit
+import ui.theme.modifiers.rememberShimmerPhase
 import java.math.BigDecimal
 
 @Composable
@@ -116,6 +129,7 @@ fun PerpsMarketsScreen(
     )
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun PerpsMarketsContent(
     pagingItems: LazyPagingItems<PerpMarket>,
@@ -132,6 +146,7 @@ private fun PerpsMarketsContent(
     MoonScaffold(
         modifier = Modifier
             .fillMaxSize()
+            .semantics { testTagsAsResourceId = true }
             .statusBarsPadding()
             .imePadding(),
         title = stringResource(Localization.perps_explore),
@@ -145,6 +160,7 @@ private fun PerpsMarketsContent(
             }
         }
         MoonSearchCell(
+            modifier = Modifier.testTag("perps_search_input"),
             placeholder = stringResource(Localization.perps_search_hint),
             searchText = searchText,
             onChanged = onQueryChange,
@@ -188,9 +204,7 @@ private fun PerpsMarketsContent(
             val failure = refresh as? LoadState.Error
                 ?: (append as? LoadState.Error)?.takeIf { pagingItems.itemCount == 0 }
             when {
-                isLoading -> {
-                    MoonLoaderCell(height = 240.dp)
-                }
+                isLoading -> PerpsMarketsSkeleton()
 
                 failure != null -> PerpsMarketsError(
                     error = (failure.error as? PerpsLoadException)?.error ?: PerpsError.Unknown,
@@ -202,6 +216,7 @@ private fun PerpsMarketsContent(
                 }
 
                 else -> PerpsMarketsList(
+                    filter = filter,
                     pagingItems = pagingItems,
                     livePrices = livePrices,
                     onOpenMarket = onOpenMarket,
@@ -221,44 +236,92 @@ private fun PerpsMarketsContent(
 }
 
 @Composable
+private fun PerpsMarketsSkeleton() {
+    val phase = rememberShimmerPhase()
+    PerpsSkeletonRowsCard(
+        count = PERPS_SKELETON_ROW_COUNT,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(state = rememberScrollState(), enabled = false),
+    ) {
+        PerpsMarketSkeletonRow(phase = phase)
+    }
+}
+
+@Composable
 private fun PerpsMarketsError(
     error: PerpsError,
     onRetry: () -> Unit,
 ) {
-    MoonEmptyScreen(
-        text = stringResource(Localization.perps_markets_load_failed),
-        description = perpsErrorDescription(error),
-        type = MoonEmptyScreenType.Error,
-        buttonText = stringResource(Localization.perps_retry),
-        onButtonClick = onRetry,
-    )
+    PerpsMarketsMessage {
+        MoonEmptyScreen(
+            text = stringResource(Localization.perps_markets_load_failed),
+            description = perpsErrorDescription(error),
+            type = MoonEmptyScreenType.Error,
+            buttonText = stringResource(Localization.perps_retry),
+            onButtonClick = onRetry,
+            minHeight = null,
+        )
+    }
 }
 
 @Composable
 private fun PerpsMarketsEmpty(query: String) {
-    MoonEmptyScreen(
-        text = stringResource(Localization.cant_find_anything),
-        description = if (query.isBlank()) {
-            stringResource(Localization.no_results)
-        } else {
-            stringResource(Localization.search_no_result, query)
-        },
-        type = MoonEmptyScreenType.Empty,
-    )
+    val trimmed = query.trim()
+    PerpsMarketsMessage {
+        MoonEmptyScreen(
+            modifier = Modifier.padding(bottom = Dimens.heightBar),
+            text = stringResource(Localization.perps_markets_not_found),
+            description = if (trimmed.isEmpty()) {
+                stringResource(Localization.perps_markets_no_markets)
+            } else {
+                stringResource(Localization.perps_markets_no_results, trimmed)
+            },
+            type = MoonEmptyScreenType.Empty,
+            minHeight = null,
+        )
+    }
+}
+
+@Composable
+private fun PerpsMarketsMessage(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        content()
+    }
 }
 
 @Composable
 private fun PerpsMarketsList(
+    filter: PerpsMarketFilter,
     pagingItems: LazyPagingItems<PerpMarket>,
     livePrices: Map<String, BigDecimal>,
     onOpenMarket: (marketIndex: Int, symbol: String) -> Unit,
     onRowVisible: (symbol: String, visible: Boolean) -> Unit,
 ) {
-    val navBottom = WindowInsets.navigationBars.asPaddingValues()
+    val navBottom = WindowInsets.navigationBars.exclude(WindowInsets.ime).asPaddingValues()
         .calculateBottomPadding()
     LazyColumn(
         contentPadding = PaddingValues(bottom = navBottom + Dimens.heightBar),
     ) {
+        item(key = "list_title") {
+            MoonBundleTitleCell(
+                title = stringResource(
+                    when (filter) {
+                        PerpsMarketFilter.ALL -> Localization.search_all_assets
+                        PerpsMarketFilter.TOKENS -> Localization.perps_filter_tokens
+                        PerpsMarketFilter.COMMODITIES -> Localization.perps_filter_commodities
+                        PerpsMarketFilter.STOCKS -> Localization.perps_filter_stocks
+                        PerpsMarketFilter.ETFS -> Localization.perps_filter_etfs
+                    },
+                ),
+            )
+        }
         items(
             count = pagingItems.itemCount,
             key = pagingItems.itemKey { it.marketIndex },
@@ -296,7 +359,8 @@ private fun PerpsFloatingSortSelector(
     onSortChange: (PerpsSort) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val navBottom = WindowInsets.navigationBars.exclude(WindowInsets.ime).asPaddingValues()
+        .calculateBottomPadding()
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -330,7 +394,7 @@ fun PerpsSortSelector(
     menuAlignment: ActionMenuHorizontalAlignment = ActionMenuHorizontalAlignment.Start,
 ) {
     val labels = listOf(
-        stringResource(Localization.perps_volume),
+        stringResource(Localization.perps_volume_24h),
         stringResource(Localization.perps_price_change),
         stringResource(Localization.perps_open_interest),
     )
@@ -359,7 +423,7 @@ fun PerpMarketRow(
         onDispose { onVisibilityChange(false) }
     }
     MoonBundleCell(
-        modifier = modifier,
+        modifier = modifier.testTag("perps_market_${market.symbol}"),
         onClick = onClick,
         position = position,
     ) {
@@ -583,9 +647,25 @@ private fun PerpMarketRowPreview() {
 
 @Preview
 @Composable
+private fun PerpsMarketsSkeletonPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        PerpsMarketsSkeleton()
+    }
+}
+
+@Preview
+@Composable
 private fun PerpsMarketsEmptyPreview() {
     ThemedPreview(isDarkOnly = true) {
         PerpsMarketsEmpty(query = "PONS")
+    }
+}
+
+@Preview
+@Composable
+private fun PerpsMarketsEmptyBlankPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        PerpsMarketsEmpty(query = "  ")
     }
 }
 

@@ -1,10 +1,8 @@
 package com.tonapps.perps.screens.details
 
-import android.content.Context
 import com.tonapps.async.Async
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.model.legacy.WalletType
-import com.tonapps.chainkit.perpetual.PerpsTradeError
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.log.L
 import com.tonapps.mvi.MviRelay
 import com.tonapps.mvi.contract.MviAction
@@ -36,14 +34,20 @@ import com.tonapps.perps.data.PerpsOperationPillState
 import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.PerpsPositionDetail
 import com.tonapps.perps.data.PerpsPositionLevels
+import com.tonapps.perps.data.PerpsPortfolioSnapshot
+import com.tonapps.perps.data.PerpsPortfolioStore
 import com.tonapps.perps.data.PerpsPositionSection
+import com.tonapps.perps.data.PerpsRealtime
+import com.tonapps.perps.data.PerpsRealtimeEvent
+import com.tonapps.perps.data.spacedEvents
+import com.tonapps.perps.data.PERPS_SLOW_POLL_MS
 import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsSendReason
 import com.tonapps.perps.data.PerpsSizeDirection
 import com.tonapps.perps.data.PerpsTradingFlags
 import com.tonapps.perps.data.PerpsTradingState
 import com.tonapps.perps.data.changeFrom
-import com.tonapps.perps.data.formatSlippagePercent
+import com.tonapps.perps.data.formatPpmPercent
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.perps.data.maskIf
 import com.tonapps.perps.data.onChartFeedEvent
@@ -55,17 +59,18 @@ import com.tonapps.perps.data.withLivePrice
 import com.tonapps.perps.trade.ORDER_FILLED_STATUS
 import com.tonapps.perps.trade.ORDER_GONE_STATUS
 import com.tonapps.perps.trade.PerpsAccountService
-import com.tonapps.perps.trade.PerpsPlanFailure
 import com.tonapps.perps.trade.PerpsPlannerAdapter
 import com.tonapps.perps.trade.PerpsProductRules
-import com.tonapps.perps.trade.PerpsSubmitStart
 import com.tonapps.perps.trade.PerpsTradeExecutor
 import com.tonapps.perps.trade.PerpsTradeFailure
-import com.tonapps.perps.trade.PerpsTradeRequest
 import com.tonapps.perps.trade.PerpsUnlockFailure
 import com.tonapps.perps.trade.failure
+import com.tonapps.perps.trade.isRateLimited
+import com.tonapps.perps.trade.isRenewalOperation
+import com.tonapps.wallet.api.API
+import com.tonapps.wallet.data.loyalty.LoyaltyEntry
+import com.tonapps.wallet.data.loyalty.LoyaltyRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
-import com.tonapps.wallet.data.multichain.lighter.LighterSigningCredentials
 import com.tonapps.wallet.data.multichain.perps.PerpsOperationKind
 import com.tonapps.wallet.data.multichain.perps.PerpsOperationRecord
 import com.tonapps.wallet.data.multichain.perps.PerpsOperationStatus
@@ -73,6 +78,7 @@ import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -80,6 +86,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
@@ -95,18 +102,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.runningReduce
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.transformLatest
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.math.BigDecimal
-import java.util.UUID
 
 interface PerpsAssetDetailsViewState : MviViewState {
     val market: StateFlow<PerpMarket?>
     val about: StateFlow<String?>
+    val keeperTermsUrl: StateFlow<String>
     val isLoading: StateFlow<Boolean>
     val error: StateFlow<PerpsError?>
     val tradingError: StateFlow<Boolean>
@@ -122,6 +130,7 @@ interface PerpsAssetDetailsViewState : MviViewState {
     val priceDecimals: StateFlow<Int>
     val sizeDecimals: StateFlow<Int?>
     val positionSection: StateFlow<PerpsPositionSection>
+    val expectsOpenPosition: StateFlow<Boolean>
     val positionView: StateFlow<PerpsPositionView>
     val operation: StateFlow<PerpsOperationRecord?>
     val pill: StateFlow<PerpsOperationPill?>
@@ -131,9 +140,11 @@ interface PerpsAssetDetailsViewState : MviViewState {
     val canOpen: StateFlow<Boolean>
     val limitOrders: StateFlow<List<PerpsLimitOrder>>
     val rules: StateFlow<PerpsMarketRules?>
+    val limitEditReview: StateFlow<PerpsLimitEditReview?>
     val limitOrderBusy: StateFlow<Boolean>
     val proceeding: StateFlow<PerpsAssetDetailsTarget?>
     val historyRequest: StateFlow<PerpsMarketHistoryRequest?>
+    val showsLoyaltyBanner: StateFlow<Boolean>
 }
 
 sealed interface PerpsAssetDetailsTarget {
@@ -154,24 +165,31 @@ sealed interface PerpsAssetDetailsAction : MviAction {
     data class AcknowledgeFailure(val operationId: String) : PerpsAssetDetailsAction
     data class SetAutoCloseSheetOpen(val open: Boolean) : PerpsAssetDetailsAction
     data class AutoCloseSet(val detail: PerpsPositionDetail) : PerpsAssetDetailsAction
+    data object HideLoyaltyBanner : PerpsAssetDetailsAction
 
     sealed interface LimitOrderChange : PerpsAssetDetailsAction {
-        val context: Context
         val orderIndex: Long
     }
 
-    data class CancelLimitOrder(override val context: Context, override val orderIndex: Long) : LimitOrderChange
+    data class CancelLimitOrder(override val orderIndex: Long) : LimitOrderChange
 
     data class ModifyLimitOrder(
-        override val context: Context,
         override val orderIndex: Long,
         val price: BigDecimal,
+        val seenBase: BigDecimal?,
     ) : LimitOrderChange
 
-    data class Proceed(val context: Context, val target: PerpsAssetDetailsTarget) : PerpsAssetDetailsAction
+    data class ConfirmLimitEdit(val review: PerpsLimitEditReview) : LimitOrderChange {
+        override val orderIndex: Long
+            get() = review.confirmedRequest().orderIndex
+    }
+
+    data object DismissLimitEdit : PerpsAssetDetailsAction
+
+    data class Proceed(val target: PerpsAssetDetailsTarget) : PerpsAssetDetailsAction
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class PerpsAssetDetailsFeature(
     private val marketIndex: Int,
     private val initialSymbol: String?,
@@ -184,6 +202,10 @@ class PerpsAssetDetailsFeature(
     unifiedAccountRepository: UnifiedAccountRepository,
     passcodeManager: PasscodeManager,
     private val settingsRepository: SettingsRepository,
+    private val api: API,
+    portfolioStore: PerpsPortfolioStore,
+    private val realtime: PerpsRealtime,
+    private val loyaltyRepository: LoyaltyRepository,
 ) : GraphViewModel<PerpsAssetDetailsViewState, PerpsAssetDetailsAction>(),
     PerpsAssetDetailsViewState {
 
@@ -226,34 +248,64 @@ class PerpsAssetDetailsFeature(
         reloadAttempt,
         transform = { wallet, attempt ->
             wallet
-                ?.takeIf { it.type == WalletType.Multichain }
+                ?.takeIf { it.supportsPerps }
                 ?.let { PerpsMarketHistoryRequest(it.id, marketIndex, attempt) }
         }
     )
         .cacheState(initialValue = null)
 
+    private val loyaltyEntry = combine(
+        wallet
+            .map { wallet -> wallet?.takeIf { it.supportsPerps }?.id }
+            .distinctUntilChanged(),
+        visible.filter { it },
+    ) { walletId, _ -> walletId }
+        .flatMapLatest { walletId ->
+            walletId?.let(loyaltyRepository::entryFlow) ?: flowOf(LoyaltyEntry.Hidden)
+        }
+
+    override val showsLoyaltyBanner = merge(
+        loyaltyEntry.map { it.showsBanner },
+        actions
+            .on<PerpsAssetDetailsAction.HideLoyaltyBanner>()
+            .onEach { wallet.value?.id?.let(loyaltyRepository::hideBanner) }
+            .map { false },
+    )
+        .distinctUntilChanged()
+        .cacheState(initialValue = false)
+
     private val hasRestingOrders = MutableStateFlow(false)
+
+    private val restingOrdersLeftAt = hasRestingOrders
+        .drop(1)
+        .filter { resting -> !resting }
+        .map { System.currentTimeMillis() }
+        .cacheState(initialValue = 0L)
 
     private val positionTick = combine(
         visible,
         reloadAttempt,
         hasRestingOrders,
-        transform = { isVisible, _, resting ->
-            when {
-                !isVisible -> null
-                resting -> RESTING_REFRESH_MS
-                else -> SILENT_REFRESH_MS
-            }
+        wallet.map { it?.takeIf { wallet -> wallet.supportsPerps }?.id }.distinctUntilChanged(),
+        transform = { isVisible, _, resting, walletId ->
+            walletId?.takeIf { isVisible }?.let { it to resting }
         }
     )
-        .flatMapLatest { period ->
-            if (period != null) {
-                flow {
-                    while (true) {
-                        delay(period)
-                        emit(Unit)
-                    }
+        .flatMapLatest { target ->
+            if (target != null) {
+                val (walletId, resting) = target
+                val period = if (resting) {
+                    PERPS_SLOW_POLL_MS
+                } else {
+                    SILENT_REFRESH_MS
                 }
+                realtime.wakeups(
+                    walletId = walletId,
+                    unsubscribedPeriodMs = period,
+                    subscribedTimeoutMs = SILENT_REFRESH_MS,
+                ) { event ->
+                    event.concernsMarketIndex(marketIndex) || event is PerpsRealtimeEvent.Account
+                }.spacedEvents()
             } else {
                 emptyFlow()
             }
@@ -268,7 +320,7 @@ class PerpsAssetDetailsFeature(
             val walletId = wallet?.id ?: return@combine null
             TradingContext(
                 walletId = walletId,
-                isMultichain = wallet.type == WalletType.Multichain,
+                isMultichain = wallet.supportsPerps,
                 attempt = attempt,
             )
         }
@@ -360,6 +412,19 @@ class PerpsAssetDetailsFeature(
         .map { it.state?.getOrNull() }
         .cacheState(initialValue = null)
 
+    private val operationRecords = wallet
+        .map { wallet -> wallet?.takeIf { it.supportsPerps }?.id }
+        .distinctUntilChanged()
+        .flatMapLatest { walletId ->
+            if (walletId != null) {
+                executor.observe(walletId)
+            } else {
+                flowOf(emptyList())
+            }
+        }
+        .map { records -> records.filter { it.marketIndex == marketIndex } }
+        .cacheState(initialValue = emptyList<PerpsOperationRecord>())
+
     private val positionState = context
         .transformLatest<TradingContext, KState<KResult<PerpsPositionDetail?, PerpsError>>> { context ->
             emit(KState.Loading())
@@ -367,21 +432,63 @@ class PerpsAssetDetailsFeature(
                 emit(KState.Data(KResult.Ok(null)))
                 return@transformLatest
             }
-            var last = repository.getOpenPosition(marketIndex, context.walletId)
-            emit(KState.Data(last))
-            var failures = 0
-            while (true) {
-                delay(POSITION_REFRESH_MS shl failures.coerceAtMost(POSITION_BACKOFF_MAX_SHIFT))
-                visible.first { it }
-                val next = repository.getOpenPosition(marketIndex, context.walletId)
-                failures = if (next is KResult.Ok) {
-                    0
-                } else {
-                    failures + 1
-                }
-                if (next is KResult.Ok || last is KResult.Err) {
-                    emit(KState.Data(next))
-                    last = next
+            coroutineScope {
+                val changes = merge(
+                    realtime.wakeups(
+                        walletId = context.walletId,
+                        unsubscribedPeriodMs = PERPS_SLOW_POLL_MS,
+                        subscribedTimeoutMs = PERPS_SLOW_POLL_MS,
+                    ) { event ->
+                        event.concernsMarketIndex(marketIndex)
+                    }.spacedEvents().map { },
+                    operationRecords.drop(1).map { },
+                )
+                    .conflate()
+                    .produceIn(this)
+                var tickSeen = positionTick.value
+                var orderLeftSeen = restingOrdersLeftAt.value
+                var last = repository.getOpenPosition(marketIndex, context.walletId)
+                emit(KState.Data(last))
+                var failures = 0
+                while (true) {
+                    val positionMissing = last is KResult.Ok && last.value == null
+                    val now = System.currentTimeMillis()
+                    val recentlyChanged = restingOrdersLeftAt.value >= now - POSITION_SETTLE_MS ||
+                        operationRecords.value.any {
+                            it.status == PerpsOperationStatus.IN_PROGRESS || it.updatedAt >= now - POSITION_SETTLE_MS
+                        }
+                    val settling = recentlyChanged || operationRecords.value.any { it.isActive() }
+                    when {
+                        failures > 0 || last is KResult.Err -> delay(
+                            POSITION_REFRESH_MS shl failures.coerceAtMost(POSITION_BACKOFF_MAX_SHIFT)
+                        )
+                        recentlyChanged -> withTimeoutOrNull(POSITION_REFRESH_MS) { changes.receive() }
+                        positionMissing && !settling -> merge(
+                            positionTick.filter { it != tickSeen }.map { },
+                            restingOrdersLeftAt.filter { it != orderLeftSeen }.map { },
+                            operationRecords.filter { records -> records.any { it.isActive() } }.map { },
+                        ).first()
+                        positionMissing -> merge(
+                            changes.receiveAsFlow(),
+                            positionTick.filter { it != tickSeen }.map { },
+                            restingOrdersLeftAt.filter { it != orderLeftSeen }.map { },
+                        ).first()
+                        else -> changes.receive()
+                    }
+                    visible.first { it }
+                    changes.tryReceive()
+                    tickSeen = positionTick.value
+                    orderLeftSeen = restingOrdersLeftAt.value
+                    val next = repository.getOpenPosition(marketIndex, context.walletId)
+                    failures = if (next is KResult.Ok) {
+                        0
+                    } else {
+                        failures + 1
+                    }
+                    if (next is KResult.Ok || last is KResult.Err) {
+                        emit(KState.Data(next))
+                        last = next
+                    }
                 }
             }
         }
@@ -425,6 +532,11 @@ class PerpsAssetDetailsFeature(
         .map { it?.about }
         .cacheState(initialValue = null)
 
+    override val keeperTermsUrl = api.configFlow
+        .map { it.termsOfUseUrl }
+        .distinctUntilChanged()
+        .cacheState(initialValue = api.getConfig(TonNetwork.MAINNET).termsOfUseUrl)
+
     override val isLoading = combine(
         detailsState,
         tradingState,
@@ -460,23 +572,13 @@ class PerpsAssetDetailsFeature(
     )
         .cacheState(initialValue = false)
 
-    private val operationRecords = wallet
-        .map { wallet -> wallet?.takeIf { it.type == WalletType.Multichain }?.id }
-        .distinctUntilChanged()
-        .flatMapLatest { walletId ->
-            if (walletId != null) {
-                executor.observe(walletId)
-            } else {
-                flowOf(emptyList())
-            }
-        }
-        .map { records -> records.filter { it.marketIndex == marketIndex } }
-        .cacheState(initialValue = emptyList<PerpsOperationRecord>())
-
     private val autoCloseApplied = operationRecords
         .mapNotNull { records ->
             records
-                .filter { it.kind == PerpsOperationKind.AUTO_CLOSE && it.status == PerpsOperationStatus.SUCCEEDED }
+                .filter {
+                    it.kind == PerpsOperationKind.AUTO_CLOSE && it.status == PerpsOperationStatus.SUCCEEDED &&
+                        !isRenewalOperation(it.operationId)
+                }
                 .maxOfOrNull { it.updatedAt }
                 ?.takeIf { it >= createdAtMs }
         }
@@ -509,32 +611,26 @@ class PerpsAssetDetailsFeature(
         }
         .cacheState(initialValue = null)
 
-    // A succeeded pill hides itself after TERMINAL_TTL_MS, so the list is re-read once that passes.
-    private val operationTick = operationRecords
+    private val visibleOperations = operationRecords
+        .map { records -> records.filterNot { isRenewalOperation(it.operationId) } }
         .transformLatest { records ->
-            emit(Unit)
-            val terminal = records
-                .filter { it.status == PerpsOperationStatus.SUCCEEDED }
-                .maxOfOrNull { it.updatedAt }
-            if (terminal != null) {
-                val delayMs = terminal + TERMINAL_TTL_MS - System.currentTimeMillis()
-                if (delayMs > 0) {
-                    delay(delayMs)
-                    emit(Unit)
-                }
+            var at = System.currentTimeMillis()
+            while (true) {
+                emit(records.filter { it.isActive() || it.updatedAt + TERMINAL_TTL_MS > at })
+                val hideAt = records
+                    .filterNot { it.isActive() }
+                    .map { it.updatedAt + TERMINAL_TTL_MS }
+                    .filter { it > at }
+                    .minOrNull()
+                    ?: break
+                delay(hideAt - at)
+                at = hideAt
             }
         }
+        .cacheState(initialValue = emptyList<PerpsOperationRecord>())
 
-    override val operation = combine(
-        operationRecords,
-        operationTick,
-        transform = { records, _ ->
-            val now = System.currentTimeMillis()
-            records
-                .filter { it.isActive() || it.updatedAt >= now - TERMINAL_TTL_MS }
-                .maxByOrNull { it.createdAt }
-        }
-    )
+    override val operation = visibleOperations
+        .map { records -> records.maxByOrNull { it.createdAt } }
         .cacheState(initialValue = null)
 
     override val pill = combine(
@@ -621,6 +717,16 @@ class PerpsAssetDetailsFeature(
         .flowOn(Async.Io)
         .cacheState(initialValue = PerpsPositionSection.Loading)
 
+    override val expectsOpenPosition = combine(
+        positionSection,
+        context,
+        portfolioStore.snapshot,
+        transform = { section, context, snapshot ->
+            section.expectsOpenPosition(snapshot, context.walletId, marketIndex)
+        }
+    )
+        .cacheState(initialValue = false)
+
     override val positionLevels = positionSection
         .map { (it as? PerpsPositionSection.Open)?.detail?.toPositionLevels() }
         .cacheState(initialValue = null)
@@ -639,14 +745,44 @@ class PerpsAssetDetailsFeature(
 
     val actionFailures = actionFailureRelay.events
 
+    private val limitOrderChanger = PerpsLimitOrderChanger(marketIndex, repository, executor, adapter, accountService)
+
     private val limitOrderState = actions
         .on<PerpsAssetDetailsAction.LimitOrderChange>()
-        .withLatestFrom(wallet) { action, wallet -> action to wallet }
-        .transformStateFirst { (action, wallet) -> changeLimitOrder(action, wallet)?.let { actionFailureRelay.emit(it) } }
+        .withLatestFrom(wallet, trading) { action, wallet, trading ->
+            Triple(action, wallet, trading?.limitOrders?.firstOrNull { it.orderIndex == action.orderIndex })
+        }
+        .transformStateFirst { (action, wallet, shown) ->
+            val result: PerpsLimitChangeResult? = try {
+                limitOrderChanger.change(action, wallet, shown)
+            } catch (t: Throwable) {
+                verifyError(t)
+                L.e(t)
+                PerpsLimitChangeResult.Failed(Localization.perps_review_failed)
+            }
+            (result as? PerpsLimitChangeResult.Failed)?.text?.let { actionFailureRelay.emit(it) }
+            result
+        }
         .cacheStateWithEmpty()
 
-    override val limitOrderBusy = limitOrderState
-        .isLoading()
+    override val limitEditReview = merge(
+        limitOrderState
+            .filterIsInstance<KState.Data<PerpsLimitChangeResult?>>()
+            .withLatestFrom(wallet) { data, wallet ->
+                (data.state as? PerpsLimitChangeResult.Review)?.review
+                    ?.takeIf { it.planned.request.walletId == wallet?.id }
+            },
+        actions.on<PerpsAssetDetailsAction.ConfirmLimitEdit>().map { null },
+        actions.on<PerpsAssetDetailsAction.DismissLimitEdit>().map { null },
+        wallet.map { it?.id }.distinctUntilChanged().drop(1).map { null },
+    )
+        .cacheState(initialValue = null)
+
+    override val limitOrderBusy = combine(
+        limitOrderState.isLoading(),
+        limitEditReview,
+        transform = { loading, review -> loading || review != null },
+    )
         .cacheState(initialValue = false)
 
     private val proceedRelay = MviRelay<PerpsAssetDetailsTarget>()
@@ -879,7 +1015,7 @@ class PerpsAssetDetailsFeature(
     ): Int? {
         if (needsActivation) {
             wallet ?: return Localization.something_went_wrong
-            when (val result = accountService.unlock(wallet, action.context)) {
+            when (val result = accountService.unlock(wallet)) {
                 is KResult.Ok -> {
                     val reloaded = withTimeoutOrNull(FLAGS_RELOAD_TIMEOUT_MS) { reloadTrading() }
                         ?: return Localization.something_went_wrong
@@ -910,76 +1046,15 @@ class PerpsAssetDetailsFeature(
         return reloaded.state.second.result
     }
 
-    private suspend fun changeLimitOrder(action: PerpsAssetDetailsAction.LimitOrderChange, wallet: WalletEntity?): Int? {
-        wallet ?: return Localization.perps_review_failed
-        val credentials = when (val result = accountService.unlock(wallet, action.context)) {
-            is KResult.Ok -> result.value
-            is KResult.Err -> return if (result.value == PerpsUnlockFailure.CANCELLED) {
-                null
-            } else {
-                Localization.perps_review_failed
-            }
-        }
-        val request = when (action) {
-            is PerpsAssetDetailsAction.CancelLimitOrder -> PerpsTradeRequest.OrderCancel(
-                walletId = wallet.id,
-                marketIndex = marketIndex,
-                orderIndex = action.orderIndex,
-            )
-
-            is PerpsAssetDetailsAction.ModifyLimitOrder -> PerpsTradeRequest.OrderModify(
-                walletId = wallet.id,
-                marketIndex = marketIndex,
-                orderIndex = action.orderIndex,
-                price = action.price,
-            )
-        }
-
-        return try {
-            withContext(Async.Io) { planAndStart(request, credentials) }
-        } catch (t: Throwable) {
-            verifyError(t)
-            L.e(t)
-            Localization.perps_review_failed
-        }
-    }
-
-    private suspend fun planAndStart(request: PerpsTradeRequest, credentials: LighterSigningCredentials): Int? {
-        val operationId = UUID.randomUUID().toString()
-        var result = adapter.plan(request, credentials, mark = null, operationId = operationId)
-        // The trading screen intermittently answers with no open orders while the order rests.
-        if (((result as? KResult.Err)?.value as? PerpsPlanFailure.Planner)?.kind == PerpsTradeError.OrderNotFound) {
-            delay(ORDER_MISSING_DELAY_MS)
-            result = adapter.plan(request, credentials, mark = null, operationId = operationId)
-        }
-        val planned = when (result) {
-            is KResult.Ok -> result.value
-            is KResult.Err -> return result.value.limitOrderFailureText()
-        }
-
-        return when (val start = executor.start(planned)) {
-            is PerpsSubmitStart.Started -> null
-            is PerpsSubmitStart.Blocked -> Localization.perps_operation_in_progress
-            is PerpsSubmitStart.Failed -> if (start.failure == PerpsTradeFailure.OperationInProgress) {
-                Localization.perps_operation_in_progress
-            } else {
-                Localization.perps_review_failed
-            }
-
-            is PerpsSubmitStart.Requote -> Localization.perps_review_failed
-        }
-    }
-
     private companion object {
         const val DEFAULT_PRICE_DECIMALS = 2
-        const val ORDER_MISSING_DELAY_MS = 1_500L
         const val TERMINAL_TTL_MS = 5_000L
         const val FIRST_FRAME_TIMEOUT_MS = 15_000L
         const val FLAGS_RELOAD_TIMEOUT_MS = 15_000L
         const val SILENT_REFRESH_MS = 120_000L
-        const val RESTING_REFRESH_MS = 5_000L
         const val POSITION_REFRESH_MS = 2_000L
         const val POSITION_BACKOFF_MAX_SHIFT = 4
+        const val POSITION_SETTLE_MS = 5_000L
 
         // Must outlast the socket's 30 s reconnect cap: a quiet market's reconnect pushes no frame.
         const val STALE_LINGER_MS = 90_000L
@@ -1013,6 +1088,24 @@ private val PNL_PENDING_KINDS = setOf(
     PerpsOperationKind.MARGIN_REMOVE,
 )
 
+internal fun PerpsPositionSection.expectsOpenPosition(
+    snapshot: PerpsPortfolioSnapshot?,
+    walletId: String,
+    marketIndex: Int,
+): Boolean = when (this) {
+    is PerpsPositionSection.Open -> true
+    is PerpsPositionSection.Failed, PerpsPositionSection.Hidden -> false
+    PerpsPositionSection.Loading -> snapshot
+        ?.takeIf { it.walletId == walletId }
+        ?.displayPortfolio()
+        ?.positions
+        ?.any { it.marketIndex == marketIndex } == true
+}
+
+private fun PerpsRealtimeEvent.concernsMarketIndex(marketIndex: Int): Boolean {
+    return this is PerpsRealtimeEvent.Market && this.marketIndex == marketIndex
+}
+
 private fun PerpsOperationRecord.isActive(): Boolean {
     return status == PerpsOperationStatus.IN_PROGRESS || status == PerpsOperationStatus.UNKNOWN
 }
@@ -1045,7 +1138,7 @@ private fun PerpsOperationRecord.toFailure(): PerpsOperationFailure {
             PerpsOperationFailure(
                 operationId = operationId,
                 text = Localization.perps_review_order_not_placed_text,
-                textArg = formatSlippagePercent(PerpsProductRules.PRICE_SLIPPAGE_PPM),
+                textArg = formatPpmPercent(PerpsProductRules.PRICE_SLIPPAGE_PPM),
             )
 
         order && failure is PerpsTradeFailure.SendRefused && failure.reason in VENUE_REFUSED_REASONS ->
@@ -1081,42 +1174,23 @@ internal fun PerpsOperationRecord.failureText(): Int {
             else -> generic
         }
 
-        PerpsTradeFailure.StaleInput -> Localization.perps_operation_price_changed_toast
+        is PerpsTradeFailure.SendRefused -> if (failure.isRateLimited) {
+            Localization.perps_too_many_requests
+        } else {
+            generic
+        }
+
+        PerpsTradeFailure.StaleInput -> if (kind == PerpsOperationKind.ORDER_MODIFY) {
+            Localization.perps_limit_order_inputs_changed
+        } else {
+            Localization.perps_operation_price_changed_toast
+        }
+
         else -> generic
     }
 }
 
-private fun PerpsPlanFailure.limitOrderFailureText(): Int {
-    if (this is PerpsPlanFailure.ClockSkew) {
-        return Localization.perps_review_wrong_device_time
-    }
-    if (this !is PerpsPlanFailure.Planner) {
-        return Localization.perps_review_failed
-    }
-
-    return when (kind) {
-        PerpsTradeError.OrderNotFound -> Localization.perps_limit_order_gone
-
-        PerpsTradeError.InvalidInput -> if (field == BASE_AMOUNT_FIELD) {
-            Localization.perps_limit_order_too_small
-        } else {
-            Localization.perps_review_failed
-        }
-
-        PerpsTradeError.ExceedsPosition -> if (field == BASE_AMOUNT_FIELD) {
-            Localization.perps_limit_order_too_large
-        } else {
-            Localization.perps_review_failed
-        }
-
-        PerpsTradeError.TradingDisabled -> Localization.perps_order_trading_disabled
-
-        else -> Localization.perps_review_failed
-    }
-}
-
 private const val SLIPPAGE_STATUS_PREFIX = "canceled-too-much-slippage"
-private const val BASE_AMOUNT_FIELD = "baseAmount"
 
 /*
  *                      Retry ──┐
@@ -1124,14 +1198,21 @@ private const val BASE_AMOUNT_FIELD = "baseAmount"
  *   SetVisible ──► visible ────┘
  *
  *                     visible ──┐
- *               reloadAttempt ──┼──► [flatMapLatest, fold] positionTick
- *            hasRestingOrders ──┘
+ *               reloadAttempt ──┤
+ *            hasRestingOrders ──┼──► [flatMapLatest, realtime wakeups, fold] positionTick
+ *                     wallet? ──┘
+ *
+ *   hasRestingOrders [drop, false] ──► restingOrdersLeftAt
  *
  *   selectedTonWalletFlow ──► wallet? ──┐
  *                       reloadAttempt ──┴──► [distinct] context
  *
  *         wallet? ──┐
  *   reloadAttempt ──┴──► historyRequest?
+ *
+ *   wallet? [distinct] ──┐
+ *      visible [true] ──┴──► [latest] loyaltyEntry ──┐
+ *                            HideLoyaltyBanner ──┴──► [merge] showsLoyaltyBanner
  *
  *                     reloadAttempt ──► [latest] detailsState
  *
@@ -1144,8 +1225,15 @@ private const val BASE_AMOUNT_FIELD = "baseAmount"
  *                 tradingLoad ──┐
  *                     context ──┴──► tradingRetrying
  *
+ *   wallet? ──► operationRecords
+ *
  *                             context ──┐
- *                            visible ⋯──┴──► [distinct, latest, poll 2 s + backoff, keep last Ok] positionState
+ *                            visible ⋯──┤
+ *                       positionTick ⋯──┤
+ *                restingOrdersLeftAt ⋯──┤
+ *                   operationRecords ⋯──┼──► [distinct, latest, backoff while failing, every 2 s right after a change, on a
+ *           realtime market wakeups ⋯──┘     market event or an operation change while open, else on positionTick, a
+ *                                             left order or an active operation, keep last Ok] positionState
  *
  *   detailsState ──► details? ──┬──► about?
  *                               ├──► priceDecimals
@@ -1160,8 +1248,15 @@ private const val BASE_AMOUNT_FIELD = "baseAmount"
  *                  └──► trading? ──┬──► limitOrders
  *                                  └──► rules?
  *
- *   LimitOrderChange, wallet? ⋯ ──► [first] limitOrderState ──┬──► limitOrderBusy
- *                                                            └──► actionFailures
+ *   LimitOrderChange, wallet? ⋯, trading? ⋯ ──► [first] limitOrderState ──► actionFailures
+ *
+ *   limitOrderState [dataOnly], wallet? ⋯ ──┐
+ *                        ConfirmLimitEdit ──┤
+ *                        DismissLimitEdit ──┼──► [merge] limitEditReview?
+ *          wallet? [distinct id, changes] ──┘
+ *
+ *   limitOrderState [loading] ──┐
+ *            limitEditReview? ──┴──► limitOrderBusy
  *
  *   Proceed ──► proceedTarget? ──────────────────────────────────────┐
  *   Proceed, wallet? ⋯, needsActivation ⋯ ──► [first] proceedState ──┼──► proceeding?
@@ -1172,8 +1267,7 @@ private const val BASE_AMOUNT_FIELD = "baseAmount"
  *   visible ──► tickerInterest ──► liveMarketPrice? ──┐
  *                                          details? ──┴──► market?
  *
- *   wallet? ──► operationRecords ──┬──► [latest] operationTick ──┐
- *                                  └─────────────────────────────┴──► operation?
+ *   operationRecords ──► [latest] visibleOperations ──► operation?
  *
  *   operationRecords ──► [distinct] autoCloseApplied
  *
@@ -1206,6 +1300,10 @@ private const val BASE_AMOUNT_FIELD = "baseAmount"
  *                        market? ──┼──► positionSection ──► positionLevels?
  *                     operation? ──┤
  *                 knownPosition? ──┘
+ *
+ *          positionSection ──┐
+ *                  context ──┼──► expectsOpenPosition
+ * portfolioStore.snapshot? ──┘
  *
  *          positionSection ──┐
  *                  market? ──┤

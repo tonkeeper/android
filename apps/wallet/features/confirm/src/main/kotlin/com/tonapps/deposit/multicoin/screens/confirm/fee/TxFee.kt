@@ -37,6 +37,7 @@ data class TxFee(
     val fee: Fee,
     // False when the relayer or the amount being sent rules the method out, whatever the balance says.
     val available: Boolean = true,
+    val reserve: BigInteger? = null,
 ) {
     val id: String
         get() = fee.asset.id
@@ -52,9 +53,19 @@ data class TxFee(
     val isUnpriced: Boolean
         get() = isBattery && fee.amount <= BigInteger.ZERO
 
+    val chargesAfterReserve: BigInteger
+        get() = fee.amount - (reserve ?: BigInteger.ZERO)
+
     // Legacy marks battery and gasless alike as `SendFee.RelayerFee` and sends them as internal messages.
     val viaRelayer: Boolean
         get() = !isNative
+
+    val preferredMethod: PreferredFeeMethod
+        get() = when (fee.asset) {
+            is Asset.Battery -> PreferredFeeMethod.BATTERY
+            is Asset.Coin -> PreferredFeeMethod.TON
+            is Asset.Token -> PreferredFeeMethod.GASLESS
+        }
 }
 
 object TxFeeLogic {
@@ -113,9 +124,9 @@ object TxFeeLogic {
     }
 
     /**
-     * The order methods are tried in: the kind the user chose last, then battery, the chain's coin, a
-     * fee in the asset being sent, a fee in any other asset. Methods that cannot pay stay listed, in
-     * the same order, below the ones that can.
+     * The order methods are tried in: the kind the user chose last (for a gasless fee, the one in the
+     * asset being sent), then battery, the chain's coin, a fee in the asset being sent, a fee in any
+     * other asset. Methods that cannot pay stay listed, in the same order, below the ones that can.
      */
     fun prioritize(
         options: List<TxFee>,
@@ -123,7 +134,7 @@ object TxFeeLogic {
         preferred: PreferredFeeMethod,
     ): List<TxFee> {
         val ranked = options.sortedBy { rank(it, sentAssetId) }
-        val (first, rest) = ranked.partition { isPreferred(it, preferred) }
+        val (first, rest) = ranked.partition { isPreferred(it, preferred, sentAssetId) }
         return payableFirst(first + rest)
     }
 
@@ -156,10 +167,12 @@ object TxFeeLogic {
         else -> 3
     }
 
-    private fun isPreferred(option: TxFee, preferred: PreferredFeeMethod): Boolean = when (preferred) {
+    // A gasless fee is kept by kind alone, not by token: only the asset being sent stands for it, as a
+    // token of any other would be the first the relayer happens to list.
+    private fun isPreferred(option: TxFee, preferred: PreferredFeeMethod, sentAssetId: String): Boolean = when (preferred) {
         PreferredFeeMethod.BATTERY -> option.isBattery
         PreferredFeeMethod.TON -> option.isNative
-        PreferredFeeMethod.GASLESS -> option.viaRelayer && !option.isBattery
+        PreferredFeeMethod.GASLESS -> option.viaRelayer && !option.isBattery && option.id.equals(sentAssetId, ignoreCase = true)
         PreferredFeeMethod.UNSPECIFIED -> false
     }
 }

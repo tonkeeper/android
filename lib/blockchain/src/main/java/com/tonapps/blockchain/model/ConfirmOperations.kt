@@ -16,14 +16,18 @@ import java.util.UUID
  */
 object ConfirmOperations {
 
-    /** A plain transfer of the sender's asset; [comment] rides where the chain has a memo. */
+    /**
+     * A plain transfer of the sender's asset; [comment] rides where the chain has a memo. A Solana
+     * payload names the SPL [token] it sends; elsewhere the token is the account's own.
+     */
     fun transfer(
         chain: Chain,
         to: String,
         amount: BigInteger,
         comment: String? = null,
         fee: Fee? = null,
-    ): Operation = single(chain, transferMeta(chain, Address.force(to, chain), amount, comment), fee)
+        token: Address? = null,
+    ): Operation = single(chain, transferMeta(chain, Address.force(to, chain), amount, comment, token), fee)
 
     /** An EVM contract call. */
     fun call(
@@ -61,14 +65,15 @@ object ConfirmOperations {
     private fun single(chain: Chain, meta: PayloadMeta, fee: Fee?): Operation =
         build(listOf(payload(0, chain, meta, fee)))
 
-    private fun transferMeta(chain: Chain, to: Address, amount: BigInteger, comment: String?): PayloadMeta {
+    private fun transferMeta(chain: Chain, to: Address, amount: BigInteger, comment: String?, token: Address?): PayloadMeta {
         return when {
             chain.isTvm -> PayloadMeta.Ton.Main(to = to, value = amount, comment = comment)
             // An EVM transfer carries no memo: calldata would turn it into a contract call.
             chain.isEvm -> PayloadMeta.Evm.Main(to = to, value = amount)
             chain is Chain.Tron -> PayloadMeta.Tron.Main(to = to, value = amount, memo = comment)
             chain is Chain.Bitcoin -> PayloadMeta.Bitcoin.Main(to = to, value = amount, memo = comment)
-            chain is Chain.Solana -> PayloadMeta.Solana.Main(to = to, value = amount, memo = comment)
+            // Binding holds the payload's mint to the account's asset: an SPL transfer without one reads as SOL.
+            chain is Chain.Solana -> PayloadMeta.Solana.Main(to = to, value = amount, memo = comment, token = token)
             else -> throw IllegalArgumentException("Transfers on ${chain.caip2} have no operation payload")
         }
     }

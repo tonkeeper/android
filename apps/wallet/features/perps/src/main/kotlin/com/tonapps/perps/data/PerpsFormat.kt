@@ -33,8 +33,14 @@ fun bidiIsolate(text: String): String = "\u2068$text\u2069"
 // Latin digits in every locale, as CurrencyFormatter does for the rest of the wallet.
 private fun groupingSymbols(): DecimalFormatSymbols = DecimalFormatSymbols(Locale.US).apply {
     groupingSeparator = '\u00A0'
-    decimalSeparator = '.'
+    decimalSeparator = localDecimalSeparator()
 }
+
+internal fun localDecimalSeparator(): Char {
+    return ChainKitFormatter.defaultOptions.decimalSeparator.singleOrNull() ?: '.'
+}
+
+private fun String.withLocalDecimalSeparator(): String = replace('.', localDecimalSeparator())
 
 /** e.g. 3906.0, "USDT" -> "3 906 USDT" */
 fun formatTokenAmount(amount: Double, symbol: String): String {
@@ -52,6 +58,8 @@ fun formatTokenAmount(amount: BigDecimal, symbol: String, decimals: Int?): Strin
 }
 
 fun formatPlainDecimal(value: BigDecimal): String = value.stripTrailingZeros().toPlainString()
+
+fun formatLocalizedDecimal(value: BigDecimal): String = formatPlainDecimal(value).withLocalDecimalSeparator()
 
 /** e.g. 3902.0 -> "$3 902", 712.56 -> "$712.56" */
 fun formatUsd(amount: Double): String {
@@ -77,6 +85,13 @@ fun formatUsdPrice(amount: Double, decimals: Int): String {
 
 fun formatUsd(amount: BigDecimal): String = formatPrice(amount, USD_CURRENCY)
 
+fun formatTrimmedUsdPrice(amount: BigDecimal): String {
+    val format = DecimalFormat("#,##0", groupingSymbols()).apply {
+        maximumFractionDigits = MAX_PRICE_DECIMALS
+    }
+    return "$${format.format(amount)}"
+}
+
 fun formatPrice(amount: BigDecimal, currencyCode: String): String {
     val pattern = if (amount.abs() >= BigDecimal.ONE) {
         "#,##0.00"
@@ -93,36 +108,50 @@ fun formatSignedUsd(amount: BigDecimal): String {
 
 fun formatUsdAmount(amount: BigDecimal): String = formatFiatAmount(amount, USD_CURRENCY)
 
-fun formatFiatAmount(amount: BigDecimal, currencyCode: String): String {
-    return "${minusOrEmpty(amount)}${currencyCode.fiatSymbol()}${compactDigits(amount.abs())}"
+fun formatUsdAmountRoundedToCents(amount: BigDecimal): String {
+    val cents = amount.setScale(CENTS_SCALE, RoundingMode.HALF_UP)
+    val shown = if (cents.signum() == 0) {
+        amount
+    } else {
+        cents
+    }
+    return formatUsdAmount(shown)
 }
 
-fun formatTokenCompact(amount: BigDecimal, symbol: String): String = "${compactDigits(amount)} $symbol"
+fun formatFiatAmount(amount: BigDecimal, currencyCode: String): String {
+    return "${minusOrEmpty(amount)}${currencyCode.fiatSymbol()}${compactDigits(amount.abs(), padCents = true)}"
+}
+
+fun formatTokenCompact(amount: BigDecimal, symbol: String): String = "${compactDigits(amount, padCents = false)} $symbol"
 
 fun formatSignedUsdAmount(amount: BigDecimal): String {
-    return "${signPrefix(amount)}${USD_CURRENCY.fiatSymbol()}${compactDigits(amount.abs())}"
+    return "${signPrefix(amount)}${USD_CURRENCY.fiatSymbol()}${compactDigits(amount.abs(), padCents = true)}"
 }
 
-private val compactFormatOptions = FormatOptions(groupingSeparator = "\u00A0")
-
-private fun compactDigits(value: BigDecimal): String {
-    return ChainKitFormatter.formatNumber(
+private fun compactDigits(value: BigDecimal, padCents: Boolean): String {
+    val digits = ChainKitFormatter.formatNumber(
         value = ChainKitBigDecimal.parseString(value.toPlainString()),
         spec = ScaleSpec.Compact,
         isShorten = true,
-        options = compactFormatOptions,
+        options = FormatOptions(
+            decimalSeparator = localDecimalSeparator().toString(),
+            groupingSeparator = "\u00A0",
+        ),
     )
-}
-
-fun formatQuoteAmount(amount: BigDecimal): String {
-    return twoDecimals(amount.setScale(AMOUNT_SCALE, RoundingMode.HALF_UP))
-}
-
-private fun twoDecimals(value: BigDecimal): String {
-    val format = DecimalFormat("#,##0.00", groupingSymbols()).apply {
-        roundingMode = RoundingMode.HALF_UP
+    val magnitude = perpsMagnitudes.ofChainKitSuffix(digits.last())
+    return when {
+        magnitude != null -> magnitude.format(digits.dropLast(1))
+        padCents -> digits.withCents()
+        else -> digits
     }
-    return format.format(value)
+}
+
+private fun String.withCents(): String {
+    val fraction = substringAfter(localDecimalSeparator(), missingDelimiterValue = "")
+    if (fraction.length != 1) {
+        return this
+    }
+    return "${this}0"
 }
 
 fun formatCompactUsd(amount: BigDecimal): String = formatCompactPrice(amount, USD_CURRENCY)
@@ -136,15 +165,21 @@ fun formatAutoClosePrice(value: BigDecimal, priceDecimals: Int): String {
 }
 
 fun formatCompactPrice(amount: BigDecimal, currencyCode: String): String {
-    val value = amount.abs()
-    val (scaled, suffix) = when {
-        value >= BILLION -> value.movePointLeft(9) to "B"
-        value >= MILLION -> value.movePointLeft(6) to "M"
-        value >= THOUSAND -> value.movePointLeft(3) to "K"
-        else -> value to ""
+    val magnitudes = perpsMagnitudes
+    var unscaled = amount.abs()
+    var scaled = unscaled.setScale(COMPACT_SCALE, RoundingMode.HALF_UP)
+    var magnitude: String? = null
+    for (nextMagnitude in listOf(magnitudes.thousands, magnitudes.millions, magnitudes.billions, magnitudes.trillions)) {
+        if (scaled < THOUSAND) {
+            break
+        }
+        unscaled = unscaled.movePointLeft(MAGNITUDE_SHIFT)
+        scaled = unscaled.setScale(COMPACT_SCALE, RoundingMode.HALF_UP)
+        magnitude = nextMagnitude
     }
-    val formatted = DecimalFormat("#,##0.##", groupingSymbols()).format(scaled)
-    return "${minusOrEmpty(amount)}${currencyCode.fiatSymbol()}$formatted$suffix"
+    val digits = DecimalFormat("#,##0.##", groupingSymbols()).format(scaled)
+    val formatted = magnitude?.format(digits) ?: digits.withCents()
+    return "${minusOrEmpty(amount)}${currencyCode.fiatSymbol()}$formatted"
 }
 
 fun formatSignedPercent(value: BigDecimal): String {
@@ -163,13 +198,13 @@ fun formatFundingPercent(value: BigDecimal): String {
     val percent = value.multiply(HUNDRED)
         .setScale(FUNDING_SCALE, RoundingMode.HALF_UP)
         .stripTrailingZeros()
-    return "${percent.toPlainString()}%"
+    return "${percent.toPlainString().withLocalDecimalSeparator()}%"
 }
 
-fun formatSlippagePercent(ppm: Long): String {
+fun formatPpmPercent(ppm: Long): String {
     val percent = BigDecimal.valueOf(ppm).movePointLeft(PPM_PERCENT_SHIFT).stripTrailingZeros()
 
-    return "${percent.toPlainString()}%"
+    return "${percent.toPlainString().withLocalDecimalSeparator()}%"
 }
 
 private fun signPrefix(value: BigDecimal): String {
@@ -189,15 +224,16 @@ private fun minusOrEmpty(value: BigDecimal): String {
 
 private val HUNDRED = BigDecimal(100)
 private val THOUSAND = BigDecimal(1_000)
-private val MILLION = BigDecimal(1_000_000)
-private val BILLION = BigDecimal(1_000_000_000)
 private const val FUNDING_SCALE = 8
 private const val OFFSET_SCALE = 2
-private const val AMOUNT_SCALE = 2
+private const val COMPACT_SCALE = 2
+private const val CENTS_SCALE = 2
+private const val MAGNITUDE_SHIFT = 3
 private const val PPM_PERCENT_SHIFT = 4
 private const val MAX_PRICE_DECIMALS = 8
 private const val MAX_SIZE_DECIMALS = 8
 private const val DEFAULT_SIZE_DECIMALS = 4
+private const val TOKEN_INPUT_MAX_DECIMALS = 8
 
 /** Plain, un-grouped string for the editable amount field, e.g. 3906.0 -> "3906". */
 fun formatPlainAmount(value: Double): String {
@@ -209,6 +245,8 @@ fun formatPlainAmount(value: Double): String {
         .stripTrailingZeros()
         .toPlainString()
 }
+
+fun tokenInputDecimals(tokenDecimals: Int): Int = minOf(tokenDecimals, TOKEN_INPUT_MAX_DECIMALS)
 
 fun limitFractionDigits(input: String, maxDigits: Int): String {
     val separator = input.indexOf('.')

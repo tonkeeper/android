@@ -29,7 +29,7 @@ data class DepositQuoteOutput(
     @SerialName(value = "amount")
     val amount: String,
 
-    /* Equal to amount: the deposit is exact. */
+    /* Equal to amount: the least that is credited. */
     @SerialName(value = "min_amount")
     val minAmount: String,
 

@@ -158,6 +158,54 @@ class EvmMethodParserTest {
     }
 
     @Test
+    fun `a typed data chain id that cannot be read is refused instead of passing as chainless`() {
+        listOf("{\"id\":1}", "[1]", "\"0xzz\"", "\"0x\"", "\"0x1" + "0".repeat(64) + "\"").forEach { chainId ->
+            val result = parser.typedData(
+                request(listOf(ADDRESS, typedData(chainId = chainId))),
+                WALLET,
+                CHAIN,
+                ADDRESS,
+            )
+
+            assertEquals(chainId, EvmMethodParser.Result.Error(INVALID_PARAMS, "Typed data cannot be read"), result)
+        }
+    }
+
+    @Test
+    fun `typed data with a domain that is not an object is refused`() {
+        val result = parser.typedData(
+            request(listOf(ADDRESS, """{"domain":"Test","message":{}}""")),
+            WALLET,
+            CHAIN,
+            ADDRESS,
+        )
+
+        assertEquals(EvmMethodParser.Result.Error(INVALID_PARAMS, "Typed data cannot be read"), result)
+    }
+
+    @Test
+    fun `a repeated chain id is signed as it was checked`() {
+        val result = parser.typedData(
+            request(listOf(ADDRESS, """{"domain":{"chainId":8453,"chainId":1},"message":{}}""")),
+            WALLET,
+            CHAIN,
+            ADDRESS,
+        )
+
+        assertTrue(result is EvmMethodParser.Result.Confirm)
+        assertEquals("""{"domain":{"chainId":1},"message":{}}""", adapter.message().data)
+    }
+
+    @Test
+    fun `hex encoded typed data is not taken for typed data`() {
+        val payload = "0x" + typedData(chainId = "8453").encodeToByteArray().joinToString("") { "%02x".format(it) }
+
+        val result = parser.typedData(request(listOf(ADDRESS, payload)), WALLET, CHAIN, ADDRESS)
+
+        assertEquals(EvmMethodParser.Result.Error(INVALID_PARAMS, "Missing typed data"), result)
+    }
+
+    @Test
     fun `typed data for another signer is refused`() {
         val result = parser.typedData(
             request(listOf(OTHER, typedData(chainId = "1"))),

@@ -10,6 +10,7 @@ import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.core.helper.analyticsAssetId
@@ -169,6 +170,7 @@ fun DepositRouter(
                                     depositEvents.depositClickFiatAsset(
                                         from = analyticsFrom,
                                         addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+                                        depositScreen = DepositFlowDepositScreen.AddFunds,
                                         buyAsset = currency.analyticsAssetId(),
                                     )
                                     backStack.add(DepositRoutes.Buy(
@@ -188,6 +190,7 @@ fun DepositRouter(
                                     depositEvents.depositClickFiatAsset(
                                         from = analyticsFrom,
                                         addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+                                        depositScreen = DepositFlowDepositScreen.AddFunds,
                                         buyAsset = currency.analyticsAssetId(),
                                     )
                                     backStack.add(DepositRoutes.Buy(
@@ -236,10 +239,12 @@ fun DepositRouter(
                             ))
                         },
                         onOpenP2P = { url ->
+                            // P2P is a payment method of «Buy with fiat», the option the user came through, as on iOS.
                             depositEvents.depositContinueToP2pMarket(
                                 from = analyticsFrom,
                                 walletMode = DepositFlowWalletMode.Single,
-                                addFundsOption = DepositFlowAddFundsOption.BuyWithP2pMarket,
+                                addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+                                depositScreen = DepositFlowDepositScreen.AddFunds,
                             )
                             openProvider(url)
                         },

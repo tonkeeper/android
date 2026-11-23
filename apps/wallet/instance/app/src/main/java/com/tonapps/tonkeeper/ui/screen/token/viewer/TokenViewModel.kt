@@ -360,7 +360,7 @@ class TokenViewModel(
             }
         }
 
-        if (token.isUsdt && !wallet.isW5 && wallet.hasPrivateKey && !api.getConfig(wallet.network).flags.disableGasless && settingsRepository.isUSDTW5(
+        if (token.isUsdt && !wallet.isW5 && !wallet.isWalletTg && wallet.hasPrivateKey && !api.getConfig(wallet.network).flags.disableGasless && settingsRepository.isUSDTW5(
                 wallet.id
             )
         ) {

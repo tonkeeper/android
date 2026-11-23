@@ -92,6 +92,7 @@ private fun SelectCurrencyContent(
         onBack = onBack,
     ) {
         MoonSearchCell(
+            placeholder = stringResource(Localization.search),
             searchText = searchText,
             onChanged = { searchText.value = it },
             isFocusOnStart = true,
@@ -123,6 +124,8 @@ private fun SelectCurrencyContent(
                         VerticalAssetCell(
                             currency = currency,
                             isSelected = isChecked,
+                            // Long names end with an ellipsis rather than a second line.
+                            extendedNameMaxLines = 1,
                             onClick = {
                                 onConfirm(currency)
                                 onBack()

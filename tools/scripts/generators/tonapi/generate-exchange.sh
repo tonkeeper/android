@@ -2,7 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SPEC="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)/shared/api/swap.yaml"
+[ -f "$SPEC" ] || SPEC="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)/api/swap.yaml"
 bash "$SCRIPT_DIR/generate-tonapi.sh" \
-  "$SCRIPT_DIR/openapi/exchange.yaml" \
+  "$SPEC" \
   "exchangeapi" \
-  "tonapi:exchange"
+  "tonapi:exchange" \
+  "false" \
+  "" \
+  "$(dirname "$SPEC")/filters/swap.yaml"

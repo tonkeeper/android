@@ -24,12 +24,20 @@ class SwapFragment : ComposableFragment(), BaseFragment.BottomSheet {
                 onContinue = { request ->
                     context?.navigationDelegate?.onOpenConfirm(request)
                 },
-                onSwapCompleted = {
-                    context?.navigationDelegate?.onOpenHistory()
+                onSwapCompleted = { tracked ->
+                    if (!tracked) {
+                        context?.navigationDelegate?.onOpenHistory()
+                    }
                     finish()
                 },
                 onOpenLink = { url ->
                     context?.navigationDelegate?.onOpenLink(url)
+                },
+                onOpenBattery = { walletId, from ->
+                    context?.navigationDelegate?.onOpenBattery(walletId, from)
+                },
+                onTopUp = { request, assetId ->
+                    context?.navigationDelegate?.onOpenTopUp(request, assetId)
                 },
             )
         }

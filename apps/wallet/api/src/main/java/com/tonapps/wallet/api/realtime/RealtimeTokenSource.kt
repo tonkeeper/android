@@ -33,6 +33,10 @@ class RealtimeTokenSource(
         multichain().wallets.getWalletRealtimeTokenWithHttpInfo(walletId = walletId, xWalletId = walletId)
     }
 
+    suspend fun perpsSubscriptionToken(walletId: String): RealtimeTokenResult = request {
+        multichain().wallets.getWalletPerpsRealtimeTokenWithHttpInfo(walletId = walletId, xWalletId = walletId)
+    }
+
     private suspend fun request(
         call: () -> ApiResponse<RealtimeToken?>,
     ): RealtimeTokenResult = withContext(Dispatchers.IO) {

@@ -331,6 +331,11 @@ private fun MarginIssueRow(
             color = UIKit.colorScheme.accent.red,
         )
 
+        is PerpsMarginChangeIssue.AboveMaximum -> MoonItemSubtitle(
+            text = stringResource(Localization.perps_order_max_margin, issue.maxFormat),
+            color = UIKit.colorScheme.accent.red,
+        )
+
         PerpsMarginChangeIssue.ImmediateRisk -> MoonItemSubtitle(
             text = stringResource(Localization.perps_margin_reduce_risk),
             color = UIKit.colorScheme.accent.red,

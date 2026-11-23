@@ -2,7 +2,6 @@ package com.tonapps.deposit.multicoin.screens.picker
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import kotlinx.coroutines.Dispatchers
@@ -10,7 +9,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 internal class AssetPickerPagingSource(
-    private val oldAccount: AccountRepository,
+    private val walletId: String,
     private val accountRepo: McAccountRepository,
     private val currency: String,
     private val query: String?,
@@ -24,9 +23,6 @@ internal class AssetPickerPagingSource(
         params: LoadParams<String>
     ): LoadResult<String, AccountWithDetails> = withContext(Dispatchers.IO) {
         try {
-            val walletId = oldAccount.getSelectedWalletId()
-                ?: return@withContext LoadResult.Page(emptyList(), null, null)
-
             val page = accountRepo.fetchAccounts(
                 walletId = walletId,
                 currency = currency,

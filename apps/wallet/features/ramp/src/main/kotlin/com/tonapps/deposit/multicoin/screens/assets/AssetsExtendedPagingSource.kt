@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 internal class AssetsExtendedPagingSource(
+    private val walletId: String,
     private val rampRepository: RampRepository,
     private val rampType: RampType,
     private val query: String?,
@@ -25,6 +26,7 @@ internal class AssetsExtendedPagingSource(
     ): LoadResult<String, RampAsset> = withContext(Dispatchers.IO) {
         try {
             val configuration = rampRepository.getConfiguration(
+                walletId = walletId,
                 rampType = rampType,
                 chain = chain,
                 fiat = fiat,

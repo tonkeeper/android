@@ -19,9 +19,10 @@ object WalletProof {
         secretKey: PrivateKeyEd25519,
         payload: String,
         stateInit: String,
+        timestamp: Long,
     ): ProofEntity {
         val domain = ProofDomainEntity("tonkeeper")
-        val result = TONProof.sign(address, secretKey, payload, domain.value)
+        val result = TONProof.sign(address, secretKey, payload, domain.value, timestamp)
         return ProofEntity(
             timestamp = result.timestamp,
             domain = domain,

@@ -27,6 +27,7 @@ data class SendParams(
     data class Exchange(
         val currency: WalletCurrency,
         val exchangeAddress: String,
+        val memo: String? = null,
         val estimatedDurationSeconds: Int? = null,
         val withdrawalFee: String? = null,
     )

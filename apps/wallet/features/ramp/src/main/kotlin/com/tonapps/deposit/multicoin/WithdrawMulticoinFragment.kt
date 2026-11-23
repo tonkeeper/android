@@ -22,6 +22,10 @@ class WithdrawMulticoinFragment : ComposableFragment(), BaseFragment.BottomSheet
 
         val delegate = context?.activity as? NavigationDelegate
 
+        val walletId = requireNotNull(arguments?.getString(ARG_WALLET_ID)) {
+            "WithdrawMulticoinFragment requires $ARG_WALLET_ID — create it via create(walletId)"
+        }
+
         val startRoute = arguments?.getString(ARG_INITIAL)
             ?.let { Json.decodeFromString<WithdrawMulticoinRoutes>(it) }
             ?: WithdrawMulticoinRoutes.Picker()
@@ -33,11 +37,13 @@ class WithdrawMulticoinFragment : ComposableFragment(), BaseFragment.BottomSheet
 
         setContent {
             WithdrawMulticoinRouter(
+                walletId = walletId,
                 initial = startRoute,
                 onBack = { finish() },
                 onTopUp = { assetId ->
                     navigation?.add(
                         DepositMulticoinFragment.create(
+                            walletId = walletId,
                             rampType = RampType.RampOn,
                             initial = DepositMulticoinRoutes.Buy(assetId),
                             analyticsFrom = analyticsFrom.asDepositFlowFrom(),
@@ -58,17 +64,20 @@ class WithdrawMulticoinFragment : ComposableFragment(), BaseFragment.BottomSheet
     }
 
     companion object {
+        private const val ARG_WALLET_ID = "arg_wallet_id"
         private const val ARG_INITIAL = "arg_initial"
         private const val ARG_FROM = "arg_from"
         private const val ARG_UTM = "arg_utm"
 
         fun create(
+            walletId: String,
             initial: WithdrawMulticoinRoutes? = null,
             analyticsFrom: WithdrawFlowFrom,
             utm: UtmParameters = UtmParameters.Empty,
         ): WithdrawMulticoinFragment {
             return WithdrawMulticoinFragment().apply {
                 arguments = Bundle().apply {
+                    putString(ARG_WALLET_ID, walletId)
                     putString(ARG_FROM, analyticsFrom.key)
                     putParcelable(ARG_UTM, utm)
                     initial?.let {

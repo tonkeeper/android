@@ -1,5 +1,10 @@
 package com.tonapps.portfolio.screens.wallet
 
+import com.tonapps.chainkit.core.chain.model.account.Chain
+import kotlinx.coroutines.CancellationException
+import com.tonapps.wallet.data.ledger.LedgerWalletInteractor
+import com.tonapps.wallet.data.ledger.analytics.LedgerIssueSite
+import com.tonapps.wallet.data.ledger.analytics.LedgerNonFatals
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -9,14 +14,22 @@ import androidx.paging.filter
 import androidx.paging.map as mapPaging
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.screenrender.ScreenRenderErrorKind
+import com.tonapps.bus.screenrender.ScreenRenderErrors
+import com.tonapps.bus.screenrender.ScreenRenderId
+import com.tonapps.bus.screenrender.ScreenRenderStage
+import com.tonapps.bus.screenrender.ScreenRenderTracker
 import com.tonapps.chainkit.core.chain.model.num.CoinValue
 import com.tonapps.chainkit.core.chain.model.num.Decimal
 import com.tonapps.chainkit.core.chain.model.num.DisplayUnit
 import com.tonapps.chainkit.core.chain.model.num.FiatCurrency
+import com.tonapps.core.flags.EarnTooltipInteractor
 import com.tonapps.core.flags.Features
 import com.tonapps.core.flags.WalletFeature.Earn
+import com.tonapps.core.flags.WalletFeature.MoonPayRamp
 import com.tonapps.core.flags.WalletFeature.Perps
 import com.tonapps.core.helper.EarnAnalytics
+import com.tonapps.core.loyalty.LOYALTY_BANNER_ID
 import com.tonapps.extensions.AppLifecycleProvider
 import com.tonapps.extensions.fiatSymbol
 import com.tonapps.log.L
@@ -29,8 +42,13 @@ import com.tonapps.perps.data.PerpsPortfolioSnapshot
 import com.tonapps.perps.data.PerpsPortfolioStore
 import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.formatFiatAmount
+import com.tonapps.perps.data.sortedByLiquidationProximity
 import com.tonapps.perps.screens.portfolio.toUi
+import com.tonapps.portfolio.wallet.WalletLimitedSection
+import com.tonapps.portfolio.wallet.WalletSectionLimit
+import com.tonapps.portfolio.wallet.WalletSectionLimitStore
 import com.tonapps.wallet.data.earn.EarnRepository
+import com.tonapps.wallet.data.earn.entities.EarnPortfolioState
 import com.tonapps.core.paging.AccountsPagingCacheSession
 import com.tonapps.core.paging.AccountsPagingSource
 import com.tonapps.wallet.api.API
@@ -41,17 +59,24 @@ import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.banner.BannerRepository
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
+import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.core.Trust
+import com.tonapps.wallet.data.loyalty.LoyaltyEntry
+import com.tonapps.wallet.data.loyalty.LoyaltyRepository
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
+import com.tonapps.wallet.data.multichain.account.WalletAssetsQuery
+import com.tonapps.core.components.isNativeTon
+import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.account.WALLET_ASSETS_PAGE_SIZE
 import com.tonapps.wallet.data.multichain.account.WalletPerpsTotal
 import com.tonapps.wallet.data.multichain.account.walletAssetsFilters
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
+import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.raffle.RaffleRepository
 import com.tonapps.wallet.data.raffle.entities.RaffleEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -83,12 +108,14 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal as JavaBigDecimal
 import java.time.Duration
 import java.time.OffsetDateTime
+import java.util.concurrent.atomic.AtomicBoolean
 
 data class WalletTotal(
     val walletId: String,
@@ -109,13 +136,15 @@ data class WalletAccountItem(
 )
 
 data class WalletBattery(
+    val walletId: String,
     val level: Float,
     val viewed: Boolean,
     val negative: Boolean,
+    val knownEmpty: Boolean,
 )
 
 enum class WalletAction {
-    Send, Deposit, Swap, Stake
+    Send, Deposit, Buy, Swap, Stake
 }
 
 class WalletFeature(
@@ -127,6 +156,7 @@ class WalletFeature(
     private val backupRepository: BackupRepository,
     private val bannerRepository: BannerRepository,
     private val raffleRepository: RaffleRepository,
+    private val loyaltyRepository: LoyaltyRepository,
     private val collectiblesRepository: CollectiblesRepository,
     private val stakingRepository: StakingRepository,
     private val networkMonitor: NetworkMonitor,
@@ -139,12 +169,23 @@ class WalletFeature(
     private val perpsRepository: PerpsRepository,
     private val earnRepository: EarnRepository,
     private val appLifecycle: AppLifecycleProvider,
+    private val ledgerWallets: LedgerWalletInteractor,
+    private val earnTooltipInteractor: EarnTooltipInteractor,
+    private val passcodeManager: PasscodeManager,
+    private val sectionLimits: WalletSectionLimitStore,
 ) : AsyncViewModel() {
 
     private val refreshSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    @Volatile
+    private var refreshRelayed = false
+    private val earnRefreshSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val earnPullPending = AtomicBoolean(false)
     private val balanceRefreshSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val accountsPagingCacheSession = AccountsPagingCacheSession()
     private val perpsLive = perpsPortfolioStore.liveSubscription()
+    private val resumed = MutableStateFlow(false)
+    private val homeTooltips = WalletHomeTooltips(earnTooltipInteractor, settingsRepository)
 
     private val errorRelay = MviRelay<Throwable>()
     val error: Flow<Throwable> = errorRelay.events
@@ -158,7 +199,7 @@ class WalletFeature(
     }.cacheState()
 
     val settingsBadge = combine(wallet, backupRepository.stream) { mcWallet, backups ->
-        mcWallet != null && backups.none { it.walletId == mcWallet.id }
+        mcWallet != null && !mcWallet.isHardware && backups.none { it.walletId == mcWallet.id }
     }.cacheState(initialValue = false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -170,11 +211,16 @@ class WalletFeature(
 
     val pushEnabling: StateFlow<Boolean> field = MutableStateFlow(false)
 
-    private val hiddenBalances: StateFlow<Boolean> = settingsRepository.hiddenBalancesFlow
+    val hiddenBalances: StateFlow<Boolean> = settingsRepository.hiddenBalancesFlow
         .map { settingsRepository.hiddenBalances }
         .cacheState(initialValue = settingsRepository.hiddenBalances)
 
     private val assetsTotal = MutableStateFlow<WalletTotal?>(null)
+    private val screenRender = ScreenRenderTracker.shared
+
+    @Volatile
+    private var assetsErrorKind: ScreenRenderErrorKind? = null
+    private var hasAppeared = false
     private var totalsRefresh: Job? = null
 
     val isTotalStale: StateFlow<Boolean> field = MutableStateFlow(true)
@@ -194,16 +240,42 @@ class WalletFeature(
         onChainEvents.mapNotNull { accountRepoLegacy.getSelectedWalletId() },
     )
 
+    // McAccountRepository.refreshTrigger replays a refresh to every new collector, and init relays it after the blocks
+    // subscribe. So the first selection only reads the cache, and that refresh goes to the network. If the refresh was
+    // relayed first, it may be lost, and the first selection loads "cache, else network". A later selection has no
+    // refresh after it.
+    private val selectionLoads = selectedWalletId.withIndex().map { (index, walletId) ->
+        val mode = if (index == 0 && !refreshRelayed) {
+            LoadMode.CacheOnly
+        } else {
+            LoadMode.CacheFirst
+        }
+        walletId to mode
+    }
+
     private val setupRefresh = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val raffles: StateFlow<List<RaffleEntity>> = merge(
-        selectedWalletId.map { it to false },
-        refreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to true } },
-        onChainEvents.mapNotNull { accountRepoLegacy.getSelectedWalletId() }.map { it to true },
+        selectedWalletId.map { it to LoadMode.CacheOnly },
+        // The first refresh comes at launch, while RootViewModel prefetches the selected wallet's raffles. That
+        // prefetch stands in for the cache: the refresh loads only if it fails.
+        refreshSignal.withIndex().mapNotNull { (index, _) ->
+            val mode = if (index == 0) {
+                LoadMode.CacheFirst
+            } else {
+                LoadMode.Network
+            }
+            accountRepoLegacy.getSelectedWalletId()?.let { it to mode }
+        },
+        onChainEvents.mapNotNull { accountRepoLegacy.getSelectedWalletId() }.map { it to LoadMode.Network },
     )
-        .flatMapLatestCatching { (walletId, forced) ->
-            raffleRepository.getRafflesFlow(walletId, forced)
+        .flatMapLatestCatching { (walletId, mode) ->
+            when (mode) {
+                LoadMode.CacheOnly -> raffleRepository.getRafflesFlow(walletId, forced = false)
+                LoadMode.CacheFirst -> raffleRepository.getRafflesFlowAfterPrefetch(walletId)
+                LoadMode.Network -> raffleRepository.getRafflesFlow(walletId, forced = true)
+            }
         }
         .cacheState(initialValue = emptyList())
 
@@ -212,7 +284,7 @@ class WalletFeature(
         .transformLatest { raffles ->
             while (true) {
                 val now = OffsetDateTime.now()
-                emit(raffles.filter { it.hasStarted(now) && !it.isOfferPhase })
+                emit(raffles.filter { it.hasStarted(now) && !it.isOfferPhase && !it.hasLeaderboard })
                 val nextBoundary = raffles
                     .map { it.startsAt }
                     .filter { it.isAfter(now) }
@@ -227,18 +299,35 @@ class WalletFeature(
     // (backend inserts it there); the raffle endpoint's own banner feeds other
     // surfaces, e.g. the trading screen.
     @OptIn(ExperimentalCoroutinesApi::class)
-    val banners: StateFlow<List<BannerEntity>> = walletIdRefresh
-        .flatMapLatest { walletId ->
-            bannerRepository.getBannersFlow(walletId, isMultichain = true)
+    val banners: StateFlow<List<BannerEntity>> = merge(
+        selectionLoads.map { (walletId, mode) -> walletId to (mode != LoadMode.CacheOnly) },
+        refreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to true } },
+        onChainEvents.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to true } },
+    )
+        .flatMapLatest { (walletId, remote) ->
+            if (remote) {
+                bannerRepository.getBannersFlow(walletId, isMultichain = true)
+            } else {
+                flow { emit(bannerRepository.getBanners(walletId, isMultichain = true)) }
+            }
         }
         .cacheState(initialValue = emptyList())
 
-    val actions = listOf(
-        WalletAction.Send,
-        WalletAction.Deposit,
-        WalletAction.Swap,
-        WalletAction.Stake,
-    )
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val loyalty: StateFlow<LoyaltyEntry> = combine(
+        wallet.map { it?.id }.distinctUntilChanged(),
+        merge(refreshSignal, resumed.filter { it }.map { }).onStart { emit(Unit) },
+    ) { walletId, _ -> walletId }
+        .flatMapLatest { walletId ->
+            walletId?.let(loyaltyRepository::entryFlow) ?: flowOf(LoyaltyEntry.Hidden)
+        }
+        .cacheState(initialValue = LoyaltyEntry.Hidden)
+
+    // The flag is not reactive: a remote config that lands while the screen is shown takes effect on the next resume.
+    val actions: StateFlow<List<WalletAction>> = resumed
+        .filter { it }
+        .map { walletActions() }
+        .cacheState(initialValue = walletActions())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val accounts: Flow<PagingData<AccountWithDetails>> = combine(
@@ -257,7 +346,7 @@ class WalletFeature(
                 assetsTotal.value = null
                 isTotalStale.value = true
             }
-            val filters = settingsRepository.walletAssetsFilters(walletId)
+            val assetsQuery = walletAssetsQuery(walletId, currencyCode)
             Pager(
                 config = PagingConfig(
                     initialLoadSize = WALLET_ASSETS_PAGE_SIZE,
@@ -268,10 +357,16 @@ class WalletFeature(
                 pagingSourceFactory = {
                     AccountsPagingSource(
                         accountRepo = accountRepo,
-                        walletId = walletId,
-                        currency = currencyCode,
-                        verifiedOnly = filters.verifiedOnly,
-                        hideDust = filters.hideDust,
+                        walletId = assetsQuery.walletId,
+                        currency = assetsQuery.currency,
+                        query = assetsQuery.query,
+                        network = assetsQuery.network,
+                        availableOnly = assetsQuery.availableOnly,
+                        showHidden = assetsQuery.showHidden,
+                        showAll = assetsQuery.showAll,
+                        capabilities = assetsQuery.capabilities,
+                        verifiedOnly = assetsQuery.verifiedOnly,
+                        hideDust = assetsQuery.hideDust,
                         cacheSession = accountsPagingCacheSession,
                         scope = viewModelScope,
                         onTotalLoaded = { result ->
@@ -285,12 +380,24 @@ class WalletFeature(
                                 )
                             }
                         },
-                        onNetworkConfirmed = { confirmTotal(walletId, currencyCode) },
+                        onNetworkConfirmed = {
+                            confirmTotal(walletId, currencyCode)
+                            assetsErrorKind = null
+                            screenRender.contentApplied(ScreenRenderStage.Fresh, ScreenRenderId.Portfolio)
+                        },
                         onLoadError = { error -> handleRefreshError(error) },
+                        onRefreshError = { error ->
+                            val kind = ScreenRenderErrors.kind(error)
+                            assetsErrorKind = kind
+                            screenRender.failed(ScreenRenderId.Portfolio, kind)
+                        },
+                        onCachedLoaded = { screenRender.contentApplied(ScreenRenderStage.Cached, ScreenRenderId.Portfolio) },
+                        onRequestStarted = { screenRender.requestStarted(ScreenRenderId.Portfolio) },
+                        onRequestFinished = { screenRender.requestFinished(ScreenRenderId.Portfolio) },
                     )
                 },
             ).flow.map { pagingData ->
-                if (filters.verifiedOnly) {
+                if (assetsQuery.verifiedOnly) {
                     pagingData.filter { it.asset.verification.isVerified }
                 } else {
                     pagingData
@@ -322,7 +429,7 @@ class WalletFeature(
     }.cacheState(initialValue = null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val perpsSnapshot: StateFlow<PerpsPortfolioSnapshot?> = multichainWalletId(Perps)
+    private val perpsSnapshot: StateFlow<PerpsPortfolioSnapshot?> = multichainWalletId(Perps, allowHardware = false)
         .flatMapLatest { walletId ->
             if (walletId != null) {
                 perpsPortfolioStore.snapshot.map { it?.takeIf { snapshot -> snapshot.walletId == walletId } }
@@ -355,7 +462,7 @@ class WalletFeature(
         when {
             portfolio == null -> null
             portfolio.positions.isNotEmpty() -> WalletSection.Perps.Positions(
-                positions = portfolio.positions.map { it.toUi(hiddenBalance) },
+                positions = portfolio.positions.sortedByLiquidationProximity().map { it.toUi(hiddenBalance) },
                 balanceFormat = balanceFormat,
             )
             markets.isEmpty() -> null
@@ -370,64 +477,187 @@ class WalletFeature(
         }
     }.cacheState(initialValue = null)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val earnPortfolio: StateFlow<Pair<String, EarnPortfolioState?>?> = combine(
+        multichainWalletId(Earn),
+        settingsRepository.currencyFlow,
+    ) { walletId, currency -> walletId?.let { it to currency.code } }
+        .distinctUntilChanged()
+        .flatMapLatest { request ->
+            if (request != null) {
+                val (walletId, currency) = request
+                merge(refreshSignal, earnRefreshSignal)
+                    .map { true }
+                    .onStart { emit(true) }
+                    .flatMapLatest { forced ->
+                        earnRepository.getPortfolioFlow(walletId, currency, forced) { earnPullPending.getAndSet(false) }
+                    }
+                    .map { walletId to it }
+            } else {
+                flowOf(null)
+            }
+        }
+        .cacheState(initialValue = null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val earnVaults: StateFlow<List<EarnVaultUi>?> = multichainWalletId(Earn)
+        .map { it != null }
+        .distinctUntilChanged()
+        .flatMapLatest { enabled ->
+            if (enabled) {
+                merge(refreshSignal.map { true }, earnRefreshSignal.map { false })
+                    .onStart { emit(true) }
+                    .flatMapLatest { forced -> earnRepository.getFeaturedVaultsFlow(forced) }
+            } else {
+                flowOf(null)
+            }
+        }
+        // The carousel keys its cards, and a repeated vault would crash the whole screen.
+        .map { vaults -> vaults?.map(EarnUiMapper::mapVault)?.distinctBy { it.id } }
+        .cacheState(initialValue = null)
+
     // Positions win over the carousel: the carousel is what a wallet without any of them sees.
     private val earn: StateFlow<WalletSection.Earn?> = combine(
         multichainWalletId(Earn),
+        earnPortfolio,
+        earnVaults,
         settingsRepository.hiddenBalancesFlow,
-    ) { walletId, _ ->
-        if (walletId != null) {
-            earnSection(hiddenBalance = settingsRepository.hiddenBalances)
-        } else {
-            null
-        }
+        sectionLimits.limit(WalletLimitedSection.Earn),
+    ) { walletId, portfolio, vaults, _, limit ->
+        val state = portfolio?.takeIf { it.first == walletId }?.second
+        earnSection(state, vaults, hiddenBalance = settingsRepository.hiddenBalances, limit = limit)
     }
         .cacheState(initialValue = null)
 
-    // Open perps positions sit above the assets and the shelf below them; Earn always comes last, as on iOS.
+    // As on iOS: open perps positions sit above the assets and the shelf below them;
+    // Earn positions come before the shelf, the Earn carousel after it.
     val sections: StateFlow<List<WalletSection>> = combine(perps, earn) { perps, earn ->
         when (perps) {
             is WalletSection.Perps.Positions -> listOfNotNull(perps, WalletSection.Assets, earn)
-            is WalletSection.Perps.Shelf -> listOfNotNull(WalletSection.Assets, perps, earn)
+            is WalletSection.Perps.Shelf -> when (earn) {
+                is WalletSection.Earn.Vaults, null -> listOfNotNull(WalletSection.Assets, perps, earn)
+                is WalletSection.Earn.Positions, is WalletSection.Earn.Unavailable ->
+                    listOf(WalletSection.Assets, earn, perps)
+            }
             null -> listOfNotNull(WalletSection.Assets, earn)
         }
     }.cacheState(initialValue = listOf(WalletSection.Assets))
 
+    val assetsLimit: StateFlow<WalletSectionLimit> = sectionLimits.limit(WalletLimitedSection.Assets)
+
+    // The lockscreen is an overlay in the activity, so the screen is resumed and on top under it.
+    // Only a wallet without positions sees it: it points at the carousel of vaults.
+    private val homeTooltip: StateFlow<HomeTooltip?> = homeTooltips.active(
+        onScreen = combine(resumed, passcodeManager.lockscreenHiddenFlow) { resumed, unlocked -> resumed && unlocked },
+        earn = earn,
+    ).cacheState(initialValue = null)
+
+    val showsEarnTooltip: StateFlow<Boolean> = homeTooltip.map { it == HomeTooltip.Earn }.cacheState(initialValue = false)
+
+    val showsPerpsTooltip: StateFlow<Boolean> = homeTooltip.map { it == HomeTooltip.Perps }.cacheState(initialValue = false)
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val stakingApy: StateFlow<String?> = walletIdRefresh
-        .mapLatest { walletId -> loadMaxStakingApy(walletId) }
-        .cacheState()
+    private val cachedAccounts: StateFlow<List<AccountWithDetails>> = combine(
+        selectedWalletId,
+        settingsRepository.currencyFlow,
+        settingsRepository.safeModeChangedFlow,
+        settingsRepository.hideDustAssetsFlow,
+    ) { walletId, walletCurrency, _, _ ->
+        walletId to walletCurrency.code
+    }
+        .flatMapLatest { (walletId, currencyCode) ->
+            accountRepo.observeCachedAccounts(walletAssetsQuery(walletId, currencyCode))
+        }
+        .cacheState(initialValue = emptyList())
+
+    private val earnOffersFailed = MutableStateFlow(false)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val earnAssetApy: StateFlow<Map<String, String>> = combine(
+        multichainWalletId(Earn),
+        cachedAccounts.map { accounts -> accounts.map { it.asset.id } }.distinctUntilChanged(),
+        refreshSignal.filter { earnOffersFailed.value }.onStart { emit(Unit) },
+    ) { walletId, assetIds, _ -> assetIds.takeIf { walletId != null } }
+        .transformLatest { assetIds ->
+            if (assetIds.isNullOrEmpty()) {
+                emit(emptyMap())
+                return@transformLatest
+            }
+            val offers = try {
+                earnRepository.loadAssetOffers(assetIds)
+            } catch (e: Throwable) {
+                verifyError(e)
+                L.w(e, "Earn offers failed")
+                earnOffersFailed.value = true
+                return@transformLatest
+            }
+            earnOffersFailed.value = false
+            emit(offers.mapValues { (_, offer) -> CurrencyFormatter.formatPercent(offer.apy).toString() })
+        }
+        .cacheState(initialValue = emptyMap())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val battery: StateFlow<WalletBattery?> = merge(
-        selectedWalletId.map { it to false },
-        refreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to true } },
-        batteryRepository.balanceUpdatedFlow.mapNotNull { wallet.value?.id?.let { it to false } },
+        selectionLoads,
+        refreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to LoadMode.Network } },
+        selectedWalletId.distinctUntilChanged().flatMapLatest { walletId ->
+            batteryRepository.balanceUpdatedFlow.drop(1).map { walletId to LoadMode.CacheFirst }
+        },
     )
-        .mapLatest { (walletId, ignoreCache) -> loadBattery(walletId, ignoreCache) }
+        .mapLatest { (walletId, mode) -> loadBattery(walletId, mode) }
         .cacheState()
+
+    val batteryHint: StateFlow<Boolean> = combine(
+        resumed,
+        passcodeManager.lockscreenHiddenFlow,
+        selectedWalletId,
+        battery,
+        settingsRepository.batteryHintFlow,
+    ) { resumed, unlocked, walletId, battery, available ->
+        resumed && unlocked && available && battery?.knownEmpty == true && battery.walletId == walletId
+    }.cacheState(initialValue = false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val stakedLoad: StateFlow<StakedLoad> = combine(
         merge(
-            selectedWalletId.map { it to false },
-            refreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to true } },
-            balanceRefreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to true } },
+            selectionLoads,
+            refreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to LoadMode.Network } },
+            balanceRefreshSignal.mapNotNull { accountRepoLegacy.getSelectedWalletId()?.let { it to LoadMode.Network } },
         ),
         settingsRepository.currencyFlow,
         settingsRepository.hiddenBalancesFlow,
-    ) { (walletId, ignoreCache), currency, _ ->
-        Triple(walletId, currency.code, ignoreCache)
+    ) { (walletId, mode), currency, _ ->
+        Triple(walletId, currency.code, mode)
     }
-        .transformLatest { (walletId, currencyCode, ignoreCache) ->
+        .transformLatest { (walletId, currencyCode, mode) ->
             emit(
                 StakedLoad(
                     walletId = walletId,
                     currencyCode = currencyCode,
-                    items = loadStaked(walletId, ignoreCache),
+                    items = loadStaked(walletId, mode),
+                    // Read from the staking cache that loadStaked has just filled: no request of its own.
+                    maxApy = loadMaxStakingApy(walletId),
                 )
             )
         }
         .cacheState(initialValue = StakedLoad.Empty)
+
+    val assetApy: StateFlow<Map<String, String>> = combine(
+        cachedAccounts,
+        combine(stakedLoad, selectedWalletId) { load, walletId ->
+            load.maxApy.takeIf { load.walletId == walletId }
+        }.distinctUntilChanged(),
+        earnAssetApy,
+    ) { accounts, staking, earn ->
+        accounts.mapNotNull { account ->
+            val apy = if (account.asset.isNativeTon()) {
+                staking
+            } else {
+                earn[account.asset.id.lowercase()]
+            }
+            apy?.let { account.asset.id to it }
+        }.toMap()
+    }.cacheState(initialValue = emptyMap())
 
     val staked: StateFlow<List<StakedUi>> = combine(
         stakedLoad,
@@ -469,6 +699,14 @@ class WalletFeature(
         .mapLatest { migratableWalletsCount() }
         .cacheState(initialValue = 0)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val ledgerMissingChains: StateFlow<List<Chain>> = combine(
+        wallet.filterNotNull(),
+        setupRefresh,
+    ) { mc, _ -> mc }
+        .mapLatest { mc -> if (mc.isHardware) { ledgerMissingChains(mc.id) } else { emptyList() } }
+        .cacheState(initialValue = emptyList())
+
     val finishSetup = combine(
         wallet.filterNotNull(),
         backupRepository.stream,
@@ -477,13 +715,17 @@ class WalletFeature(
         total,
     ) { mc, backups, _, _, total ->
         Triple(mc, backups, total)
-    }.combine(migratableWallets) { (mc, backups, total), migratableWallets ->
-        buildFinishSetupState(mc, backups, total, migratableWallets)
+    }.combine(combine(migratableWallets, ledgerMissingChains, ::Pair)) { (mc, backups, total), (migratableWallets, ledgerChains) ->
+        buildFinishSetupState(mc, backups, total, migratableWallets, ledgerChains)
     }.cacheState()
 
     init {
         bgScope.launch {
+            homeTooltips.load()
+        }
+        bgScope.launch {
             accountRepo.refreshTrigger.collect {
+                refreshRelayed = true
                 refreshSignal.tryEmit(Unit)
             }
         }
@@ -520,8 +762,9 @@ class WalletFeature(
         backups: List<BackupEntity>,
         total: WalletTotal?,
         migratableWallets: Int,
+        ledgerChains: List<Chain>,
     ): FinishSetupState? {
-        val hasBackup = backups.any { it.walletId == mc.id }
+        val hasBackup = mc.isHardware || backups.any { it.walletId == mc.id }
         val funded = total != null && total.walletId == mc.id &&
             total.value.toDisplayValue() > BigDecimal.ZERO
         if (funded && !hasBackup) {
@@ -537,6 +780,9 @@ class WalletFeature(
         val lines = buildList {
             if (!hasBackup) {
                 add(FinishSetupLine.Backup(status = FinishSetupLineStatus.Pending))
+            }
+            if (ledgerChains.isNotEmpty()) {
+                add(FinishSetupLine.LedgerNetworks(status = FinishSetupLineStatus.Pending, chains = ledgerChains))
             }
             if (migratableWallets > 0) {
                 add(
@@ -557,6 +803,16 @@ class WalletFeature(
             return null
         }
         return FinishSetupState(lines = lines, skippable = true)
+    }
+
+    private suspend fun ledgerMissingChains(walletId: String): List<Chain> = try {
+        ledgerWallets.missingChains(walletId)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        L.e(e, "Failed to read the networks missing from the Ledger wallet")
+        LedgerNonFatals.recordIssue(e, LedgerIssueSite.Wallet)
+        emptyList()
     }
 
     private suspend fun migratableWalletsCount(): Int {
@@ -581,11 +837,18 @@ class WalletFeature(
     fun hideBanner(banner: BannerEntity) {
         val walletId = wallet.value?.id ?: return
         bgScope.launch {
-            bannerRepository.hideBanner(walletId, banner.id)
+            if (banner.id == LOYALTY_BANNER_ID) {
+                loyaltyRepository.hideBanner(walletId)
+            } else {
+                bannerRepository.hideBanner(walletId, banner.id)
+            }
         }
     }
 
     fun refreshAssets() {
+        if (Earn.isEnabled && wallet.value != null) {
+            earnPullPending.set(true)
+        }
         refreshSignal.tryEmit(Unit)
         setupRefresh.update { it + 1 }
         perpsPortfolioStore.refresh()
@@ -627,20 +890,48 @@ class WalletFeature(
     }
 
     fun setResumed(resumed: Boolean) {
+        val earnShown = showsEarnTooltip.value
+        if (resumed) {
+            homeTooltips.recheckPerps()
+        }
+        this.resumed.value = resumed
+        if (!resumed && earnShown) {
+            dismissEarnTooltip()
+        }
         perpsLive.set(resumed)
+        if (resumed) {
+            earnRefreshSignal.tryEmit(Unit)
+        }
+    }
+
+    fun dismissEarnTooltip() = homeTooltips.dismissEarn()
+
+    fun setPerpsShelfVisibility(visibility: PerpsShelfVisibility) = homeTooltips.setPerpsShelf(visibility)
+
+    fun dismissPerpsTooltip() = homeTooltips.dismissPerps()
+
+    fun retryEarn() {
+        earnRefreshSignal.tryEmit(Unit)
+    }
+
+    fun selectAssetsLimit(limit: WalletSectionLimit) {
+        sectionLimits.setLimit(WalletLimitedSection.Assets, limit)
+    }
+
+    fun selectEarnLimit(limit: WalletSectionLimit) {
+        sectionLimits.setLimit(WalletLimitedSection.Earn, limit)
     }
 
     fun onEarnPositionsShown() {
-        bgScope.launch {
-            val portfolio = earnRepository.portfolio()
-            EarnAnalytics.yourVaultsView(portfolio.positions.size, portfolio.totalUsd.toDouble())
-        }
+        val walletId = wallet.value?.id ?: return
+        val state = earnPortfolio.value?.takeIf { it.first == walletId }?.second as? EarnPortfolioState.Loaded ?: return
+        val portfolio = state.portfolio
+        EarnAnalytics.yourVaultsView(portfolio.positions.size, portfolio.totalUsd.toDouble())
     }
 
     fun onEarnVaultsShown() {
-        bgScope.launch {
-            EarnAnalytics.featuredView(featuredVaults().size)
-        }
+        val vaults = earnVaults.value ?: return
+        EarnAnalytics.featuredView(vaults.size)
     }
 
     override fun onCleared() {
@@ -649,34 +940,76 @@ class WalletFeature(
     }
 
     // Earn and Perps live only in multichain wallets: McAccountRepository has no row for a legacy one.
-    private fun multichainWalletId(feature: Features<Boolean>): Flow<String?> = combine(
+    private fun multichainWalletId(
+        feature: Features<Boolean>,
+        allowHardware: Boolean = true,
+    ): Flow<String?> = combine(
         wallet,
         refreshSignal.onStart { emit(Unit) },
-    ) { wallet, _ -> wallet?.id?.takeIf { feature.isEnabled } }
+    ) { wallet, _ -> wallet?.takeIf { allowHardware || !it.isHardware }?.id?.takeIf { feature.isEnabled } }
         .distinctUntilChanged()
 
-    private fun earnSection(hiddenBalance: Boolean): WalletSection.Earn? {
-        val portfolio = earnRepository.portfolio()
-        val positions = portfolio.positions.map { EarnUiMapper.mapPosition(it, hiddenBalance) }
-        if (positions.isNotEmpty()) {
+    private fun walletAssetsQuery(walletId: String, currencyCode: String): WalletAssetsQuery {
+        val filters = settingsRepository.walletAssetsFilters(walletId)
+        return WalletAssetsQuery(
+            walletId = walletId,
+            currency = currencyCode,
+            verifiedOnly = filters.verifiedOnly,
+            hideDust = filters.hideDust,
+        )
+    }
+
+    private fun earnSection(
+        state: EarnPortfolioState?,
+        vaults: List<EarnVaultUi>?,
+        hiddenBalance: Boolean,
+        limit: WalletSectionLimit,
+    ): WalletSection.Earn? {
+        val loaded = when (state) {
+            null -> return null
+            is EarnPortfolioState.Unavailable -> return WalletSection.Earn.Unavailable
+            is EarnPortfolioState.Loaded -> state
+        }
+        val portfolio = loaded.portfolio
+        if (portfolio.positions.isNotEmpty()) {
+            val positions = portfolio.positions.map { EarnUiMapper.mapPosition(it, portfolio.currency, hiddenBalance) }
             return WalletSection.Earn.Positions(
-                positions = positions,
-                totalFormat = EarnUiMapper.formatTotal(portfolio.totalUsd, hiddenBalance),
+                positions = positions.take(limit.count),
+                hiddenPositions = positions.drop(limit.count),
+                limit = limit,
+                totalFormat = EarnUiMapper.formatFiat(portfolio.currency, portfolio.totalFiat, hiddenBalance),
+                isStale = loaded.isStale,
             )
         }
-        val vaults = featuredVaults()
-        return if (vaults.isEmpty()) {
+        return if (vaults.isNullOrEmpty()) {
             null
         } else {
             WalletSection.Earn.Vaults(vaults)
         }
     }
 
-    private fun featuredVaults(): List<EarnVaultUi> {
-        return earnRepository.featuredVaults()
-            .map(EarnUiMapper::mapVault)
-            // The carousel keys its cards, and a repeated vault would crash the whole screen.
-            .distinctBy { it.id }
+    /**
+     * The tab is shown again. Assets are not reloaded on that, so the visit ends with what is on screen,
+     * or with the last load's failure.
+     */
+    fun onScreenShown() {
+        if (!hasAppeared) {
+            hasAppeared = true
+            return
+        }
+        val errorKind = assetsErrorKind
+        if (assetsTotal.value == null && errorKind == null) {
+            // Still loading: the session ends with that load.
+            return
+        }
+        if (assetsTotal.value != null) {
+            screenRender.contentApplied(ScreenRenderStage.Cached, ScreenRenderId.Portfolio)
+        }
+        if (errorKind != null) {
+            screenRender.failed(ScreenRenderId.Portfolio, errorKind)
+        } else {
+            screenRender.finish(ScreenRenderId.Portfolio)
+        }
     }
 
     private fun handleRefreshError(error: Throwable) {
@@ -699,32 +1032,38 @@ class WalletFeature(
             return null
         }
 
-        return stakingRepository.getMaxApyFormatted(
+        return stakingRepository.getCachedMaxApyFormatted(
             accountId = tonWallet.accountId,
             network = tonWallet.network,
-            initializedAccount = tonWallet.initialized,
         )
     }
 
     private suspend fun loadBattery(
         walletId: String,
-        ignoreCache: Boolean = false,
+        mode: LoadMode,
     ): WalletBattery? = withContext(Dispatchers.IO) {
         val tonWallet = unifiedAccountRepository.getTonWalletById(walletId) ?: return@withContext null
         if (tonWallet.testnet) {
             return@withContext null
         }
 
-        val balance = batteryRepository.getBalance(tonWallet, ignoreCache).balance
+        val entity = if (mode == LoadMode.CacheOnly) {
+            batteryRepository.getCachedBalance(tonWallet) ?: return@withContext null
+        } else {
+            batteryRepository.getBalance(tonWallet, ignoreCache = mode == LoadMode.Network)
+        }
+        val balance = entity.balance
 
         if (api.getConfig(tonWallet.network).flags.disableBattery && !balance.isPositive) {
             return@withContext null
         }
 
         WalletBattery(
+            walletId = walletId,
             level = BatteryMapper.convertToBatteryLevel(balance),
             viewed = settingsRepository.batteryViewed,
             negative = balance.isNegative,
+            knownEmpty = entity !== BatteryBalanceEntity.Empty && balance.value.signum() == 0,
         )
     }
 
@@ -740,7 +1079,7 @@ class WalletFeature(
 
     private suspend fun loadStaked(
         walletId: String,
-        ignoreCache: Boolean = false,
+        mode: LoadMode,
     ): List<StakedUi> = withContext(Dispatchers.IO) {
         val tonWallet = unifiedAccountRepository.getTonWalletById(walletId) ?: return@withContext emptyList()
         if (tonWallet.testnet) {
@@ -755,7 +1094,7 @@ class WalletFeature(
             hiddenBalance = settingsRepository.hiddenBalances,
             accountRepo = accountRepo,
             stakingRepository = stakingRepository,
-            ignoreCache = ignoreCache,
+            mode = mode,
         )
     }
 
@@ -823,10 +1162,13 @@ class WalletFeature(
     }
 }
 
+internal enum class LoadMode { CacheOnly, CacheFirst, Network }
+
 private data class StakedLoad(
     val walletId: String,
     val currencyCode: String,
     val items: List<StakedUi>,
+    val maxApy: String? = null,
 ) {
     companion object {
         val Empty = StakedLoad(walletId = "", currencyCode = "", items = emptyList())
@@ -859,4 +1201,13 @@ private fun WalletTotal.plusNominatorStakes(stakes: List<StakedUi>): WalletTotal
         return this
     }
     return copy(value = DisplayUnit(value.toDisplayValue() + extra, Decimal(2)))
+}
+
+// The flag opens the buying screen right away (DepositMulticoinRouter), so the button says so, as on iOS.
+private fun walletActions(): List<WalletAction> {
+    val deposit = when {
+        MoonPayRamp.isEnabled -> WalletAction.Buy
+        else -> WalletAction.Deposit
+    }
+    return listOf(WalletAction.Send, deposit, WalletAction.Swap, WalletAction.Stake)
 }

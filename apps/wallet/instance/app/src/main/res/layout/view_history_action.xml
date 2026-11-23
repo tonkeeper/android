@@ -186,6 +186,13 @@
                 android:textColor="?attr/textPrimaryColor"
                 android:textSize="14sp"/>
 
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/contract_payload"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"/>
+
         </uikit.widget.ColumnLayout>
 
     </FrameLayout>

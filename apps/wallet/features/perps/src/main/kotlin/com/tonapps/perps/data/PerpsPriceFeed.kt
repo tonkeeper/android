@@ -50,6 +50,7 @@ class PerpsPriceFeed(private val api: API) {
         data class Socket(val event: HermesPriceEvent?) : LoopInput
         data class Desired(val tickers: Set<String>) : LoopInput
         data object Timeout : LoopInput
+        data object Renew : LoopInput
     }
 
     // Session state is confined to the event-loop coroutine; only one socket exists at a time.
@@ -98,19 +99,32 @@ class PerpsPriceFeed(private val api: API) {
         }
 
         private suspend fun runSession(): SessionEnd {
+            val token = try {
+                api.hermes.loginToken()
+            } catch (e: Throwable) {
+                L.e(e)
+                null
+            } ?: return SessionEnd.SILENT
+            val loginDeadlineMs = System.currentTimeMillis() + LOGIN_TIMEOUT_MS
             val socket = HermesPricesSocket(api.hermes)
+            val renewals = Channel<Unit>(Channel.CONFLATED)
             var pingJob: Job? = null
-            var opened = false
+            var renewJob: Job? = null
+            var loggedIn = false
             var awaitingAck = false
             var delivered = false
-            var loginToken: String? = null
             try {
                 socket.connect()
                 while (true) {
                     val input = select<LoopInput> {
                         socket.events.onReceiveCatching { LoopInput.Socket(it.getOrNull()) }
                         updates.onReceive { LoopInput.Desired(it) }
-                        if (awaitingAck) {
+                        renewals.onReceive { LoopInput.Renew }
+                        if (!loggedIn) {
+                            onTimeout((loginDeadlineMs - System.currentTimeMillis()).coerceAtLeast(0L)) {
+                                LoopInput.Timeout
+                            }
+                        } else if (awaitingAck) {
                             onTimeout(SUBSCRIBE_TIMEOUT_MS) { LoopInput.Timeout }
                         }
                     }
@@ -120,7 +134,7 @@ class PerpsPriceFeed(private val api: API) {
                             if (desired.isEmpty()) {
                                 return SessionEnd.IDLE
                             }
-                            if (opened) {
+                            if (loggedIn) {
                                 subscribe(socket)
                                 awaitingAck = true
                             }
@@ -128,36 +142,56 @@ class PerpsPriceFeed(private val api: API) {
 
                         LoopInput.Timeout -> break
 
+                        LoopInput.Renew -> return SessionEnd.RELOGIN
+
                         is LoopInput.Socket -> when (val event = input.event) {
-                            HermesPriceEvent.Opened -> {
-                                opened = true
-                                loginToken = try {
-                                    api.hermes.accessToken()
-                                } catch (e: Throwable) {
-                                    L.e(e)
-                                    null
-                                }
-                                loginToken?.let { socket.login(it) }
-                                subscribe(socket)
-                                awaitingAck = true
-                                pingJob = scope.launch { socket.keepAlive() }
-                            }
+                            HermesPriceEvent.Opened -> socket.login(token.value)
 
                             HermesPriceEvent.Subscribed -> awaitingAck = false
 
-                            HermesPriceEvent.LoggedIn -> loginRefreshUsed = false
-
-                            HermesPriceEvent.LoginRejected -> if (!loginRefreshUsed) {
-                                loginRefreshUsed = true
-                                loginToken?.let { expired ->
-                                    try {
-                                        api.hermes.refreshAccessToken(expired)
-                                    } catch (e: Throwable) {
-                                        L.e(e)
+                            HermesPriceEvent.LoggedIn -> {
+                                loggedIn = true
+                                loginRefreshUsed = false
+                                subscribe(socket)
+                                awaitingAck = true
+                                pingJob = scope.launch { socket.keepAlive() }
+                                renewJob = token.renewDelayMs(System.currentTimeMillis()).let { delayMs ->
+                                    scope.launch {
+                                        delay(delayMs)
+                                        while (true) {
+                                            val renewed = try {
+                                                api.hermes.refreshAccessToken(token.value)
+                                            } catch (e: Throwable) {
+                                                L.e(e)
+                                                null
+                                            }
+                                            if (renewed != null) {
+                                                renewals.send(Unit)
+                                                break
+                                            }
+                                            delay(RENEW_RETRY_MS)
+                                        }
                                     }
                                 }
-                                return SessionEnd.RELOGIN
                             }
+
+                            HermesPriceEvent.LoginRejected -> {
+                                if (!loginRefreshUsed) {
+                                    val renewed = try {
+                                        api.hermes.refreshAccessToken(token.value)
+                                    } catch (e: Throwable) {
+                                        L.e(e)
+                                        null
+                                    }
+                                    if (renewed != null) {
+                                        loginRefreshUsed = true
+                                        return SessionEnd.RELOGIN
+                                    }
+                                }
+                                break
+                            }
+
+                            HermesPriceEvent.LoginFailed -> break
 
                             is HermesPriceEvent.Prices -> {
                                 awaitingAck = false
@@ -173,6 +207,7 @@ class PerpsPriceFeed(private val api: API) {
                 }
             } finally {
                 pingJob?.cancel()
+                renewJob?.cancel()
                 socket.close()
             }
             return if (delivered) {
@@ -193,6 +228,8 @@ class PerpsPriceFeed(private val api: API) {
         const val MIN_BACKOFF_MS = 1_000L
         const val MAX_BACKOFF_MS = 30_000L
         const val SUBSCRIBE_TIMEOUT_MS = 30_000L
+        const val LOGIN_TIMEOUT_MS = 30_000L
+        const val RENEW_RETRY_MS = 30_000L
     }
 }
 

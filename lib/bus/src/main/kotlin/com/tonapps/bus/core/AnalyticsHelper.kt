@@ -9,7 +9,6 @@ import com.tonapps.bus.core.contract.EventDelegate
 import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.core.tracer.AnalyticException
 import com.tonapps.bus.generated.DefaultEvents
-import com.tonapps.core.flags.FeatureKey
 import java.util.concurrent.CancellationException
 import kotlin.concurrent.atomics.AtomicReference
 
@@ -30,8 +29,8 @@ class AnalyticsHelper private constructor(
 
     private val config = AtomicReference<Config?>(null)
 
-    fun start(context: Context, persistentCacheFeature: FeatureKey) {
-        executor.start(context, persistentCacheFeature)
+    fun start(context: Context) {
+        executor.start(context)
     }
 
     fun setConfig(context: Context, initConfig: Config) {

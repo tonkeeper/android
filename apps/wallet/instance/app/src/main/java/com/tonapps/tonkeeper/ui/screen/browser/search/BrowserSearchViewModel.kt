@@ -94,6 +94,10 @@ class BrowserSearchViewModel(
                 null
             }
         }
+        val host = uri?.host?.takeIf { it.isNotEmpty() }
+        if (host == null) {
+            uri = null
+        }
 
         val apps = browserRepository.search(
             country = settingsRepository.country,
@@ -114,10 +118,10 @@ class BrowserSearchViewModel(
         } else {
             for (index in 0 until appsCount) {
                 val position = ListCell.getPosition(appsCount, index)
-                if (index == 0 && uri != null) {
-                    items.add(Item.Link(position, uri.toString(), uri.host!!))
+                if (index == 0 && uri != null && host != null) {
+                    items.add(Item.Link(position, uri.toString(), host))
                 }
-                val appIndex = index - if (uri != null) 1 else 0
+                val appIndex = index - if (uri != null) { 1 } else { 0 }
                 if (appIndex in apps.indices) {
                     items.add(Item.App(position, apps[appIndex]))
                 }

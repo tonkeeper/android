@@ -6,16 +6,12 @@ let package = Package(
     name: "KeeperResources",
     platforms: [.iOS(.v15)],
     products: [
-        // Dependency-free, dynamically linked so the asset catalog / fonts / Lottie live in
-        // one shared framework instead of every product that statically links `TKUIKit`.
-        // SwiftPM still copies the resource bundle into each app/extension; the intents
-        // extension drops its copy at build time (see Keeper.xcodeproj). It lives in its own package so
-        // consumers depend on it as a *product* (like `SnapKit-Dynamic`) — that's what lets it
-        // build as a single shared framework. Having no code dependencies, being `.dynamic`
-        // does not break SwiftUI Previews.
+        // Linked only by `TKUIKit`, so the code lives once in the shared `TKUIKit.framework`.
+        // Not `.dynamic`: that would break the previews of `TKUIKit`'s own views (see its
+        // manifest). SwiftPM still copies the resource bundle into each app/extension; the
+        // intents extension drops its copy at build time (see Keeper.xcodeproj).
         .library(
             name: "KeeperResources",
-            type: .dynamic,
             targets: ["KeeperResources"]
         ),
     ],

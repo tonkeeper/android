@@ -8,4 +8,6 @@ bash "$SCRIPT_DIR/generate-tonapi.sh" \
   "$SPEC" \
   "batteryapi" \
   "tonapi:battery" \
-  "true"
+  "true" \
+  "" \
+  "$(dirname "$SPEC")/filters/battery.yaml"

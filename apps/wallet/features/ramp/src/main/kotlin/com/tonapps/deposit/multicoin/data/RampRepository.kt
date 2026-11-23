@@ -24,11 +24,12 @@ class RampRepository(
     private val unifiedAccountRepository: UnifiedAccountRepository,
 ) {
 
-    private suspend fun multichainWalletId(): String? {
-        return unifiedAccountRepository.getSelectedWallet()?.multichainWalletId
+    private suspend fun multichainWalletId(walletId: String): String? {
+        return unifiedAccountRepository.getTonWalletById(walletId)?.multichainWalletId
     }
 
     suspend fun getConfiguration(
+        walletId: String,
         rampType: RampType,
         chain: String? = null,
         fiat: String? = null,
@@ -52,7 +53,7 @@ class RampRepository(
                 platform = Platform.android,
                 cursor = cursor,
                 limit = limit,
-                xWalletID = multichainWalletId(),
+                xWalletID = multichainWalletId(walletId),
                 F = settings.installId,
             ).toRamp()
 
@@ -75,7 +76,7 @@ class RampRepository(
         }
     }
 
-    suspend fun getOnrampChains(fiat: String? = null): List<Chain> = withContext(Async.Io) {
+    suspend fun getOnrampChains(walletId: String, fiat: String? = null): List<Chain> = withContext(Async.Io) {
         api.exchange.onramp.getOnrampChains(
             fiat = fiat,
             country = api.country,
@@ -85,12 +86,17 @@ class RampRepository(
             timezone = environment.timezone(),
             isVpnActive = environment.isVpnActive(),
             platform = Platform.android,
-            xWalletID = multichainWalletId(),
+            xWalletID = multichainWalletId(walletId),
             F = settings.installId,
         ).chains.mapNotNull { Chain.find(it, Network.Mode.Mainnet.id) }.distinct()
     }
 
-    suspend fun getAsset(rampType: RampType, assetId: String, fiat: String? = null): RampAssetDetail = withContext(Async.Io) {
+    suspend fun getAsset(
+        walletId: String,
+        rampType: RampType,
+        assetId: String,
+        fiat: String? = null,
+    ): RampAssetDetail = withContext(Async.Io) {
         when (rampType) {
             RampType.RampOn -> api.exchange.onramp.getOnrampAsset(
                 assetId = assetId,
@@ -102,7 +108,7 @@ class RampRepository(
                 timezone = environment.timezone(),
                 isVpnActive = environment.isVpnActive(),
                 platform = Platform.android,
-                xWalletID = multichainWalletId(),
+                xWalletID = multichainWalletId(walletId),
                 F = settings.installId,
             ).toRamp()
 
@@ -121,6 +127,7 @@ class RampRepository(
     }
 
     suspend fun getQuotes(
+        walletId: String,
         rampType: RampType,
         assetId: String,
         fiat: String,
@@ -145,7 +152,7 @@ class RampRepository(
                 timezone = environment.timezone(),
                 isVpnActive = environment.isVpnActive(),
                 platform = Platform.android,
-                xWalletID = multichainWalletId(),
+                xWalletID = multichainWalletId(walletId),
                 F = settings.installId,
             ).toRamp()
 
@@ -174,6 +181,7 @@ class RampRepository(
      * provider widget URL the user should be redirected to.
      */
     suspend fun createOrder(
+        walletId: String,
         rampType: RampType,
         assetId: String,
         fiat: String,
@@ -202,7 +210,7 @@ class RampRepository(
                 timezone = environment.timezone(),
                 isVpnActive = environment.isVpnActive(),
                 platform = Platform.android,
-                xWalletID = multichainWalletId(),
+                xWalletID = multichainWalletId(walletId),
                 F = settings.installId,
             ).widgetUrl
 

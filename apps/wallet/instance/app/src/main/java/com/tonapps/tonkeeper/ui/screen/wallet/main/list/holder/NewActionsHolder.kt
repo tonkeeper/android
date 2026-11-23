@@ -29,11 +29,11 @@ class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout
         val isWatchOnly = item.walletType == WalletType.Watch
         val isSwapEnabled = item.walletType != WalletType.Watch && item.walletType != WalletType.Testnet && !item.isSwapDisabled
         val isSendEnabled = item.walletType != WalletType.Watch
-        val isStakeEnabled = item.walletType != WalletType.Watch && item.walletType != WalletType.Testnet && !item.isStakingDisabled
+        val isStakeEnabled = item.wallet.isStakingAllowed && item.walletType != WalletType.Testnet && !item.isStakingDisabled
 
         receiveView.setMoonOnClickListener {
             if (item.walletType == WalletType.Multichain) {
-                navigation?.add(DepositMulticoinFragment.create(analyticsFrom = DepositFlowFrom.WalletScreen))
+                navigation?.add(DepositMulticoinFragment.create(walletId = item.wallet.id, analyticsFrom = DepositFlowFrom.WalletScreen))
             } else {
                 navigation?.add(DepositFragment.create(analyticsFrom = DepositFlowFrom.WalletScreen))
             }
@@ -63,7 +63,7 @@ class NewActionsHolder(parent: ViewGroup): Holder<Item.Actions>(parent, R.layout
             }
 
             if (item.walletType == WalletType.Multichain) {
-                navigation?.add(WithdrawMulticoinFragment.create(analyticsFrom = WithdrawFlowFrom.WalletScreen))
+                navigation?.add(WithdrawMulticoinFragment.create(walletId = item.wallet.id, analyticsFrom = WithdrawFlowFrom.WalletScreen))
             } else {
                 navigation?.add(WithdrawFragment.create(analyticsFrom = WithdrawFlowFrom.WalletScreen))
             }

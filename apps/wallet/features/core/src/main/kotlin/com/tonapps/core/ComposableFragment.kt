@@ -53,7 +53,11 @@ abstract class ComposableFragment : BaseFragment(R.layout.fragment_compose_host)
                 "blue" -> appColorSchemeBlue()
                 "dark" -> appColorSchemeDark()
                 "light" -> appColorSchemeLight()
-                else -> if (requireContext().isDarkMode) appColorSchemeBlue() else appColorSchemeLight()
+                else -> if (requireContext().isDarkMode) {
+                    appColorSchemeDark()
+                } else {
+                    appColorSchemeLight()
+                }
             }
         }
 

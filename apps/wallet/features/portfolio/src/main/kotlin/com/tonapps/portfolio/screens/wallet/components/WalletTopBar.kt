@@ -2,15 +2,21 @@ package com.tonapps.portfolio.screens.wallet.components
 
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
 import ui.components.moon.MoonTopAppBar
 import ui.components.moon.MoonTopAppBarIcon
 import ui.painterResource
+import com.tonapps.core.extensions.walletColor
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun WalletTopBar(
     modifier: Modifier = Modifier,
@@ -37,6 +43,9 @@ internal fun WalletTopBar(
             MoonTopAppBarIcon(
                 painter = painterResource(UIKitIcon.ic_gear_outline_28),
                 onClick = onSettingsClick,
+                modifier = Modifier
+                    .semantics { testTagsAsResourceId = true }
+                    .testTag("wallet_settings"),
                 showNotificationDot = settingsBadge,
             )
         },
@@ -46,7 +55,7 @@ internal fun WalletTopBar(
             WalletTopBarSwitch(
                 name = wallet.name,
                 emoji = wallet.emoji,
-                color = Color(wallet.color),
+                color = walletColor(wallet.color),
                 onClick = onWalletClick,
             )
         },

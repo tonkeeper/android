@@ -10,6 +10,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.blockchain.model.legacy.Amount
 import com.tonapps.blockchain.model.legacy.TransferEntity
 import com.tonapps.tonkeeper.core.history.HistoryHelper
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
@@ -124,7 +125,7 @@ class RemoveExtensionViewModel(
                         type = InsufficientBalanceType.InsufficientTONBalance
                     )
                 } else {
-                    toast(e.getDebugMessage() ?: getString(Localization.unknown_error))
+                    failureToast(e.getDebugMessage() ?: getString(Localization.unknown_error))
                     _stateFlow.value = SendTransactionState.FailedEmulation
                 }
             }
@@ -143,7 +144,11 @@ class RemoveExtensionViewModel(
 
         return SendTransactionState.Details(
             emulated = details,
-            totalFormat = if (emulated.failed) getString(Localization.unknown) else totalFormatBuilder.toString(),
+            totalFormat = if (emulated.failed) {
+                getString(Localization.unknown)
+            } else {
+                totalFormatBuilder.toString()
+            },
             isDangerous = emulated.total.isDangerous,
             nftCount = emulated.nftCount,
             failed = emulated.failed,
@@ -182,7 +187,8 @@ class RemoveExtensionViewModel(
             wallet = wallet,
             unsignedBody = unsignedBody,
             ledgerTransaction = null,
-            seqNo = seqNo
+            seqNo = seqNo,
+            reason = PasscodeReason.CONFIRM_ACTION,
         )
 
         val confirmationTimeSeconds = getConfirmationTimeMillis() / 1000.0

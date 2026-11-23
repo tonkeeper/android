@@ -1,0 +1,32 @@
+{
+  "route_id": "036bb244-764a-4cb0-b5b8-8e1362551794",
+  "aggregator": "omniston",
+  "execution_id": "2d4c0861-02f2-4477-bb15-8747dc399838",
+  "operation": {
+    "id": "036bb244-764a-4cb0-b5b8-8e1362551794",
+    "payloads": [
+      {
+        "id": "63ff0764-ef20-4570-9877-1cbf3de61bd0",
+        "type": "main",
+        "chain_id": "ton/mainnet",
+        "version": 1,
+        "meta": {
+          "value": "1280000000",
+          "body": "te6cckECBQEAAWoAAiGlp8v4ZLJHK4lAWzxDuaygCAECABnEQlAPMR4KYAAAAAABAdOAHhy8XXiXPILNhsg+k1kS5GhxIfsU6txsk5vAlEEVC1loFXUqAUALXMdcMUMp6BCaRG4+NP0bqZn72kNWnz3NRatcDdZ/KoAgBa5jrhihlPQITSI3Hxp+jdTM/e0hq0+e5qLVrgbrP5VEAwHRGjwvw4AWuY64YoZT0CE0iNx8afo3UzP3tIatPnuai1a4G6z+VRAC1zHXDFDKegQmkRuPjT9G6mZ+9pDVp89zUWrXA3WfyqIAWuY64YoZT0CE0iNx8afo3UzP3tIatPnuai1a4G6z+VRABADVgARIDnuQ+iIAbCRNs0OZ1VE6NwSTezc2RYwCdmukLh9pYAjQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAECoLIsh",
+          "to": "EQAH4MY1EbqP7Gg2wJkoZvoCG4BYPsEG5lVBXPZn0UqXNz4y"
+        }
+      }
+    ]
+  },
+  "human_summary": {
+    "action": "Swap on TON",
+    "spend_asset": "ton/mainnet/coin",
+    "spend_amount": "1000000000",
+    "receive_asset": "ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe",
+    "receive_amount": "1183456",
+    "recipient_address": "0:b5cc75c314329e8109a446e3e34fd1ba999fbda43569f3dcd45ab5c0dd67f2a8",
+    "protocol": "omniston"
+  },
+  "validation_status": "validated",
+  "date_expire": "2026-11-02T15:50:28Z"
+}

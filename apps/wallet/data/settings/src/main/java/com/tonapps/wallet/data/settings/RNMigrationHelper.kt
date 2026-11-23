@@ -1,7 +1,6 @@
 package com.tonapps.wallet.data.settings
 
 import android.content.Context
-import com.tonapps.extensions.locale
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
 import com.tonapps.blockchain.model.legacy.WalletCurrency
@@ -163,10 +162,10 @@ internal class RNMigrationHelper(
     fun getLegacySelectedCountry(): String {
         try {
             return getFiatMethods().optString("selectedCountry", "").ifBlank {
-                context.locale.country
+                context.systemLocale.country
             }
         } catch (ignored: Exception) {}
-        return context.locale.country
+        return context.systemLocale.country
     }
 
     fun setLegacySelectedCountry(country: String) {

@@ -7,7 +7,7 @@ import com.tonapps.chainkit.core.chain.api.models.SignRes
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.op.Operation
 import com.tonapps.chainkit.core.op.Payload
@@ -20,6 +20,7 @@ import com.tonapps.wallet.api.AuthorizationProvider
 import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.testing.BaseUnitTest
+import com.tonapps.wallet.testing.FakeTimeProvider
 import com.tonapps.wallet.testing.TestAssets
 import com.tonapps.wallet.testing.TestWallet
 import com.tonapps.wallet.testing.testAccount
@@ -48,11 +49,12 @@ import java.util.UUID
 class GaslessSenderEvmTest : BaseUnitTest() {
 
     private val provider = mockk<ChainKitProvider>()
-    private val evmGasless = mockk<EvmGasless>()
+    private val gaslessRelayer = mockk<GaslessRelayer>()
     private val batteryRepository = mockk<BatteryRepository>(relaxed = true)
     private val authorizationProvider = mockk<AuthorizationProvider>()
     private val wallet = mockk<WalletEntity>()
-    private val cryptoWallet = mockk<CryptoWallet>()
+    private val cryptoWallet = mockk<MnemonicWallet>()
+    private val serverTime = FakeTimeProvider()
 
     private val sender = GaslessSender(
         api = mockk(),
@@ -60,7 +62,9 @@ class GaslessSenderEvmTest : BaseUnitTest() {
         batteryRepository = batteryRepository,
         pendingTransactionReporter = mockk(),
         provider = provider,
-        evmGasless = evmGasless,
+        gaslessRelayer = gaslessRelayer,
+        timeProvider = serverTime,
+        ledgerSigner = mockk(),
     )
 
     private val chain = Chain.Ethereum.Mainnet
@@ -112,7 +116,7 @@ class GaslessSenderEvmTest : BaseUnitTest() {
             val payload = firstArg<Payload>()
             SignRes.ok(SignedPayload.signed(payload, "signed-${payload.id}"))
         }
-        every { evmGasless.send(any(), any()) } answers {
+        every { gaslessRelayer.send(any(), any()) } answers {
             posted += secondArg<SignedOperation>()
             answer()
         }
@@ -135,11 +139,30 @@ class GaslessSenderEvmTest : BaseUnitTest() {
 
     @Test
     fun anEmulationPastItsDeadlineIsNeitherSignedNorPosted() = runTest {
-        val failure = failureOf { send(emulation(expiresAt = System.currentTimeMillis() - 1)) }
+        val failure = failureOf { send(emulation(expiresAt = serverTime.currentTimeMillis() - 1)) }
 
         assertTrue(failure is RelayerQuoteExpiredException)
         assertTrue(posted.isEmpty())
         coVerify(exactly = 0) { provider.signPayload(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun anEmulationIsTimedOnTheRelayersClockWhileTheDeviceClockRunsAhead() = runTest {
+        serverTime.offsetMs = -DEVICE_CLOCK_SKEW_MS
+
+        send(emulation(expiresAt = serverTime.currentTimeMillis() + 60_000L))
+
+        assertEquals(1, posted.size)
+    }
+
+    @Test
+    fun anEmulationPastItsDeadlineOnTheRelayersClockIsRefusedWhileTheDeviceClockRunsBehind() = runTest {
+        serverTime.offsetMs = DEVICE_CLOCK_SKEW_MS
+
+        val failure = failureOf { send(emulation(expiresAt = serverTime.currentTimeMillis() - 1)) }
+
+        assertTrue(failure is RelayerQuoteExpiredException)
+        assertTrue(posted.isEmpty())
     }
 
     @Test
@@ -202,15 +225,22 @@ class GaslessSenderEvmTest : BaseUnitTest() {
     }
 
     @Test
-    fun anUnknownStatusIsNotASuccess() = runTest {
+    fun anUnknownStatusHasAnUnknownOutcome() = runTest {
         answer = { response(GaslessV2SendResponse.Status.unknown) }
 
         assertTrue(failureOf { send(emulation()) } is RelayerOutcomeUnknownException)
         verify(exactly = 0) { batteryRepository.refreshBalanceDelay(any()) }
     }
 
-    private suspend fun send(emulation: EvmGasless.Emulation) {
-        sender.sendEvm(wallet, account, SigningWallet.Hd(cryptoWallet), battery, emulation)
+    @Test
+    fun aSentOperationReturnsTheTransactionTheRelayerBroadcast() = runTest {
+        answer = { response(GaslessV2SendResponse.Status.ok, txHash = RELAYER_HASH) }
+
+        assertEquals(RELAYER_HASH, sender.sendOperation(wallet, account, RelayerSigner.Software(SigningWallet.Hd(cryptoWallet)), battery, emulation(), calls = emptyList()))
+    }
+
+    private suspend fun send(emulation: GaslessRelayer.Emulation) {
+        sender.sendOperation(wallet, account, RelayerSigner.Software(SigningWallet.Hd(cryptoWallet)), battery, emulation, calls = emptyList())
     }
 
     private suspend fun failureOf(block: suspend () -> Unit): Throwable? {
@@ -222,16 +252,17 @@ class GaslessSenderEvmTest : BaseUnitTest() {
         }
     }
 
-    private fun emulation(expiresAt: Long = Long.MAX_VALUE) = EvmGasless.Emulation(
+    private fun emulation(expiresAt: Long = Long.MAX_VALUE) = GaslessRelayer.Emulation(
         assetId = Asset.Battery.ID,
         fee = battery.fee.amount,
         operation = operation,
         expiresAt = expiresAt,
     )
 
-    private fun response(status: GaslessV2SendResponse.Status) = GaslessV2SendResponse(
+    private fun response(status: GaslessV2SendResponse.Status, txHash: String? = null) = GaslessV2SendResponse(
         operationId = UUID.fromString(OPERATION_ID),
         status = status,
+        txHash = txHash,
     )
 
     private fun rejection(status: Int, code: String) = ClientException(
@@ -244,6 +275,8 @@ class GaslessSenderEvmTest : BaseUnitTest() {
     )
 
     private companion object {
+        const val RELAYER_HASH = "0x5e1a7ed"
         const val OPERATION_ID = "bcef74e1-b940-4142-b7a7-76161850971e"
+        const val DEVICE_CLOCK_SKEW_MS = 60L * 60L * 1_000L
     }
 }

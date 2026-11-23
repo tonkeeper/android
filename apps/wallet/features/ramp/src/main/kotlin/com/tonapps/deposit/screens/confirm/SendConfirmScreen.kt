@@ -261,6 +261,14 @@ private fun SendConfirmContent(
                             minHeight = 82.dp,
                             onClick = { clipboardManager.copy(address) }
                         )
+                        state.exchangeData?.memo?.let { memo ->
+                            MoonItemDivider()
+                            TextCell(
+                                title = { MoonItemTitle(stringResource(Localization.memo), color = UIKit.colorScheme.text.secondary) },
+                                subtitle = { MoonItemTitle(text = memo, maxLines = 2) },
+                                onClick = { clipboardManager.copy(memo) }
+                            )
+                        }
                     }
 
                     state.displayCurrency?.let { currency ->

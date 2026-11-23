@@ -9,6 +9,8 @@ import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.extensions.readBooleanCompat
 import com.tonapps.extensions.writeBooleanCompat
 import com.tonapps.ledger.ton.LedgerConnectData
+import com.tonapps.onboading.screens.selector.WalletKind
+import com.tonapps.onboading.screens.selector.WalletKindItem
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
 import com.tonapps.wallet.api.entity.AccountDetailsEntity
 import com.tonapps.blockchain.model.legacy.Wallet
@@ -84,6 +86,28 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         get() = savedStateHandle.get<String>(MNEMONIC_TYPE_KEY)?.let { MnemonicType.valueOf(it) }
         set(value) = savedStateHandle.set(MNEMONIC_TYPE_KEY, value?.name)
 
+    // The seed holds an active Telegram wallet (WalletTg) and the user picked it.
+    var telegramWallet: Boolean
+        get() = savedStateHandle[TELEGRAM_WALLET_KEY] ?: false
+        set(value) = savedStateHandle.set(TELEGRAM_WALLET_KEY, value)
+
+    // The Telegram account offered in the kind selector: picking TON there replaces [accounts].
+    var telegramAccount: AccountItem?
+        get() = savedStateHandle[TELEGRAM_ACCOUNT_KEY]
+        set(value) = savedStateHandle.set(TELEGRAM_ACCOUNT_KEY, value)
+
+    val walletKindsFlow = savedStateHandle.getStateFlow<List<WalletKindItem>?>(WALLET_KINDS_KEY, null)
+
+    var walletKinds: List<WalletKindItem>?
+        get() = savedStateHandle[WALLET_KINDS_KEY]
+        set(value) = savedStateHandle.set(WALLET_KINDS_KEY, value?.let { ArrayList(it) })
+
+    val selectedWalletKindFlow = savedStateHandle.getStateFlow<WalletKind?>(SELECTED_WALLET_KIND_KEY, null)
+
+    var selectedWalletKind: WalletKind?
+        get() = savedStateHandle[SELECTED_WALLET_KIND_KEY]
+        set(value) = savedStateHandle.set(SELECTED_WALLET_KIND_KEY, value)
+
     var accounts: List<AccountItem>?
         get() = savedStateHandle[ACCOUNTS]
         set(value) = savedStateHandle.set(ACCOUNTS, value)
@@ -129,6 +153,10 @@ class InitModelState(private val savedStateHandle: SavedStateHandle) {
         private const val WATCH_ACCOUNT_KEY = "watch_account"
         private const val MNEMONIC_KEY = "mnemonic"
         private const val MNEMONIC_TYPE_KEY = "mnemonic_type"
+        private const val TELEGRAM_WALLET_KEY = "telegram_wallet"
+        private const val TELEGRAM_ACCOUNT_KEY = "telegram_account"
+        private const val WALLET_KINDS_KEY = "wallet_kinds"
+        private const val SELECTED_WALLET_KIND_KEY = "selected_wallet_kind"
         private const val ACCOUNTS = "accounts"
         private const val PUBLIC_KEY = "public_key"
         private const val LEDGER_CONNECT_DATA = "ledger_connect_data"

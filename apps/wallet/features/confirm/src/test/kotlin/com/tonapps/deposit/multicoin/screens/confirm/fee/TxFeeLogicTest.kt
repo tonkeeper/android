@@ -276,13 +276,30 @@ class TxFeeLogicTest : BaseUnitTest() {
             TxFeeLogic.prioritize(options, sentAssetId, PreferredFeeMethod.TON),
         )
         assertEquals(
-            listOf(sent, other, battery, native),
+            listOf(sent, battery, native, other),
             TxFeeLogic.prioritize(options, sentAssetId, PreferredFeeMethod.GASLESS),
         )
         assertEquals(
             listOf(battery, native, sent, other),
             TxFeeLogic.prioritize(options, sentAssetId, PreferredFeeMethod.BATTERY),
         )
+    }
+
+    @Test
+    fun aGaslessPreferenceRaisesNoTokenButTheOneSent() {
+        val battery = battery(charges = 3, balance = 10)
+        val native = native(amount = 5, balance = 10)
+        val other = gasless(amount = 1, balance = 10, asset = otherToken)
+        val usdt = gasless(amount = 1, balance = 10)
+
+        // The coin is sent: the tokens the relayer bills in stay below battery and the coin.
+        val ordered = TxFeeLogic.prioritize(
+            options = listOf(other, usdt, native, battery),
+            sentAssetId = native.id,
+            preferred = PreferredFeeMethod.GASLESS,
+        )
+
+        assertEquals(listOf(battery, native, other, usdt), ordered)
     }
 
     @Test

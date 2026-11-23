@@ -2,12 +2,14 @@ package com.tonapps.blockchain.tron
 
 import com.google.protobuf.ByteString
 import com.tonapps.blockchain.tron.proto.Chain.Transaction
+import com.tonapps.chainkit.chain.tron.utils.TronUtils
 import org.json.JSONArray
 import org.json.JSONObject
-import org.web3j.crypto.ECKeyPair
-import org.web3j.crypto.Sign
-import java.math.BigInteger
 import java.security.MessageDigest
+
+private const val RECOVERY_ID_INDEX = 64
+private const val RECOVERY_ID_HEADER = 27
+private const val SIGNATURE_LENGTH = 65
 
 class TronTransaction private constructor(private val tx: Transaction) {
 
@@ -31,6 +33,9 @@ class TronTransaction private constructor(private val tx: Transaction) {
             return tx.rawData.toByteArray().toTronHex()
         }
 
+    val rawDataBytes: ByteArray
+        get() = tx.rawData.toByteArray()
+
     private fun toJSON(): JSONObject {
         val json = JSONObject()
 
@@ -51,6 +56,9 @@ class TronTransaction private constructor(private val tx: Transaction) {
                     put("owner_address", contract.ownerAddress)
                     put("contract_address", contract.contractAddress)
                     put("data", contract.callData)
+                    if (contract.callValue > 0) {
+                        put("call_value", contract.callValue)
+                    }
                 }
 
                 is TronContract.Transfer -> JSONObject().apply {
@@ -100,17 +108,27 @@ class TronTransaction private constructor(private val tx: Transaction) {
         return TronTransaction(tx.toBuilder().setRawData(newRaw).build())
     }
 
-    fun sign(privateKey: BigInteger): TronTransaction {
-        val rawDataBytes = tx.rawData.toByteArray()
-        val txHash = MessageDigest.getInstance("SHA-256").digest(rawDataBytes)
+    fun withSignature(signature: ByteArray): TronTransaction {
+        require(signature.size == SIGNATURE_LENGTH) { "Tron signature must be $SIGNATURE_LENGTH bytes" }
+        val normalized = signature.copyOf()
+        val recovery = normalized[RECOVERY_ID_INDEX].toInt() and 0xff
+        if (recovery < RECOVERY_ID_HEADER) {
+            normalized[RECOVERY_ID_INDEX] = (recovery + RECOVERY_ID_HEADER).toByte()
+        }
+        return TronTransaction(
+            tx = tx.toBuilder().addSignature(ByteString.copyFrom(normalized)).build()
+        )
+    }
 
-        val ecKeyPair = ECKeyPair.create(privateKey)
-        val signature = Sign.signMessage(txHash, ecKeyPair, false)
-
-        val signatureBytes = signature.r + signature.s + signature.v
+    // [privateKey] is the 32-byte secp256k1 scalar.
+    fun sign(privateKey: ByteArray): TronTransaction {
+        val signature = TronUtils.signRawData(tx.rawData.toByteArray(), privateKey)
+        // r || s || recovery id (0 or 1); the node and the relay get the 27/28 header TronWeb and
+        // the previous signer emit.
+        signature[RECOVERY_ID_INDEX] = (signature[RECOVERY_ID_INDEX] + RECOVERY_ID_HEADER).toByte()
 
         return TronTransaction(
-            tx = tx.toBuilder().addSignature(ByteString.copyFrom(signatureBytes)).build()
+            tx = tx.toBuilder().addSignature(ByteString.copyFrom(signature)).build()
         )
     }
 
@@ -131,6 +149,11 @@ class TronTransaction private constructor(private val tx: Transaction) {
             )
 
             request.requireMatches(transaction.contract)
+            // The memo is the transaction's own `data`: none where none was asked for.
+            val memo = rawData.data.toTronHex()
+            if (!memo.equals(request.memo?.removePrefix("0x").orEmpty(), ignoreCase = true)) {
+                throw TronTransactionMismatchException("data", request.memo.orEmpty(), memo)
+            }
 
             return transaction
         }

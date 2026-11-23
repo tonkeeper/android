@@ -8,6 +8,7 @@ import com.tonapps.network.backoff.ExponentialBackoff
 import io.infrastructure.ClientError
 import io.infrastructure.ClientException
 import io.infrastructure.ServerError
+import io.infrastructure.ServerException
 import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
@@ -59,6 +60,7 @@ fun <R> withRetry(
 private fun Throwable.getHttpStatusCode(): Int {
     return when (this) {
         is ClientException -> statusCode
+        is ServerException -> statusCode
         is OkHttpError -> statusCode
         else -> 0
     }

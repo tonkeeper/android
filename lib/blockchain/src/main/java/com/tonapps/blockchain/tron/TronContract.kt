@@ -102,10 +102,6 @@ private fun requireNoUncomparedFields(contract: Transaction.Contract) {
 }
 
 private fun requireNoUncomparedFields(raw: Transaction.raw) {
-    if (!raw.data.isEmpty) {
-        throw TronTransactionMismatchException("data", "", raw.data.toTronHex())
-    }
-
     if (raw.authsCount != 0) {
         throw TronTransactionMismatchException("auths", "0", raw.authsCount.toString())
     }

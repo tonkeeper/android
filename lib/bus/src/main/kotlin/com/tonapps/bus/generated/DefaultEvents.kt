@@ -7,19 +7,22 @@ import com.tonapps.bus.generated.flows.BatteryNativeImpl
 import com.tonapps.bus.generated.flows.DappBrowserImpl
 import com.tonapps.bus.generated.flows.DeeplinkOpenImpl
 import com.tonapps.bus.generated.flows.DepositFlowImpl
+import com.tonapps.bus.generated.flows.DomainMigrationImpl
 import com.tonapps.bus.generated.flows.EarnFlowExternalImpl
 import com.tonapps.bus.generated.flows.EarnFlowImpl
 import com.tonapps.bus.generated.flows.InappReviewImpl
 import com.tonapps.bus.generated.flows.InstallAppImpl
 import com.tonapps.bus.generated.flows.LaunchAppImpl
+import com.tonapps.bus.generated.flows.LedgerFlowImpl
 import com.tonapps.bus.generated.flows.MigrationImpl
 import com.tonapps.bus.generated.flows.MysteryRaffleImpl
 import com.tonapps.bus.generated.flows.OnboardingFlowImpl
-import com.tonapps.bus.generated.flows.OnrampsNativeImpl
 import com.tonapps.bus.generated.flows.PasscodeLockoutImpl
 import com.tonapps.bus.generated.flows.PerpsImpl
 import com.tonapps.bus.generated.flows.PushClickImpl
 import com.tonapps.bus.generated.flows.RedOperationsImpl
+import com.tonapps.bus.generated.flows.ScannerImpl
+import com.tonapps.bus.generated.flows.ScreenRenderImpl
 import com.tonapps.bus.generated.flows.SendNativeImpl
 import com.tonapps.bus.generated.flows.StakingNativeImpl
 import com.tonapps.bus.generated.flows.StoriesImpl
@@ -47,19 +50,22 @@ class DefaultEvents(
     val dappBrowser = DappBrowserImpl(eventExecutor)
     val deeplinkOpen = DeeplinkOpenImpl(eventExecutor)
     val depositFlow = DepositFlowImpl(eventExecutor)
+    val domainMigration = DomainMigrationImpl(eventExecutor)
     val earnFlowExternal = EarnFlowExternalImpl(eventExecutor)
     val earnFlow = EarnFlowImpl(eventExecutor)
     val inappReview = InappReviewImpl(eventExecutor)
     val installApp = InstallAppImpl(eventExecutor)
     val launchApp = LaunchAppImpl(eventExecutor)
+    val ledgerFlow = LedgerFlowImpl(eventExecutor)
     val migration = MigrationImpl(eventExecutor)
     val mysteryRaffle = MysteryRaffleImpl(eventExecutor)
     val onboardingFlow = OnboardingFlowImpl(eventExecutor)
-    val onrampsNative = OnrampsNativeImpl(eventExecutor)
     val passcodeLockout = PasscodeLockoutImpl(eventExecutor)
     val perps = PerpsImpl(eventExecutor)
     val pushClick = PushClickImpl(eventExecutor)
     val redOperations = RedOperationsImpl(eventExecutor)
+    val scanner = ScannerImpl(eventExecutor)
+    val screenRender = ScreenRenderImpl(eventExecutor)
     val sendNative = SendNativeImpl(eventExecutor)
     val stakingNative = StakingNativeImpl(eventExecutor)
     val stories = StoriesImpl(eventExecutor)

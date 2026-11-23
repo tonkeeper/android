@@ -13,12 +13,15 @@ import com.tonapps.wallet.data.multichain.exchange.SwapQuote
 import com.tonapps.wallet.data.multichain.exchange.SwapQuoteResult
 import com.tonapps.wallet.data.multichain.exchange.SwapRepository
 import io.exchangeapi.models.CrossSwapExactType
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -170,6 +173,8 @@ class SwapFeatureRaceTest : BaseUnitTest() {
     /** Answers each pair with its own route, late enough to still be in flight. */
     private fun slowRepo(): SwapRepository = mockk<SwapRepository>().also { repo ->
         every { repo.swapCompleted } returns MutableSharedFlow()
+        every { repo.networkFees } returns MutableStateFlow(null)
+        coEvery { repo.loadNetworkFees() } just Runs
         // Without a config the screen would open on the feature's ETH -> TON fallback, where
         // picking ETH to buy flips the pair instead of replacing the side.
         coEvery { repo.getConfig(any(), any(), any()) } returns SwapConfig(
@@ -181,6 +186,9 @@ class SwapFeatureRaceTest : BaseUnitTest() {
         )
         every { repo.formatRateLabel(any(), any(), any()) } returns "1 TON"
         every { repo.getMaxReserve(any()) } answers {
+            firstArg<Asset>().decimals.baseUnit(BigInteger.ZERO)
+        }
+        every { repo.getMinimumAmount(any()) } answers {
             firstArg<Asset>().decimals.baseUnit(BigInteger.ZERO)
         }
         coEvery { repo.fetchQuote(any(), any(), any(), any(), any(), any()) } coAnswers {

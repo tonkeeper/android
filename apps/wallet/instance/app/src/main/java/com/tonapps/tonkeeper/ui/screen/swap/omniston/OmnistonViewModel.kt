@@ -16,8 +16,10 @@ import com.tonapps.blockchain.ton.extensions.cellFromHex
 import com.tonapps.blockchain.ton.extensions.equalsRawAddress
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.RedAttemptSource
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
+import com.tonapps.core.helper.SendRedMetadata
 import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.screens.send.state.SendFee
@@ -26,7 +28,6 @@ import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.mapList
 import com.tonapps.icu.Coins
@@ -53,6 +54,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -465,7 +467,7 @@ class OmnistonViewModel(
         if (isTon && balance <= MAX_TON_RESERVED_FOR_FEE) {
             viewModelScope.launch {
                 val reserve = CurrencyFormatter.format(value = MAX_TON_RESERVED_FOR_FEE)
-                toast(getString(Localization.swap_error_max_below_reserve, reserve))
+                toast(getString(Localization.swap_error_max_below_reserve, reserve, token.token.symbol))
             }
             return
         }
@@ -647,7 +649,7 @@ class OmnistonViewModel(
                         required = requiredTon,
                         available = tonBalance.balance.value,
                         type = InsufficientBalanceType.InsufficientBalanceForFee,
-                        withRechargeBattery = true,
+                        withRechargeBattery = wallet.supportsBattery,
                         singleWallet = isSingleWallet()
                     )
                 } else if (requiredTon > tonBalance.balance.value) {
@@ -709,7 +711,7 @@ class OmnistonViewModel(
     private fun getLedgerTransaction(
         message: MessageBodyEntity
     ): List<Transaction> {
-        if (!message.wallet.isLedger) {
+        if (!message.wallet.signsWithLedger) {
             return emptyList()
         }
         val transactions = mutableListOf<Transaction>()
@@ -745,9 +747,15 @@ class OmnistonViewModel(
                 operationId = operationId,
                 flow = Events.RedOperations.RedOperationsFlow.Swap,
                 operation = Events.RedOperations.RedOperationsOperation.Send,
-                attemptSource = null,
-                startedAtMs = currentTimeSecondsInt(),
-                otherMetadata = null,
+                attemptSource = RedAttemptSource.NATIVE_UI,
+                startedAtMs = startedAtMs,
+                otherMetadata = SendRedMetadata.swap(
+                    from = state.fromCurrency,
+                    to = state.toCurrency,
+                    fromAmount = state.fromUnits.value.toDouble(),
+                    toAmount = state.toUnits.value.toDouble(),
+                    isBattery = state.isPreferredFeeMethodBattery,
+                ),
             )
             try {
                 val isBattery = state.isPreferredFeeMethodBattery
@@ -776,7 +784,8 @@ class OmnistonViewModel(
                         wallet = wallet,
                         unsignedBody = unsignedBody,
                         ledgerTransaction = ledgerTransactions.firstOrNull(),
-                        seqNo = getSeqNo()
+                        seqNo = getSeqNo(),
+                        reason = PasscodeReason.CONFIRM_SWAP,
                     )
                     cells.add(cell)
                 }
@@ -814,7 +823,7 @@ class OmnistonViewModel(
                     operation = Events.RedOperations.RedOperationsOperation.Send,
                     outcome = Events.RedOperations.RedOperationsOutcome.Success,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     errorCode = null,
                     errorMessage = null,
                     errorType = null,
@@ -831,7 +840,7 @@ class OmnistonViewModel(
                     flow = Events.RedOperations.RedOperationsFlow.Swap,
                     operation = Events.RedOperations.RedOperationsOperation.Send,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     error = e,
                 )
                 withContext(Dispatchers.Main) {
@@ -878,7 +887,6 @@ class OmnistonViewModel(
         return BatteryHelper.isBatteryIsEnabledTx(
             wallet,
             BatteryTransaction.SWAP,
-            settingsRepository,
             accountRepository,
             batteryRepository
         )
@@ -993,7 +1001,7 @@ class OmnistonViewModel(
             flow = Events.RedOperations.RedOperationsFlow.Swap,
             operation = Events.RedOperations.RedOperationsOperation.Quote,
             attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
+            startedAtMs = startedAtMs,
             otherMetadata = null,
         )
         var quoteReceived = false
@@ -1010,7 +1018,7 @@ class OmnistonViewModel(
                     flow = Events.RedOperations.RedOperationsFlow.Swap,
                     operation = Events.RedOperations.RedOperationsOperation.Quote,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     error = null,
                 )
             }

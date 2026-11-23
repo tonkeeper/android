@@ -41,10 +41,12 @@ internal fun EarnSection(
     onOpenEarn: () -> Unit,
     onOpenVault: (network: String, vaultId: String) -> Unit,
     modifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         MoonBundleTitleCell(
             title = stringResource(Localization.earn_title),
+            titleModifier = titleModifier,
             onClick = onOpenEarn,
         )
         LazyRow(

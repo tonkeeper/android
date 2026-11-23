@@ -14,9 +14,9 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
-import io.batteryapi.models.GetTonConnectPayloadDefaultResponse
-import io.batteryapi.models.TonConnectProof200Response
-import io.batteryapi.models.TonConnectProofRequest
+import io.batteryapi.models.BatteryMigration
+import io.batteryapi.models.GetStatusDefaultResponse
+import io.batteryapi.models.MigrateBatteryRequest
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -45,11 +45,11 @@ class WalletApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun tonConnectProof(tonConnectProofRequest: TonConnectProofRequest): TonConnectProof200Response {
-        val localVarResponse = tonConnectProofWithHttpInfo(tonConnectProofRequest = tonConnectProofRequest)
+    fun migrateBattery(migrateBatteryRequest: MigrateBatteryRequest, tonConnectAuth: String? = null, xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null): BatteryMigration {
+        val localVarResponse = migrateBatteryWithHttpInfo(migrateBatteryRequest = migrateBatteryRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
 
         return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as TonConnectProof200Response
+            ResponseType.Success -> (localVarResponse as Success<*>).data as BatteryMigration
             ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
             ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
             ResponseType.ClientError -> {
@@ -65,27 +65,33 @@ class WalletApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun tonConnectProofWithHttpInfo(tonConnectProofRequest: TonConnectProofRequest): ApiResponse<TonConnectProof200Response?> {
-        val localVariableConfig = tonConnectProofRequestConfig(tonConnectProofRequest = tonConnectProofRequest)
+    fun migrateBatteryWithHttpInfo(migrateBatteryRequest: MigrateBatteryRequest, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): ApiResponse<BatteryMigration?> {
+        val localVariableConfig = migrateBatteryRequestConfig(migrateBatteryRequest = migrateBatteryRequest, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
 
-        return request<TonConnectProofRequest, TonConnectProof200Response>(
+        return request<MigrateBatteryRequest, BatteryMigration>(
             localVariableConfig
         )
     }
 
-    fun tonConnectProofRequestConfig(tonConnectProofRequest: TonConnectProofRequest): RequestConfig<TonConnectProofRequest> {
-        val localVariableBody = tonConnectProofRequest
+    fun migrateBatteryRequestConfig(migrateBatteryRequest: MigrateBatteryRequest, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): RequestConfig<MigrateBatteryRequest> {
+        val localVariableBody = migrateBatteryRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        authorization?.apply { localVariableHeaders["Authorization"] = this.toString() }
+        xWalletAuthorization?.apply { localVariableHeaders["X-Wallet-Authorization"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
             method = RequestMethod.POST,
-            path = "/tonconnect/proof",
+            path = "/wallet/migrate",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
             body = localVariableBody
         )
     }

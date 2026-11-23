@@ -23,7 +23,11 @@ import kotlinx.serialization.encoding.Encoder
 data class SendTransactionsRequest(
     /* In submission order. Lighter caps a batch at fifty and answers one as a whole, so a refusal refuses all of them. More than fifty is refused here as batch_not_accepted. */
     @SerialName(value = "transactions")
-    val transactions: List<SignedTransaction>
+    val transactions: List<SignedTransaction>,
+
+    /* The client's id of the operation the request carries out. A withdrawal sent with it is stored with it and names it in the push that completes it, so the client can match that push to its own record. */
+    @SerialName(value = "operation_id")
+    val operationId: String? = null
 ) {
 }
 

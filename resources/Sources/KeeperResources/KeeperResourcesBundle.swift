@@ -1,17 +1,12 @@
 import Foundation
 
-/// Resources (asset catalog, fonts, Lottie) live in this dependency-free package so it can be
-/// linked as a single shared dynamic framework — embedded once in the app and reused by the
-/// extensions, instead of being copied into every product that depends on `TKUIKit`.
-///
-/// `TKUIKit` itself stays statically linked (automatic), which keeps SwiftUI Previews working:
-/// importing an explicitly `.dynamic` product force-promotes transitive deps (e.g. Kingfisher)
-/// into synthesized `*_PackageProduct.framework`s that XCPreviewAgent can't locate.
+/// Resources (asset catalog, fonts, Lottie) shared with Android. Linked only by `TKUIKit`, so the
+/// code lives once in the shared `TKUIKit.framework`.
 public enum KeeperResourcesBundle {
     /// The compiled resource bundle.
     ///
-    /// Resolved by hand rather than via SwiftPM's generated `Bundle.module`: as a dynamic
-    /// framework the bundle is copied next to whichever product is running (`Bundle.main` for the
+    /// Resolved by hand rather than via SwiftPM's generated `Bundle.module`: inside a framework the
+    /// bundle is copied next to whichever product is running (`Bundle.main` for the
     /// app/extension, the build-products dir for a hostless `xctest`), and SwiftPM's accessor only
     /// checks `Bundle.main` + the framework's own resources — so it `fatalError`s under test. This
     /// finder also walks up from the framework location, covering every host.

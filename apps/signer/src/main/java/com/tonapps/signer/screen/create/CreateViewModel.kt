@@ -43,10 +43,6 @@ class CreateViewModel(
     private val _pagesFlow = MutableStateFlow<List<PageType>?>(null)
     val pagesFlow = _pagesFlow.asStateFlow().filterNotNull()
 
-    private suspend fun requestPasswordCreate(): Boolean {
-        return !vault.hasPassword()
-    }
-
     private val _onReady = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val onReady: Flow<Unit> = _onReady.asSharedFlow()
 
@@ -70,6 +66,10 @@ class CreateViewModel(
             _pagesFlow.value = pages
             _currentPage.tryEmit(pages.first())
         }
+    }
+
+    private suspend fun requestPasswordCreate(): Boolean {
+        return !vault.hasPassword()
     }
 
     fun pageIndex() = currentPage.map { pageIndex(it) }
@@ -165,7 +165,7 @@ class CreateViewModel(
         mnemonic: List<String>
     ) = withContext(Dispatchers.IO) {
         val seed = Mnemonic(mnemonic).toSeed()
-        val publicKey = PrivateKeyEd25519(seed).publicKey()
+        val publicKey = PrivateKeyEd25519(seed.copyOf(32)).publicKey()
 
         val entity = keyRepository.addKey(name, publicKey)
 

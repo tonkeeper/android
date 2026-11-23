@@ -2,12 +2,14 @@ package io.batteryapi
 
 import io.batteryapi.apis.DefaultApi
 import io.batteryapi.apis.GaslessApi
+import io.batteryapi.apis.WalletApi
 import io.batteryapi.models.GaslessV2Fee
 import io.batteryapi.models.GaslessV2SendRequest
 import io.batteryapi.models.GaslessV2SendResponse
 import io.batteryapi.models.EvmGas
 import io.batteryapi.models.EvmSignedAuthorization
 import io.batteryapi.models.IOSBatteryPurchaseStatusTransactionsInnerError
+import io.batteryapi.models.MigrateBatteryRequest
 import io.batteryapi.models.MultichainTronSendRequest
 import io.batteryapi.models.PurchasesPurchasesInner
 import io.batteryapi.models.RechargeMethodsMethodsInner
@@ -33,6 +35,21 @@ class BatteryGenerationTest {
         assertEquals("wallet-id", request.walletId)
         assertEquals("wallet-id", request.headers["X-Wallet-ID"])
         assertEquals("tonconnect-token", request.headers["X-TonConnect-Auth"])
+    }
+
+    @Test
+    fun migrationSendsTheLegacyProofWithTheMultichainWalletAuthentication() {
+        val request = WalletApi().migrateBatteryRequestConfig(
+            migrateBatteryRequest = MigrateBatteryRequest(proof = "proof", fromAddress = "0:legacy"),
+            tonConnectAuth = "legacy-tonconnect-token",
+            xWalletId = "multichain-wallet-id",
+        )
+
+        assertTrue(request.requiresAuthentication)
+        assertTrue(request.requiresWalletAuthentication)
+        assertEquals("multichain-wallet-id", request.walletId)
+        assertEquals("multichain-wallet-id", request.headers["X-Wallet-ID"])
+        assertEquals("legacy-tonconnect-token", request.headers["X-TonConnect-Auth"])
     }
 
     @Test

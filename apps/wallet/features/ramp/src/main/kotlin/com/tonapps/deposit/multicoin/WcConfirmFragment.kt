@@ -3,22 +3,14 @@ package com.tonapps.deposit.multicoin
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
-import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmRequest
-import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.core.ComposableFragment
 import com.tonapps.core.navigation.NavigationDelegate
-import com.tonapps.deposit.multicoin.analytics.asDepositFlowFrom
 import com.tonapps.deposit.multicoin.screens.confirm.ConfirmScreen
-import com.tonapps.deposit.screens.qr.QrAssetFragment
-import com.tonapps.log.L
-import com.tonapps.deposit.screens.ramp.RampType
 import com.tonapps.wallet.data.dapps.confirm.ConfirmSheetQueue
 import com.tonapps.wallet.data.dapps.evm.EvmProviderRepository
 import com.tonapps.wallet.data.dapps.wc.WcRepository
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapAccounts
-import com.tonapps.wallet.data.multichain.legacy.LegacySwapAssets
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.android.ext.android.inject
@@ -44,10 +36,7 @@ class WcConfirmFragment : ComposableFragment(), BaseFragment.BottomSheet, Confir
 
         val request = resolveRequest()
         if (request == null) {
-            // finish() hides the sheet, and a sheet that has not been shown yet is already hidden:
-            // nothing would remove it, and it would open empty. Posted, since a restored fragment
-            // gets here in the middle of a fragment transaction.
-            view.post { finishInternal() }
+            finish()
             return
         }
 
@@ -68,42 +57,10 @@ class WcConfirmFragment : ComposableFragment(), BaseFragment.BottomSheet, Confir
         }
     }
 
-    // The multichain ramp only knows wallets the backend registered: a legacy wallet swapping
-    // GRAM ↔ USDT TRC20 tops up through its own receive screen, as its sends do.
     private fun topUp(request: ConfirmRequest, assetId: String) {
         viewLifecycleOwner.lifecycleScope.launch {
-            // A lookup that fails leaves the button working as it did before legacy swaps.
-            val legacyWallet = try {
-                legacySwapAccounts.find(request.data.walletId)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Throwable) {
-                L.e(e)
-                null
-            }
-            val legacyToken = LegacySwapAssets.token(assetId)
-            val screen = if (legacyWallet != null && legacyToken != null) {
-                QrAssetFragment.newInstance(
-                    token = legacyToken,
-                    walletId = legacyWallet.id,
-                    analyticsFrom = request.topUpFrom(),
-                )
-            } else {
-                DepositMulticoinFragment.create(
-                    rampType = RampType.RampOn,
-                    initial = DepositMulticoinRoutes.Buy(assetId),
-                    analyticsFrom = request.topUpFrom(),
-                )
-            }
-            navigation?.add(screen)
+            navigation?.add(confirmTopUpScreen(request, assetId, legacySwapAccounts))
         }
-    }
-
-    private fun ConfirmRequest.topUpFrom(): DepositFlowFrom {
-        if (context is ConfirmContext.Dapp) {
-            return DepositFlowFrom.Walletconnect
-        }
-        return initiator.asDepositFlowFrom()
     }
 
     private fun resolveRequest(): ConfirmRequest? {

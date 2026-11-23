@@ -10,8 +10,6 @@ import com.tonapps.signer.extensions.fromClipboard
 import com.tonapps.signer.screen.create.CreateViewModel
 import com.tonapps.signer.screen.create.pager.PageType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.getViewModel
@@ -29,10 +27,6 @@ import uikit.widget.WordFormView
 import uikit.extensions.setMoonOnClickListener
 
 class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
-
-    companion object {
-        fun newInstance() = CreatePhraseFragment()
-    }
 
     private val createViewModel: CreateViewModel by lazy {
         requireParentFragment().getViewModel()
@@ -74,7 +68,7 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
         pasteButton = view.findViewById(R.id.paste)
         pasteButton.setMoonOnClickListener { paste() }
 
-        collectFlow(createViewModel.page(PageType.Phrase)) {
+        keepFocusInsidePage(createViewModel, PageType.Phrase) {
             wordFormView.focus()
         }
 
@@ -90,12 +84,12 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
         }
 
         lifecycleScope.launch(Dispatchers.Main) {
-            val words = wordFormView.getWords()
-            val isValid = withContext(Dispatchers.IO) {
-                Mnemonic(words).isValid()
-            }
-            nextButton.isEnabled = isValid
+            nextButton.isEnabled = isValidPhrase(wordFormView.getWords())
         }
+    }
+
+    private suspend fun isValidPhrase(words: List<String>): Boolean = withContext(Dispatchers.IO) {
+        words.size == PHRASE_WORDS_COUNT && Mnemonic(words).isValid()
     }
 
     private fun scrollToFocusedInput(smooth: Boolean): Boolean {
@@ -128,8 +122,14 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
     }
 
     private fun saveMnemonic() {
+        nextButton.isEnabled = false
         lifecycleScope.launch {
-            createViewModel.setMnemonic(wordFormView.getWords())
+            val words = wordFormView.getWords()
+            val isValid = isValidPhrase(words)
+            nextButton.isEnabled = isValid
+            if (isValid) {
+                createViewModel.setMnemonic(words)
+            }
         }
     }
 
@@ -145,4 +145,10 @@ class CreatePhraseFragment: BaseFragment(R.layout.fragment_create_phrase) {
             }
         }
     }
+
+    companion object {
+        fun newInstance() = CreatePhraseFragment()
+    }
 }
+
+private const val PHRASE_WORDS_COUNT = 24

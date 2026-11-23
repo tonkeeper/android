@@ -37,6 +37,7 @@ import com.tonapps.chainkit.perpetual.PerpsTradeException
 import com.tonapps.chainkit.perpetual.PerpsTradeIntent
 import com.tonapps.log.L
 import com.tonapps.mvi.graph.KResult
+import com.tonapps.perps.data.PerpsAutoCloseDraft
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsLoadException
 import com.tonapps.perps.data.PerpsMarkQuote
@@ -45,11 +46,15 @@ import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsTradingSnapshot
 import com.tonapps.perps.data.PerpsTradingState
 import com.tonapps.perps.data.spendableBalance
+import com.tonapps.perps.data.toWireDecimalOrNull
+import com.tonapps.perps.screens.order.repriced
+import com.tonapps.perps.security.PerpsSecurityConfigRepository
 import com.tonapps.wallet.data.multichain.lighter.LighterSigningCredentials
 import io.perpsapi.models.Integrator
 import io.perpsapi.models.MarginMode
 import io.perpsapi.models.Market
 import io.perpsapi.models.Order
+import io.perpsapi.models.OrderAutoCloseLeg
 import io.perpsapi.models.OrderCategory
 import io.perpsapi.models.OrderSide
 import io.perpsapi.models.OrderStatus
@@ -75,15 +80,16 @@ class PerpsPlannerAdapter(
     private val accountService: PerpsAccountService,
     private val clientOrderIndex: PerpsClientOrderIndexStore,
     val mediator: LighterPerpsMediator,
-) {
+    private val securityConfig: PerpsSecurityConfigRepository,
+) : PerpsTradePlanner {
 
-    suspend fun plan(
+    override suspend fun plan(
         request: PerpsTradeRequest,
         credentials: LighterSigningCredentials,
         mark: PerpsMarkQuote?,
         operationId: String,
-        applied: List<PerpsAppliedPrerequisite> = emptyList(),
-        previous: PerpsTradeIntent? = null,
+        applied: List<PerpsAppliedPrerequisite>,
+        previous: PerpsTradeIntent?,
     ): KResult<PerpsPlannedTrade, PerpsPlanFailure> {
         val snapshot = when (val result = tradingSnapshot(request.marketIndex, request.walletId)) {
             is KResult.Ok -> result.value
@@ -98,7 +104,7 @@ class PerpsPlannerAdapter(
         var priceDecimals: Int? = null
         return try {
             val scope = scope(request.walletId, credentials)
-            val rules = rules(market, snapshot.integrator, scope, snapshot.receivedAtMs)
+            val rules = rules(request.marketIndex, market, snapshot.integrator, scope, snapshot.receivedAtMs)
             priceDecimals = rules.scale.priceDecimals
             val nowMs = System.currentTimeMillis()
             val context = context(
@@ -106,9 +112,8 @@ class PerpsPlannerAdapter(
                 scope = scope,
                 rules = rules,
                 openOrdersReadable = openOrdersReadable(request.walletId, request.marketIndex, snapshot),
-                request = request,
             )
-            val markPrice = markPrice(mark, market.markPrice?.toBigDecimalOrNull(), rules.scale, snapshot.receivedAtMs)
+            val markPrice = markPrice(mark, market.markPrice.toWireDecimalOrNull(), rules.scale, snapshot.receivedAtMs)
             val intent = previous
                 ?: intent(request, scope, rules, context, markPrice.price, operationId, nowMs)
             val plan = prepare(request, intent, rules, context, markPrice, nowMs, applied)
@@ -152,9 +157,9 @@ class PerpsPlannerAdapter(
                 chainId = PerpsProductRules.CHAIN_ID,
                 environment = PerpsProductRules.ENVIRONMENT,
             )
-            val rules = rules(market, snapshot.integrator, scope, snapshot.receivedAtMs)
+            val rules = rules(request.marketIndex, market, snapshot.integrator, scope, snapshot.receivedAtMs)
             val nowMs = System.currentTimeMillis()
-            val mark = markPrice(null, market.markPrice?.toBigDecimalOrNull(), rules.scale, snapshot.receivedAtMs)
+            val mark = markPrice(null, market.markPrice.toWireDecimalOrNull(), rules.scale, snapshot.receivedAtMs)
             val intent = openIntent(request, scope, rules, UUID.randomUUID().toString(), nowMs) { it }
             val bounds = withMarketSnapshot(request, intent, rules, mark, nowMs) { marketSnapshot ->
                 PerpsTradeBounds().openBounds(intent, rules, marketSnapshot, nowMs)
@@ -179,7 +184,7 @@ class PerpsPlannerAdapter(
         val scope = planned.plan.scope
 
         return try {
-            val rules = rules(market, snapshot.integrator, scope, snapshot.receivedAtMs)
+            val rules = rules(request.marketIndex, market, snapshot.integrator, scope, snapshot.receivedAtMs)
             KResult.Ok(
                 PerpsMarketState(
                     rules = rules,
@@ -188,7 +193,6 @@ class PerpsPlannerAdapter(
                         scope = scope,
                         rules = rules,
                         openOrdersReadable = openOrdersReadable(request.walletId, request.marketIndex, snapshot),
-                        request = request,
                     ),
                 )
             )
@@ -197,6 +201,8 @@ class PerpsPlannerAdapter(
             KResult.Err(PerpsError.Unknown)
         }
     }
+
+    suspend fun signedSymbol(marketIndex: Int): String? = securityConfig.verified()?.markets?.get(marketIndex)?.symbol
 
     private fun scope(walletId: String, credentials: LighterSigningCredentials): PerpsScope {
         return PerpsScope(
@@ -210,38 +216,38 @@ class PerpsPlannerAdapter(
         )
     }
 
-    private fun rules(
+    private suspend fun rules(
+        marketId: Int,
         market: Market,
         integrator: Integrator,
         scope: PerpsScope,
         receivedAtMs: Long,
     ): PerpsMarketRules {
-        val marketId = market.marketIndex?.toLong() ?: missing("market_index")
-        val priceDecimals = market.priceDecimals ?: missing("price_decimals")
-        val baseDecimals = market.sizeDecimals ?: missing("size_decimals")
         val status = market.status?.takeIf { it.isNotBlank() } ?: missing("status")
+        val signed = PerpsSignedMarketCheck.signedMarket(marketId, market, securityConfig.verified())
+        val priceDecimals = signed.priceDecimals
+        val baseDecimals = signed.sizeDecimals
         val scale = PerpsScale(
             priceDecimals = priceDecimals,
             baseDecimals = baseDecimals,
-            quoteDecimals = priceDecimals + baseDecimals,
+            quoteDecimals = signed.quoteDecimals,
         )
-        val maxLeverage = PerpsProductRules.leverageCeiling(market.maxLeverage, market.initialMarginFraction)
 
         return PerpsMarketRules(
             scopeEnvironment = scope.environment,
-            marketId = marketId,
+            marketId = marketId.toLong(),
             quoteAsset = market.quoteAsset ?: PerpsProductRules.QUOTE_ASSET,
             tradingStatus = status,
             scale = scale,
             priceTick = required(market.tickSize, priceDecimals, "tick_size", RoundingMode.UP),
             baseStep = required(market.stepSize, baseDecimals, "step_size", RoundingMode.UP),
-            minBaseAmount = optional(market.minSizeBase, baseDecimals, RoundingMode.UP) ?: 0L,
+            minBaseAmount = signed.minBaseAmount.toFixedPoint(baseDecimals, RoundingMode.UP),
             maxBaseAmount = optional(market.maxSizeBase, baseDecimals, RoundingMode.DOWN),
-            minNotionalQuote = optional(market.minSizeQuote, scale.quoteDecimals, RoundingMode.UP),
+            minNotionalQuote = signed.minQuoteAmount.toFixedPoint(scale.quoteDecimals, RoundingMode.UP),
             maxNotionalQuote = optional(market.maxSizeQuote, scale.quoteDecimals, RoundingMode.DOWN),
             makerFeePpm = feePpm(market.makerFeePct, "maker_fee_pct"),
             takerFeePpm = feePpm(market.takerFeePct, "taker_fee_pct"),
-            minInitialMarginBps = PerpsProductRules.IMF_TICKS / maxLeverage,
+            minInitialMarginBps = PerpsProductRules.IMF_TICKS / signed.maxLeverage,
             maxInitialMarginBps = PerpsProductRules.IMF_TICKS,
             maintenanceMarginBps = market.maintenanceMarginFraction
                 ?: missing("maintenance_margin_fraction"),
@@ -314,9 +320,9 @@ class PerpsPlannerAdapter(
         scope: PerpsScope,
         rules: PerpsMarketRules,
         openOrdersReadable: Boolean,
-        request: PerpsTradeRequest? = null,
     ): PerpetualAccountSnapshot {
         val screen = snapshot.screen
+        PerpsMarketBinding.requireRequestedMarket(rules.marketId.toInt(), screen)
         val scale = rules.scale
         val position = screen.position
         val positionState = positionState(snapshot, rules)
@@ -331,13 +337,6 @@ class PerpsPlannerAdapter(
                 initialMarginBps = PerpsProductRules.initialMarginBps(leverage),
             )
 
-            // chain-kit refuses modify bounds without margin settings, and a flat market has none.
-            request is PerpsTradeRequest.OrderModify -> PerpsMarginSettings.Known(
-                mode = LighterConstants.IsolatedMargin,
-                initialMarginBps = screen.market?.initialMarginFraction?.takeIf { it > 0 }
-                    ?: rules.minInitialMarginBps,
-            )
-
             else -> PerpsMarginSettings.Unknown
         }
 
@@ -350,14 +349,14 @@ class PerpsPlannerAdapter(
             } else {
                 PerpsContextCompleteness.Incomplete(OPEN_ORDERS_UNAVAILABLE)
             },
-            openEnabled = screen.flags?.openEnabled ?: true,
+            openEnabled = screen.flags?.openEnabled ?: false,
             availableBalanceQuote = optional(
                 screen.balance?.spendableBalance(),
                 scale.quoteDecimals,
                 RoundingMode.DOWN,
             ) ?: 0L,
             position = positionState,
-            restingOrders = screen.openOrders.orEmpty().mapNotNull { it.toRestingOrder(scale) },
+            restingOrders = screen.openOrders.orEmpty().toRestingOrders(scale),
             marginSettings = marginSettings,
         )
     }
@@ -365,18 +364,19 @@ class PerpsPlannerAdapter(
     private fun positionState(snapshot: PerpsTradingSnapshot, rules: PerpsMarketRules): PerpsPositionState {
         val scale = rules.scale
         val position = snapshot.screen.position ?: return PerpsPositionState.KnownFlat
-        val baseAmount = optional(position.propertySize, scale.baseDecimals, RoundingMode.DOWN) ?: 0L
-        if (baseAmount <= 0L) {
+        val size = position.propertySize.toWireDecimalOrNull()?.takeIf { it.signum() >= 0 } ?: missing("size")
+        if (size.signum() == 0) {
             return PerpsPositionState.KnownFlat
+        }
+
+        val baseAmount = size.toFixedPoint(scale.baseDecimals, RoundingMode.DOWN)
+        if (baseAmount == 0L) {
+            missing("size")
         }
 
         return PerpsPositionState.Present(
             positionId = rules.marketId.toString(),
-            side = if (position.side == PositionSide.short) {
-                PerpsSide.Short
-            } else {
-                PerpsSide.Long
-            },
+            side = position.side.toPerpsSide(),
             baseAmount = baseAmount,
             entryPrice = required(position.avgEntryPrice, scale.priceDecimals, "avg_entry_price", RoundingMode.HALF_UP),
             allocatedMarginQuote = required(
@@ -420,6 +420,11 @@ class PerpsPlannerAdapter(
 
             is PerpsTradeRequest.Reduce -> {
                 val present = present(context)
+                val margin = BigDecimal.valueOf(present.allocatedMarginQuote, scale.quoteDecimals)
+                if (closesWholePosition(request.marginDelta, margin)) {
+                    val close = PerpsTradeRequest.Close(request.walletId, request.marketIndex)
+                    return intent(close, scope, rules, context, mark, operationId, nowMs)
+                }
                 val delta = request.marginDelta.toFixedPoint(scale.quoteDecimals, RoundingMode.DOWN)
                 if (present.allocatedMarginQuote <= 0L || delta >= present.allocatedMarginQuote) {
                     throw PerpsTradeException(
@@ -534,6 +539,7 @@ class PerpsPlannerAdapter(
             is PerpsTradeRequest.OrderModify -> {
                 val resting = context.restingOrders.firstOrNull { it.orderIndex == request.orderIndex }
                     ?: throw PerpsTradeException(PerpsTradeError.OrderNotFound, "order is no longer resting")
+                checkModifyAgainstSeen(resting, request, scale)
 
                 PerpsTradeIntent.OrderModify(
                     operationId = operationId,
@@ -559,6 +565,53 @@ class PerpsPlannerAdapter(
                 )
                 if (legs.isEmpty) {
                     throw PerpsTradeException(PerpsTradeError.InvalidAutoClose, "nothing to change")
+                }
+
+                PerpsTradeIntent.AutoClose(
+                    operationId = operationId,
+                    scope = scope,
+                    marketId = rules.marketId,
+                    positionId = present.positionId,
+                    side = present.side,
+                    autoClose = legs.spec(),
+                )
+            }
+
+            is PerpsTradeRequest.AutoCloseRenewal -> {
+                val present = present(context)
+                val legs = renewalLegs(context.restingOrders, nowMs, request.confirmed)
+                if (legs.isEmpty) {
+                    throw PerpsTradeException(PerpsTradeError.InvalidAutoClose, "nothing to renew")
+                }
+
+                PerpsTradeIntent.AutoClose(
+                    operationId = operationId,
+                    scope = scope,
+                    marketId = rules.marketId,
+                    positionId = present.positionId,
+                    side = present.side,
+                    autoClose = legs.spec(),
+                )
+            }
+
+            is PerpsTradeRequest.AutoCloseFromEntry -> {
+                val present = present(context)
+                val target = entryAutoClose(
+                    placed = request.placed,
+                    restingOrders = context.restingOrders,
+                    entryPrice = BigDecimal.valueOf(present.entryPrice, scale.priceDecimals),
+                    leverage = BigDecimal(request.leverage),
+                    side = present.side.toOrderSide(),
+                    priceDecimals = scale.priceDecimals,
+                )
+                val legs = autoCloseLegs(
+                    edit = PerpsAutoCloseEdit.Set(target),
+                    restingOrders = context.restingOrders,
+                    scale = scale,
+                    nowMs = nowMs,
+                )
+                if (legs.isEmpty) {
+                    throw PerpsTradeException(PerpsTradeError.InvalidAutoClose, "the legs already sit at the entry")
                 }
 
                 PerpsTradeIntent.AutoClose(
@@ -644,20 +697,79 @@ class PerpsPlannerAdapter(
             return AutoCloseLegs()
         }
 
-        fun leg(trigger: Long?, indexOffset: Long): PerpsAutoCloseLeg? = trigger?.let {
-            PerpsAutoCloseLeg(
-                triggerPrice = it,
-                expiryUnixMs = expiryUnixMs,
-                clientOrderIndex = clientOrderIndex.next(nowMs + indexOffset),
-            )
-        }
-
         return AutoCloseLegs(
-            takeProfit = leg(takeProfitTrigger, TAKE_PROFIT_INDEX_OFFSET),
-            stopLoss = leg(stopLossTrigger, STOP_LOSS_INDEX_OFFSET),
+            takeProfit = takeProfitTrigger?.let { autoCloseLeg(it, expiryUnixMs, nowMs, TAKE_PROFIT_INDEX_OFFSET) },
+            stopLoss = stopLossTrigger?.let { autoCloseLeg(it, expiryUnixMs, nowMs, STOP_LOSS_INDEX_OFFSET) },
             replacedTakeProfit = restingTakeProfit?.cancelKey(),
             replacedStopLoss = restingStopLoss?.cancelKey(),
         )
+    }
+
+    private fun renewalLegs(
+        restingOrders: List<PerpsRestingOrder>,
+        nowMs: Long,
+        confirmed: Map<Long, Long>,
+    ): AutoCloseLegs {
+        val (takeProfit, stopLoss) = renewableLegs(restingOrders, nowMs, confirmed) ?: return AutoCloseLegs()
+        val expiryUnixMs = nowMs + PerpsProductRules.AUTO_CLOSE_EXPIRY_MS
+
+        return AutoCloseLegs(
+            takeProfit = takeProfit?.triggerPrice?.let {
+                autoCloseLeg(it, expiryUnixMs, nowMs, TAKE_PROFIT_INDEX_OFFSET)
+            },
+            stopLoss = stopLoss?.triggerPrice?.let {
+                autoCloseLeg(it, expiryUnixMs, nowMs, STOP_LOSS_INDEX_OFFSET)
+            },
+            replacedTakeProfit = takeProfit?.cancelKey(),
+            replacedStopLoss = stopLoss?.cancelKey(),
+        )
+    }
+
+    private fun autoCloseLeg(
+        triggerPrice: Long,
+        expiryUnixMs: Long,
+        nowMs: Long,
+        indexOffset: Long,
+    ): PerpsAutoCloseLeg {
+        return PerpsAutoCloseLeg(
+            triggerPrice = triggerPrice,
+            expiryUnixMs = expiryUnixMs,
+            clientOrderIndex = clientOrderIndex.next(nowMs + indexOffset),
+        )
+    }
+
+    override suspend fun autoCloseRenewalDue(
+        walletId: String,
+        marketIndex: Int,
+        credentials: LighterSigningCredentials,
+        nowMs: Long,
+        confirmed: Map<Long, Long>,
+    ): KResult<Boolean, PerpsError> {
+        val snapshot = when (val result = tradingSnapshot(marketIndex, walletId)) {
+            is KResult.Ok -> result.value
+            is KResult.Err -> return KResult.Err(result.value)
+        }
+        val market = snapshot.screen.market ?: return KResult.Err(PerpsError.Unknown)
+
+        return try {
+            val rules = rules(marketIndex, market, snapshot.integrator, scope(walletId, credentials), snapshot.receivedAtMs)
+            PerpsMarketBinding.requireRequestedMarket(marketIndex, snapshot.screen)
+            if (positionState(snapshot, rules) !is PerpsPositionState.Present) {
+                return KResult.Ok(false)
+            }
+            val orders = snapshot.screen.openOrders ?: return KResult.Err(PerpsError.Unknown)
+            KResult.Ok(renewableLegs(orders.toRestingOrders(rules.scale), nowMs, confirmed) != null)
+        } catch (e: PerpsLoadException) {
+            L.e(e)
+            KResult.Err(e.error)
+        } catch (e: PerpsTradeException) {
+            L.e(e)
+            if (e.field == SIGNED_MARKET_FIELD || e.field == MARKET_BINDING_FIELD) {
+                KResult.Ok(false)
+            } else {
+                KResult.Err(PerpsError.Unknown)
+            }
+        }
     }
 
     suspend fun reviewMarketState(
@@ -678,7 +790,7 @@ class PerpsPlannerAdapter(
         )
 
         return try {
-            val rules = rules(market, snapshot.integrator, scope, snapshot.receivedAtMs)
+            val rules = rules(marketIndex, market, snapshot.integrator, scope, snapshot.receivedAtMs)
             KResult.Ok(
                 PerpsMarketState(
                     rules = rules,
@@ -799,12 +911,6 @@ class PerpsPlannerAdapter(
                     )
                 }
             }
-            // chain-kit only rejects a book from the future; one the backend stopped refreshing would
-            // otherwise price the bound off a day-old level and sign an IOC that can never fill.
-            val bookAgeMs = book.updatedAtMs?.let { nowMs - it }
-            if (bookAgeMs != null && bookAgeMs > PerpsProductRules.POLICY.maxMarketSnapshotAgeUnixMs) {
-                throw PerpsTradeException(PerpsTradeError.UnusableSnapshot, "order book is $bookAgeMs ms old")
-            }
             val slice = PerpsBookSlice(
                 side = bookRequest.side,
                 levels = book.levels.map { (price, size) ->
@@ -816,7 +922,7 @@ class PerpsPlannerAdapter(
                 truncatedAtCoverage = book.truncated,
                 requestedCoverageQuote = coverage,
             )
-            val result = attempt(snapshot(rules, intent, nowMs, book.updatedAtMs, slice, mark))
+            val result = attempt(snapshot(rules, intent, nowMs, null, slice, mark))
             val error = result.error ?: return result.unwrap()
             if (error.kind == PerpsTradeError.NeedsMoreDepth && book.truncated && coverage <= Long.MAX_VALUE / 2) {
                 coverage *= 2
@@ -882,6 +988,11 @@ class PerpsPlannerAdapter(
                 coverageQuote = marginCoverageQuote(intent.marginBudgetQuote, intent.initialMarginBps),
             )
 
+            intent is PerpsTradeIntent.Open && intent.autoClose?.takeProfit != null -> BookRequest(
+                side = intent.side,
+                coverageQuote = 0L,
+            )
+
             intent is PerpsTradeIntent.Add && intent.order is PerpsOrderSpec.Market -> BookRequest(
                 side = intent.side,
                 coverageQuote = marginCoverageQuote(intent.marginBudgetQuote, intent.initialMarginBps),
@@ -941,6 +1052,23 @@ class PerpsPlannerAdapter(
     }
 }
 
+internal fun checkModifyAgainstSeen(
+    resting: PerpsRestingOrder,
+    request: PerpsTradeRequest.OrderModify,
+    scale: PerpsScale,
+) {
+    val seen = request.maxBaseAmount.toFixedPoint(scale.baseDecimals, RoundingMode.DOWN)
+    if (resting.remainingBaseAmount > seen) {
+        throw PerpsTradeException(PerpsTradeError.StaleInput, "order size grew since it was shown")
+    }
+    val priceMoved = request.expectedLimitPrice?.let {
+        it.toFixedPoint(scale.priceDecimals, RoundingMode.HALF_UP) != resting.limitPrice
+    } == true
+    if (priceMoved) {
+        throw PerpsTradeException(PerpsTradeError.StaleInput, "order price changed since it was confirmed")
+    }
+}
+
 private data class AutoCloseLegs(
     val takeProfit: PerpsAutoCloseLeg? = null,
     val stopLoss: PerpsAutoCloseLeg? = null,
@@ -978,6 +1106,64 @@ internal fun List<PerpsRestingOrder>.restingLeg(category: PerpsOrderCategory): P
     }
 }
 
+internal fun renewableLegs(
+    restingOrders: List<PerpsRestingOrder>,
+    nowMs: Long,
+    confirmed: Map<Long, Long>,
+): Pair<PerpsRestingOrder?, PerpsRestingOrder?>? {
+    val takeProfit = restingOrders.restingLeg(PerpsOrderCategory.TakeProfit)?.takeIf { it.isConfirmedIn(confirmed) }
+    val stopLoss = restingOrders.restingLeg(PerpsOrderCategory.StopLoss)?.takeIf { it.isConfirmedIn(confirmed) }
+    val legs = listOfNotNull(takeProfit, stopLoss)
+    val renewBeforeMs = nowMs + PerpsProductRules.AUTO_CLOSE_RENEWAL_LEAD_MS
+    if (legs.none { (it.expiryUnixMs ?: 0L) in 1L until renewBeforeMs }) {
+        return null
+    }
+
+    return takeProfit to stopLoss
+}
+
+private fun PerpsRestingOrder.isConfirmedIn(confirmed: Map<Long, Long>): Boolean {
+    return clientOrderIndex != null && triggerPrice != null && confirmed[clientOrderIndex] == triggerPrice
+}
+
+internal fun entryAutoClose(
+    placed: PerpsAutoCloseDraft,
+    restingOrders: List<PerpsRestingOrder>,
+    entryPrice: BigDecimal,
+    leverage: BigDecimal,
+    side: PerpsOrderSide,
+    priceDecimals: Int,
+): PerpsAutoCloseDraft {
+    val placedTakeProfit = placed.takeProfit?.toFixedPoint(priceDecimals, RoundingMode.HALF_UP)
+    val placedStopLoss = placed.stopLoss?.toFixedPoint(priceDecimals, RoundingMode.HALF_UP)
+    val restingTakeProfit = restingOrders.restingLeg(PerpsOrderCategory.TakeProfit)
+    val restingStopLoss = restingOrders.restingLeg(PerpsOrderCategory.StopLoss)
+    if ((placedTakeProfit != null && restingTakeProfit == null) || (placedStopLoss != null && restingStopLoss == null)) {
+        throw PerpsTradeException(PerpsTradeError.OrderNotFound, "the open's auto-close legs are not resting yet")
+    }
+    if (!sameLeg(placedTakeProfit, restingTakeProfit) || !sameLeg(placedStopLoss, restingStopLoss)) {
+        throw PerpsTradeException(PerpsTradeError.InvalidAutoClose, "the auto-close changed since the open")
+    }
+    val repriced = placed.repriced(entryPrice, leverage, priceDecimals, side)
+
+    return repriced.copy(
+        takeProfit = cappedEntryLeg("take profit", placed.takeProfit, repriced.takeProfit, leverage),
+        stopLoss = cappedEntryLeg("stop loss", placed.stopLoss, repriced.stopLoss, leverage),
+    )
+}
+
+private fun cappedEntryLeg(leg: String, placed: BigDecimal?, repriced: BigDecimal?, leverage: BigDecimal): BigDecimal? {
+    if (placed == null || repriced == null) {
+        return repriced
+    }
+    if (withinReviewDrift(repriced, placed, leverage)) {
+        return repriced
+    }
+    L.d("Perps auto-close from entry: the $leg moved from $placed to $repriced, keeping the confirmed trigger")
+
+    return placed
+}
+
 private fun PerpsRestingOrder.cancelKey(): Long {
     return clientOrderIndex?.takeIf { it > 0 } ?: orderIndex
 }
@@ -1008,6 +1194,56 @@ private fun floorToStep(value: Long, step: Long): Long {
     return value - value % step
 }
 
+internal fun List<Order>.toRestingOrders(scale: PerpsScale): List<PerpsRestingOrder> {
+    val waiting = flatMap { it.waitingLegs(scale) }
+    val waitingIndexes = waiting.mapTo(HashSet()) { it.orderIndex }
+    val listed = mapNotNull { order ->
+        order.toRestingOrder(scale)?.let { resting ->
+            if (resting.orderIndex in waitingIndexes) {
+                resting.copy(positionTied = false)
+            } else {
+                resting
+            }
+        }
+    }
+    val listedIndexes = listed.mapTo(HashSet()) { it.orderIndex }
+
+    return listed + waiting.filter { it.orderIndex !in listedIndexes }
+}
+
+private fun Order.waitingLegs(scale: PerpsScale): List<PerpsRestingOrder> {
+    val closingSide = side.toPerpsSide().opposite()
+
+    return listOfNotNull(
+        autoClose?.takeProfit?.toWaitingLeg(PerpsOrderCategory.TakeProfit, PerpsRestingOrderType.TakeProfit, closingSide, scale),
+        autoClose?.stopLoss?.toWaitingLeg(PerpsOrderCategory.StopLoss, PerpsRestingOrderType.StopLoss, closingSide, scale),
+    )
+}
+
+private fun OrderAutoCloseLeg.toWaitingLeg(
+    category: PerpsOrderCategory,
+    orderType: PerpsRestingOrderType,
+    side: PerpsSide,
+    scale: PerpsScale,
+): PerpsRestingOrder? {
+    val index = orderIndex ?: return null
+
+    return PerpsRestingOrder(
+        orderIndex = index,
+        clientOrderIndex = clientOrderIndex,
+        side = side,
+        category = category,
+        orderType = orderType,
+        status = PerpsRestingOrderStatus.Pending,
+        reduceOnly = true,
+        positionTied = false,
+        remainingBaseAmount = 0L,
+        limitPrice = optional(price, scale.priceDecimals, RoundingMode.HALF_UP)?.takeIf { it > 0L },
+        triggerPrice = optional(triggerPrice, scale.priceDecimals, RoundingMode.HALF_UP)?.takeIf { it > 0L },
+        expiryUnixMs = validTo?.takeIf { it > 0L }?.let { it * MILLIS_PER_SECOND },
+    )
+}
+
 private fun Order.toRestingOrder(scale: PerpsScale): PerpsRestingOrder? {
     val index = orderIndex ?: return null
     val size = optional(baseSize, scale.baseDecimals, RoundingMode.DOWN) ?: 0L
@@ -1016,11 +1252,7 @@ private fun Order.toRestingOrder(scale: PerpsScale): PerpsRestingOrder? {
     return PerpsRestingOrder(
         orderIndex = index,
         clientOrderIndex = clientOrderIndex,
-        side = if (side == OrderSide.short) {
-            PerpsSide.Short
-        } else {
-            PerpsSide.Long
-        },
+        side = side.toPerpsSide(),
         category = category.toPerpsCategory(),
         orderType = toPerpsOrderType(),
         status = status.toPerpsStatus(),
@@ -1077,7 +1309,23 @@ private fun PerpsOrderSide.toPerpsSide(): PerpsSide {
     }
 }
 
-private fun PerpsSide.toOrderSide(): PerpsOrderSide {
+private fun PositionSide?.toPerpsSide(): PerpsSide {
+    return when (this) {
+        PositionSide.long -> PerpsSide.Long
+        PositionSide.short -> PerpsSide.Short
+        PositionSide.unknown, null -> missing("side")
+    }
+}
+
+private fun OrderSide?.toPerpsSide(): PerpsSide {
+    return when (this) {
+        OrderSide.long -> PerpsSide.Long
+        OrderSide.short -> PerpsSide.Short
+        OrderSide.unknown, null -> missing("side")
+    }
+}
+
+internal fun PerpsSide.toOrderSide(): PerpsOrderSide {
     return when (this) {
         PerpsSide.Long -> PerpsOrderSide.LONG
         PerpsSide.Short -> PerpsOrderSide.SHORT
@@ -1105,17 +1353,16 @@ private fun BigDecimal.toFixedPoint(decimals: Int, mode: RoundingMode): Long {
 }
 
 private fun required(value: String?, decimals: Int, field: String, mode: RoundingMode): Long {
-    val text = value?.takeIf { it.isNotBlank() } ?: missing(field)
-    val amount = text.toBigDecimalOrNull() ?: missing(field)
+    val amount = value.toWireDecimalOrNull() ?: missing(field)
     return amount.toFixedPoint(decimals, mode)
 }
 
 private fun optional(value: String?, decimals: Int, mode: RoundingMode): Long? {
-    return value?.takeIf { it.isNotBlank() }?.toBigDecimalOrNull()?.toFixedPoint(decimals, mode)
+    return value.toWireDecimalOrNull()?.toFixedPoint(decimals, mode)
 }
 
 private fun feePpm(value: String?, field: String): Long {
-    val percent = value?.toBigDecimalOrNull() ?: missing(field)
+    val percent = value.toWireDecimalOrNull() ?: missing(field)
     return PerpsProductRules.percentToPpm(percent)
 }
 
@@ -1141,3 +1388,4 @@ private fun clampToLong(value: BigDecimal): Long {
 }
 
 private const val PPM_SCALE = 1_000_000L
+private const val MILLIS_PER_SECOND = 1_000L

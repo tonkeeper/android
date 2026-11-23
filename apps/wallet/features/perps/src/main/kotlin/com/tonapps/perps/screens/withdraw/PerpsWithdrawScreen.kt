@@ -35,14 +35,14 @@ import com.tonapps.extensions.fiatSymbol
 import com.tonapps.mvi.graph.KState
 import com.tonapps.paging.collectAsStateWorkaround
 import com.tonapps.perps.data.USD_CURRENCY
-import com.tonapps.perps.data.formatTokenAmount
+import com.tonapps.perps.data.formatTokenCompact
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.perps.funding.PerpsFundingAmount
 import com.tonapps.perps.funding.PerpsWithdrawDestination
 import com.tonapps.perps.funding.PerpsWithdrawService
+import com.tonapps.perps.screens.common.PerpsFundingTopBar
 import com.tonapps.perps.screens.deposit.PerpsAmountInputCell
 import com.tonapps.perps.screens.deposit.SourceImage
-import com.tonapps.perps.screens.deposit.SourceTags
 import com.tonapps.perps.screens.deposit.networkName
 import com.tonapps.perps.screens.deposit.showsNetwork
 import com.tonapps.perps.screens.deposit.sourceSubtitle
@@ -53,9 +53,7 @@ import ui.components.moon.MoonCircleIcon
 import ui.components.moon.MoonItemDivider
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemSubtitle
-import ui.components.moon.MoonLabel
 import ui.components.moon.MoonSmallItemTitle
-import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonLoaderCell
@@ -79,6 +77,7 @@ fun PerpsWithdrawScreen(
     val destinations by feature.destinations.collectAsStateWorkaround()
     val selected by feature.selected.collectAsStateWorkaround()
     val amountInput by feature.amountInput.collectAsStateWorkaround()
+    val inputInToken by feature.inputInToken.collectAsStateWorkaround()
     val summary by feature.summary.collectAsStateWorkaround()
     val withdrawInFlight by feature.withdrawInFlight.collectAsStateWorkaround()
     var showMethods by remember { mutableStateOf(false) }
@@ -96,8 +95,12 @@ fun PerpsWithdrawScreen(
         modifier = Modifier
             .statusBarsPadding()
             .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars)),
-        title = stringResource(Localization.perps_withdraw_title),
-        onClose = onClose,
+        topBar = {
+            PerpsFundingTopBar(
+                title = stringResource(Localization.perps_withdraw_title),
+                onClose = onClose,
+            )
+        },
     ) {
         Column(Modifier.fillMaxSize()) {
             Column(
@@ -106,28 +109,40 @@ fun PerpsWithdrawScreen(
                     .verticalScroll(rememberScrollState())
                     .nestedScroll(rememberNestedScrollInteropConnection()),
             ) {
+                val receiveSymbol = target?.let(::destinationTitle)
                 PerpsAmountInputCell(
                     amount = amountInput,
-                    currencyCode = USD_CURRENCY,
-                    pillText = current?.let {
-                        formatTokenAmount(it.amount, PerpsWithdrawService.USDC_SYMBOL, PerpsFundingAmount.USDC_DECIMALS)
+                    currencyCode = if (inputInToken) {
+                        receiveSymbol.orEmpty()
+                    } else {
+                        USD_CURRENCY
                     },
-                    maxFractionDigits = PerpsFundingAmount.USDC_DECIMALS,
+                    pillText = when {
+                        current == null || receiveSymbol == null -> null
+                        inputInToken -> formatUsdAmount(PerpsFundingAmount.toDecimal(current.amountUnits, PerpsFundingAmount.USDC_DECIMALS))
+                        else -> current.receiveAmount?.let { formatTokenCompact(it, receiveSymbol) }
+                    },
+                    maxFractionDigits = if (inputInToken && target != null) {
+                        target.receiveInputDecimals
+                    } else {
+                        PerpsFundingAmount.USDC_DECIMALS
+                    },
                     onAmountChange = { feature.sendAction(PerpsWithdrawAction.SetAmount(it)) },
-                    onSwap = null,
+                    onSwap = { feature.sendAction(PerpsWithdrawAction.ToggleInput) }.takeIf { target?.usdPrice != null },
                     onDone = review,
-                    currencyPrefix = USD_CURRENCY.fiatSymbol(),
+                    currencyPrefix = USD_CURRENCY.fiatSymbol().takeIf { !inputInToken },
                 )
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(start = 16.dp, top = 8.dp, end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     MoonBadgeButton(
                         content = { MoonSmallItemTitle(stringResource(Localization.max).uppercase()) },
+                        modifier = Modifier.height(MAX_BUTTON_HEIGHT),
                         onClick = { feature.sendAction(PerpsWithdrawAction.Max) },
                     )
                     val availableFormat = available.state
@@ -212,8 +227,7 @@ private fun DestinationCell(
         selected != null -> MoonBundleCell {
             TextCell(
                 title = destinationTitle(selected.destination),
-                subtitle = destinationSubtitle(selected),
-                tags = { DestinationTags(selected.destination) },
+                subtitle = selected.source?.let { sourceSubtitle(it) },
                 onClick = onClick,
                 content = { MoonItemIcon(painterResource(UIKitIcon.ic_switch_16)) },
                 minHeight = 76.dp,
@@ -256,10 +270,9 @@ private fun PerpsWithdrawMethodDialog(
     val navigator = rememberDialogNavigator(onClose = onClose)
 
     MoonModalDialog(navigator = navigator) {
-        MoonTopAppBarSimple(
+        PerpsFundingTopBar(
             title = stringResource(Localization.choose_asset),
-            actionIconRes = UIKitIcon.ic_close_16,
-            onActionClick = { navigator.close() },
+            onClose = { navigator.close() },
         )
 
         MoonSurface {
@@ -278,8 +291,7 @@ private fun PerpsWithdrawMethodDialog(
                             }
                             TextCheckCell(
                                 title = destinationTitle(destination),
-                                subtitle = destinationSubtitle(item),
-                                tags = { DestinationTags(destination) },
+                                subtitle = item.source?.let { sourceSubtitle(it) },
                                 isChecked = destination.assetId == selectedAssetId,
                                 onCheckedChange = {
                                     navigator.close()
@@ -305,38 +317,11 @@ internal fun destinationTitle(destination: PerpsWithdrawDestination): String {
 internal fun destinationNetwork(destination: PerpsWithdrawDestination): String? {
     val source = destination.source
     return when {
-        destination.isLighterWithdraw -> ETHEREUM_NETWORK
         source != null && showsNetwork(source) -> networkName(source.account.value.chain)
         else -> null
     }
 }
 
-@Composable
-private fun destinationSubtitle(item: PerpsWithdrawDestinationUi): String {
-    val destination = item.destination
-    val source = item.source
-    val transferFeeUnits = destination.transferFeeUnits
-    return when {
-        destination.isLighterWithdraw || source == null -> stringResource(Localization.perps_withdraw_method_fee)
-        transferFeeUnits != null -> stringResource(
-            Localization.perps_withdraw_method_fee_from,
-            formatUsdAmount(PerpsFundingAmount.toDecimal(transferFeeUnits, PerpsFundingAmount.USDC_DECIMALS)),
-        )
-
-        else -> sourceSubtitle(source)
-    }
-}
-
-@Composable
-private fun DestinationTags(destination: PerpsWithdrawDestination) {
-    val source = destination.source
-    if (destination.isLighterWithdraw) {
-        MoonLabel(text = ETHEREUM_NETWORK)
-    } else if (source != null) {
-        SourceTags(source)
-    }
-}
-
-private const val ETHEREUM_NETWORK = "Ethereum"
+private val MAX_BUTTON_HEIGHT = 36.dp
 private const val ICON_BACKGROUND_ALPHA = 0.12f
 private const val FALLBACK_ICON_RATIO = 0.5f

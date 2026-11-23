@@ -1,14 +1,11 @@
 package com.tonapps.perps.trade
 
-import android.content.Context
 import com.tonapps.async.Async
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.chainkit.CryptoKitClient
 import com.tonapps.chainkit.core.chain.model.MessageType
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
-import com.tonapps.chainkit.core.chain.model.account.WalletKind
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.perpetual.PerpetualAccountKeySource
 import com.tonapps.chainkit.perpetual.PerpetualChain
 import com.tonapps.log.L
@@ -18,17 +15,21 @@ import com.tonapps.perps.data.PerpsAccount
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsPortfolio
 import com.tonapps.perps.data.PerpsRepository
+import com.tonapps.time.TimeProvider
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.lighter.LighterSigningCredentials
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
 import com.tonapps.wallet.data.multichain.lighter.StoredLighterAccount
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -47,8 +48,9 @@ class PerpsAccountService(
     private val perpetualRepository: PerpetualRepository,
     private val client: CryptoKitClient,
     private val mcAccountRepository: McAccountRepository,
-    private val passcodeManager: PasscodeManager,
+    private val walletUnlocker: WalletUnlocker,
     private val tierUpgrader: PerpsAccountTierUpgrader,
+    private val timeProvider: TimeProvider,
     private val scope: CoroutineScope,
 ) {
 
@@ -64,7 +66,7 @@ class PerpsAccountService(
         return repository.account(walletId)
     }
 
-    suspend fun ensureBound(walletId: String, wallet: CryptoWallet): PerpsAccount? {
+    suspend fun ensureBound(walletId: String, wallet: MnemonicWallet): PerpsAccount? {
         val account = repository.account(walletId).getOrNull() ?: return null
         if (account.l1Address != null) {
             return account
@@ -72,7 +74,7 @@ class PerpsAccountService(
         return bind(walletId, wallet)
     }
 
-    suspend fun signOwnerMessage(wallet: CryptoWallet, message: String): String? {
+    suspend fun signOwnerMessage(wallet: MnemonicWallet, message: String): String? {
         return client.perpetual.getAccountMediator(PerpetualChain.Lighter).keySource(wallet).signOwnerMessage(message)
     }
 
@@ -92,7 +94,7 @@ class PerpsAccountService(
         }
     }
 
-    suspend fun ensureActivated(walletId: String, unlockWallet: suspend () -> CryptoWallet): PerpsActivation {
+    suspend fun ensureActivated(walletId: String, unlockWallet: suspend () -> MnemonicWallet): PerpsActivation {
         val stored = perpetualRepository.signingCredentials(walletId)
         if (stored != null) {
             tierUpgrader.ensurePlusBeforeTrading(walletId)
@@ -106,20 +108,24 @@ class PerpsAccountService(
 
         // TODO remove the unlock: binding the L1 address and registering a key the venue does not hold
         //  belong to the deposit (change_pub_key); activation should only store what the venue has.
-        var wallet: CryptoWallet? = null
+        var wallet: MnemonicWallet? = null
         if (account.l1Address == null) {
             wallet = unlockWallet()
             account = bind(walletId, wallet) ?: return PerpsActivation.Failed
         }
         val accountIndex = account.accountIndex ?: return PerpsActivation.NoAccount
-        val l1Address = account.l1Address ?: return PerpsActivation.Failed
+        val ownerAddress = ownerAddress(walletId) ?: return PerpsActivation.Failed
+        if (!account.isOwnedBy(ownerAddress)) {
+            L.e("perps: account $accountIndex answered ${account.l1Address}, the wallet is $ownerAddress")
+            return PerpsActivation.Failed
+        }
 
         val keySource = if (holdsKeptKey(walletId, account)) {
-            KeptKeySource(walletId, l1Address)
+            KeptKeySource(walletId, ownerAddress)
         } else {
             client.perpetual.getAccountMediator(PerpetualChain.Lighter).keySource(wallet ?: unlockWallet())
         }
-        val credentials = register(walletId, accountIndex, keySource)
+        val credentials = register(walletId, accountIndex, ownerAddress, keySource)
             ?: return PerpsActivation.Failed
         if (account.hasRoToken != true) {
             mintRoToken(walletId)
@@ -129,19 +135,14 @@ class PerpsAccountService(
         return PerpsActivation.Ready(credentials)
     }
 
-    suspend fun unlock(wallet: WalletEntity, context: Context): KResult<LighterSigningCredentials, PerpsUnlockFailure> {
-        if (wallet.type != WalletType.Multichain) {
+    suspend fun unlock(wallet: WalletEntity): KResult<LighterSigningCredentials, PerpsUnlockFailure> {
+        if (!wallet.supportsPerps) {
             return KResult.Err(PerpsUnlockFailure.COMING_SOON)
         }
 
         return withContext(Async.Io) {
             try {
-                val outcome = ensureActivated(wallet.id) {
-                    passcodeManager.unlockMultichainVault(context) { coder ->
-                        mcAccountRepository.getCryptoWallet(wallet.id, coder)
-                            ?: throw IllegalStateException("No multichain wallet for ${wallet.id}")
-                    }
-                }
+                val outcome = ensureActivated(wallet.id) { openWallet(wallet.id) }
                 when (outcome) {
                     is PerpsActivation.Ready -> KResult.Ok(outcome.credentials)
                     PerpsActivation.NoAccount -> KResult.Err(PerpsUnlockFailure.COMING_SOON)
@@ -154,6 +155,16 @@ class PerpsAccountService(
                 KResult.Err(PerpsUnlockFailure.FAILED)
             }
         }
+    }
+
+    suspend fun unlockOwnerSigner(wallet: WalletEntity): PerpsOwnerMessageSigner? {
+        val cryptoWallet = try {
+            openWallet(wallet.id)
+        } catch (_: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            return null
+        }
+        return PerpsOwnerMessageSigner { message -> signOwnerMessage(cryptoWallet, message) }
     }
 
     fun refreshRoToken(walletId: String, tokenRefused: Boolean) {
@@ -192,9 +203,28 @@ class PerpsAccountService(
         }
     }
 
+    suspend fun keepTradingKey(walletId: String): Boolean {
+        if (perpetualRepository.walletsWithoutTradingKey(listOf(walletId)).isEmpty()) {
+            return true
+        }
+        val wallet = try {
+            openWallet(walletId)
+        } catch (e: CancellationException) {
+            currentCoroutineContext().ensureActive()
+            return false
+        }
+        perpetualRepository.saveTradingKey(walletId, wallet)
+        return true
+    }
+
+    private suspend fun openWallet(walletId: String): MnemonicWallet {
+        return walletUnlocker.unlockWallet(walletId, PasscodeReason.PERPS)
+    }
+
     private suspend fun register(
         walletId: String,
         accountIndex: Long,
+        ownerAddress: String,
         keySource: PerpetualAccountKeySource,
     ): LighterSigningCredentials? {
         val mediator = client.perpetual.getAccountMediator(PerpetualChain.Lighter)
@@ -208,10 +238,12 @@ class PerpsAccountService(
             }
             val state = mediator.activate(
                 keySource = keySource,
-                delegate = PerpsTkAccountDelegate(walletId, repository, expectedPublicKey),
-                nowUnixMs = System.currentTimeMillis(),
+                delegate = PerpsTkAccountDelegate(walletId, repository, expectedPublicKey, accountIndex, ownerAddress),
+                // The key registration it signs expires on Lighter's clock.
+                nowUnixMs = timeProvider.currentTimeMillis(),
             )
-            if (state.hasL2Key != true) {
+            val registeredAccountIndex = state.accountIndex
+            if (state.hasL2Key != true || registeredAccountIndex == null) {
                 return null
             }
 
@@ -220,7 +252,7 @@ class PerpsAccountService(
                 perpetualRepository.saveActivation(
                     walletId = walletId,
                     account = StoredLighterAccount(
-                        accountIndex = accountIndex,
+                        accountIndex = registeredAccountIndex,
                         apiKeyIndex = LIGHTER_API_KEY_INDEX,
                     ),
                     l2PrivateKey = privateKey,
@@ -257,10 +289,10 @@ class PerpsAccountService(
      */
     private inner class KeptKeySource(
         private val walletId: String,
-        private val l1Address: String,
+        private val ownerAddress: String,
     ) : PerpetualAccountKeySource {
 
-        override suspend fun ownerAddress(): String = l1Address
+        override suspend fun ownerAddress(): String = ownerAddress
 
         override suspend fun deriveTradingKey(): ByteArray {
             return checkNotNull(perpetualRepository.tradingKey(walletId)) { "perps: no trading key kept for $walletId" }
@@ -269,11 +301,20 @@ class PerpsAccountService(
         override suspend fun signOwnerMessage(message: String): String? = null
     }
 
-    private suspend fun bind(walletId: String, wallet: CryptoWallet): PerpsAccount? {
+    private suspend fun ownerAddress(walletId: String): String? {
+        val ethereum = mcAccountRepository.getCoinAccounts(walletId).firstOrNull { it.chain == Chain.Ethereum.Mainnet }
+        if (ethereum == null) {
+            L.e("perps: no Ethereum account for $walletId")
+            return null
+        }
+        return PerpsAccountProofs.normalizeL1AddressOrNull(ethereum.displayAddress)
+    }
+
+    private suspend fun bind(walletId: String, wallet: MnemonicWallet): PerpsAccount? {
         val chain = Chain.Ethereum.Mainnet
         try {
             val l1Address = PerpsAccountProofs.normalizeL1Address(wallet.getAddress(chain).display)
-            val deadline = nowSeconds() + BIND_DEADLINE_SECONDS
+            val deadline = timeProvider.currentTimeSeconds() + BIND_DEADLINE_SECONDS
             val signed = client.blockchain.getMediator(chain.network.type).sign.message?.sign(
                 chain = chain,
                 privateKey = wallet.getPrivateKey(chain),
@@ -281,7 +322,7 @@ class PerpsAccountService(
                 messageType = MessageType.TypedMessage,
             )?.unwrap() ?: throw IllegalStateException("perps: no message signer for ${chain.network.type}")
 
-            val proof = PerpsAccountProofs.bindProof(wallet.walletKeyPair(WalletKind.Multichain), walletId, l1Address)
+            val proof = PerpsAccountProofs.bindProof(wallet.walletKeyPair(), walletId, l1Address)
 
             val signature = PerpsAccountProofs.normalizeHex(signed, withPrefix = true)
             return when (val result = repository.bindAccount(walletId, deadline, signature, proof)) {
@@ -359,7 +400,7 @@ class PerpsAccountService(
     }
 
     private suspend fun issueRoToken(walletId: String): KResult<Unit, PerpsError>? {
-        val auth = perpetualRepository.authorization(walletId, nowSeconds() + RO_TOKEN_AUTH_SECONDS) ?: return null
+        val auth = perpetualRepository.authorization(walletId, timeProvider.currentTimeSeconds() + RO_TOKEN_AUTH_SECONDS) ?: return null
 
         return when (val result = repository.issueRoToken(walletId, auth)) {
             is KResult.Ok -> {
@@ -370,8 +411,6 @@ class PerpsAccountService(
             is KResult.Err -> KResult.Err(result.value)
         }
     }
-
-    private fun nowSeconds(): Long = System.currentTimeMillis() / 1_000
 
     private class PasscodeRequired : Exception()
 

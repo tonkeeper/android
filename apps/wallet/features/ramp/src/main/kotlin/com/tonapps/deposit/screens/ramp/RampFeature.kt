@@ -4,6 +4,7 @@ import com.tonapps.async.Async
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowWithdrawOption
@@ -92,6 +93,7 @@ class RampFeature(
                 events.depositFlow.depositStarted(
                     from = analyticsFrom,
                     walletMode = DepositFlowWalletMode.Single,
+                    depositScreen = DepositFlowDepositScreen.AddFunds,
                     availableOptions = options.toAnalyticsOptions { it.key },
                 )
             }

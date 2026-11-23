@@ -5,8 +5,12 @@ import com.tonapps.bus.core.contract.EventExecutor
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowBuyAsset
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFailureReason
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowNetwork
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowOutcome
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowProviderMode
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 
 /**
@@ -24,19 +28,22 @@ class DepositFlowImpl(
     /**
      * deposit_started
      *
-     * User entered the Add Funds screen
+     * User entered the Add Funds screen. With the native onramp (the multichain "Buy crypto" screen, behind the `android_moonpay_ramp_enabled` / `ios_moonpay_ramp_enabled` flags) a multichain wallet's buying opens "Buy crypto" directly and skips Add Funds; the event is then sent when "Buy crypto" opens, once per opening (not again on rotation or on the way back from its pickers), with `wallet_mode = multi` and `available_options = [buy_with_fiat]`. That includes the entries that come with an asset (for example the Buy button of a token's screen, a top up from a send, a withdrawal, a WalletConnect or TonConnect confirmation, staking or the migration), which sent no deposit_started before. On "Buy crypto" it is sent with `deposit_screen = buy_crypto`.
+
      */
     @AnyThread
     override fun depositStarted(
         from: DepositFlowFrom,
         walletMode: DepositFlowWalletMode,
+        depositScreen: DepositFlowDepositScreen?,
         availableOptions: String
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "wallet_mode" to walletMode.key,
             "available_options" to availableOptions
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
         trackEvent("deposit_started", props)
     }
 
@@ -69,14 +76,16 @@ class DepositFlowImpl(
         from: DepositFlowFrom,
         walletMode: DepositFlowWalletMode,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         network: DepositFlowNetwork
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "wallet_mode" to walletMode.key,
             "add_funds_option" to addFundsOption.key,
             "network" to network.key
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
         trackEvent("deposit_view_receive_tokens", props)
     }
 
@@ -93,19 +102,22 @@ class DepositFlowImpl(
     /**
      * deposit_continue_to_p2p_market
      *
-     * User was sent to the external Wallet P2P flow
+     * User was sent to the external Wallet P2P flow. `add_funds_option` is the option the user came through: P2P picked as a payment method of "Buy with fiat" or on "Buy crypto" is `buy_with_fiat` on iOS and Android. Android versions before TK-5448 sent `buy_with_p2p_market` from the Add Funds payment method list; web still sends it there.
+
      */
     @AnyThread
     override fun depositContinueToP2pMarket(
         from: DepositFlowFrom,
         walletMode: DepositFlowWalletMode,
-        addFundsOption: DepositFlowAddFundsOption
+        addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "wallet_mode" to walletMode.key,
             "add_funds_option" to addFundsOption.key
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
         trackEvent("deposit_continue_to_p2p_market", props)
     }
 
@@ -182,104 +194,117 @@ class DepositFlowImpl(
     /**
      * deposit_view_fiat_choose_asset
      *
-     * User sees the "Choose asset" screen listing assets available for purchase with fiat (TON, USDT TON, USDT TRC20, etc.)
+     * User sees the "Choose asset" screen listing assets available for purchase with fiat (TON, USDT TON, USDT TRC20, etc.). On "Buy crypto": the asset picker opened.
 
      */
     @AnyThread
     override fun depositViewFiatChooseAsset(
         from: DepositFlowFrom,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         availableOptions: String
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "add_funds_option" to addFundsOption.key,
             "available_options" to availableOptions
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
         trackEvent("deposit_view_fiat_choose_asset", props)
     }
 
     /**
      * deposit_click_fiat_asset
      *
-     * User selected an asset on the "Choose asset" screen
+     * User selected an asset on the "Choose asset" screen. On "Buy crypto": an asset picked in its asset picker.
+
      */
     @AnyThread
     override fun depositClickFiatAsset(
         from: DepositFlowFrom,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         buyAsset: String
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "add_funds_option" to addFundsOption.key,
             "buy_asset" to buyAsset
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
         trackEvent("deposit_click_fiat_asset", props)
     }
 
     /**
      * deposit_view_fiat_payment_method
      *
-     * User sees the "Payment method" screen listing fiat payment options (Apple Pay, Debit Card, PayPal, Revolut Pay, Venmo, Volt, P2P Market)
+     * User sees the "Payment method" screen listing fiat payment options (Apple Pay, Debit Card, PayPal, Revolut Pay, Venmo, Volt, P2P Market). On "Buy crypto": the payment method picker opened.
 
      */
     @AnyThread
     override fun depositViewFiatPaymentMethod(
         from: DepositFlowFrom,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         buyAsset: String,
         sellAsset: String,
         availableOptions: String
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "add_funds_option" to addFundsOption.key,
             "buy_asset" to buyAsset,
             "sell_asset" to sellAsset,
             "available_options" to availableOptions
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
         trackEvent("deposit_view_fiat_payment_method", props)
     }
 
     /**
      * deposit_click_fiat_payment_method
      *
-     * User selected a payment method on the "Payment method" screen
+     * User selected a payment method on the "Payment method" screen. On "Buy crypto": a method picked in its payment method picker, saved cards included.
+
      */
     @AnyThread
     override fun depositClickFiatPaymentMethod(
         from: DepositFlowFrom,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         buyAsset: String,
         sellAsset: String,
         paymentMethod: String
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "add_funds_option" to addFundsOption.key,
             "buy_asset" to buyAsset,
             "sell_asset" to sellAsset,
             "payment_method" to paymentMethod
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
         trackEvent("deposit_click_fiat_payment_method", props)
     }
 
     /**
      * deposit_view_ramp_insert_amount
      *
-     * User sees the amount entry screen for the onramp purchase
+     * User sees the amount entry screen for the onramp purchase. On "Buy crypto", where the amount sits on the screen itself: sent once per opening, as soon as the provider is known: with MoonPay when its payment methods load, with a merchant at its first offer; `provider_name` is the merchant or `MoonPay`.
+
      */
     @AnyThread
     override fun depositViewRampInsertAmount(
         from: DepositFlowFrom,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         buyAsset: String,
         sellAsset: String,
         paymentMethod: String,
-        providerName: String
+        providerName: String,
+        providerMode: DepositFlowProviderMode?
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "add_funds_option" to addFundsOption.key,
             "buy_asset" to buyAsset,
@@ -287,33 +312,38 @@ class DepositFlowImpl(
             "payment_method" to paymentMethod,
             "provider_name" to providerName
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
+        providerMode?.let { props["provider_mode"] = it.key }
         trackEvent("deposit_view_ramp_insert_amount", props)
     }
 
     /**
      * deposit_click_ramp_insert_amount_continue
      *
-     * User tapped "Continue" on the ramp insert amount screen
+     * User tapped "Continue" on the ramp insert amount screen, or on "Buy crypto". Sent on every tap the screen accepts, except on "Buy crypto" with P2P, which has no provider and sends deposit_continue_to_p2p_market only.
+
      */
     @AnyThread
     override fun depositClickRampInsertAmountContinue(
         from: DepositFlowFrom,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         buyAsset: String,
         sellAsset: String,
         paymentMethod: String,
         providerName: String,
-        amount: Double
+        providerMode: DepositFlowProviderMode?
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "add_funds_option" to addFundsOption.key,
             "buy_asset" to buyAsset,
             "sell_asset" to sellAsset,
             "payment_method" to paymentMethod,
-            "provider_name" to providerName,
-            "amount" to amount
+            "provider_name" to providerName
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
+        providerMode?.let { props["provider_mode"] = it.key }
         trackEvent("deposit_click_ramp_insert_amount_continue", props)
     }
 
@@ -330,8 +360,7 @@ class DepositFlowImpl(
         buyAsset: String,
         sellAsset: String,
         paymentMethod: String,
-        providerName: String,
-        amount: Double
+        providerName: String
     ) {
         val props = hashMapOf(
             "from" to from.key,
@@ -339,8 +368,7 @@ class DepositFlowImpl(
             "buy_asset" to buyAsset,
             "sell_asset" to sellAsset,
             "payment_method" to paymentMethod,
-            "provider_name" to providerName,
-            "amount" to amount
+            "provider_name" to providerName
         )
         trackEvent("deposit_view_ramp_alert", props)
     }
@@ -348,7 +376,7 @@ class DepositFlowImpl(
     /**
      * deposit_continue_to_ramp_provider
      *
-     * User is presented with the provider's onramp flow. tx_id is the transaction ID generated by Tonkeeper for this onramp session, used to join clickstream data with onramp API data.
+     * User is presented with the provider's onramp flow: the merchant's page opens, or on "Buy crypto" with MoonPay the payment starts. tx_id is the transaction ID generated by Tonkeeper for this onramp session, used to join clickstream data with onramp API data and to get the amount, which no event carries. Every "Continue" is a new session with a new tx_id.
 
      */
     @AnyThread
@@ -356,14 +384,15 @@ class DepositFlowImpl(
         from: DepositFlowFrom,
         walletMode: DepositFlowWalletMode,
         addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
         buyAsset: String,
         sellAsset: String,
         paymentMethod: String,
         providerName: String,
-        amount: Double,
+        providerMode: DepositFlowProviderMode?,
         txId: String
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "from" to from.key,
             "wallet_mode" to walletMode.key,
             "add_funds_option" to addFundsOption.key,
@@ -371,10 +400,49 @@ class DepositFlowImpl(
             "sell_asset" to sellAsset,
             "payment_method" to paymentMethod,
             "provider_name" to providerName,
-            "amount" to amount,
             "tx_id" to txId
         )
+        depositScreen?.let { props["deposit_screen"] = it.key }
+        providerMode?.let { props["provider_mode"] = it.key }
         trackEvent("deposit_continue_to_ramp_provider", props)
+    }
+
+    /**
+     * deposit_ramp_result
+     *
+     * How a native onramp payment ended, sent by "Buy crypto" with MoonPay once per session (tx_id), when its payment status sheet learns the outcome or is closed before. A merchant's page opens outside the app and reports no outcome, so merchants send no deposit_ramp_result.
+
+     */
+    @AnyThread
+    override fun depositRampResult(
+        from: DepositFlowFrom,
+        walletMode: DepositFlowWalletMode,
+        addFundsOption: DepositFlowAddFundsOption,
+        depositScreen: DepositFlowDepositScreen?,
+        buyAsset: String,
+        sellAsset: String,
+        paymentMethod: String,
+        providerName: String,
+        providerMode: DepositFlowProviderMode?,
+        txId: String,
+        outcome: DepositFlowOutcome,
+        failureReason: DepositFlowFailureReason?
+    ) {
+        val props = hashMapOf<String, Any>(
+            "from" to from.key,
+            "wallet_mode" to walletMode.key,
+            "add_funds_option" to addFundsOption.key,
+            "buy_asset" to buyAsset,
+            "sell_asset" to sellAsset,
+            "payment_method" to paymentMethod,
+            "provider_name" to providerName,
+            "tx_id" to txId,
+            "outcome" to outcome.key
+        )
+        depositScreen?.let { props["deposit_screen"] = it.key }
+        providerMode?.let { props["provider_mode"] = it.key }
+        failureReason?.let { props["failure_reason"] = it.key }
+        trackEvent("deposit_ramp_result", props)
     }
 
     /**

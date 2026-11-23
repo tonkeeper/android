@@ -16,14 +16,14 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.chainkit.sdk)
     implementation(libs.koin.core)
+    implementation(libs.androidx.lifecycleProcess)
     implementation("com.trustwallet:wallet-core-kotlin:4.6.0")
 
-    implementation("com.reown:android-core:1.6.12")
-    implementation("com.reown:walletkit:1.6.12")
+    implementation("com.reown:android-core:1.6.17")
+    implementation("com.reown:walletkit:1.9.0")
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.org.json)
 }
 
 tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {

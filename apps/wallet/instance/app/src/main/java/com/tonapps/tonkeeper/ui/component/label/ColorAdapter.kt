@@ -8,6 +8,7 @@ import com.tonapps.blockchain.model.legacy.WalletColor
 import uikit.extensions.inflate
 import uikit.widget.ColorView
 import uikit.extensions.setMoonOnClickListener
+import com.tonapps.core.extensions.walletColor
 
 class ColorAdapter(
     private val listener: (Int) -> Unit
@@ -34,7 +35,7 @@ class ColorAdapter(
                 activeColor = color
                 listener(color)
             }
-            colorView.color = color
+            colorView.color = itemView.context.walletColor(color)
             colorView.active = activeColor == color
         }
     }

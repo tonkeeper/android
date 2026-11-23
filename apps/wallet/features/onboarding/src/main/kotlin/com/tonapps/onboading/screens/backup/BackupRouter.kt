@@ -1,5 +1,6 @@
 package com.tonapps.onboading.screens.backup
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,6 +53,7 @@ fun BackupRouter(
             }
 
             is BackupRoutes.Check -> NavEntry(key) {
+                BackHandler { backStack.safeRemoveLastOrNull(key) }
                 BackupCheckScreen(
                     data = BackupCheckData(words),
                     onDone = {

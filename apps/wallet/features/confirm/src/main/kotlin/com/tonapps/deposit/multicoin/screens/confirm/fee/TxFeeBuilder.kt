@@ -8,10 +8,13 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.TransferEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.TonSendMode
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.tron.TronTransfer
+import com.tonapps.chainkit.chain.ethereum.utils.Hermes
+import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
@@ -19,10 +22,14 @@ import com.tonapps.chainkit.core.chain.model.account.TokenType
 import com.tonapps.chainkit.core.chain.model.num.FiatRate
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
+import com.tonapps.chainkit.core.op.Payload
+import com.tonapps.chainkit.core.op.PayloadMeta
 import com.tonapps.core.components.tokenAssetId
 import com.tonapps.icu.Coins
 import com.tonapps.log.L
+import com.tonapps.deposit.multicoin.screens.confirm.base.operation.coinValue
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.api.entity.EmulateWithBatteryResult
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
@@ -31,7 +38,6 @@ import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.account.tonCoinAssetId
-import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
 import com.tonapps.wallet.data.token.TokenRepository
@@ -54,7 +60,7 @@ class TxFeeBuilder(
     private val settingsRepository: SettingsRepository,
     private val tokenRepository: TokenRepository,
     private val sender: GaslessSender,
-    private val evmGasless: EvmGasless,
+    private val gaslessRelayer: GaslessRelayer,
 ) {
 
     suspend fun build(
@@ -78,15 +84,16 @@ class TxFeeBuilder(
         }
         val wallet = mcWallet(walletId) ?: return@withContext native
 
-        if (asset.chain.isEvm) {
-            if (!settingsRepository.batteryIsEnabledTx(wallet.accountId, BatteryTransaction.JETTON)) {
-                return@withContext native
-            }
-            return@withContext buildEvm(
+        if (asset.chain.isEvm || asset.chain is Chain.Solana) {
+            return@withContext buildRelayed(
                 wallet = wallet,
                 account = account,
                 energy = energy,
-                call = EvmGasless.transfer(account, to, amount),
+                call = if (asset.chain is Chain.Solana) {
+                    GaslessRelayer.solanaTransfer(account, to, amount, comment)
+                } else {
+                    GaslessRelayer.transfer(account, to, amount)
+                },
                 amount = amount,
                 estimated = estimated,
                 nativeAmount = if (shrinkToFit) {
@@ -96,6 +103,7 @@ class TxFeeBuilder(
                 },
             )
         }
+
         if (asset !is Asset.Token) {
             return@withContext native
         }
@@ -115,16 +123,20 @@ class TxFeeBuilder(
                 )
             }
 
-            TokenType.Jetton -> buildTonJetton(
-                wallet = wallet,
-                master = asset.contract.display,
-                account = account,
-                energy = energy,
-                amount = amount,
-                to = to,
-                comment = comment,
-                estimated = estimated,
-            )
+            TokenType.Jetton -> if (wallet.isMultichainLedger) {
+                native
+            } else {
+                buildTonJetton(
+                    wallet = wallet,
+                    master = asset.contract.display,
+                    account = account,
+                    energy = energy,
+                    amount = amount,
+                    to = to,
+                    comment = comment,
+                    estimated = estimated,
+                )
+            }
 
             else -> native
         }
@@ -139,13 +151,18 @@ class TxFeeBuilder(
         estimated: Fee?,
         attachedEnergy: BigInteger,
         shrinkToFit: Boolean,
+        // What the swap takes of the account's asset, where its messages do not say: null reads it off them.
+        sold: BigInteger? = null,
+        // Whether a relayer may carry the approvals with the swap, as one batch. False where they are
+        // sent ahead of the swap on their own, which a batch would then repeat.
+        relayApprovals: Boolean = false,
     ): TxFeeState = withContext(Async.Io) {
         val native = TxFeeState(energy = energy, estimated = estimated, attachedEnergy = attachedEnergy)
         val transaction = transactions.first()
         val asset = account.asset.value
         val chain = asset.chain
 
-        if (batteryDisabled() || (!chain.isTvm && chain !is Chain.Tron && !chain.isEvm)) {
+        if (batteryDisabled() || (!chain.isTvm && chain !is Chain.Tron && !chain.isEvm && chain !is Chain.Solana)) {
             return@withContext native
         }
 
@@ -158,11 +175,17 @@ class TxFeeBuilder(
             return@withContext native
         }
 
-        if (!settingsRepository.batteryIsEnabledTx(wallet.accountId, BatteryTransaction.SWAP)) {
+        if (wallet.isMultichainLedger && chain.isTvm) {
             return@withContext native
         }
 
         when {
+            // The battery is charged for the TON that leaves the wallet, and a swap that sells the TON coin
+            // sends what it sells: it would be priced at the amount sold, not at the gas. A wallet that
+            // sells the coin holds it for the fee, so the chain's own fee stands, as on iOS. For a `/v2`
+            // route as for a `/v3` one: both are priced here.
+            chain.isTvm && asset is Asset.Coin -> native
+
             chain.isTvm && asset is Asset.Token && transactions.size == 1 && transaction.data.isNullOrBlank() -> buildTonJetton(
                 wallet = wallet,
                 master = asset.contract.display,
@@ -175,17 +198,321 @@ class TxFeeBuilder(
                 swap = true,
             )
 
-            chain.isTvm -> buildTonSwap(wallet, energy, transactions, estimated, attachedEnergy)
+            chain.isTvm -> buildTonSwap(
+                wallet = wallet,
+                energy = energy,
+                messages = transactions.map { transaction ->
+                    SwapMessagePayload(
+                        to = transaction.to.display,
+                        amount = transaction.amount,
+                        data = transaction.data,
+                        stateInit = transaction.initData,
+                    )
+                },
+                estimated = estimated,
+                attachedEnergy = attachedEnergy,
+            )
+
             chain is Chain.Tron -> buildTronSwap(wallet, account, energy, transaction, estimated)
-            chain.isEvm -> buildEvmSwap(wallet, account, energy, transaction, approvals, estimated, shrinkToFit)
+            chain.isEvm || (chain is Chain.Solana && transactions.size == 1) ->
+                buildRelayedSwap(wallet, account, energy, transaction, approvals, estimated, shrinkToFit, sold, relayApprovals)
             else -> native
+        }
+    }
+
+    /**
+     * The ways an operation, a `/v3` swap or a send, may be paid on a chain the gasless relayer carries.
+     * The operation's [payloads] go to the relayer as they state themselves, the approve ahead of an EVM
+     * swap in one batch with it: nothing is made of them that the relayer does not ask for. [sold] is what
+     * the operation takes of the account's asset; with [shrinkToFit] it is prepared again to what a fee in
+     * that asset leaves. [purpose] is what the relayer is told the operation is, and holds a send to.
+     */
+    suspend fun buildSwapOperation(
+        account: AccountWithDetails,
+        energy: AccountWithDetails,
+        walletId: String,
+        payloads: List<Payload>,
+        sold: BigInteger,
+        shrinkToFit: Boolean,
+        estimated: Fee?,
+        purpose: GaslessRelayer.Purpose = GaslessRelayer.Purpose.Swap,
+    ): TxFeeState = withContext(Async.Io) {
+        val native = TxFeeState(energy = energy, estimated = estimated)
+        val chain = account.asset.value.chain
+        val swap = payloads.lastOrNull()?.meta ?: return@withContext native
+
+        if (batteryDisabled() || chain.network.mode != Network.Mode.Mainnet || !relayerCarries(chain)) {
+            return@withContext native
+        }
+
+        // Nothing is built for a wallet the relayer is not asked to serve.
+        val wallet = mcWallet(walletId) ?: return@withContext native
+        if (wallet.isMultichainLedger || api.getConfig(wallet.network).batterySendDisabled) {
+            return@withContext native
+        }
+
+        val sale = Sale(sold, shrinkToFit)
+        when (swap) {
+            is PayloadMeta.Evm.Main -> buildEvmSwap(wallet, account, energy, payloads, sale, estimated, purpose)
+            is PayloadMeta.Solana if payloads.size == 1 -> buildSolanaSwap(wallet, account, energy, swap, sale, estimated, purpose)
+            is PayloadMeta.Tron if payloads.size == 1 -> buildTronCall(wallet, account, energy, swap, sale, estimated, purpose)
+            is PayloadMeta.Ton -> {
+                // A route split into parts comes as a batch: each part goes to the relayer as its own message.
+                val messages = payloads.flatMap { payload ->
+                    when (val meta = payload.meta) {
+                        is PayloadMeta.Ton.Main -> listOf(meta)
+                        is PayloadMeta.Ton.Batch -> meta.calls.ifEmpty { throw IllegalStateException("A TON batch with no message") }
+                            .map { call -> call as? PayloadMeta.Ton.Main ?: return@withContext native }
+                        else -> return@withContext native
+                    }
+                }
+                buildTonMessages(wallet, account, energy, messages, sold, estimated, purpose)
+            }
+            else -> native
+        }
+    }
+
+    /**
+     * A TON swap is its messages, one or the parts of a route split for a better price, handed to the
+     * relayer as the swap states them: the relayer delivers each itself. Selling a jetton, the TON they
+     * carry is the relayer's to attach; selling TON, it is the sale, which the account holds.
+     */
+    private suspend fun buildTonMessages(
+        wallet: WalletEntity,
+        account: AccountWithDetails,
+        energy: AccountWithDetails,
+        messages: List<PayloadMeta.Ton.Main>,
+        sold: BigInteger,
+        estimated: Fee?,
+        purpose: GaslessRelayer.Purpose,
+    ): TxFeeState {
+        val attachedEnergy = if (account.asset.value is Asset.Token) {
+            messages.fold(BigInteger.ZERO) { sum, message -> sum + message.coinValue() }
+        } else {
+            BigInteger.ZERO
+        }
+        val native = TxFeeState(energy = energy, estimated = estimated, attachedEnergy = attachedEnergy)
+
+        // A jetton deposit's transfer is chainkit's to make (tonkeeper/chain-kit#89): its answer is not
+        // signed here, so no relayer is offered for it.
+        if (messages.any { it.token != null }) {
+            return native
+        }
+
+        // Every part is held to the sale as a whole.
+        val calls = messages.map { message -> GaslessRelayer.tonSwap(account, message, sold, purpose) ?: return native }
+        return buildRelayed(
+            wallet = wallet,
+            account = account,
+            energy = energy,
+            call = calls.first(),
+            amount = sold,
+            estimated = estimated,
+            relayedCalls = calls,
+            // The relayer prices one payload at a time: the parts of a route do not depend on one another.
+            estimatedCalls = calls,
+            attachedEnergy = attachedEnergy,
+        )
+    }
+
+    /**
+     * An EVM swap is its call, with the approve it spends the allowance of ahead of it. The relayer's
+     * estimate prices a single call, and a swap alone reverts without its approve: the two go to the
+     * relayer as one batch, or the route stays with the wallet paying.
+     */
+    private suspend fun buildEvmSwap(
+        wallet: WalletEntity,
+        account: AccountWithDetails,
+        energy: AccountWithDetails,
+        payloads: List<Payload>,
+        sale: Sale,
+        estimated: Fee?,
+        purpose: GaslessRelayer.Purpose,
+    ): TxFeeState {
+        val native = TxFeeState(energy = energy, estimated = estimated)
+
+        val calls = payloads.map { payload ->
+            val meta = payload.meta as? PayloadMeta.Evm.Main ?: return native
+            GaslessRelayer.evmMain(account, meta, purpose) ?: return native
+        }
+        val swap = calls.last()
+        val batch = if (calls.size > 1) {
+            relayedBatch(account, calls) ?: return native
+        } else {
+            null
+        }
+
+        // The coin sold goes along with the call as its value; the tokens sold are inside the calldata,
+        // and only what the swap is told to sell counts them.
+        val spent = if (account.asset.value is Asset.Coin) {
+            maxOf(swap.value, sale.fitted)
+        } else {
+            sale.fitted
+        }
+
+        return buildRelayed(
+            wallet = wallet,
+            account = account,
+            energy = energy,
+            call = batch?.whole ?: swap,
+            amount = spent,
+            nativeAmount = sale.native(spent),
+            estimated = estimated,
+            relayedCalls = batch?.calls,
+        )
+    }
+
+    /**
+     * A Solana swap is a deposit the relayer makes the transfer of, memo and all, or the provider's own
+     * transaction, which names no amount: what the swap is told to sell stands for what it takes.
+     */
+    private suspend fun buildSolanaSwap(
+        wallet: WalletEntity,
+        account: AccountWithDetails,
+        energy: AccountWithDetails,
+        meta: PayloadMeta.Solana,
+        sale: Sale,
+        estimated: Fee?,
+        purpose: GaslessRelayer.Purpose,
+    ): TxFeeState {
+        val call = GaslessRelayer.solanaSwap(account, meta, sale.sold, purpose)
+            ?: return TxFeeState(energy = energy, estimated = estimated)
+
+        val deposit = meta as? PayloadMeta.Solana.Main
+        val spent = when {
+            account.asset.value is Asset.Coin -> maxOf(deposit?.value ?: BigInteger.ZERO, sale.fitted)
+            deposit != null -> deposit.value
+            else -> sale.fitted
+        }
+
+        return buildRelayed(
+            wallet = wallet,
+            account = account,
+            energy = energy,
+            call = call,
+            amount = spent,
+            nativeAmount = sale.native(spent),
+            estimated = estimated,
+        )
+    }
+
+    /**
+     * A TRON payload goes to the relayer as the swap states it: a route's own transaction, or a `main` (a
+     * call with its calldata, or TRX, with its memo) the relayer builds the transaction of. Whatever the
+     * relayer refuses is paid in TRX alone.
+     */
+    private suspend fun buildTronCall(
+        wallet: WalletEntity,
+        account: AccountWithDetails,
+        energy: AccountWithDetails,
+        meta: PayloadMeta.Tron,
+        sale: Sale,
+        estimated: Fee?,
+        purpose: GaslessRelayer.Purpose,
+    ): TxFeeState {
+        val call = tryOrNull { tronCall(account, meta, purpose) }
+            ?: return TxFeeState(energy = energy, estimated = estimated)
+
+        return buildRelayed(
+            wallet = wallet,
+            account = account,
+            energy = energy,
+            call = call,
+            amount = sale.sold,
+            nativeAmount = sale.native(sale.sold),
+            estimated = estimated,
+            // The transaction is signed as it was built: a fee in a token would be another one beside it.
+            batteryOnly = true,
+        )
+    }
+
+    private fun tronCall(account: AccountWithDetails, meta: PayloadMeta.Tron, purpose: GaslessRelayer.Purpose): GaslessRelayer.Call? {
+        return when (meta) {
+            is PayloadMeta.Tron.Prebuild -> GaslessRelayer.tronCall(account, meta.data, purpose)
+
+            is PayloadMeta.Tron.Main -> GaslessRelayer.tronMain(account, meta, purpose)
+
+            is PayloadMeta.Tron.PlainMessage -> null
+        }
+    }
+
+    suspend fun buildOperation(
+        account: AccountWithDetails,
+        energy: AccountWithDetails,
+        walletId: String,
+        payload: Payload,
+        spentAmount: BigInteger,
+        estimated: Fee?,
+    ): TxFeeState = withContext(Async.Io) {
+        val native = TxFeeState(energy = energy, estimated = estimated)
+        val chain = account.asset.value.chain
+
+        if (batteryDisabled() || chain.network.mode != Network.Mode.Mainnet || payload.type != Payload.Type.Main) {
+            return@withContext native
+        }
+
+        val wallet = mcWallet(walletId) ?: return@withContext native
+        if (api.getConfig(wallet.network).batterySendDisabled) {
+            return@withContext native
+        }
+
+        when (val meta = payload.meta) {
+            is PayloadMeta.Ton.Main -> {
+                val carriesBalance = (meta.mode ?: 0) and (TonSendMode.CARRY_ALL_REMAINING_BALANCE.value or TonSendMode.CARRY_ALL_REMAINING_INCOMING_VALUE.value) != 0
+                if (carriesBalance || meta.stateInit != null || (meta.body == null && !meta.comment.isNullOrBlank())) {
+                    return@withContext native
+                }
+                buildTonSwap(
+                    wallet = wallet,
+                    energy = energy,
+                    messages = listOf(
+                        SwapMessagePayload(
+                            to = meta.to.display,
+                            amount = meta.value,
+                            data = meta.body,
+                            stateInit = null,
+                            bounce = meta.bounce,
+                        )
+                    ),
+                    estimated = estimated,
+                    attachedEnergy = meta.value,
+                )
+            }
+
+            is PayloadMeta.Evm.Main -> {
+                val call = GaslessRelayer.call(account, meta.to.display, meta.value, meta.data)
+                    ?: return@withContext native
+                val relayedCalls = relayedCalls(account, meta) ?: return@withContext native
+                buildRelayed(
+                    wallet = wallet,
+                    account = account,
+                    energy = energy,
+                    call = call,
+                    relayedCalls = relayedCalls,
+                    amount = spentAmount,
+                    estimated = estimated,
+                )
+            }
+
+            else -> native
+        }
+    }
+
+    private fun relayedCalls(account: AccountWithDetails, meta: PayloadMeta.Evm.Main): List<GaslessRelayer.Call>? {
+        val sender = account.data.displayAddress
+        if (!HermesSelfCall.isSelfCall(sender, meta.to.display)) {
+            return GaslessRelayer.call(account, meta.to.display, meta.value, meta.data)?.let(::listOf)
+        }
+        val calls = HermesSelfCall.unbatch(sender, meta.value, meta.data, account.asset.value.chain) ?: return null
+        return calls.map { call ->
+            GaslessRelayer.call(account, call.target.display, call.value, call.data) ?: return null
         }
     }
 
     private suspend fun buildTonSwap(
         wallet: WalletEntity,
         energy: AccountWithDetails,
-        transactions: List<Transaction.Swap>,
+        messages: List<SwapMessagePayload>,
         estimated: Fee?,
         attachedEnergy: BigInteger,
     ): TxFeeState {
@@ -193,15 +520,7 @@ class TxFeeBuilder(
 
         val batteryConfig = batteryRepository.getConfig(wallet.network)
         val excessesAddress = batteryConfig.excessesAddress ?: return native
-        val payloads = transactions.map { transaction ->
-            SwapMessagePayload(
-                to = transaction.to.display,
-                amount = transaction.amount,
-                data = transaction.data,
-                stateInit = transaction.initData,
-                excessesAddress = excessesAddress,
-            )
-        }
+        val payloads = messages.map { it.copy(excessesAddress = excessesAddress) }
 
         val emulated = tryOrNull {
             val boc = sender.swapMessage(wallet, payloads)
@@ -212,8 +531,12 @@ class TxFeeBuilder(
         val extra = emulated.consequences.event.extra
         val chain = energy.asset.value.chain
         val charges = BatteryMapper.calculateChargesAmount(Coins.of(abs(extra)).value, batteryConfig.chargeCost)
+        val reserve = emulated.excess
+            ?.let { BatteryMapper.calculateChargesAmount(Coins.of(it).value, batteryConfig.chargeCost) }
+            ?.takeIf { it in 1 until charges }
+            ?.let { BigInteger.fromInt(it) }
         val batteryOption = (
-            batteryOption(wallet, chain, charges, batteryConfig.chargeCost)
+            batteryOption(wallet, chain, charges, batteryConfig.chargeCost)?.copy(reserve = reserve)
                 ?: unpricedBattery(wallet, chain, batteryConfig.chargeCost)
             )?.takeIfAllowedBy(emulated) ?: return native
 
@@ -235,6 +558,7 @@ class TxFeeBuilder(
                     option = option,
                     payloads = payloads,
                 )
+                null
             },
         )
     }
@@ -250,6 +574,11 @@ class TxFeeBuilder(
         val asset = account.asset.value
 
         if (!transaction.data.isNullOrBlank()) {
+            return native
+        }
+
+        // The transfer the battery relays is made of the recipient and the amount alone: a memo is not in it.
+        if (!transaction.memo.isNullOrBlank()) {
             return native
         }
 
@@ -400,6 +729,7 @@ class TxFeeBuilder(
 
         val batteryConfig = batteryRepository.getConfig(wallet.network)
         val excessesAddress = batteryConfig.excessesAddress ?: return native
+        val transferCost = batteryConfig.transferCost(master)
 
         val balance = jettonBalance(wallet, master) ?: return native
         // Minting-on-demand and custom-payload jettons need the payload plumbing the legacy send has;
@@ -412,22 +742,13 @@ class TxFeeBuilder(
             sender.jettonTransfer(wallet, balance, amount, to, comment)
         } ?: return native
 
-        val batteryTx = if (swap) {
-            BatteryTransaction.SWAP
-        } else {
-            BatteryTransaction.JETTON
-        }
-        val emulated = if (settingsRepository.batteryIsEnabledTx(wallet.accountId, batteryTx)) {
-            tryOrNull {
-                val boc = transfer.signForEstimation(
-                    internalMessage = true,
-                    excessesAddress = excessesAddress,
-                    jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT,
-                )
-                emulateBattery(wallet, boc)
-            }
-        } else {
-            null
+        val emulated = tryOrNull {
+            val boc = transfer.signForEstimation(
+                internalMessage = true,
+                excessesAddress = excessesAddress,
+                jettonTransferAmount = transferCost,
+            )
+            emulateBattery(wallet, boc)
         }
 
         val extra = emulated?.consequences?.event?.extra ?: 0L
@@ -456,6 +777,7 @@ class TxFeeBuilder(
                 excessesAddress = excessesAddress,
                 amount = amount,
                 rechargeMethods = batteryConfig.rechargeMethods,
+                transferCost = transferCost,
             )
         } else {
             null
@@ -492,11 +814,12 @@ class TxFeeBuilder(
                     to = to,
                     comment = comment,
                 )
+                null
             },
         )
     }
 
-    private suspend fun buildEvmSwap(
+    private suspend fun buildRelayedSwap(
         wallet: WalletEntity,
         account: AccountWithDetails,
         energy: AccountWithDetails,
@@ -504,23 +827,32 @@ class TxFeeBuilder(
         approvals: List<Transaction>,
         estimated: Fee?,
         shrinkToFit: Boolean,
+        sold: BigInteger?,
+        relayApprovals: Boolean,
     ): TxFeeState {
         // The relayer's estimate prices a single call, and a swap alone reverts without the approve
-        // sent ahead of it: such a route stays with the wallet paying.
-        if (approvals.isNotEmpty()) {
-            return TxFeeState(energy = energy, estimated = estimated)
+        // ahead of it: the two go to the relayer as one batch, or the route stays with the wallet paying.
+        val swap = GaslessRelayer.swap(account, transaction)
+        val batch = when {
+            approvals.isEmpty() || swap == null -> null
+            relayApprovals -> relayedBatch(account, approvals, swap)
+                ?: return TxFeeState(energy = energy, estimated = estimated)
+            else -> return TxFeeState(energy = energy, estimated = estimated)
         }
-        // With calldata the amount is the coin sent along with the call; the tokens sold are inside it.
-        val spent = if (account.asset.value is Asset.Coin || transaction.data.isNullOrBlank()) {
-            transaction.amount
-        } else {
-            BigInteger.ZERO
+
+        // With calldata the amount is the coin sent along with the call; the tokens sold are inside it,
+        // and only [sold] counts them. A prebuilt transaction carries no amount at all.
+        val spent = when {
+            account.asset.value is Asset.Coin -> maxOf(transaction.amount, sold ?: BigInteger.ZERO)
+            transaction.data.isNullOrBlank() -> transaction.amount
+            else -> sold ?: BigInteger.ZERO
         }
-        return buildEvm(
+
+        return buildRelayed(
             wallet = wallet,
             account = account,
             energy = energy,
-            call = EvmGasless.swap(account, transaction),
+            call = batch?.whole ?: swap,
             amount = spent,
             nativeAmount = if (shrinkToFit) {
                 BigInteger.ZERO
@@ -528,22 +860,72 @@ class TxFeeBuilder(
                 spent
             },
             estimated = estimated,
+            relayedCalls = batch?.calls,
         )
     }
 
+    // Calls the relayer carries together: priced as [whole], the one call of the sender's to itself
+    // that runs them, and emulated and sent as [calls].
+    private class RelayedBatch(
+        val whole: GaslessRelayer.Call,
+        val calls: List<GaslessRelayer.Call>,
+    )
+
+    /**
+     * The [approvals] and the [swap] that spends what they allow, as one batch: the swap then finds its
+     * allowance granted in the same transaction. Null when one of them is not a call the relayer carries.
+     */
+    private fun relayedBatch(
+        account: AccountWithDetails,
+        approvals: List<Transaction>,
+        swap: GaslessRelayer.Call,
+    ): RelayedBatch? {
+        val chain = account.asset.value.chain
+        if (!chain.isEvm) {
+            return null
+        }
+
+        val approves = approvals.map { approval ->
+            val call = approval as? Transaction.Call ?: return null
+            GaslessRelayer.call(account, call.contract.display, call.amount, call.data) ?: return null
+        }
+        return relayedBatch(account, approves + swap)
+    }
+
+    /** [calls] in the order they run, as the one call of the sender's to itself that runs them all. */
+    private fun relayedBatch(account: AccountWithDetails, calls: List<GaslessRelayer.Call>): RelayedBatch? {
+        val chain = account.asset.value.chain
+        if (!chain.isEvm) {
+            return null
+        }
+
+        val data = HermesSelfCall.batch(
+            calls.map { call -> Hermes.Call(Address.force(call.to, chain), call.value, call.data ?: EMPTY_CALLDATA) }
+        )
+        val whole = GaslessRelayer.call(account, account.data.displayAddress, BigInteger.ZERO, data) ?: return null
+        return RelayedBatch(whole, calls)
+    }
+
     /** [amount] is what [call] takes out of [account] in its own asset. */
-    private suspend fun buildEvm(
+    private suspend fun buildRelayed(
         wallet: WalletEntity,
         account: AccountWithDetails,
         energy: AccountWithDetails,
-        call: EvmGasless.Call?,
+        call: GaslessRelayer.Call?,
         amount: BigInteger,
         estimated: Fee?,
         nativeAmount: BigInteger = amount,
+        relayedCalls: List<GaslessRelayer.Call>? = null,
+        // Only the battery is listed of what the relayer takes its fee in.
+        batteryOnly: Boolean = false,
+        // The coin the call carries, which a relayer attaches for the wallet.
+        attachedEnergy: BigInteger = BigInteger.ZERO,
+        // Calls priced one by one and summed, where the relayer cannot price them as one.
+        estimatedCalls: List<GaslessRelayer.Call>? = null,
     ): TxFeeState {
-        val native = TxFeeState(energy = energy, estimated = estimated)
+        val native = TxFeeState(energy = energy, estimated = estimated, attachedEnergy = attachedEnergy)
 
-        if (api.getConfig(wallet.network).batterySendDisabled) {
+        if (wallet.isMultichainLedger || api.getConfig(wallet.network).batterySendDisabled) {
             return native
         }
         call ?: return native
@@ -555,12 +937,14 @@ class TxFeeBuilder(
         if (!relayerCarries(account.asset.value.chain)) {
             return native
         }
-        val estimations = tryOrNull { evmGasless.estimate(auth, call) } ?: return native
+        val estimations = tryOrNull { estimateAll(gaslessRelayer, auth, estimatedCalls ?: listOf(call)) }
+            ?.filter { !batteryOnly || it.assetId == Asset.Battery.ID }
+            ?: return native
 
         val assetIds = mutableMapOf<String, String>()
         val relayed = estimations.mapNotNull { estimation ->
-            evmOption(wallet, account, energy, estimation)
-                ?.let { it.copy(available = estimation.available && (it.isBattery || evmCanPay(it, account, amount))) }
+            relayedOption(wallet, account, energy, estimation)
+                ?.let { it.copy(available = estimation.available && (it.isBattery || relayedCanPay(it, account, amount))) }
                 ?.also { assetIds[it.id] = estimation.assetId }
         }
         if (relayed.isEmpty()) {
@@ -569,22 +953,27 @@ class TxFeeBuilder(
 
         val nativeOption = estimated
             ?.let { TxFee(account = FeeAccount.Chain(energy), fee = it) }
-            ?.let { it.copy(available = evmCanPay(it, account, nativeAmount)) }
+            ?.let { option ->
+                // Paid by the wallet, the coin the call carries comes out of the same balance as the fee.
+                val carried = TxFeeLogic.requiredEnergy(option.fee, attachedEnergy) <= energy.unitBalance.value
+                option.copy(available = carried && relayedCanPay(option, account, nativeAmount))
+            }
 
         return TxFeeState(
             energy = energy,
             estimated = estimated,
+            attachedEnergy = attachedEnergy,
             options = TxFeeLogic.prioritize(
                 options = relayed + listOfNotNull(nativeOption),
                 sentAssetId = account.asset.id,
                 preferred = settingsRepository.getPreferredFeeMethod(wallet.id),
             ),
             quote = RelayerQuote { state, option ->
-                quoteEvm(
+                quoteRelayed(
                     wallet = wallet,
                     account = account,
                     amount = amount,
-                    call = call,
+                    calls = relayedCalls ?: listOf(call),
                     assetId = assetIds[option.id],
                     state = state,
                     option = option,
@@ -593,11 +982,11 @@ class TxFeeBuilder(
         )
     }
 
-    private suspend fun evmOption(
+    private suspend fun relayedOption(
         wallet: WalletEntity,
         account: AccountWithDetails,
         energy: AccountWithDetails,
-        estimation: EvmGasless.Estimation,
+        estimation: GaslessRelayer.Estimation,
     ): TxFee? {
         if (estimation.assetId == Asset.Battery.ID) {
             return batteryOption(
@@ -621,47 +1010,25 @@ class TxFeeBuilder(
         )
     }
 
-    // The relayer may label a token with another type than the wallet does (BSC: erc20, the wallet
-    // bep20). A token is its contract on its chain, so its id is rebuilt the wallet's way.
-    private fun walletAssetId(relayerAssetId: String, chain: Chain): String {
-        val parts = relayerAssetId.split('/')
-        if (parts.size != TOKEN_ASSET_ID_PARTS ||
-            parts[0] != chain.network.type.id ||
-            parts[1] != chain.network.mode.id
-        ) {
-            return relayerAssetId
-        }
-        return chain.tokenAssetId(parts[3])
-    }
-
-    // A fee in the asset being sent has to fit next to the amount, not just under the balance.
-    private fun evmCanPay(option: TxFee, account: AccountWithDetails, amount: BigInteger): Boolean {
-        val balance = option.account.balance ?: return false
-        val payer = (option.account as? FeeAccount.Chain)?.value
-        val spent = if (payer != null && payer.asset.id.equals(account.asset.id, ignoreCase = true)) {
-            amount
-        } else {
-            BigInteger.ZERO
-        }
-        return option.fee.amount + spent <= balance
-    }
-
-    private suspend fun quoteEvm(
+    private suspend fun quoteRelayed(
         wallet: WalletEntity,
         account: AccountWithDetails,
         amount: BigInteger,
-        call: EvmGasless.Call,
+        calls: List<GaslessRelayer.Call>,
         assetId: String?,
         state: TxFeeState,
         option: TxFee,
     ): TxFeeState? = withContext(Async.Io) {
         assetId ?: return@withContext null
+        // A fee in a TON jetton goes out of the account's own wallet of it.
+        val feeWallet = TON_JETTON.matchEntire(assetId)?.groupValues?.get(1)
+            ?.let { master -> tryOrNull { jettonBalance(wallet, master) }?.walletAddress }
         val emulation = tryOrNull {
-            evmGasless.emulate(unifiedAccountRepository.getAuthBy(wallet.id), call, assetId)
+            gaslessRelayer.emulate(unifiedAccountRepository.getAuthBy(wallet.id), calls, assetId, feeWallet)
         } ?: return@withContext null
 
         val quoted = option.copy(fee = Fee.Value(option.fee.asset, emulation.fee))
-        if (!quoted.isBattery && !evmCanPay(quoted, account, amount)) {
+        if (!quoted.isBattery && !relayedCanPay(quoted, account, amount)) {
             return@withContext null
         }
 
@@ -677,15 +1044,17 @@ class TxFeeBuilder(
                 if (selected.id != quoted.id) {
                     throw IllegalStateException("${selected.id} was not emulated")
                 }
-                sender.sendEvm(
+                sender.sendOperation(
                     wallet = wallet,
                     account = account.data.chainAccount,
                     signer = signer,
                     option = selected,
                     emulation = emulation,
+                    calls = calls,
                 )
             },
             quotedId = quoted.id,
+            relayedOperation = emulation.intended,
         )
     }
 
@@ -702,6 +1071,7 @@ class TxFeeBuilder(
         excessesAddress: AddrStd,
         amount: BigInteger,
         rechargeMethods: List<RechargeMethodEntity>,
+        transferCost: Coins,
     ): TxFee? {
         if (!wallet.isSupportedFeature(WalletFeature.GASLESS)) {
             return null
@@ -729,7 +1099,7 @@ class TxFeeBuilder(
                         batteryAddress = excessesAddress,
                     )
                 ),
-                jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT,
+                jettonTransferAmount = transferCost,
             )
             api.estimateGaslessCost(
                 auth = auth,
@@ -844,16 +1214,6 @@ class TxFeeBuilder(
         )
     }
 
-    private fun nativeOption(
-        energy: AccountWithDetails,
-        fee: Fee?,
-        attachedEnergy: BigInteger = BigInteger.ZERO,
-    ): TxFee? {
-        fee ?: return null
-        val option = TxFee(account = FeeAccount.Chain(energy), fee = fee)
-        return option.takeIf { TxFeeLogic.requiredEnergy(fee, attachedEnergy) <= energy.unitBalance.value }
-    }
-
     private suspend fun jettonBalance(wallet: WalletEntity, master: String): BalanceEntity? =
         withContext(Async.Io) {
             tokenRepository.getJettonBalance(
@@ -864,7 +1224,7 @@ class TxFeeBuilder(
         }
 
     private suspend fun relayerCarries(chain: Chain): Boolean {
-        val chainId = EvmGasless.chainId(chain) ?: return false
+        val chainId = GaslessRelayer.chainId(chain) ?: return false
         return chainId in batteryRepository.getGaslessChains(TonNetwork.MAINNET)
     }
 
@@ -891,4 +1251,91 @@ class TxFeeBuilder(
 // chain/network/type/contract
 private const val TOKEN_ASSET_ID_PARTS = 4
 
+// `ton/mainnet/jetton/<master>`: a fee in a TON jetton.
+private val TON_JETTON = Regex("^ton/mainnet/jetton/(.+)$")
+private const val EMPTY_CALLDATA = "0x"
+
 internal fun BigInteger.toJavaBigInteger(): java.math.BigInteger = java.math.BigInteger(toString())
+
+/**
+ * What a swap takes of the account's asset. The amounts are signed as prepared, so a fee in what is
+ * sold has to fit next to [sold]. A sale that [shrinksToFit] is the exception: it is prepared again
+ * to sell what such a fee leaves, so nothing is held against the fee.
+ */
+private class Sale(val sold: BigInteger, val shrinksToFit: Boolean) {
+
+    val fitted: BigInteger
+        get() = if (shrinksToFit) {
+            BigInteger.ZERO
+        } else {
+            sold
+        }
+
+    /** What the chain's own fee is held against, where [spent] is what the swap takes. */
+    fun native(spent: BigInteger): BigInteger = if (shrinksToFit) {
+        BigInteger.ZERO
+    } else {
+        spent
+    }
+}
+
+private fun nativeOption(
+    energy: AccountWithDetails,
+    fee: Fee?,
+    attachedEnergy: BigInteger = BigInteger.ZERO,
+): TxFee? {
+    fee ?: return null
+    val option = TxFee(account = FeeAccount.Chain(energy), fee = fee)
+    return option.takeIf { TxFeeLogic.requiredEnergy(fee, attachedEnergy) <= energy.unitBalance.value }
+}
+
+// The relayer may label a token with another type than the wallet does (BSC: erc20, the wallet
+// bep20). A token is its contract on its chain, so its id is rebuilt the wallet's way. Only on EVM:
+// the rebuilt id is lowercased, and a Solana mint is case-sensitive base58.
+private fun walletAssetId(relayerAssetId: String, chain: Chain): String {
+    val parts = relayerAssetId.split('/')
+    if (!chain.isEvm ||
+        parts.size != TOKEN_ASSET_ID_PARTS ||
+        parts[0] != chain.network.type.id ||
+        parts[1] != chain.network.mode.id
+    ) {
+        return relayerAssetId
+    }
+    return chain.tokenAssetId(parts[3])
+}
+
+// A fee in the asset being sent has to fit next to the amount, not just under the balance.
+private fun relayedCanPay(option: TxFee, account: AccountWithDetails, amount: BigInteger): Boolean {
+    val balance = option.account.balance ?: return false
+    val payer = (option.account as? FeeAccount.Chain)?.value
+    val spent = if (payer != null && payer.asset.id.equals(account.asset.id, ignoreCase = true)) {
+        amount
+    } else {
+        BigInteger.ZERO
+    }
+    return option.fee.amount + spent <= balance
+}
+
+/**
+ * [calls] priced one by one: an asset pays for them together only where it pays for every one, at the
+ * sum of what each costs.
+ */
+private fun estimateAll(
+    relayer: GaslessRelayer,
+    auth: Authorization,
+    calls: List<GaslessRelayer.Call>,
+): List<GaslessRelayer.Estimation> {
+    val each = calls.map { call -> relayer.estimate(auth, call) }
+    if (each.size == 1) {
+        return each.single()
+    }
+
+    return each.first().mapNotNull { estimation ->
+        val parts = each.map { estimations -> estimations.firstOrNull { it.assetId == estimation.assetId } ?: return@mapNotNull null }
+        GaslessRelayer.Estimation(
+            assetId = estimation.assetId,
+            fee = parts.fold(BigInteger.ZERO) { sum, part -> sum + part.fee },
+            available = parts.all { it.available },
+        )
+    }
+}

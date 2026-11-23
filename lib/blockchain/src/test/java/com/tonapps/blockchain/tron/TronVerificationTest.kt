@@ -4,9 +4,13 @@ import com.google.protobuf.ByteString
 import com.tonapps.blockchain.tron.proto.Chain.Transaction
 import com.tonapps.blockchain.tron.proto.Common
 import com.tonapps.blockchain.tron.proto.Contract
-import org.bitcoinj.core.Base58
+import com.tonapps.chainkit.chain.tron.utils.TronUtils
+import com.trustwallet.core.WalletCoreLibLoader
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
+import org.junit.BeforeClass
 import org.junit.Test
 import java.math.BigInteger
 import com.google.protobuf.Any as ProtoAny
@@ -35,6 +39,61 @@ class TronVerificationTest {
         to = recipient,
         amountSun = AMOUNT_SUN,
     )
+
+    private val callRequest = TronTransactionRequest.Call(
+        from = owner,
+        contractAddress = usdtContract,
+        callData = transfer.callData,
+        feeLimit = FEE_LIMIT,
+    )
+
+    @Test
+    fun honestNodeBuildsTheRequestedCall() {
+        verify(callRequest, triggerRaw())
+    }
+
+    @Test
+    fun substitutedCallDataIsRejected() {
+        val hijacked = transfer.copy(to = stranger)
+
+        assertMismatch("data", callRequest, triggerRaw(data = hijacked.callData))
+    }
+
+    @Test
+    fun aCallOfAnotherContractIsRejected() {
+        assertMismatch("contract_address", callRequest, triggerRaw(contract = stranger))
+    }
+
+    @Test
+    fun aCallFromAnotherSenderIsRejected() {
+        assertMismatch("owner_address", callRequest, triggerRaw(owner = stranger))
+    }
+
+    @Test
+    fun trxAttachedToACallThatAsksForNoneIsRejected() {
+        assertMismatch("call_value", callRequest, triggerRaw(callValue = 1))
+    }
+
+    @Test
+    fun aNativeTransferInsteadOfACallIsRejected() {
+        assertMismatch("contract_type", callRequest, transferRaw(feeLimit = FEE_LIMIT))
+    }
+
+    /** The readable `raw_data` of the document says what `raw_data_hex` does: the TRX a call attaches is in both. */
+    @Test
+    fun aCallsDocumentNamesTheTrxItAttaches() {
+        val raw = triggerRaw(callValue = AMOUNT_SUN)
+        val transaction = TronTransaction.fromRawDataHex(raw.toByteArray().toTronHex(), callRequest.copy(callValue = AMOUNT_SUN))
+
+        assertEquals(AMOUNT_SUN, callParameter(transaction).getLong("call_value"))
+    }
+
+    @Test
+    fun aCallThatAttachesNoTrxNamesNone() {
+        val transaction = TronTransaction.fromRawDataHex(triggerRaw().toByteArray().toTronHex(), callRequest)
+
+        assertFalse(callParameter(transaction).has("call_value"))
+    }
 
     @Test
     fun honestNodeBuildsTheRequestedTrc20Transfer() {
@@ -151,6 +210,26 @@ class TronVerificationTest {
         assertMismatch("data", trc20Request, raw)
     }
 
+    /** A memo is the transaction's own `data`: it has to be the one asked for, as its hex. */
+    @Test
+    fun theMemoAskedForIsAccepted() {
+        val raw = triggerRaw().toBuilder().setData(MEMO_BYTES).build()
+
+        verify(callRequest.copy(memo = MEMO_HEX), raw)
+    }
+
+    @Test
+    fun anotherMemoIsRejected() {
+        val raw = triggerRaw().toBuilder().setData(ONE_BYTE).build()
+
+        assertMismatch("data", callRequest.copy(memo = MEMO_HEX), raw)
+    }
+
+    @Test
+    fun aMemoAskedForButMissingIsRejected() {
+        assertMismatch("data", trxRequest.copy(memo = MEMO_HEX), transferRaw())
+    }
+
     @Test
     fun transactionCarryingAuthsIsRejected() {
         val raw = triggerRaw().toBuilder()
@@ -176,6 +255,13 @@ class TronVerificationTest {
     fun transactionCarryingASecondContractIsRejected() {
         assertMismatch("contract_count", trc20Request, triggerRaw(contracts = 2))
     }
+
+    private fun callParameter(transaction: TronTransaction): JSONObject = transaction.json
+        .getJSONObject("raw_data")
+        .getJSONArray("contract")
+        .getJSONObject(0)
+        .getJSONObject("parameter")
+        .getJSONObject("value")
 
     private fun verify(request: TronTransactionRequest, raw: Transaction.raw) {
         TronTransaction.fromRawDataHex(raw.toByteArray().toTronHex(), request)
@@ -273,15 +359,25 @@ class TronVerificationTest {
     private fun String.hexToBytes(): ByteArray =
         chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 
-    private companion object {
+    companion object {
 
-        const val FEE_LIMIT = 150_000_000L
-        const val AMOUNT_SUN = 2_000_000L
-        const val EXPIRATION = 1_700_000_060_000L
-        const val TIMESTAMP = 1_700_000_000_000L
+        private const val FEE_LIMIT = 150_000_000L
+        private const val AMOUNT_SUN = 2_000_000L
+        private const val EXPIRATION = 1_700_000_060_000L
+        private const val TIMESTAMP = 1_700_000_000_000L
 
-        val ONE_BYTE: ByteString = ByteString.copyFrom(byteArrayOf(1))
+        private val ONE_BYTE: ByteString = ByteString.copyFrom(byteArrayOf(1))
+        private const val MEMO_HEX = "71756f74652d3031"
+        private val MEMO_BYTES: ByteString = ByteString.copyFromUtf8("quote-01")
 
-        fun tronAddress(seed: Int): String = Base58.encodeChecked(0x41, ByteArray(20) { seed.toByte() })
+        @JvmStatic
+        @BeforeClass
+        fun loadWalletCore() {
+            WalletCoreLibLoader.loadLibrary()
+        }
+
+        private fun tronAddress(seed: Int): String =
+            TronUtils.addressFromHex("41" + "%02x".format(seed).repeat(20))
+                ?: error("fixture address")
     }
 }

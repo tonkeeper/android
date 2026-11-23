@@ -24,7 +24,7 @@ data class GaslessV2Payload(
     @SerialName(value = "id")
     val id: String,
 
-    /* main | prebuild | batch | eip7702/authorization | eip7821/hermes/delegate | solana/message */
+    /* main | prebuild (TRON, Solana) | batch | eip7702/authorization | eip7821/hermes/delegate. On TRON a main (to: the token's contract, data: the transfer(address,uint256) call, memo: hex, optional) is built into the prebuild to sign. A TON payload to sign says in meta.format how: ext_msg or int_msg */
     @SerialName(value = "type")
     val type: String,
     @SerialName(value = "chain_id")

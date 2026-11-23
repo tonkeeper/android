@@ -15,20 +15,18 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.exchangeapi.models.CalculateSwap400Response
+import io.exchangeapi.models.CalculateSwap500Response
 import io.exchangeapi.models.CreateCrossSwapQuoteRequest
-import io.exchangeapi.models.CrossSwapAsset
 import io.exchangeapi.models.CrossSwapAssets
 import io.exchangeapi.models.CrossSwapConfig
-import io.exchangeapi.models.CrossSwapExecution
 import io.exchangeapi.models.CrossSwapPrepare
+import io.exchangeapi.models.CrossSwapPrepareV3
 import io.exchangeapi.models.CrossSwapQuote
-import io.exchangeapi.models.CrossSwapSlippage
-import io.exchangeapi.models.CrossSwapStoredRoute
-import io.exchangeapi.models.CrossSwapSubmit
-import io.exchangeapi.models.GetCrossSwapAsset404Response
-import io.exchangeapi.models.Healthcheck500Response
+import io.exchangeapi.models.CrossSwapQuoteRequest
+import io.exchangeapi.models.CrossSwapQuoteV3
+import io.exchangeapi.models.PrepareCrossSwapRoute404Response
 import io.exchangeapi.models.PrepareCrossSwapRouteRequest
-import io.exchangeapi.models.SubmitCrossSwapPayloadRequest
+import io.exchangeapi.models.PrepareCrossSwapRouteV3Request
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -107,11 +105,11 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getCrossSwapAsset(assetId: String): CrossSwapAsset {
-        val localVarResponse = getCrossSwapAssetWithHttpInfo(assetId = assetId)
+    fun createCrossSwapQuoteV3(crossSwapQuoteRequest: CrossSwapQuoteRequest, xWalletID: String? = null, F: String? = null): CrossSwapQuoteV3 {
+        val localVarResponse = createCrossSwapQuoteV3WithHttpInfo(crossSwapQuoteRequest = crossSwapQuoteRequest, xWalletID = xWalletID, F = F)
 
         return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapAsset
+            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapQuoteV3
             ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
             ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
             ResponseType.ClientError -> {
@@ -127,29 +125,30 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getCrossSwapAssetWithHttpInfo(assetId: String): ApiResponse<CrossSwapAsset?> {
-        val localVariableConfig = getCrossSwapAssetRequestConfig(assetId = assetId)
+    fun createCrossSwapQuoteV3WithHttpInfo(crossSwapQuoteRequest: CrossSwapQuoteRequest, xWalletID: String?, F: String?): ApiResponse<CrossSwapQuoteV3?> {
+        val localVariableConfig = createCrossSwapQuoteV3RequestConfig(crossSwapQuoteRequest = crossSwapQuoteRequest, xWalletID = xWalletID, F = F)
 
-        return request<Unit, CrossSwapAsset>(
+        return request<CrossSwapQuoteRequest, CrossSwapQuoteV3>(
             localVariableConfig
         )
     }
 
-    fun getCrossSwapAssetRequestConfig(assetId: String): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                put("asset_id", listOf(assetId.toString()))
-            }
+    fun createCrossSwapQuoteV3RequestConfig(crossSwapQuoteRequest: CrossSwapQuoteRequest, xWalletID: String?, F: String?): RequestConfig<CrossSwapQuoteRequest> {
+        val localVariableBody = crossSwapQuoteRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        F?.apply { localVariableHeaders["F"] = this.toString() }
+        localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/crosschain/asset",
+            method = RequestMethod.POST,
+            path = "/v3/crosschain/quotes",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
+            walletId = xWalletID,
             body = localVariableBody
         )
     }
@@ -205,149 +204,6 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
             headers = localVariableHeaders,
             requiresAuthentication = false,
             walletId = walletId,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getCrossSwapExecution(executionId: String): CrossSwapExecution {
-        val localVarResponse = getCrossSwapExecutionWithHttpInfo(executionId = executionId)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapExecution
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getCrossSwapExecutionWithHttpInfo(executionId: String): ApiResponse<CrossSwapExecution?> {
-        val localVariableConfig = getCrossSwapExecutionRequestConfig(executionId = executionId)
-
-        return request<Unit, CrossSwapExecution>(
-            localVariableConfig
-        )
-    }
-
-    fun getCrossSwapExecutionRequestConfig(executionId: String): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/crosschain/executions/{execution_id}".replace("{"+"execution_id"+"}", encodeURIComponent(executionId.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getCrossSwapSlippage(): CrossSwapSlippage {
-        @Suppress("DEPRECATION")
-        val localVarResponse = getCrossSwapSlippageWithHttpInfo()
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapSlippage
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getCrossSwapSlippageWithHttpInfo(): ApiResponse<CrossSwapSlippage?> {
-        @Suppress("DEPRECATION")
-        val localVariableConfig = getCrossSwapSlippageRequestConfig()
-
-        return request<Unit, CrossSwapSlippage>(
-            localVariableConfig
-        )
-    }
-
-    @Deprecated(message = "This operation is deprecated.")
-    fun getCrossSwapSlippageRequestConfig(): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/crosschain/slippage",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getCrossSwapStoredRoute(routeId: String): CrossSwapStoredRoute {
-        val localVarResponse = getCrossSwapStoredRouteWithHttpInfo(routeId = routeId)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapStoredRoute
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getCrossSwapStoredRouteWithHttpInfo(routeId: String): ApiResponse<CrossSwapStoredRoute?> {
-        val localVariableConfig = getCrossSwapStoredRouteRequestConfig(routeId = routeId)
-
-        return request<Unit, CrossSwapStoredRoute>(
-            localVariableConfig
-        )
-    }
-
-    fun getCrossSwapStoredRouteRequestConfig(routeId: String): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/crosschain/routes/{route_id}".replace("{"+"route_id"+"}", encodeURIComponent(routeId.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
             body = localVariableBody
         )
     }
@@ -465,11 +321,11 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun submitCrossSwapPayload(payloadId: String, submitCrossSwapPayloadRequest: SubmitCrossSwapPayloadRequest): CrossSwapSubmit {
-        val localVarResponse = submitCrossSwapPayloadWithHttpInfo(payloadId = payloadId, submitCrossSwapPayloadRequest = submitCrossSwapPayloadRequest)
+    fun prepareCrossSwapRouteV3(routeId: String, xWalletID: String? = null, F: String? = null, prepareCrossSwapRouteV3Request: PrepareCrossSwapRouteV3Request? = null): CrossSwapPrepareV3 {
+        val localVarResponse = prepareCrossSwapRouteV3WithHttpInfo(routeId = routeId, xWalletID = xWalletID, F = F, prepareCrossSwapRouteV3Request = prepareCrossSwapRouteV3Request)
 
         return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapSubmit
+            ResponseType.Success -> (localVarResponse as Success<*>).data as CrossSwapPrepareV3
             ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
             ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
             ResponseType.ClientError -> {
@@ -485,27 +341,30 @@ class CrosschainApi(basePath: String = defaultBasePath, client: Call.Factory = A
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun submitCrossSwapPayloadWithHttpInfo(payloadId: String, submitCrossSwapPayloadRequest: SubmitCrossSwapPayloadRequest): ApiResponse<CrossSwapSubmit?> {
-        val localVariableConfig = submitCrossSwapPayloadRequestConfig(payloadId = payloadId, submitCrossSwapPayloadRequest = submitCrossSwapPayloadRequest)
+    fun prepareCrossSwapRouteV3WithHttpInfo(routeId: String, xWalletID: String?, F: String?, prepareCrossSwapRouteV3Request: PrepareCrossSwapRouteV3Request?): ApiResponse<CrossSwapPrepareV3?> {
+        val localVariableConfig = prepareCrossSwapRouteV3RequestConfig(routeId = routeId, xWalletID = xWalletID, F = F, prepareCrossSwapRouteV3Request = prepareCrossSwapRouteV3Request)
 
-        return request<SubmitCrossSwapPayloadRequest, CrossSwapSubmit>(
+        return request<PrepareCrossSwapRouteV3Request, CrossSwapPrepareV3>(
             localVariableConfig
         )
     }
 
-    fun submitCrossSwapPayloadRequestConfig(payloadId: String, submitCrossSwapPayloadRequest: SubmitCrossSwapPayloadRequest): RequestConfig<SubmitCrossSwapPayloadRequest> {
-        val localVariableBody = submitCrossSwapPayloadRequest
+    fun prepareCrossSwapRouteV3RequestConfig(routeId: String, xWalletID: String?, F: String?, prepareCrossSwapRouteV3Request: PrepareCrossSwapRouteV3Request?): RequestConfig<PrepareCrossSwapRouteV3Request> {
+        val localVariableBody = prepareCrossSwapRouteV3Request
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        F?.apply { localVariableHeaders["F"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
         return RequestConfig(
             method = RequestMethod.POST,
-            path = "/v2/crosschain/payloads/{payload_id}/submit".replace("{"+"payload_id"+"}", encodeURIComponent(payloadId.toString())),
+            path = "/v3/crosschain/routes/{route_id}/prepare".replace("{"+"route_id"+"}", encodeURIComponent(routeId.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,
+            walletId = xWalletID,
             body = localVariableBody
         )
     }

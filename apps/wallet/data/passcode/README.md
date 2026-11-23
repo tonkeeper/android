@@ -138,8 +138,11 @@ unlockOrCreateMultichainVault(pin):
 ### MC signing / backup
 
 ```
-unlockMultichainVault(context):
-   PasscodeDialog ──► isValid ──► unlock(pin) ──► short-lived MnemonicCoder ──► close()
+WalletUnlocker.unlockWallet(walletId, reason) / unlockVault(reason, block):
+   ForegroundActivityTracker.awaitResumed ──► the resumed FragmentActivity
+        none within 2 s ──► CancellationException   reads as a dismissed prompt
+   unlockMultichainVault(activity, reason):        internal, reached only through WalletUnlocker
+        PasscodeDialog ──► isValid ──► unlock(pin) ──► short-lived MnemonicCoder ──► close()
 ```
 
 ### PIN change (two-phase across three stores)

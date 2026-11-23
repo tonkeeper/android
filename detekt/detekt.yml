@@ -175,8 +175,14 @@ style:
     active: true
   ForbiddenComment:
     active: false
+  # The app reaches wallet-core only through ChainKit (TronUtils, TonUtils, PrivateKey(bytes), …);
+  # the Ledger signers build and compile wallet-core signing inputs for the device, which ChainKit does not expose.
   ForbiddenImport:
-    active: false
+    active: true
+    excludes: ['**/test/**', '**/testFixtures/**', '**/androidTest/**', '**/apps/wallet/data/ledger/**']
+    imports:
+      - value: 'com.trustwallet.*'
+        reason: 'Use the ChainKit API instead of wallet-core directly'
   ForbiddenMethodCall:
     active: false
   ForbiddenVoid:

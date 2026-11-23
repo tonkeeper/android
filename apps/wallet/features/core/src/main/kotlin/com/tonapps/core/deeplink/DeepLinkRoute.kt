@@ -7,11 +7,11 @@ import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonDomain
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.blockchain.tron.isValidTronAddress
+import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.chainkit.core.chain.model.account.TokenType
 import com.tonapps.core.components.tokenAssetId
-import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.extensions.fullPathOrNull
 import com.tonapps.extensions.hasUnsupportedQuery
 import com.tonapps.extensions.hostOrNull
@@ -28,6 +28,8 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 private const val MYSTERY_RAFFLE_SLUG = "mystery_raffle"
+private const val DINNER_WITH_TRUMP_SLUG = "dinner_with_trump"
+private const val TRUMP_DAPP_URL = "https://trump.keeperwallet.com/"
 
 sealed class DeepLinkRoute {
 
@@ -168,6 +170,7 @@ sealed class DeepLinkRoute {
     data object DnsRenew: DeepLinkRoute()
 
     data class Transfer(
+        // As the link sets it: see validUntil.
         val exp: Long?,
         val address: String,
         val amount: Long?,
@@ -178,26 +181,8 @@ sealed class DeepLinkRoute {
         val initStateBase64: String?
     ): DeepLinkRoute() {
 
-        val isExpired: Boolean
-            get() {
-                if (exp == null || 0 >= exp) {
-                    return false
-                }
-                val now = currentTimeSeconds()
-                val fixedExp = exp - 15
-                return now > fixedExp
-            }
-
         constructor(uri: Uri) : this(
-            exp = uri.queryLong("exp")?.let { parsedExp ->
-                val maxExp = currentTimeSeconds() + MAX_EXP
-                val validUntil = minOf(parsedExp, maxExp)
-                if (0 >= validUntil) {
-                    currentTimeSeconds() + MAX_EXP
-                } else {
-                    validUntil
-                }
-            },
+            exp = uri.queryLong("exp"),
             address = uri.pathOrNull ?: throw IllegalArgumentException("Address is required"),
             amount = uri.queryLong("amount"),
             text = uri.query("text"),
@@ -233,6 +218,11 @@ sealed class DeepLinkRoute {
             }
         }
 
+        /** The link's deadline in seconds: see [Companion.validUntil]. */
+        fun validUntil(now: Long): Long = validUntil(exp, now)
+
+        fun isExpired(now: Long): Boolean = isExpired(validUntil(now), now)
+
         fun targetAssetId(testnet: Boolean): String? {
             if (assetId != null) {
                 return assetId
@@ -259,6 +249,21 @@ sealed class DeepLinkRoute {
 
         companion object {
             const val MAX_EXP = 10 * 60L
+            private const val EXPIRY_LEAD_SECONDS = 15L
+
+            /**
+             * The deadline in seconds a transfer link or a TON Connect request sets with [exp]: at most
+             * [MAX_EXP] after [now] (server time), or [MAX_EXP] after it when it sets none.
+             */
+            fun validUntil(exp: Long?, now: Long): Long {
+                val maxExp = now + MAX_EXP
+                val own = exp?.takeIf { it > 0 } ?: return maxExp
+                return minOf(own, maxExp)
+            }
+
+            fun isExpired(validUntil: Long, now: Long): Boolean {
+                return now > validUntil - EXPIRY_LEAD_SECONDS
+            }
         }
     }
 
@@ -330,6 +335,17 @@ sealed class DeepLinkRoute {
             id = uri.pathOrNull?.takeIf { it != MYSTERY_RAFFLE_SLUG },
             source = uri.query("source"),
         )
+
+        companion object {
+
+            fun of(uri: Uri): DeepLinkRoute {
+                return if (uri.pathOrNull == DINNER_WITH_TRUMP_SLUG) {
+                    DApp(TRUMP_DAPP_URL)
+                } else {
+                    Raffle(uri)
+                }
+            }
+        }
     }
 
     data class Story(val id: String): DeepLinkRoute() {
@@ -342,33 +358,77 @@ sealed class DeepLinkRoute {
 
     sealed class Perps : DeepLinkRoute() {
 
-        abstract val fromBanner: Boolean
+        abstract val entryPoint: PerpsEntryPoint?
 
-        data class Home(override val fromBanner: Boolean = false) : Perps()
+        data class Home(override val entryPoint: PerpsEntryPoint? = null) : Perps()
 
-        data class Market(val marketIndex: Int, override val fromBanner: Boolean = false) : Perps()
+        data class Market(val marketIndex: Int, override val entryPoint: PerpsEntryPoint? = null) : Perps()
 
-        data class AutoClose(val marketIndex: Int, override val fromBanner: Boolean = false) : Perps()
+        data class AutoClose(val marketIndex: Int, override val entryPoint: PerpsEntryPoint? = null) : Perps()
+
+        data class MarketSymbol(val symbol: String, override val entryPoint: PerpsEntryPoint? = null) : Perps()
 
         companion object {
 
             const val ENTRY_POINT_QUERY = "entry_point"
-            const val MAIN_BANNER = "main_banner"
 
-            fun of(uri: Uri): Perps {
-                val fromBanner = uri.query(ENTRY_POINT_QUERY) == MAIN_BANNER
-                val segments = uri.pathSegments
+            private val LINK_ENTRY_POINTS = listOf(PerpsEntryPoint.MainBanner, PerpsEntryPoint.Loyalty)
+
+            private val MARKET_ID = Regex("[0-9]+")
+
+            private val MARKET_SYMBOL = Regex("[A-Za-z0-9]+")
+
+            fun of(uri: Uri): Perps = of(
+                segments = uri.pathSegments,
+                entryPoint = uri.query(ENTRY_POINT_QUERY)?.let { key -> LINK_ENTRY_POINTS.firstOrNull { it.key == key } },
+            )
+
+            fun of(segments: List<String>, entryPoint: PerpsEntryPoint?): Perps {
                 if (segments.isEmpty()) {
-                    return Home(fromBanner)
+                    return Home(entryPoint)
                 }
                 require(segments.first() == "market" && segments.size >= 2) { "Unknown perps path" }
-                val marketIndex = segments[1].toIntOrNull()?.takeIf { it >= 0 }
-                    ?: throw IllegalArgumentException("Invalid market id")
-                return if (segments.getOrNull(2) == "auto-close") {
-                    AutoClose(marketIndex, fromBanner)
-                } else {
-                    Market(marketIndex, fromBanner)
+                val market = segments[1]
+                val autoClose = segments.getOrNull(2) == "auto-close"
+                if (!MARKET_ID.matches(market)) {
+                    require(!autoClose && MARKET_SYMBOL.matches(market)) { "Invalid market id" }
+                    return MarketSymbol(market, entryPoint)
                 }
+                val marketIndex = market.toIntOrNull() ?: throw IllegalArgumentException("Invalid market id")
+                return if (autoClose) {
+                    AutoClose(marketIndex, entryPoint)
+                } else {
+                    Market(marketIndex, entryPoint)
+                }
+            }
+        }
+    }
+
+    sealed class Earn : DeepLinkRoute() {
+
+        data object Home : Earn()
+
+        /** [network] names the chain as the Earn page's routes do: `mainnet`, `base`, `bsc` or `arbitrum`. */
+        data class Vault(val network: String, val vaultId: String) : Earn()
+
+        companion object {
+
+            private val NETWORKS = setOf("mainnet", "base", "bsc", "arbitrum")
+
+            // A vault's contract address, optionally with a "-<suffix>" of letters, digits and dashes,
+            // such as "-1", "-0x<token>" or "-usdc-v2".
+            private val VAULT_ID = Regex("0[xX][0-9a-fA-F]{40}(-[A-Za-z0-9-]+)?")
+
+            fun of(uri: Uri): Earn = of(network = uri.query("network"), vaultId = uri.query("vault"))
+
+            fun of(network: String?, vaultId: String?): Earn {
+                if (network == null && vaultId == null) {
+                    return Home
+                }
+                val earnNetwork = network?.lowercase()
+                require(earnNetwork != null && earnNetwork in NETWORKS) { "Unknown Earn network: $network" }
+                require(vaultId != null && VAULT_ID.matches(vaultId)) { "Invalid Earn vault id: $vaultId" }
+                return Vault(earnNetwork, vaultId)
             }
         }
     }
@@ -426,6 +486,8 @@ sealed class DeepLinkRoute {
         }
     }
 
+    data class MultichainDApp(val url: String): DeepLinkRoute()
+
     data class Signer(
         val publicKey: PublicKeyEd25519,
         val name: String?,
@@ -458,6 +520,28 @@ sealed class DeepLinkRoute {
                 ?: uri.query("id")
                 ?: throw IllegalArgumentException("Asset id is required")
         )
+    }
+
+    data class Loyalty(val referralCode: String?): DeepLinkRoute() {
+
+        constructor(uri: Uri) : this(
+            referralCode = referralCodeOf(uri.query(REFERRAL_CODE_QUERY)),
+        )
+
+        companion object {
+
+            const val REFERRAL_CODE_QUERY = "referral_code"
+
+            private val REFERRAL_CODE = Regex("[A-Za-z0-9_-]{1,64}")
+
+            fun referralCodeOf(value: String?): String? {
+                return value?.trim()?.takeIf(REFERRAL_CODE::matches)
+            }
+
+            fun ofReferralPath(segments: List<String>): Loyalty {
+                return Loyalty(referralCodeOf(segments.singleOrNull()))
+            }
+        }
     }
 
     companion object {
@@ -528,10 +612,14 @@ sealed class DeepLinkRoute {
                     "jetton", "token" -> Jetton(uri)
                     "asset", "assets" -> Asset(uri)
                     "story", "stories" -> Story(uri)
-                    "raffle", "raffles" -> Raffle(uri)
+                    "raffle", "raffles" -> Raffle.of(uri)
+                    "trump-multichain" -> MultichainDApp(TRUMP_DAPP_URL)
                     "perps" -> Perps.of(uri)
+                    "earn" -> Earn.of(uri)
                     "migrate" -> Migrate(from)
                     "add-wallet" -> AddWallet(uri)
+                    "loyalty" -> Loyalty(uri)
+                    "r" -> Loyalty.ofReferralPath(uri.pathSegments)
                     else -> throw IllegalArgumentException("Unknown domain: $domain")
                 }
             } catch (e: Throwable) {

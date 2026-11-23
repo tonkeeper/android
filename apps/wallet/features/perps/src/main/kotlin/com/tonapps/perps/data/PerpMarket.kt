@@ -16,7 +16,10 @@ data class PerpMarket(
     val fundingRateHourly: BigDecimal?,
     val priceDecimals: Int?,
     val sizeDecimals: Int?,
-)
+) {
+    val displayName: String
+        get() = name ?: symbol
+}
 
 data class PerpsMarketDetails(
     val market: PerpMarket,

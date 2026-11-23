@@ -23,9 +23,10 @@ object PasscodeBiometric {
     suspend fun showPrompt(
         context: Context,
         title: String,
-        passcodeFallback: Boolean = false
+        passcodeFallback: Boolean = false,
+        subtitle: String? = null,
     ): Boolean = suspendCancellableCoroutine { continuation ->
-        showPrompt(context, title, passcodeFallback, object : BiometricPrompt.AuthenticationCallback() {
+        showPrompt(context, title, passcodeFallback, subtitle, object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 continuation.resume(false)
             }
@@ -41,6 +42,7 @@ object PasscodeBiometric {
         context: Context,
         title: String,
         passcodeFallback: Boolean = false,
+        subtitle: String? = null,
         callback: BiometricPrompt.AuthenticationCallback
     ) {
         val activity = context.activity as? FragmentActivity
@@ -53,6 +55,7 @@ object PasscodeBiometric {
             val biometricPrompt = BiometricPrompt(activity, mainExecutor, callback)
             val builder = BiometricPrompt.PromptInfo.Builder()
                 .setTitle(title)
+                .setSubtitle(subtitle)
                 .setAllowedAuthenticators(authenticators)
                 .setConfirmationRequired(false)
                 .setNegativeButtonText(negativeButtonText(context, passcodeFallback))

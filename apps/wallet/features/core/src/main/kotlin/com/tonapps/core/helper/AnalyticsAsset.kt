@@ -21,7 +21,7 @@ fun WalletCurrency.analyticsAssetId(): String {
         is WalletCurrency.Chain.ETC ->
             chainAssetId("eth", "erc20", currencyChain.address, "ETC")
         is WalletCurrency.Chain.BNB ->
-            chainAssetId("bnb", "bep20", currencyChain.address, "BNB")
+            chainAssetId("bsc", "bep20", currencyChain.address, "BNB")
         is WalletCurrency.Chain.Solana ->
             chainAssetId("sol", "spl", currencyChain.address, "SOL")
         is WalletCurrency.Chain.BTC -> "btc/mainnet/coin"

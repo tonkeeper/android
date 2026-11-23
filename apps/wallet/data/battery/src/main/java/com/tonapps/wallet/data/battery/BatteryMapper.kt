@@ -63,11 +63,8 @@ object BatteryMapper {
     ) = calculateChargesAmount(BigDecimal(transactionCost), meanFees)
 
     fun calculateCryptoCharges(method: RechargeMethodEntity, meanFees: String, amount: Coins): Int {
-        val meanFeesBigDecimal = BigDecimal(meanFees)
-        val rateBigDecimal = BigDecimal(method.rate)
-        return rateBigDecimal.divide(meanFeesBigDecimal, 20, RoundingMode.HALF_UP)
-            .multiply(amount.value)
-            .setScale(0, RoundingMode.FLOOR)
+        return BatteryRechargeMath.charges(amount.value, method.chargesPerUnit(meanFees))
+            .coerceAtMost(Int.MAX_VALUE.toLong())
             .toInt()
     }
 
@@ -85,7 +82,8 @@ object BatteryMapper {
             .divide(tonPriceInUsd.value, 20, RoundingMode.HALF_UP)
             .minus(reservedAmount)
             .divide(meanFees, 20, RoundingMode.HALF_UP)
-            .setScale(0, RoundingMode.FLOOR)
+            .setScale(0, RoundingMode.HALF_UP)
             .toInt()
+            .coerceAtLeast(0)
     }
 }

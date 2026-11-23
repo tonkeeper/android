@@ -172,8 +172,11 @@ class EmulationUseCase(
     ): Emulated {
         val wallet = message.wallet
         val boc = createMessage(message, false)
+        // Without local gas figures (WalletTg runs code that validators may replace) the fee is taken
+        // from the emulation, run with enough balance to complete.
+        val feeFromEmulation = checkTonBalance && !contractExecution.hasLocalEstimate(wallet.version)
 
-        if (checkTonBalance) {
+        if (checkTonBalance && !feeFromEmulation) {
             val account = api.accounts(wallet.network).getAccount(wallet.accountId)
             val accountBalance = Coins.of(account.balance)
             val totalFee = contractExecution.computeFee(wallet, account, boc, message.getOutMsgs())
@@ -183,7 +186,7 @@ class EmulationUseCase(
             }
         }
 
-        val consequences = (if (params) {
+        val consequences = (if (params || feeFromEmulation) {
             api.emulate(
                 cell = boc,
                 network = wallet.network,
@@ -198,6 +201,16 @@ class EmulationUseCase(
                 safeModeEnabled = settingsRepository.isSafeModeEnabled(wallet.id, wallet.network)
             )
         }) ?: throw IllegalArgumentException("Emulation failed")
+
+        if (feeFromEmulation) {
+            val account = api.accounts(wallet.network).getAccount(wallet.accountId)
+            val accountBalance = Coins.of(account.balance)
+            val fee = Coins.of(maxOf(0L, -consequences.event.extra))
+            val totalAmount = fee + calculateTransferAmount(message.transfers)
+            if (totalAmount > accountBalance) {
+                throw InsufficientBalanceError(accountBalance, totalAmount)
+            }
+        }
         return parseEmulated(wallet, consequences, TransferType.Default, capTonRiskToBalance = capTonRiskToBalance)
     }
 
@@ -382,6 +395,7 @@ class EmulationUseCase(
 
         @Volatile
         private var cachedTrxFee: Coins? = null
+
         @Volatile
         private var cachedTrxFeeTimestamp: Long = 0L
 

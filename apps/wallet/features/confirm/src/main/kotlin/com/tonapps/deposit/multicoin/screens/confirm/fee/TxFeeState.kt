@@ -2,6 +2,7 @@ package com.tonapps.deposit.multicoin.screens.confirm.fee
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
+import com.tonapps.chainkit.core.op.Operation
 import com.tonapps.deposit.multicoin.screens.confirm.base.ConfirmationError
 import com.tonapps.wallet.SigningWallet
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
@@ -13,7 +14,14 @@ import com.tonapps.wallet.data.multichain.account.AccountWithDetails
  */
 fun interface RelayerSend {
 
-    suspend fun send(signer: SigningWallet, option: TxFee)
+    suspend fun send(signer: RelayerSigner, option: TxFee): String?
+}
+
+sealed interface RelayerSigner {
+
+    class Software(val wallet: SigningWallet) : RelayerSigner
+
+    class Ledger(val walletId: String) : RelayerSigner
 }
 
 /**
@@ -50,6 +58,10 @@ data class TxFeeState(
     // The option [quote] has priced, and the only one [relayer] sends.
     val quotedId: String? = null,
 
+    // What the relayer built for [quotedId]: the operation a relayed send signs. Null where the wallet
+    // makes what the relayer carries itself (a TON battery message, a TRON transfer).
+    val relayedOperation: Operation? = null,
+
     // Chainkit-path error from prepare time. Kept off the banner while a relayed method is selected —
     // a relayer pays the chain fee, so the wallet not covering it isn't an error — but a swipe on a
     // non-relayed method must still surface it.
@@ -65,6 +77,9 @@ data class TxFeeState(
 
     val hasBatteryOption: Boolean
         get() = options.any { it.isBattery && TxFeeLogic.isSufficient(it) }
+
+    val hasRelayedOption: Boolean
+        get() = options.any { it.viaRelayer && TxFeeLogic.isSufficient(it) }
 
     // Whether recharging the battery would pay this transaction's fee: the relayer priced it and
     // the charges fall short.
@@ -88,6 +103,19 @@ data class TxFeeState(
                     listed.copy(available = false)
                 } else {
                     listed
+                }
+            }
+        ),
+    )
+
+    /** The same methods with the chain's coin ruled out: what a relayer does not carry cannot be paid. */
+    fun relayedOnly(): TxFeeState = copy(
+        options = TxFeeLogic.payableFirst(
+            options.map { listed ->
+                if (listed.viaRelayer) {
+                    listed
+                } else {
+                    listed.copy(available = false)
                 }
             }
         ),

@@ -28,6 +28,7 @@ import uikit.extensions.statusBarHeight
 import uikit.widget.RowLayout
 import kotlin.math.abs
 import uikit.extensions.setMoonOnClickListener
+import com.tonapps.core.extensions.walletColor
 
 class WalletHeaderView @JvmOverloads constructor(
     context: Context,
@@ -159,7 +160,7 @@ class WalletHeaderView @JvmOverloads constructor(
         walletView.visibility = View.VISIBLE
         nameView.text = walletLabel.name.fixW5Title()
         emojiView.setEmoji(walletLabel.emoji, Color.TRANSPARENT)
-        walletView.backgroundTintList = ColorStateList.valueOf(walletLabel.color)
+        walletView.backgroundTintList = ColorStateList.valueOf(context.walletColor(walletLabel.color))
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {

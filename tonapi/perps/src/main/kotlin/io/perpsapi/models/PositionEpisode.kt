@@ -42,7 +42,11 @@ data class PositionEpisode(
 
     /* What ended it. `fill` is an ordinary close and `liquidation` a fill the venue marked as one. `event` is every close with no fill of ours behind it -- an auto-deleverage, or one whose fill this service never saw: the venue reported the position gone without saying why, and this does not claim to know either. Treat the set as open-ended; a later release may name a reason `event` covers today. */
     @SerialName(value = "close_reason")
-    val closeReason: CloseReason?
+    val closeReason: CloseReason?,
+
+    /* The position as this service counts it from the fills it recorded, for a client that wants to show it before its next portfolio read. Only on an open episode this service saw open (open_seen true); absent otherwise. It lags the venue while fills are still arriving, so compare `size` with what the order filled before trusting it. */
+    @SerialName(value = "position")
+    val position: EpisodePosition? = null
 ) {
     /**
      * What ended it. `fill` is an ordinary close and `liquidation` a fill the venue marked as one. `event` is every close with no fill of ours behind it -- an auto-deleverage, or one whose fill this service never saw: the venue reported the position gone without saying why, and this does not claim to know either. Treat the set as open-ended; a later release may name a reason `event` covers today.

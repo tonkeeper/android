@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +53,7 @@ import ui.components.moon.dialog.MoonModalDialog
 import ui.components.moon.dialog.rememberDialogNavigator
 import ui.components.moon.screen.MoonEmptyScreen
 import ui.components.moon.screen.MoonEmptyScreenType
+import ui.components.moon.tintedButtonColors
 import ui.theme.UIKit
 
 @Composable
@@ -203,13 +203,7 @@ fun DisconnectDappContent(
     onDisconnect: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val disconnectAccent = UIKit.colorScheme.accent.red
-    val disconnectColors = ButtonColors(
-        containerColor = disconnectAccent.copy(alpha = 0.08f),
-        contentColor = disconnectAccent,
-        disabledContainerColor = disconnectAccent.copy(alpha = 0.08f),
-        disabledContentColor = disconnectAccent,
-    )
+    val disconnectColors = tintedButtonColors(UIKit.colorScheme.accent.red)
 
     MoonTopAppBarSimple(
         title = "",

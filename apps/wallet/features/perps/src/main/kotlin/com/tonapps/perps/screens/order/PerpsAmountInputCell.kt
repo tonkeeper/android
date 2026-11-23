@@ -1,10 +1,8 @@
 package com.tonapps.perps.screens.order
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +10,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -24,9 +21,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -41,13 +43,16 @@ import androidx.compose.ui.unit.sp
 import com.tonapps.perps.data.PERPS_QUOTE_INPUT_SCALE
 import com.tonapps.perps.data.limitFractionDigits
 import com.tonapps.perps.data.sanitizeAmount
+import com.tonapps.perps.screens.common.PerpsDecimalInputTransformation
 import com.tonapps.uikit.icon.UIKitIcon
 import com.wallet.crypto.trustapp.common.ui.components.MoonEditText
+import com.wallet.crypto.trustapp.common.ui.components.amountFieldScroll
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.cell.MoonBundleCell
 import ui.painterResource
 import ui.theme.UIKit
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun PerpsAmountInputCell(
     amount: String,
@@ -62,6 +67,7 @@ internal fun PerpsAmountInputCell(
     MoonBundleCell {
         Column(
             Modifier
+                .semantics { testTagsAsResourceId = true }
                 .defaultMinSize(minHeight = minHeight)
                 .padding(remember { PaddingValues(vertical = 28.dp, horizontal = 16.dp) })
                 .fillMaxWidth(),
@@ -73,6 +79,7 @@ internal fun PerpsAmountInputCell(
                 verticalAlignment = Alignment.Bottom,
             ) {
                 val focusRequester = remember { FocusRequester() }
+                val currentOnDone by rememberUpdatedState(onDone)
                 val scrollState = rememberScrollState()
                 val style = remember { TextStyle(fontSize = 40.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp) }
 
@@ -96,11 +103,10 @@ internal fun PerpsAmountInputCell(
                 MoonEditText(
                     paddingValues = PaddingValues(),
                     modifier = Modifier
+                        .testTag("perps_amount_input")
                         .focusRequester(focusRequester)
                         .weight(1f, fill = false)
-                        .horizontalScroll(scrollState)
-                        .width(IntrinsicSize.Min)
-                        .defaultMinSize(minWidth = 24.dp),
+                        .amountFieldScroll(scrollState),
                     value = field,
                     onValueChange = { changed ->
                         val sanitized = limitFractionDigits(sanitizeAmount(changed.text), maxFractionDigits)
@@ -116,8 +122,9 @@ internal fun PerpsAmountInputCell(
                         }
                     },
                     textStyle = style,
-                    keyboardActions = remember { KeyboardActions(onDone = { onDone() }) },
+                    keyboardActions = remember { KeyboardActions(onDone = { currentOnDone() }) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    visualTransformation = PerpsDecimalInputTransformation,
                     placeholder = { Text(text = "0", style = style, color = UIKit.colorScheme.text.primary) },
                 )
 
@@ -141,6 +148,7 @@ internal fun PerpsAmountInputCell(
 
                 Row(
                     modifier = Modifier
+                        .testTag("amount_input_converted")
                         .clip(CircleShape)
                         .then(
                             if (onSwap != null) {

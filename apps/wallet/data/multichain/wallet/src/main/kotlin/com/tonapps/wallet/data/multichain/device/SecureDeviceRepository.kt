@@ -1,7 +1,5 @@
 package com.tonapps.wallet.data.multichain.device
 
-import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
-import com.tonapps.chainkit.core.chain.model.account.WalletKind
 import com.tonapps.log.L
 import com.tonapps.wallet.SecureProofProvider
 import com.tonapps.wallet.api.API
@@ -46,6 +44,12 @@ class SecureDeviceRepository(
         renewAccessToken(expiredToken)
     }
 
+    override fun accessTokenExpiresAt(accessToken: String): Long? {
+        return vaultRepository.getDeviceSession()
+            ?.takeIf { it.accessToken == accessToken }
+            ?.accessTokenExpiresAtMs
+    }
+
     // A wallet token stays valid for exactly as long as the access token it signs, so it is cached
     // under both and every entry minted for an earlier access token is dropped on the next miss.
     override fun walletAuthToken(walletId: String, accessToken: String): String? {
@@ -74,7 +78,7 @@ class SecureDeviceRepository(
 
         return try {
             proofProvider.walletAuthToken(
-                keyPair = WalletKeyPair.fromPrivateKey(appPrivateKey, WALLET_KIND),
+                keyPair = WalletKeyRepository.keyPair(walletId, appPrivateKey),
                 accessToken = accessToken,
             )
         } catch (e: Throwable) {
@@ -201,6 +205,7 @@ class SecureDeviceRepository(
             deviceId = tokens.deviceId.toString(),
             accessToken = tokens.deviceJwt,
             refreshToken = tokens.refreshToken,
+            accessTokenExpiresAtMs = System.currentTimeMillis() + tokens.expiresIn * MILLIS_IN_SECOND,
         )
 
         vaultRepository.saveDeviceSession(session)
@@ -210,10 +215,11 @@ class SecureDeviceRepository(
 
     private companion object {
         val PLATFORM = DevicePlatform.android
-        val WALLET_KIND = WalletKind.Multichain
 
         const val PUSH_APP_ID = 695609596302L
 
         const val WALLET_AUTH_UNLOCK_TIMEOUT_MS = 60_000L
+
+        const val MILLIS_IN_SECOND = 1_000L
     }
 }

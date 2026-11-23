@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,27 +29,30 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import com.tonapps.blockchain.model.DappConnectRequest.DomainStatus
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.core.LocalIsTopFragment
+import com.tonapps.core.components.MoonDomainRiskBottomSheet
 import com.tonapps.deposit.multicoin.screens.confirm.base.BaseTransactionConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.base.ConfirmEvent
 import com.tonapps.deposit.multicoin.screens.confirm.base.ConfirmationError
 import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.SendingState
+import com.tonapps.deposit.multicoin.screens.confirm.base.isRetryable
+import com.tonapps.deposit.multicoin.screens.confirm.base.operation.PrepareErrorMessage
 import com.tonapps.deposit.multicoin.screens.confirm.fee.FeeAccount
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeLogic
 import com.tonapps.uikit.icon.UIKitIcon
@@ -58,17 +63,11 @@ import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonItemTitle
 import ui.components.moon.MoonLargeItemSubtitle
-import ui.components.moon.MoonTopAppBarSimple
-import ui.components.moon.ButtonColorsOrange
-import ui.components.moon.ButtonColorsRed
-import ui.components.moon.ButtonColorsSecondary
-import ui.components.moon.cell.MoonButtonCell
 import ui.components.moon.cell.MoonPropertyBigCell
 import ui.components.moon.cell.MoonPropertyTitle
 import ui.components.moon.cell.MoonPropertyValue
 import ui.components.moon.cell.MoonSlideConfirmation
 import ui.components.moon.cell.MoonSlideConfirmationState
-import ui.components.moon.cell.MoonTextContentCell
 import ui.components.moon.cell.rememberSliderState
 import ui.components.moon.dialog.MoonAlertDialog
 import ui.components.moon.dialog.MoonModalDialog
@@ -79,6 +78,7 @@ import ui.moon.rememberMoonToastHostState
 import ui.theme.UIKit
 import ui.theme.modifiers.rememberShimmerPhase
 import ui.theme.modifiers.shimmer
+import uikit.widget.ToastFeedback
 
 /**
  * Shared scaffold for the multichain confirm screens. Handles the loading skeleton, completion event,
@@ -112,21 +112,12 @@ internal fun ConfirmScreenScaffold(
 
     LaunchedEffect(confirmationError) {
         val rejected = confirmationError as? ConfirmationError.RelayerRejected ?: return@LaunchedEffect
-        toastHost.showToast(rejected.message.ifBlank { fallback })
+        toastHost.showToast(rejected.message.ifBlank { fallback }, feedback = ToastFeedback.Failure)
     }
 
     // Coming back from the battery refill or receive flow must re-estimate. Navigation only adds
     // fragments on top, so this sheet never pauses — the top-fragment flag is the only signal.
-    val isTopFragment = LocalIsTopFragment.current
-    var wasCovered by remember { mutableStateOf(false) }
-    LaunchedEffect(isTopFragment) {
-        if (!isTopFragment) {
-            wasCovered = true
-        } else if (wasCovered) {
-            wasCovered = false
-            feature.refreshFees()
-        }
-    }
+    OnUncovered(feature::refreshFees)
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(lifecycle) {
@@ -180,6 +171,7 @@ private fun ConfirmContent(
     val scope = rememberCoroutineScope()
     var showSendAllConfirmation by remember { mutableStateOf(false) }
     var showPriceImpactWarning by remember { mutableStateOf(false) }
+    var showDomainRiskWarning by remember { mutableStateOf(false) }
 
     val phase by rememberShimmerPhase()
     // Frozen while an error is up: a sweeping skeleton reads as "still loading" right above a slot
@@ -190,22 +182,26 @@ private fun ConfirmContent(
     }
 
     val priceImpact = tx?.priceImpact()
+    val domainRisk = tx?.domainRisk()
     val pickedFeeId by feature.pickedFeeId.collectAsState()
     val selectedFee = remember(tx, pickedFeeId) {
         tx?.fee?.resolve(pickedFeeId)
     }
     val feeInsufficient = selectedFee != null && !TxFeeLogic.isSufficient(selectedFee)
     val feeQuoting by feature.feeQuoting.collectAsState()
-    val outcomeUnknown = error == ConfirmationError.OutcomeUnknown
+    val mayHaveBeenSent = error == ConfirmationError.OutcomeUnknown ||
+        error == ConfirmationError.PartiallySent ||
+        error == ConfirmationError.NonceTaken
+    val retryable = error?.isRetryable != false
+    val feeUnavailable = tx?.isFeeUnavailable == true
 
-    val context = LocalContext.current
     val sign: () -> Unit = {
         if (tx != null) {
             onConfirm()
-            feature.sendTransaction(context, tx)
+            feature.sendTransaction(tx)
         }
     }
-    val retry: () -> Unit = { feature.retry(context) }
+    val retry: () -> Unit = { feature.retry() }
 
     // Single thumb-reset path: covers a cancelled passcode dialog as well as a cleared error, and
     // keeps concurrent animateTo calls off the slider Animatable.
@@ -234,6 +230,11 @@ private fun ConfirmContent(
                 SendConfirmShimmerBody(shimmer)
             } else {
                 content(tx)
+                val reason = error?.takeIf { feeUnavailable }?.feeErrorText
+                if (reason != null) {
+                    Spacer(Modifier.height(16.dp))
+                    PrepareErrorMessage(reason)
+                }
             }
         }
 
@@ -249,10 +250,37 @@ private fun ConfirmContent(
         }
 
         val impactWarning = priceImpact?.takeIf { it.severity != PriceImpactSeverity.Normal }
-        val sliderThumbColor = when (impactWarning?.severity) {
-            PriceImpactSeverity.Danger -> UIKit.colorScheme.accent.red
-            PriceImpactSeverity.Warning -> UIKit.colorScheme.accent.orange
+        val sliderThumbColor = when {
+            domainRisk != null -> UIKit.colorScheme.accent.red
+            impactWarning?.severity == PriceImpactSeverity.Danger -> UIKit.colorScheme.accent.red
+            impactWarning?.severity == PriceImpactSeverity.Warning -> UIKit.colorScheme.accent.orange
             else -> UIKit.colorScheme.buttonPrimary.primaryBackground
+        }
+        val proceed: () -> Unit = {
+            when {
+                isMax == true -> showSendAllConfirmation = true
+                impactWarning != null -> showPriceImpactWarning = true
+                else -> sign()
+            }
+        }
+
+        val domainRiskText = when (domainRisk) {
+            DomainStatus.Scam -> stringResource(Localization.domain_status_scam)
+            DomainStatus.Invalid -> stringResource(Localization.domain_status_invalid)
+            DomainStatus.Valid,
+            DomainStatus.Unknown,
+            null -> null
+        }
+        if (domainRiskText != null) {
+            Text(
+                text = domainRiskText,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 32.dp, top = 16.dp, end = 32.dp),
+                color = UIKit.colorScheme.accent.red,
+                style = UIKit.typography.body2,
+                textAlign = TextAlign.Center,
+            )
         }
 
         MoonSlideConfirmation(
@@ -262,7 +290,7 @@ private fun ConfirmContent(
                 else -> Modifier.shimmer(shimmer)
             },
             sliderState = sliderState,
-            error = error?.errorText,
+            error = error?.takeUnless { feeUnavailable }?.errorText,
             thumbColor = sliderThumbColor,
             title = when (confirmationState) {
                 MoonSlideConfirmationState.Slider,
@@ -272,17 +300,31 @@ private fun ConfirmContent(
             },
             subtitle = stringResource(Localization.swipe_right),
             buttonTitle = stringResource(Localization.try_again),
-            enabled = tx != null && sendingState == SendingState.None && !feeInsufficient && !feeQuoting && !outcomeUnknown,
+            enabled = tx != null && sendingState == SendingState.None && !feeInsufficient && !feeQuoting && !mayHaveBeenSent && !feeUnavailable,
             onConfirm = {
                 when {
-                    isMax == true -> showSendAllConfirmation = true
-                    impactWarning != null -> showPriceImpactWarning = true
-                    else -> sign()
+                    domainRisk != null -> showDomainRiskWarning = true
+                    else -> proceed()
                 }
             },
-            onClick = retry.takeIf { !outcomeUnknown },
+            onClick = retry.takeIf { retryable },
             onDone = {},
         )
+
+        if (showDomainRiskWarning && domainRisk != null) {
+            MoonDomainRiskBottomSheet(
+                status = domainRisk,
+                confirmText = stringResource(Localization.confirm_anyway),
+                onConfirm = {
+                    showDomainRiskWarning = false
+                    proceed()
+                },
+                onClose = {
+                    showDomainRiskWarning = false
+                    scope.launch { sliderState.reset() }
+                },
+            )
+        }
 
         if (showPriceImpactWarning && impactWarning != null) {
             PriceImpactWarningDialog(
@@ -329,8 +371,34 @@ private fun ConfirmContent(
 }
 
 @Composable
-internal fun FeeCell(fee: Pair<String, String?>, onClick: (() -> Unit)? = null) {
-    MoonItemDivider()
+internal fun OnUncovered(action: () -> Unit) {
+    val isTopFragment = LocalIsTopFragment.current
+    var wasCovered by remember { mutableStateOf(false) }
+    LaunchedEffect(isTopFragment) {
+        if (!isTopFragment) {
+            wasCovered = true
+        } else if (wasCovered) {
+            wasCovered = false
+            action()
+        }
+    }
+}
+
+@Composable
+internal fun FeeCell(
+    fee: Pair<String, String?>,
+    onClick: (() -> Unit)? = null,
+    fiatFirst: Boolean,
+    subtitle: String?,
+    divider: Boolean = true,
+) {
+    val (value, detail) = when (fiatFirst) {
+        true -> (fee.second ?: fee.first) to subtitle
+        false -> fee
+    }
+    if (divider) {
+        MoonItemDivider()
+    }
     MoonPropertyBigCell(
         title = {
             Column {
@@ -348,11 +416,72 @@ internal fun FeeCell(fee: Pair<String, String?>, onClick: (() -> Unit)? = null) 
         },
         content = {
             MoonPropertyValue(
-                title = fee.first,
-                subtitle = fee.second,
+                title = value,
+                subtitle = detail,
             )
         },
         onClick = onClick,
+    )
+}
+
+@Composable
+fun TxFeeRow(
+    feature: BaseTransactionConfirmFeature,
+    tx: PendingTransaction,
+    onOpenBattery: (walletId: String, from: BatteryNativeFrom) -> Unit,
+    fiatFirst: Boolean = false,
+    subtitle: String? = null,
+) {
+    if (tx.fee.options.isNotEmpty()) {
+        TxFeeCell(
+            feature = feature,
+            tx = tx,
+            onOpenBattery = onOpenBattery,
+            fiatFirst = fiatFirst,
+            subtitle = subtitle,
+        )
+        return
+    }
+    val fee = tx.fee()
+    if (fee != null) {
+        FeeCell(fee, fiatFirst = fiatFirst, subtitle = subtitle)
+    } else if (tx.isFeeUnavailable) {
+        UnavailableFeeCell(onRetry = { feature.retry() })
+    }
+}
+
+@Composable
+fun UnavailableFeeCell(onRetry: () -> Unit, divider: Boolean = true) {
+    if (divider) {
+        MoonItemDivider()
+    }
+    MoonPropertyBigCell(
+        title = {
+            MoonLargeItemSubtitle(
+                text = stringResource(Localization.network_fee),
+                color = UIKit.colorScheme.text.secondary,
+            )
+        },
+        content = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MoonItemTitle(
+                    text = stringResource(Localization.fee_unavailable),
+                    color = UIKit.colorScheme.text.secondary,
+                )
+                MoonItemTitle(
+                    text = stringResource(Localization.retry),
+                    color = UIKit.colorScheme.text.accent,
+                )
+                MoonItemIcon(
+                    painter = painterResource(UIKitIcon.ic_refresh_16),
+                    color = UIKit.colorScheme.text.accent,
+                )
+            }
+        },
+        onClick = onRetry,
     )
 }
 
@@ -360,11 +489,13 @@ internal fun FeeCell(fee: Pair<String, String?>, onClick: (() -> Unit)? = null) 
  * Fee row when there is a method to pick: value, then the paying asset as the tappable part.
  */
 @Composable
-private fun FeeSelectorCell(
+internal fun FeeSelectorCell(
     value: String,
     symbol: String,
     enabled: Boolean,
     onClick: () -> Unit,
+    subtitle: String?,
+    divider: Boolean = true,
 ) {
     val symbolColor = if (enabled) {
         UIKit.colorScheme.text.accent
@@ -372,7 +503,9 @@ private fun FeeSelectorCell(
         UIKit.colorScheme.text.secondary
     }
 
-    MoonItemDivider()
+    if (divider) {
+        MoonItemDivider()
+    }
     MoonPropertyBigCell(
         title = {
             MoonLargeItemSubtitle(
@@ -383,6 +516,7 @@ private fun FeeSelectorCell(
         content = {
             MoonPropertyValue(
                 title = value,
+                subtitle = subtitle,
                 content = {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -408,10 +542,12 @@ private fun FeeSelectorCell(
 }
 
 @Composable
-private fun FeeQuotingCell() {
+fun FeeQuotingCell(divider: Boolean = true) {
     val phase = rememberShimmerPhase()
 
-    MoonItemDivider()
+    if (divider) {
+        MoonItemDivider()
+    }
     MoonPropertyBigCell(
         title = {
             MoonLargeItemSubtitle(
@@ -439,29 +575,27 @@ internal fun TxFeeCell(
     feature: BaseTransactionConfirmFeature,
     tx: PendingTransaction,
     onOpenBattery: (walletId: String, from: BatteryNativeFrom) -> Unit,
+    fiatFirst: Boolean,
+    subtitle: String?,
 ) {
     val pickedFeeId by feature.pickedFeeId.collectAsState()
     val committed by feature.txCommitted.collectAsState()
     val quoting by feature.feeQuoting.collectAsState()
-    if (quoting) {
-        FeeQuotingCell()
-        return
-    }
     val selected = remember(tx, pickedFeeId) {
         tx.fee.resolve(pickedFeeId)
     } ?: return
-    val pickerAvailable = tx.fee.isPickerAvailable
     var showPicker by remember { mutableStateOf(false) }
 
-    if (pickerAvailable) {
-        FeeSelectorCell(
+    when {
+        quoting -> FeeQuotingCell()
+        tx.fee.isPickerAvailable -> FeeSelectorCell(
             value = selected.quotedValue(),
             symbol = selected.shortTitle(),
             enabled = !committed,
             onClick = { showPicker = true },
+            subtitle = subtitle,
         )
-    } else {
-        FeeCell(fee = selected.formattedValue())
+        else -> FeeCell(fee = selected.formattedValue(), fiatFirst = fiatFirst, subtitle = subtitle)
     }
 
     if (showPicker && !committed) {
@@ -483,7 +617,7 @@ internal fun TxFeeCell(
 }
 
 @Composable
-internal fun PriceImpactCell(priceImpact: PriceImpact) {
+fun PriceImpactCell(priceImpact: PriceImpact, onClick: (() -> Unit)? = null) {
     val impactColor = when (priceImpact.severity) {
         PriceImpactSeverity.Danger -> UIKit.colorScheme.accent.red
         PriceImpactSeverity.Warning -> UIKit.colorScheme.accent.orange
@@ -519,6 +653,7 @@ internal fun PriceImpactCell(priceImpact: PriceImpact) {
                 )
             }
         },
+        onClick = onClick,
     )
 }
 
@@ -550,47 +685,15 @@ internal fun ColumnScope.PriceImpactWarningContent(
     onConfirm: () -> Unit,
     onClose: () -> Unit,
 ) {
-    MoonTopAppBarSimple(
-        title = "",
-        actionIconRes = UIKitIcon.ic_close_16,
-        onActionClick = onClose,
-        backgroundColor = Color.Transparent,
-    )
-
-    Spacer(modifier = Modifier.height(20.dp))
-
-    MoonItemIcon(
-        painter = when (severity) {
-            PriceImpactSeverity.Danger -> painterResource(UIKitIcon.ic_exclamationmark_triangle_colorful_84)
-            else -> painterResource(UIKitIcon.ic_exclamationmark_circle_colorful_84)
-        },
-        color = Color.Unspecified,
-        size = 66.dp,
-    )
-
-    MoonTextContentCell(
+    SwapWarningContent(
+        danger = severity == PriceImpactSeverity.Danger,
         title = stringResource(Localization.price_impact_too_high),
-        description = stringResource(Localization.price_impact_too_high_description),
+        text = stringResource(Localization.price_impact_too_high_description),
+        confirmText = stringResource(Localization.swap_at_changed_price),
+        iconSize = 66.dp,
+        onConfirm = onConfirm,
+        onClose = onClose,
     )
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    MoonButtonCell(
-        onClick = onConfirm,
-        text = stringResource(Localization.swap_at_changed_price),
-        colors = when (severity) {
-            PriceImpactSeverity.Danger -> ButtonColorsRed
-            else -> ButtonColorsOrange
-        },
-    )
-
-    MoonButtonCell(
-        onClick = onClose,
-        text = stringResource(Localization.back_to_swap),
-        colors = ButtonColorsSecondary,
-    )
-
-    Spacer(modifier = Modifier.height(16.dp))
 }
 
 @Composable

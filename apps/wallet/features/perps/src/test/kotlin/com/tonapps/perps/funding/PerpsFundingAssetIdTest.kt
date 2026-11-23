@@ -43,8 +43,23 @@ class PerpsFundingAssetIdTest {
     }
 
     @Test
+    fun usdtIsTheOneJettonOnTonThatIsASourceAndNoWithdrawalDestination() {
+        val usdtTon = checkNotNull(PerpsFundingAssetId.parse(PerpsFundingAssetId.USDT_TON))
+        assertFalse(usdtTon.isCoin)
+        assertFalse(usdtTon.isEvm)
+        assertEquals("ton/mainnet", usdtTon.chainId)
+        assertEquals(PerpsFundingAssetId.USDT_TON_MASTER, usdtTon.tokenAddress)
+        assertNotNull(PerpsFundingAssetId.parse("ton/mainnet/jetton/0:B113A994B5024A16719F69139328EB759596C38A25F59028B146FECDC3621DFE"))
+
+        assertNull(PerpsFundingAssetId.parseDestination(PerpsFundingAssetId.USDT_TON))
+        assertNull(PerpsFundingAssetId.parse("ton/mainnet/jetton/0:9f8e7d6c5b4a39281706f5e4d3c2b1a09f8e7d6c5b4a39281706f5e4d3c2b1a0"))
+        assertNull(PerpsFundingAssetId.parse("ton/mainnet/jetton/EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"))
+        assertNull(PerpsFundingAssetId.parse("ton/mainnet/erc20/" + PerpsFundingAssetId.USDT_TON_MASTER))
+        assertNull(PerpsFundingAssetId.parse("eth/mainnet/jetton/" + PerpsFundingAssetId.USDT_TON_MASTER))
+    }
+
+    @Test
     fun whatTheBackendDoesNotQuoteIsNoSource() {
-        assertNull(PerpsFundingAssetId.parse("ton/mainnet/jetton/0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"))
         assertNull(PerpsFundingAssetId.parse("btc/mainnet/brc20/ordi"))
         assertNull(PerpsFundingAssetId.parse("sol/mainnet/coin"))
         assertNull(PerpsFundingAssetId.parse("bsc/mainnet/erc20/0x55d398326f99059ff775485246999027b3197955"))

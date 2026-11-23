@@ -1,0 +1,300 @@
+openapi: 3.0.3
+info:
+  title: Keeper Earn Backend
+  description: |
+    Data for the Keeper Earn native screens: home carousel, "your vaults" block and the asset page badge.
+    Vault data comes from Vaults.fyi; the Vaults.fyi API key stays on the backend.
+    Deposit and withdraw are out of scope: the embedded Vaults.fyi UI calls its transaction API itself.
+  version: 1.0.0
+# Every path carries the `/keeper-earn` service prefix, so a path here is
+# the URL a client calls. This file is published to Sauron verbatim, so keep notes like this
+# one in comments: `info.description` is shown to API consumers.
+tags:
+  - name: vaults
+    description: Vault catalog
+  - name: wallets
+    description: Earn balance and positions of a wallet
+paths:
+  /keeper-earn/public-api/v1/vaults:
+    get:
+      operationId: getVaults
+      summary: Vaults for the carousel, by id, or by underlying asset
+      description: |
+        Without `asset_ids` and `underlying_asset_ids`: the featured list for the home carousel, in the order set in
+        backend config; empty when none is set.
+        With `underlying_asset_ids`: every featured vault over those underlying assets,
+        sorted by `apy` descending, ties by `asset_id` ascending. The order is guaranteed, so the asset page
+        badge needs no client-side ranking: with one underlying asset it is `vaults[0]` (no badge when `vaults` is
+        empty); with several, the order is across the whole list, so take the first vault for each `asset.asset_id`.
+        The badge APY and the link (`vaults_fyi`) then refer to the same vault.
+        With `asset_ids`: those vaults in the requested order, featured or not; unknown ids are skipped.
+        `asset_ids` and `underlying_asset_ids` cannot be combined.
+      tags: [ vaults ]
+      security: [ ]
+      parameters:
+        - $ref: '#/components/parameters/CurrenciesQuery'
+        - $ref: '#/components/parameters/AssetIdsQuery'
+        - $ref: '#/components/parameters/UnderlyingAssetIdsQuery'
+      responses:
+        '200':
+          description: Vaults
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vaults'
+        default:
+          $ref: '#/components/responses/Error'
+  /keeper-earn/public-api/v1/wallets/{wallet_id}/balance:
+    get:
+      operationId: getWalletBalance
+      summary: Earn balance and positions of a wallet
+      description: |
+        Positions of the wallet's EVM address across the supported chains. Requires the device access token and
+        the wallet proof for `wallet_id` (`X-Wallet-ID`, `X-Wallet-Authorization`); without a valid proof the
+        answer is 403 `wallet_proof_required`. An empty `positions` array means the wallet has no Earn positions.
+        When the positions cannot be loaded, the last loaded ones are served if they are at most two days old,
+        valued at current prices; `updated_at` tells when they were loaded. Otherwise a failure is an error
+        response, never an empty list.
+      tags: [ wallets ]
+      security:
+        - deviceJWT: [ ]
+      parameters:
+        - $ref: '#/components/parameters/WalletIdPath'
+        - $ref: '#/components/parameters/CurrenciesQuery'
+        - $ref: '#/components/parameters/RefreshQuery'
+        - $ref: '#/components/parameters/WalletIdHeader'
+        - $ref: '#/components/parameters/WalletAuthorizationHeader'
+      responses:
+        '200':
+          description: Earn balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        default:
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    deviceJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Device access token issued by multichain-backend.
+  parameters:
+    # Required in practice, optional in the schema so that a missing proof answers 403
+    # wallet_proof_required, as multichain-backend does, rather than a generic 400.
+    WalletIdHeader:
+      name: X-Wallet-ID
+      in: header
+      required: false
+      description: Wallet id the proof is for; must equal the path `wallet_id`.
+      schema:
+        type: string
+    WalletAuthorizationHeader:
+      name: X-Wallet-Authorization
+      in: header
+      required: false
+      description: Wallet proof over the access token, as for multichain-backend.
+      schema:
+        type: string
+    WalletIdPath:
+      name: wallet_id
+      in: path
+      required: true
+      description: Wallet id, as in multichain-backend.
+      schema:
+        $ref: '#/components/schemas/WalletId'
+    CurrenciesQuery:
+      name: currencies
+      in: query
+      required: true
+      description: |
+        Currencies for the `*_fiat` fields, case-insensitive: fiat codes and the crypto codes `ton` (alias `gram`)
+        and `btc`. Keys in the response are upper-case.
+      explode: false
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 50
+        items:
+          type: string
+          minLength: 1
+          maxLength: 10
+        example: [ usd, rub, btc, gram ]
+    RefreshQuery:
+      name: refresh
+      in: query
+      required: false
+      description: |
+        Loaded positions are reused for a short time. `true` loads them again, except that a refresh within
+        5 seconds of the previous load gets the same answer; send it on pull-to-refresh and after a deposit or
+        withdrawal. When loading fails or is slow, stored positions are served: compare `updated_at`.
+      schema:
+        type: boolean
+        default: false
+    AssetIdsQuery:
+      name: asset_ids
+      in: query
+      required: false
+      description: Vault ids (share token asset ids) to return, in this order.
+      explode: false
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 50
+        items:
+          $ref: '#/components/schemas/AssetId'
+        example: [ eth/mainnet/erc20/0xbeef01735c132ada46aa9aa4c54623caa92a64cb ]
+    UnderlyingAssetIdsQuery:
+      name: underlying_asset_ids
+      in: query
+      required: false
+      description: |
+        Underlying asset ids (`vault.asset.asset_id`) for the asset page badge. The response is sorted by `apy`
+        descending: the first vault for an underlying asset is its best one.
+      explode: false
+      schema:
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          $ref: '#/components/schemas/AssetId'
+        example: [ eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 ]
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    WalletId:
+      type: string
+      pattern: '^[a-z2-7]{36}$'
+    AssetId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: |
+        Universal asset id `chain/network/type[/address]`, EVM addresses lower-case
+        (`eth/mainnet/coin`, `eth/mainnet/erc20/0x...`, `bsc/mainnet/bep20/0x...`). Input is matched case-insensitively.
+    FiatValue:
+      type: object
+      additionalProperties:
+        type: string
+      description: |
+        Amount per requested currency, upper-case keys. A currency without a rate is omitted; when no requested
+        currency has a rate, the amount comes in `USD`.
+      example: { USD: "1234.56", RUB: "101234.00" }
+    AssetInfo:
+      type: object
+      required: [ asset_id, name, symbol, decimals, image ]
+      properties:
+        asset_id:
+          $ref: '#/components/schemas/AssetId'
+        name:
+          type: string
+        symbol:
+          type: string
+        decimals:
+          type: integer
+        image:
+          type: string
+          description: Image URL; empty when unknown.
+    VaultsFyiRef:
+      type: object
+      description: Identifies the vault in the embedded Vaults.fyi UI.
+      required: [ network, vault_id ]
+      properties:
+        network:
+          type: string
+          example: mainnet
+        vault_id:
+          type: string
+          example: "0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB"
+    Vault:
+      type: object
+      required: [ asset_id, symbol, name, asset, protocol_name, protocol_logo, apy, tvl_fiat, score, vaults_fyi ]
+      properties:
+        asset_id:
+          $ref: '#/components/schemas/AssetId'
+        symbol:
+          type: string
+          description: Vault share token symbol.
+          example: steakUSDC
+        name:
+          type: string
+          description: Vault name.
+        asset:
+          $ref: '#/components/schemas/AssetInfo'
+        protocol_name:
+          type: string
+          example: Morpho
+        protocol_logo:
+          type: string
+          description: Protocol logo URL; empty when unknown.
+        apy:
+          type: number
+          format: double
+          description: Total APY (base + rewards) as a fraction, 0.0534 = 5.34%. The APY interval is backend config (7 days by default).
+          example: 0.0534
+        tvl_fiat:
+          $ref: '#/components/schemas/FiatValue'
+        score:
+          type: number
+          format: double
+          description: Vaults.fyi vault score, 0-100.
+        vaults_fyi:
+          $ref: '#/components/schemas/VaultsFyiRef'
+    Vaults:
+      type: object
+      required: [ vaults ]
+      properties:
+        vaults:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vault'
+    Position:
+      type: object
+      description: |
+        `earned_fiat` is the position's lifetime earnings from Vaults.fyi; it is "0" in every requested currency
+        when there are none, when Vaults.fyi does not track the position's history, or when its lookup failed.
+      required: [ vault, balance, balance_fiat, earned_fiat ]
+      properties:
+        vault:
+          $ref: '#/components/schemas/Vault'
+        balance:
+          type: string
+          description: Position value in the underlying asset, integer in `vault.asset.decimals` units.
+        balance_fiat:
+          $ref: '#/components/schemas/FiatValue'
+        earned_fiat:
+          $ref: '#/components/schemas/FiatValue'
+    Balance:
+      type: object
+      required: [ total_fiat, positions, updated_at ]
+      properties:
+        total_fiat:
+          $ref: '#/components/schemas/FiatValue'
+        updated_at:
+          type: string
+          format: date-time
+          description: When the position amounts were loaded.
+        positions:
+          type: array
+          description: |
+            One item per vault, largest first. A position in a vault outside the backend's vault snapshot
+            (very small or brand-new vaults) carries 0 for `vault.tvl_fiat` and `vault.score`.
+          items:
+            $ref: '#/components/schemas/Position'
+    Error:
+      type: object
+      required: [ code, message ]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        # Free-form so apierr.WithPayload survives both write paths. Narrow it to a oneOf
+        # of concrete shapes as you add errors that carry detail.
+        payload: { }

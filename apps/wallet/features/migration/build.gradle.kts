@@ -27,6 +27,7 @@ dependencies {
     implementation(projects.apps.wallet.data.account)
     implementation(projects.apps.wallet.data.backup)
     implementation(projects.apps.wallet.data.multichain.wallet)
+    implementation(projects.apps.wallet.data.passcode)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.rates)
     implementation(projects.apps.wallet.data.events)

@@ -98,7 +98,9 @@ data class AccountDetailsEntity(
 
         private fun resolveVersionByInterface(interfaces: List<String>?): WalletVersion {
             interfaces ?: return WalletVersion.UNKNOWN
-            return if (interfaces.contains("wallet_v5_beta")) {
+            return if (interfaces.contains("walletTg")) {
+                WalletVersion.WALLET_TG
+            } else if (interfaces.contains("wallet_v5_beta")) {
                 WalletVersion.V5BETA
             } else if (interfaces.contains("wallet_v5") || interfaces.contains("wallet_v5r1")) {
                 WalletVersion.V5R1

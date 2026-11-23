@@ -40,139 +40,6 @@ abstract class BaseWalletContract(
     val publicKey: PublicKeyEd25519
 ) {
 
-    companion object {
-        const val DEFAULT_WORKCHAIN = 0
-        const val DEFAULT_WALLET_ID: Int = 698983191
-
-        fun create(
-            publicKey: PublicKeyEd25519,
-            v: String,
-            networkGlobalId: Int
-        ): BaseWalletContract {
-            return when (v.lowercase()) {
-                "v3r1" -> WalletV3R1Contract(publicKey = publicKey)
-                "v3r2" -> WalletV3R2Contract(publicKey = publicKey)
-                "v4r1" -> WalletV4R1Contract(publicKey = publicKey)
-                "v4r2" -> WalletV4R2Contract(publicKey = publicKey)
-                "v5beta" -> WalletV5BetaContract(
-                    publicKey = publicKey,
-                    networkGlobalId = networkGlobalId
-                )
-                "v5r1" -> WalletV5R1Contract(
-                    publicKey = publicKey,
-                    networkGlobalId = networkGlobalId
-                )
-                else -> throw IllegalArgumentException("Unsupported contract version: $v")
-            }
-        }
-
-        fun resolveVersion(
-            publicKey: PublicKeyEd25519,
-            accountId: String,
-            network: TonNetwork
-        ): WalletVersion {
-            return resolveVersion(publicKey, accountId, network.value)
-        }
-
-        fun resolveVersion(
-            publicKey: PublicKeyEd25519,
-            accountId: String,
-            networkGlobalId: Int
-        ): WalletVersion {
-            val v4r2 = WalletV4R2Contract(publicKey = publicKey).address.toAccountId()
-            if (accountId.equalsAddress(v4r2)) {
-                return WalletVersion.V4R2
-            }
-            val v5r1 = WalletV5R1Contract(
-                publicKey = publicKey,
-                networkGlobalId = networkGlobalId
-            ).address.toAccountId()
-            if (accountId.equalsAddress(v5r1)) {
-                return WalletVersion.V5R1
-            }
-            val v5beta = WalletV5BetaContract(
-                publicKey = publicKey,
-                networkGlobalId = networkGlobalId
-            ).address.toAccountId()
-            if (accountId.equalsAddress(v5beta)) {
-                return WalletVersion.V5BETA
-            }
-            val v4r1 = WalletV4R1Contract(publicKey = publicKey).address.toAccountId()
-            if (accountId.equalsAddress(v4r1)) {
-                return WalletVersion.V4R1
-            }
-
-            val v3r2 = WalletV3R2Contract(publicKey = publicKey).address.toAccountId()
-            if (accountId.equalsAddress(v3r2)) {
-                return WalletVersion.V3R2
-            }
-
-            val v3r1 = WalletV3R1Contract(publicKey = publicKey).address.toAccountId()
-            if (accountId.equalsAddress(v3r1)) {
-                return WalletVersion.V3R1
-            }
-
-            return WalletVersion.UNKNOWN
-        }
-
-        fun create(
-            publicKey: PublicKeyEd25519,
-            v: String,
-            network: TonNetwork
-        ): BaseWalletContract {
-            return create(
-                publicKey = publicKey,
-                v = v,
-                networkGlobalId = network.value
-            )
-        }
-
-        fun createIntMsg(gift: WalletTransfer): MessageRelaxed<Cell> {
-            val info = when (val dest = gift.destination) {
-                is MsgAddressInt -> {
-                    CommonMsgInfoRelaxed.IntMsgInfoRelaxed(
-                        ihrDisabled = true,
-                        bounce = gift.bounceable,
-                        bounced = false,
-                        src = AddrNone,
-                        dest = dest,
-                        value = gift.coins,
-                        ihrFee = Coins(),
-                        fwdFee = Coins(),
-                        createdLt = 0u,
-                        createdAt = 0u
-                    )
-                }
-
-                is MsgAddressExt -> {
-                    CommonMsgInfoRelaxed.ExtOutMsgInfoRelaxed(
-                        src = AddrNone,
-                        dest = dest,
-                        createdLt = 0u,
-                        createdAt = 0u
-                    )
-                }
-            }
-
-            val init = Maybe.of(gift.messageData.stateInit?.let {
-                Either.of<StateInit, CellRef<StateInit>>(null, it)
-            })
-
-            val bodyCell = gift.messageData.body
-            val body = if (bodyCell.isEmpty()) {
-                Either.of<Cell, CellRef<Cell>>(Cell.empty(), null)
-            } else {
-                Either.of<Cell, CellRef<Cell>>(null, CellRef(cell = bodyCell, AnyTlbConstructor)) // TODO TONSDK
-            }
-
-            return MessageRelaxed(
-                info = info,
-                init = init,
-                body = body,
-            )
-        }
-    }
-
     val walletId = DEFAULT_WALLET_ID + workchain
 
     private val stateInit: StateInit by lazy {
@@ -191,15 +58,15 @@ abstract class BaseWalletContract(
         AddrStd(workchain, hash)
     }
 
+    abstract val features: WalletFeature
+
+    abstract val maxMessages: Int
+
     fun stateInitCell(): Cell {
         return CellBuilder.createCell {
             storeTlb(StateInit.tlbCodec(), stateInit)
         }
     }
-
-    abstract val features: WalletFeature
-
-    abstract val maxMessages: Int
 
     fun isSupportedFeature(feature: WalletFeature): Boolean {
         return features.contains(feature)
@@ -281,7 +148,9 @@ abstract class BaseWalletContract(
 
         val init = if (seqno == 0) {
             stateInit
-        } else null
+        } else {
+            null
+        }
 
         val maybeStateInit =
             Maybe.of(init?.let { Either.of<StateInit, CellRef<StateInit>>(null, CellRef(value = it, StateInit)) })
@@ -309,7 +178,9 @@ abstract class BaseWalletContract(
 
         val init = if (seqno == 0) {
             stateInit
-        } else null
+        } else {
+            null
+        }
 
         val maybeStateInit =
             Maybe.of(init?.let { Either.of<StateInit, CellRef<StateInit>>(null, CellRef(value = it, StateInit)) })
@@ -407,5 +278,150 @@ abstract class BaseWalletContract(
             )
         }
         return outMsgs
+    }
+
+    companion object {
+        const val DEFAULT_WORKCHAIN = 0
+        const val DEFAULT_WALLET_ID: Int = 698983191
+
+        fun create(
+            publicKey: PublicKeyEd25519,
+            v: String,
+            networkGlobalId: Int
+        ): BaseWalletContract {
+            return when (v.lowercase()) {
+                "v3r1" -> WalletV3R1Contract(publicKey = publicKey)
+                "v3r2" -> WalletV3R2Contract(publicKey = publicKey)
+                "v4r1" -> WalletV4R1Contract(publicKey = publicKey)
+                "v4r2" -> WalletV4R2Contract(publicKey = publicKey)
+                "v5beta" -> WalletV5BetaContract(
+                    publicKey = publicKey,
+                    networkGlobalId = networkGlobalId
+                )
+                "v5r1" -> WalletV5R1Contract(
+                    publicKey = publicKey,
+                    networkGlobalId = networkGlobalId
+                )
+                "wallettg" -> WalletTgContract(
+                    publicKey = publicKey,
+                    networkGlobalId = networkGlobalId
+                )
+                else -> throw IllegalArgumentException("Unsupported contract version: $v")
+            }
+        }
+
+        fun resolveVersion(
+            publicKey: PublicKeyEd25519,
+            accountId: String,
+            network: TonNetwork
+        ): WalletVersion {
+            return resolveVersion(publicKey, accountId, network.value)
+        }
+
+        fun resolveVersion(
+            publicKey: PublicKeyEd25519,
+            accountId: String,
+            networkGlobalId: Int
+        ): WalletVersion {
+            val v4r2 = WalletV4R2Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v4r2)) {
+                return WalletVersion.V4R2
+            }
+            val v5r1 = WalletV5R1Contract(
+                publicKey = publicKey,
+                networkGlobalId = networkGlobalId
+            ).address.toAccountId()
+            if (accountId.equalsAddress(v5r1)) {
+                return WalletVersion.V5R1
+            }
+            val v5beta = WalletV5BetaContract(
+                publicKey = publicKey,
+                networkGlobalId = networkGlobalId
+            ).address.toAccountId()
+            if (accountId.equalsAddress(v5beta)) {
+                return WalletVersion.V5BETA
+            }
+            val v4r1 = WalletV4R1Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v4r1)) {
+                return WalletVersion.V4R1
+            }
+
+            val v3r2 = WalletV3R2Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v3r2)) {
+                return WalletVersion.V3R2
+            }
+
+            val v3r1 = WalletV3R1Contract(publicKey = publicKey).address.toAccountId()
+            if (accountId.equalsAddress(v3r1)) {
+                return WalletVersion.V3R1
+            }
+
+            val walletTg = WalletTgContract(
+                publicKey = publicKey,
+                networkGlobalId = networkGlobalId
+            ).address.toAccountId()
+            if (accountId.equalsAddress(walletTg)) {
+                return WalletVersion.WALLET_TG
+            }
+
+            return WalletVersion.UNKNOWN
+        }
+
+        fun create(
+            publicKey: PublicKeyEd25519,
+            v: String,
+            network: TonNetwork
+        ): BaseWalletContract {
+            return create(
+                publicKey = publicKey,
+                v = v,
+                networkGlobalId = network.value
+            )
+        }
+
+        fun createIntMsg(gift: WalletTransfer): MessageRelaxed<Cell> {
+            val info = when (val dest = gift.destination) {
+                is MsgAddressInt -> {
+                    CommonMsgInfoRelaxed.IntMsgInfoRelaxed(
+                        ihrDisabled = true,
+                        bounce = gift.bounceable,
+                        bounced = false,
+                        src = AddrNone,
+                        dest = dest,
+                        value = gift.coins,
+                        ihrFee = Coins(),
+                        fwdFee = Coins(),
+                        createdLt = 0u,
+                        createdAt = 0u
+                    )
+                }
+
+                is MsgAddressExt -> {
+                    CommonMsgInfoRelaxed.ExtOutMsgInfoRelaxed(
+                        src = AddrNone,
+                        dest = dest,
+                        createdLt = 0u,
+                        createdAt = 0u
+                    )
+                }
+            }
+
+            val init = Maybe.of(gift.messageData.stateInit?.let {
+                Either.of<StateInit, CellRef<StateInit>>(null, it)
+            })
+
+            val bodyCell = gift.messageData.body
+            val body = if (bodyCell.isEmpty()) {
+                Either.of<Cell, CellRef<Cell>>(Cell.empty(), null)
+            } else {
+                Either.of<Cell, CellRef<Cell>>(null, CellRef(cell = bodyCell, AnyTlbConstructor)) // TODO TONSDK
+            }
+
+            return MessageRelaxed(
+                info = info,
+                init = init,
+                body = body,
+            )
+        }
     }
 }

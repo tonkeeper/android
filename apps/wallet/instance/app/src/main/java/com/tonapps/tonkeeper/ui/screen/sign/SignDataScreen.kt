@@ -28,6 +28,7 @@ import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.resolveColor
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import org.koin.core.parameter.parametersOf
@@ -215,6 +216,11 @@ class SignDataScreen(wallet: WalletEntity): BaseWalletScreen<ScreenContext.Walle
             payload: SignDataRequestPayload
         ): TONProof.Result {
             val activity = context.activity ?: throw IllegalArgumentException("Context must be an Activity")
+            if (wallet.isMultichainLedger) {
+                val message = context.getString(Localization.ledger_operation_not_supported)
+                context.showToast(message)
+                throw BridgeException(message = message)
+            }
             val fragment = newInstance(wallet, appUrl, payload)
             val result = activity.addForResult(fragment)
             if (result.containsKey(ERROR)) {

@@ -27,7 +27,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.math.BigInteger
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -263,7 +262,7 @@ class LegacySwapAccountsImpl(
         SigningWallet.Keys(
             mapOf(
                 Chain.Ton.Mainnet to ton.key.toByteArray(),
-                Chain.Tron.Mainnet to tron.toKeyBytes(),
+                Chain.Tron.Mainnet to tron,
             )
         )
     }
@@ -287,16 +286,3 @@ class LegacySwapAccountsImpl(
         val REFRESH_TICKS = listOf(3.seconds, 10.seconds, 30.seconds)
     }
 }
-
-// The 32-byte big-endian secp256k1 scalar: BigInteger.toByteArray() adds a sign byte to a key with
-// its top bit set and drops leading zero bytes.
-internal fun BigInteger.toKeyBytes(): ByteArray {
-    val raw = toByteArray()
-    return when {
-        raw.size == KEY_SIZE -> raw
-        raw.size > KEY_SIZE -> raw.copyOfRange(raw.size - KEY_SIZE, raw.size)
-        else -> ByteArray(KEY_SIZE - raw.size) + raw
-    }
-}
-
-private const val KEY_SIZE = 32

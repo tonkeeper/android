@@ -29,11 +29,13 @@ data class GaslessV2Fee(
     val `data`: GaslessV2FeeData
 ) {
     /**
-     * Values: VALUE,unknown
+     * Values: VALUE,gas,eip1559,unknown
      */
     @Serializable(with = TypeSerializer::class)
     enum class Type(val value: String) {
         @SerialName(value = "value") VALUE("value"),
+        @SerialName(value = "gas") gas("gas"),
+        @SerialName(value = "eip1559") eip1559("eip1559"),
         @SerialName(value = "unknown") unknown("unknown");
     }
 

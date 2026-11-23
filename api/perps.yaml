@@ -31,7 +31,48 @@ tags:
   description: Order book depth, truncated to what a given notional consumes.
 - name: integrator
   description: Partner attribution — what the client signs into its transactions so fees accrue here.
+- name: client-metrics
+  description: Measurements the client takes itself and reports in the background.
 paths:
+  /client-metrics:
+    post:
+      tags:
+      - client-metrics
+      operationId: recordClientMetrics
+      summary: Record measurements taken on the client
+      description: >-
+        Stores measurements the client took itself, such as how long the user waited for a position
+        to open. Send them in the background, in batches of up to 100. Each entry has a type, and the
+        type decides its fields. An unknown type refuses the whole batch with 400: check the list
+        below before sending a new one.
+
+        Nothing else depends on this call, and it changes nothing for the account. A failed call can
+        be sent again as it was: an entry whose id the wallet already sent is skipped, so a repeat is
+        stored once. The stored rows are the record; the server's latency metric is best effort and
+        can miss an entry whose first send was stored but not answered.
+      security:
+      - deviceJWT: []
+        walletAuth: []
+        xWalletId: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordClientMetricsRequest'
+      responses:
+        '204':
+          description: Stored.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /account:
     get:
       tags:
@@ -261,7 +302,9 @@ paths:
             or balance for it, the same transaction can pass once funds are added or a position is
             closed; integrator_not_approved — the order carries an integrator fee this account has
             not approved, or the approval expired: send ApproveIntegrator with the values from
-            GET /integrator, then sign the order again; lighter_rejected — the venue refused it for a
+            GET /integrator, then sign the order again; withdrawal_rate_limited — the venue allows only
+            a few withdrawals per account in a window (now 3 per 2 hours), the same withdrawal can pass
+            later, repeating it now will not help; lighter_rejected — the venue refused it for a
             reason this service cannot yet name. Plus the request-shaped ones: empty_batch,
             malformed_tx_info, foreign_account, integrator_fee_mismatch.
 
@@ -384,6 +427,9 @@ paths:
 
         Spot maximums are always zero. This service trades perpetuals, and approving a spot maximum
         would grant a permission nothing here uses.
+
+        venue_taker_fee and venue_maker_fee are not signed: they are Lighter's own fee, which it charges
+        on top of ours. A client adds both to show the full fee.
       security:
       - deviceJWT: []
         walletAuth: []
@@ -675,6 +721,9 @@ paths:
         mean both "there are none" and "we could not look", and a client would offer to create a
         take-profit over one that already exists. It is false when the wallet has stored no token,
         when the stored one has expired, and when the token could not be decrypted.
+
+        close_estimate is what a market close gives now, by the live book. It is only here, not in
+        the list, because it reads the book for each position.
 
         The id comes from the list and is opaque. A market the wallet holds nothing open in is a 404,
         including one whose position has just closed -- Lighter keeps a zero-size row for it, and a
@@ -1316,9 +1365,12 @@ paths:
         the rest on.
 
         source_amount is a budget, not a price: the payloads returned never ask for more than it, and the
-        deposit is sized to what that amount buys after the aggregator's fees, which is why output.amount
-        and output.min_amount are equal -- the deposit is exact, and the slippage the quote allowed for
-        was on the source side. The whole of source_amount is rarely spent to the last unit.
+        deposit is sized to what that amount buys after the aggregator's fees. output.amount and
+        output.min_amount are always equal. A deposit through the gateway on Ethereum is exact, and the
+        slippage the quote allowed for was on the source side. A deposit into an existing account is
+        credited by the aggregator on Lighter directly, without the gateway, and is quoted at the
+        aggregator's floor: at least that much is credited. The whole of source_amount is rarely spent to
+        the last unit.
 
         A source asset that is already USDC on Ethereum needs no aggregator: the payloads are then the
         approval and the gateway call for the client's own Ethereum key, provider is `direct`, and
@@ -1623,7 +1675,8 @@ components:
         /account and /screens/portfolio answer 503 rather than report an account state they did not
         establish. /screens/trading and /activity degrade instead, because each has an answer that does
         not depend on the account -- the market data for one, this service's own deposit records for the
-        other -- and their private halves already come back empty on an upstream failure.
+        other. This covers only not knowing the account. Once the account is known, /screens/trading
+        answers 503 if Lighter fails to return the account or its orders.
     lighterAuth:
       type: apiKey
       in: header
@@ -1693,9 +1746,9 @@ components:
           type: integer
           format: int64
           description: >-
-            Unix seconds, signed inside the EIP-712 message. Not checked against the clock: a device
-            clock running behind would otherwise refuse every bind, and the signature binds nothing
-            without the operation proof. Travels with signature: one without the other is a 400.
+            Unix seconds, signed inside the EIP-712 message. A signature past it is refused with 400
+            signature_expired; this bounds a replay of an intercepted signature. Not capped: a far one
+            lets a retry reuse the signature. Travels with signature: one without the other is a 400.
           example: 1755600000
         signature:
           type: string
@@ -1836,9 +1889,9 @@ components:
           type: integer
           format: int64
           description: >-
-            Unix seconds, signed inside the EIP-712 message. Not checked against the clock: a device
-            clock running behind would otherwise refuse every bind, and the signature binds nothing
-            without the operation proof. Travels with signature: one without the other is a 400.
+            Unix seconds, signed inside the EIP-712 message. A signature past it is refused with 400
+            signature_expired; this bounds a replay of an intercepted signature. Not capped: a far one
+            lets a retry reuse the signature. Travels with signature: one without the other is a 400.
           example: 1755600000
         signature:
           type: string
@@ -1953,9 +2006,9 @@ components:
           type: integer
           format: int64
           description: >-
-            Unix seconds, signed inside the EIP-712 message. Not checked against the clock: a device
-            clock running behind would otherwise refuse every bind, and the signature binds nothing
-            without the operation proof. Travels with signature: one without the other is a 400.
+            Unix seconds, signed inside the EIP-712 message. A signature past it is refused with 400
+            signature_expired; this bounds a replay of an intercepted signature. Not capped: a far one
+            lets a retry reuse the signature. Travels with signature: one without the other is a 400.
           example: 1755600000
         signature:
           type: string
@@ -2038,6 +2091,13 @@ components:
             refusal refuses all of them. More than fifty is refused here as batch_not_accepted.
           items:
             $ref: '#/components/schemas/SignedTransaction'
+        operation_id:
+          type: string
+          description: >-
+            The client's id of the operation the request carries out. A withdrawal sent with it is
+            stored with it and names it in the push that completes it, so the client can match that
+            push to its own record.
+          example: 4b0c3f7e-5d1a-4c8e-9f3b-2a6d7e8f9a0b
     SentTransaction:
       type: object
       required:
@@ -2367,6 +2427,18 @@ components:
             How far ahead of now the approval_expiry signed into ApproveIntegrator should sit, in
             milliseconds. Zero alongside a zero account index means there is nothing to approve.
           example: 31536000000
+        venue_taker_fee:
+          type: integer
+          description: >-
+            Lighter's own taker fee for the caller's account tier, in millionths, charged on top of
+            integrator_taker_fee. For display only, never signed. Read from Lighter's fee table for the
+            last tier this service saw, without volume or staking discounts. Absent while the tier is
+            not known.
+          example: 50
+        venue_maker_fee:
+          type: integer
+          description: Lighter's own maker fee for the caller's account tier, as venue_taker_fee.
+          example: 50
     Market:
       type: object
       description: A perpetual market and its live stats. All monetary/price/size fields are human-unit
@@ -2575,6 +2647,53 @@ components:
             in percentage points cut toward zero. A trigger at the price the position is counted
             at projects its roi_pct. Empty when the leverage cannot be derived.
           example: '60.93'
+    OrderAutoCloseLeg:
+      type: object
+      description: >-
+        A take-profit or stop-loss that waits for its order to fill. It has no size: it closes what
+        the order filled.
+      properties:
+        order_index:
+          type: integer
+          format: int64
+          description: >-
+            Lighter's number for the leg. Use it with `market_index` to cancel or change the leg.
+          example: 562953677753528
+        client_order_index:
+          type: integer
+          format: int64
+          description: >-
+            Number chosen by whoever created the leg. Zero if nobody chose one.
+          example: 0
+        trigger_price:
+          type: string
+          description: Price that fires the leg.
+          example: '93207.4'
+        price:
+          type: string
+          description: Price that Lighter keeps with the trigger. A market leg has it too.
+          example: '88547.0'
+        order_type:
+          $ref: '#/components/schemas/OrderType'
+        valid_to:
+          type: integer
+          format: int64
+          nullable: true
+          description: Expiry as a unix timestamp in seconds; null means good-till-cancel.
+          example: 1795772370
+    OrderAutoClose:
+      type: object
+      description: Take-profit and stop-loss placed with an order. A leg is null if the order has
+        none.
+      properties:
+        take_profit:
+          allOf:
+          - $ref: '#/components/schemas/OrderAutoCloseLeg'
+          nullable: true
+        stop_loss:
+          allOf:
+          - $ref: '#/components/schemas/OrderAutoCloseLeg'
+          nullable: true
     PositionAutoClose:
       type: object
       description: The take-profit and stop-loss legs attached to a position. A leg is null when the
@@ -2606,6 +2725,50 @@ components:
           - $ref: '#/components/schemas/PositionAutoClose'
           nullable: true
           description: The legs, or null when there are none -- or when auto_close_known is false.
+        close_estimate:
+          allOf:
+          - $ref: '#/components/schemas/PositionCloseEstimate'
+          nullable: true
+          description: What a market close of the whole position gives now. Null if the book is
+            unavailable or too thin.
+    PositionCloseEstimate:
+      type: object
+      description: >-
+        A market close of the whole position at the live book: a long sells to the bids, a short buys
+        from the asks. This is what the user gets. The position's unrealized_pnl and roi_pct use the
+        mark (the mid on RWA markets), like Lighter, so they differ by about half the spread. Money is
+        in USDC.
+      required:
+      - price
+      - pnl
+      - roi_pct
+      - fee
+      - receive
+      properties:
+        price:
+          type: string
+          description: Average fill price for the whole size, rounded to the market's price decimals.
+            pnl uses the exact price.
+          example: '3.4067'
+        pnl:
+          type: string
+          description: (price - avg_entry_price) x size for a long, (avg_entry_price - price) x size
+            for a short, minus the fee.
+          example: '-0.0152'
+        roi_pct:
+          type: string
+          description: pnl as a percent of the position margin, cut to two decimals. Empty if the
+            margin is zero.
+          example: '-1.40'
+        fee:
+          type: string
+          description: Our integrator taker fee, price x size x fee rate. Lighter's own fee is not
+            included, it is zero on the standard tier.
+          example: '0'
+        receive:
+          type: string
+          description: margin + pnl, what goes back to the account.
+          example: '1.07'
     OpenPositionsPage:
       type: object
       description: The caller's open positions. An object rather than a bare array so aggregates or
@@ -2861,6 +3024,53 @@ components:
           - fill
           - liquidation
           - event
+        position:
+          allOf:
+          - $ref: '#/components/schemas/EpisodePosition'
+          nullable: true
+          description: >-
+            The position as this service counts it from the fills it recorded, for a client that
+            wants to show it before its next portfolio read. Only on an open episode this service
+            saw open (open_seen true); absent otherwise. It lags the venue while fills are still
+            arriving, so compare `size` with what the order filled before trusting it.
+    EpisodePosition:
+      type: object
+      description: >-
+        Size and entry from this service's own fills, with no venue read behind them. Mark, PnL
+        and the liquidation price need the venue and stay with the portfolio.
+      required:
+      - size
+      - avg_entry_price
+      - last_trade_id
+      properties:
+        size:
+          type: string
+          description: Base units the episode holds, unsigned; the side is the episode's.
+          example: '0.0063'
+        avg_entry_price:
+          type: string
+          description: What the held size cost, per unit.
+          example: '2345.02'
+        leverage:
+          type: integer
+          description: From the initial margin fraction of the latest fill. Absent when that fill carried none.
+          example: 5
+        margin_mode:
+          allOf:
+          - $ref: '#/components/schemas/MarginMode'
+          description: >-
+            From the venue's last position event, and only while that event is for the size counted
+            here. Absent for a mode this service does not know, and allocated_margin with it.
+        allocated_margin:
+          type: string
+          description: >-
+            Margin an isolated position holds, from the venue's last position event. Absent until
+            that event is for the size counted here.
+          example: '2.953767'
+        last_trade_id:
+          type: string
+          description: Lighter's trade id of the latest fill counted, so a client can tell an older count from a newer one.
+          example: '36724168491'
     PositionStateOrder:
       type: object
       description: What the venue said about one order, as this service recorded it.
@@ -2873,6 +3083,13 @@ components:
           format: int64
           description: Lighter's own number for the order. A cancel or a modify is addressed by `market_index` plus this.
           example: 844421542005799
+        client_order_index:
+          type: integer
+          format: int64
+          description: >-
+            The client's number for the order. Absent if there is none. In the realtime snapshot the
+            client finds its own order by it.
+          example: 1793711859371
         kind:
           type: string
           description: The venue's own word for what kind of order it was, e.g. `market`, `take-profit`, `stop-loss`, `liquidation`.
@@ -3001,6 +3218,13 @@ components:
           nullable: true
           description: Return on investment as a decimal string, null if not applicable.
           example: '0.0124'
+        auto_close:
+          allOf:
+          - $ref: '#/components/schemas/OrderAutoClose'
+          nullable: true
+          description: >-
+            Take-profit and stop-loss placed with this order. They wait for the order to fill, then
+            protect the new position. Null if there are none or the order is not on the book.
         fees:
           allOf:
           - $ref: '#/components/schemas/OrderFees'
@@ -3141,9 +3365,9 @@ components:
         Perps asset details payload for a single market. Only open_orders needs a read-only token, and
         this service reads it from its own store rather than from the caller: the position, its PnL and
         the balance all come from the account snapshot, which Lighter serves by account index and which
-        needs no token. Without a usable token open_orders is empty, and two fields derived from it go
-        with it -- flags.cancel_enabled is false and position.auto_close is null, since the TP/SL legs
-        are themselves open orders.
+        needs no token. The balance still needs the orders, since it nets out the margin they reserve.
+        So a wallet with an account but no usable token gets no screen: it is answered 400
+        readonly_token_unavailable (see the endpoint).
       properties:
         type:
           $ref: '#/components/schemas/AssetDetailsType'
@@ -3201,9 +3425,36 @@ components:
           type: array
           description: >-
             Orders resting on the book, across every market. Take-profit and stop-loss legs are not
-            among them.
+            among them. A position's legs come with the position. An unfilled order's legs come in
+            its auto_close.
           items:
-            $ref: '#/components/schemas/Order'
+            $ref: '#/components/schemas/PortfolioOrder'
+    PortfolioOrder:
+      description: A resting order with the caller's leverage and the margin the order needs.
+      allOf:
+      - $ref: '#/components/schemas/Order'
+      - type: object
+        properties:
+          leverage:
+            type: integer
+            description: >-
+              Caller's leverage on this market now, not when the order was placed. Lighter keeps one
+              leverage per market, not per order. Falls back to the market default. Absent when
+              unknown.
+            example: 20
+          margin:
+            type: string
+            description: >-
+              Margin this order needs on its own, in quote units: the unfilled size at the limit
+              price times the account's initial margin fraction on this market. leverage is that
+              fraction rounded to a whole number, so dividing by leverage can differ a little in
+              the last digits. Other orders and the position on the same market are
+              not counted, so Lighter may hold less: a buy and a sell on one market hold margin
+              for one side only, and an order that closes a position holds none. The real total is
+              already taken out of available_balance. This is not the amount typed in the order
+              form: the form sizes the order at the mark price. Absent for a reduce-only order and
+              when the leverage is unknown.
+            example: '1.5'
     OpenOrdersPage:
       type: object
       description: The caller's resting orders. An object rather than a bare array so aggregates or
@@ -3357,6 +3608,23 @@ components:
             A deposit paid from another chain sends execution_id instead and may leave this out.
             Omitting both is 400 deposit_reference_required.
           example: '0xecf31cab1cb7f5cd0010b5858d3248035288baa23804be478e7d5750c49b2380'
+        source_tx_hash:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: >-
+            Optional. The transaction the wallet signed on the source chain, for a deposit sent with
+            execution_id. Send it whenever the wallet already has it: with the first call if the
+            transaction is signed by then, or by repeating this call with the same operation_id once it
+            is. A repeat with another value replaces the stored one, so a transaction signed again can
+            be named again. It is never part of the terms, so it never makes a 409.
+
+            For a `funxyz` deposit it is the bridge's transfer this deposit takes, and the only one: the
+            transfer must also fit the quote (chain, token, amount, time). Until the bridge reports it the
+            deposit waits, and expires like any unpaid one if it never does, so a wrong hash is not
+            matched to another transfer. Other deposits of the address do not take a transfer named here.
+            Without it the deposit is matched by chain, token, amount and time. Kept as sent, never parsed.
+          example: '0x7f05a82b4e8929153921fc8a02f71673b3cab15404ca1a06e86989f5d59f98c6'
     Deposit:
       type: object
       description: One recorded deposit.
@@ -3391,6 +3659,20 @@ components:
             record is where such a deposit stays. Treat it as "we did not see it", not as proof of
             loss, and check the account balance before telling anyone their money is gone.
           example: pending
+        pending_step:
+          type: string
+          enum: [sending, converting, adding]
+          description: >-
+            Where a pending deposit is now. Present only while status is pending; once it is not,
+            status says how the deposit ended.
+
+            - sending: the money has not left the wallet yet, or the provider has not seen it.
+            - converting: the provider is swapping it to USDC on Ethereum.
+            - adding: the money is sent to Lighter, and Lighter has not credited it yet.
+
+            Steps only move forward and can be skipped. A deposit in USDC has no swap, so it goes
+            from sending to adding. It can also skip a step that passed between two checks.
+          example: converting
         asset_id:
           type: string
           description: The network and token the funds were sent as; echoed from the request.
@@ -3667,7 +3949,7 @@ components:
       properties:
         target:
           type: string
-          example: '0x3b4d794a66304f130a4db8f2551b0070dfcf5ca7'
+          example: '0x183ef7195d443a3da7ec1d7003baca1ff490757d'
         value:
           type: string
           example: '0'
@@ -3801,6 +4083,16 @@ components:
             The slippage the quote allowed for, in basis points. It applies to the source side: the
             deposit itself is exact.
           example: 100
+        fees:
+          type: array
+          description: >-
+            The provider's fees on this deposit, in US dollars: most of why output.amount is worth less
+            than the input. The rest is the swap's rate and the slippage allowance, and input.amount is
+            a budget that is rarely spent to the last unit. The source chain's own network fee is not
+            among them: it is paid on top, on the payload's `fee` where the quote states one. Absent
+            when the provider states none -- `direct` and `funxyz` deposits take nothing.
+          items:
+            $ref: '#/components/schemas/DepositQuoteFee'
         operation:
           $ref: '#/components/schemas/DepositOperation'
         tracking:
@@ -3830,6 +4122,24 @@ components:
             About how long from sending the payloads until the money is on the Lighter account, in
             seconds. An estimate to show, not a deadline. Absent when there is none for this route.
           example: 120
+    DepositQuoteFee:
+      type: object
+      required:
+      - type
+      - amount_usd
+      properties:
+        type:
+          type: string
+          maxLength: 64
+          description: >-
+            `destination_gas` is the Ethereum gas of delivering the USDC and calling Lighter's gateway --
+            it does not grow with the amount, so it is most of a small deposit's cost; `provider` is the aggregator's
+            own fee. Deliberately not an enum: show an unknown type under a generic label.
+          example: destination_gas
+        amount_usd:
+          type: string
+          description: The fee in US dollars, a decimal string.
+          example: '1.238412'
     DepositQuoteInput:
       type: object
       description: >-
@@ -3873,7 +4183,7 @@ components:
           example: '34746294'
         min_amount:
           type: string
-          description: 'Equal to amount: the deposit is exact.'
+          description: 'Equal to amount: the least that is credited.'
           example: '34746294'
         address:
           type: string
@@ -4314,6 +4624,86 @@ components:
           type: string
           description: The PSBT, base64.
           example: cHNidP8BAL4CAAAAARp+to64b/gtfLBuI7rEL2YIKXSwIDQna3RBoh4r0B2H
+    RecordClientMetricsRequest:
+      type: object
+      required:
+      - metrics
+      properties:
+        metrics:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/ClientMetric'
+    ClientMetric:
+      description: >-
+        One measurement. `type` says what was measured and which fields it has.
+      oneOf:
+      - $ref: '#/components/schemas/ClientMetricPositionOpen'
+      - $ref: '#/components/schemas/ClientMetricPositionClose'
+      discriminator:
+        propertyName: type
+        mapping:
+          position_open: '#/components/schemas/ClientMetricPositionOpen'
+          position_close: '#/components/schemas/ClientMetricPositionClose'
+    ClientMetricPositionOpen:
+      type: object
+      description: How long the user waited for a position to open.
+      required:
+      - id
+      - type
+      - duration_ms
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[A-Za-z0-9_-]{1,64}$'
+          description: >-
+            Unique per wallet, set by the client; a UUID is enough. Letters, digits, `_` and `-`
+            only. An entry with an id the wallet already sent is skipped.
+          example: 0195f3a2-7c41-7d8e-9b1a-3c5d2e4f6a7b
+        type:
+          type: string
+          enum: [position_open]
+          x-enum-varnames: [ClientMetricTypePositionOpen]
+          example: position_open
+        duration_ms:
+          type: integer
+          format: int64
+          minimum: 0
+          description: >-
+            From the press of the button to the result on screen, by the client's own timer.
+          example: 2140
+    ClientMetricPositionClose:
+      type: object
+      description: How long the user waited for a position to close.
+      required:
+      - id
+      - type
+      - duration_ms
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[A-Za-z0-9_-]{1,64}$'
+          description: >-
+            Unique per wallet, set by the client; a UUID is enough. Letters, digits, `_` and `-`
+            only. An entry with an id the wallet already sent is skipped.
+          example: 0195f3a2-7c41-7d8e-9b1a-3c5d2e4f6a7b
+        type:
+          type: string
+          enum: [position_close]
+          x-enum-varnames: [ClientMetricTypePositionClose]
+          example: position_close
+        duration_ms:
+          type: integer
+          format: int64
+          minimum: 0
+          description: >-
+            From the press of the button to the result on screen, by the client's own timer.
+          example: 1830
     PayloadFee:
       description: >-
         The network fee the wallet should expect for this payload, with `type` saying how it is

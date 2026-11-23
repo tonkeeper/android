@@ -16,8 +16,7 @@ import okhttp3.HttpUrl
 
 import io.batteryapi.models.EstimateRequest
 import io.batteryapi.models.EstimateResponse
-import io.batteryapi.models.GetTonConnectPayloadDefaultResponse
-import io.batteryapi.models.GetTransaction200Response
+import io.batteryapi.models.GetStatusDefaultResponse
 import io.batteryapi.models.SendRequest
 import io.batteryapi.models.SendResponse
 
@@ -98,79 +97,6 @@ class MultichainApi(basePath: String = defaultBasePath, client: Call.Factory = A
             requiresAuthentication = true,
             requiresWalletAuthentication = true,
             walletId = xWalletId,
-            body = localVariableBody
-        )
-    }
-
-    /**
-     * enum for parameter chain
-     */
-     enum class ChainGetTransaction(val value: String) {
-         @SerialName(value = "tron") tron("tron"),
-         @SerialName(value = "ton") ton("ton"),
-         @SerialName(value = "eth") eth("eth"),
-         @SerialName(value = "bsc") bsc("bsc"),
-         @SerialName(value = "arb") arb("arb"),
-         @SerialName(value = "base") base("base"),
-         @SerialName(value = "polygon") polygon("polygon"),
-         @SerialName(value = "unknown") unknown("unknown");
-
-        /**
-         * Override [toString()] to avoid using the enum variable name as the value, and instead use
-         * the actual value defined in the API spec file.
-         *
-         * This solves a problem when the variable name and its value are different, and ensures that
-         * the client sends the correct enum values to the server always.
-         */
-        override fun toString(): String = "$value"
-     }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getTransaction(chain: ChainGetTransaction, hash: String): GetTransaction200Response {
-        val localVarResponse = getTransactionWithHttpInfo(chain = chain, hash = hash)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GetTransaction200Response
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getTransactionWithHttpInfo(chain: ChainGetTransaction, hash: String): ApiResponse<GetTransaction200Response?> {
-        val localVariableConfig = getTransactionRequestConfig(chain = chain, hash = hash)
-
-        return request<Unit, GetTransaction200Response>(
-            localVariableConfig
-        )
-    }
-
-    fun getTransactionRequestConfig(chain: ChainGetTransaction, hash: String): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                put("chain", listOf(chain.value))
-                put("hash", listOf(hash.toString()))
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/transaction",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
             body = localVariableBody
         )
     }

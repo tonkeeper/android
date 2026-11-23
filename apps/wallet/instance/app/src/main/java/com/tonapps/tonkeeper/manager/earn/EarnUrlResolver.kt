@@ -10,7 +10,7 @@ import org.json.JSONArray
 
 class EarnUrlResolver(private val api: API) {
 
-    // Same fallback as iOS (EarnHardcodedData.url) until the backend serves earn_url.
+    // Same fallback as iOS (EarnHardcodedData.url) until the backend serves earnUrl.
     val base: Uri
         get() = api.getConfig(TonNetwork.MAINNET)
             .earnUrl

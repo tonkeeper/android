@@ -134,12 +134,18 @@ data class TokenEntity(
             customPayloadApiUri = null
         )
 
+        private val builtInTokensByAddress = listOf(TON, USDT, TRON_USDT, TRX, USDE, TS_USDE).associateBy { it.address }
+
         fun assetId(blockchain: Blockchain, address: String, network: TonNetwork): String {
             val chain = when (blockchain) {
                 Blockchain.TON -> "ton"
                 Blockchain.TRON -> "tron"
             }
-            val net = if (network.isMainnet) "mainnet" else "testnet"
+            val net = if (network.isMainnet) {
+                "mainnet"
+            } else {
+                "testnet"
+            }
             val isCoin = address == TON.address || address == TRX.address
             val type = when {
                 isCoin -> "coin"
@@ -203,7 +209,11 @@ data class TokenEntity(
         WalletCurrency(
             code = symbol,
             title = name,
-            chain = if (blockchain == Blockchain.TRON) Chain.TRON(address, decimals) else Chain.TON(address, decimals),
+            chain = if (blockchain == Blockchain.TRON) {
+                Chain.TRON(address, decimals)
+            } else {
+                Chain.TON(address, decimals)
+            },
             iconUrl = imageUri.toString(),
             isToken = tokenType != null,
             isFiat = false,
@@ -259,6 +269,15 @@ data class TokenEntity(
             amount.value * numerator / denominator,
             decimals
         )
+    }
+
+    fun withCurrentBuildIcon(): TokenEntity {
+        val builtInToken = builtInTokensByAddress[address]
+        return if (imageUri.scheme == "res" && builtInToken != null) {
+            copy(imageUri = builtInToken.imageUri)
+        } else {
+            this
+        }
     }
 
     fun assetId(network: TonNetwork): String {

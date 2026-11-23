@@ -1,17 +1,17 @@
 package com.tonapps.wallet.api
 
 import android.content.Context
-import android.os.Build
 import com.tonapps.extensions.Os
-import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.cacheFolder
 import com.tonapps.extensions.locale
 import com.tonapps.network.interceptor.AcceptLanguageInterceptor
 import com.tonapps.network.interceptor.AuthorizationInterceptor
 import com.tonapps.network.interceptor.LoggingInterceptor
 import com.tonapps.network.interceptor.RateLimitInterceptor
+import com.tonapps.network.interceptor.ServerTimeInterceptor
 import com.tonapps.network.interceptor.Tron429RetryInterceptor
 import com.tonapps.network.safeProxySelector
+import com.tonapps.time.ServerTimeProvider
 import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.internal.DeviceAuthInterceptor
 import okhttp3.Cache
@@ -27,12 +27,14 @@ import java.util.concurrent.TimeUnit
 abstract class CoreAPI(
     private val context: Context,
     private val delegate: LoggingInterceptor.Delegate,
+    val appVersionName: String,
+    serverTime: ServerTimeProvider,
 ) {
 
-    val appVersionName = context.appVersionName
+    private val serverTimeInterceptor = ServerTimeInterceptor(serverTime, SERVER_TIME_DOMAINS)
 
     // e.g. Tonkeeper/1.2.3 (Android; 14; Pixel Tablet)
-    val userAgent = "Tonkeeper/${appVersionName} (Android; ${Build.VERSION.RELEASE}; ${Os.deviceNameAndModel()})"
+    val userAgent = Os.tonkeeperUserAgent(appVersionName)
 
     @Volatile
     protected var deviceAuthProvider: DeviceAuthProvider? = null
@@ -48,6 +50,7 @@ abstract class CoreAPI(
         interceptors = listOf(
             UserAgentInterceptor(userAgent),
         ),
+        serverTimeInterceptor = serverTimeInterceptor,
         delegate = delegate,
     ).build()
 
@@ -62,6 +65,7 @@ abstract class CoreAPI(
             UserAgentInterceptor(userAgent),
             Tron429RetryInterceptor(),
         ),
+        serverTimeInterceptor = serverTimeInterceptor,
         delegate = delegate,
     ).build()
 
@@ -83,6 +87,7 @@ abstract class CoreAPI(
             allowDomains = { config().domains },
             deviceAuthHosts = { deviceAuthHosts(config()) },
             deviceAuthProvider = { deviceAuthProvider },
+            serverTimeInterceptor = serverTimeInterceptor,
             delegate = delegate,
         )
     }
@@ -101,6 +106,7 @@ abstract class CoreAPI(
             allowDomains = { config().domains },
             deviceAuthHosts = { deviceAuthHosts(config()) },
             deviceAuthProvider = { deviceAuthProvider },
+            serverTimeInterceptor = serverTimeInterceptor,
             delegate = delegate,
 //            cronetEngine = { cronetEngine }
         )
@@ -127,6 +133,9 @@ abstract class CoreAPI(
     private companion object {
 
         const val MAX_CACHE_SIZE = 500L * 1024 * 1024
+
+        // Our servers only: the clients also fetch dApp manifests and pages, whose date must not set the app's time.
+        val SERVER_TIME_DOMAINS = listOf("tonkeeper.com", "tonapi.io")
 
         object ExtraHeadersInterceptor : Interceptor {
 
@@ -165,6 +174,7 @@ abstract class CoreAPI(
             rateLimit: Int = 10,
             interceptors: List<Interceptor> = emptyList(),
             context: Context,
+            serverTimeInterceptor: ServerTimeInterceptor,
             delegate: LoggingInterceptor.Delegate,
 //            cronetEngine: () -> CronetEngine?,
         ): OkHttpClient.Builder {
@@ -214,6 +224,8 @@ abstract class CoreAPI(
                 LoggingInterceptor(delegate = delegate)
             )
 
+            builder.addNetworkInterceptor(serverTimeInterceptor)
+
             return builder
         }
 
@@ -221,6 +233,7 @@ abstract class CoreAPI(
             return ownHosts + listOfNotNull(
                 config.tradingApiUrl.toHttpUrlOrNull()?.host,
                 config.multichainApiUrl.toHttpUrlOrNull()?.host,
+                config.keeperEarnApiUrl.toHttpUrlOrNull()?.host,
                 config.batteryHost.toHttpUrlOrNull()?.host,
                 config.batteryTestnetHost.toHttpUrlOrNull()?.host,
             )
@@ -230,11 +243,11 @@ abstract class CoreAPI(
             userAgent: String,
             context: Context,
             timeoutSeconds: Long = 30,
-            rateLimit: Int = 10,
             tonApiV2Key: () -> String,
             allowDomains: () -> List<String>,
             deviceAuthHosts: () -> Collection<String>,
             deviceAuthProvider: () -> DeviceAuthProvider?,
+            serverTimeInterceptor: ServerTimeInterceptor,
             delegate: LoggingInterceptor.Delegate,
 //            cronetEngine: () -> CronetEngine?,
         ): OkHttpClient {
@@ -255,9 +268,12 @@ abstract class CoreAPI(
             return baseOkHttpClientBuilder(
                 timeoutSeconds = timeoutSeconds,
                 callTimeoutSeconds = 0,
-                rateLimit = rateLimit,
+                // No proactive throttle: a cold launch sends ~25 calls at once, and the queue delayed the portfolio
+                // by up to a second. Calls in withRetry retry a 429; iOS has no client throttle either.
+                rateLimit = 0,
                 context = context,
                 interceptors = interceptors,
+                serverTimeInterceptor = serverTimeInterceptor,
                 delegate = delegate,
 //                cronetEngine = cronetEngine,
             ).build()

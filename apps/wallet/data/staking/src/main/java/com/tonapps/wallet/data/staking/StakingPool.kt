@@ -6,6 +6,12 @@ import io.tonapi.models.PoolImplementationType
 
 private val GAS_RESERVE = Coins.of(0.1)
 
+// Stays in the wallet to pay for the withdrawal request and for collecting it: 0.2 TON each plus fees.
+private val WHALES_WITHDRAW_RESERVE = Coins.of(0.41)
+
+// The fee that reserve leaves room for, counted when the emulation could not tell the real one.
+private val WHALES_FEE_ESTIMATE = Coins.of(0.01)
+
 object StakingPool {
 
     enum class Implementation(
@@ -73,8 +79,23 @@ object StakingPool {
         }
     }
 
+    fun getUnstakeRequired(implementation: Implementation, networkFee: Coins?): Coins {
+        return getUnstakeTemporaryReserve(implementation) + getNetworkFeeOrEstimate(implementation, networkFee)
+    }
+
+    // An unknown fee (the emulation failed or has not finished) is estimated, not counted as zero.
+    fun getNetworkFeeOrEstimate(implementation: Implementation, networkFee: Coins?): Coins {
+        return networkFee ?: when (implementation) {
+            Implementation.Whales -> WHALES_FEE_ESTIMATE
+            Implementation.LiquidTF, Implementation.TF -> GAS_RESERVE
+        }
+    }
+
     fun getStakeMinRemaining(implementation: Implementation): Coins {
-        return getStakeTemporaryReserve(implementation) + GAS_RESERVE
+        return when (implementation) {
+            Implementation.Whales -> WHALES_WITHDRAW_RESERVE
+            Implementation.LiquidTF, Implementation.TF -> getStakeTemporaryReserve(implementation) + GAS_RESERVE
+        }
     }
 
 }

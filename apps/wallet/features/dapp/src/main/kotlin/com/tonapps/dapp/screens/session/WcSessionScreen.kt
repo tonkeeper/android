@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
@@ -47,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import com.tonapps.blockchain.model.DappConnectRequest.DomainStatus
-import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.core.components.MoonDomainRiskBottomSheet
 import com.tonapps.core.components.WalletRowCell
 import com.tonapps.core.components.WalletsSelectorDialog
 import com.tonapps.core.components.painterResource
@@ -56,14 +55,9 @@ import com.tonapps.dapp.component.ConnectCryptoView
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.account.AccountEntity
 import com.tonapps.wallet.localization.Localization
-import androidx.compose.material3.ButtonColors
-import ui.components.moon.ButtonColorsSecondary
-import ui.components.moon.ButtonSizeLarge
-import ui.components.moon.MoonAccentButton
 import ui.components.moon.MoonChevronRight
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
-import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonBottomButtonCell
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
@@ -72,8 +66,6 @@ import ui.components.moon.cell.MoonButtonCellDefaults
 import ui.components.moon.container.MoonCutRow
 import ui.components.moon.container.MoonScaffold
 import ui.components.moon.container.OverlapDirection
-import ui.components.moon.dialog.MoonModalDialog
-import ui.components.moon.dialog.rememberDialogNavigator
 import ui.theme.Dimens
 import ui.theme.UIKit
 
@@ -211,7 +203,8 @@ fun WcSessionScreen(
                 if (isWarningOpened) {
                     MoonDomainRiskBottomSheet(
                         status = feature.dappConnection.domainStatus,
-                        onConnect = { feature.approve() },
+                        confirmText = stringResource(Localization.connect_anyway),
+                        onConfirm = { feature.approve() },
                         onClose = { isWarningOpened = false }
                     )
                 }
@@ -425,106 +418,5 @@ private fun DappHeader(
             maxLines = 3,
             textAlign = TextAlign.Center,
         )
-    }
-}
-
-@Composable
-fun MoonDomainRiskBottomSheet(
-    status: DomainStatus?,
-    onConnect: () -> Unit,
-    onClose: () -> Unit,
-) {
-    val isCritical = status == DomainStatus.Scam || status == DomainStatus.Invalid
-    val router = rememberDialogNavigator { onClose() }
-    MoonModalDialog(navigator = router) {
-        MoonTopAppBarSimple(
-            title = "",
-            actionIconRes = UIKitIcon.ic_close_16,
-            onActionClick = { router.close() },
-            backgroundColor = Color.Transparent,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        MoonItemImage(
-            painter = painterResource(
-                if (isCritical) {
-                    UIKitIcon.ic_exclamationmark_triangle_colorful_84
-                } else {
-                    UIKitIcon.ic_exclamationmark_circle_colorful_84
-                }
-            ),
-            size = 84.dp,
-            shape = RectangleShape,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = when (status) {
-                DomainStatus.Scam -> stringResource(Localization.domain_risk_scam_title)
-                DomainStatus.Invalid -> stringResource(Localization.domain_risk_invalid_title)
-                else -> stringResource(Localization.domain_risk_unknown_title)
-            },
-            modifier = Modifier.padding(horizontal = 32.dp),
-            style = UIKit.typography.h2,
-            color = UIKit.colorScheme.text.primary,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = when (status) {
-                DomainStatus.Scam -> stringResource(Localization.domain_risk_scam_description)
-                DomainStatus.Invalid -> stringResource(Localization.domain_risk_invalid_description)
-                else -> stringResource(Localization.domain_status_unknown)
-            },
-            modifier = Modifier.padding(horizontal = 32.dp),
-            style = UIKit.typography.body1,
-            color = UIKit.colorScheme.text.secondary,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        val connectAnywayAccent = if (isCritical) {
-            UIKit.colorScheme.accent.red
-        } else {
-            UIKit.colorScheme.accent.orange
-        }
-        val connectAnywayColors = ButtonColors(
-            containerColor = connectAnywayAccent.copy(alpha = 0.08f),
-            contentColor = connectAnywayAccent,
-            disabledContainerColor = connectAnywayAccent.copy(alpha = 0.08f),
-            disabledContentColor = connectAnywayAccent,
-        )
-
-        MoonAccentButton(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            onClick = {
-                onConnect()
-                router.close()
-            },
-            text = stringResource(Localization.connect_anyway),
-            buttonColors = connectAnywayColors,
-            size = ButtonSizeLarge,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        MoonAccentButton(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            onClick = { router.close() },
-            text = stringResource(id = Localization.cancel),
-            buttonColors = ButtonColorsSecondary,
-            size = ButtonSizeLarge,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }

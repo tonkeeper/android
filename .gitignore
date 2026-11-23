@@ -14,7 +14,7 @@ captures
 tools/build/
 mavenLocal
 
-# Maestro QA: local-only material, never pushed (see .agents/skills/tk-qa-verify-android)
+# Maestro QA: local-only material, never pushed (see .agents/skills/tk-qa-verify)
 maestro_ui_tests/flows/*_local/
 maestro_ui_tests/mocks/scenarios/
 maestro_ui_tests/mocks/_recorded/

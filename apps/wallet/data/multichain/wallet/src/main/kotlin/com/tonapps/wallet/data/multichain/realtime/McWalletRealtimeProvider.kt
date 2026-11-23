@@ -43,6 +43,7 @@ class McWalletRealtimeProvider(
     private val disabledByBackend = MutableStateFlow(false)
     private val _subscribedWalletId = MutableStateFlow<String?>(null)
     val subscribedWalletId: StateFlow<String?> = _subscribedWalletId.asStateFlow()
+    val connectedWalletId: StateFlow<String?> field = MutableStateFlow(null)
 
     private val seqGuard = RealtimeSeqGuard()
     private val unsubscribedAt = mutableMapOf<String, Long>()
@@ -81,6 +82,7 @@ class McWalletRealtimeProvider(
                     } else {
                         connect(walletId)
                     }
+                    connectedWalletId.value = walletId
                 }
         }
         scope.launch {

@@ -39,7 +39,11 @@ data class OpenDepositRequest(
 
     /* The Ethereum transaction that called Lighter's gateway. Required when execution_id is absent, which is a direct deposit: the wallet signs the gateway call itself and knows its hash before broadcasting. Lighter resolves it to the credit, the amount and the account index, without a read-only token, which a first deposit could not have anyway since the account does not exist yet. Only the Ethereum hash counts, never a source-chain one: Lighter has never seen those. A deposit paid from another chain sends execution_id instead and may leave this out. Omitting both is 400 deposit_reference_required. */
     @SerialName(value = "l1_tx_hash")
-    val l1TxHash: String? = null
+    val l1TxHash: String? = null,
+
+    /* Optional. The transaction the wallet signed on the source chain, for a deposit sent with execution_id. Send it whenever the wallet already has it: with the first call if the transaction is signed by then, or by repeating this call with the same operation_id once it is. A repeat with another value replaces the stored one, so a transaction signed again can be named again. It is never part of the terms, so it never makes a 409. For a `funxyz` deposit it is the bridge's transfer this deposit takes, and the only one: the transfer must also fit the quote (chain, token, amount, time). Until the bridge reports it the deposit waits, and expires like any unpaid one if it never does, so a wrong hash is not matched to another transfer. Other deposits of the address do not take a transfer named here. Without it the deposit is matched by chain, token, amount and time. Kept as sent, never parsed. */
+    @SerialName(value = "source_tx_hash")
+    val sourceTxHash: String? = null
 ) {
 }
 

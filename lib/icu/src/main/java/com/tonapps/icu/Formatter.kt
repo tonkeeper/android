@@ -12,7 +12,7 @@ object Formatter {
             value > 0f -> "+ %.2f%%"
             else -> "- %.2f%%"
         }
-        return format.format(abs(value))
+        return format.format(CurrencyFormatter.locale, abs(value))
     }
 
     fun percent(value: String) = percent(value.replace(STRIP_PATTERN, "").toFloatOrNull() ?: 0f)

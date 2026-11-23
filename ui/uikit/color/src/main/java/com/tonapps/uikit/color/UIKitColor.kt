@@ -211,6 +211,23 @@ val Context.separatorCommonColor
 val Context.separatorAlternateColor
     get() = resolveColor(R.attr.separatorAlternateColor)
 
+
+@get:ColorInt
+val Context.glassRimTopColor
+    get() = resolveColor(R.attr.glassRimTopColor)
+
+@get:ColorInt
+val Context.glassRimBottomColor
+    get() = resolveColor(R.attr.glassRimBottomColor)
+
+@get:ColorInt
+val Context.glassBorderColor
+    get() = resolveColor(R.attr.glassBorderColor)
+
+@get:ColorInt
+val Context.glassShadowColor
+    get() = resolveColor(R.attr.glassShadowColor)
+
 @get:ColorInt
 val Context.constantBlackColor
     get() = resources.getColor(R.color.constantBlack)

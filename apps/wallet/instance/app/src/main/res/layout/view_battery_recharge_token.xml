@@ -35,6 +35,7 @@
 
 
         <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/token_switch"
             android:layout_width="16dp"
             android:layout_height="16dp"
             android:layout_gravity="center"

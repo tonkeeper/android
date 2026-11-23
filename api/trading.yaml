@@ -79,6 +79,7 @@ paths:
         - $ref: '#/components/parameters/deviceCountyCodeQuery'
         - $ref: '#/components/parameters/timezoneQuery'
         - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
       responses:
         "200":
           description: Конфиг полок
@@ -232,6 +233,7 @@ paths:
         - $ref: '#/components/parameters/deviceCountyCodeQuery'
         - $ref: '#/components/parameters/timezoneQuery'
         - $ref: '#/components/parameters/isVpnActiveQuery'
+        - $ref: '#/components/parameters/walletIdQuery'
         - name: tab
           in: query
           required: false
@@ -569,8 +571,8 @@ paths:
       summary: Экспорт метаданных ассетов для других сервисов
       description: >
         Редко меняющиеся данные ассетов (идентификация, decimals, картинка, тип, верификация, score,
-        ссылки, reference_id, описания на всех языках) плюс медленные флаги is_swappable, is_perp_depositable и
-        max_leverage. Возвращает только ассеты, чьи метаданные изменились после after_date, в порядке
+        ссылки, reference_id, описания на всех языках) плюс медленные флаги is_swappable, is_perp_depositable,
+        is_battery_depositable и max_leverage. Возвращает только ассеты, чьи метаданные изменились после after_date, в порядке
         (updated_at, id); листать через next_cursor. Требует Bearer-токен внутреннего API.
         Рынки Lighter, которые Lighter ещё не листит, не отдаются; после листинга рынок приходит
         как изменённый.
@@ -689,8 +691,8 @@ components:
     currency:
       description: >
         Display currency for prices and amounts (fiat ISO 4217 like usd/eur, or
-        an asset id). Defaults to usd when omitted. Send the user's currency
-        from app settings.
+        an asset id). Defaults to usd when omitted or unknown. Send the user's
+        currency from app settings.
       in: query
       name: currency
       required: false
@@ -737,6 +739,17 @@ components:
       schema:
         type: string
         example: "Europe/Berlin"
+    walletIdQuery:
+      description: >
+        Stable wallet identifier. A format 2 wallet_id of kind legacy (a TON phrase
+        wallet: TON and TRON) gets the legacy content: v2 shelves serve what v1 serves,
+        and the v2 catalog lists TON and TRON assets only (perpetuals are unaffected).
+        Any other value changes nothing.
+      in: query
+      name: wallet_id
+      required: false
+      schema:
+        type: string
     isVpnActiveQuery:
       description: >
         Whether a VPN tunnel is currently active on the device. The client
@@ -1044,6 +1057,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Warning"
+        chains:
+          type: array
+          description: >
+            Только v2, только первая страница (без cursor и ids). Сети, в которых при текущих tab и filter
+            есть ассеты, — значения для параметра chain (ton, eth, sol, ...), по алфавиту. Клиент показывает
+            чипы только этих сетей. Не зависит от chain и q. При tab=perpetuals пустой: с выбранной сетью
+            perp-рынки не отдаются. Если поля нет — сервер не смог посчитать список, клиент оставляет свои чипы.
+          items:
+            type: string
 
     MarketItem:
       type: object
@@ -1250,6 +1272,7 @@ components:
           $ref: "#/components/schemas/AssetCapabilities"
         data_freshness_sec:
           type: integer
+          description: Приблизительная свежесть данных (секунды).
         info_source:
           $ref: "#/components/schemas/AssetInfoSource"
         warnings:
@@ -1528,7 +1551,8 @@ components:
     AssetMetadataExport:
       type: object
       required: [id, symbol, name, decimals, image_url, asset_type, verification, trust_score, links,
-                 is_swappable, swap_providers, is_perp_depositable, is_lp, descriptions, updated_at]
+                 is_swappable, swap_providers, is_perp_depositable, is_battery_depositable, is_lp, descriptions,
+                 updated_at]
       properties:
         id:
           type: string
@@ -1564,6 +1588,9 @@ components:
         is_perp_depositable:
           type: boolean
           description: Ассет можно использовать для депозита в перпы через relay.link.
+        is_battery_depositable:
+          type: boolean
+          description: Ассетом можно пополнить батарейку (custodial-battery /recharge-methods).
         is_lp:
           type: boolean
           description: LP-токен (доля пула DEX, Curve или Pendle). Такие токены не обмениваются через swap, is_swappable у них всегда false.

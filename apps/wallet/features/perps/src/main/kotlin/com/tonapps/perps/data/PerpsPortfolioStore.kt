@@ -1,13 +1,12 @@
 package com.tonapps.perps.data
 
-import android.content.Context
 import com.tonapps.async.Async
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.chainkit.lighter.LighterConstants
-import com.tonapps.extensions.isDebug
 import com.tonapps.mvi.graph.KResult
 import com.tonapps.perps.trade.PerpsAccountService
 import com.tonapps.perps.trade.PerpsAccountTierUpgrader
+import com.tonapps.perps.trade.PerpsAutoCloseRenewal
+import com.tonapps.perps.trade.PerpsProductRules
 import com.tonapps.perps.trade.legIndexes
 import com.tonapps.perps.trade.readPortfolio
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
@@ -40,7 +39,6 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import java.math.BigDecimal
-import java.math.MathContext
 import java.math.RoundingMode
 
 data class PerpsPortfolioSnapshot(
@@ -72,13 +70,14 @@ data class PerpsPortfolioSnapshot(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PerpsPortfolioStore(
-    appContext: Context,
     private val repository: PerpsRepository,
+    private val realtime: PerpsRealtime,
     unifiedAccountRepository: UnifiedAccountRepository,
     accountRefresh: PerpsAccountRefresh,
     private val accountService: PerpsAccountService,
     private val tierUpgrader: PerpsAccountTierUpgrader,
     private val journal: PerpsOperationJournal,
+    private val autoCloseRenewal: PerpsAutoCloseRenewal,
 ) {
 
     private data class LoadContext(
@@ -97,11 +96,6 @@ class PerpsPortfolioStore(
     private val liveSubscribers = MutableStateFlow(0)
     private val liveFailures = MutableStateFlow(0)
     private val emptyPollRefreshed = MutableStateFlow(false)
-    private val liveRefreshMs = if (appContext.isDebug) {
-        DEBUG_LIVE_REFRESH_MS
-    } else {
-        LIVE_REFRESH_MS
-    }
 
     private val live = liveSubscribers.map { it > 0 }
         .distinctUntilChanged()
@@ -122,7 +116,7 @@ class PerpsPortfolioStore(
         merge(refreshSignal.map { false }, accountRefresh.events.map { true })
             .runningFold(0 to false) { (attempt, _), afterAccountChange -> attempt + 1 to afterAccountChange },
     ) { wallet, (attempt, afterAccountChange) ->
-        wallet?.let { LoadContext(it.id, it.type == WalletType.Multichain, attempt, afterAccountChange) }
+        wallet?.let { LoadContext(it.id, it.supportsPerps, attempt, afterAccountChange) }
     }
         .filterNotNull()
         .distinctUntilChanged()
@@ -167,7 +161,7 @@ class PerpsPortfolioStore(
                         val seed = (latest.value?.lastGood ?: lastGood).takeIf {
                             result is KResult.Ok && !context.afterAccountChange
                         }
-                        pollPositions(context, seed)
+                        livePortfolio(context, seed)
                     } else {
                         emptyFlow()
                     }
@@ -221,39 +215,64 @@ class PerpsPortfolioStore(
         val portfolio = result.getOrNull() ?: return result
         accountService.refreshRoToken(context.walletId, tokenRefused = portfolio.openOrders == null)
         tierUpgrader.ensurePlusInBackground(context.walletId)
+        autoCloseRenewal.renewInBackground(context.walletId, portfolio.positions.map { it.marketIndex })
         return KResult.Ok(withMargin(context.walletId, withCatalog(portfolio)))
     }
 
-    private fun pollPositions(context: LoadContext, seed: PerpsPortfolio?): Flow<PerpsPortfolioSnapshot> = flow {
-        var portfolio = seed
-        while (portfolio == null || portfolio.positions.isNotEmpty() || portfolio.openOrders?.isEmpty() != true) {
-            delay(liveRefreshMs shl liveFailures.value.coerceAtMost(LIVE_BACKOFF_MAX_SHIFT))
-            val current = portfolio
-            val fetched = load(context).getOrNull()
-            if (fetched == null) {
-                if (liveFailures.updateAndGet { it + 1 } == 1 && current != null) {
-                    refresh()
-                }
-                continue
-            }
-            liveFailures.value = 0
-            if (current != null && fetched.positions.isEmpty() && current.positions.isNotEmpty() && !emptyPollRefreshed.value) {
-                emptyPollRefreshed.value = true
-                refresh()
-                continue
-            }
-            emptyPollRefreshed.value = fetched.positions.isEmpty() && emptyPollRefreshed.value
-            portfolio = fetched
-            emit(
-                PerpsPortfolioSnapshot(
-                    walletId = context.walletId,
-                    loading = false,
-                    result = KResult.Ok(fetched),
-                    lastGood = fetched,
-                )
+    private fun livePortfolio(context: LoadContext, seed: PerpsPortfolio?): Flow<PerpsPortfolioSnapshot> = flow {
+        val demand = realtime.demand()
+        demand.set(true)
+        try {
+            var portfolio = seed
+            realtime.wakeups(
+                walletId = context.walletId,
+                unsubscribedPeriodMs = PERPS_SLOW_POLL_MS,
+                subscribedTimeoutMs = PERPS_SLOW_POLL_MS,
+                wakeOn = { it is PerpsRealtimeEvent.Market || it is PerpsRealtimeEvent.Account },
             )
+                .spacedEvents()
+                .collect { wake ->
+                    val current = portfolio
+                    val due = when (wake) {
+                        PerpsWake.EVENT, PerpsWake.RESUBSCRIBED -> true
+                        PerpsWake.SILENCE -> current == null
+                        PerpsWake.TICK -> current == null || !current.isIdle()
+                    }
+                    if (!due) {
+                        return@collect
+                    }
+                    val fetched = load(context).getOrNull()
+                    if (fetched == null) {
+                        if (liveFailures.updateAndGet { it + 1 } == 1 && current != null) {
+                            refresh()
+                        }
+                        return@collect
+                    }
+                    liveFailures.value = 0
+                    if (current != null && fetched.positions.isEmpty() && current.positions.isNotEmpty() &&
+                        !emptyPollRefreshed.value
+                    ) {
+                        emptyPollRefreshed.value = true
+                        refresh()
+                        return@collect
+                    }
+                    emptyPollRefreshed.value = fetched.positions.isEmpty() && emptyPollRefreshed.value
+                    portfolio = fetched
+                    emit(
+                        PerpsPortfolioSnapshot(
+                            walletId = context.walletId,
+                            loading = false,
+                            result = KResult.Ok(fetched),
+                            lastGood = fetched,
+                        )
+                    )
+                }
+        } finally {
+            demand.close()
         }
     }
+
+    private fun PerpsPortfolio.isIdle(): Boolean = positions.isEmpty() && openOrders?.isEmpty() == true
 
     private suspend fun withCatalog(portfolio: PerpsPortfolio): PerpsPortfolio {
         val indices = portfolio.positions.map { it.marketIndex } +
@@ -292,7 +311,7 @@ class PerpsPortfolioStore(
                     ?: catalog[order.marketIndex]?.maxLeverage?.takeIf { it > 0 }
                 order.copy(
                     leverage = leverage,
-                    margin = placement?.remainingBudget(order.remainingBase) ?: order.limitMargin(leverage),
+                    margin = order.limitMargin(leverage),
                 )
             },
         )
@@ -312,26 +331,17 @@ class PerpsPortfolioStore(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val LIVE_REFRESH_MS = 10_000L
-        const val DEBUG_LIVE_REFRESH_MS = 30_000L
-        const val LIVE_BACKOFF_MAX_SHIFT = 4
         const val LIVE_STOP_LINGER_MS = 2_000L
     }
 }
 
 private const val MARGIN_SCALE = 2
 
-private fun PerpsOperationRecord.remainingBudget(remainingBase: BigDecimal?): BigDecimal? {
-    val budget = marginQuote.toBigDecimalOrNull() ?: return null
-    val planned = expectedBaseSize?.toBigDecimalOrNull()?.takeIf { it.signum() > 0 } ?: return budget
-    val remaining = remainingBase ?: return budget
-    val share = remaining.divide(planned, MathContext.DECIMAL64).min(BigDecimal.ONE)
-    return budget.multiply(share).setScale(MARGIN_SCALE, RoundingMode.HALF_UP)
-}
-
-private fun PerpsPortfolioOrder.limitMargin(leverage: Int?): BigDecimal? {
+internal fun PerpsPortfolioOrder.limitMargin(leverage: Int?): BigDecimal? {
     val price = limitPrice ?: return null
     val base = remainingBase ?: return null
-    val divisor = leverage ?: return null
-    return base.multiply(price).divide(BigDecimal(divisor), MARGIN_SCALE, RoundingMode.HALF_UP)
+    val initialMarginBps = leverage?.let(PerpsProductRules::initialMarginBps) ?: return null
+    return base.multiply(price)
+        .multiply(BigDecimal(initialMarginBps))
+        .divide(BigDecimal(PerpsProductRules.IMF_TICKS), MARGIN_SCALE, RoundingMode.HALF_UP)
 }

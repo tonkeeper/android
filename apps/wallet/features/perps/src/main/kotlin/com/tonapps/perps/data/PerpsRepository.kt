@@ -4,6 +4,7 @@ import com.tonapps.async.Async
 import com.tonapps.core.helper.EnvironmentHelper
 import com.tonapps.log.L
 import com.tonapps.mvi.graph.KResult
+import com.tonapps.perps.security.PerpsMarketListing
 import com.tonapps.perps.trade.PerpsProductRules
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.multichain.asset.perpsAssetId
@@ -18,6 +19,7 @@ import io.perpsapi.models.ActivityItem
 import io.perpsapi.models.Balance
 import io.perpsapi.models.BindAccountRequest
 import io.perpsapi.models.ChangeAccountTierRequest
+import io.perpsapi.models.ClientMetric
 import io.perpsapi.models.Deposit
 import io.perpsapi.models.DepositQuote
 import io.perpsapi.models.DepositQuoteRequest
@@ -28,16 +30,18 @@ import io.perpsapi.models.Market
 import io.perpsapi.models.OpenPosition
 import io.perpsapi.models.OpenPositionDetail
 import io.perpsapi.models.Order
+import io.perpsapi.models.OrderAutoCloseLeg
 import io.perpsapi.models.OrderCategory
 import io.perpsapi.models.OrderSide
 import io.perpsapi.models.OrderStatus
 import io.perpsapi.models.OrderType
+import io.perpsapi.models.PortfolioOrder
 import io.perpsapi.models.PositionAutoCloseLeg
 import io.perpsapi.models.PositionEpisode
 import io.perpsapi.models.PositionSide
+import io.perpsapi.models.RecordClientMetricsRequest
 import io.perpsapi.models.SendTransactionsRequest
 import io.perpsapi.models.SignedTransaction
-import io.perpsapi.models.TradingFlags
 import io.perpsapi.models.TradingScreen
 import io.perpsapi.models.WithdrawQuote
 import io.perpsapi.models.WithdrawQuoteRequest
@@ -59,6 +63,7 @@ class PerpsRepository(
     private val api: API,
     private val candleFeed: PerpsCandleFeed,
     private val environment: EnvironmentHelper,
+    private val listing: PerpsMarketListing,
 ) {
 
     suspend fun getMarkets(
@@ -86,9 +91,10 @@ class PerpsRepository(
                 timezone = environment.timezone(),
                 isVpnActive = environment.isVpnActive(),
             )
+            val signedSymbols = listing.signedSymbols()
             KResult.Ok(
                 PerpsMarketsPage(
-                    markets = response.items.mapNotNull { it.toPerpMarket() },
+                    markets = response.items.filter { it.isListedIn(signedSymbols) }.mapNotNull { it.toPerpMarket() },
                     nextCursor = response.nextCursor?.takeIf { it.isNotBlank() },
                 )
             )
@@ -151,7 +157,9 @@ class PerpsRepository(
                 timezone = environment.timezone(),
                 isVpnActive = environment.isVpnActive(),
             )
-            val market = response.asset.toPerpMarket()
+            val market = response.asset
+                .takeIf { it.isListedIn(listing.signedSymbols(), marketIndex) }
+                ?.toPerpMarket()
             if (market != null) {
                 KResult.Ok(
                     PerpsMarketDetails(
@@ -184,9 +192,11 @@ class PerpsRepository(
             // Unusable market rules only block order entry; the rest of the screen still reads.
             KResult.Ok(
                 PerpsTradingState(
-                    flags = screen.flags.toPerpsTradingFlags(),
-                    limitOrders = screen.openOrders.orEmpty().mapNotNull { it.toPerpsLimitOrder() },
-                    availableBalance = screen.balance?.spendableBalance().toDecimalOrNull(),
+                    flags = screen.toPerpsTradingFlags(),
+                    limitOrders = screen.openOrders.orEmpty()
+                        .filter { it.marketIndex == marketIndex }
+                        .mapNotNull { it.toPerpsLimitOrder() },
+                    availableBalance = screen.balance?.spendableBalance().toWireDecimalOrNull(),
                     rules = screen.market?.toPerpsMarketRules(),
                 )
             )
@@ -252,6 +262,27 @@ class PerpsRepository(
                 api.perps.positions.getOpenPosition(xWalletId = walletId, id = LIGHTER_POSITION_PREFIX + marketIndex)
             }
             KResult.Ok(detail.toPerpsPositionDetail())
+        } catch (e: Throwable) {
+            if (e is CancellationException) {
+                throw e
+            }
+            if (e is ClientException && e.statusCode == HTTP_NOT_FOUND) {
+                return@withContext KResult.Ok(null)
+            }
+            L.e(e)
+            KResult.Err(e.toPerpsError())
+        }
+    }
+
+    suspend fun getOrder(
+        orderIndex: Long,
+        walletId: String,
+    ): KResult<PerpsOrderDetail?, PerpsError> = withContext(Async.Io) {
+        try {
+            val detail = retrying {
+                api.perps.orders.getOrder(id = LIGHTER_ORDER_PREFIX + orderIndex, xWalletId = walletId)
+            }
+            KResult.Ok(detail.order?.status?.let { PerpsOrderDetail(status = it.value) })
         } catch (e: Throwable) {
             if (e is CancellationException) {
                 throw e
@@ -428,6 +459,20 @@ class PerpsRepository(
         }
     }
 
+    suspend fun recordClientMetric(walletId: String, metric: ClientMetric): Unit = withContext(Async.Io) {
+        try {
+            api.perps.clientMetrics.recordClientMetrics(
+                xWalletId = walletId,
+                recordClientMetricsRequest = RecordClientMetricsRequest(metrics = listOf(metric)),
+            )
+        } catch (e: Throwable) {
+            if (e is CancellationException) {
+                throw e
+            }
+            L.e(e)
+        }
+    }
+
     suspend fun withdrawalActivity(walletId: String, limit: Int): List<ActivityItem> = withContext(Async.Io) {
         api.perps.activity.getActivity(
             xWalletId = walletId,
@@ -457,7 +502,7 @@ class PerpsRepository(
                         PerpsStateOrder(
                             orderIndex = it.orderIndex,
                             status = it.status,
-                            filledBase = it.filledBase.toDecimalOrNull(),
+                            filledBase = it.filledBase.toWireDecimalOrNull(),
                         )
                     },
                 )
@@ -499,11 +544,10 @@ class PerpsRepository(
                 PerpsOrderBook(
                     truncated = book.truncated,
                     levels = levels.orEmpty().mapNotNull { level ->
-                        val price = level.price.toDecimalOrNull() ?: return@mapNotNull null
-                        val size = level.propertySize.toDecimalOrNull() ?: return@mapNotNull null
+                        val price = level.price.toWireDecimalOrNull() ?: return@mapNotNull null
+                        val size = level.propertySize.toWireDecimalOrNull() ?: return@mapNotNull null
                         price to size
                     },
-                    updatedAtMs = book.updatedAt.toInstant().toEpochMilli(),
                 )
             )
         } catch (e: Throwable) {
@@ -528,7 +572,7 @@ class PerpsRepository(
 
     suspend fun getShelfMarkets(): List<PerpMarket> {
         val page = getMarkets("", PerpsMarketFilter.ALL, PerpsSort.VOLUME, USD_CURRENCY, cursor = null)
-        return page.getOrNull()?.markets?.take(SHELF_SIZE).orEmpty()
+        return page.getOrNull()?.markets?.distinctBy { it.marketIndex }?.take(SHELF_SIZE).orEmpty()
     }
 
     suspend fun getOpenPositions(
@@ -536,7 +580,9 @@ class PerpsRepository(
     ): KResult<List<PerpsPosition>, PerpsError> = withContext(Async.Io) {
         try {
             val page = api.perps.positions.listOpenPositions(xWalletId = walletId)
-            KResult.Ok(page.positions.orEmpty().mapNotNull { it.toPerpsPosition() })
+            val positions = page.positions.orEmpty().mapNotNull { it.toPerpsPosition() }.distinctPositions()
+            listing.reportUnlisted(positions)
+            KResult.Ok(positions)
         } catch (e: Throwable) {
             if (e is CancellationException) {
                 throw e
@@ -551,11 +597,13 @@ class PerpsRepository(
     ): KResult<PerpsPortfolio, PerpsError> = withContext(Async.Io) {
         try {
             val portfolio = retrying { api.perps.portfolio.getPortfolio(xWalletId = walletId) }
+            val positions = portfolio.positions.orEmpty().mapNotNull { it.toPerpsPosition() }.distinctPositions()
+            listing.reportUnlisted(positions)
             KResult.Ok(
                 PerpsPortfolio(
                     balance = portfolio.balance?.toPerpsBalance(),
-                    positions = portfolio.positions.orEmpty().mapNotNull { it.toPerpsPosition() },
-                    openOrders = portfolio.openOrders?.mapNotNull { it.toPortfolioOrder() },
+                    positions = positions,
+                    openOrders = portfolio.openOrders?.mapNotNull { it.toOrder().toPortfolioOrder() }?.distinctOrders(),
                 )
             )
         } catch (e: Throwable) {
@@ -662,18 +710,17 @@ private fun PerpsSort.toApiSort(): AssetsSort {
     }
 }
 
-private fun TradingFlags?.toPerpsTradingFlags(): PerpsTradingFlags {
-    if (this != null) {
-        return PerpsTradingFlags(
-            openEnabled = openEnabled ?: false,
-            closeEnabled = closeEnabled ?: true,
-            cancelEnabled = cancelEnabled ?: true,
-            addMarginEnabled = addMarginEnabled ?: true,
-            removeMarginEnabled = removeMarginEnabled ?: true,
-            autoCloseEnabled = autoCloseEnabled ?: true,
-        )
-    }
-    return PerpsTradingFlags.VENUE_SILENT
+internal fun TradingScreen.toPerpsTradingFlags(): PerpsTradingFlags {
+    val flags = flags ?: return PerpsTradingFlags.VENUE_SILENT
+    val flat = position == null
+    return PerpsTradingFlags(
+        openEnabled = flags.openEnabled ?: false,
+        closeEnabled = flat || flags.closeEnabled != false,
+        cancelEnabled = flags.cancelEnabled ?: true,
+        addMarginEnabled = flat || flags.addMarginEnabled != false,
+        removeMarginEnabled = flat || flags.removeMarginEnabled != false,
+        autoCloseEnabled = flags.autoCloseEnabled ?: true,
+    )
 }
 
 private fun Market.toPerpsMarketRules(): PerpsMarketRules? {
@@ -684,14 +731,14 @@ private fun Market.toPerpsMarketRules(): PerpsMarketRules? {
         maxLeverage = PerpsProductRules.leverageCeiling(maxLeverage, initialMarginFraction),
         priceDecimals = priceScale,
         sizeDecimals = sizeScale,
-        tickSize = tickSize.toDecimalOrNull(),
-        stepSize = stepSize.toDecimalOrNull(),
-        minSizeBase = minSizeBase.toDecimalOrNull(),
-        minSizeQuote = minSizeQuote.toDecimalOrNull(),
-        takerFeePct = takerFeePct.toDecimalOrNull(),
+        tickSize = tickSize.toWireDecimalOrNull(),
+        stepSize = stepSize.toWireDecimalOrNull(),
+        minSizeBase = minSizeBase.toWireDecimalOrNull(),
+        minSizeQuote = minSizeQuote.toWireDecimalOrNull(),
+        takerFeePct = takerFeePct.toWireDecimalOrNull(),
         initialMarginBps = initialMarginFraction,
         maintenanceMarginBps = maintenanceMarginFraction,
-        markPrice = markPrice.toDecimalOrNull(),
+        markPrice = markPrice.toWireDecimalOrNull(),
         tradable = status == null || status == MARKET_STATUS_ACTIVE,
     )
 }
@@ -729,15 +776,24 @@ private fun Order.toPerpsLimitOrder(): PerpsLimitOrder? {
         OrderSide.short -> PerpsPositionSide.SHORT
         OrderSide.unknown, null -> return null
     }
-    val base = baseSize.toDecimalOrNull()
+    val base = baseSize.toWireDecimalOrNull()
 
     return PerpsLimitOrder(
         orderIndex = index,
         clientOrderIndex = clientOrderIndex,
         side = orderSide,
-        remainingBase = base?.subtract(filledBase.toDecimalOrNull() ?: BigDecimal.ZERO),
-        limitPrice = price.toDecimalOrNull()?.takeIf { it.signum() > 0 },
+        remainingBase = base?.subtract(filledBase.toWireDecimalOrNull() ?: BigDecimal.ZERO),
+        limitPrice = price.toWireDecimalOrNull()?.takeIf { it.signum() > 0 },
         expiryUnixMs = expiresAt?.toInstant()?.toEpochMilli()?.takeIf { it > 0L },
+        takeProfit = autoClose?.takeProfit?.toPerpsLimitOrderLeg(),
+        stopLoss = autoClose?.stopLoss?.toPerpsLimitOrderLeg(),
+    )
+}
+
+private fun OrderAutoCloseLeg.toPerpsLimitOrderLeg(): PerpsLimitOrderLeg? {
+    return PerpsLimitOrderLeg(
+        orderIndex = orderIndex ?: return null,
+        triggerPrice = triggerPrice.toWireDecimalOrNull()?.takeIf { it.signum() > 0 } ?: return null,
     )
 }
 
@@ -755,6 +811,26 @@ private fun Order.toPortfolioOrder(): PerpsPortfolioOrder? {
         limitPrice = order.limitPrice,
         leverage = null,
         margin = null,
+        takeProfit = order.takeProfit,
+        stopLoss = order.stopLoss,
+    )
+}
+
+private fun PortfolioOrder.toOrder(): Order {
+    return Order(
+        orderIndex = orderIndex,
+        clientOrderIndex = clientOrderIndex,
+        marketIndex = marketIndex,
+        symbol = symbol,
+        side = side,
+        type = type,
+        status = status,
+        category = category,
+        baseSize = baseSize,
+        price = price,
+        filledBase = filledBase,
+        expiresAt = expiresAt,
+        autoClose = autoClose,
     )
 }
 
@@ -779,25 +855,25 @@ private fun OpenPosition.toPerpsOpenPosition(): PerpsOpenPosition? {
         PositionSide.unknown, null -> return null
     }
 
-    val positionMargin = margin.toDecimalOrNull()
-    val positionPnl = unrealizedPnl.toDecimalOrNull()
+    val positionMargin = margin.toWireDecimalOrNull()
+    val positionPnl = unrealizedPnl.toWireDecimalOrNull()
     return PerpsOpenPosition(
         id = positionId,
         marketIndex = index,
         symbol = ticker,
         side = positionSide,
-        size = propertySize.toDecimalOrNull(),
-        positionValue = positionValue.toDecimalOrNull(),
-        avgEntryPrice = avgEntryPrice.toDecimalOrNull(),
-        markPrice = markPrice.toDecimalOrNull(),
-        liquidationPrice = liquidationPrice.toDecimalOrNull(),
-        liquidationDistancePct = liquidationDistancePct.toDecimalOrNull(),
+        size = propertySize.toWireDecimalOrNull(),
+        positionValue = positionValue.toWireDecimalOrNull(),
+        avgEntryPrice = avgEntryPrice.toWireDecimalOrNull(),
+        markPrice = markPrice.toWireDecimalOrNull(),
+        liquidationPrice = liquidationPrice.toWireDecimalOrNull(),
+        liquidationDistancePct = liquidationDistancePct.toWireDecimalOrNull(),
         margin = positionMargin,
-        equity = equity.toDecimalOrNull() ?: positionMargin?.add(positionPnl ?: BigDecimal.ZERO),
+        equity = equity.toWireDecimalOrNull() ?: positionMargin?.add(positionPnl ?: BigDecimal.ZERO),
         unrealizedPnl = positionPnl,
-        roiPct = roiPct.toDecimalOrNull(),
+        roiPct = roiPct.toWireDecimalOrNull(),
         leverage = leverage?.takeIf { it > 0 },
-        fundingPaid = fundingPaid.toDecimalOrNull(),
+        fundingPaid = fundingPaid.toWireDecimalOrNull(),
     )
 }
 
@@ -808,27 +884,32 @@ private fun PositionAutoCloseLeg.toPerpsAutoCloseLeg(
         kind = kind,
         orderIndex = orderIndex,
         clientOrderIndex = clientOrderIndex,
-        triggerPrice = triggerPrice.toDecimalOrNull(),
-        sharePct = sharePct.toDecimalOrNull(),
-        projectedRoiPct = projectedRoiPct.toDecimalOrNull(),
+        triggerPrice = triggerPrice.toWireDecimalOrNull(),
+        sharePct = sharePct.toWireDecimalOrNull(),
+        projectedRoiPct = projectedRoiPct.toWireDecimalOrNull(),
     )
 }
 
 private fun PerpsAccount.toPerpsBalance(): PerpsBalance {
     return PerpsBalance(
-        collateral = collateral.toDecimalOrNull(),
-        availableBalance = availableBalance.toDecimalOrNull(),
+        collateral = collateral.toWireDecimalOrNull(),
+        availableBalance = availableBalance.toWireDecimalOrNull(),
         transferableBalance = null,
     )
 }
 
 private fun Balance.toPerpsBalance(): PerpsBalance {
     return PerpsBalance(
-        collateral = collateral.toDecimalOrNull(),
-        availableBalance = availableBalance.toDecimalOrNull(),
-        transferableBalance = transferableBalance.toDecimalOrNull(),
+        collateral = collateral.toWireDecimalOrNull(),
+        availableBalance = availableBalance.toWireDecimalOrNull(),
+        transferableBalance = transferableBalance.toWireDecimalOrNull(),
     )
 }
+
+private fun List<PerpsPosition>.distinctPositions(): List<PerpsPosition> = distinctBy { it.marketIndex to it.side }
+
+private fun List<PerpsPortfolioOrder>.distinctOrders(): List<PerpsPortfolioOrder> =
+    distinctBy { it.marketIndex to it.orderIndex }
 
 private fun OpenPosition.toPerpsPosition(): PerpsPosition? {
     val index = marketIndex ?: return null
@@ -839,8 +920,8 @@ private fun OpenPosition.toPerpsPosition(): PerpsPosition? {
         PositionSide.unknown, null -> return null
     }
 
-    val positionMargin = margin.toDecimalOrNull()
-    val positionPnl = unrealizedPnl.toDecimalOrNull()
+    val positionMargin = margin.toWireDecimalOrNull()
+    val positionPnl = unrealizedPnl.toWireDecimalOrNull()
     return PerpsPosition(
         marketIndex = index,
         symbol = ticker,
@@ -848,19 +929,10 @@ private fun OpenPosition.toPerpsPosition(): PerpsPosition? {
         side = positionSide,
         margin = positionMargin,
         unrealizedPnl = positionPnl,
-        equity = equity.toDecimalOrNull() ?: positionMargin?.add(positionPnl ?: BigDecimal.ZERO),
+        equity = equity.toWireDecimalOrNull() ?: positionMargin?.add(positionPnl ?: BigDecimal.ZERO),
         leverage = leverage?.takeIf { it > 0 },
+        liquidationDistancePct = liquidationDistancePct.toWireDecimalOrNull(),
     )
-}
-
-private fun String?.toDecimalOrNull(): BigDecimal? {
-    val value = this?.takeIf { it.isNotBlank() } ?: return null
-    return try {
-        BigDecimal(value)
-    } catch (e: NumberFormatException) {
-        L.e(e)
-        null
-    }
 }
 
 private const val HTTP_NOT_FOUND = 404
@@ -870,6 +942,7 @@ private const val RETRY_BASE_DELAY_MS = 1_000L
 private const val REQUEST_DECIMALS = 8
 private const val MARKET_STATUS_ACTIVE = "active"
 private const val LIGHTER_POSITION_PREFIX = "lighter:"
+private const val LIGHTER_ORDER_PREFIX = "lighter:"
 private const val IDS_CHUNK_SIZE = 10
 private const val SHELF_SIZE = 8
 private val RESTING_STATUSES = setOf(

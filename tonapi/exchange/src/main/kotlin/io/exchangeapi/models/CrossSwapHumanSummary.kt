@@ -27,13 +27,15 @@ data class CrossSwapHumanSummary(
     @SerialName(value = "receive_amount")
     val receiveAmount: String? = null,
 
-    /* Least amount of `receive_asset` the built transaction lets through, as the aggregator reported it when building, in minimal units. It can be below the route's `minimum_destination_amount`: the aggregator may reprice between quote and build. Omitted when the aggregator reports none at build time; then only the route's `minimum_destination_amount` is known.  */
+    /* Least amount of `receive_asset` the user should expect from the built transaction, in minimal units, by the same rule as the route's `minimum_destination_amount`: the aggregator's floor at build time, lowered to `receive_amount` minus the route's slippage when the aggregator's floor is higher. It can be below the route's `minimum_destination_amount`: the aggregator may reprice between quote and build. Omitted when the aggregator reports none at build time; then only the route's `minimum_destination_amount` is known.  */
     @SerialName(value = "minimum_receive_amount")
     val minimumReceiveAmount: String? = null,
 
     /* Final destination of the swap (user's address on destination chain) */
     @SerialName(value = "recipient_address")
     val recipientAddress: String? = null,
+
+    /* Provider deposit channel the payload pays into. Never a router a contract call targets. */
     @SerialName(value = "deposit_address")
     val depositAddress: String? = null,
     @SerialName(value = "memo")

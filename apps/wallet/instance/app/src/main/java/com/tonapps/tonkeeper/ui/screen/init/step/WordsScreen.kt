@@ -21,6 +21,7 @@ import com.tonapps.tonkeeper.extensions.hideKeyboard
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.component.WordEditText
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
+import com.tonapps.tonkeeper.ui.screen.init.MnemonicResult
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundContentTintColor
 import com.tonapps.uikit.color.iconPrimaryColor
@@ -283,14 +284,22 @@ class WordsScreen: BaseFragment(R.layout.fragment_init_words) {
                 initViewModel.trackImportInputError("recovery_mismatch")
                 navigation?.toast(Localization.mnemonic_match_error)
             } else if (initViewModel.isWalletAlreadyImported(words)) {
-                initViewModel.trackImportInputError("already_imported")
-                navigation?.toast(Localization.wallet_already_imported)
+                when (initViewModel.importTelegramWalletOnly(words)) {
+                    MnemonicResult.Accepted -> initViewModel.trackMnemonicAccepted()
+                    MnemonicResult.Invalid -> {
+                        initViewModel.trackImportInputError("already_imported")
+                        navigation?.toast(Localization.wallet_already_imported)
+                    }
+                    MnemonicResult.Failed -> Unit
+                }
             } else {
-                if (initViewModel.setMnemonic(words)) {
-                    initViewModel.trackMnemonicAccepted()
-                } else {
-                    initViewModel.trackImportInputError("invalid_mnemonic")
-                    navigation?.toast(Localization.incorrect_phrase)
+                when (initViewModel.setMnemonic(words)) {
+                    MnemonicResult.Accepted -> initViewModel.trackMnemonicAccepted()
+                    MnemonicResult.Invalid -> {
+                        initViewModel.trackImportInputError("invalid_mnemonic")
+                        navigation?.toast(Localization.incorrect_phrase)
+                    }
+                    MnemonicResult.Failed -> Unit
                 }
             }
             setDefault()

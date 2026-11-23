@@ -1,7 +1,6 @@
 package com.tonapps.wallet.api.entity
 
-import org.json.JSONArray
-import org.json.JSONObject
+import io.tonendpointapi.models.Currency
 
 data class CurrencyEntity(
     val code: String,
@@ -18,24 +17,22 @@ data class CurrencyEntity(
         const val TYPE_FIAT = "fiat"
         const val TYPE_CRYPTO = "crypto"
 
-        fun of(json: JSONObject): CurrencyEntity? {
-            val code = json.optString("code").trim().uppercase()
+        fun of(currency: Currency): CurrencyEntity? {
+            val code = currency.code.orEmpty().trim().uppercase()
             if (code.isEmpty()) {
                 return null
             }
             return CurrencyEntity(
                 code = code,
-                name = json.optString("name").trim().ifEmpty { code },
-                image = json.optString("image").takeIf { it.isNotBlank() },
-                type = json.optString("type").ifBlank { TYPE_FIAT },
-                symbol = json.optString("symbol").trim().takeIf { it.isNotEmpty() },
+                name = currency.name.orEmpty().trim().ifEmpty { code },
+                image = currency.image?.takeIf { it.isNotBlank() },
+                type = currency.type.orEmpty().ifBlank { TYPE_FIAT },
+                symbol = currency.symbol?.trim()?.takeIf { it.isNotEmpty() },
             )
         }
 
-        fun parse(array: JSONArray): List<CurrencyEntity> {
-            return (0 until array.length())
-                .mapNotNull { index -> array.optJSONObject(index)?.let(::of) }
-                .distinctBy { it.code }
+        fun parse(currencies: List<Currency>): List<CurrencyEntity> {
+            return currencies.mapNotNull(::of).distinctBy { it.code }
         }
     }
 }

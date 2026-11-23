@@ -16,6 +16,7 @@ import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.extensions.getTransfers
 import com.tonapps.tonkeeper.extensions.method
 import com.tonapps.tonkeeper.helper.BatteryHelper
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectSignMessageValidation
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
@@ -67,6 +68,7 @@ class SendTransactionViewModel(
     app: Application,
     private val wallet: WalletEntity,
     private val request: SignRequestEntity,
+    private val passcodeReason: PasscodeReason,
     private val batteryTransactionType: BatteryTransaction,
     private val forceRelayer: Boolean,
     private val broadcastVia: BroadcastVia,
@@ -86,6 +88,7 @@ class SendTransactionViewModel(
 ) : BaseWalletVM(app) {
 
     private val currency = settingsRepository.currency
+    private val relayerForced = forceRelayer && wallet.supportsBattery
     private val isBattery = AtomicBoolean(false)
 
     private val isSignMessage: Boolean
@@ -139,7 +142,6 @@ class SendTransactionViewModel(
             val useBattery = BatteryHelper.isBatteryIsEnabledTx(
                 wallet,
                 batteryTransactionType,
-                settingsRepository,
                 accountRepository,
                 batteryRepository
             )
@@ -159,14 +161,14 @@ class SendTransactionViewModel(
                 }
 
                 val batteryDeferred = async {
-                    if (useBattery || forceRelayer) {
+                    if (useBattery || relayerForced) {
                         BatteryHelper.emulation(
                             wallet = wallet,
                             message = message!!,
                             emulationUseCase = emulationUseCase,
                             accountRepository = accountRepository,
                             batteryRepository = batteryRepository,
-                            forceRelayer = forceRelayer,
+                            forceRelayer = relayerForced,
                             params = !request.ignoreInsufficientBalance
                         )
                     } else {
@@ -193,7 +195,7 @@ class SendTransactionViewModel(
                         wallet = wallet,
                         balance = Amount(error.accountBalance),
                         required = Amount(error.totalAmount),
-                        withRechargeBattery = forceRelayer || useBattery,
+                        withRechargeBattery = relayerForced || useBattery,
                         singleWallet = isSingleWallet(),
                         type = InsufficientBalanceType.InsufficientTONBalance
                     )
@@ -201,7 +203,10 @@ class SendTransactionViewModel(
                     return@launch
                 }
 
-                tonDetails = if (!tonEmulated.failed) {
+                // A forced relayer's message carries only the TON the relayer funds (a battery
+                // recharge attaches the battery's transfer cost): paid from the wallet, it could run
+                // out of gas, so TON is not offered.
+                tonDetails = if (!tonEmulated.failed && !relayerForced) {
                     tonAnalyticsTransfer = tonEmulated.analyticsTransfer()
                     createDetails(tonEmulated)
                 } else {
@@ -234,7 +239,7 @@ class SendTransactionViewModel(
                     APIException.Emulation(
                         boc = message?.createSignedBody(
                             EmptyPrivateKeyEd25519.invoke(),
-                            forceRelayer || useBattery
+                            relayerForced || useBattery
                         )?.base64() ?: "failed",
                         sourceUri = request.appUri,
                         cause = e
@@ -247,12 +252,12 @@ class SendTransactionViewModel(
                         wallet = wallet,
                         balance = Amount(tonBalance),
                         required = Amount(Coins.of(0.1)),
-                        withRechargeBattery = forceRelayer || useBattery,
+                        withRechargeBattery = relayerForced || useBattery,
                         singleWallet = isSingleWallet(),
                         type = InsufficientBalanceType.InsufficientTONBalance
                     )
                 } else {
-                    toast(e.getDebugMessage() ?: getString(Localization.unknown_error))
+                    failureToast(e.getDebugMessage() ?: getString(Localization.unknown_error))
                     _stateFlow.value = SendTransactionState.FailedEmulation
                 }
             }
@@ -297,7 +302,7 @@ class SendTransactionViewModel(
                     cause = e
                 )
             )
-            toast(e.getDebugMessage() ?: getString(Localization.unknown_error))
+            failureToast(e.getDebugMessage() ?: getString(Localization.unknown_error))
             _stateFlow.value = SendTransactionState.FailedEmulation
         }
     }
@@ -358,7 +363,7 @@ class SendTransactionViewModel(
     private fun getLedgerTransaction(
         message: MessageBodyEntity
     ): List<Transaction> {
-        if (!message.wallet.isLedger) {
+        if (!message.wallet.signsWithLedger) {
             return emptyList()
         }
         /*if (message.transfers.size > 1) {
@@ -415,7 +420,7 @@ class SendTransactionViewModel(
         val message = signMessageBody(transfers)
         val unsignedBody = message.createUnsignedBody(internalMessage = true)
         val signature = withContext(Dispatchers.Main) {
-            signUseCase(context = context, wallet = wallet, unsignedBody = unsignedBody)
+            signUseCase(context = context, wallet = wallet, unsignedBody = unsignedBody, reason = passcodeReason)
         }
         val signedBody = wallet.contract.signedBody(signature, unsignedBody)
         val internalMessage = wallet.contract.createSignedInternalMessageCell(message.seqNo, signedBody)
@@ -450,7 +455,8 @@ class SendTransactionViewModel(
                 wallet = wallet,
                 unsignedBody = unsignedBody,
                 ledgerTransaction = ledgerTransactions.firstOrNull(),
-                seqNo = message.seqNo
+                seqNo = message.seqNo,
+                reason = passcodeReason,
             )
             cells.add(cell)
         }

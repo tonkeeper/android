@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ui.ComposeIcon
 import ui.components.moon.MoonAsyncImage
+import ui.components.moon.MoonItemImage
 import ui.theme.Dimens
 import ui.theme.UIKit
 
@@ -25,6 +26,7 @@ fun ActionMenuItem(
     text: String,
     painter: Painter?,
     onClick: () -> Unit,
+    leadingImage: String? = null,
 ) {
     Row(
         modifier = Modifier
@@ -34,6 +36,9 @@ fun ActionMenuItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        if (leadingImage != null) {
+            MoonItemImage(image = leadingImage, size = 20.dp)
+        }
         Text(
             modifier = Modifier.weight(1f),
             text = text,
@@ -58,7 +63,8 @@ fun ActionMenuItem(
 fun ActionMenuItem(
     text: String,
     icon: ComposeIcon?,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    leadingImage: String? = null,
 ) {
     Row(
         modifier = Modifier
@@ -68,6 +74,9 @@ fun ActionMenuItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        if (leadingImage != null) {
+            MoonItemImage(image = leadingImage, size = 20.dp)
+        }
         Text(
             modifier = Modifier.weight(1f),
             text = text,

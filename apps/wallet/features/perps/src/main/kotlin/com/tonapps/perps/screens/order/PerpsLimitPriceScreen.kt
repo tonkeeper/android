@@ -2,15 +2,12 @@ package com.tonapps.perps.screens.order
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,7 +16,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -50,9 +46,11 @@ import com.tonapps.paging.collectAsStateWorkaround
 import com.tonapps.perps.data.PERPS_EMPTY_VALUE
 import com.tonapps.perps.data.formatOffsetPercent
 import com.tonapps.perps.data.formatUsd
+import com.tonapps.perps.screens.common.PerpsDecimalInputTransformation
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import com.wallet.crypto.trustapp.common.ui.components.MoonEditText
+import com.wallet.crypto.trustapp.common.ui.components.amountFieldScroll
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonOutlineChip
@@ -170,7 +168,7 @@ private fun LimitPriceInputCell(
     value: String,
     inPercent: Boolean,
     chipText: String,
-    warning: Int?,
+    warning: PerpsLimitPriceWarning?,
     onValueChange: (String) -> Unit,
     onToggleMode: () -> Unit,
     onDone: () -> Unit,
@@ -208,14 +206,13 @@ private fun LimitPriceInputCell(
                     modifier = Modifier
                         .focusRequester(focusRequester)
                         .weight(1f, fill = false)
-                        .horizontalScroll(scrollState)
-                        .width(IntrinsicSize.Min)
-                        .defaultMinSize(minWidth = 24.dp),
+                        .amountFieldScroll(scrollState),
                     value = value,
                     onValueChange = onValueChange,
                     textStyle = style,
                     keyboardActions = remember { KeyboardActions(onDone = { onDone() }) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    visualTransformation = PerpsDecimalInputTransformation,
                     placeholder = { Text(text = "0", style = style, color = UIKit.colorScheme.text.tertiary) },
                 )
 
@@ -269,13 +266,29 @@ private fun LimitPriceInputCell(
                         }
                     )
                     .padding(horizontal = 6.dp),
-                text = warning?.let { stringResource(it) } ?: "",
-                color = UIKit.colorScheme.accent.red,
+                text = warning?.let { warningText(it) } ?: "",
+                color = if (warning?.blocking == false) {
+                    UIKit.colorScheme.accent.orange
+                } else {
+                    UIKit.colorScheme.accent.red
+                },
             )
 
             Spacer(Modifier.height(8.dp))
         }
     }
+}
+
+@Composable
+private fun warningText(warning: PerpsLimitPriceWarning): String {
+    val text = if (warning.price != null) {
+        stringResource(warning.text, warning.price)
+    } else {
+        stringResource(warning.text)
+    }
+    val removal = warning.removal ?: return text
+
+    return stringResource(Localization.perps_limit_price_leg_removed_pattern, text, stringResource(removal))
 }
 
 private const val DISABLED_ALPHA = 0.4f

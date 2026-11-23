@@ -2,6 +2,7 @@ package com.tonapps.deposit.screens.ramp.amount
 
 import com.tonapps.blockchain.model.legacy.BalanceEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.deposit.data.ExchangeRepository
@@ -114,7 +115,9 @@ class DepositAmountFeature(
 
     private val amountSubject = MviSubject<String>()
 
-    private val analytics = RampAnalytics.of(data.rampType, data.analyticsFrom, DepositFlowWalletMode.Single, data.utm)
+    private val analytics = RampAnalytics.of(
+        data.rampType, data.analyticsFrom, DepositFlowWalletMode.Single, data.utm, DepositFlowDepositScreen.AddFunds,
+    )
     private val analyticsCryptoAsset = data.cryptoAsset.toCurrency.analyticsAssetId()
     private val analyticsFiatCode = data.fiatAsset.toCurrency.code
     private val viewTracked = AtomicBoolean(false)
@@ -223,7 +226,7 @@ class DepositAmountFeature(
                 null
             }
 
-            val merchants = onRampRepository.getMerchants()
+            val merchants = onRampRepository.getMerchants(wallet.id)
 
             val providerItems = merchants.map { merchant ->
                 ProviderWithQuote(

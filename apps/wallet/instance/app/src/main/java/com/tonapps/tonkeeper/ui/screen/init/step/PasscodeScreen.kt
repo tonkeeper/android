@@ -9,6 +9,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -41,6 +42,12 @@ class PasscodeScreen: BaseFragment(R.layout.fragment_init_passcode)  {
             Mode.ReEnter -> Localization.passcode_re_enter
             Mode.Enter -> Localization.passcode_enter
         })
+
+        if (mode == Mode.Enter) {
+            val reasonView = view.findViewById<AppCompatTextView>(R.id.reason)
+            reasonView.setText(PasscodeReason.ADD_WALLET.text)
+            reasonView.visibility = View.VISIBLE
+        }
 
         pinInputView = view.findViewById(R.id.passcode)
 

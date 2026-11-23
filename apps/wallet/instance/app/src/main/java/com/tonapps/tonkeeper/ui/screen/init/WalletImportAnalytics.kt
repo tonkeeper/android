@@ -5,6 +5,8 @@ import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowFrom
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowLedgerModel
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletMode
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
+import com.tonapps.bus.walletimport.WalletImportPairingSession
+import com.tonapps.bus.walletimport.WalletImportPairingSessions
 import com.tonapps.log.L
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import kotlinx.coroutines.CancellationException
@@ -14,6 +16,7 @@ import kotlinx.coroutines.CancellationException
 class WalletImportAnalytics(
     private val unifiedAccountRepository: UnifiedAccountRepository,
     private val analytics: AnalyticsHelper,
+    private val pairingSessions: WalletImportPairingSessions,
 ) {
 
     suspend fun trackError(
@@ -22,6 +25,7 @@ class WalletImportAnalytics(
         errorMessage: String? = null,
         ledgerModel: WalletFlowLedgerModel? = null,
     ) {
+        pairingSessions.active(walletSource)?.setBlocked(WalletImportPairingSession.Blocker.ImportError)
         analytics.events.walletFlow.walletImportError(
             // Ledger, Signer and Keystone accounts are always single-chain, matching
             // InitViewModel.importedWalletMode.
@@ -69,7 +73,7 @@ class WalletImportAnalytics(
         )
     }
 
-    private suspend fun from(): WalletFlowFrom {
+    suspend fun from(): WalletFlowFrom {
         val hasAnyWallet = try {
             unifiedAccountRepository.hasAnyWallet()
         } catch (e: CancellationException) {

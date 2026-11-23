@@ -29,6 +29,9 @@ class PagerAdapter(
         super.onAttachedToRecyclerView(recyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.isNestedScrollingEnabled = false
+        recyclerView.preserveFocusAfterLayout = false
+        recyclerView.isFocusable = false
+        recyclerView.isFocusableInTouchMode = false
         recyclerView.itemAnimator = null
         recyclerView.layoutAnimation = null
     }

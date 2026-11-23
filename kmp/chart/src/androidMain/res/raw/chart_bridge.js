@@ -246,6 +246,14 @@ window.AndroidChart = (function () {
             chart.timeScale().setVisibleLogicalRange({ from: from, to: to });
         }),
 
+        afterNextPaint: guarded('afterNextPaint', function (request) {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    post({ type: 'paint', request: request });
+                });
+            });
+        }),
+
         attachPriceLevelMarkers: guarded('attachPriceLevelMarkers', function (pluginId, seriesId, options) {
             pluginsById[pluginId] = window.TKLightweightCharts.createPriceLevelMarkers(seriesById[seriesId], options);
         }),

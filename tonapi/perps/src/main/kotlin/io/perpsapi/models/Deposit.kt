@@ -29,6 +29,10 @@ data class Deposit(
     @SerialName(value = "status")
     val status: Status? = null,
 
+    /* Where a pending deposit is now. Present only while status is pending; once it is not, status says how the deposit ended. - sending: the money has not left the wallet yet, or the provider has not seen it. - converting: the provider is swapping it to USDC on Ethereum. - adding: the money is sent to Lighter, and Lighter has not credited it yet. Steps only move forward and can be skipped. A deposit in USDC has no swap, so it goes from sending to adding. It can also skip a step that passed between two checks. */
+    @SerialName(value = "pending_step")
+    val pendingStep: PendingStep? = null,
+
     /* The network and token the funds were sent as; echoed from the request. */
     @SerialName(value = "asset_id")
     val assetId: String? = null,
@@ -83,6 +87,32 @@ data class Deposit(
         }
 
         override fun serialize(encoder: Encoder, value: Status) {
+            encoder.encodeSerializableValue(String.serializer(), value.value)
+        }
+    }
+    /**
+     * Where a pending deposit is now. Present only while status is pending; once it is not, status says how the deposit ended. - sending: the money has not left the wallet yet, or the provider has not seen it. - converting: the provider is swapping it to USDC on Ethereum. - adding: the money is sent to Lighter, and Lighter has not credited it yet. Steps only move forward and can be skipped. A deposit in USDC has no swap, so it goes from sending to adding. It can also skip a step that passed between two checks.
+     *
+     * Values: sending,converting,adding,unknown
+     */
+    @Serializable(with = PendingStepSerializer::class)
+    enum class PendingStep(val value: String) {
+        @SerialName(value = "sending") sending("sending"),
+        @SerialName(value = "converting") converting("converting"),
+        @SerialName(value = "adding") adding("adding"),
+        @SerialName(value = "unknown") unknown("unknown");
+    }
+
+    internal object PendingStepSerializer : KSerializer<PendingStep> {
+        override val descriptor = String.serializer().descriptor
+
+        override fun deserialize(decoder: Decoder): PendingStep {
+            val value = decoder.decodeSerializableValue(String.serializer())
+            return PendingStep.entries.firstOrNull { it.value == value }
+                ?: PendingStep.unknown
+        }
+
+        override fun serialize(encoder: Encoder, value: PendingStep) {
             encoder.encodeSerializableValue(String.serializer(), value.value)
         }
     }

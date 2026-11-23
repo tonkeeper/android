@@ -1,6 +1,7 @@
 package com.tonapps.core.deeplink
 
 import android.net.Uri
+import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.extensions.toUriOrNull
 
@@ -70,6 +71,17 @@ object DeepLinkBuilder {
 
     fun dApp(appUrl: String): String {
         return "${appScheme}dapp/$appUrl"
+    }
+
+    fun perps(route: DeepLinkRoute.Perps, entryPoint: PerpsEntryPoint?): String {
+        val path = when (route) {
+            is DeepLinkRoute.Perps.Home -> "perps"
+            is DeepLinkRoute.Perps.Market -> "perps/market/${route.marketIndex}"
+            is DeepLinkRoute.Perps.AutoClose -> "perps/market/${route.marketIndex}/auto-close"
+            is DeepLinkRoute.Perps.MarketSymbol -> "perps/market/${route.symbol}"
+        }
+        val query = entryPoint?.let { "?${DeepLinkRoute.Perps.ENTRY_POINT_QUERY}=${it.key}" }.orEmpty()
+        return "$appScheme$path$query"
     }
 
     fun dAppShare(appUrl: String): String {

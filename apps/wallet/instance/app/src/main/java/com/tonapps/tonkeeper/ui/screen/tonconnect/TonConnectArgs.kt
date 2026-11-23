@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.wallet.data.dapps.entities.AppEntity
 import uikit.base.BaseArgs
 
@@ -13,7 +14,9 @@ data class TonConnectArgs(
     val proofPayload: String?,
     val returnUri: Uri?,
     val wallet: WalletEntity?,
-    val fromPackageName: String?
+    val fromPackageName: String?,
+    val proofDomain: String?,
+    val utm: UtmParameters = UtmParameters.Empty,
 ): BaseArgs() {
 
     constructor(bundle: Bundle) : this(
@@ -22,7 +25,9 @@ data class TonConnectArgs(
         proofPayload = bundle.getString(ARG_PROOF_PAYLOAD),
         returnUri = bundle.getParcelableCompat(ARG_RETURN_URI),
         wallet = bundle.getParcelableCompat(ARG_WALLET),
-        fromPackageName = bundle.getString(ARG_FROM_PACKAGE_NAME)
+        fromPackageName = bundle.getString(ARG_FROM_PACKAGE_NAME),
+        proofDomain = bundle.getString(ARG_PROOF_DOMAIN),
+        utm = bundle.getParcelableCompat(ARG_UTM) ?: UtmParameters.Empty,
     )
 
     override fun toBundle(): Bundle {
@@ -33,6 +38,8 @@ data class TonConnectArgs(
         bundle.putParcelable(ARG_RETURN_URI, returnUri)
         bundle.putParcelable(ARG_WALLET, wallet)
         bundle.putString(ARG_FROM_PACKAGE_NAME, fromPackageName)
+        bundle.putString(ARG_PROOF_DOMAIN, proofDomain)
+        bundle.putParcelable(ARG_UTM, utm)
         return bundle
     }
 
@@ -43,5 +50,7 @@ data class TonConnectArgs(
         private const val ARG_RETURN_URI = "returnUri"
         private const val ARG_WALLET = "wallet"
         private const val ARG_FROM_PACKAGE_NAME = "fromPackageName"
+        private const val ARG_PROOF_DOMAIN = "proofDomain"
+        private const val ARG_UTM = "utm"
     }
 }

@@ -24,14 +24,12 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
-import java.math.BigInteger
 
 /**
  * The legacy side of the GRAM ↔ USDT TRC20 swap: which wallets it signs for, the pair it opens on,
@@ -183,33 +181,6 @@ class LegacySwapAccountsTest {
     @Test
     fun assetOutsideTheSwapHasNoAccount() {
         assertNull(eligible().account("eth/mainnet/coin", emptyList(), USD))
-    }
-
-    // Keys
-
-    @Test
-    fun keyOfThirtyTwoBytesIsTakenAsIs() {
-        val bytes = ByteArray(32) { (it + 1).toByte() }
-
-        assertArrayEquals(bytes, BigInteger(1, bytes).toKeyBytes())
-    }
-
-    @Test
-    fun keyWithTheTopBitSetLosesTheSignByte() {
-        val bytes = ByteArray(32) { 0xF0.toByte() }
-        val key = BigInteger(1, bytes)
-
-        assertEquals(33, key.toByteArray().size)
-        assertArrayEquals(bytes, key.toKeyBytes())
-    }
-
-    @Test
-    fun keyWithALeadingZeroByteIsLeftPadded() {
-        val bytes = ByteArray(32) { 0x11 }.also { it[0] = 0 }
-        val key = BigInteger(1, bytes)
-
-        assertEquals(31, key.toByteArray().size)
-        assertArrayEquals(bytes, key.toKeyBytes())
     }
 
     @Test

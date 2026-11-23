@@ -173,9 +173,11 @@
                 </uikit.widget.ColumnLayout>
 
                 <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/pool_switch"
                     android:layout_width="16dp"
                     android:layout_height="24dp"
                     android:layout_gravity="center"
+                    android:visibility="gone"
                     android:src="@drawable/ic_switch_16"
                     android:tint="?attr/iconTertiaryColor"/>
 

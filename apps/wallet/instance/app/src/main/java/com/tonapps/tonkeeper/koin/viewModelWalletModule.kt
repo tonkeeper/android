@@ -6,15 +6,27 @@ import com.tonapps.bus.generated.Events.DappBrowser.DappAppClickFrom
 import com.tonapps.dapp.screens.confirm.DAppConfirmFeature
 import com.tonapps.dapp.screens.session.WcSessionFeature
 import com.tonapps.dapp.screens.sessions.WcSessionsFeature
+import com.tonapps.deposit.multicoin.screens.confirm.battery.BatteryPurchaseConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualDepositConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.SwapConfirmFeature
+import com.tonapps.deposit.multicoin.screens.confirm.SwapOperationConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.TxConfirmFeature
+import com.tonapps.deposit.multicoin.screens.confirm.dapp.DappTxConfirmFeature
+import com.tonapps.deposit.multicoin.screens.confirm.transfer.TransferConfirmFeature
 import com.tonapps.deposit.multicoin.screens.assets.AssetsExtendedFeature
 import com.tonapps.deposit.multicoin.screens.method.PaymentMethodFeature as McPaymentMethodFeature
 import com.tonapps.deposit.multicoin.screens.picker.AssetPickerFeature
 import com.tonapps.deposit.multicoin.screens.qr.ReceiveQrFeature
 import com.tonapps.deposit.multicoin.screens.ramp.RampFeature as McRampFeature
+import com.tonapps.deposit.multicoin.screens.moonpay.MoonPayPaymentFeature
+import com.tonapps.deposit.multicoin.screens.buy.BuyCryptoData
+import com.tonapps.deposit.multicoin.screens.buy.method.BuyCryptoMethodData
+import com.tonapps.deposit.multicoin.screens.buy.method.BuyCryptoMethodFeature
+import com.tonapps.deposit.multicoin.domain.MoonPayRamp
+import com.tonapps.deposit.multicoin.moonpay.frame.MoonPayTheme
+import com.tonapps.deposit.multicoin.screens.buy.BuyCryptoFeature
+import com.tonapps.deposit.multicoin.screens.buy.BuyCryptoOffer
 import com.tonapps.deposit.multicoin.screens.ramp.amount.RampAmountFeature as McRampAmountFeature
 import com.tonapps.deposit.multicoin.screens.receive.ReceiveFeature
 import com.tonapps.deposit.multicoin.screens.send.SendFeature as McSendFeature
@@ -38,11 +50,13 @@ import com.tonapps.tonkeeper.ui.screen.backup.main.BackupViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.earn.EarnDAppBridges
 import com.tonapps.tonkeeper.ui.screen.phrase.PhraseViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.BatteryRechargeViewModel
+import com.tonapps.tonkeeper.ui.screen.battery.recharge.asset.BatteryAssetRechargeViewModel
 import com.tonapps.tonkeeper.ui.screen.battery.refill.BatteryRefillViewModel
-import com.tonapps.tonkeeper.ui.screen.battery.settings.BatterySettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.base.BrowserBaseViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.earn.EarnDAppViewModel
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.keeper.KeeperDAppBridges
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.keeper.KeeperDAppViewModel
 import com.tonapps.tonkeeper.ui.screen.browser.more.BrowserMoreViewModel
 import com.tonapps.tonkeeper.ui.screen.card.CardViewModel
 import com.tonapps.tonkeeper.ui.screen.collectibles.main.CollectiblesViewModel
@@ -64,6 +78,7 @@ import com.tonapps.tonkeeper.ui.screen.settings.apps.AppsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.extensions.ExtensionsViewModel
 import com.tonapps.tonkeeper.ui.screen.settings.main.SettingsViewModel
 import com.tonapps.tonkeeper.ui.screen.sign.SignDataViewModel
+import com.tonapps.tonkeeper.ui.screen.staking.rewards.StakingRewardsHistoryFeature
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeViewModel
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.StakeViewerViewModel
@@ -107,6 +122,7 @@ import com.tonapps.perps.screens.details.PerpsPositionAutoCloseFeature
 import com.tonapps.perps.screens.margin.PerpsMarginChangeFeature
 import com.tonapps.perps.screens.markets.PerpsMarketsFeature
 import com.tonapps.perps.screens.order.PerpsCreateOrderFeature
+import com.tonapps.perps.screens.order.PerpsLimitAutoClose
 import com.tonapps.perps.screens.order.PerpsLimitPriceFeature
 import com.tonapps.perps.screens.review.PerpsReviewArgs
 import com.tonapps.perps.screens.review.PerpsReviewFeature
@@ -131,6 +147,10 @@ val viewModelWalletModule = module {
         EarnDAppViewModel(get { parametersOf(wallet, from) })
     }
     factoryOf(::EarnDAppBridges)
+    viewModel { (wallet: WalletEntity) ->
+        KeeperDAppViewModel(get { parametersOf(wallet) })
+    }
+    factoryOf(::KeeperDAppBridges)
     viewModelOf(::NotificationsManageViewModel)
     viewModelOf(::TokenViewModel)
     viewModelOf(::BackupViewModel)
@@ -138,9 +158,9 @@ val viewModelWalletModule = module {
     viewModelOf(::BackupCheckViewModel)
     viewModelOf(::BackupCheckFeature)
     viewModelOf(::TokensManageViewModel)
-    viewModelOf(::BatterySettingsViewModel)
     viewModelOf(::BatteryRefillViewModel)
     viewModelOf(::BatteryRechargeViewModel)
+    viewModelOf(::BatteryAssetRechargeViewModel)
     viewModel { (nftAddress: String, prefetchedNft: NftEntity?) ->
         NftViewModel(
             app = get(),
@@ -151,6 +171,7 @@ val viewModelWalletModule = module {
             settingsRepository = get(),
             api = get(),
             collectiblesRepository = get(),
+            timeProvider = get(),
         )
     }
     viewModelOf(::StakeViewerViewModel)
@@ -182,6 +203,7 @@ val viewModelWalletModule = module {
     // Compose
     viewModelOf(::TxEventsViewModel)
     viewModelOf(::TxDetailsViewModel)
+    viewModelOf(::StakingRewardsHistoryFeature)
 
     viewModelOf(::RampFeature)
     viewModelOf(::AssetsCryptoExtendedFeature)
@@ -192,14 +214,50 @@ val viewModelWalletModule = module {
     viewModelOf(::SendFeature)
     viewModelOf(::ConfirmFeature)
     viewModelOf(::DAppConfirmFeature)
-    viewModelOf(::SelectCurrencyFeature)
+    viewModel { params ->
+        SelectCurrencyFeature(
+            walletId = params.getOrNull(),
+            accountRepository = get(),
+            unifiedAccountRepository = get(),
+            exchangeRepository = get(),
+            settingsRepository = get(),
+        )
+    }
     viewModelOf(::SelectNetworkFeature)
     viewModelOf(::TokenPickerFeature)
     viewModelOf(::ShelvesFeature)
     single<PushStatusProvider> { get<Environment>() }
     single<MigrationStatusProvider> { WalletMigrationStatusProvider(get()) }
     single<BiometryStatusProvider> { DeviceBiometryStatusProvider(get()) }
-    viewModelOf(::WalletFeature)
+    viewModel {
+        WalletFeature(
+            accountRepo = get(),
+            accountRepoLegacy = get(),
+            unifiedAccountRepository = get(),
+            settingsRepository = get(),
+            batteryRepository = get(),
+            backupRepository = get(),
+            bannerRepository = get(),
+            raffleRepository = get(),
+            loyaltyRepository = get(),
+            collectiblesRepository = get(),
+            stakingRepository = get(),
+            networkMonitor = get(),
+            transactionManager = get(),
+            api = get(),
+            pushStatusProvider = get(),
+            migrationStatusProvider = get(),
+            biometryStatusProvider = get(),
+            perpsPortfolioStore = get(),
+            perpsRepository = get(),
+            earnRepository = get(),
+            appLifecycle = get(),
+            ledgerWallets = get(),
+            earnTooltipInteractor = get(),
+            passcodeManager = get(),
+            sectionLimits = get(),
+        )
+    }
     viewModel { (walletId: String, raffleId: String?) ->
         RaffleFeature(
             walletId = walletId,
@@ -233,6 +291,8 @@ val viewModelWalletModule = module {
             networkMonitor = get(),
             realtimeProvider = get(),
             unifiedAccountRepository = get(),
+            fundingRecovery = get(),
+            perpsRealtime = get(),
             assetId = params.getOrNull(),
             mode = params.getOrNull() ?: EventsScreenMode.General,
             awaitsFundingActivity = params.getOrNull() ?: false,
@@ -253,17 +313,41 @@ val viewModelWalletModule = module {
     viewModelOf(::McSendFeature)
     viewModelOf(::EncryptedCommentsFeature)
     viewModelOf(::TxConfirmFeature)
+    viewModelOf(::TransferConfirmFeature)
+    viewModelOf(::DappTxConfirmFeature)
     viewModelOf(::SwapConfirmFeature)
+    // The headless swap adds the fee id it kept from an earlier attempt; the confirm screen passes none.
+    viewModel { params ->
+        SwapOperationConfirmFeature(
+            request = params.get<ConfirmRequest>(),
+            provider = get(),
+            accountRepo = get(),
+            walletUnlocker = get(),
+            signatureGate = get(),
+            postTransactionRefreshSchedule = get(),
+            timeProvider = get(),
+            confirmResults = get(),
+            swapRepo = get(),
+            statusTracker = get(),
+            feeBuilder = get(),
+            settingsRepository = get(),
+            feeId = params.getOrNull<String>(),
+        )
+    }
     viewModelOf(::PerpetualConfirmFeature)
+    viewModelOf(::BatteryPurchaseConfirmFeature)
     viewModel { (request: ConfirmRequest) ->
         PerpetualDepositConfirmFeature(
             request = request,
             provider = get(),
             accountRepo = get(),
-            passcodeManager = get(),
+            walletUnlocker = get(),
+            signatureGate = get(),
             postTransactionRefreshSchedule = get(),
+            timeProvider = get(),
             tracker = getOrNull(),
             authorizer = get(),
+            depositFeeMethods = get(),
         )
     }
     viewModelOf(::AssetPickerFeature)
@@ -271,6 +355,29 @@ val viewModelWalletModule = module {
     viewModelOf(::McPaymentMethodFeature)
     viewModelOf(::McRampFeature)
     viewModelOf(::McRampAmountFeature)
+    viewModelOf(::MoonPayPaymentFeature)
+    viewModel { (data: BuyCryptoMethodData, theme: MoonPayTheme, buy: BuyCryptoOffer) ->
+        BuyCryptoMethodFeature(
+            data,
+            buy = buy,
+            source = get { parametersOf(data.walletId) },
+            moonPay = get<MoonPayRamp> { parametersOf(data.walletId, theme) },
+            savedStateHandle = get(),
+        )
+    }
+    viewModel { (data: BuyCryptoData, theme: MoonPayTheme) ->
+        BuyCryptoFeature(
+            data = data,
+            source = get { parametersOf(data.walletId) },
+            merchants = get { parametersOf(data.walletId) },
+            moonPay = get<MoonPayRamp> { parametersOf(data.walletId, theme) },
+            exchange = get(),
+            settingsRepository = get(),
+            appLifecycle = get(),
+            savedStateHandle = get(),
+            networkMonitor = get(),
+        )
+    }
     viewModelOf(::AssetsFeature)
     viewModelOf(::AssetDetailsFeature)
     viewModelOf(::WcSessionFeature)
@@ -289,6 +396,9 @@ val viewModelWalletModule = module {
             settingsRepository = get(),
             networkMonitor = get(),
             legacyAccounts = get(),
+            api = get(),
+            batteryRepository = get(),
+            unifiedAccountRepository = get(),
         )
     }
 
@@ -316,6 +426,10 @@ val viewModelWalletModule = module {
             unifiedAccountRepository = get(),
             passcodeManager = get(),
             settingsRepository = get(),
+            api = get(),
+            portfolioStore = get(),
+            realtime = get(),
+            loyaltyRepository = get(),
         )
     }
     viewModel { (marketIndex: Int) ->
@@ -334,17 +448,19 @@ val viewModelWalletModule = module {
             side = side,
             adapter = get(),
             perpetualRepository = get(),
+            leverageStore = get(),
             livePrices = get(),
             unifiedAccountRepository = get(),
             settingsRepository = get(),
         )
     }
-    viewModel { (marketIndex: Int, symbol: String, side: PerpsOrderSide, initialPrice: BigDecimal?) ->
+    viewModel { (marketIndex: Int, symbol: String, side: PerpsOrderSide, initialPrice: BigDecimal?, autoClose: PerpsLimitAutoClose?) ->
         PerpsLimitPriceFeature(
             marketIndex = marketIndex,
             symbol = symbol,
             side = side,
             initialPrice = initialPrice,
+            autoClose = autoClose,
             adapter = get(),
             livePrices = get(),
             unifiedAccountRepository = get(),
@@ -383,7 +499,9 @@ val viewModelWalletModule = module {
             adapter = get(),
             executor = get(),
             accountService = get(),
+            leverageStore = get(),
             unifiedAccountRepository = get(),
+            loyaltyRepository = get(),
         )
     }
 

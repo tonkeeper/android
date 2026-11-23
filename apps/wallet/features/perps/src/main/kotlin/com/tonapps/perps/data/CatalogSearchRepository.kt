@@ -1,9 +1,11 @@
 package com.tonapps.perps.data
 
 import com.tonapps.async.Async
+import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.core.helper.EnvironmentHelper
 import com.tonapps.log.L
 import com.tonapps.mvi.graph.KResult
+import com.tonapps.perps.security.PerpsMarketListing
 import com.tonapps.wallet.api.API
 import io.tradingapi.models.AssetsOrder
 import io.tradingapi.models.AssetsSort
@@ -14,6 +16,7 @@ import kotlinx.coroutines.withContext
 class CatalogSearchRepository(
     private val api: API,
     private val environment: EnvironmentHelper,
+    private val listing: PerpsMarketListing,
 ) {
 
     suspend fun search(
@@ -29,7 +32,7 @@ class CatalogSearchRepository(
             val response = api.trading.assets.getAssetsCatalogV2(
                 tab = AssetsTab.all,
                 q = query.takeIf { it.isNotBlank() },
-                showPerps = true.takeIf { showPerps && chain == null },
+                showPerps = true.takeIf { showPerps && chain == null && filter == PerpsMarketFilter.ALL },
                 chain = chain,
                 sort = sort.toApiSort(),
                 order = sort.toApiOrder(),
@@ -44,10 +47,14 @@ class CatalogSearchRepository(
                 timezone = environment.timezone(),
                 isVpnActive = environment.isVpnActive(),
             )
+            val signedSymbols = listing.signedSymbols()
             KResult.Ok(
                 CatalogSearchPage(
-                    rows = response.items.mapNotNull { it.toCatalogSearchRow(currency) },
+                    rows = response.items
+                        .filter { it.isListedIn(signedSymbols) }
+                        .mapNotNull { it.toCatalogSearchRow(currency) },
                     nextCursor = response.nextCursor?.takeIf { it.isNotBlank() },
+                    availableNetworks = response.chains?.mapNotNull { Network.Type.find(it) },
                 ),
             )
         } catch (e: Throwable) {

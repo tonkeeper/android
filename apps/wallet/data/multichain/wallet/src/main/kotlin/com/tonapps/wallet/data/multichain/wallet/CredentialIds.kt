@@ -11,6 +11,8 @@ object CredentialIds {
     // TODO remove before perps release: rows only earlier builds wrote, see lighterAccount and lighterRoToken.
     private const val LIGHTER_ACCOUNT = "lighter_account:"
     private const val LIGHTER_RO_TOKEN = "lighter_ro_token:"
+    private const val HARDWARE_DESCRIPTOR = "hw:"
+    private const val HARDWARE_APP_KEY = "hw_app_key:"
 
     private val lighterEnvironments = listOf(LIGHTER_MAINNET)
 
@@ -27,8 +29,14 @@ object CredentialIds {
     // TODO remove before perps release: nothing writes it any more, it is only deleted with the wallet.
     fun lighterRoToken(walletId: String, environment: String): String = "$LIGHTER_RO_TOKEN$walletId:$environment"
 
+    fun hardwareDescriptor(walletId: String): String = HARDWARE_DESCRIPTOR + walletId
+
+    fun hardwareAppKey(walletId: String): String = HARDWARE_APP_KEY + walletId
+
+    fun isHardwareDescriptor(credentialId: String): Boolean = credentialId.startsWith(HARDWARE_DESCRIPTOR)
+
     fun derivedIds(walletId: String): List<String> {
-        return listOf(appKey(walletId)) + lighterEnvironments.flatMap { environment ->
+        return listOf(appKey(walletId), hardwareAppKey(walletId)) + lighterEnvironments.flatMap { environment ->
             listOf(
                 lighterL2Key(walletId, environment),
                 // TODO remove before perps release, with lighterAccount and lighterRoToken.

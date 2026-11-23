@@ -4,6 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- MoonPay's frames: a hidden one stays under the screens, the others open as dialogs. -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/moonpay_frames"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@id/root_container"
         android:layout_width="match_parent"
@@ -13,6 +19,11 @@
         android:id="@id/sheet_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/swap_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <uikit.widget.ColumnLayout
         android:id="@+id/lock"

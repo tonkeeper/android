@@ -30,6 +30,7 @@ class LaunchAppImpl(
         appIcon: LaunchAppAppIcon?,
         walletsCount: Int?,
         pushPermission: LaunchAppPushPermission?,
+        pushMismatchWalletsCount: Int?,
         featureFlags: Map<String, Any>
     ) {
         val props = mutableMapOf<String, Any>()
@@ -38,6 +39,7 @@ class LaunchAppImpl(
         appIcon?.let { props["app_icon"] = it.key }
         walletsCount?.let { props["wallets_count"] = it }
         pushPermission?.let { props["push_permission"] = it.key }
+        pushMismatchWalletsCount?.let { props["push_mismatch_wallets_count"] = it }
         trackEvent("launch_app", props)
     }
 }

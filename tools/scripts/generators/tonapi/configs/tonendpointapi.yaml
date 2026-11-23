@@ -1,0 +1,3 @@
+schemaMappings:
+  getAllKeys_200_response: kotlinx.serialization.json.JsonObject
+  getStoriesBatch_200_response: kotlinx.serialization.json.JsonObject

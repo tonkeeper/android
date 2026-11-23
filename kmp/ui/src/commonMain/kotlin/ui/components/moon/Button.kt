@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -95,4 +96,11 @@ val ButtonColorsRed: ButtonColors
         disabledContainerColor = UIKit.colorScheme.buttonRed.primaryBackgroundDisable,
         disabledContentColor = UIKit.colorScheme.buttonRed.primaryForeground,
     )
+
+fun tintedButtonColors(accent: Color): ButtonColors = ButtonColors(
+    containerColor = accent.copy(alpha = 0.08f),
+    contentColor = accent,
+    disabledContainerColor = accent.copy(alpha = 0.08f),
+    disabledContentColor = accent,
+)
 

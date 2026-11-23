@@ -19,17 +19,6 @@ class SQLSource(
     private val context: Context
 ): SQLiteOpenHelper(context, DATABASE_NAME, null, 1) {
 
-    private companion object {
-        private const val DATABASE_NAME = "signer"
-
-        private const val TON_KEYS_TABLE_NAME = "ton_keys"
-
-        private const val TON_KEYS_NAME_COLUMN = "ton_key_name"
-        private const val TON_KEYS_PK_COLUMN = "ton_key_pk"
-        private const val TON_KEYS_TIMESTAMP_COLUMN = "ton_key_timestamp"
-        private const val TON_KEYS_ID_COLUMN = "ton_key_id"
-    }
-
     private val coroutineContext = Dispatchers.IO + SupervisorJob()
     private val backup = BackupSource(context)
 
@@ -49,6 +38,7 @@ class SQLSource(
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) { }
 
     suspend fun deleteAll() = withContext(coroutineContext) {
+        close()
         context.deleteDatabase(DATABASE_NAME)
         backup.deleteAll()
     }
@@ -123,5 +113,16 @@ class SQLSource(
         }
         backup.add(KeyEntity(id, name, publicKey))
         id
+    }
+
+    private companion object {
+        private const val DATABASE_NAME = "signer"
+
+        private const val TON_KEYS_TABLE_NAME = "ton_keys"
+
+        private const val TON_KEYS_NAME_COLUMN = "ton_key_name"
+        private const val TON_KEYS_PK_COLUMN = "ton_key_pk"
+        private const val TON_KEYS_TIMESTAMP_COLUMN = "ton_key_timestamp"
+        private const val TON_KEYS_ID_COLUMN = "ton_key_id"
     }
 }

@@ -28,7 +28,7 @@ data class CrossSwapPrepare(
     @SerialName(value = "provider_route_id")
     val providerRouteId: String? = null,
 
-    /* The execution opened for this route, when the provider can follow it before a payload is submitted (a `relay` deposit). Absent otherwise: submit the signed payload to get one.  */
+    /* The execution opened for this route, when the provider can follow it before anything is signed (a `relay` deposit). Absent otherwise.  */
     @SerialName(value = "execution_id")
     val executionId: String? = null
 ) {

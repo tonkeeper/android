@@ -16,7 +16,7 @@ import okhttp3.HttpUrl
 
 import io.exchangeapi.models.AssetCapabilitiesResponse
 import io.exchangeapi.models.CalculateSwap400Response
-import io.exchangeapi.models.Healthcheck500Response
+import io.exchangeapi.models.CalculateSwap500Response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

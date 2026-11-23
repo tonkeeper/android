@@ -1,105 +1,137 @@
 package com.tonapps.perps
 
+import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.balanceBucketOf
 import com.tonapps.bus.generated.Events
+import com.tonapps.bus.generated.Events.Perps.PerpsAmountBucket
 import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
+import com.tonapps.bus.generated.Events.Perps.PerpsErrorType
 import com.tonapps.bus.generated.Events.Perps.PerpsOrderType
-import com.tonapps.bus.generated.Events.Perps.PerpsReason
+import com.tonapps.bus.generated.Events.Perps.PerpsScreen
 import com.tonapps.bus.generated.Events.Perps.PerpsSide
-import com.tonapps.bus.generated.Events.Perps.PerpsWalletType
-import com.tonapps.chainkit.perpetual.PerpsTradeError
-import com.tonapps.perps.data.PerpsError
+import com.tonapps.bus.generated.Events.Perps.PerpsWalletMode
+import com.tonapps.deposit.multicoin.screens.confirm.base.ConfirmationError
 import com.tonapps.perps.data.PerpsOrderSide
-import com.tonapps.perps.data.PerpsSendReason
-import com.tonapps.perps.screens.review.PerpsReviewArgs
-import com.tonapps.perps.trade.PerpsSubmitStart
-import com.tonapps.perps.trade.PerpsTradeFailure
+import com.tonapps.perps.data.USD_CURRENCY
+import com.tonapps.perps.funding.PerpsDepositQuoteError
+import com.tonapps.perps.funding.PerpsDepositSource
+import com.tonapps.perps.funding.PerpsDepositSources
+import com.tonapps.perps.funding.PerpsFundingAmount
+import com.tonapps.perps.trade.PerpsTradeRequest
 import com.tonapps.wallet.data.multichain.asset.perpsAssetId
 import java.math.BigDecimal
+import java.math.MathContext
 
 object PerpsAnalytics {
 
     private val events: Events.Perps
         get() = AnalyticsHelper.Default.events.perps
 
+    private val minimumDepositUsd: BigDecimal =
+        PerpsFundingAmount.toDecimal(PerpsFundingAmount.GATEWAY_MINIMUM_USDC_UNITS, PerpsFundingAmount.USDC_DECIMALS)
+
     fun sectionOpened(entryPoint: PerpsEntryPoint) {
         events.perpsSectionOpened(entryPoint)
     }
 
-    fun depositStarted() {
-        events.perpsDepositStarted(PerpsWalletType.Multichain)
+    fun depositStarted(listing: PerpsDepositSources?) {
+        val sources = listing?.takeIf { it.fresh }?.items
+        val eligible = sources?.count { source ->
+            sources.usdValue(source, source.balance)?.let { it >= minimumDepositUsd } == true
+        }
+        events.perpsDepositStarted(PerpsWalletMode.Multi, eligible)
     }
 
-    fun orderSubmitted(args: PerpsReviewArgs.Open) {
+    fun depositContinueClicked(
+        source: PerpsDepositSource,
+        amount: BigDecimal,
+        typedFiat: BigDecimal?,
+        sources: List<PerpsDepositSource>,
+    ) {
+        val usd = typedFiat?.let { sources.usdOfFiat(source, it) } ?: sources.usdValue(source, amount)
+        val bucket = usd?.let { PerpsAmountBucket.valueOf(balanceBucketOf(it.toDouble()).name) }
+        events.perpsDepositContinueClicked(source.assetId, bucket)
+    }
+
+    fun depositAmountFailed(error: PerpsDepositQuoteError) {
+        val errorType = when (error) {
+            is PerpsDepositQuoteError.BelowMinimum -> PerpsErrorType.BelowMinimum
+            PerpsDepositQuoteError.InsufficientBalance -> PerpsErrorType.InsufficientBalance
+            is PerpsDepositQuoteError.InsufficientNetworkFee -> PerpsErrorType.InsufficientNetworkFee
+            PerpsDepositQuoteError.ServiceUnavailable -> PerpsErrorType.ServiceUnavailable
+            PerpsDepositQuoteError.QuoteFailed -> PerpsErrorType.NoQuote
+            PerpsDepositQuoteError.AddressBlocked -> PerpsErrorType.AddressBlocked
+            PerpsDepositQuoteError.Failed -> PerpsErrorType.Failed
+        }
+        events.perpsDepositFailed(PerpsScreen.Amount, errorType)
+    }
+
+    fun depositAddressBlockedInBackground() {
+        events.perpsDepositFailed(PerpsScreen.Background, PerpsErrorType.AddressBlocked)
+    }
+
+    fun depositAmountInFlight() {
+        events.perpsDepositFailed(PerpsScreen.Amount, PerpsErrorType.DepositInProgress)
+    }
+
+    fun depositConfirmFailed(error: ConfirmationError) {
+        val errorType = when (error) {
+            ConfirmationError.InsufficientBalance -> PerpsErrorType.InsufficientBalance
+            is ConfirmationError.InsufficientNetworkFee -> PerpsErrorType.InsufficientNetworkFee
+            ConfirmationError.Expired -> PerpsErrorType.QuoteExpired
+            ConfirmationError.DepositInFlight -> PerpsErrorType.DepositInProgress
+            is ConfirmationError.DepositBelowMinimum -> PerpsErrorType.BelowMinimum
+            else -> PerpsErrorType.Failed
+        }
+        events.perpsDepositFailed(PerpsScreen.Confirm, errorType)
+    }
+
+    fun depositQuoteChanged() {
+        events.perpsDepositFailed(PerpsScreen.Confirm, PerpsErrorType.QuoteChanged)
+    }
+
+    fun depositConfirmed(deposit: ConfirmType.PerpetualDeposit, assetId: String, operationId: String) {
+        val sourceScreen = deposit.sourceScreen ?: return
+        events.perpsDepositConfirmed(
+            sourceScreen = sourceScreen,
+            asset = assetId,
+            operationId = operationId,
+        )
+    }
+
+    fun orderSubmitted(request: PerpsTradeRequest.Open, clientOrderIndex: Long) {
         events.perpsOrderSubmitted(
-            side = when (args.side) {
+            side = when (request.side) {
                 PerpsOrderSide.LONG -> PerpsSide.Long
                 PerpsOrderSide.SHORT -> PerpsSide.Short
             },
-            asset = perpsAssetId(args.marketIndex),
-            leverage = args.leverage.toDouble(),
-            margin = BigDecimal(args.marginQuote).toDouble(),
-            orderType = if (args.limitPrice == null) {
+            asset = perpsAssetId(request.marketIndex),
+            leverage = request.leverage.toDouble(),
+            orderType = if (request.limitPrice == null) {
                 PerpsOrderType.Market
             } else {
                 PerpsOrderType.Limit
             },
+            clientOrderIndex = clientOrderIndex,
         )
-    }
-
-    fun orderFailed(reason: PerpsReason) {
-        events.perpsOrderFailed(reason)
     }
 
     fun tradingDataError(marketIndex: Int) {
         events.perpsTradingDataError(perpsAssetId(marketIndex))
     }
-}
 
-internal fun PerpsSubmitStart.failureReason(): PerpsReason? {
-    return when (this) {
-        is PerpsSubmitStart.Started -> null
-        is PerpsSubmitStart.Requote -> PerpsReason.PriceMoved
-        is PerpsSubmitStart.Blocked -> PerpsReason.Other
-        is PerpsSubmitStart.Failed -> failure.failureReason()
+    private fun List<PerpsDepositSource>.usdValue(source: PerpsDepositSource, amount: BigDecimal): BigDecimal? {
+        val price = source.price?.takeIf { it.signum() > 0 } ?: return null
+        return usdOfFiat(source, amount.multiply(price))
     }
-}
 
-internal fun PerpsTradeFailure.failureReason(): PerpsReason {
-    return when (this) {
-        is PerpsTradeFailure.NonceUnavailable -> error.failureReason()
-        is PerpsTradeFailure.SendFailed -> error.failureReason()
-        is PerpsTradeFailure.SendRefused -> if (reason == PerpsSendReason.RESIGN_REQUIRED) {
-            PerpsReason.Other
+    private fun List<PerpsDepositSource>.usdOfFiat(source: PerpsDepositSource, fiat: BigDecimal): BigDecimal? {
+        val dollar = if (source.account.rate?.currencyCode.equals(USD_CURRENCY, ignoreCase = true)) {
+            BigDecimal.ONE
         } else {
-            PerpsReason.VenueRejected
+            firstOrNull { it.isBestValue }?.price?.takeIf { it.signum() > 0 } ?: return null
         }
-        is PerpsTradeFailure.OrderRejected -> PerpsReason.VenueRejected
-        is PerpsTradeFailure.PlannerRejected -> kind.failureReason()
-        PerpsTradeFailure.OperationInProgress,
-        PerpsTradeFailure.StaleInput,
-        PerpsTradeFailure.Interrupted,
-        PerpsTradeFailure.Unresolved -> PerpsReason.Other
-    }
-}
-
-private fun PerpsError.failureReason(): PerpsReason {
-    return when (this) {
-        PerpsError.Network,
-        PerpsError.ServiceUnavailable -> PerpsReason.NetworkError
-        else -> PerpsReason.Other
-    }
-}
-
-private fun PerpsTradeError.failureReason(): PerpsReason {
-    return when (this) {
-        PerpsTradeError.SlippageExceeded,
-        PerpsTradeError.InsufficientLiquidity,
-        PerpsTradeError.NeedsMoreDepth -> PerpsReason.PriceMoved
-        PerpsTradeError.InsufficientBalance,
-        PerpsTradeError.MarginBelowRequirement -> PerpsReason.InsufficientFunds
-        PerpsTradeError.TradingDisabled,
-        PerpsTradeError.UnsupportedMarket -> PerpsReason.VenueRejected
-        else -> PerpsReason.Other
+        return fiat.divide(dollar, MathContext.DECIMAL64)
     }
 }

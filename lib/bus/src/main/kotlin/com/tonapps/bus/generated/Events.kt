@@ -145,8 +145,8 @@ interface Events {
             Eth("eth"),
             Base("base"),
             Arb("arb"),
-            Bnb("bnb"),
-            Pol("pol"),
+            Bsc("bsc"),
+            Polygon("polygon"),
             Avax("avax"),
             Robinhood("robinhood"),
             Sol("sol"),
@@ -155,6 +155,7 @@ interface Events {
             Ltc("ltc"),
             Doge("doge"),
             Bch("bch"),
+            Lighter("lighter"),
             Multichain("multichain")
         }
 
@@ -220,7 +221,7 @@ interface Events {
             appId: String,
             bannerId: String?,
             location: String,
-            loadDurationMs: Int
+            loadDurationMs: Long
         )
 
         /** dapp_app_load_failed */
@@ -233,7 +234,7 @@ interface Events {
             location: String,
             errorCode: String,
             httpStatus: Int?,
-            loadDurationMs: Int
+            loadDurationMs: Long
         )
 
         /** dapp_browser_search_open */
@@ -248,7 +249,8 @@ interface Events {
 
         enum class DeeplinkOpenFrom(val key: String) {
             AppLink("app_link"),
-            UniversalLink("universal_link")
+            UniversalLink("universal_link"),
+            DeferredLink("deferred_link")
         }
 
         enum class DeeplinkOpenLinkType(val key: String) {
@@ -275,6 +277,7 @@ interface Events {
             AddWallet("add_wallet"),
             Main("main"),
             Raffle("raffle"),
+            Perps("perps"),
             Unknown("unknown")
         }
 
@@ -310,6 +313,11 @@ interface Events {
             Single("single")
         }
 
+        enum class DepositFlowDepositScreen(val key: String) {
+            AddFunds("add_funds"),
+            BuyCrypto("buy_crypto")
+        }
+
         enum class DepositFlowAddFundsOption(val key: String) {
             ReceiveTokens("receive_tokens"),
             BuyWithFiat("buy_with_fiat"),
@@ -327,10 +335,37 @@ interface Events {
             TonMainnetCoin("ton/mainnet/coin")
         }
 
+        enum class DepositFlowProviderMode(val key: String) {
+            Headless("headless"),
+            Merchant("merchant")
+        }
+
+        enum class DepositFlowOutcome(val key: String) {
+            Success("success"),
+            Failed("failed"),
+            Pending("pending"),
+            Unknown("unknown"),
+            Cancelled("cancelled")
+        }
+
+        enum class DepositFlowFailureReason(val key: String) {
+            Declined("declined"),
+            LimitReached("limit_reached"),
+            QuoteRejected("quote_rejected"),
+            NotConfirmed("not_confirmed"),
+            Unavailable("unavailable"),
+            VerificationPending("verification_pending"),
+            VerificationUnavailable("verification_unavailable"),
+            NoResponse("no_response"),
+            TransactionCancelled("transaction_cancelled"),
+            Unknown("unknown")
+        }
+
         /** deposit_started */
         fun depositStarted(
             from: DepositFlowFrom,
             walletMode: DepositFlowWalletMode,
+            depositScreen: DepositFlowDepositScreen?,
             availableOptions: String
         )
 
@@ -346,6 +381,7 @@ interface Events {
             from: DepositFlowFrom,
             walletMode: DepositFlowWalletMode,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             network: DepositFlowNetwork
         )
 
@@ -356,7 +392,8 @@ interface Events {
         fun depositContinueToP2pMarket(
             from: DepositFlowFrom,
             walletMode: DepositFlowWalletMode,
-            addFundsOption: DepositFlowAddFundsOption
+            addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?
         )
 
         /** deposit_view_buy_ton_with_crypto */
@@ -389,6 +426,7 @@ interface Events {
         fun depositViewFiatChooseAsset(
             from: DepositFlowFrom,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             availableOptions: String
         )
 
@@ -396,6 +434,7 @@ interface Events {
         fun depositClickFiatAsset(
             from: DepositFlowFrom,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             buyAsset: String
         )
 
@@ -403,6 +442,7 @@ interface Events {
         fun depositViewFiatPaymentMethod(
             from: DepositFlowFrom,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             buyAsset: String,
             sellAsset: String,
             availableOptions: String
@@ -412,6 +452,7 @@ interface Events {
         fun depositClickFiatPaymentMethod(
             from: DepositFlowFrom,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             buyAsset: String,
             sellAsset: String,
             paymentMethod: String
@@ -421,21 +462,24 @@ interface Events {
         fun depositViewRampInsertAmount(
             from: DepositFlowFrom,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             buyAsset: String,
             sellAsset: String,
             paymentMethod: String,
-            providerName: String
+            providerName: String,
+            providerMode: DepositFlowProviderMode?
         )
 
         /** deposit_click_ramp_insert_amount_continue */
         fun depositClickRampInsertAmountContinue(
             from: DepositFlowFrom,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             buyAsset: String,
             sellAsset: String,
             paymentMethod: String,
             providerName: String,
-            amount: Double
+            providerMode: DepositFlowProviderMode?
         )
 
         /** deposit_view_ramp_alert */
@@ -445,8 +489,7 @@ interface Events {
             buyAsset: String,
             sellAsset: String,
             paymentMethod: String,
-            providerName: String,
-            amount: Double
+            providerName: String
         )
 
         /** deposit_continue_to_ramp_provider */
@@ -454,12 +497,29 @@ interface Events {
             from: DepositFlowFrom,
             walletMode: DepositFlowWalletMode,
             addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
             buyAsset: String,
             sellAsset: String,
             paymentMethod: String,
             providerName: String,
-            amount: Double,
+            providerMode: DepositFlowProviderMode?,
             txId: String
+        )
+
+        /** deposit_ramp_result */
+        fun depositRampResult(
+            from: DepositFlowFrom,
+            walletMode: DepositFlowWalletMode,
+            addFundsOption: DepositFlowAddFundsOption,
+            depositScreen: DepositFlowDepositScreen?,
+            buyAsset: String,
+            sellAsset: String,
+            paymentMethod: String,
+            providerName: String,
+            providerMode: DepositFlowProviderMode?,
+            txId: String,
+            outcome: DepositFlowOutcome,
+            failureReason: DepositFlowFailureReason?
         )
 
         /** deposit_view_choose_stablecoin */
@@ -508,6 +568,88 @@ interface Events {
             buyAsset: String,
             stablecoinSymbol: String,
             sellAsset: String
+        )
+    }
+
+
+    interface DomainMigration {
+
+        enum class DomainMigrationCheckOutcome(val key: String) {
+            Sent("sent"),
+            Unreachable("unreachable"),
+            Failed("failed")
+        }
+
+        enum class DomainMigrationAnswer(val key: String) {
+            Found("found"),
+            None("none")
+        }
+
+        enum class DomainMigrationFrom(val key: String) {
+            Check("check"),
+            OldDomain("old_domain"),
+            Manual("manual")
+        }
+
+        enum class DomainMigrationOfferClickAction(val key: String) {
+            Continue("continue"),
+            NotNow("not_now")
+        }
+
+        enum class DomainMigrationPopupResultOutcome(val key: String) {
+            Approved("approved"),
+            None("none"),
+            Declined("declined"),
+            Closed("closed"),
+            Blocked("blocked"),
+            Rejected("rejected")
+        }
+
+        enum class DomainMigrationConfirmClickAction(val key: String) {
+            Add("add"),
+            NotMine("not_mine")
+        }
+
+        enum class DomainMigrationNotMineClickAction(val key: String) {
+            MoveManually("move_manually"),
+            ContinueWithout("continue_without")
+        }
+
+        enum class DomainMigrationImportResultOutcome(val key: String) {
+            Success("success"),
+            AlreadyHere("already_here"),
+            Failed("failed")
+        }
+
+        /** domain_migration_check */
+        fun domainMigrationCheck(outcome: DomainMigrationCheckOutcome)
+
+        /** domain_migration_check_answer */
+        fun domainMigrationCheckAnswer(answer: DomainMigrationAnswer)
+
+        /** domain_migration_offer_view */
+        fun domainMigrationOfferView(from: DomainMigrationFrom)
+
+        /** domain_migration_offer_click */
+        fun domainMigrationOfferClick(action: DomainMigrationOfferClickAction)
+
+        /** domain_migration_popup_result */
+        fun domainMigrationPopupResult(outcome: DomainMigrationPopupResultOutcome)
+
+        /** domain_migration_confirm_view */
+        fun domainMigrationConfirmView(accountsCount: Int, alreadyHereAccountsCount: Int)
+
+        /** domain_migration_confirm_click */
+        fun domainMigrationConfirmClick(action: DomainMigrationConfirmClickAction)
+
+        /** domain_migration_not_mine_click */
+        fun domainMigrationNotMineClick(action: DomainMigrationNotMineClickAction)
+
+        /** domain_migration_import_result */
+        fun domainMigrationImportResult(
+            outcome: DomainMigrationImportResultOutcome,
+            accountsCount: Int,
+            legacyUserId: String?
         )
     }
 
@@ -724,8 +866,8 @@ interface Events {
             Eth("eth"),
             Base("base"),
             Arb("arb"),
-            Bnb("bnb"),
-            Pol("pol"),
+            Bsc("bsc"),
+            Polygon("polygon"),
             Avax("avax"),
             Robinhood("robinhood"),
             Sol("sol"),
@@ -734,6 +876,7 @@ interface Events {
             Ltc("ltc"),
             Doge("doge"),
             Bch("bch"),
+            Lighter("lighter"),
             Multichain("multichain")
         }
 
@@ -787,7 +930,7 @@ interface Events {
         )
 
         /** earn_close */
-        fun earnClose(from: EarnSignRequestFrom, exitMethod: EarnFlowExitMethod, durationMs: Int)
+        fun earnClose(from: EarnSignRequestFrom, exitMethod: EarnFlowExitMethod, durationMs: Long)
     }
 
 
@@ -805,7 +948,13 @@ interface Events {
 
     interface InstallApp {
 
+        enum class InstallAppAttributionStatus(val key: String) {
+            Organic("organic"),
+            NonOrganic("non_organic")
+        }
+
         enum class InstallAppProvider(val key: String) {
+            Appsflyer("appsflyer"),
             Branch("branch"),
             Linkrunner("linkrunner")
         }
@@ -815,6 +964,7 @@ interface Events {
 
         /** install_attribution */
         fun installAttribution(
+            attributionStatus: InstallAppAttributionStatus?,
             provider: InstallAppProvider,
             campaignId: String?,
             campaignName: String?
@@ -852,9 +1002,170 @@ interface Events {
             appIcon: LaunchAppAppIcon?,
             walletsCount: Int?,
             pushPermission: LaunchAppPushPermission?,
+            pushMismatchWalletsCount: Int?,
             featureFlags: Map<String, Any> = emptyMap()
         )
     }
+
+
+    interface LedgerFlow {
+
+        enum class LedgerFlowPurpose(val key: String) {
+            Connect("connect"),
+            ImportAccounts("import_accounts"),
+            AddAccounts("add_accounts"),
+            VerifyAddress("verify_address"),
+            SignTransaction("sign_transaction"),
+            SignMessage("sign_message"),
+            SignProof("sign_proof"),
+            CreateWallet("create_wallet")
+        }
+
+        enum class LedgerFlowOutcome(val key: String) {
+            Success("success"),
+            Rejected("rejected"),
+            Failed("failed"),
+            Cancelled("cancelled")
+        }
+
+        enum class LedgerFlowFailureType(val key: String) {
+            BluetoothUnavailable("bluetooth_unavailable"),
+            BluetoothOff("bluetooth_off"),
+            NoPermission("no_permission"),
+            DeviceNotFound("device_not_found"),
+            UsbNotConnected("usb_not_connected"),
+            UsbAccessDenied("usb_access_denied"),
+            ScanUnavailable("scan_unavailable"),
+            PairingRefused("pairing_refused"),
+            PairingLost("pairing_lost"),
+            UnsupportedDevice("unsupported_device"),
+            ConnectionLost("connection_lost"),
+            Busy("busy"),
+            DeviceLocked("device_locked"),
+            RequestExpired("request_expired"),
+            Timeout("timeout"),
+            AppNotInstalled("app_not_installed"),
+            WrongAppOpen("wrong_app_open"),
+            UserRefused("user_refused"),
+            SettingRequired("setting_required"),
+            AppUpdateRequired("app_update_required"),
+            InvalidPayload("invalid_payload"),
+            AddressMismatch("address_mismatch"),
+            Unsupported("unsupported"),
+            DeviceError("device_error"),
+            Unexpected("unexpected")
+        }
+
+        enum class LedgerFlowLedgerApp(val key: String) {
+            Ton("ton"),
+            Ethereum("ethereum"),
+            Tron("tron"),
+            Bitcoin("bitcoin"),
+            Solana("solana")
+        }
+
+        enum class LedgerFlowLedgerSetting(val key: String) {
+            BlindSigning("blind_signing"),
+            RawMessages("raw_messages"),
+            DataAllowed("data_allowed"),
+            CustomContracts("custom_contracts"),
+            SignByHash("sign_by_hash")
+        }
+
+        enum class LedgerFlowLedgerModel(val key: String) {
+            NanoS("nano_s"),
+            NanoSPlus("nano_s_plus"),
+            NanoX("nano_x"),
+            Stax("stax"),
+            Flex("flex"),
+            NanoGen5("nano_gen5"),
+            Atom("atom"),
+            Unknown("unknown")
+        }
+
+        enum class LedgerFlowLedgerTransport(val key: String) {
+            Bluetooth("bluetooth"),
+            Usb("usb")
+        }
+
+        enum class LedgerDeviceViewFrom(val key: String) {
+            Settings("settings"),
+            WalletHeader("wallet_header"),
+            SetupSection("setup_section")
+        }
+
+        enum class LedgerMigrationStartFrom(val key: String) {
+            Tooltip("tooltip"),
+            Settings("settings"),
+            Import("import"),
+            Startup("startup")
+        }
+
+        enum class LedgerDiscoveryErrorFrom(val key: String) {
+            Import("import"),
+            Migration("migration"),
+            Repair("repair"),
+            AddNetworks("add_networks")
+        }
+
+        /** ledger_request_result */
+        fun ledgerRequestResult(
+            purpose: LedgerFlowPurpose,
+            outcome: LedgerFlowOutcome,
+            attempts: Int,
+            durationMs: Int,
+            failureType: LedgerFlowFailureType?,
+            ledgerApp: LedgerFlowLedgerApp?,
+            ledgerSetting: LedgerFlowLedgerSetting?,
+            errorCode: Int?,
+            ledgerModel: LedgerFlowLedgerModel?,
+            ledgerTransport: LedgerFlowLedgerTransport?
+        )
+
+        /** ledger_device_view */
+        fun ledgerDeviceView(from: LedgerDeviceViewFrom)
+
+        /** ledger_add_networks_start */
+        fun ledgerAddNetworksStart()
+
+        /** ledger_add_networks_success */
+        fun ledgerAddNetworksSuccess(addedApps: String, ledgerModel: LedgerFlowLedgerModel?)
+
+        /** ledger_add_networks_error */
+        fun ledgerAddNetworksError(
+            failureType: LedgerFlowFailureType?,
+            ledgerModel: LedgerFlowLedgerModel?
+        )
+
+        /** ledger_migration_tooltip_view */
+        fun ledgerMigrationTooltipView()
+
+        /** ledger_migration_start */
+        fun ledgerMigrationStart(from: LedgerMigrationStartFrom)
+
+        /** ledger_migration_success */
+        fun ledgerMigrationSuccess(
+            from: LedgerMigrationStartFrom,
+            ledgerModel: LedgerFlowLedgerModel?
+        )
+
+        /** ledger_migration_error */
+        fun ledgerMigrationError(
+            from: LedgerMigrationStartFrom,
+            failureType: LedgerFlowFailureType,
+            ledgerModel: LedgerFlowLedgerModel?
+        )
+
+        /** ledger_discovery_error */
+        fun ledgerDiscoveryError(
+            from: LedgerDiscoveryErrorFrom,
+            ledgerApp: LedgerFlowLedgerApp,
+            failureType: LedgerFlowFailureType,
+            ledgerModel: LedgerFlowLedgerModel?
+        )
+    }
+
+
 
 
     interface Migration {
@@ -888,8 +1199,8 @@ interface Events {
             Eth("eth"),
             Base("base"),
             Arb("arb"),
-            Bnb("bnb"),
-            Pol("pol"),
+            Bsc("bsc"),
+            Polygon("polygon"),
             Avax("avax"),
             Robinhood("robinhood"),
             Sol("sol"),
@@ -898,6 +1209,7 @@ interface Events {
             Ltc("ltc"),
             Doge("doge"),
             Bch("bch"),
+            Lighter("lighter"),
             Multichain("multichain")
         }
 
@@ -1013,82 +1325,6 @@ interface Events {
     }
 
 
-    interface OnrampsNative {
-
-        enum class OnrampsNativeType(val key: String) {
-            Buy("buy"),
-            Sell("sell"),
-            Swap("swap")
-        }
-
-        /** onramp_open */
-        fun onrampOpen(from: String)
-
-        /** onramp_enter_amount */
-        fun onrampEnterAmount(
-            txId: String?,
-            type: OnrampsNativeType,
-            sellAssetNetwork: String,
-            sellAssetSymbol: String,
-            sellAmount: Double,
-            buyAssetNetwork: String,
-            buyAssetSymbol: String,
-            buyAmount: Double,
-            countryCode: String?
-        )
-
-        /** onramp_continue_to_provider */
-        fun onrampContinueToProvider(
-            txId: String?,
-            type: OnrampsNativeType,
-            sellAssetNetwork: String,
-            sellAssetSymbol: String,
-            sellAmount: Double,
-            buyAssetNetwork: String,
-            buyAssetSymbol: String,
-            buyAmount: Double,
-            countryCode: String?,
-            paymentMethod: String,
-            providerName: String,
-            providerDomain: String
-        )
-
-        /** onramp_success */
-        fun onrampSuccess(
-            txId: String?,
-            type: OnrampsNativeType,
-            sellAssetNetwork: String,
-            sellAssetSymbol: String,
-            sellAmount: Double,
-            buyAssetNetwork: String,
-            buyAssetSymbol: String,
-            buyAmount: Double,
-            countryCode: String?,
-            paymentMethod: String,
-            providerName: String,
-            providerDomain: String
-        )
-
-        /** onramp_fail */
-        fun onrampFail(
-            txId: String?,
-            type: OnrampsNativeType,
-            sellAssetNetwork: String,
-            sellAssetSymbol: String,
-            sellAmount: Double,
-            buyAssetNetwork: String,
-            buyAssetSymbol: String,
-            buyAmount: Double,
-            countryCode: String?,
-            paymentMethod: String,
-            providerName: String,
-            providerDomain: String,
-            errorCode: String?,
-            errorMessage: String?
-        )
-    }
-
-
     interface PasscodeLockout {
 
         enum class PasscodeLockoutFrom(val key: String) {
@@ -1110,12 +1346,51 @@ interface Events {
             MainPositions("main_positions"),
             AssetPage("asset_page"),
             Search("search"),
-            TradeTab("trade_tab")
+            TradeTab("trade_tab"),
+            Loyalty("loyalty"),
+            Other("other")
         }
 
-        enum class PerpsWalletType(val key: String) {
-            Multichain("multichain"),
-            Ton("ton")
+        enum class PerpsWalletMode(val key: String) {
+            Multi("multi"),
+            Single("single")
+        }
+
+        enum class PerpsAmountBucket(val key: String) {
+            _0("0"),
+            _01("0-1"),
+            _110("1-10"),
+            _10100("10-100"),
+            _1001k("100-1k"),
+            _1k10k("1k-10k"),
+            _10k100k("10k-100k"),
+            _100k("100k+")
+        }
+
+        enum class PerpsScreen(val key: String) {
+            Amount("amount"),
+            Confirm("confirm"),
+            Background("background")
+        }
+
+        enum class PerpsErrorType(val key: String) {
+            BelowMinimum("below_minimum"),
+            InsufficientBalance("insufficient_balance"),
+            InsufficientNetworkFee("insufficient_network_fee"),
+            NoQuote("no_quote"),
+            ServiceUnavailable("service_unavailable"),
+            QuoteExpired("quote_expired"),
+            QuoteChanged("quote_changed"),
+            DepositInProgress("deposit_in_progress"),
+            AddressBlocked("address_blocked"),
+            Failed("failed")
+        }
+
+        enum class PerpsSourceScreen(val key: String) {
+            PerpsHome("perps_home"),
+            OpenPosition("open_position"),
+            AddToPosition("add_to_position"),
+            AddMargin("add_margin")
         }
 
         enum class PerpsSide(val key: String) {
@@ -1128,31 +1403,33 @@ interface Events {
             Limit("limit")
         }
 
-        enum class PerpsReason(val key: String) {
-            VenueRejected("venue_rejected"),
-            PriceMoved("price_moved"),
-            InsufficientFunds("insufficient_funds"),
-            NetworkError("network_error"),
-            Other("other")
-        }
-
         /** perps_section_opened */
         fun perpsSectionOpened(entryPoint: PerpsEntryPoint)
 
         /** perps_deposit_started */
-        fun perpsDepositStarted(walletType: PerpsWalletType)
+        fun perpsDepositStarted(walletMode: PerpsWalletMode, eligibleAssetsCount: Int?)
+
+        /** perps_deposit_continue_clicked */
+        fun perpsDepositContinueClicked(asset: String, amountBucket: PerpsAmountBucket?)
+
+        /** perps_deposit_failed */
+        fun perpsDepositFailed(screen: PerpsScreen, errorType: PerpsErrorType)
+
+        /** perps_deposit_confirmed */
+        fun perpsDepositConfirmed(
+            sourceScreen: PerpsSourceScreen,
+            asset: String,
+            operationId: String
+        )
 
         /** perps_order_submitted */
         fun perpsOrderSubmitted(
             side: PerpsSide,
             asset: String,
             leverage: Double,
-            margin: Double,
-            orderType: PerpsOrderType
+            orderType: PerpsOrderType,
+            clientOrderIndex: Long
         )
-
-        /** perps_order_failed */
-        fun perpsOrderFailed(reason: PerpsReason)
 
         /** perps_trading_data_error */
         fun perpsTradingDataError(asset: String)
@@ -1197,7 +1474,7 @@ interface Events {
             flow: RedOperationsFlow,
             operation: RedOperationsOperation,
             attemptSource: String?,
-            startedAtMs: Int,
+            startedAtMs: Long,
             otherMetadata: String?
         )
 
@@ -1208,12 +1485,114 @@ interface Events {
             operation: RedOperationsOperation,
             outcome: RedOperationsOutcome,
             durationMs: Double,
-            finishedAtMs: Int,
+            finishedAtMs: Long,
             errorCode: Int?,
             errorMessage: String?,
             errorType: String?,
             stage: String?,
             otherMetadata: String?
+        )
+    }
+
+
+    interface Scanner {
+
+        enum class ScannerInput(val key: String) {
+            Camera("camera"),
+            Gallery("gallery")
+        }
+
+        enum class ScannerErrorType(val key: String) {
+            NoCode("no_code"),
+            InvalidLink("invalid_link"),
+            UnsupportedHere("unsupported_here")
+        }
+
+        /** scan_open */
+        fun scanOpen()
+
+        /** scan_success */
+        fun scanSuccess(input: ScannerInput)
+
+        /** scan_error */
+        fun scanError(input: ScannerInput, errorType: ScannerErrorType)
+    }
+
+
+    interface ScreenRender {
+
+        enum class ScreenRenderScreen(val key: String) {
+            Portfolio("portfolio"),
+            History("history"),
+            Trade("trade"),
+            Browser("browser")
+        }
+
+        enum class ScreenRenderWalletMode(val key: String) {
+            Multi("multi"),
+            Single("single")
+        }
+
+        enum class ScreenRenderTrigger(val key: String) {
+            InApp("in_app"),
+            AppLaunch("app_launch"),
+            Deeplink("deeplink"),
+            Push("push"),
+            Auto("auto")
+        }
+
+        enum class ScreenRenderOutcome(val key: String) {
+            Fresh("fresh"),
+            CachedOnly("cached_only"),
+            Failed("failed"),
+            Abandoned("abandoned"),
+            Timeout("timeout")
+        }
+
+        enum class ScreenRenderErrorKind(val key: String) {
+            Timeout("timeout"),
+            Offline("offline"),
+            Network("network"),
+            Server("server"),
+            Decode("decode"),
+            Unknown("unknown")
+        }
+
+        enum class ScreenRenderNetworkType(val key: String) {
+            Wifi("wifi"),
+            Cellular("cellular"),
+            Wired("wired"),
+            Other("other"),
+            None("none")
+        }
+
+        enum class ScreenRenderThermalState(val key: String) {
+            Nominal("nominal"),
+            Fair("fair"),
+            Serious("serious"),
+            Critical("critical")
+        }
+
+        /** screen_content_rendered */
+        fun screenContentRendered(
+            screen: ScreenRenderScreen,
+            walletMode: ScreenRenderWalletMode,
+            trigger: ScreenRenderTrigger,
+            outcome: ScreenRenderOutcome,
+            errorKind: ScreenRenderErrorKind?,
+            isFirstOpen: Boolean,
+            cachedMs: Long?,
+            freshMs: Long?,
+            screenCreatedMs: Long?,
+            screenWillShowMs: Long?,
+            screenShownMs: Long?,
+            requestMs: Long?,
+            marks: String?,
+            pausedMs: Long?,
+            hadPasscode: Boolean?,
+            networkType: ScreenRenderNetworkType,
+            isLowPower: Boolean,
+            thermalState: ScreenRenderThermalState
         )
     }
 
@@ -1533,6 +1912,7 @@ interface Events {
             V4R2("v4R2"),
             V5Beta("v5Beta"),
             V5R1("v5R1"),
+            WalletTg("walletTg"),
             Legacy("legacy"),
             P2sh("p2sh"),
             Segwit("segwit"),
@@ -1681,6 +2061,23 @@ interface Events {
             Watchonly("watchonly")
         }
 
+        enum class WalletFlowPairingEntry(val key: String) {
+            Menu("menu"),
+            Deeplink("deeplink"),
+            AppQrScanner("app_qr_scanner")
+        }
+
+        enum class WalletFlowPairingAction(val key: String) {
+            CameraOpened("camera_opened"),
+            SignerAppOpened("signer_app_opened"),
+            DeviceSearchStarted("device_search_started")
+        }
+
+        enum class WalletFlowLedgerTransport(val key: String) {
+            Bluetooth("bluetooth"),
+            Usb("usb")
+        }
+
         enum class WalletFlowLedgerModel(val key: String) {
             NanoS("nano_s"),
             NanoSPlus("nano_s_plus"),
@@ -1690,6 +2087,24 @@ interface Events {
             NanoGen5("nano_gen5"),
             Atom("atom"),
             Unknown("unknown")
+        }
+
+        enum class WalletFlowPairingLastStep(val key: String) {
+            None("none"),
+            Action("action"),
+            DeviceFound("device_found"),
+            Connected("connected"),
+            AppOpened("app_opened"),
+            AccountsView("accounts_view")
+        }
+
+        enum class WalletFlowPairingExitReason(val key: String) {
+            Back("back"),
+            BluetoothOff("bluetooth_off"),
+            BluetoothPermissionDenied("bluetooth_permission_denied"),
+            CameraPermissionDenied("camera_permission_denied"),
+            Error("error"),
+            Other("other")
         }
 
         enum class WalletFlowBalanceBucket(val key: String) {
@@ -1738,7 +2153,34 @@ interface Events {
         fun walletImportStarted(
             walletMode: WalletFlowWalletMode,
             walletSource: WalletFlowWalletSource,
-            from: WalletFlowFrom
+            from: WalletFlowFrom,
+            pairingEntry: WalletFlowPairingEntry?
+        )
+
+        /** wallet_import_pairing_action */
+        fun walletImportPairingAction(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            pairingAction: WalletFlowPairingAction
+        )
+
+        /** wallet_import_ledger_device_found */
+        fun walletImportLedgerDeviceFound(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            ledgerTransport: WalletFlowLedgerTransport,
+            ledgerModel: WalletFlowLedgerModel?
+        )
+
+        /** wallet_import_pairing_exit */
+        fun walletImportPairingExit(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            pairingLastStep: WalletFlowPairingLastStep,
+            pairingExitReason: WalletFlowPairingExitReason
         )
 
         /** wallet_import_mnemonic_accepted */
@@ -1770,12 +2212,29 @@ interface Events {
             ledgerModel: WalletFlowLedgerModel?
         )
 
+        /** wallet_import_ledger_usb_connected */
+        fun walletImportLedgerUsbConnected(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            ledgerModel: WalletFlowLedgerModel?
+        )
+
         /** wallet_import_ledger_app_opened */
         fun walletImportLedgerAppOpened(
             walletMode: WalletFlowWalletMode,
             walletSource: WalletFlowWalletSource,
             from: WalletFlowFrom,
             ledgerModel: WalletFlowLedgerModel?
+        )
+
+        /** wallet_import_ledger_accounts_view */
+        fun walletImportLedgerAccountsView(
+            walletMode: WalletFlowWalletMode,
+            walletSource: WalletFlowWalletSource,
+            from: WalletFlowFrom,
+            ledgerModel: WalletFlowLedgerModel?,
+            ledgerApps: String
         )
 
         /** wallet_import_error */
@@ -1794,6 +2253,7 @@ interface Events {
             walletMode: WalletFlowWalletMode,
             walletSource: WalletFlowWalletSource,
             from: WalletFlowFrom,
+            pairingEntry: WalletFlowPairingEntry?,
             ledgerModel: WalletFlowLedgerModel?
         )
 
@@ -1835,6 +2295,7 @@ interface Events {
             V4R2("v4R2"),
             V5Beta("v5Beta"),
             V5R1("v5R1"),
+            WalletTg("walletTg"),
             Legacy("legacy"),
             P2sh("p2sh"),
             Segwit("segwit"),
@@ -1850,6 +2311,8 @@ interface Events {
             walletInterface: WalletOpenWalletInterface?
         )
     }
+
+
 
 
     interface WithdrawFlow {

@@ -1,9 +1,8 @@
 package com.tonapps.wallet.data.browser.entities
 
 import android.os.Parcelable
-import com.tonapps.log.L
+import io.tonendpointapi.models.GetPopularApps200ResponseData
 import kotlinx.parcelize.Parcelize
-import org.json.JSONObject
 
 @Parcelize
 data class BrowserDataEntity(
@@ -11,8 +10,8 @@ data class BrowserDataEntity(
     val categories: List<BrowserCategoryEntity>
 ): Parcelable {
 
-    constructor(json: JSONObject) : this(
-        apps = BrowserAppEntity.parse(json.getJSONArray("apps")),
-        categories = BrowserCategoryEntity.parse(json.getJSONArray("categories"))
+    constructor(data: GetPopularApps200ResponseData) : this(
+        apps = data.apps.map(::BrowserAppEntity),
+        categories = data.categories.map(::BrowserCategoryEntity)
     )
 }

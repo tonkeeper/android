@@ -25,7 +25,7 @@ data class WalletRegisterItem(
     @SerialName(value = "accounts")
     val accounts: List<WalletAccount>,
 
-    /* Format 2 wallet_id: `base32(format ‖ kind_byte ‖ blake2b160(LP(\"keeper.wallet.id.v2\") ‖ LP(kind) ‖ LP(rootPub)))`, where `format` = 2 and `kind_byte` = 1 for multichain. */
+    /* Format 2 wallet_id: `base32(format ‖ kind_byte ‖ blake2b160(LP(\"keeper.wallet.id.v2\") ‖ LP(kind) ‖ LP(rootPub)))`, where `format` = 2 and `kind_byte` = 0 for legacy, 1 for multichain, 0x80 for ledger. */
     @SerialName(value = "wallet_id")
     val walletId: String? = null,
 

@@ -20,7 +20,7 @@ internal fun StakeViewerActionsBar(
     backgroundColor: Color,
 ) {
     MoonBottomBar(backgroundColor = backgroundColor) {
-        ActionButton(Localization.unstake, unstakeEnabled, onUnstakeClick)
+        ActionButton(Localization.staking_pool_unstake, unstakeEnabled, onUnstakeClick)
         ActionButton(Localization.stake, stakeEnabled, onStakeClick)
     }
 }

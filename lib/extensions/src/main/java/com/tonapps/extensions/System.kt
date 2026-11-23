@@ -11,10 +11,6 @@ fun currentTimeSeconds(): Long {
     return currentTimeMillis() / 1000
 }
 
-fun currentTimeSecondsInt(): Int {
-    return (currentTimeMillis() / 1000).toInt()
-}
-
 @OptIn(ExperimentalUuidApi::class)
 fun generateUuid(): String {
     return Uuid.generateV4().toString()

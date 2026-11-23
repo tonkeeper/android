@@ -11,11 +11,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.deposit.components.VerticalAssetCell
 import com.tonapps.mvi.props.observeSafeState
+import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonItemDivider
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonSearchCell
@@ -59,6 +61,7 @@ private fun Content(
         onBack = onBack,
     ) {
         MoonSearchCell(
+            placeholder = stringResource(Localization.search),
             searchText = searchText,
             onChanged = {
                 searchText.value = it

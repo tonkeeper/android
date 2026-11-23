@@ -32,7 +32,11 @@ data class GaslessV2EmulateRequest(
     @SerialName(value = "gasless_asset")
     val gaslessAsset: String,
     @SerialName(value = "payloads")
-    val payloads: List<GaslessV2Payload>
+    val payloads: List<GaslessV2Payload>,
+
+    /* TON only: the wallet's public key, hex. Needed only while the wallet is not deployed yet; a deployed wallet's key is read from the chain. */
+    @SerialName(value = "sender_public_key")
+    val senderPublicKey: String? = null
 ) {
 }
 

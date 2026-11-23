@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.take
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 interface PerpsMarginChangeViewState : MviViewState {
     val position: StateFlow<PerpsOpenPosition?>
@@ -68,6 +67,7 @@ sealed interface PerpsMarginChangeIssue {
     data object TradingDisabled : PerpsMarginChangeIssue
     data class MinAmount(val min: BigDecimal) : PerpsMarginChangeIssue
     data class ExceedsMargin(val maxFormat: String) : PerpsMarginChangeIssue
+    data class AboveMaximum(val maxFormat: String) : PerpsMarginChangeIssue
     data object InsufficientBalance : PerpsMarginChangeIssue
     data object ImmediateRisk : PerpsMarginChangeIssue
 }
@@ -159,7 +159,7 @@ class PerpsMarginChangeFeature(
         marginBounds,
         transform = { balance, bounds ->
             if (add) {
-                (bounds?.maxAddMarginQuote ?: balance)?.setScale(PERPS_QUOTE_INPUT_SCALE, RoundingMode.DOWN)
+                balance
             } else {
                 bounds?.maxRemoveMarginQuote
             }
@@ -230,12 +230,11 @@ class PerpsMarginChangeFeature(
             amount < minimum -> PerpsMarginChangeIssue.MinAmount(minimum)
             add -> {
                 val ceiling = amounts.bounds?.maxAddMarginQuote
-                    ?: amounts.available
-                    ?: BigDecimal.ZERO
-                if (amount > ceiling) {
-                    PerpsMarginChangeIssue.InsufficientBalance
-                } else {
-                    null
+                val available = amounts.available ?: ceiling ?: BigDecimal.ZERO
+                when {
+                    amount > available -> PerpsMarginChangeIssue.InsufficientBalance
+                    ceiling != null && amount > ceiling -> PerpsMarginChangeIssue.AboveMaximum(maskedUsd(ceiling))
+                    else -> null
                 }
             }
 
@@ -248,7 +247,11 @@ class PerpsMarginChangeFeature(
     }
 
     private fun exceedsMargin(max: BigDecimal): PerpsMarginChangeIssue {
-        return PerpsMarginChangeIssue.ExceedsMargin(maskIf(settingsRepository.hiddenBalances) { formatUsdAmount(max) })
+        return PerpsMarginChangeIssue.ExceedsMargin(maskedUsd(max))
+    }
+
+    private fun maskedUsd(amount: BigDecimal): String {
+        return maskIf(settingsRepository.hiddenBalances) { formatUsdAmount(amount) }
     }
 
     private fun liquidation(

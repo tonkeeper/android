@@ -2,6 +2,7 @@ package com.tonapps.tonkeeper.ui.screen.add
 
 import android.app.Application
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.add.list.Item
 import com.tonapps.wallet.api.API
@@ -27,7 +28,11 @@ class AddWalletViewModel(
 
         uiItems.add(Item.otherOptionsTitle)
 
-        uiItems.add(Item.ledger)
+        if (WalletFeature.LedgerMultichain.isEnabled) {
+            uiItems.add(Item.ledgerMultichain)
+        } else {
+            uiItems.add(Item.ledger)
+        }
         uiItems.add(Item.keystone)
         if (!api.getConfig(TonNetwork.MAINNET).flags.disableSigner) {
             uiItems.add(Item.signer)

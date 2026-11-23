@@ -16,5 +16,7 @@ internal class LocalDataSource(context: Context): BlobDataSource<List<BalanceEnt
 
     override fun onMarshall(data: List<BalanceEntity>) = data.toByteArray()
 
-    override fun onUnmarshall(bytes: ByteArray) = bytes.toListParcel<BalanceEntity>()
+    override fun onUnmarshall(bytes: ByteArray) = bytes.toListParcel<BalanceEntity>()?.map { balance ->
+        balance.copy(token = balance.token.withCurrentBuildIcon())
+    }
 }

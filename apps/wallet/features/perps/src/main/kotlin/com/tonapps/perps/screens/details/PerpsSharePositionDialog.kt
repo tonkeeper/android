@@ -233,6 +233,7 @@ private fun SharePositionCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(UIKit.shapes.large)
             .then(
                 if (graphicsLayer != null) {
                     Modifier.drawWithContent {
@@ -243,7 +244,6 @@ private fun SharePositionCard(
                     Modifier
                 }
             )
-            .clip(UIKit.shapes.large)
             .background(UIKit.colorScheme.background.content)
             .background(glowBrush),
     ) {

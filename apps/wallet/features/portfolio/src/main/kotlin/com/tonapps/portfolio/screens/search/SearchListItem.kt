@@ -3,7 +3,11 @@ package com.tonapps.portfolio.screens.search
 import com.tonapps.perps.data.CatalogSearchRow
 
 enum class SearchSection {
+    ALL_ASSETS,
     TOKENS,
+    COMMODITIES,
+    STOCKS,
+    ETFS,
     PERPETUALS,
 }
 

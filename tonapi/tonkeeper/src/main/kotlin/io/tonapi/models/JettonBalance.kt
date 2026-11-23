@@ -28,6 +28,10 @@ data class JettonBalance(
     val defiAsset: JettonAssetInfo? = null,
     @SerialName(value = "extensions")
     val extensions: List<String>? = null,
+
+    /* logical time of the jetton wallet's transaction the balance is as of; absent when unknown, such as for an unclaimed mintless balance */
+    @SerialName(value = "balance_lt")
+    val balanceLt: Long? = null,
     @SerialName(value = "lock")
     val lock: JettonBalanceLock? = null
 ) {

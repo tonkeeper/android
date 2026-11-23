@@ -10,6 +10,7 @@ import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.GaslessChainsEntity
+import com.tonapps.wallet.data.battery.entity.RechargeMethodsEntity
 import com.tonapps.wallet.data.core.BlobDataSource
 
 internal class LocalDataSource(
@@ -17,7 +18,10 @@ internal class LocalDataSource(
 ) {
 
     private val balance = BlobDataSource.simple<BatteryBalanceEntity>(context, "battery_balance")
-    private val configStore = BlobDataSource.simple<BatteryConfigEntity>(context, "battery_config")
+
+    // A new name for the recharge methods' new fields: a config cached in the old layout is not read as this one.
+    private val configStore = BlobDataSource.simple<BatteryConfigEntity>(context, "battery_config_v3")
+    private val multichainMethodsStore = BlobDataSource.simple<RechargeMethodsEntity>(context, "battery_recharge_methods_multichain_v2")
     private val gaslessChainsStore = BlobDataSource.simple<GaslessChainsEntity>(context, "battery_gasless_chains")
 
     private val prefs = context.prefs(NAME)
@@ -28,6 +32,14 @@ internal class LocalDataSource(
 
     fun getConfig(network: TonNetwork): BatteryConfigEntity? {
         return configStore.getCache(configCacheKey(network))
+    }
+
+    fun setMultichainRechargeMethods(network: TonNetwork, entity: RechargeMethodsEntity) {
+        multichainMethodsStore.setCache(configCacheKey(network), entity)
+    }
+
+    fun getMultichainRechargeMethods(network: TonNetwork): RechargeMethodsEntity? {
+        return multichainMethodsStore.getCache(configCacheKey(network))
     }
 
     fun setGaslessChains(network: TonNetwork, entity: GaslessChainsEntity) {

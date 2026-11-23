@@ -47,3 +47,9 @@ val JettonSwapAction.amountCoinsOut: Coins
         val tonAmount = tonOut ?: return Coins.ofNano(amountOut, tokenOut.decimals)
         return Coins.of(tonAmount, tokenOut.decimals)
     }
+
+val JettonSwapAction.uiAmountIn: Coins
+    get() = tokenIn.toUIAmount(amountCoinsIn)
+
+val JettonSwapAction.uiAmountOut: Coins
+    get() = tokenOut.toUIAmount(amountCoinsOut)

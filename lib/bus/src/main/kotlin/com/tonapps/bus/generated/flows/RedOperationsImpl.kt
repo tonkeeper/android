@@ -30,7 +30,7 @@ class RedOperationsImpl(
         flow: RedOperationsFlow,
         operation: RedOperationsOperation,
         attemptSource: String?,
-        startedAtMs: Int,
+        startedAtMs: Long,
         otherMetadata: String?
     ) {
         val props = hashMapOf<String, Any>(
@@ -56,7 +56,7 @@ class RedOperationsImpl(
         operation: RedOperationsOperation,
         outcome: RedOperationsOutcome,
         durationMs: Double,
-        finishedAtMs: Int,
+        finishedAtMs: Long,
         errorCode: Int?,
         errorMessage: String?,
         errorType: String?,

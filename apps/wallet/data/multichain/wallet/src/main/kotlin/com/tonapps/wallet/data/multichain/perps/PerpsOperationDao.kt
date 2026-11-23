@@ -34,13 +34,14 @@ interface PerpsOperationDao {
 
     @Query(
         "UPDATE perps_operation SET plan_digest = :planDigest, " +
-            "expected_base_size = :expectedBaseSize, updated_at = :updatedAt " +
+            "expected_base_size = :expectedBaseSize, base_before = :baseBefore, updated_at = :updatedAt " +
             "WHERE operation_id = :operationId",
     )
     suspend fun updateOperationPlan(
         operationId: String,
         planDigest: String?,
         expectedBaseSize: String?,
+        baseBefore: String?,
         updatedAt: Long,
     )
 
@@ -49,12 +50,13 @@ interface PerpsOperationDao {
         operationId: String,
         planDigest: String?,
         expectedBaseSize: String?,
+        baseBefore: String?,
         steps: List<PerpsOperationStepEntity>,
         updatedAt: Long,
     ) {
         deleteSteps(operationId)
         steps.forEach { insertStep(it) }
-        updateOperationPlan(operationId, planDigest, expectedBaseSize, updatedAt)
+        updateOperationPlan(operationId, planDigest, expectedBaseSize, baseBefore, updatedAt)
     }
 
     @Query(

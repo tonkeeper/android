@@ -60,6 +60,16 @@ class McTonWalletResolver(
             initialized = true,
             addressOverride = account.displayAddress,
             stateInitOverride = stateInitOverride,
+            ledger = hardwareLedger(mc),
         )
+    }
+
+    private suspend fun hardwareLedger(mc: McWalletEntity): WalletEntity.Ledger? {
+        if (!mc.isHardware) {
+            return null
+        }
+        val descriptor = mcAccountRepository.getHardwareDescriptor(mc.id)
+            ?: return WalletEntity.Ledger(deviceId = "", accountIndex = 0)
+        return WalletEntity.Ledger(deviceId = descriptor.deviceId, accountIndex = descriptor.accountIndex)
     }
 }

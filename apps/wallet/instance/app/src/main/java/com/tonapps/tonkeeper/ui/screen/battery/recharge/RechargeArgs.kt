@@ -12,6 +12,7 @@ data class RechargeArgs(
     val isGift: Boolean,
     val from: BatteryNativeFrom,
     val utm: UtmParameters,
+    val selectsCustomAmount: Boolean = false,
 ) : BaseArgs() {
 
     constructor(bundle: Bundle) : this(
@@ -19,6 +20,7 @@ data class RechargeArgs(
         isGift = bundle.getBoolean(ARG_IS_GIFT),
         from = BatteryNativeFrom.valueOf(bundle.getString(ARG_FROM)!!),
         utm = bundle.getParcelableCompat<UtmParameters>(ARG_UTM) ?: UtmParameters.Empty,
+        selectsCustomAmount = bundle.getBoolean(ARG_CUSTOM_AMOUNT),
     )
 
     override fun toBundle(): Bundle {
@@ -27,6 +29,7 @@ data class RechargeArgs(
         bundle.putBoolean(ARG_IS_GIFT, isGift)
         bundle.putString(ARG_FROM, from.name)
         bundle.putParcelable(ARG_UTM, utm)
+        bundle.putBoolean(ARG_CUSTOM_AMOUNT, selectsCustomAmount)
         return bundle
     }
 
@@ -35,5 +38,6 @@ data class RechargeArgs(
         private const val ARG_IS_GIFT = "is_gift"
         private const val ARG_FROM = "from"
         private const val ARG_UTM = "utm"
+        private const val ARG_CUSTOM_AMOUNT = "custom_amount"
     }
 }

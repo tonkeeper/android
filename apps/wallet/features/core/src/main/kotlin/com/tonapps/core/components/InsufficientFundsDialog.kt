@@ -74,7 +74,7 @@ fun InsufficientFundsDialog(
 }
 
 @Composable
-private fun InsufficientFundsContent(
+fun InsufficientFundsContent(
     title: String,
     messages: List<String>,
     actions: List<InsufficientFundsAction>,

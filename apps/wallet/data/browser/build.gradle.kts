@@ -8,6 +8,7 @@ dependencies {
     implementation(libs.koin.core)
 
     implementation(projects.apps.wallet.api)
+    implementation(projects.tonapi.tonendpoint)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.account)
 

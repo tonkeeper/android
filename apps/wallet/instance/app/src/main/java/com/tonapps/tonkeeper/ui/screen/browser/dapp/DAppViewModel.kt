@@ -31,11 +31,11 @@ class DAppViewModel(
     val installId: String
         get() = settingsRepository.installId
 
-    fun mute() {
+    fun mute(appUrl: Uri) {
         DAppPushToggleWorker.run(
             context = context,
             wallet = wallet,
-            appUrl = url,
+            appUrl = appUrl,
             enable = false
         )
     }

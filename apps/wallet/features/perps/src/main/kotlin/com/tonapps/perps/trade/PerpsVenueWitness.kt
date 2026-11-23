@@ -7,7 +7,9 @@ import com.tonapps.wallet.data.multichain.perps.PerpsOperationRecord
 import com.tonapps.wallet.data.multichain.perps.PerpsStepKind
 import com.tonapps.wallet.data.multichain.perps.PerpsStepRecord
 import com.tonapps.perps.data.PerpsRepository
-import kotlinx.coroutines.delay
+import com.tonapps.perps.data.isDeadOrderStatus
+import com.tonapps.perps.data.isFilledOrderStatus
+import com.tonapps.perps.data.isUnknownOrderStatus
 import java.math.BigDecimal
 
 internal class PerpsVenueWitness(
@@ -39,17 +41,6 @@ internal class PerpsVenueWitness(
         return setOfNotNull(detail.takeProfit?.clientOrderIndex, detail.stopLoss?.clientOrderIndex)
     }
 
-    suspend fun cancelledOnVenue(walletId: String, marketIndex: Int, orderIndex: Long): Boolean? {
-        val result = repository.getOpenPosition(marketIndex, walletId) as? KResult.Ok ?: return null
-        val detail = result.value ?: return true
-        if (!detail.autoCloseKnown) {
-            return null
-        }
-
-        return listOfNotNull(detail.takeProfit, detail.stopLoss)
-            .none { it.orderIndex == orderIndex || it.clientOrderIndex == orderIndex }
-    }
-
     suspend fun restingOnVenue(walletId: String, marketIndex: Int, clientOrderIndex: Long): Boolean? {
         val result = repository.getOpenOrders(marketIndex, walletId) as? KResult.Ok ?: return null
 
@@ -68,37 +59,21 @@ internal class PerpsVenueWitness(
     }
 
     suspend fun cancelOutcome(operation: PerpsOperationRecord, step: PerpsStepRecord): PerpsCancelOnVenue? {
-        when (limitOnVenue(operation.walletId, operation.marketIndex, step.clientOrderIndex, price = null)) {
-            PerpsLimitOnVenue.GONE -> Unit
-            null -> return null
-            else -> return PerpsCancelOnVenue.RESTING
-        }
-        val changed = positionChanged(operation) ?: return null
-        if (changed) {
-            return PerpsCancelOnVenue.FILLED
-        }
-        delay(POSITION_RECHECK_MS)
+        val status = orderStatus(operation.walletId, operation.marketIndex, step.clientOrderIndex) ?: return null
 
-        return when (positionChanged(operation)) {
-            false -> PerpsCancelOnVenue.CANCELLED
-            true -> PerpsCancelOnVenue.FILLED
-            null -> null
+        return when {
+            status.isDeadOrderStatus() -> PerpsCancelOnVenue.CANCELLED
+            status.isFilledOrderStatus() -> PerpsCancelOnVenue.FILLED
+            else -> PerpsCancelOnVenue.RESTING
         }
     }
 
-    private suspend fun positionChanged(operation: PerpsOperationRecord): Boolean? {
-        val result = repository.getOpenPosition(operation.marketIndex, operation.walletId) as? KResult.Ok ?: return null
-        val position = result.value?.position
-        val before = operation.baseBefore?.toBigDecimalOrNull()
-        val size = position?.size?.abs()
+    private suspend fun orderStatus(walletId: String, marketIndex: Int, index: Long): String? {
+        val state = repository.positionState(walletId, marketIndex, index) as? KResult.Ok
+        val status = state?.value?.orders?.firstOrNull()?.status?.takeUnless { it.isUnknownOrderStatus() }
+            ?: (repository.getOrder(index, walletId) as? KResult.Ok)?.value?.status
 
-        return when {
-            position == null -> before != null
-            before == null -> true
-            position.side.name != operation.side -> true
-            else -> size != null &&
-                size.subtract(before).abs() > before.multiply(FILL_TOLERANCE_RATIO).max(MIN_FILL_TOLERANCE)
-        }
+        return status?.takeUnless { it.isUnknownOrderStatus() }
     }
 
     private suspend fun limitOpenedOnVenue(operation: PerpsOperationRecord, step: PerpsStepRecord): Boolean? {
@@ -118,7 +93,7 @@ internal class PerpsVenueWitness(
     suspend fun closedOnVenue(walletId: String, marketIndex: Int): Boolean? {
         val result = repository.getOpenPosition(marketIndex, walletId) as? KResult.Ok ?: return null
 
-        return result.value == null
+        return false.takeIf { result.value != null }
     }
 
     suspend fun sizeOnVenue(walletId: String, marketIndex: Int, expected: BigDecimal, grew: Boolean): Boolean? {
@@ -150,7 +125,7 @@ internal class PerpsVenueWitness(
         return if (grew) {
             position?.side?.name == operation.side && size != null && size > start.add(tolerance)
         } else {
-            position == null || (size != null && size < start.subtract(tolerance))
+            size != null && size < start.subtract(tolerance)
         }
     }
 
@@ -168,7 +143,7 @@ internal class PerpsVenueWitness(
             PerpsStepKind.ADD -> operation.baseAfter(grew = true)
                 ?.let { suspend { sizeOnVenue(walletId, marketIndex, it, grew = true) } }
 
-            PerpsStepKind.CLOSE -> if (operation.kind == PerpsOperationKind.CLOSE) {
+            PerpsStepKind.CLOSE -> if (operation.closesPosition()) {
                 suspend { closedOnVenue(walletId, marketIndex) }
             } else {
                 operation.baseAfter(grew = false)
@@ -180,16 +155,12 @@ internal class PerpsVenueWitness(
                     ?.containsAll(step.legIndexes().filter { it > LighterConstants.NilClientOrderIndex })
             }
 
-            PerpsStepKind.ORDER_CANCEL -> if (operation.kind == PerpsOperationKind.ORDER_CANCEL) {
-                suspend {
-                    when (cancelOutcome(operation, step)) {
-                        PerpsCancelOnVenue.CANCELLED -> true
-                        PerpsCancelOnVenue.RESTING -> false
-                        PerpsCancelOnVenue.FILLED, null -> null
-                    }
+            PerpsStepKind.ORDER_CANCEL -> suspend {
+                when (cancelOutcome(operation, step)) {
+                    PerpsCancelOnVenue.CANCELLED -> true
+                    PerpsCancelOnVenue.RESTING -> false
+                    PerpsCancelOnVenue.FILLED, null -> null
                 }
-            } else {
-                suspend { cancelledOnVenue(walletId, marketIndex, step.clientOrderIndex) }
             }
 
             PerpsStepKind.ORDER_MODIFY -> operation.marginQuote.toBigDecimalOrNull()?.let {
@@ -218,5 +189,3 @@ internal enum class PerpsCancelOnVenue {
     FILLED,
     RESTING,
 }
-
-private const val POSITION_RECHECK_MS = 3_000L

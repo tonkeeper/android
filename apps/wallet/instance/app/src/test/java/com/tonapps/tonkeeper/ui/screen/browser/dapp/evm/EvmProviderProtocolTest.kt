@@ -2,8 +2,8 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp.evm
 
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderProtocol.Message
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderProtocol.Response
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Protocol
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Script
+import com.tonapps.webview.bridge.InAppBridgeContract.Protocol
+import com.tonapps.webview.bridge.InAppBridgeContract.Script
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -16,7 +16,7 @@ class EvmProviderProtocolTest {
     // and the page matches the answer by its JSON id: all three must name the same request.
     @Test
     fun `an answer reaches the request it answers`() {
-        val request = protocol.parse("""{"id":7,"method":"eth_requestAccounts","params":[]}""", "dapp.example")
+        val request = protocol.parse("""{"id":7,"method":"eth_requestAccounts","params":[]}""", "dapp.example", null)
             as Message.Request
         val route = protocol.route(request) as Protocol.Route.Request
 

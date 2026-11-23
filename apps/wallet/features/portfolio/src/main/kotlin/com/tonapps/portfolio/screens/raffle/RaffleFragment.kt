@@ -2,10 +2,6 @@ package com.tonapps.portfolio.screens.raffle
 
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
 import com.tonapps.bus.generated.Events.MysteryRaffle.MysteryRaffleSource
 import com.tonapps.core.ComposableFragment
 import com.tonapps.core.deeplink.withRaffleSourceWalletId
@@ -19,17 +15,6 @@ class RaffleFragment : ComposableFragment(), BaseFragment.Modal {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // Full-height content: the sheet starts right below the status bar.
-        // This can't move into Compose: the margin belongs to the view-level
-        // sheet container hosting the ComposeView.
-        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
-            val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            bottomSheetView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = statusBar
-            }
-            insets
-        }
 
         val walletId = requireArguments().getString(ARG_WALLET_ID) ?: return finish()
         val raffleId = requireArguments().getString(ARG_RAFFLE_ID)

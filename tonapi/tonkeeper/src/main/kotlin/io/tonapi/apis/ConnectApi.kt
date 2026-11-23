@@ -14,10 +14,8 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
-import io.tonapi.models.AccountInfoByStateInit
-import io.tonapi.models.GetAccountInfoByStateInitRequest
-import io.tonapi.models.GetOpenapiJsonDefaultResponse
 import io.tonapi.models.GetTonConnectPayload200Response
+import io.tonapi.models.StatusDefaultResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -42,53 +40,6 @@ class ConnectApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         val defaultBasePath: String by lazy {
             System.getProperties().getProperty(ApiClient.baseUrlKey, "https://tonapi.io")
         }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAccountInfoByStateInit(getAccountInfoByStateInitRequest: GetAccountInfoByStateInitRequest): AccountInfoByStateInit {
-        val localVarResponse = getAccountInfoByStateInitWithHttpInfo(getAccountInfoByStateInitRequest = getAccountInfoByStateInitRequest)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as AccountInfoByStateInit
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getAccountInfoByStateInitWithHttpInfo(getAccountInfoByStateInitRequest: GetAccountInfoByStateInitRequest): ApiResponse<AccountInfoByStateInit?> {
-        val localVariableConfig = getAccountInfoByStateInitRequestConfig(getAccountInfoByStateInitRequest = getAccountInfoByStateInitRequest)
-
-        return request<GetAccountInfoByStateInitRequest, AccountInfoByStateInit>(
-            localVariableConfig
-        )
-    }
-
-    fun getAccountInfoByStateInitRequestConfig(getAccountInfoByStateInitRequest: GetAccountInfoByStateInitRequest): RequestConfig<GetAccountInfoByStateInitRequest> {
-        val localVariableBody = getAccountInfoByStateInitRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/v2/tonconnect/stateinit",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
     }
 
     @Suppress("UNCHECKED_CAST")

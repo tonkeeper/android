@@ -17,7 +17,7 @@
         android:maxSdkVersion="28" />
 
     <application>
-        <service android:exported="true" android:name="com.tonapps.ledger.ble.service.BleService" android:enabled="true"/>
+        <service android:exported="false" android:name="com.tonapps.ledger.ble.service.BleService" android:enabled="true"/>
 
     </application>
 

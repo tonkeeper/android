@@ -8,7 +8,7 @@ import java.util.Locale
 
 /**
  * One place for the `2 Oct, 07:09` style used by transaction lists, details and charts.
- * The year is added only outside the current one: `10 Oct 2025, 18:55`.
+ * [format] adds the year only outside the current one: `10 Oct 2025, 18:55`; [formatWithYear] always adds it.
  */
 object TransactionDateFormatter {
 
@@ -59,6 +59,11 @@ object TransactionDateFormatter {
         } else {
             "$dayMonth ${zdt.year}, $time"
         }
+    }
+
+    fun formatWithYear(epochMillis: Long, locale: Locale): String {
+        val zdt = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault())
+        return "${dayMonth(zdt, locale)} ${zdt.year}, ${DateTimeFormatter.ofPattern("HH:mm", locale).format(zdt)}"
     }
 
     /** `2 Oct` without time, for chart axes. */

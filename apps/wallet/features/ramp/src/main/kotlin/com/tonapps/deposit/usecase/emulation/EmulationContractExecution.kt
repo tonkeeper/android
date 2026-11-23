@@ -30,14 +30,8 @@ class EmulationContractExecution(private val api: API) {
         val (usedStorageBits, usedStorageCells) = if (!isInited) {
             103 to 1
         } else {
-            when (version) {
-                WalletVersion.V3R1 -> 1163 to 3
-                WalletVersion.V3R2 -> 1283 to 3
-                WalletVersion.V4R2 -> 1315 to 3
-                WalletVersion.V5BETA -> 749 to 3
-                WalletVersion.V5R1 -> 5020 to 22
-                else -> throw IllegalArgumentException("Unknown wallet version: $version")
-            }
+            val figures = figures(version)
+            figures.storageBits to figures.storageCells
         }
 
         val used =
@@ -49,14 +43,8 @@ class EmulationContractExecution(private val api: API) {
     private fun computeGasFee(
         config: ContractExecutionConfig, version: WalletVersion, outMsgsCount: Int
     ): Long {
-        val gasUsed = when (version) {
-            WalletVersion.V3R1 -> 2275 + 642 * outMsgsCount
-            WalletVersion.V3R2 -> 2352 + 642 * outMsgsCount
-            WalletVersion.V4R2 -> 2666 + 642 * outMsgsCount
-            WalletVersion.V5BETA -> 3079 + 328 * outMsgsCount
-            WalletVersion.V5R1 -> 4222 + 717 * outMsgsCount
-            else -> throw IllegalArgumentException("Unknown wallet version: $version")
-        }
+        val figures = figures(version)
+        val gasUsed = figures.baseGas + figures.gasPerMessage * outMsgsCount
 
         return gasUsed * config.gasPrice
     }
@@ -108,7 +96,7 @@ class EmulationContractExecution(private val api: API) {
         ) {
             val config = getConfig(wallet.network)
 
-            val nowTimestamp = api.liteServer(wallet.network).getRawTime().time
+            val nowTimestamp = api.getServerTime(wallet.network)
             val isInited =
                 account.status != AccountStatus.uninit && account.status != AccountStatus.nonexist
             val timeDelta = nowTimestamp - account.lastActivity
@@ -192,7 +180,27 @@ class EmulationContractExecution(private val api: API) {
         }
 
 
+    fun hasLocalEstimate(version: WalletVersion): Boolean = version in FIGURES
+
+    private fun figures(version: WalletVersion): Figures {
+        return FIGURES[version] ?: throw IllegalArgumentException("Unknown wallet version: $version")
+    }
+
+    private data class Figures(
+        val storageBits: Int,
+        val storageCells: Int,
+        val baseGas: Int,
+        val gasPerMessage: Int,
+    )
+
     companion object {
+        private val FIGURES = mapOf(
+            WalletVersion.V3R1 to Figures(storageBits = 1163, storageCells = 3, baseGas = 2275, gasPerMessage = 642),
+            WalletVersion.V3R2 to Figures(storageBits = 1283, storageCells = 3, baseGas = 2352, gasPerMessage = 642),
+            WalletVersion.V4R2 to Figures(storageBits = 1315, storageCells = 3, baseGas = 2666, gasPerMessage = 642),
+            WalletVersion.V5BETA to Figures(storageBits = 749, storageCells = 3, baseGas = 3079, gasPerMessage = 328),
+            WalletVersion.V5R1 to Figures(storageBits = 5020, storageCells = 22, baseGas = 4222, gasPerMessage = 717),
+        )
         private val GAS_SAFETY_MULTIPLIER = BigDecimal(105)
         private val GAS_SAFETY_MULTIPLIER_DENOMINATOR = BigDecimal(100)
     }

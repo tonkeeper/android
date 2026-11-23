@@ -266,6 +266,7 @@ private fun TextCellNoSubtitlePreview() {
 private fun MoonSearchCellPreview() {
     ThemedPreview {
         MoonSearchCell(
+            placeholder = "Search",
             searchText = remember { mutableStateOf("") },
             onChanged = {},
             error = false
@@ -278,6 +279,7 @@ private fun MoonSearchCellPreview() {
 private fun MoonSearchCellWithCancelPreview() {
     ThemedPreview {
         MoonSearchCell(
+            placeholder = "Search",
             searchText = remember { mutableStateOf("query") },
             onChanged = {},
             error = false,

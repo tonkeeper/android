@@ -8,6 +8,7 @@ import com.tonapps.extensions.short12
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.extensions.setFailedLabel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.StakingInsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.staking.applyStakingReserve
@@ -106,7 +107,7 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
                 setTaskState(ProcessTaskView.State.DEFAULT)
                 StakingInsufficientFundsDialog(
                     context = requireContext(),
-                    walletId = primaryFragment.screenContext.wallet.id,
+                    wallet = primaryFragment.screenContext.wallet,
                 ).show(insufficientFunds)
             } else {
                 sendUnStake()
@@ -121,6 +122,7 @@ class UnStakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<UnStakeScreen
             } else {
                 ProcessTaskView.State.FAILED
             }
+            taskView.setFailedLabel(e)
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)

@@ -4,6 +4,7 @@ import com.tonapps.blockchain.ton.MnemonicType
 import io.ktor.util.hex
 import org.ton.kotlin.crypto.Pbkdf2
 import org.ton.kotlin.crypto.PrivateKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.kotlin.crypto.Sha512
 import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import java.security.MessageDigest
@@ -147,10 +148,45 @@ object MnemonicHelper {
 
     fun privateKey(mnemonic: List<String>): PrivateKeyEd25519 {
         return if (isValidStandardTonMnemonic(mnemonic)) {
-            PrivateKeyEd25519(Mnemonic(mnemonic).toSeed().copyOf(32))
+            tonToPrivateKey(mnemonic)
         } else {
             bip39ToPrivateKey(mnemonic)
         }
+    }
+
+    fun privateKey(mnemonic: List<String>, type: MnemonicType): PrivateKeyEd25519 {
+        return when (type) {
+            MnemonicType.Ton -> tonToPrivateKey(mnemonic)
+            MnemonicType.Bip39 -> bip39ToPrivateKey(mnemonic)
+            MnemonicType.Both -> privateKey(mnemonic)
+        }
+    }
+
+    /**
+     * Whether a wallet with [publicKey] was derived from [mnemonic] as a BIP39 seed. The words alone do
+     * not tell it: some of them are valid in both schemes, so the wallet's own key decides.
+     */
+    fun isBip39Wallet(mnemonic: List<String>, publicKey: PublicKeyEd25519): Boolean {
+        if (!isValidBip39Mnemonic(mnemonic)) {
+            return false
+        }
+        return bip39ToPrivateKey(mnemonic).publicKey() == publicKey
+    }
+
+    fun candidatePrivateKeys(mnemonic: List<String>): List<PrivateKeyEd25519> {
+        val bip39 = if (isValidBip39Mnemonic(mnemonic)) {
+            bip39ToPrivateKey(mnemonic)
+        } else {
+            null
+        }
+        return listOfNotNull(tonToPrivateKey(mnemonic), bip39)
+    }
+
+    private fun tonToPrivateKey(mnemonic: List<String>): PrivateKeyEd25519 {
+        val seed = Mnemonic(mnemonic).toSeed()
+        val privateKey = PrivateKeyEd25519(seed.copyOf(32))
+        seed.fill(0)
+        return privateKey
     }
 
     private fun bip39ToPrivateKey(mnemonic: List<String>): PrivateKeyEd25519 {

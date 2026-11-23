@@ -1,6 +1,7 @@
 package com.tonapps.core.deeplink
 
 import androidx.core.net.toUri
+import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 
 fun String.withPerpsBannerEntry(): String {
     val uri = toUri()
@@ -11,7 +12,7 @@ fun String.withPerpsBannerEntry(): String {
         return this
     }
     return uri.buildUpon()
-        .appendQueryParameter(DeepLinkRoute.Perps.ENTRY_POINT_QUERY, DeepLinkRoute.Perps.MAIN_BANNER)
+        .appendQueryParameter(DeepLinkRoute.Perps.ENTRY_POINT_QUERY, PerpsEntryPoint.MainBanner.key)
         .build()
         .toString()
 }

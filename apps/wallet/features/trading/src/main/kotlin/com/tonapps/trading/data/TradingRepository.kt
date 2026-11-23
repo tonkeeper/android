@@ -82,50 +82,68 @@ class TradingRepository(
         marketItems.update { it - assetId }
     }
 
-    suspend fun getShelfGroups(isMultichainWallet: Boolean): List<MultichainShelfGroup> {
+    /** [onFetchStarted] / [onFetchFinished] run around a network load only, not for a cached answer. */
+    suspend fun getShelfGroups(
+        isMultichainWallet: Boolean,
+        onFetchStarted: () -> Unit = {},
+        onFetchFinished: () -> Unit = {},
+    ): List<MultichainShelfGroup> {
         return if (isMultichainWallet) {
             cache.getOrLoad(Keys.ShelvesMultichain) {
-                withContext(Async.Io) {
-                    api.trading.shelves.getShelvesConfigV2(
-                        xLang = environment.locale(),
-                        storeCountryCode = environment.storeCountry(),
-                        deviceCountryCode = environment.deviceCountry(),
-                        simCountry = environment.simCountry(),
-                        timezone = environment.timezone(),
-                        isVpnActive = environment.isVpnActive(),
-                        currency = environment.currency(),
-                    ).groups.mapNotNull { multichainGroup ->
-                        val groups = multichainGroup.groups.mapNotNull { it.pruned() }
-                        if (groups.isEmpty()) {
-                            null
-                        } else {
-                            multichainGroup.copy(groups = groups)
+                fetching(onFetchStarted, onFetchFinished) {
+                    withContext(Async.Io) {
+                        api.trading.shelves.getShelvesConfigV2(
+                            xLang = environment.locale(),
+                            storeCountryCode = environment.storeCountry(),
+                            deviceCountryCode = environment.deviceCountry(),
+                            simCountry = environment.simCountry(),
+                            timezone = environment.timezone(),
+                            isVpnActive = environment.isVpnActive(),
+                            currency = environment.currency(),
+                        ).groups.mapNotNull { multichainGroup ->
+                            val groups = multichainGroup.groups.mapNotNull { it.pruned() }
+                            if (groups.isEmpty()) {
+                                null
+                            } else {
+                                multichainGroup.copy(groups = groups)
+                            }
                         }
                     }
                 }
             }
         } else {
             cache.getOrLoad(Keys.ShelvesLegacy) {
-                withContext(Async.Io) {
-                    api.trading.shelves.getShelvesConfig(
-                        xLang = environment.locale(),
-                        storeCountryCode = environment.storeCountry(),
-                        deviceCountryCode = environment.deviceCountry(),
-                        simCountry = environment.simCountry(),
-                        timezone = environment.timezone(),
-                        isVpnActive = environment.isVpnActive(),
-                        currency = environment.currency(),
-                    ).groups.mapNotNull { group ->
-                        group.pruned()?.let {
-                            MultichainShelfGroup(
-                                id = it.stableId(),
-                                name = it.name,
-                                groups = listOf(it),
-                            )
+                fetching(onFetchStarted, onFetchFinished) {
+                    withContext(Async.Io) {
+                        api.trading.shelves.getShelvesConfig(
+                            xLang = environment.locale(),
+                            storeCountryCode = environment.storeCountry(),
+                            deviceCountryCode = environment.deviceCountry(),
+                            simCountry = environment.simCountry(),
+                            timezone = environment.timezone(),
+                            isVpnActive = environment.isVpnActive(),
+                            currency = environment.currency(),
+                        ).groups.mapNotNull { group ->
+                            group.pruned()?.let {
+                                MultichainShelfGroup(
+                                    id = it.stableId(),
+                                    name = it.name,
+                                    groups = listOf(it),
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun <T> fetching(onStarted: () -> Unit, onFinished: () -> Unit, load: suspend () -> T): T {
+        onStarted()
+        try {
+            return load()
+        } finally {
+            onFinished()
         }
     }
 

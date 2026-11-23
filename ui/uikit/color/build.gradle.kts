@@ -1,3 +1,5 @@
+import com.android.build.gradle.tasks.factory.AndroidUnitTest
+
 plugins {
     id("target.android.library")
 }
@@ -5,4 +7,10 @@ plugins {
 
 dependencies {
     implementation(libs.androidx.annotation)
+
+    testImplementation(libs.junit)
+}
+
+tasks.withType<AndroidUnitTest>().configureEach {
+    enabled = true
 }

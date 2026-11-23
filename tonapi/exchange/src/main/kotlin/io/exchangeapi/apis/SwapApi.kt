@@ -16,7 +16,7 @@ import okhttp3.HttpUrl
 
 import io.exchangeapi.models.BuildOmnistonSwapRequest
 import io.exchangeapi.models.CalculateSwap400Response
-import io.exchangeapi.models.Healthcheck500Response
+import io.exchangeapi.models.CalculateSwap500Response
 import io.exchangeapi.models.OmnistonSwapMessages
 import io.exchangeapi.models.Provider
 import io.exchangeapi.models.SwapAsset

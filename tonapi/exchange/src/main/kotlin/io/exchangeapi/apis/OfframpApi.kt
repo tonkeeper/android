@@ -15,16 +15,16 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.exchangeapi.models.CalculateSwap400Response
+import io.exchangeapi.models.CalculateSwap500Response
 import io.exchangeapi.models.CreateOfframpOrderRequest
 import io.exchangeapi.models.ExchangePaymentMethodType
-import io.exchangeapi.models.GetCrossSwapAsset404Response
-import io.exchangeapi.models.Healthcheck500Response
 import io.exchangeapi.models.OfframpAssetDetail
 import io.exchangeapi.models.OfframpConfiguration
 import io.exchangeapi.models.OfframpOrder
 import io.exchangeapi.models.OfframpQuoteRequest
 import io.exchangeapi.models.OfframpQuotes
 import io.exchangeapi.models.Platform
+import io.exchangeapi.models.PrepareCrossSwapRoute404Response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

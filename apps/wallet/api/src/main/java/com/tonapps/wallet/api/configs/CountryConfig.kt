@@ -5,5 +5,4 @@ data class CountryConfig(
     val storeCountry: String? = null,
     val simCountry: String? = null,
     val timezone: String? = null,
-    val isVpn: Boolean? = null,
 )

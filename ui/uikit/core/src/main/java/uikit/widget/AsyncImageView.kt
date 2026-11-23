@@ -12,6 +12,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import coil3.ImageLoader
+import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
@@ -193,13 +194,21 @@ class AsyncImageView @JvmOverloads constructor(
     override fun setImageURI(uri: Uri?) {
         if (uri == null) {
             clear(null)
-        } else if (uri.scheme == "res") {
-            uri.path?.replaceFirst("/", "")?.toInt()?.let {
-                load(resourceUri(it))
-            }
         } else {
-            load(uri)
+            load(uri.resolved())
         }
+    }
+
+    /** [onResult] reports whether the image was set; it is not called for a request replaced by a newer one. */
+    fun loadImageURI(uri: Uri, onResult: (success: Boolean) -> Unit) {
+        load(uri.resolved(), onResult)
+    }
+
+    private fun Uri.resolved(): Uri {
+        if (scheme != "res") {
+            return this
+        }
+        return path?.replaceFirst("/", "")?.toIntOrNull()?.let(::resourceUri) ?: this
     }
 
     override fun setImageResource(resId: Int) {
@@ -207,7 +216,7 @@ class AsyncImageView @JvmOverloads constructor(
         super.setImageResource(resId)
     }
 
-    private fun load(data: Any?) {
+    private fun load(data: Any?, onResult: ((success: Boolean) -> Unit)? = null) {
         val transformations = mutableListOf<Transformation>()
         if (blur) {
             transformations.add(hiddenBalanceBlurTransformation())
@@ -241,6 +250,12 @@ class AsyncImageView @JvmOverloads constructor(
             .scale(coilScale)
 
         builder.placeholder(placeholderDrawable)
+        if (onResult != null) {
+            builder.listener(
+                onSuccess = { _, _ -> onResult(true) },
+                onError = { _, _ -> onResult(false) },
+            )
+        }
 
         resizeOptions?.let { ro ->
             val w = if (ro.width > 0) {
@@ -301,6 +316,18 @@ class AsyncImageView @JvmOverloads constructor(
                     .build()
                     .also { instance = it }
             }
+
+        fun prefetch(context: Context, uris: List<Uri>) {
+            val loader = get(context)
+            for (uri in uris) {
+                loader.enqueue(
+                    ImageRequest.Builder(context)
+                        .data(uri)
+                        .memoryCachePolicy(CachePolicy.DISABLED)
+                        .build()
+                )
+            }
+        }
 
         suspend fun loadSquareBitmap(context: Context, url: Uri, size: Int = 0): Bitmap? {
             val loader = ImageLoader(context)

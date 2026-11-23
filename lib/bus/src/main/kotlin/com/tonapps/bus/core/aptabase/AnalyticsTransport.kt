@@ -2,16 +2,10 @@ package com.tonapps.bus.core.aptabase
 
 import android.annotation.SuppressLint
 import android.content.Context
-import com.tonapps.core.flags.FeatureSource
 import com.tonapps.extensions.prefs
 
 private const val PREFS_NAME = "analytics_transport"
 private const val SEQUENCE_KEY = "analytics_event_seq"
-
-enum class AnalyticsTransport(val value: String) {
-    Sdk("sdk"),
-    Cache("cache"),
-}
 
 interface AnalyticsSequenceStorage {
     fun read(): Long
@@ -50,16 +44,11 @@ object AnalyticsTransportProps {
     const val SEQUENCE = "event_seq"
     const val TRANSPORT = "analytics_transport"
     const val INSTALL_ID = "analytics_install_id"
-    const val COHORT_SOURCE = "analytics_cohort_source"
 
-    fun decorate(
-        props: MutableMap<String, Any>,
-        transport: AnalyticsTransport,
-        cohortSource: FeatureSource,
-        sequence: Long,
-    ) {
+    private const val TRANSPORT_CACHE = "cache"
+
+    fun decorate(props: MutableMap<String, Any>, sequence: Long) {
         props[SEQUENCE] = sequence
-        props[TRANSPORT] = transport.value
-        props[COHORT_SOURCE] = cohortSource.name.lowercase()
+        props[TRANSPORT] = TRANSPORT_CACHE
     }
 }

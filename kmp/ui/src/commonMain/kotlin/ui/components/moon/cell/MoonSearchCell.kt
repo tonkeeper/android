@@ -48,12 +48,11 @@ import ui.theme.resources.Res
 import ui.theme.resources.cancel
 import ui.theme.resources.ic_magnifying_glass_16
 import ui.theme.resources.ic_xmark_circle_16
-import ui.theme.resources.search
 
 @Composable
 fun MoonSearchCell(
     modifier: Modifier = Modifier,
-    placeholder: String = stringResource(Res.string.search),
+    placeholder: String,
     searchText: MutableState<String> = rememberSaveable { mutableStateOf("") },
     onChanged: ((String) -> Unit)? = null,
 

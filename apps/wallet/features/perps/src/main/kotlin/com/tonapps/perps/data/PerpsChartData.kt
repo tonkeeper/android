@@ -96,7 +96,9 @@ fun GetCandlesResponse.toBaseVolumes(stepMillis: Long): Map<Long, Double> {
 }
 
 fun List<PerpsCandle>.withVolumes(volumes: Map<Long, Double>): List<PerpsCandle> {
-    return map { candle -> candle.copy(volumeUsd = volumes[candle.time]?.times(candle.close)) }
+    return map { candle ->
+        candle.copy(volumeUsd = volumes[candle.time]?.times(candle.close)?.takeIf { it.isFinite() })
+    }
 }
 
 data class PerpsCandleHistory(
@@ -104,12 +106,15 @@ data class PerpsCandleHistory(
     val volumes: Map<Long, Double>,
 )
 
-fun PerpsCandle.changeFrom(basePrice: Double): PerpsChartChange {
+fun PerpsCandle.changeFrom(basePrice: Double): PerpsChartChange? {
     val amount = close - basePrice
     val percent = if (basePrice > 0.0) {
         amount / basePrice * PERCENT_FACTOR
     } else {
         0.0
+    }
+    if (!amount.isFinite() || !percent.isFinite()) {
+        return null
     }
     return PerpsChartChange(percent = percent, amount = amount, isPositive = amount >= 0.0)
 }
@@ -121,10 +126,12 @@ private fun Long.toChartSecondsOrNull(): Long? {
     if (this <= 0L) {
         return null
     }
-    if (this >= MILLIS_MAGNITUDE_THRESHOLD) {
-        return this / MILLIS_IN_SECOND
+    val seconds = if (this >= MILLIS_MAGNITUDE_THRESHOLD) {
+        this / MILLIS_IN_SECOND
+    } else {
+        this
     }
-    return this
+    return seconds.takeIf { it <= MAX_CHART_TIME_SECONDS }
 }
 
 private fun String?.toPositiveOrNull(): Double? {
@@ -137,4 +144,5 @@ private fun String?.toPositiveOrNull(): Double? {
 
 private const val MILLIS_IN_SECOND = 1_000L
 private const val MILLIS_MAGNITUDE_THRESHOLD = 100_000_000_000L
+private const val MAX_CHART_TIME_SECONDS = 4_102_444_800L
 private const val PERCENT_FACTOR = 100.0

@@ -30,6 +30,10 @@ data class OnrampAssetDetail(
     /* Ordered for display; render as received */
     @SerialName(value = "payment_methods")
     val paymentMethods: List<OnrampPaymentMethod>,
+
+    /* Human-readable asset name (e.g. \"Bitcoin\", \"Tether\") */
+    @SerialName(value = "name")
+    val name: String? = null,
     @SerialName(value = "network_name")
     val networkName: String? = null,
     @SerialName(value = "network_image")

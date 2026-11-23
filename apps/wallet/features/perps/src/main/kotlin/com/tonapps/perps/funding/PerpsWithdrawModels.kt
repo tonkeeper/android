@@ -13,19 +13,14 @@ data class PerpsWithdrawDestination(
     val source: PerpsDepositSource?,
     val transferFeeUnits: BigInteger?,
 ) {
-    val isLighterWithdraw: Boolean
+    val isUsdcEthereum: Boolean
         get() = assetId.equals(PerpsFundingAssetId.USDC_ETHEREUM, ignoreCase = true)
 }
 
 data class PerpsWithdrawLimits(
-    val minWithdrawalUnits: BigInteger,
     val minTransferUnits: BigInteger,
-    val delaySeconds: Long?,
 ) {
     fun minimumFor(destination: PerpsWithdrawDestination): BigInteger {
-        if (destination.isLighterWithdraw) {
-            return minWithdrawalUnits
-        }
         return minTransferUnits + (destination.transferFeeUnits ?: BigInteger.ZERO)
     }
 }
@@ -40,8 +35,8 @@ data class PerpsWithdrawPlan(
     val amountUnits: BigInteger,
     val destination: PerpsWithdrawDestination,
     val limits: PerpsWithdrawLimits,
-    val quote: PerpsWithdrawQuote?,
-    val cost: PerpsWithdrawCost?,
+    val quote: PerpsWithdrawQuote,
+    val cost: PerpsWithdrawCost,
 ) {
     val amount: BigDecimal
         get() = PerpsFundingAmount.toDecimal(amountUnits, PerpsFundingAmount.USDC_DECIMALS)
@@ -58,7 +53,12 @@ sealed class PerpsWithdrawException(message: String) : IllegalStateException(mes
     class BelowMinimum(val minUnits: BigInteger) : PerpsWithdrawException("withdrawal is below $minUnits units")
     class AccountUnavailable : PerpsWithdrawException("perps account is not bound to an address")
     class DestinationUnavailable(assetId: String) : PerpsWithdrawException("$assetId is not a withdrawal destination")
+    class RelayUnverified : PerpsWithdrawException("no verified Relay account on Lighter")
     class QuoteExpired : PerpsWithdrawException("withdraw quote expired")
+    class QuoteChanged(val plan: PerpsWithdrawPlan) : PerpsWithdrawException(
+        "renewed withdraw quote spends ${plan.quote.transfer.spentUnits} units (fee ${plan.quote.transfer.usdcFeeUnits}) " +
+            "for ${plan.quote.outputUnits}, worse than shown",
+    )
     class FeeChanged(quoted: BigInteger, current: BigInteger) :
         PerpsWithdrawException("Lighter transfer fee is $current units, the quote has $quoted")
     class ActivationFailed : PerpsWithdrawException("perps account activation failed")

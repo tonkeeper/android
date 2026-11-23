@@ -4,19 +4,24 @@ import android.content.Context
 import android.net.Uri
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.tron.TronTransaction
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.core.requestPrivateKey
 import com.tonapps.core.sign
 import com.tonapps.deposit.screens.send.SendException
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.ledger.signing.LedgerSigningInteractor
+import com.tonapps.wallet.data.ledger.signing.ledgerCall
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.bitstring.BitString
@@ -27,14 +32,13 @@ import org.ton.kotlin.crypto.PublicKeyEd25519
 import uikit.base.BaseFragment
 import uikit.extensions.addForResult
 import uikit.navigation.NavigationActivity
-import java.math.BigInteger
 import java.util.UUID
 import java.util.concurrent.CancellationException
 
 class UnlockedWalletSigner(
     private val wallet: WalletEntity,
     private val tonPrivateKey: PrivateKeyEd25519,
-    private val tronPrivateKey: BigInteger?,
+    private val tronPrivateKey: ByteArray?,
 ) {
     fun signTransfer(
         unsignedBody: Cell,
@@ -54,13 +58,19 @@ class UnlockedWalletSigner(
         val privateKey = tronPrivateKey ?: throw SendException.UnableSendTransaction()
         return transaction.sign(privateKey)
     }
+
+    fun signMessage(message: ByteArray): ByteArray {
+        return tonPrivateKey.signToByteArray(message)
+    }
 }
 
 class SignTransaction(
     private val accountRepository: AccountRepository,
     private val mcAccountRepository: McAccountRepository,
     private val passcodeManager: PasscodeManager,
+    private val walletUnlocker: WalletUnlocker,
     private val rnLegacy: RNLegacy,
+    private val ledgerSigner: LedgerSigningInteractor,
 ) {
 
     interface Delegate {
@@ -82,6 +92,8 @@ class SignTransaction(
         fun newInstance(
             publicKey: PublicKeyEd25519,
             unsignedBody: Cell,
+            walletVersion: WalletVersion,
+            network: TonNetwork,
             label: String = ""
         ): Pair<BaseFragment, BaseFragment.ResultContract<Uri, BitString>>
 
@@ -89,25 +101,25 @@ class SignTransaction(
             context: Context,
             publicKey: PublicKeyEd25519,
             body: Cell,
+            walletVersion: WalletVersion,
+            network: TonNetwork,
         ): BitString?
     }
 
     suspend fun unlock(
         activity: NavigationActivity,
         wallet: WalletEntity,
+        reason: PasscodeReason,
     ): UnlockedWalletSigner {
         if (!wallet.hasPrivateKey) {
             throw SendException.UnableSendTransaction()
         }
-        val isValidPasscode = passcodeManager.confirmation(
-            activity,
-            activity.getString(Localization.app_name),
-        )
+        val isValidPasscode = passcodeManager.confirmation(activity, reason)
         if (!isValidPasscode) {
             throw CancellationException()
         }
 
-        val tonPrivateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id)
+        val tonPrivateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id, reason)
             ?: throw SendException.UnableSendTransaction()
         val tronPrivateKey = accountRepository.getTronPrivateKey(wallet.id)
 
@@ -122,24 +134,23 @@ class SignTransaction(
         activity: NavigationActivity,
         wallet: WalletEntity,
         transaction: TronTransaction,
+        reason: PasscodeReason,
     ): TronTransaction {
-        return unlock(activity, wallet).signTron(transaction)
+        return unlock(activity, wallet, reason).signTron(transaction)
     }
 
     fun multichainTron(
-        cryptoWallet: CryptoWallet,
+        cryptoWallet: MnemonicWallet,
         transaction: TronTransaction,
     ): TronTransaction {
         return transaction.sign(multichainTronPrivateKey(cryptoWallet))
     }
 
-    // Raw 32-byte secp256k1 scalar from the chainkit BIP44 m/44'/195' derivation; the unsigned
-    // interpretation matters, a leading 0x80 byte would otherwise become a negative key.
-    fun multichainTronPrivateKey(cryptoWallet: CryptoWallet): BigInteger {
-        return BigInteger(1, cryptoWallet.getPrivateKey(Chain.Tron.Mainnet).data())
+    fun multichainTronPrivateKey(cryptoWallet: MnemonicWallet): ByteArray {
+        return cryptoWallet.getPrivateKey(Chain.Tron.Mainnet).data()
     }
 
-    fun multichainTonPrivateKey(cryptoWallet: CryptoWallet): PrivateKeyEd25519 {
+    fun multichainTonPrivateKey(cryptoWallet: MnemonicWallet): PrivateKeyEd25519 {
         return PrivateKeyEd25519(cryptoWallet.getPrivateKey(Chain.Ton.Mainnet).data())
     }
 
@@ -150,6 +161,11 @@ class SignTransaction(
         transactionIndex: Int,
         transactionCount: Int
     ): Cell {
+        if (wallet.isMultichainLedger) {
+            return ledgerCall {
+                ledgerSigner.signTonTransaction(wallet.id, ledgerTransaction, transactionIndex + 1, transactionCount)
+            }
+        }
         if (activity !is Delegate) {
             throw IllegalArgumentException("Activity must implement SignTransaction.Delegate")
         }
@@ -171,7 +187,8 @@ class SignTransaction(
     suspend fun requestSignature(
         activity: NavigationActivity,
         wallet: WalletEntity,
-        unsignedBody: Cell
+        unsignedBody: Cell,
+        reason: PasscodeReason,
     ): BitString {
         return when (wallet.type) {
             WalletType.SignerQR -> signerQR(activity, wallet, unsignedBody)
@@ -179,11 +196,12 @@ class SignTransaction(
             WalletType.Default, WalletType.Testnet, WalletType.Lockup -> default(
                 activity,
                 wallet,
-                unsignedBody
+                unsignedBody,
+                reason,
             )
 
             WalletType.Keystone -> keystone(activity, wallet, unsignedBody)
-            WalletType.Multichain -> multichain(activity, wallet, unsignedBody)
+            WalletType.Multichain -> multichain(wallet, unsignedBody, reason)
             else -> {
                 throw IllegalArgumentException("Unsupported wallet type: ${wallet.type}")
             }
@@ -193,9 +211,10 @@ class SignTransaction(
     suspend fun requestSignedMessage(
         activity: NavigationActivity,
         wallet: WalletEntity,
-        unsignedBody: Cell
+        unsignedBody: Cell,
+        reason: PasscodeReason,
     ): Cell {
-        val signature = requestSignature(activity, wallet, unsignedBody)
+        val signature = requestSignature(activity, wallet, unsignedBody, reason)
         return wallet.contract.signedBody(signature, unsignedBody)
     }
 
@@ -229,7 +248,9 @@ class SignTransaction(
 
         val (fragment, contract) = activity.newInstance(
             publicKey = wallet.publicKey,
-            unsignedBody = unsignedBody
+            unsignedBody = unsignedBody,
+            walletVersion = wallet.version,
+            network = wallet.network,
         )
         val result = activity.addForResult(fragment)
         return contract.parseResult(result)
@@ -244,23 +265,24 @@ class SignTransaction(
             throw IllegalArgumentException("Activity must implement SignTransaction.Delegate")
         }
 
-        val hash = activity.invoke(activity, wallet.publicKey, unsignedBody)
+        val hash = activity.invoke(activity, wallet.publicKey, unsignedBody, wallet.version, wallet.network)
         return hash ?: throw CancellationException("Signer cancelled")
     }
 
     suspend fun default(
         activity: NavigationActivity,
         wallet: WalletEntity,
-        unsignedBody: Cell
+        unsignedBody: Cell,
+        reason: PasscodeReason,
     ): BitString = withContext(Dispatchers.IO) {
         if (!wallet.hasPrivateKey) {
             throw SendException.UnableSendTransaction()
         }
-        val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        val isValidPasscode = passcodeManager.confirmation(activity, reason)
         if (!isValidPasscode) {
             throw CancellationException()
         }
-        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id)
+        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id, reason)
             ?: throw SendException.UnableSendTransaction()
         val hash = unsignedBody.hash().toByteArray()
         BitString(privateKey.signToByteArray(hash))
@@ -269,43 +291,47 @@ class SignTransaction(
     suspend fun default(
         activity: NavigationActivity,
         wallet: WalletEntity,
-        bytes: ByteArray
+        bytes: ByteArray,
+        reason: PasscodeReason,
     ): ByteArray = withContext(Dispatchers.IO) {
         if (!wallet.hasPrivateKey) {
             throw SendException.UnableSendTransaction()
         }
-        val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        val isValidPasscode = passcodeManager.confirmation(activity, reason)
         if (!isValidPasscode) {
             throw CancellationException()
         }
 
-        accountRepository.sign(activity, rnLegacy, wallet.id, bytes)
+        accountRepository.sign(activity, rnLegacy, wallet.id, bytes, reason)
     }
 
     suspend fun multichain(
-        activity: NavigationActivity,
         wallet: WalletEntity,
         unsignedBody: Cell,
+        reason: PasscodeReason,
     ): BitString = withContext(Dispatchers.IO) {
-        val privateKey = unlockTonPrivateKey(activity, wallet.id)
+        if (wallet.isMultichainLedger) {
+            throw SendException.UnableSendTransaction()
+        }
+        val privateKey = unlockTonPrivateKey(wallet.id, reason)
         val hash = unsignedBody.hash().toByteArray()
         BitString(privateKey.signToByteArray(hash))
     }
 
     suspend fun multichain(
-        activity: NavigationActivity,
         wallet: WalletEntity,
         bytes: ByteArray,
+        reason: PasscodeReason,
     ): ByteArray = withContext(Dispatchers.IO) {
-        val privateKey = unlockTonPrivateKey(activity, wallet.id)
+        if (wallet.isMultichainLedger) {
+            throw SendException.UnableSendTransaction()
+        }
+        val privateKey = unlockTonPrivateKey(wallet.id, reason)
         privateKey.signToByteArray(bytes)
     }
 
-    private suspend fun unlockTonPrivateKey(
-        activity: NavigationActivity,
-        walletId: String,
-    ): PrivateKeyEd25519 {
-        val cryptoWallet = passcodeManager.unlockMultichainVault(activity) { coder ->
+    private suspend fun unlockTonPrivateKey(walletId: String, reason: PasscodeReason): PrivateKeyEd25519 {
+        val cryptoWallet = walletUnlocker.unlockVault(reason) { coder ->
             mcAccountRepository.getCryptoWallet(walletId, coder)
                 ?: throw SendException.UnableSendTransaction()
         }

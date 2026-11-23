@@ -61,6 +61,7 @@ private fun WalletAction.title(): String = stringResource(
     when (this) {
         WalletAction.Send -> Localization.send
         WalletAction.Deposit -> Localization.add_funds
+        WalletAction.Buy -> Localization.buy
         WalletAction.Swap -> Localization.swap
         WalletAction.Stake -> Localization.stake
     }
@@ -70,7 +71,7 @@ private fun WalletAction.title(): String = stringResource(
 private fun WalletAction.icon(): Painter = painterResource(
     when (this) {
         WalletAction.Send -> UIKitIcon.ic_arrow_up_outline_28
-        WalletAction.Deposit -> UIKitIcon.ic_arrow_down_outline_28
+        WalletAction.Deposit, WalletAction.Buy -> UIKitIcon.ic_arrow_down_outline_28
         WalletAction.Swap -> UIKitIcon.ic_swap_horizontal_outline_28
         WalletAction.Stake -> UIKitIcon.ic_staking_outline_28
     }

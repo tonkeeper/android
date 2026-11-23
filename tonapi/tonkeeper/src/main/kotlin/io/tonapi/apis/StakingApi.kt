@@ -15,10 +15,8 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.tonapi.models.AccountStaking
-import io.tonapi.models.GetOpenapiJsonDefaultResponse
-import io.tonapi.models.GetStakingPoolHistory200Response
-import io.tonapi.models.GetStakingPoolInfo200Response
 import io.tonapi.models.GetStakingPools200Response
+import io.tonapi.models.StatusDefaultResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -84,107 +82,6 @@ class StakingApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/staking/nominator/{account_id}/pools".replace("{"+"account_id"+"}", encodeURIComponent(accountId.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getStakingPoolHistory(accountId: String, beforeLt: Long? = null, limit: Int? = 100): GetStakingPoolHistory200Response {
-        val localVarResponse = getStakingPoolHistoryWithHttpInfo(accountId = accountId, beforeLt = beforeLt, limit = limit)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GetStakingPoolHistory200Response
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getStakingPoolHistoryWithHttpInfo(accountId: String, beforeLt: Long?, limit: Int?): ApiResponse<GetStakingPoolHistory200Response?> {
-        val localVariableConfig = getStakingPoolHistoryRequestConfig(accountId = accountId, beforeLt = beforeLt, limit = limit)
-
-        return request<Unit, GetStakingPoolHistory200Response>(
-            localVariableConfig
-        )
-    }
-
-    fun getStakingPoolHistoryRequestConfig(accountId: String, beforeLt: Long?, limit: Int?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (beforeLt != null) {
-                    put("before_lt", listOf(beforeLt.toString()))
-                }
-                if (limit != null) {
-                    put("limit", listOf(limit.toString()))
-                }
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/staking/pool/{account_id}/history".replace("{"+"account_id"+"}", encodeURIComponent(accountId.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getStakingPoolInfo(accountId: String, acceptLanguage: String? = "en"): GetStakingPoolInfo200Response {
-        val localVarResponse = getStakingPoolInfoWithHttpInfo(accountId = accountId, acceptLanguage = acceptLanguage)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GetStakingPoolInfo200Response
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getStakingPoolInfoWithHttpInfo(accountId: String, acceptLanguage: String?): ApiResponse<GetStakingPoolInfo200Response?> {
-        val localVariableConfig = getStakingPoolInfoRequestConfig(accountId = accountId, acceptLanguage = acceptLanguage)
-
-        return request<Unit, GetStakingPoolInfo200Response>(
-            localVariableConfig
-        )
-    }
-
-    fun getStakingPoolInfoRequestConfig(accountId: String, acceptLanguage: String?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/staking/pool/{account_id}".replace("{"+"account_id"+"}", encodeURIComponent(accountId.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

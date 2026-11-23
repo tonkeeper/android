@@ -5,6 +5,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.core.tracer.AnalyticException
 import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.extensions.logError
 import com.tonapps.log.L
 import com.tonapps.security.DeviceCredentialRequiredException
@@ -46,7 +47,9 @@ class PasscodeManager(
     private val multichainVault: McPasscodeStore,
     private val mcAccountRepository: McAccountRepository,
     private val perpetualRepository: PerpetualRepository,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val legacyWalletMigrator: LegacyWalletMigrator? = null,
+    private val isPerpsEnabled: () -> Boolean = { WalletFeature.Perps.isEnabled },
 ) {
 
     private val vaultMutex = Mutex()
@@ -87,8 +90,18 @@ class PasscodeManager(
     // show them. Nothing changes them while the lock screen is up.
     private val lockMissingChains = scope.async(start = CoroutineStart.LAZY) { missingChainsOrEmpty() }
 
+    // The old-store wallets to move into the multichain one, read once per lock screen like the
+    // missing chains: moving them needs the PIN, so it is part of the entry.
+    private val lockLegacyWallets = scope.async(start = CoroutineStart.LAZY) { migratableLegacyWalletsOrEmpty() }
+
+    // One entry at a time: the numpad is live while the PIN is checked and the wallets move, and a
+    // second entry would start a second move of the same wallet. A PIN typed during a running entry
+    // is dropped; a biometric success waits for it, see lockscreenBiometric.
+    private val lockEntryMutex = Mutex()
+
     init {
         settingsRepository.isMigratedFlow.onEach {
+            lockLegacyWallets.start()
             lockscreen.init()
             lockMissingChains.start()
             ensureMultichainVault()
@@ -112,6 +125,46 @@ class PasscodeManager(
                 throw e
             } catch (e: Throwable) {
                 FirebaseCrashlytics.getInstance().recordException(e)
+            }
+        }
+    }
+
+    // Reporting must never be what breaks the lock screen.
+    private fun reportMigrationFailure(e: Throwable) {
+        runCatching { L.e(e) }
+        runCatching { FirebaseCrashlytics.getInstance().recordException(e) }
+    }
+
+    private suspend fun migratableLegacyWalletsOrEmpty(): List<String> {
+        val migrator = legacyWalletMigrator ?: return emptyList()
+        return try {
+            migrator.migratableWalletIds()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            reportMigrationFailure(e)
+            emptyList()
+        }
+    }
+
+    // Moves the wallets under the vault the [pin] opens. A failure never blocks the user: what did
+    // not move stays in the old store and is tried again on the next start.
+    private suspend fun migrateLegacyWallets(walletIds: List<String>, code: String) {
+        val migrator = legacyWalletMigrator ?: return
+        if (walletIds.isEmpty()) {
+            return
+        }
+        val pin = code.toCharArray()
+        withContext(Dispatchers.IO) {
+            try {
+                val coder = vaultMutex.withLock { multichainVault.unlock(pin) }
+                coder.use { migrator.migrate(walletIds, it) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                reportMigrationFailure(e)
+            } finally {
+                pin.fill('\u0000')
             }
         }
     }
@@ -164,6 +217,12 @@ class PasscodeManager(
 
     // No PIN: no lock screen, so the chains are checked right at start, with the vault's default key.
     internal suspend fun startNewChainsWithoutPin(): Boolean {
+        val legacy = lockLegacyWallets.await()
+        if (legacy.isNotEmpty()) {
+            ensureMultichainVault()
+            lockscreen.migrating()
+            migrateLegacyWallets(legacy, DEFAULT_PIN)
+        }
         val missing = missingChainsOrEmpty()
         if (missing.isEmpty()) {
             return false
@@ -211,7 +270,9 @@ class PasscodeManager(
     // needs its mnemonic. The caller keeps ownership of [pin].
     private suspend fun syncWallets(pin: CharArray) {
         val firstWalletId = accountRepository.getSelectedWalletId()
-        val withoutTradingKey = perpetualRepository.walletsWithoutTradingKey(mcAccountRepository.getWallets().map { it.id })
+        val withoutTradingKey = perpetualRepository.walletsWithoutTradingKey(
+            mcAccountRepository.getWallets().filterNot { it.isHardware }.map { it.id },
+        )
         if (!mcAccountRepository.hasMissingChains() && withoutTradingKey.isEmpty()) {
             mcAccountRepository.syncWallets(mnemonicCoder = null, firstWalletId = firstWalletId)
             return
@@ -255,6 +316,7 @@ class PasscodeManager(
 
                 if (multichainVault.hasVault()) {
                     multichainVault.unlockSession(DEFAULT_PIN.toCharArray())
+                    restoreHardwareAppKeys(DEFAULT_PIN.toCharArray())
                 } else {
                     multichainVault.setPin(DEFAULT_PIN.toCharArray())
                         .use { }
@@ -267,21 +329,53 @@ class PasscodeManager(
         }
     }
 
-    fun lockscreenBiometric() {
-        scope.launch {
+    fun restoreSessionOnForeground() {
+        scope.launch(Dispatchers.IO) {
             try {
-                val code = helper.getPinCode()
-                    ?: throw IllegalStateException("biometric unlock without a stored pin")
-
-                val missingChains = lockMissingChains.await()
-                startMultichainSession(code)
-                startNewChains(missingChains, code)
-                lockscreen.biometric()
+                vaultMutex.withLock {
+                    if (hasPinCode() && !multichainVault.isSessionUnlocked) {
+                        multichainVault.restoreSession()
+                    }
+                }
             } catch (e: Throwable) {
                 AnalyticsHelper.Default.captureException(
-                    AnalyticException.Passcode("biometric unlock failed", e)
+                    AnalyticException.Vault("session restore on foreground failed", e)
                 )
             }
+        }
+    }
+
+    // The biometric prompt opens after the numpad, so a PIN check may already be running when it
+    // succeeds. The success waits for that check: if the PIN opened the wallet there is nothing left to
+    // do, and if the PIN was wrong the fingerprint still opens it instead of leaving the PIN error.
+    fun lockscreenBiometric() {
+        scope.launch {
+            lockEntryMutex.withLock {
+                if (lockscreen.waitsForPasscode) {
+                    unlockByBiometric()
+                }
+            }
+        }
+    }
+
+    private suspend fun unlockByBiometric() {
+        try {
+            val code = helper.getPinCode()
+                ?: throw IllegalStateException("biometric unlock without a stored pin")
+
+            val missingChains = lockMissingChains.await()
+            val legacy = lockLegacyWallets.await()
+            startMultichainSession(code)
+            if (legacy.isNotEmpty()) {
+                lockscreen.migrating()
+                migrateLegacyWallets(legacy, code)
+            }
+            startNewChains(missingChains, code)
+            lockscreen.biometric()
+        } catch (e: Throwable) {
+            AnalyticsHelper.Default.captureException(
+                AnalyticException.Passcode("biometric unlock failed", e)
+            )
         }
     }
 
@@ -306,7 +400,7 @@ class PasscodeManager(
 
         // The chains a wallet misses are derived from its mnemonic too: the PIN entry adds them and
         // shows the new networks screen, as it does with the lock screen on.
-        if (lockMissingChains.await().isNotEmpty()) {
+        if (lockMissingChains.await().isNotEmpty() || lockLegacyWallets.await().isNotEmpty()) {
             return@withContext false
         }
 
@@ -334,8 +428,8 @@ class PasscodeManager(
     // fails counts as owing, and the PIN entry is the way through.
     private suspend fun owesTradingKey(): Boolean {
         return try {
-            val walletIds = mcAccountRepository.getWallets().map { it.id }
-            perpetualRepository.walletsWithoutTradingKey(walletIds).isNotEmpty()
+            val walletIds = mcAccountRepository.getWallets().filterNot { it.isHardware }.map { it.id }
+            perpetualRepository.walletsWithoutTradingKey(walletIds).isNotEmpty() && isPerpsEnabled()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -344,11 +438,38 @@ class PasscodeManager(
         }
     }
 
-    fun lockscreenCheck(context: Context, code: String) {
-        scope.launch {
-            val missingChains = lockMissingChains.await()
-            lockscreen.check(context, code, onValid = { startNewChains(missingChains, code) })
+    // The lock screen also shows with the lock off when the PIN is needed to add the chains the
+    // wallets miss: it names that instead of the unlock.
+    suspend fun lockscreenReason(): PasscodeReason = withContext(Dispatchers.IO) {
+        when {
+            lockLegacyWallets.await().isNotEmpty() -> PasscodeReason.WALLET_MIGRATION
+            lockMissingChains.await().isNotEmpty() -> PasscodeReason.ADD_NETWORKS
+            else -> PasscodeReason.UNLOCK_WALLET
         }
+    }
+
+    fun lockscreenCheck(context: Context, code: String) {
+        if (!lockEntryMutex.tryLock()) {
+            return
+        }
+        scope.launch {
+            try {
+                lockscreenCheckInternal(context, code)
+            } finally {
+                lockEntryMutex.unlock()
+            }
+        }
+    }
+
+    private suspend fun lockscreenCheckInternal(context: Context, code: String) {
+        val missingChains = lockMissingChains.await()
+        val legacy = lockLegacyWallets.await()
+        lockscreen.check(
+            context = context,
+            code = code,
+            migrate = legacy.takeIf { it.isNotEmpty() }?.let { ids -> { migrateLegacyWallets(ids, code) } },
+            onValid = { startNewChains(missingChains, code) },
+        )
     }
 
     suspend fun hasPinCode(): Boolean = withContext(Dispatchers.IO) {
@@ -368,15 +489,15 @@ class PasscodeManager(
         !helper.hasPinCode && rnLegacy.hasPinCode()
     }
 
-    suspend fun requestValidPasscode(context: Context): String = withContext(Dispatchers.Main) {
+    suspend fun requestValidPasscode(context: Context, reason: PasscodeReason): String = withContext(Dispatchers.Main) {
         if (!unlockSecureStorage(context, withVault = false)) {
             throw CancellationException("device credential request cancelled")
         }
 
         // Dismissing the dialog is a user cancellation, not a failure: callers must be able to tell
         // it apart from a wrong passcode to avoid showing an error.
-        val code = requestPasscodeByBiometric(context)
-            ?: PasscodeDialog.request(context)
+        val code = requestPasscodeByBiometric(context, reason)
+            ?: PasscodeDialog.request(context, reason)
             ?: throw CancellationException("passcode request cancelled")
 
         if (!isValid(context, code)) {
@@ -386,7 +507,7 @@ class PasscodeManager(
         code
     }
 
-    private suspend fun requestPasscodeByBiometric(context: Context): String? {
+    private suspend fun requestPasscodeByBiometric(context: Context, reason: PasscodeReason): String? {
         if (!settingsRepository.biometric) {
             return null
         }
@@ -400,13 +521,7 @@ class PasscodeManager(
         }
 
         return try {
-            val authenticated = PasscodeBiometric.showPrompt(
-                context = context,
-                title = context.getString(Localization.app_name),
-                passcodeFallback = true
-            )
-
-            if (authenticated) {
+            if (showBiometricPrompt(context, reason)) {
                 helper.getPinCode()
             } else {
                 null
@@ -419,11 +534,13 @@ class PasscodeManager(
         }
     }
 
-    suspend fun <T> unlockMultichainVault(
+    // Reached through WalletUnlocker, which finds the screen to prompt on.
+    internal suspend fun <T> unlockMultichainVault(
         context: Context,
+        reason: PasscodeReason,
         block: suspend (MnemonicCoder) -> T
     ): T {
-        val pin = requestValidPasscode(context).toCharArray()
+        val pin = requestValidPasscode(context, reason).toCharArray()
         return try {
             multichainVault.unlock(pin).use { coder ->
                 block(coder)
@@ -482,6 +599,7 @@ class PasscodeManager(
         if (multichainVault.isSessionUnlocked) {
             // A session restored without a passcode skips the vault work but still owes the binding
             // sync a PIN unlock would have kicked off; it dedupes itself.
+            vaultMutex.withLock { restoreHardwareAppKeys(code.toCharArray()) }
             syncWalletBindings(code)
             return
         }
@@ -495,6 +613,7 @@ class PasscodeManager(
                     } catch (e: Throwable) {
                         recoverMultichainVault(pin, e)
                     }
+                    restoreHardwareAppKeys(pin)
                 } else {
                     multichainVault.setPin(pin)
                         .use { }
@@ -512,6 +631,20 @@ class PasscodeManager(
             )
         } finally {
             pin.fill('\u0000')
+        }
+    }
+
+    private suspend fun restoreHardwareAppKeys(pin: CharArray) {
+        try {
+            if (mcAccountRepository.hasHardwareWalletsWithoutReadableAppKey()) {
+                multichainVault.unlock(pin).use { coder -> mcAccountRepository.restoreHardwareAppKeys(coder) }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            AnalyticsHelper.Default.captureException(
+                AnalyticException.Vault("hardware app key restore failed", e)
+            )
         }
     }
 
@@ -684,7 +817,7 @@ class PasscodeManager(
 
     suspend fun confirmationByBiometric(
         context: Context,
-        title: String
+        reason: PasscodeReason,
     ): Boolean = withContext(Dispatchers.Main) {
         try {
             if (isRequestMigration()) {
@@ -694,7 +827,7 @@ class PasscodeManager(
                 }
                 migration(context, passcode)
             } else {
-                PasscodeBiometric.showPrompt(context, title, passcodeFallback = true)
+                showBiometricPrompt(context, reason)
             }
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
@@ -704,20 +837,20 @@ class PasscodeManager(
 
     suspend fun confirmation(
         context: Context,
-        title: String
+        reason: PasscodeReason,
     ): Boolean = withContext(Dispatchers.Main) {
         if (!unlockSecureStorage(context, withVault = true)) {
             return@withContext false
         }
 
         if (isRequestMigration()) {
-            return@withContext confirmationMigration(context)
+            return@withContext confirmationMigration(context, reason)
         }
 
-        if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context) && PasscodeBiometric.showPrompt(context, title, passcodeFallback = true)) {
+        if (settingsRepository.biometric && PasscodeBiometric.isAvailableOnDevice(context) && showBiometricPrompt(context, reason)) {
             true
         } else {
-            val passcode = PasscodeDialog.request(context)
+            val passcode = PasscodeDialog.request(context, reason)
             if (passcode.isNullOrBlank()) {
                 false
             } else {
@@ -727,9 +860,19 @@ class PasscodeManager(
     }
 
     suspend fun legacyGetPasscode(
-        context: Context
+        context: Context,
+        reason: PasscodeReason,
     ): String? {
-        return legacyGetPasscodeByBiometry() ?: PasscodeDialog.request(context)
+        return legacyGetPasscodeByBiometry() ?: PasscodeDialog.request(context, reason)
+    }
+
+    private suspend fun showBiometricPrompt(context: Context, reason: PasscodeReason): Boolean {
+        return PasscodeBiometric.showPrompt(
+            context = context,
+            title = context.getString(Localization.app_name),
+            passcodeFallback = true,
+            subtitle = context.getString(reason.text),
+        )
     }
 
     private suspend fun legacyGetPasscodeByBiometry(): String? {
@@ -743,6 +886,7 @@ class PasscodeManager(
 
     private suspend fun confirmationMigration(
         context: Context,
+        reason: PasscodeReason,
     ): Boolean = withContext(Dispatchers.Main) {
         val passcodeByBiometric: String? = try {
             if (settingsRepository.biometric) {
@@ -757,7 +901,7 @@ class PasscodeManager(
 
         val passcodeByDialog: String? = try {
             if (passcodeByBiometric.isNullOrEmpty()) {
-                PasscodeDialog.request(context)
+                PasscodeDialog.request(context, reason)
             } else {
                 null
             }

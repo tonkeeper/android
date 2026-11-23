@@ -25,7 +25,7 @@ data class BindAccountRequest(
     @SerialName(value = "proof")
     val proof: String,
 
-    /* Unix seconds, signed inside the EIP-712 message. Not checked against the clock: a device clock running behind would otherwise refuse every bind, and the signature binds nothing without the operation proof. Travels with signature: one without the other is a 400. */
+    /* Unix seconds, signed inside the EIP-712 message. A signature past it is refused with 400 signature_expired; this bounds a replay of an intercepted signature. Not capped: a far one lets a retry reuse the signature. Travels with signature: one without the other is a 400. */
     @SerialName(value = "deadline")
     val deadline: Long? = null,
 

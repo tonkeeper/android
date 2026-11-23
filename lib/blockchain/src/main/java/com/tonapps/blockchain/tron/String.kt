@@ -1,27 +1,20 @@
 package com.tonapps.blockchain.tron
 
-import com.google.protobuf.ByteString
-import org.bitcoinj.core.Base58
+import com.tonapps.chainkit.chain.tron.utils.TronUtils
 
 fun String.encodeTronAddress(): String {
-    val decoded: ByteArray = Base58.decodeChecked(this)
-    return decoded.copyOfRange(1, 21).joinToString("") { "%02x".format(it) }.padStart(64, '0')
+    return toEvmHex().padStart(64, '0')
 }
 
+// The 21 address bytes as hex: "41" and the 20 bytes of the address.
 fun String.tronHex(): String {
-    return Base58.decodeChecked(this).joinToString("") { "%02x".format(it) }
+    return TronUtils.addressHex(this) ?: throw IllegalArgumentException("Invalid TRON address")
 }
 
 fun String.toEvmHex(): String {
-    val fullHex = Base58.decodeChecked(this).joinToString("") { "%02x".format(it) }
-    return fullHex.removePrefix("41")
+    return tronHex().removePrefix("41")
 }
 
 fun String.isValidTronAddress(): Boolean {
-    return this.length == 34 && this.startsWith("T") && try {
-        Base58.decodeChecked(this)
-        true
-    } catch (e: Exception) {
-        false
-    }
+    return TronUtils.isValidAddress(this)
 }

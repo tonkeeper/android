@@ -68,7 +68,7 @@ private fun buildWalletCurrency(
         title = networkName,
         chain = chain,
         iconUrl = imageUrl,
-        isToken = network != "NATIVE",
+        isToken = !network.equals("NATIVE", ignoreCase = true),
         isStablecoin = isStablecoin,
     )
 }

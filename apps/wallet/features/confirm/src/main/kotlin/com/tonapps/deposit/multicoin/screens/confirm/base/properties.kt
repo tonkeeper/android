@@ -11,6 +11,9 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmOperations
 import com.tonapps.blockchain.model.ConfirmType
+import com.tonapps.blockchain.model.DappConnectRequest.DomainStatus
+import com.tonapps.chainkit.core.chain.model.account.Asset
+import com.tonapps.chainkit.core.chain.model.num.FiatRate
 import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.chainkit.core.chain.model.num.toDisplayUnit
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
@@ -19,18 +22,24 @@ import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.Signing
 import com.tonapps.deposit.multicoin.screens.confirm.fee.FeeAccount
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFee
+import com.tonapps.deposit.multicoin.screens.confirm.perpetual.perpetualDepositMinimumText
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.Plurals
 import kotlin.math.abs
+import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.chainkit.core.chain.model.account.Network
 
 @get:Composable
 val ConfirmationError.errorText: String? get() = when (this) {
     ConfirmationError.Unknown -> stringResource(Localization.unknown_error)
     ConfirmationError.OutcomeUnknown -> stringResource(Localization.unknown_error)
+    ConfirmationError.PartiallySent -> stringResource(Localization.confirmation_error_partially_sent)
     ConfirmationError.InsufficientBalance -> stringResource(Localization.insufficient_balance)
+    is ConfirmationError.InsufficientNetworkFee -> stringResource(Localization.perps_deposit_insufficient_network_fee, symbol)
     ConfirmationError.Expired -> stringResource(Localization.transaction_expired)
     ConfirmationError.InvalidAddress -> stringResource(Localization.confirmation_error_invalid_address)
     ConfirmationError.UnsupportedTransaction -> stringResource(Localization.confirmation_error_unsupported_transaction)
+    ConfirmationError.LedgerUnsupported -> stringResource(Localization.ledger_mc_error_unsupported)
     ConfirmationError.UnsupportedAsset -> stringResource(Localization.confirmation_error_unsupported_asset)
     ConfirmationError.MissingField -> stringResource(Localization.confirmation_error_missing_field)
     ConfirmationError.DustAmount -> stringResource(Localization.confirmation_error_dust_amount)
@@ -45,8 +54,19 @@ val ConfirmationError.errorText: String? get() = when (this) {
     ConfirmationError.UtxoError -> stringResource(Localization.confirmation_error_utxo)
     ConfirmationError.InternalError -> stringResource(Localization.confirmation_error_internal)
     is ConfirmationError.NodeRejected -> message.ifBlank { stringResource(Localization.unknown_error) }
+    ConfirmationError.NonceTaken -> stringResource(Localization.confirmation_error_nonce_taken)
     is ConfirmationError.RelayerRejected -> stringResource(Localization.failed)
     ConfirmationError.DepositInFlight -> stringResource(Localization.perps_deposit_payment_in_flight)
+    is ConfirmationError.DepositBelowMinimum -> perpetualDepositMinimumText(minUsd)
+    ConfirmationError.WalletScreened -> stringResource(Localization.swap_error_wallet_screened)
+    ConfirmationError.SignatureDisabled -> stringResource(Localization.sign_error_two_factor)
+}
+
+@get:Composable
+val ConfirmationError.feeErrorText: String? get() = when (this) {
+    ConfirmationError.Unknown,
+    ConfirmationError.InternalError -> stringResource(Localization.fee_calculation_failed)
+    else -> errorText
 }
 
 @Composable
@@ -137,6 +157,11 @@ fun PendingTransaction.appName(): String? {
     }
 }
 
+fun PendingTransaction.domainRisk(): DomainStatus? {
+    val status = (request.context as? ConfirmContext.Dapp)?.domainStatus
+    return status?.takeIf { it == DomainStatus.Invalid || it == DomainStatus.Scam }
+}
+
 private val RATE_DIVISION_MODE = DecimalMode(
     decimalPrecision = 30L,
     roundingMode = RoundingMode.ROUND_HALF_CEILING,
@@ -162,17 +187,19 @@ fun PendingTransaction.sellAmount(): String? {
 fun PendingTransaction.minReceived(): Pair<String, String?>? {
     val quote = quote ?: return null
     val destination = destination ?: return null
-    val asset = destination.asset
+    val asset = destination.asset.value
     val rate = destination.rate?.value
+    val amount = quote.minimumBuyBaseAmount
+    return remember(asset, rate, amount) {
+        formatMinReceived(asset = asset, rate = rate, baseAmount = amount)
+    }
+}
 
-    val display = asset.value.toDisplayUnit(quote.minimumBuyBaseAmount)
-    val amountFormatted = remember(display) {
-        Formatter.formatShort(value = display, asset = asset.value, approximate = true)
-    }
-    val fiatFormatted = remember(display, rate) {
-        rate?.let { Formatter.formatFiat(value = display, rate = it, separator = " ", approximate = true) }
-    }
-    return amountFormatted to fiatFormatted
+fun formatMinReceived(asset: Asset, rate: FiatRate?, baseAmount: BigInteger): Pair<String, String?> {
+    val display = asset.toDisplayUnit(baseAmount)
+    val amount = Formatter.formatShort(value = display, asset = asset, approximate = true)
+    val fiat = rate?.let { Formatter.formatFiat(value = display, rate = it, separator = " ", approximate = true) }
+    return amount to fiat
 }
 
 @Composable
@@ -189,9 +216,10 @@ data class PriceImpact(
     val severity: PriceImpactSeverity,
 )
 
-@Composable
-fun PendingTransaction.priceImpact(): PriceImpact? {
-    val bps = quote?.priceImpactBps ?: return null
+fun PendingTransaction.priceImpact(): PriceImpact? = priceImpactOf(quote?.priceImpactBps)
+
+fun priceImpactOf(bps: Int?): PriceImpact? {
+    bps ?: return null
     if (abs(bps) < 300) {
         return null
     }
@@ -290,3 +318,19 @@ fun PendingTransaction.fee(): Pair<String, String?>? {
 
     return feeFormatted to feeFiatFormatted
 }
+
+// The token standard a chain's assets are sent under, as the confirm's network row names it.
+internal val Chain.networkStandardLabel: String
+    get() = when (network.type) {
+        Network.Type.Ton -> "TON"
+        Network.Type.Ethereum,
+        Network.Type.Arbitrum,
+        Network.Type.Base,
+        Network.Type.Robinhood,
+        Network.Type.Polygon,
+        Network.Type.Avalanche -> "ERC20"
+        Network.Type.Smartchain -> "BEP20"
+        Network.Type.Tron -> "TRC20"
+        Network.Type.Bitcoin -> "BTC"
+        Network.Type.Solana -> "SPL"
+    }

@@ -2,11 +2,13 @@ package com.tonapps.swap.screens.swap
 
 import android.content.Context
 import androidx.lifecycle.ViewModelStore
+import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.core.flags.WalletFeatureKey
 import com.tonapps.extensions.AppLifecycleProvider
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.swap.SwapRoutes
 import com.tonapps.wallet.api.API
+import com.tonapps.wallet.api.entity.ConfigEntity
 import com.tonapps.wallet.api.core.ExchangeAPI
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
@@ -16,29 +18,38 @@ import com.tonapps.wallet.testing.TestWallet
 import com.tonapps.wallet.testing.testAccount
 import com.tonapps.wallet.testing.testWallet
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.multichain.exchange.SwapRepository
+import com.tonapps.wallet.data.multichain.fees.NetworkFeesRepository
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapAccounts
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapPair
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapWallet
 import com.tonapps.wallet.data.raffle.RaffleRepository
 import com.tonapps.wallet.data.raffle.entities.RaffleEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
+import io.Serializer
 import io.exchangeapi.apis.CrosschainApi
-import io.exchangeapi.infrastructure.Serializer
 import io.exchangeapi.models.CreateCrossSwapQuoteRequest
 import io.exchangeapi.models.CrossSwapConfig
 import io.exchangeapi.models.CrossSwapExactType
 import io.exchangeapi.models.CrossSwapPrepare
 import io.exchangeapi.models.CrossSwapQuote
+import io.exchangeapi.models.CrossSwapQuoteRequest
+import io.exchangeapi.models.CrossSwapQuoteV3
 import io.mockk.coEvery
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlin.time.TimeSource
+import java.time.OffsetDateTime
 import java.util.concurrent.CopyOnWriteArrayList
+import io.batteryapi.models.NetworkFees as NetworkFeesResponse
 
 /**
  * The world a [SwapFeature] runs in.
@@ -58,6 +69,7 @@ class SwapTestEnv(
     val timings: SwapTimings = SwapTimings(),
     exactOutputEnabled: Boolean = true,
     swapKitEnabled: Boolean = false,
+    swapV3Enabled: Boolean = false,
     // The real trigger replays its last refresh to a new subscriber; one the app has never fired
     // has nothing to replay.
     refreshReplayed: Boolean = true,
@@ -71,6 +83,9 @@ class SwapTestEnv(
 
     /** Every config request the feature sent, as (walletId, sellAssetId, buyAssetId). */
     val configRequests = CopyOnWriteArrayList<Triple<String, String?, String?>>()
+
+    /** Every `/v3/crosschain` quote request the feature sent, in order. */
+    val quoteRequestsV3 = CopyOnWriteArrayList<CrossSwapQuoteRequest>()
 
     /** Every route id the feature asked to prepare, in order. */
     val prepareRequests = CopyOnWriteArrayList<String>()
@@ -152,7 +167,17 @@ class SwapTestEnv(
         LegacySwapPair(sell = SwapFixtures.tonAsset, buy = SwapFixtures.usdtTronAsset)
     }
 
+    var tonWallet: WalletEntity? = null
+
+    var batteryCharges: Int? = null
+
+    /** Battery's `/network-fees` answer; none unless a test gives one, so MAX keeps its fixed reserve. */
+    var networkFees: NetworkFeesResponse? = null
+
     private val legacyAccounts = mockk<LegacySwapAccounts>()
+    private val batteryRepository = mockk<BatteryRepository>()
+    private val api = mockk<API>()
+    private val unifiedAccounts = mockk<UnifiedAccountRepository>()
     private val settings = mockk<SettingsRepository>()
     private val networkMonitor = mockk<NetworkMonitor> {
         every { isOnlineFlow } returns isOnline
@@ -168,9 +193,9 @@ class SwapTestEnv(
         features
             .set(WalletFeatureKey.IS_SWAP_EXACT_OUTPUT_ENABLED, exactOutputEnabled)
             .set(WalletFeatureKey.IS_SWAPKIT_HARD_SWITCH_ENABLED, swapKitEnabled)
+            .set(WalletFeatureKey.IS_SWAP_V3_ENABLED, swapV3Enabled)
 
         val exchange = mockk<ExchangeAPI>()
-        val api = mockk<API>()
         every { api.exchange } returns exchange
         every { exchange.swapV2 } returns crosschain
         every { crosschain.getCrossSwapConfig(any(), any(), any()) } answers {
@@ -181,7 +206,13 @@ class SwapTestEnv(
             val request = firstArg<CreateCrossSwapQuoteRequest>()
             quoteRequests += request
             quoteWalletIds += secondArg<String?>()
-            quoteAnswer(request)
+            val quote = quoteAnswer(request)
+            quote.copy(routes = quote.routes.map { it.copy(dateExpire = OffsetDateTime.now().plusHours(1)) })
+        }
+        every { crosschain.createCrossSwapQuoteV3(any(), any(), any()) } answers {
+            quoteRequestsV3 += firstArg<CrossSwapQuoteRequest>()
+            quoteWalletIds += secondArg<String?>()
+            SwapFixtures.v3Quote
         }
         every { crosschain.prepareCrossSwapRoute(any(), any(), any(), any()) } answers {
             val routeId = firstArg<String>()
@@ -191,8 +222,16 @@ class SwapTestEnv(
 
         every { settings.installId } returns "test-install-id"
         every { settings.hiddenBalances } answers { hiddenBalances }
+        every { settings.swapBatteryPromoShown } returns false
+        every { settings.swapBatteryPromoShown = any() } just Runs
+        coEvery { unifiedAccounts.getTonWalletById(any()) } coAnswers { tonWallet }
+        every { api.getConfig(any()) } returns ConfigEntity.default
+        coEvery { batteryRepository.fetchCharges(any()) } coAnswers { batteryCharges }
+        coEvery { batteryRepository.getGaslessChains(any(), any()) } returns emptySet()
 
-        swapRepo = SwapRepository(api, settings)
+        every { api.getBatteryNetworkFees() } answers { networkFees }
+
+        swapRepo = SwapRepository(api, settings, NetworkFeesRepository(api))
 
         coEvery { accountRepo.findAccount(any(), any(), any(), any()) } coAnswers {
             val assetId = secondArg<String>()
@@ -241,6 +280,9 @@ class SwapTestEnv(
         settingsRepository = settings,
         networkMonitor = networkMonitor,
         legacyAccounts = legacyAccounts,
+        api = api,
+        batteryRepository = batteryRepository,
+        unifiedAccountRepository = unifiedAccounts,
         timings = timings,
         timeSource = timeSource,
     ).also { store.put("swap-${featureCount++}", it) }
@@ -291,6 +333,9 @@ object SwapFixtures {
 
     val config: CrossSwapConfig by lazy { decodeResource("swap_config.json") }
     val exactInputQuote: CrossSwapQuote by lazy { decodeResource("swap_quote_exact_input.json") }
+
+    /** TON -> USDT on `/v3/crosschain`, recorded for the test wallet: one Omniston route, no payloads. */
+    val v3Quote: CrossSwapQuoteV3 by lazy { decodeResource("swap_v3_quote_ton_usdt.json") }
     val exactOutputQuote: CrossSwapQuote by lazy { decodeResource("swap_quote_exact_output.json") }
     val noRouteQuote: CrossSwapQuote by lazy { decodeResource("swap_quote_no_route.json") }
 
@@ -304,6 +349,6 @@ object SwapFixtures {
         }
         val json = stream.bufferedReader().use { it.readText() }
 
-        return Serializer.kotlinxSerializationJson.decodeFromString(json)
+        return Serializer.JSON.decodeFromString(json)
     }
 }

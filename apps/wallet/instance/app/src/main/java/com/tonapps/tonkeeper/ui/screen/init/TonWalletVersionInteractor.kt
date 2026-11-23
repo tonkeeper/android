@@ -7,7 +7,7 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.core.chain.model.num.Decimal
 import com.tonapps.chainkit.core.chain.model.num.DisplayUnit
 import com.tonapps.chainkit.core.chain.model.num.FIAT_DECIMALS
@@ -53,7 +53,7 @@ class TonWalletVersionInteractor(
     private val settingsRepository: SettingsRepository,
 ) {
 
-    suspend fun resolve(cryptoWallet: CryptoWallet, network: TonNetwork): WalletVersions =
+    suspend fun resolve(cryptoWallet: MnemonicWallet, network: TonNetwork): WalletVersions =
         withContext(Dispatchers.IO) {
             try {
                 val chain = Chain.Ton.Mainnet

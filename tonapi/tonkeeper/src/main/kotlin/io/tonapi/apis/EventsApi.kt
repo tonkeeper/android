@@ -15,8 +15,7 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.tonapi.models.Event
-import io.tonapi.models.GaslessEstimateRequestMessagesInner
-import io.tonapi.models.GetOpenapiJsonDefaultResponse
+import io.tonapi.models.StatusDefaultResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -41,59 +40,6 @@ class EventsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
         val defaultBasePath: String by lazy {
             System.getProperties().getProperty(ApiClient.baseUrlKey, "https://tonapi.io")
         }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun emulateMessageToEvent(gaslessEstimateRequestMessagesInner: GaslessEstimateRequestMessagesInner, acceptLanguage: String? = "en", ignoreSignatureCheck: Boolean? = null): Event {
-        val localVarResponse = emulateMessageToEventWithHttpInfo(gaslessEstimateRequestMessagesInner = gaslessEstimateRequestMessagesInner, acceptLanguage = acceptLanguage, ignoreSignatureCheck = ignoreSignatureCheck)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as Event
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun emulateMessageToEventWithHttpInfo(gaslessEstimateRequestMessagesInner: GaslessEstimateRequestMessagesInner, acceptLanguage: String?, ignoreSignatureCheck: Boolean?): ApiResponse<Event?> {
-        val localVariableConfig = emulateMessageToEventRequestConfig(gaslessEstimateRequestMessagesInner = gaslessEstimateRequestMessagesInner, acceptLanguage = acceptLanguage, ignoreSignatureCheck = ignoreSignatureCheck)
-
-        return request<GaslessEstimateRequestMessagesInner, Event>(
-            localVariableConfig
-        )
-    }
-
-    fun emulateMessageToEventRequestConfig(gaslessEstimateRequestMessagesInner: GaslessEstimateRequestMessagesInner, acceptLanguage: String?, ignoreSignatureCheck: Boolean?): RequestConfig<GaslessEstimateRequestMessagesInner> {
-        val localVariableBody = gaslessEstimateRequestMessagesInner
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (ignoreSignatureCheck != null) {
-                    put("ignore_signature_check", listOf(ignoreSignatureCheck.toString()))
-                }
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/v2/events/emulate",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
     }
 
     @Suppress("UNCHECKED_CAST")

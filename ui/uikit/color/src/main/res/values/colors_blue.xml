@@ -61,4 +61,9 @@
     <color name="separatorCommonBlue">#14C2DAFF</color>
     <color name="separatorAlternateBlue">#14FFFFFF</color>
 
+    <color name="glassRimTopBlue">#2BFFFFFF</color>
+    <color name="glassRimBottomBlue">#1AFFFFFF</color>
+    <color name="glassShadowBlue">#33000000</color>
+    <color name="glassBorderBlue">#00000000</color>
+
 </resources>

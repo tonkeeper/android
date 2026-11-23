@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <uikit.widget.SkeletonLayout
+        android:id="@+id/monthly"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <include
+            layout="@layout/view_staking_reward_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible" />
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="14dp"
+                android:background="@drawable/bg_content"
+                android:backgroundTint="?attr/backgroundContentTintColor" />
+
+            <View
+                android:layout_width="96dp"
+                android:layout_height="16dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_content"
+                android:backgroundTint="?attr/backgroundContentTintColor" />
+
+            <View
+                android:layout_width="64dp"
+                android:layout_height="14dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_content"
+                android:backgroundTint="?attr/backgroundContentTintColor" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </uikit.widget.SkeletonLayout>
+
+    <Space
+        android:layout_width="8dp"
+        android:layout_height="0dp" />
+
+    <uikit.widget.SkeletonLayout
+        android:id="@+id/yearly"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <include
+            layout="@layout/view_staking_reward_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible" />
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <View
+                android:layout_width="56dp"
+                android:layout_height="14dp"
+                android:background="@drawable/bg_content"
+                android:backgroundTint="?attr/backgroundContentTintColor" />
+
+            <View
+                android:layout_width="96dp"
+                android:layout_height="16dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_content"
+                android:backgroundTint="?attr/backgroundContentTintColor" />
+
+            <View
+                android:layout_width="64dp"
+                android:layout_height="14dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_content"
+                android:backgroundTint="?attr/backgroundContentTintColor" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </uikit.widget.SkeletonLayout>
+
+</androidx.appcompat.widget.LinearLayoutCompat>

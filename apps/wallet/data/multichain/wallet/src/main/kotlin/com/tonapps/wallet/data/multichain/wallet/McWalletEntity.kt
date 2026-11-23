@@ -7,7 +7,6 @@ import androidx.room.PrimaryKey
 import com.tonapps.blockchain.model.legacy.WalletColor
 import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.chainkit.core.chain.model.account.Address
-import com.tonapps.extensions.generateUuid
 
 @Entity(
     tableName = "wallet",
@@ -49,7 +48,11 @@ class McWalletEntity(
 
     @ColumnInfo("backup_time")
     val backupTime: Long? = null,
-)
+) {
+
+    val isHardware: Boolean
+        get() = CredentialIds.isHardwareDescriptor(credentialId)
+}
 
 
 enum class McWalletType {

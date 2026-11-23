@@ -2,7 +2,6 @@ package com.tonapps.wallet.data.dapps.wc
 
 import androidx.core.net.toUri
 import com.tonapps.async.Async
-import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.DappConnectRequest
 import com.tonapps.chainkit.core.chain.model.account.Chain
@@ -25,6 +24,7 @@ import com.tonapps.wc.models.WcEvent
 import com.tonapps.wc.models.WcPendingEvent
 import com.tonapps.wc.models.WcSessionData
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -65,6 +65,10 @@ sealed interface WcRequestResult {
         override val connection: WcConnection,
     ) : WcRequestResult
 
+    data class Expired(
+        override val connection: WcConnection,
+    ) : WcRequestResult
+
     data class Executed(
         override val connection: WcConnection,
         val isApproved: Boolean,
@@ -96,13 +100,14 @@ class WcRepository internal constructor(
     // Session + Common
     private val sources = ConcurrentHashMap<String, WcConnection>() // topic -> source cache
     private val pendingProposals = ConcurrentHashMap<String, DappConnectRequest>() // requestId -> proposal
-    private val pendingRequests = ConcurrentHashMap<String, ConfirmRequest>() // requestId -> request
+    private val pendingRequests = WcPendingRequests()
 
     private val requestFlow = MutableSharedFlow<WcRequestResult>()
     private val sessionFlow = MutableSharedFlow<WcPendingEvent>()
 
     val request: SharedFlow<WcRequestResult> = requestFlow.asSharedFlow()
     val sessions: SharedFlow<WcPendingEvent> = sessionFlow.asSharedFlow()
+    val becameAvailableFlow: Flow<Unit> = wcManager.becameAvailableFlow
 
     init {
         wcManager.events.onEach { event ->
@@ -126,7 +131,8 @@ class WcRepository internal constructor(
     }
 
     suspend fun pair(uri: String, connection: WcConnection = WcConnection.DApp) {
-        if (!wcManager.isAvailable) {
+        requestFlow.emit(WcRequestResult.Connecting(connection))
+        if (!wcManager.awaitAvailable()) {
             requestFlow.emit(WcRequestResult.Error(WalletConnectException(WcError.UNKNOWN), connection))
             return
         }
@@ -136,7 +142,6 @@ class WcRepository internal constructor(
             sources[it] = connection
         }
 
-        requestFlow.emit(WcRequestResult.Connecting(connection))
         wcManager.createPair(uri)
     }
 
@@ -225,7 +230,15 @@ class WcRepository internal constructor(
     }
 
     fun pendingRequest(requestId: String): ConfirmRequest? {
-        return pendingRequests[requestId]
+        return pendingRequests.get(requestId)
+    }
+
+    fun requestGone(requestId: String): Flow<Unit> {
+        return pendingRequests.gone(requestId)
+    }
+
+    suspend fun requestExpired(topic: String) {
+        findConnection(topic)?.let { requestFlow.emit(WcRequestResult.Expired(it)) }
     }
 
     private suspend fun handleSession(event: WcEvent.Session) {
@@ -294,7 +307,7 @@ class WcRepository internal constructor(
 
         when (result) {
             is WcMethodParser.Result.Request -> {
-                pendingRequests[event.requestId] = result.data
+                pendingRequests.put(event.requestId, result.data)
                 requestFlow.emit(WcRequestResult.Request(result.data, event.requestId, connection))
             }
             is WcMethodParser.Result.Error -> {
@@ -315,10 +328,7 @@ class WcRepository internal constructor(
             is WcPendingEvent.Disconnected -> {
                 connectDao.deleteWalletConnectByTopic(state.topic)
                 sources.remove(state.topic)
-                pendingRequests
-                    .filterValues { (it.context as? ConfirmContext.Dapp)?.topic == state.topic }
-                    .keys
-                    .forEach(confirmSheetQueue::discard)
+                pendingRequests.removeTopic(state.topic).forEach(confirmSheetQueue::discard)
             }
         }
 
@@ -343,13 +353,11 @@ class WcRepository internal constructor(
     }
 
     private suspend fun handleRequestError(event: WcEvent.RequestError): String? {
-        val topic = when (event.topic) {
-            null -> wcManager.rejectRequest(event.requestId, event.error)
-                .onFailure { L.e(it, "WC", event) }
-                .onSuccess { L.d("WC", "Rejected request", event) }
-                .getOrNull()
-            else -> event.topic
-        }
+        val rejectedTopic = wcManager.rejectRequest(event.requestId, event.error)
+            .onFailure { L.e(it, "WC", event) }
+            .onSuccess { L.d("WC", "Rejected request", event) }
+            .getOrNull()
+        val topic = event.topic ?: rejectedTopic
 
         topic?.let { sendError(it, event.error) }
 

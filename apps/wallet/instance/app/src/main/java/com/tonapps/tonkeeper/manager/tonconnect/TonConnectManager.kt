@@ -12,7 +12,6 @@ import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.dapp.screens.sessions.TonConnectDisconnectInteractor
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.blockchain.ton.extensions.equalsAddress
-import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.flatter
@@ -381,7 +380,9 @@ class TonConnectManager(
                     proofPayload = tonConnect.proofPayload,
                     returnUri = tonConnect.returnUri,
                     wallet = wallet,
-                    fromPackageName = tonConnect.fromPackageName
+                    fromPackageName = tonConnect.fromPackageName,
+                    proofDomain = tonConnect.tonProofDomain(app.url.host),
+                    utm = tonConnect.utm,
                 )
                 val bundle = activity.addForResult(screen)
                 screen.contract.parseResult(bundle)
@@ -422,7 +423,7 @@ class TonConnectManager(
                 wallet = response.wallet,
                 proof = response.proof,
                 proofError = response.proofError,
-                activity.appVersionName
+                DevSettings.reportedVersionName
             )
         } catch (e: CancellationException) {
             JsonBuilder.connectEventError(BridgeError.userDeclinedTransaction())

@@ -25,6 +25,8 @@ data class AssetDetailsResponse(
     val asset: AssetRef,
     @SerialName(value = "sections")
     val sections: AssetSections,
+
+    /* Приблизительная свежесть данных (секунды). */
     @SerialName(value = "data_freshness_sec")
     val dataFreshnessSec: Int,
     @SerialName(value = "info_source")

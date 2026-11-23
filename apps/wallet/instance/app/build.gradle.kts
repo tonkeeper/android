@@ -48,6 +48,7 @@ dependencies {
     implementation(projects.apps.wallet.data.browser)
     implementation(projects.apps.wallet.data.banner)
     implementation(projects.apps.wallet.data.raffle)
+    implementation(projects.apps.wallet.data.loyalty)
     implementation(projects.apps.wallet.data.earn)
     implementation(projects.apps.wallet.data.attribution)
     implementation(projects.apps.wallet.data.backup)
@@ -64,6 +65,7 @@ dependencies {
     implementation(projects.apps.wallet.data.legacy)
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.multichain.exchange)
+    implementation(projects.apps.wallet.data.ledger)
 
     implementation(projects.apps.wallet.features.core)
     implementation(projects.apps.wallet.features.onboarding)
@@ -79,6 +81,7 @@ dependencies {
     implementation(projects.apps.wallet.features.migration)
     implementation(projects.apps.wallet.features.perps)
     implementation(projects.apps.wallet.features.events)
+    implementation(projects.apps.wallet.features.ledger)
     implementation(projects.apps.wallet.features.embeded.scanner)
 
     implementation(projects.ui.uikit.core)
@@ -113,6 +116,7 @@ dependencies {
     implementation(projects.ui.blur)
 
     implementation(projects.lib.network)
+    implementation(projects.lib.time)
     implementation(projects.lib.icu)
     implementation(projects.lib.qr)
     implementation(projects.lib.log)
@@ -122,9 +126,11 @@ dependencies {
     implementation(projects.lib.blockchain)
     implementation(projects.lib.extensions)
     implementation(projects.lib.ledger)
+    implementation(projects.lib.ledgerkit)
     implementation(projects.lib.ur)
     implementation(projects.lib.base64)
     implementation(projects.lib.wc)
+    implementation(projects.lib.webviewBridge)
 
     implementation(libs.camerax.base)
     implementation(libs.camerax.core)
@@ -138,7 +144,6 @@ dependencies {
 
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
-    implementation(libs.aptabase)
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
@@ -159,6 +164,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(testFixtures(projects.lib.test))
     // android.jar only has stubs of org.json: the in-app bridge tests need the real one.
     testImplementation(libs.org.json)
 }

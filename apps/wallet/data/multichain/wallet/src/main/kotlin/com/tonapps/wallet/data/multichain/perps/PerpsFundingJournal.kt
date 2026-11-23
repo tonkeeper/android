@@ -77,6 +77,17 @@ enum class PerpsDepositStage(val value: String) {
     }
 }
 
+enum class PerpsDepositPendingStep(val value: String) {
+    SENDING("sending"),
+    CONVERTING("converting"),
+    ADDING("adding");
+
+    companion object {
+
+        fun of(value: String?): PerpsDepositPendingStep? = entries.firstOrNull { it.value == value }
+    }
+}
+
 enum class PerpsFundingStepKind {
     APPROVAL,
     MAIN,
@@ -116,6 +127,7 @@ data class PerpsDepositRegistration(
     val amount: String,
     val l1TxHash: String?,
     val executionId: String?,
+    val sourceTxHash: String? = null,
 )
 
 data class PerpsFundingRecord(
@@ -143,6 +155,9 @@ data class PerpsFundingRecord(
     val creditedAmount: String?,
     val accountIndex: Long?,
     val failureReason: String?,
+    val pendingStep: PerpsDepositPendingStep? = null,
+    val estimatedDurationSeconds: Long? = null,
+    val statusAcknowledged: Boolean = false,
     val revision: Int,
     val createdAt: Long,
     val updatedAt: Long,
@@ -210,6 +225,10 @@ class PerpsFundingJournal(
         mutex.withLock { dao.delete(operationIds) }
     }
 
+    suspend fun acknowledgeDepositStatuses(operationIds: Collection<String>): Unit = withContext(Async.Io) {
+        mutex.withLock { dao.acknowledge(operationIds.toList()) }
+    }
+
     suspend fun cleanup(now: Long = System.currentTimeMillis()): Unit = withContext(Async.Io) {
         mutex.withLock {
             val expired = dao.getAll().map { it.toRecord() }.filter { record ->
@@ -268,6 +287,9 @@ private fun PerpsFundingEntity.toRecord(): PerpsFundingRecord {
         creditedAmount = creditedAmount,
         accountIndex = accountIndex,
         failureReason = failureReason,
+        pendingStep = PerpsDepositPendingStep.of(pendingStep),
+        estimatedDurationSeconds = estimatedDurationSeconds,
+        statusAcknowledged = statusAcknowledged,
         revision = revision,
         createdAt = createdAt,
         updatedAt = updatedAt,
@@ -299,6 +321,9 @@ private fun PerpsFundingRecord.toEntity(): PerpsFundingEntity {
         creditedAmount = creditedAmount,
         accountIndex = accountIndex,
         failureReason = failureReason,
+        pendingStep = pendingStep?.value,
+        estimatedDurationSeconds = estimatedDurationSeconds,
+        statusAcknowledged = statusAcknowledged,
         revision = revision,
         createdAt = createdAt,
         updatedAt = updatedAt,

@@ -15,11 +15,7 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.tonapi.models.GaslessConfig
-import io.tonapi.models.GaslessEstimateRequest
-import io.tonapi.models.GaslessSendRequest
-import io.tonapi.models.GaslessTx
-import io.tonapi.models.GetOpenapiJsonDefaultResponse
-import io.tonapi.models.SignRawParams
+import io.tonapi.models.StatusDefaultResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -85,101 +81,6 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/gasless/config",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun gaslessEstimate(masterId: String, gaslessEstimateRequest: GaslessEstimateRequest, acceptLanguage: String? = "en"): SignRawParams {
-        val localVarResponse = gaslessEstimateWithHttpInfo(masterId = masterId, gaslessEstimateRequest = gaslessEstimateRequest, acceptLanguage = acceptLanguage)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as SignRawParams
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun gaslessEstimateWithHttpInfo(masterId: String, gaslessEstimateRequest: GaslessEstimateRequest, acceptLanguage: String?): ApiResponse<SignRawParams?> {
-        val localVariableConfig = gaslessEstimateRequestConfig(masterId = masterId, gaslessEstimateRequest = gaslessEstimateRequest, acceptLanguage = acceptLanguage)
-
-        return request<GaslessEstimateRequest, SignRawParams>(
-            localVariableConfig
-        )
-    }
-
-    fun gaslessEstimateRequestConfig(masterId: String, gaslessEstimateRequest: GaslessEstimateRequest, acceptLanguage: String?): RequestConfig<GaslessEstimateRequest> {
-        val localVariableBody = gaslessEstimateRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/v2/gasless/estimate/{master_id}".replace("{"+"master_id"+"}", encodeURIComponent(masterId.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun gaslessSend(gaslessSendRequest: GaslessSendRequest): GaslessTx {
-        val localVarResponse = gaslessSendWithHttpInfo(gaslessSendRequest = gaslessSendRequest)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GaslessTx
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun gaslessSendWithHttpInfo(gaslessSendRequest: GaslessSendRequest): ApiResponse<GaslessTx?> {
-        val localVariableConfig = gaslessSendRequestConfig(gaslessSendRequest = gaslessSendRequest)
-
-        return request<GaslessSendRequest, GaslessTx>(
-            localVariableConfig
-        )
-    }
-
-    fun gaslessSendRequestConfig(gaslessSendRequest: GaslessSendRequest): RequestConfig<GaslessSendRequest> {
-        val localVariableBody = gaslessSendRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/v2/gasless/send",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

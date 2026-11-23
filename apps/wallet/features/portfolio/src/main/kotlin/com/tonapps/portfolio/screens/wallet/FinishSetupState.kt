@@ -1,5 +1,7 @@
 package com.tonapps.portfolio.screens.wallet
 
+import com.tonapps.chainkit.core.chain.model.account.Chain
+
 data class FinishSetupState(
     val lines: List<FinishSetupLine>,
     val skippable: Boolean,
@@ -28,5 +30,10 @@ sealed class FinishSetupLine {
 
     data class Biometry(
         override val status: FinishSetupLineStatus,
+    ) : FinishSetupLine()
+
+    data class LedgerNetworks(
+        override val status: FinishSetupLineStatus,
+        val chains: List<Chain>,
     ) : FinishSetupLine()
 }

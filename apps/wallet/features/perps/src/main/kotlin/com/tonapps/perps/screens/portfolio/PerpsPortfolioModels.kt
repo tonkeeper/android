@@ -41,6 +41,8 @@ data class PerpsOrderUi(
     val order: PerpsPortfolioOrder,
     val amountFormat: String,
     val limitPriceFormat: String,
+    val takeProfitFormat: String? = null,
+    val stopLossFormat: String? = null,
 )
 
 fun PerpsPosition.toUi(hiddenBalance: Boolean): PerpsPositionUi = PerpsPositionUi(

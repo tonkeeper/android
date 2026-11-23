@@ -4,13 +4,10 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.R
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.screen.create.CreateViewModel
 import com.tonapps.signer.screen.create.pager.PageType
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
@@ -21,22 +18,14 @@ import uikit.extensions.setMoonOnClickListener
 
 class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
 
-    companion object {
-        private const val IS_REPEAT_KEY = "is_repeat"
-
-        fun newInstance(isRepeat: Boolean): CreatePasswordFragment {
-            val fragment = CreatePasswordFragment()
-            fragment.arguments = Bundle().apply {
-                putBoolean(IS_REPEAT_KEY, isRepeat)
-            }
-            return fragment
-        }
-    }
-
     private val isRepeat: Boolean by lazy { arguments?.getBoolean(IS_REPEAT_KEY) ?: false }
 
     private val pageType: PageType
-        get() = if (isRepeat) PageType.RepeatPassword else PageType.Password
+        get() = if (isRepeat) {
+            PageType.RepeatPassword
+        } else {
+            PageType.Password
+        }
 
     private val createViewModel: CreateViewModel by lazy {
         requireParentFragment().getViewModel()
@@ -79,7 +68,7 @@ class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
             doneButton.isEnabled = Password.isValid(it)
         }
 
-        collectFlow(createViewModel.page(pageType)) {
+        keepFocusInsidePage(createViewModel, pageType) {
             passwordInput.error = false
             passwordInput.focusWithKeyboard()
         }
@@ -114,4 +103,15 @@ class CreatePasswordFragment : BaseFragment(R.layout.fragment_create_password) {
         passwordInput.failedPassword()
     }
 
+    companion object {
+        private const val IS_REPEAT_KEY = "is_repeat"
+
+        fun newInstance(isRepeat: Boolean): CreatePasswordFragment {
+            val fragment = CreatePasswordFragment()
+            fragment.arguments = Bundle().apply {
+                putBoolean(IS_REPEAT_KEY, isRepeat)
+            }
+            return fragment
+        }
+    }
 }

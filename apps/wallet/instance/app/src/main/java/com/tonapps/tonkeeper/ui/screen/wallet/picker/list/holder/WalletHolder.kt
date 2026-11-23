@@ -20,6 +20,7 @@ import com.tonapps.wallet.localization.Localization
 import uikit.drawable.CellBackgroundDrawable
 import uikit.extensions.drawable
 import uikit.extensions.setMoonOnClickListener
+import com.tonapps.core.extensions.walletColor
 
 class WalletHolder(
     parent: ViewGroup,
@@ -39,7 +40,7 @@ class WalletHolder(
     private val pencilView = findViewById<View>(R.id.pencil)
 
     override fun onBind(item: Item.Wallet) {
-        colorView.backgroundTintList = ColorStateList.valueOf(item.color)
+        colorView.backgroundTintList = ColorStateList.valueOf(context.walletColor(item.color))
         emojiView.setEmoji(item.emoji, Color.TRANSPARENT)
         nameView.text = item.name.fixW5Title()
         typesView.text = context.getWalletBadges(item.wallet.type, item.wallet.version)

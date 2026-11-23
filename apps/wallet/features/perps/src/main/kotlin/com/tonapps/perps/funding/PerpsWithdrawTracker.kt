@@ -7,6 +7,8 @@ import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsSendError
 import com.tonapps.perps.data.PerpsSendReason
 import com.tonapps.perps.data.PerpsSignedTx
+import com.tonapps.perps.data.toWireDecimalOrNull
+import com.tonapps.time.TimeProvider
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.perps.PerpsDepositRoute
 import com.tonapps.wallet.data.multichain.perps.PerpsDepositStage
@@ -31,6 +33,7 @@ class PerpsWithdrawTracker(
     private val mcAccountRepository: McAccountRepository,
     private val lighterApi: LighterPublicApi,
     private val accountRefresh: PerpsAccountRefresh,
+    private val timeProvider: TimeProvider,
 ) {
 
     private val lastTrackedAt = ConcurrentHashMap<String, Long>()
@@ -52,7 +55,7 @@ class PerpsWithdrawTracker(
     }
 
     suspend fun send(record: PerpsFundingRecord, firstAttempt: Boolean): PerpsWithdrawSend {
-        val step = record.steps.firstOrNull()
+        val step = record.steps.lastOrNull()
             ?: return PerpsWithdrawSend(fail(record, null, NOTHING_SIGNED), null)
         val sending = journal.update(record.operationId, record.revision) {
             it.withStep(step.stepId) { current -> current.copy(status = PerpsFundingStepStatus.SENDING) }
@@ -77,11 +80,16 @@ class PerpsWithdrawTracker(
 
             is KResult.Err -> when (val error = result.value) {
                 is PerpsSendError.Refused -> when {
-                    error.reason != PerpsSendReason.RESIGN_REQUIRED ->
-                        PerpsWithdrawSend(fail(sending, step, error.failureReason()), error)
+                    firstAttempt && error.reason == PerpsSendReason.RESIGN_REQUIRED -> PerpsWithdrawSend(sending, error)
 
-                    firstAttempt -> PerpsWithdrawSend(sending, error)
-                    else -> PerpsWithdrawSend(settleConsumedNonce(sending, step), error)
+                    error.reason == PerpsSendReason.RESIGN_REQUIRED || record.steps.size > 1 ->
+                        PerpsWithdrawSend(settleConsumedNonce(sending, step), error)
+
+                    error.reason in RATE_LIMIT_REASONS &&
+                        (record.stage == PerpsDepositStage.SOURCE_SENDING || record.stage == PerpsDepositStage.SOURCE_UNKNOWN) ->
+                        PerpsWithdrawSend(unknown(sending, step), error)
+
+                    else -> PerpsWithdrawSend(fail(sending, step, error.failureReason()), error)
                 }
 
                 PerpsSendError.Unknown,
@@ -90,16 +98,18 @@ class PerpsWithdrawTracker(
         }
     }
 
-    suspend fun refused(record: PerpsFundingRecord, error: PerpsSendError.Refused): PerpsFundingRecord {
-        return fail(record, record.steps.firstOrNull(), error.failureReason())
+    suspend fun reconcile(record: PerpsFundingRecord): PerpsWithdrawSend {
+        val step = record.steps.lastOrNull()
+            ?: return PerpsWithdrawSend(fail(record, null, NOTHING_SIGNED), null)
+        return PerpsWithdrawSend(unknown(record, step), PerpsSendError.Unknown)
     }
 
     private fun PerpsSendError.Refused.failureReason(): String = "send_refused:${reason.name}:$code"
 
     private suspend fun settleConsumedNonce(record: PerpsFundingRecord, step: PerpsFundingStep): PerpsFundingRecord {
         val hash = step.txHash ?: return fail(record, step, HASH_UNKNOWN)
-        val presence = try {
-            lighterApi.transaction(hash).presence
+        val (seen, presence) = try {
+            venuePresence(record, step, hash)
         } catch (e: Throwable) {
             if (e is CancellationException) {
                 throw e
@@ -108,17 +118,17 @@ class PerpsWithdrawTracker(
             return unknown(record, step)
         }
         return when (presence) {
-            LighterTransactionPresence.KNOWN -> accept(record, step, hash)
+            LighterTransactionPresence.KNOWN -> accept(record, seen, checkNotNull(seen.txHash))
             LighterTransactionPresence.FAILED -> fail(record, step, L2_FAILED)
-            LighterTransactionPresence.UNKNOWN -> fail(record, step, NONCE_CONSUMED)
+            LighterTransactionPresence.UNKNOWN -> unknown(record, step)
         }
     }
 
     private suspend fun settleAmbiguous(record: PerpsFundingRecord): PerpsFundingRecord {
-        val step = record.steps.firstOrNull() ?: return fail(record, null, NOTHING_SIGNED)
+        val step = record.steps.lastOrNull() ?: return fail(record, null, NOTHING_SIGNED)
         val hash = step.txHash ?: return fail(record, step, HASH_UNKNOWN)
-        val presence = try {
-            lighterApi.transaction(hash).presence
+        val (seen, presence) = try {
+            venuePresence(record, step, hash)
         } catch (e: Throwable) {
             if (e is CancellationException) {
                 throw e
@@ -127,19 +137,33 @@ class PerpsWithdrawTracker(
             return record
         }
         return when (presence) {
-            LighterTransactionPresence.KNOWN -> accept(record, step, hash)
+            LighterTransactionPresence.KNOWN -> accept(record, seen, checkNotNull(seen.txHash))
             LighterTransactionPresence.FAILED -> fail(record, step, L2_FAILED)
             LighterTransactionPresence.UNKNOWN -> resendUnlessExpired(record, step)
         }
     }
 
+    private suspend fun venuePresence(
+        record: PerpsFundingRecord,
+        step: PerpsFundingStep,
+        hash: String,
+    ): Pair<PerpsFundingStep, LighterTransactionPresence> {
+        val earlier = record.steps.filter { it.stepId != step.stepId }.firstOrNull { attempt ->
+            attempt.txHash?.let { lighterApi.transaction(it).presence } == LighterTransactionPresence.KNOWN
+        }
+        if (earlier != null) {
+            return earlier to LighterTransactionPresence.KNOWN
+        }
+        return step to lighterApi.transaction(hash).presence
+    }
+
     private suspend fun resendUnlessExpired(record: PerpsFundingRecord, step: PerpsFundingStep): PerpsFundingRecord {
-        val now = System.currentTimeMillis()
-        val expiredAt = step.expiredAtMs()
+        val expiredAt = step.expiredAtMs() ?: return fail(record, step, EXPIRY_UNKNOWN)
+
+        // Lighter reads ExpiredAt on its own clock; updatedAt was written on the device's.
         return when {
-            expiredAt == null -> fail(record, step, EXPIRY_UNKNOWN)
-            now > expiredAt + EXPIRY_GRACE_MS -> fail(record, step, EXPIRED)
-            now - record.updatedAt < RESEND_GRACE_MS -> record
+            timeProvider.currentTimeMillis() > expiredAt + EXPIRY_GRACE_MS -> fail(record, step, EXPIRED)
+            System.currentTimeMillis() - record.updatedAt < RESEND_GRACE_MS -> record
             else -> send(record, firstAttempt = false).record
         }
     }
@@ -254,7 +278,7 @@ class PerpsWithdrawTracker(
         return filter { item ->
             val at = item.timestamp?.toInstant()?.toEpochMilli()
             at != null && abs(at - executedAtMs) < EXECUTION_TIME_TOLERANCE_MS &&
-                item.amount?.toBigDecimalOrNull()?.compareTo(amount) == 0
+                item.amount.toWireDecimalOrNull()?.compareTo(amount) == 0
         }.singleOrNull()
     }
 
@@ -323,7 +347,6 @@ class PerpsWithdrawTracker(
         const val HASH_UNKNOWN = "hash_unknown"
         const val EXPIRED = "expired"
         const val EXPIRY_UNKNOWN = "expiry_unknown"
-        const val NONCE_CONSUMED = "nonce_consumed"
         const val L2_FAILED = "l2_failed"
         const val L1_UNVERIFIED = "l1_unverified"
         const val EXECUTION_UNKNOWN = "execution_unknown"
@@ -334,6 +357,7 @@ class PerpsWithdrawTracker(
         // https://github.com/elliottech/lighter-python/blob/a38b6405f362fc14a562fe7a97df03f3ee756bc1/lighter/models/withdraw_history_item.py#L43
         val SETTLED_STATUSES = setOf("claimable", "completed")
         val RETURNED_STATUSES = setOf("failed", "refunded")
+        val RATE_LIMIT_REASONS = setOf(PerpsSendReason.WITHDRAWAL_RATE_LIMITED, PerpsSendReason.RATE_LIMITED)
         val json = Json { ignoreUnknownKeys = true }
     }
 }

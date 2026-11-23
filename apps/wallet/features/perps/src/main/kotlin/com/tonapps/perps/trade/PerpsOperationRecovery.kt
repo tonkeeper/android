@@ -1,6 +1,5 @@
 package com.tonapps.perps.trade
 
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -18,7 +17,7 @@ class PerpsOperationRecovery(
     fun start() {
         scope.launch {
             unifiedAccountRepository.selectedTonWalletFlow
-                .map { wallet -> wallet?.takeIf { it.type == WalletType.Multichain }?.id }
+                .map { wallet -> wallet?.takeIf { it.supportsPerps }?.id }
                 .filterNotNull()
                 .distinctUntilChanged()
                 .collectLatest { walletId -> executor.reconcile(walletId) }

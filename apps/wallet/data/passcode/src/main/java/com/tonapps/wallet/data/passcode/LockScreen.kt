@@ -25,6 +25,10 @@ class LockScreen(
         // Passed, but first the wallets get the chains they miss (the new networks screen). The lock
         // screen goes once the user leaves that screen.
         data object NewChains: State()
+
+        // The passcode was right and the old-store wallets are being moved to the multichain one:
+        // the lock screen shows a loader in place of the passcode.
+        data object Migrating: State()
     }
 
     private val _stateFlow = MutableStateFlow<State?>(null)
@@ -32,6 +36,13 @@ class LockScreen(
 
     private val _hiddenFlow = MutableStateFlow(false)
     val hiddenFlow = _hiddenFlow.asStateFlow()
+
+    // The lock screen is up and nothing has opened the wallet yet.
+    val waitsForPasscode: Boolean
+        get() {
+            val state = _stateFlow.value
+            return state == State.Input || state == State.Biometric || state is State.Error
+        }
 
     suspend fun init() {
         if (!passcodeManager.hasPinCode()) {
@@ -50,8 +61,6 @@ class LockScreen(
     }
 
     suspend fun retryWithoutPasscode(): Boolean {
-        val state = _stateFlow.value
-        val waitsForPasscode = state == State.Input || state == State.Biometric || state is State.Error
         if (!waitsForPasscode) {
             return false
         }
@@ -72,8 +81,21 @@ class LockScreen(
         _stateFlow.value = State.Error()
     }
 
-    suspend fun check(context: Context, code: String, onValid: () -> Unit = {}) = withContext(Dispatchers.IO) {
+    fun migrating() {
+        _stateFlow.value = State.Migrating
+    }
+
+    suspend fun check(
+        context: Context,
+        code: String,
+        migrate: (suspend () -> Unit)? = null,
+        onValid: () -> Unit = {},
+    ) = withContext(Dispatchers.IO) {
         if (passcodeManager.isValid(context, code)) {
+            if (migrate != null) {
+                migrating()
+                migrate()
+            }
             onValid()
             passed()
         } else {

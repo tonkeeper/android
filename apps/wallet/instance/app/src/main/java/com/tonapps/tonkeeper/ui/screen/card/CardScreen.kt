@@ -5,38 +5,16 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
-import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.extensions.appVersionName
-import com.tonapps.extensions.bestMessage
-import com.tonapps.extensions.toUriOrNull
 import com.tonapps.tonkeeper.koin.walletViewModel
-import com.tonapps.tonkeeper.manager.tonconnect.ConnectRequest
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnect
-import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.JsonBuilder
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeError
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeEvent
-import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.ui.base.InjectedTonConnectScreen
-import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
-import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.R
-import com.tonapps.wallet.api.API
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.wallet.data.core.entity.SignRequestEntity
-import org.json.JSONArray
-import org.json.JSONObject
-import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
-import uikit.extensions.activity
 import uikit.widget.webview.WebViewFixed
-import java.util.concurrent.CancellationException
 
 class CardScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragment_card, wallet), BaseFragment.SwipeBack {
 
@@ -66,8 +44,8 @@ class CardScreen(wallet: WalletEntity): InjectedTonConnectScreen(R.layout.fragme
                 deviceInfo = deviceInfo.toString(),
                 send = ::tonconnectSend,
                 connect = ::tonconnect,
-                restoreConnection = { viewModel.restoreConnection(webView.url?.toUriOrNull()) },
-                disconnect = { viewModel.disconnect() },
+                restoreConnection = { viewModel.restoreConnection(uri) },
+                disconnect = { viewModel.disconnect(uri) },
                 tonapiFetch = ::tonapiFetch,
             )
         )

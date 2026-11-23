@@ -21,7 +21,6 @@ import io.perpsapi.models.ChangeAccountTierRequest
 import io.perpsapi.models.ErrorResponse
 import io.perpsapi.models.IssueRoTokenRequest
 import io.perpsapi.models.IssuedRoToken
-import io.perpsapi.models.SaveRoTokenRequest
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -285,60 +284,6 @@ class AccountApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/account/ro-token/issue",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = true,
-            requiresWalletAuthentication = true,
-            walletId = xWalletId,
-            body = localVariableBody
-        )
-    }
-
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun saveRoToken(saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String? = null, xWalletId: String? = null): Unit {
-        @Suppress("DEPRECATION")
-        val localVarResponse = saveRoTokenWithHttpInfo(saveRoTokenRequest = saveRoTokenRequest, lighterAuth = lighterAuth, xWalletId = xWalletId)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> Unit
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Throws(IllegalStateException::class, IOException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun saveRoTokenWithHttpInfo(saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String?, xWalletId: String?): ApiResponse<Unit?> {
-        @Suppress("DEPRECATION")
-        val localVariableConfig = saveRoTokenRequestConfig(saveRoTokenRequest = saveRoTokenRequest, lighterAuth = lighterAuth, xWalletId = xWalletId)
-
-        return request<SaveRoTokenRequest, Unit>(
-            localVariableConfig
-        )
-    }
-
-    @Deprecated(message = "This operation is deprecated.")
-    fun saveRoTokenRequestConfig(saveRoTokenRequest: SaveRoTokenRequest, lighterAuth: String?, xWalletId: String?): RequestConfig<SaveRoTokenRequest> {
-        val localVariableBody = saveRoTokenRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        lighterAuth?.apply { localVariableHeaders["X-Lighter-Auth"] = this }
-        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/account/ro-token",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

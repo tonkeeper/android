@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.battery.recharge.list
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.tonkeeper.Environment
-import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AddressHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.AmountHolder
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder.ButtonHolder
@@ -22,7 +21,7 @@ class Adapter(
     private val onAddressChange: (String) -> Unit,
     private val openAddressBook: () -> Unit,
     private val onAmountChange: (Double) -> Unit,
-    private val onPackSelect: (RechargePackType) -> Unit,
+    private val onPackSelect: (String) -> Unit,
     private val onCustomAmountSelect: () -> Unit,
     private val onContinue: () -> Unit,
     private val onSubmitPromo: (String) -> Unit,

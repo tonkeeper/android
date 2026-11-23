@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.ton_keeper"
         versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1000000000 // more than github
-        versionName = System.getenv("VERSION_NAME") ?: "26.10.1" // Format is "yy.mm.iteration" (e.g. "26.02.0") and only numbers are allowed
+        versionName = System.getenv("VERSION_NAME") ?: "26.11.4" // Format is "yy.mm.iteration" (e.g. "26.02.0") and only numbers are allowed
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -99,7 +99,8 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             manifestPlaceholders += mapOf("build_type" to "internal_debug")
 
-            ndk { abiFilters += setOf(ABI_ARM64_V8A) }
+            // -PdebugAbi=x86_64: the APK of the CI emulators (android-maestro-tests.yml).
+            ndk { abiFilters += setOf(providers.gradleProperty("debugAbi").orNull ?: ABI_ARM64_V8A) }
         }
     }
 
@@ -121,6 +122,13 @@ android {
                 "META-INF/*.kotlin_module"
             )
         }
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        val versionName = "9${android.defaultConfig.versionName}"
+        variant.outputs.forEach { it.versionName.set(versionName) }
     }
 }
 
@@ -168,6 +176,7 @@ dependencies {
     implementation(projects.apps.wallet.features.perps)
     implementation(projects.apps.wallet.features.ramp)
     implementation(projects.apps.wallet.features.dapp)
+    implementation(projects.apps.wallet.features.ledger)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.passcode)
@@ -186,12 +195,14 @@ dependencies {
     implementation(projects.apps.wallet.data.attribution)
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.multichain.exchange)
+    implementation(projects.apps.wallet.data.ledger)
     implementation(projects.apps.wallet.data.rates)
     implementation(projects.apps.wallet.data.collectibles)
     implementation(projects.apps.wallet.data.events)
     implementation(projects.apps.wallet.data.browser)
     implementation(projects.apps.wallet.data.banner)
     implementation(projects.apps.wallet.data.raffle)
+    implementation(projects.apps.wallet.data.loyalty)
     implementation(projects.apps.wallet.data.earn)
     implementation(projects.apps.wallet.data.backup)
     implementation(projects.apps.wallet.data.rn)
@@ -199,6 +210,7 @@ dependencies {
     implementation(projects.apps.wallet.localization)
     implementation(projects.apps.wallet.api)
 
+    implementation(projects.lib.blockchain)
     implementation(projects.lib.bus)
     implementation(projects.lib.features)
     implementation(projects.lib.icu)
@@ -210,6 +222,8 @@ dependencies {
 
     implementation(projects.kmp.async)
     implementation(projects.kmp.mvi)
+
+    implementation(projects.ui.uikit.core)
 
     implementation(projects.apps.wallet.localization)
     implementation(projects.apps.wallet.instance.app)

@@ -1,7 +1,9 @@
 package com.tonapps.deposit.multicoin.screens.method
 
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.deposit.data.ExchangeRepository
@@ -10,12 +12,15 @@ import com.tonapps.deposit.multicoin.analytics.RampAnalytics
 import com.tonapps.deposit.multicoin.data.RampAssetDetail
 import com.tonapps.deposit.multicoin.data.RampMethod
 import com.tonapps.deposit.multicoin.data.RampRepository
+import com.tonapps.deposit.multicoin.loadKnownFiats
+import com.tonapps.deposit.multicoin.pickFiat
+import com.tonapps.deposit.multicoin.supportedFiats
 import com.tonapps.deposit.screens.ramp.RampType
 import com.tonapps.extensions.lazyUnsafe
 import com.tonapps.log.L
 import com.tonapps.mvi.AsyncViewModel
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.exchangeapi.models.CreateP2PSessionRequest
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,6 +56,7 @@ sealed interface PaymentMethodEvent {
 }
 
 data class PaymentMethodFeatureData(
+    val walletId: String,
     val rampType: RampType,
     val assetId: String,
     val analyticsFrom: DepositFlowFrom,
@@ -62,7 +68,7 @@ class PaymentMethodFeature(
     private val data: PaymentMethodFeatureData,
     private val rampRepository: RampRepository,
     private val exchangeRepository: ExchangeRepository,
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
     private val mcAccountRepository: McAccountRepository,
     private val settingsRepository: SettingsRepository,
 ) : AsyncViewModel() {
@@ -70,8 +76,12 @@ class PaymentMethodFeature(
     val state: StateFlow<PaymentMethodState> field = MutableStateFlow<PaymentMethodState>(PaymentMethodState.Loading)
     val events: SharedFlow<PaymentMethodEvent> field = MutableSharedFlow(extraBufferCapacity = 1)
 
-    private val depositAnalytics = DepositAnalytics(data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm)
-    private val rampAnalytics = RampAnalytics.of(data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm)
+    private val depositAnalytics = DepositAnalytics(
+        data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm, DepositFlowDepositScreen.AddFunds,
+    )
+    private val rampAnalytics = RampAnalytics.of(
+        data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm, DepositFlowDepositScreen.AddFunds,
+    )
     private val viewTracked = AtomicBoolean(false)
 
     init {
@@ -84,14 +94,13 @@ class PaymentMethodFeature(
 
     fun openP2PMethod() {
         bgScope.launch {
-            val walletId = accountRepository.getSelectedWalletId() ?: return@launch
-            openP2P(walletId)
+            openP2P()
         }
     }
 
-    private suspend fun openP2P(walletId: String) {
+    private suspend fun openP2P() {
         val current = state.value as? PaymentMethodState.Data ?: return
-        val address = mcAccountRepository.findAccount(walletId, data.assetId)?.data?.displayAddress
+        val address = mcAccountRepository.findAccount(data.walletId, data.assetId)?.data?.displayAddress
         if (address.isNullOrBlank()) {
             events.tryEmit(PaymentMethodEvent.ShowP2PError)
             return
@@ -104,7 +113,7 @@ class PaymentMethodFeature(
                     fiatCurrency = current.fiatCode,
                 )
             )
-            depositAnalytics.continueToP2pMarket()
+            depositAnalytics.continueToP2pMarket(DepositFlowAddFundsOption.BuyWithFiat)
             events.tryEmit(PaymentMethodEvent.OpenP2P(response.deeplinkUrl))
         } catch (e: Throwable) {
             L.e(e)
@@ -129,7 +138,7 @@ class PaymentMethodFeature(
         state.tryEmit(PaymentMethodState.Loading)
         bgScope.launch {
             try {
-                val asset = rampRepository.getAsset(data.rampType, data.assetId)
+                val asset = rampRepository.getAsset(data.walletId, data.rampType, data.assetId)
                 val fiatCode = resolveFiatCode(asset)
                 val loaded = PaymentMethodState.Data(
                     asset = asset,
@@ -158,31 +167,8 @@ class PaymentMethodFeature(
     }
 
     private suspend fun resolveFiatCode(asset: RampAssetDetail): String {
-        val supportedFiats = asset.methods
-            .flatMap { method -> method.providers.map { it.fiat } }
-            .distinct()
-        val currencyCodes = loadCurrencyCodes()
-            .ifEmpty { supportedFiats }
-            .filter { code -> supportedFiats.any { it.equals(code, true) } }
-        val preferred = data.preferredCurrency ?: settingsRepository.currency.code
-        return currencyCodes.firstOrNull { it.equals(preferred, true) }
-            ?: currencyCodes.firstOrNull { it.equals(WalletCurrency.USD.code, true) }
-            ?: currencyCodes.firstOrNull()
-            ?: WalletCurrency.USD.code
-    }
-
-    private suspend fun loadCurrencyCodes(): List<String> {
-        return try {
-            val wallet = accountRepository.forceSelectedWallet()
-            exchangeRepository
-                .getCurrencies(wallet.network, settingsRepository.getLocale(), wallet.multichainWalletId)
-                .map { it.code }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            L.e(e)
-            emptyList()
-        }
+        val known = loadKnownFiats(data.walletId, accountRepository, exchangeRepository, settingsRepository)
+        return pickFiat(asset.supportedFiats, known, data.preferredCurrency ?: settingsRepository.currency.code)
     }
 
 }

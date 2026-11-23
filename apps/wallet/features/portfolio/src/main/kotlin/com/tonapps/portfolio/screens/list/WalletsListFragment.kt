@@ -47,4 +47,12 @@ class WalletsListFragment : ComposableFragment(), BaseFragment.Modal {
         }
         super.onDestroyView()
     }
+
+    companion object {
+        internal const val ARG_PERPS_WALLETS_ONLY = "perps_wallets_only"
+
+        fun newInstance(perpsWalletsOnly: Boolean): WalletsListFragment = WalletsListFragment().apply {
+            arguments = Bundle().apply { putBoolean(ARG_PERPS_WALLETS_ONLY, perpsWalletsOnly) }
+        }
+    }
 }

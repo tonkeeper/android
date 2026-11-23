@@ -36,4 +36,19 @@ class ConfirmRequestSerializationTest {
 
         assertEquals(ConfirmContext.Dapp.Source.WalletConnect, restored.source)
     }
+
+    @Test
+    fun domainStatusSurvivesRoundTrip() {
+        val context = ConfirmContext.Dapp(
+            requestId = "1",
+            topic = "t",
+            name = "n",
+            url = "u",
+            domainStatus = DappConnectRequest.DomainStatus.Scam,
+        )
+
+        val restored = Json.decodeFromString<ConfirmContext.Dapp>(Json.encodeToString(context))
+
+        assertEquals(DappConnectRequest.DomainStatus.Scam, restored.domainStatus)
+    }
 }

@@ -3,6 +3,8 @@ package com.tonapps.tonkeeper.ui.screen.events.compose.history
 import android.os.Bundle
 import android.view.View
 import androidx.compose.runtime.Composable
+import com.tonapps.bus.screenrender.ScreenRenderId
+import com.tonapps.core.screenrender.ScreenRenderFragmentLifecycle
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
 import com.tonapps.tonkeeper.ui.screen.events.compose.history.ui.TxEventComposable
@@ -17,8 +19,12 @@ class TxEventsScreen(wallet: WalletEntity) : ComposeWalletScreen(wallet), BaseFr
 
     private val canGoBack: Boolean by lazy { requireArguments().getBoolean(ARG_CAN_GO_BACK) }
 
+    // Several history screens can be stacked; the ViewModel, which reports the stages, owns the session.
+    private val screenRender = ScreenRenderFragmentLifecycle(this, ScreenRenderId.History) { viewModel }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        screenRender.onViewCreated()
     }
 
     @Composable

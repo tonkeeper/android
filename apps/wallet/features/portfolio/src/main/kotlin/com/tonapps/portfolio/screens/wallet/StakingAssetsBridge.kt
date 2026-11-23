@@ -33,21 +33,25 @@ internal object StakingAssetsBridge {
         hiddenBalance: Boolean,
         accountRepo: McAccountRepository,
         stakingRepository: StakingRepository,
-        ignoreCache: Boolean = false,
+        mode: LoadMode,
     ): List<StakedUi> {
-        val staking = stakingRepository.get(
-            accountId = accountId,
-            network = network,
-            ignoreCache = ignoreCache,
-            initializedAccount = initializedAccount,
-        )
+        val staking = if (mode == LoadMode.CacheOnly) {
+            stakingRepository.getCached(accountId, network, initializedAccount) ?: return emptyList()
+        } else {
+            stakingRepository.get(
+                accountId = accountId,
+                network = network,
+                ignoreCache = mode == LoadMode.Network,
+                initializedAccount = initializedAccount,
+            )
+        }
 
         val accounts = accountRepo.getCachedAccounts(walletId)?.accounts.orEmpty()
 
         val testnet = network.isTestnet
         val tonAccount = resolveAccount(
             cached = accounts.firstOrNull { it.asset.isNativeTon() },
-            forceRefresh = ignoreCache,
+            mode = mode,
         ) {
             accountRepo.findAccount(walletId, tonCoinAssetId(testnet), currencyCode, forceRefresh = it)
         }
@@ -61,7 +65,7 @@ internal object StakingAssetsBridge {
             tonAccount = tonAccount,
             staking = staking,
             accountRepo = accountRepo,
-            forceRefresh = ignoreCache,
+            mode = mode,
         )
         val nominators = loadNominatorRows(
             currencyCode = currencyCode,
@@ -81,7 +85,7 @@ internal object StakingAssetsBridge {
         tonAccount: AccountWithDetails?,
         staking: StakingEntity,
         accountRepo: McAccountRepository,
-        forceRefresh: Boolean,
+        mode: LoadMode,
     ): List<StakedUi> {
         val tonPrice = tonAccount?.rate?.value?.value?.takeIf { it > BigDecimal.ZERO }
             ?: return emptyList()
@@ -112,7 +116,7 @@ internal object StakingAssetsBridge {
                 tonPrice = tonPrice,
                 staking = staking,
                 accountRepo = accountRepo,
-                forceRefresh = forceRefresh,
+                mode = mode,
             )
             if (row == null) {
                 continue
@@ -179,13 +183,13 @@ internal object StakingAssetsBridge {
         tonPrice: BigDecimal,
         staking: StakingEntity,
         accountRepo: McAccountRepository,
-        forceRefresh: Boolean,
+        mode: LoadMode,
     ): StakedUi? {
         val master = pool.liquidJettonMaster ?: return null
         val assetId = jettonAssetId(master, testnet)
         val liquidAccount = resolveAccount(
             cached = accounts.firstOrNull { it.matchesJettonMaster(master) },
-            forceRefresh = forceRefresh,
+            mode = mode,
         ) {
             accountRepo.findAccount(walletId, assetId, currencyCode, forceRefresh = it)
         } ?: return null
@@ -278,12 +282,11 @@ internal object StakingAssetsBridge {
 
     private suspend fun resolveAccount(
         cached: AccountWithDetails?,
-        forceRefresh: Boolean,
+        mode: LoadMode,
         fetch: suspend (forceRefresh: Boolean) -> AccountWithDetails?,
-    ): AccountWithDetails? {
-        if (!forceRefresh) {
-            return cached ?: runCatching { fetch(false) }.getOrNull()
-        }
-        return runCatching { fetch(true) }.getOrNull() ?: cached
+    ): AccountWithDetails? = when (mode) {
+        LoadMode.CacheOnly -> cached
+        LoadMode.CacheFirst -> cached ?: runCatching { fetch(false) }.getOrNull()
+        LoadMode.Network -> runCatching { fetch(true) }.getOrNull() ?: cached
     }
 }

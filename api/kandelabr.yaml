@@ -1,0 +1,387 @@
+openapi: 3.1.0
+info:
+  title: kandelabr
+  description: kandelabr public API for candles
+  version: 1.0.1959
+servers:
+  - url: http://localhost:10000
+security:
+  - jwtUserToken: []
+    IPHeader: []
+tags:
+  - name: candles
+    description: Candle data operations
+  - name: rates
+    description: Currency pair rates
+paths:
+  /kandelabr/public-api/v1/candles:
+    post:
+      tags:
+        - candles
+      summary: Get candles
+      description: |
+        Get candles for specified market and resolution.
+
+        **Modes:**
+        - **Time range:** provide `start_ts` and `end_ts` to get candles in [start_ts, end_ts).
+        - **Last N candles:** provide `limit` (number of candles). They are counted backwards from `end_ts`;
+          if `end_ts` is omitted, `end_ts` is treated as current time (now).
+
+        **Validation (400 if violated):**
+        - Either `limit` or both `start_ts` and `end_ts` must be provided.
+        - If `limit` is set, it must be a positive number.
+        - If both `start_ts` and `end_ts` are set, `start_ts` must be less than or equal to `end_ts`.
+
+        **Limits:** Number of candles (from time range or `limit`) must not exceed 3000. Exceeding returns 400.
+      operationId: getCandles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCandlesRequest'
+        required: true
+      responses:
+        "200":
+          description: Candles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCandlesResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kandelabr/public-api/v1/candles/batch:
+    post:
+      tags:
+        - candles
+      summary: Get candles (batch)
+      description: |
+        Get candles for multiple requests in one call. Request and response are arrays (same order).
+
+        **Limits:**
+        - Number of requests in `requests` array must not exceed 20.
+        - Sum of estimated candles across all requests must not exceed 3000.
+        Exceeding either limit returns 400.
+      operationId: getCandlesBatch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCandlesBatchRequest'
+        required: true
+      responses:
+        "200":
+          description: Candles retrieved successfully (one response per request item, same order)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCandlesBatchResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kandelabr/public-api/v1/latest-rates:
+    post:
+      tags:
+        - candles
+      summary: Get latest rates
+      description: |
+        Get latest close price (rate) per ticker (minute resolution).
+
+        **Limits:** Number of tickers in `tickers` array must not exceed 20. Exceeding returns 400.
+      operationId: getLatestRates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLatestRatesRequest'
+        required: true
+      responses:
+        "200":
+          description: Latest rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLatestRatesResponse'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kandelabr/public-api/v1/rate/crypto-to-fiat:
+    get:
+      tags:
+        - rates
+      summary: Get latest crypto to fiat rate
+      description: |
+        Latest rate of a crypto to a fiat, computed through USD from the latest stored prices.
+        Mirrors exchange-rate-provider `GET /rates/public-api/v1/rate/crypto-to-fiat`.
+      operationId: getCryptoToFiatRate
+      parameters:
+        - name: base
+          in: query
+          description: Crypto code, case-sensitive (e.g. "BTC")
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+        - name: quote
+          in: query
+          description: Fiat code, case-sensitive (e.g. "EUR")
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SUCCESS with the rate, or UNSUPPORTED_BASE_CURRENCY / UNSUPPORTED_QUOTE_CURRENCY
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCryptoToFiatRateResponse'
+        "503":
+          description: RATE_IS_NOT_AVAILABLE when there is no stored price
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCryptoToFiatRateResponse'
+components:
+  schemas:
+    GetCandlesRequest:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: |
+            Ticker symbol. Two forms are accepted:
+              - `ASSET/CURRENCY` (e.g. `BTC/USD`) — instrument defaults to PERP.
+              - `ASSET/CURRENCY/INSTRUMENT` (e.g. `BTC/USDT/SPOT`) — full form.
+        resolution:
+          type: string
+          description: Candle resolution
+          enum:
+            - 1m
+            - 5m
+            - 15m
+            - 1h
+            - 4h
+            - 1d
+            - 1w
+            - 1mo
+          example: 1m
+        start_ts:
+          type: integer
+          format: int64
+          description: Start timestamp in milliseconds. Required when not using limit.
+          example: 1705000000000
+        end_ts:
+          type: integer
+          format: int64
+          description: End timestamp in milliseconds (exclusive). When using limit, candles are counted backwards from this time; if omitted, current time is used.
+          example: 1705003600000
+        limit:
+          type: integer
+          format: int32
+          description: Number of candles to return (positive). When set, candles are counted backwards from end_ts (or now if end_ts omitted).
+          example: 100
+          minimum: 1
+      required:
+        - resolution
+        - ticker
+    GetCandlesBatchRequest:
+      type: object
+      properties:
+        requests:
+          type: array
+          description: Array of getCandles requests
+          items:
+            $ref: '#/components/schemas/GetCandlesRequest'
+          maxItems: 20
+      required:
+        - requests
+    GetCandlesBatchResponse:
+      type: object
+      properties:
+        responses:
+          type: array
+          description: Array of getCandles responses (same order as requests)
+          items:
+            $ref: '#/components/schemas/GetCandlesResponse'
+      required:
+        - responses
+    GetCandlesResponse:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: Ticker symbol
+        resolution:
+          type: string
+          description: Candle resolution
+          example: 1m
+        start_ts:
+          type: integer
+          format: int64
+          description: Start timestamp in milliseconds
+          example: 1705000000000
+        candles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Candle'
+        sourceTickers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceTicker'
+      required:
+        - candles
+        - resolution
+        - start_ts
+        - ticker
+    Candle:
+      type: object
+      properties:
+        o:
+          type: string
+          description: Open price
+          example: "3500.12"
+        h:
+          type: string
+          description: High price
+          example: "3525.99"
+        l:
+          type: string
+          description: Low price
+          example: "3490.5"
+        c:
+          type: string
+          description: Close price
+          example: "3510.75"
+        v:
+          type: string
+          description: Volume
+          example: "145.32"
+        empty:
+          type: boolean
+          description: Whether the candle is empty (no trades in the period)
+      required:
+        - c
+        - h
+        - l
+        - o
+        - v
+    SourceTicker:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: Ticker symbol
+        rate:
+          type: string
+          description: Latest close price, if available
+          example: "3500.12"
+      required:
+        - ticker
+    GetLatestRatesRequest:
+      type: object
+      properties:
+        tickers:
+          type: array
+          description: Ticker symbols in full format (e.g. BTC/USD/PERP). If omitted, returns empty list.
+          items:
+            type: string
+          maxItems: 20
+    GetLatestRatesResponse:
+      type: object
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/LatestRate'
+      required:
+        - rates
+    LatestRate:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: Ticker symbol, exactly as it was requested
+          example: BTC/USD/PERP
+        rate:
+          type: string
+          description: Latest close price
+          example: "3500.12"
+      required:
+        - rate
+        - ticker
+    GetCryptoToFiatRateResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - UNSUPPORTED_BASE_CURRENCY
+            - UNSUPPORTED_QUOTE_CURRENCY
+            - RATE_IS_NOT_AVAILABLE
+        message:
+          type: string
+          description: Reason of a non-success result
+          x-field-extra-annotation: '@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)'
+        data:
+          $ref: '#/components/schemas/PairRate'
+          x-field-extra-annotation: '@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)'
+      required:
+        - status
+    PairRate:
+      type: object
+      properties:
+        base:
+          type: string
+          example: BTC
+        quote:
+          type: string
+          example: EUR
+        rate:
+          type: string
+          description: Rate as decimal string in plain notation
+          example: "56012.345678901234"
+        lastUpdateDateTime:
+          type: string
+          format: date-time
+          description: Earliest update time of the prices the rate is computed from
+          example: 2026-10-08T10:00:00.123Z
+      required:
+        - base
+        - lastUpdateDateTime
+        - quote
+        - rate
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - NOT_FOUND
+            - INVALID_REQUEST
+        message:
+          type: string
+      required:
+        - message
+        - status
+  securitySchemes:
+    jwtUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    IPHeader:
+      type: apiKey
+      name: X-Real-IP
+      in: header

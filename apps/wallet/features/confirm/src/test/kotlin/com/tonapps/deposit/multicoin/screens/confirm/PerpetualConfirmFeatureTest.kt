@@ -4,7 +4,7 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.blockchain.model.CommonTransactionData
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualConfirmDelegate
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualConfirmError
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualConfirmEvent
@@ -12,9 +12,11 @@ import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualConfirmE
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualReview
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualSendingState
-import com.tonapps.wallet.data.multichain.account.McAccountRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.deposit.multicoin.screens.confirm.perpetual.isRetryable
+import com.tonapps.time.TimeProvider
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.testing.BaseUnitTest
+import com.tonapps.wallet.testing.FakeTimeProvider
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -38,16 +40,16 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class PerpetualConfirmFeatureTest : BaseUnitTest() {
 
-    private val cryptoWallet = mockk<CryptoWallet>()
-    private val accountRepo = mockk<McAccountRepository>()
-    private val passcodeManager = mockk<PasscodeManager>()
-    private val delegate = FakeDelegate()
+    private val cryptoWallet = mockk<MnemonicWallet>()
+    private val walletUnlocker = mockk<WalletUnlocker>()
+    private val serverTime = FakeTimeProvider()
+    private val delegate = FakeDelegate(serverTime)
 
     private val scheduler get() = dispatchers.scheduler
 
     @Before
     fun setUp() {
-        coEvery { passcodeManager.unlockMultichainVault<CryptoWallet>(any(), any()) } returns cryptoWallet
+        coEvery { walletUnlocker.unlockWallet(any(), any()) } returns cryptoWallet
     }
 
     @Test
@@ -78,7 +80,7 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         assertFalse(feature.loading.value)
 
         delegate.reviewError = null
-        feature.retry(context)
+        feature.retry()
         scheduler.runCurrent()
 
         assertEquals(2, delegate.reviews.size)
@@ -147,7 +149,7 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         val events = collectEvents(feature)
         scheduler.runCurrent()
 
-        feature.confirm(context)
+        feature.confirm()
         assertEquals(PerpetualSendingState.Loading, feature.sending.value)
         scheduler.runCurrent()
 
@@ -159,14 +161,14 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         scheduler.advanceTimeBy(500L)
         scheduler.runCurrent()
         assertEquals(listOf(PerpetualConfirmEvent.Submitted), events)
-        coVerify(exactly = 1) { passcodeManager.unlockMultichainVault<CryptoWallet>(any(), any()) }
+        coVerify(exactly = 1) { walletUnlocker.unlockWallet(any(), any()) }
     }
 
     @Test
     fun confirmIsIgnoredUntilTheQuoteIsIn() {
         val feature = open()
 
-        feature.confirm(context)
+        feature.confirm()
         scheduler.runCurrent()
 
         assertTrue(delegate.submits.isEmpty())
@@ -179,7 +181,7 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         val feature = open()
         scheduler.runCurrent()
 
-        feature.confirm(context)
+        feature.confirm()
         scheduler.runCurrent()
 
         assertTrue(delegate.submits.isEmpty())
@@ -191,8 +193,8 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         val feature = open()
         scheduler.runCurrent()
 
-        feature.confirm(context)
-        feature.confirm(context)
+        feature.confirm()
+        feature.confirm()
         scheduler.advanceTimeBy(1_000L)
         scheduler.runCurrent()
 
@@ -205,7 +207,7 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         val feature = open()
         scheduler.runCurrent()
 
-        feature.confirm(context)
+        feature.confirm()
         scheduler.runCurrent()
 
         assertEquals(PerpetualSendingState.None, feature.sending.value)
@@ -214,7 +216,57 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         assertEquals(1, delegate.reviews.size)
 
         delegate.submitError = null
-        feature.retry(context)
+        feature.retry()
+        scheduler.runCurrent()
+
+        assertEquals(2, delegate.submits.size)
+        assertEquals(PerpetualSendingState.Done, feature.sending.value)
+        assertNull(feature.submitError.value)
+    }
+
+    @Test
+    fun aWithdrawalRateLimitAllowsAManualRetryWithoutAutomaticResubmission() {
+        delegate.submitError = PerpetualConfirmException(PerpetualConfirmError.WithdrawalRateLimited)
+        val feature = open()
+        scheduler.runCurrent()
+
+        feature.confirm()
+        scheduler.runCurrent()
+
+        assertEquals(PerpetualSendingState.None, feature.sending.value)
+        assertEquals(PerpetualConfirmError.WithdrawalRateLimited, feature.submitError.value)
+        assertTrue(checkNotNull(feature.submitError.value).isRetryable)
+        scheduler.advanceTimeBy(1_000L)
+        scheduler.runCurrent()
+        assertEquals(1, delegate.submits.size)
+
+        delegate.submitError = null
+        feature.confirm()
+        scheduler.runCurrent()
+
+        assertEquals(2, delegate.submits.size)
+        assertEquals(PerpetualSendingState.Done, feature.sending.value)
+        assertNull(feature.submitError.value)
+    }
+
+    @Test
+    fun tooManyRequestsAllowsAManualRetryWithoutAutomaticResubmission() {
+        delegate.submitError = PerpetualConfirmException(PerpetualConfirmError.TooManyRequests)
+        val feature = open()
+        scheduler.runCurrent()
+
+        feature.confirm()
+        scheduler.runCurrent()
+
+        assertEquals(PerpetualSendingState.None, feature.sending.value)
+        assertEquals(PerpetualConfirmError.TooManyRequests, feature.submitError.value)
+        assertTrue(checkNotNull(feature.submitError.value).isRetryable)
+        scheduler.advanceTimeBy(1_000L)
+        scheduler.runCurrent()
+        assertEquals(1, delegate.submits.size)
+
+        delegate.submitError = null
+        feature.confirm()
         scheduler.runCurrent()
 
         assertEquals(2, delegate.submits.size)
@@ -229,12 +281,58 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         val feature = open()
         scheduler.runCurrent()
 
-        feature.confirm(context)
+        feature.confirm()
         scheduler.runCurrent()
 
         assertEquals(2, delegate.reviews.size)
         assertEquals(PerpetualConfirmError.Failed, feature.submitError.value)
         assertSame(delegate.lastReview, feature.review.value)
+    }
+
+    @Test
+    fun aRenewedReviewFromTheSubmitIsShownWithoutQuotingAgain() {
+        delegate.expiresInMs = 10_000L
+        val feature = open()
+        scheduler.runCurrent()
+        val renewed = reviewOf(WALLET_ID, plan = "renewed", expiresAtMs = serverTime.currentTimeMillis() + 30_000L)
+        delegate.submitError = PerpetualConfirmException(PerpetualConfirmError.QuoteExpired, requote = true, requoted = renewed)
+
+        feature.confirm()
+        scheduler.runCurrent()
+
+        assertSame(renewed, feature.review.value)
+        assertEquals(1, delegate.reviews.size)
+        assertEquals(PerpetualConfirmError.QuoteExpired, feature.submitError.value)
+        assertEquals(PerpetualSendingState.None, feature.sending.value)
+        assertFalse(feature.loading.value)
+
+        scheduler.advanceTimeBy(20_000L)
+        scheduler.runCurrent()
+        assertEquals(1, delegate.reviews.size)
+        assertSame(renewed, feature.review.value)
+
+        scheduler.advanceTimeBy(9_000L)
+        scheduler.runCurrent()
+        assertEquals(2, delegate.reviews.size)
+        assertSame(delegate.lastReview, feature.review.value)
+    }
+
+    @Test
+    fun aSwipeOnTheRenewedReviewSubmitsIt() {
+        val feature = open()
+        scheduler.runCurrent()
+        val renewed = reviewOf(WALLET_ID, plan = "renewed", expiresAtMs = null)
+        delegate.submitError = PerpetualConfirmException(PerpetualConfirmError.QuoteExpired, requote = true, requoted = renewed)
+        feature.confirm()
+        scheduler.runCurrent()
+
+        delegate.submitError = null
+        feature.confirm()
+        scheduler.runCurrent()
+
+        assertEquals(listOf("plan-1", "renewed"), delegate.submits.map { it.first.plan })
+        assertEquals(PerpetualSendingState.Done, feature.sending.value)
+        assertNull(feature.submitError.value)
     }
 
     @Test
@@ -244,7 +342,7 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         val feature = open()
         scheduler.runCurrent()
 
-        feature.confirm(context)
+        feature.confirm()
         scheduler.advanceTimeBy(15_000L)
         scheduler.runCurrent()
 
@@ -253,12 +351,29 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
     }
 
     @Test
-    fun aCancelledPasscodeLeavesTheSwipeReady() {
-        coEvery { passcodeManager.unlockMultichainVault<CryptoWallet>(any(), any()) } throws CancellationException()
+    fun aQuoteLivesOnTheServersClockWhileTheDeviceClockRunsAhead() {
+        serverTime.offsetMs = -DEVICE_CLOCK_SKEW_MS
+        delegate.expiresInMs = 60_000L
         val feature = open()
         scheduler.runCurrent()
 
-        feature.confirm(context)
+        scheduler.advanceTimeBy(55_000L)
+        scheduler.runCurrent()
+        assertEquals(1, delegate.reviews.size)
+
+        feature.confirm()
+        scheduler.runCurrent()
+
+        assertEquals(listOf(delegate.lastReview to cryptoWallet), delegate.submits)
+    }
+
+    @Test
+    fun aCancelledPasscodeLeavesTheSwipeReady() {
+        coEvery { walletUnlocker.unlockWallet(any(), any()) } throws CancellationException()
+        val feature = open()
+        scheduler.runCurrent()
+
+        feature.confirm()
         scheduler.runCurrent()
 
         assertEquals(PerpetualSendingState.None, feature.sending.value)
@@ -271,7 +386,7 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
             data = CommonTransactionData(assetId = ASSET_ID, walletId = WALLET_ID),
             type = ConfirmType.PerpetualWithdraw(amount = AMOUNT),
         )
-        return PerpetualConfirmFeature(request, delegate, accountRepo, passcodeManager)
+        return PerpetualConfirmFeature(request, delegate, walletUnlocker, serverTime)
     }
 
     private fun collectEvents(feature: PerpetualConfirmFeature): List<PerpetualConfirmEvent> {
@@ -280,40 +395,30 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
         return events
     }
 
-    private class FakeDelegate : PerpetualConfirmDelegate {
+    private class FakeDelegate(private val serverTime: TimeProvider) : PerpetualConfirmDelegate {
 
         val reviews = mutableListOf<Pair<ConfirmRequest, ConfirmType.PerpetualWithdraw>>()
-        val submits = mutableListOf<Pair<PerpetualReview, CryptoWallet>>()
+        val submits = mutableListOf<Pair<PerpetualReview, MnemonicWallet>>()
         var lastReview: PerpetualReview? = null
 
         var reviewError: Throwable? = null
         var submitError: Throwable? = null
         var submitDelayMs = 0L
 
-        /** Relative to the wall clock, which is what the feature compares the expiry against. */
+        /** Relative to the server's clock, which is what the feature compares the expiry against. */
         var expiresInMs: Long? = null
 
         override suspend fun review(request: ConfirmRequest, withdraw: ConfirmType.PerpetualWithdraw): PerpetualReview {
             reviews += request to withdraw
             reviewError?.let { throw it }
-            return PerpetualReview(
+            return reviewOf(
                 walletId = request.data.walletId,
-                expiresAtMs = expiresInMs?.let { System.currentTimeMillis() + it },
-                display = PerpetualReview.Withdraw(
-                    symbol = "USDC",
-                    network = "Ethereum",
-                    image = null,
-                    amount = "$10",
-                    receive = "10 USDC",
-                    fee = null,
-                    feeIsEstimate = false,
-                    arrivalSeconds = 60L,
-                ),
                 plan = "plan-${reviews.size}",
+                expiresAtMs = expiresInMs?.let { serverTime.currentTimeMillis() + it },
             ).also { lastReview = it }
         }
 
-        override suspend fun submit(review: PerpetualReview, wallet: CryptoWallet) {
+        override suspend fun submit(review: PerpetualReview, wallet: MnemonicWallet) {
             if (submitDelayMs > 0) {
                 delay(submitDelayMs)
             }
@@ -325,6 +430,25 @@ class PerpetualConfirmFeatureTest : BaseUnitTest() {
     private companion object {
         const val WALLET_ID = "wallet-1"
         const val ASSET_ID = "lighter/mainnet/usdc"
+        const val DEVICE_CLOCK_SKEW_MS = 60L * 60L * 1_000L
         val AMOUNT: BigInteger = BigInteger.parseString("10000000")
+
+        fun reviewOf(walletId: String, plan: String, expiresAtMs: Long?) = PerpetualReview(
+            walletId = walletId,
+            expiresAtMs = expiresAtMs,
+            display = PerpetualReview.Withdraw(
+                symbol = "USDC",
+                network = "Ethereum",
+                image = null,
+                amount = "$10",
+                receive = "10 USDC",
+                fee = null,
+                feeIsEstimate = false,
+                arrivalSeconds = 60L,
+                recipient = "0x0eE3CdEE4f010BF6c49aF86E9e67ef2bc80a508b",
+                provider = "Relay",
+            ),
+            plan = plan,
+        )
     }
 }

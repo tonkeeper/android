@@ -37,6 +37,7 @@ internal fun Raffle.toEntity(): RaffleEntity? = RaffleEntity(
     banner = banner?.toEntity(),
     stories = stories.orEmpty().map { it.toEntity() },
     progress = progress?.toEntity(),
+    leaderboard = leaderboard?.let { RaffleEntity.Leaderboard(points = it.points.toBigDecimalOrNull()) },
 )
 
 private fun RaffleStatus.toEntity() = when (this) {

@@ -17,6 +17,7 @@ import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.localization.Localization
 import uikit.extensions.drawable
 import uikit.extensions.setMoonOnClickListener
+import com.tonapps.core.extensions.walletColor
 
 class AccountHolder(
     parent: ViewGroup,
@@ -38,7 +39,7 @@ class AccountHolder(
         itemView.setMoonOnClickListener { onClick(item) }
         itemView.background = ListCell.Position.SINGLE.drawable(context)
 
-        colorView.backgroundTintList = ColorStateList.valueOf(item.color)
+        colorView.backgroundTintList = ColorStateList.valueOf(context.walletColor(item.color))
         emojiView.setEmoji(item.emoji, Color.TRANSPARENT)
         nameView.text = item.title
         balanceView.setText(Localization.customize)

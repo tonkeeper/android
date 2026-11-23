@@ -159,6 +159,7 @@ class PerpsOperationJournal(
         operationId: String,
         planDigest: String?,
         expectedBaseSize: String?,
+        baseBefore: String?,
         steps: List<PerpsStepRecord>,
         updatedAt: Long,
     ) = withContext(Async.Io) {
@@ -166,6 +167,7 @@ class PerpsOperationJournal(
             operationId = operationId,
             planDigest = planDigest,
             expectedBaseSize = expectedBaseSize,
+            baseBefore = baseBefore,
             steps = steps.map { it.toEntity() },
             updatedAt = updatedAt,
         )

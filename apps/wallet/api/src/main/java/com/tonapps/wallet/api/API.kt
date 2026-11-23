@@ -8,12 +8,15 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.errors.SendBlockchainException
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletTgContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.cellFromHex
+import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
+import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.blockchain.ton.extensions.toRawAddress
 import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
 import com.tonapps.wallet.SecureProofProvider
@@ -32,13 +35,17 @@ import com.tonapps.network.postJSON
 import com.tonapps.network.requestBuilder
 import com.tonapps.network.sse
 import com.tonapps.network.ssePost
+import com.tonapps.time.ServerTimeProvider
 import com.tonapps.wallet.api.Constants.HERMES_PATH
+import com.tonapps.wallet.api.Constants.LOYALTY_PATH
 import com.tonapps.wallet.api.Constants.PERPS_PATH
 import com.tonapps.wallet.api.Constants.SWAP_API
 import com.tonapps.wallet.api.configs.CountryConfig
+import com.tonapps.wallet.api.core.EarnAPI
 import com.tonapps.wallet.api.core.ExchangeAPI
 import com.tonapps.wallet.api.core.HermesAPI
 import com.tonapps.wallet.api.core.KandelabrAPI
+import com.tonapps.wallet.api.core.LoyaltyAPI
 import com.tonapps.wallet.api.core.MultichainAPI
 import com.tonapps.wallet.api.core.PerpsAPI
 import com.tonapps.wallet.api.core.TradingAPI
@@ -56,10 +63,11 @@ import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.wallet.api.entity.toncenter.ToncenterSSERequest
 import com.tonapps.wallet.api.entity.value.Timestamp
 import com.tonapps.wallet.api.extensions.toTokenEntity
-import com.tonapps.wallet.api.internal.BootConfigOverrides
 import com.tonapps.wallet.api.internal.ConfigRepository
+import com.tonapps.wallet.api.internal.DeviceTokenRequiredInterceptor
 import com.tonapps.wallet.api.internal.InternalApi
 import com.tonapps.wallet.api.internal.SwapApi
+import com.tonapps.wallet.api.tonstakers.TonstakersApi
 import com.tonapps.wallet.api.tron.TronApi
 import io.Serializer
 import io.batteryapi.apis.DefaultApi
@@ -69,6 +77,10 @@ import io.batteryapi.models.Balance
 import io.batteryapi.models.Config
 import io.batteryapi.models.EstimateGaslessCostRequest
 import io.batteryapi.models.GaslessV2Config
+import io.batteryapi.models.NetworkFees
+import io.batteryapi.models.PurchaseBatteryEmulateRequest
+import io.batteryapi.models.PurchaseBatteryEmulateResponse
+import io.batteryapi.models.PurchaseBatteryEstimateResponse
 import io.batteryapi.models.Purchases
 import io.batteryapi.models.RechargeMethods
 import io.batteryapi.models.SendMessageRequest
@@ -93,6 +105,8 @@ import io.tonapi.models.NftItem
 import io.tonapi.models.SendBlockchainMessageRequest
 import io.tonapi.models.TokenRates
 import io.tonapi.models.WalletsByPublicKey
+import io.tonendpointapi.models.GetFiatMethods200ResponseData
+import io.tonendpointapi.models.GetPopularApps200ResponseData
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -131,11 +145,12 @@ class API(
     private val scope: CoroutineScope,
     private val delegate: LoggingInterceptor.Delegate,
     private val proofProvider: SecureProofProvider,
-    buildProvider: BuildProvider,
-) : CoreAPI(context, delegate) {
+    versionNameProvider: VersionNameProvider,
+    val serverTime: ServerTimeProvider,
+) : CoreAPI(context, delegate, versionNameProvider.versionName(), serverTime) {
 
-    fun interface BuildProvider {
-        fun buildOverride(): String?
+    fun interface VersionNameProvider {
+        fun versionName(): String
     }
 
     private sealed interface Keys : CacheKey {
@@ -153,19 +168,28 @@ class API(
     private val internalApi = InternalApi(
         context,
         defaultHttpClient,
-        buildProvider.buildOverride() ?: appVersionName,
+        appVersionName,
     )
     private val swapApi = SwapApi(defaultHttpClient)
     private val configRepository = ConfigRepository(context, scope, internalApi)
 
     val configFlow: Flow<ConfigEntity>
-        get() = configRepository.stream.map { BootConfigOverrides.applyTo(it) }
+        // A debug overlay re-emits the config it changes, after BootFlags carries it. One that changes nothing does
+        // not, so a repeated extra does not restart what collects it (TransactionManager's realtime stream).
+        get() = configRepository.overlaid
+
+    val hasCountryConfig: Boolean
+        get() = internalApi.hasCountryConfig
 
     private val mainnetConfig: ConfigEntity
         get() = getConfig(TonNetwork.MAINNET)
 
     private val tonAPIHttpClient: OkHttpClient by lazy {
         tonAPIHttpClient { getConfig(TonNetwork.MAINNET) }
+    }
+
+    private val kandelabrHttpClient: OkHttpClient by lazy {
+        tonAPIHttpClient.newBuilder().addInterceptor(DeviceTokenRequiredInterceptor).build()
     }
 
     private val sseHttpClient: OkHttpClient by lazy {
@@ -189,9 +213,16 @@ class API(
         val perps: PerpsAPI,
         val kandelabr: KandelabrAPI,
         val hermes: HermesAPI,
+        val earn: EarnAPI,
+        val loyalty: LoyaltyAPI,
     )
 
-    private data class Hosts(val trading: String, val multichain: String, val multichainOrigin: String)
+    private data class Hosts(
+        val trading: String,
+        val multichain: String,
+        val multichainOrigin: String,
+        val earn: String,
+    )
 
     private val _hostApisState: StateFlow<HostApis> = run {
         val initialHosts = hostsOf(mainnetConfig)
@@ -219,6 +250,12 @@ class API(
     val hermes: HermesAPI
         get() = _hostApisState.value.hermes
 
+    val earn: EarnAPI
+        get() = _hostApisState.value.earn
+
+    val loyalty: LoyaltyAPI
+        get() = _hostApisState.value.loyalty
+
     val realtimeTokens: RealtimeTokenSource by lazy {
         RealtimeTokenSource { multichain }
     }
@@ -245,6 +282,10 @@ class API(
         TronApi(mainnetConfig, tronHttpClient, batteryProvider.default.get(TonNetwork.MAINNET))
     }
 
+    val tonstakers: TonstakersApi by lazy {
+        TonstakersApi(defaultHttpClient)
+    }
+
     private fun buildProvider() = Provider(
         mainnetHost = getConfig(TonNetwork.MAINNET).tonapiMainnetHost,
         testnetHost = getConfig(TonNetwork.TESTNET).tonapiTestnetHost,
@@ -261,6 +302,7 @@ class API(
         trading = config.tradingApiUrl,
         multichain = config.multichainApiUrl,
         multichainOrigin = config.multichainOrigin,
+        earn = config.keeperEarnApiUrl,
     )
 
     private fun buildHostApis(hosts: Hosts): HostApis {
@@ -268,13 +310,16 @@ class API(
             trading = TradingAPI(hosts.trading, tonAPIHttpClient),
             multichain = MultichainAPI(hosts.multichain, tonAPIHttpClient),
             perps = PerpsAPI(hosts.multichainOrigin + PERPS_PATH, tonAPIHttpClient),
-            kandelabr = KandelabrAPI(hosts.multichainOrigin, tonAPIHttpClient),
+            kandelabr = KandelabrAPI(hosts.multichainOrigin, kandelabrHttpClient),
             hermes = HermesAPI(
                 url = hosts.multichainOrigin + HERMES_PATH,
                 okHttpClient = tonAPIHttpClient,
                 tokenProvider = { deviceAuthProvider?.accessToken() },
                 tokenRefresher = { deviceAuthProvider?.refreshToken(it) },
+                tokenExpiry = { deviceAuthProvider?.accessTokenExpiresAt(it) },
             ),
+            earn = EarnAPI(hosts.earn, tonAPIHttpClient),
+            loyalty = LoyaltyAPI(hosts.multichainOrigin + LOYALTY_PATH, tonAPIHttpClient),
         )
     }
 
@@ -283,6 +328,8 @@ class API(
     fun setCountryConfig(config: CountryConfig) = internalApi.setConfig(config)
 
     suspend fun initConfig() = configRepository.initConfig()
+
+    suspend fun awaitDownloadedConfig(): Boolean = configRepository.awaitDownloadedConfig()
 
     suspend fun tonapiFetch(
         url: String,
@@ -361,11 +408,11 @@ class API(
 
     fun battery(network: TonNetwork) = batteryProvider.default.get(network)
 
-    fun batteryWallet(network: TonNetwork) = batteryProvider.wallet.get(network)
-
     fun batteryEmulation(network: TonNetwork) = batteryProvider.emulation.get(network)
 
     fun batteryGasless(network: TonNetwork) = batteryProvider.gasless.get(network)
+
+    fun batteryWallet(network: TonNetwork) = batteryProvider.wallet.get(network)
 
     fun getBatteryConfig(network: TonNetwork): Config? {
         return withRetry { battery(network).getConfig() }
@@ -375,13 +422,46 @@ class API(
         return withRetry { batteryGasless(network).gaslessBatteryConfig() }
     }
 
+    /** What a swap and a perps deposit cost in gas the wallet pays itself; served on mainnet only. */
+    fun getBatteryNetworkFees(): NetworkFees? {
+        return withRetry { battery(TonNetwork.MAINNET).getNetworkFees() }
+    }
+
     /** tonapi gasless relay: the jetton transfer to this address in a relayed message is the relayer's fee. */
     fun getGaslessRelayAddress(network: TonNetwork): String? {
         return withRetry { provider.gasless.get(network).gaslessConfig() }?.relayAddress
     }
 
-    fun getBatteryRechargeMethods(network: TonNetwork): RechargeMethods? {
-        return withRetry { battery(network).getRechargeMethods(false) }
+    /**
+     * Every asset the battery takes, for recharging and for gasless fees alike: [RechargeMethods] says which
+     * of the two each serves. [multichain] adds the assets of the chains other than TON.
+     */
+    fun getBatteryRechargeMethods(network: TonNetwork, multichain: Boolean = false): RechargeMethods? {
+        return withRetry {
+            battery(network).getRechargeMethods(includeRechargeOnly = false, multichain = multichain)
+        }
+    }
+
+    /** What a battery purchase paid on a chain other than TON would add, without building anything to sign. */
+    fun purchaseBatteryEstimate(
+        auth: Authorization,
+        request: PurchaseBatteryEmulateRequest,
+    ): PurchaseBatteryEstimateResponse {
+        return batteryGasless(TonNetwork.MAINNET).purchaseBatteryEstimate(
+            purchaseBatteryEmulateRequest = request,
+            xWalletId = auth.walletId,
+        )
+    }
+
+    /** A battery purchase paid on a chain other than TON, with the operation to sign and send to /gasless/send. */
+    fun purchaseBatteryEmulate(
+        auth: Authorization,
+        request: PurchaseBatteryEmulateRequest,
+    ): PurchaseBatteryEmulateResponse {
+        return batteryGasless(TonNetwork.MAINNET).purchaseBatteryEmulate(
+            purchaseBatteryEmulateRequest = request,
+            xWalletId = auth.walletId,
+        )
     }
 
     fun getOnRampData() = internalApi.getOnRampData(mainnetConfig.webSwapsUrl)
@@ -789,15 +869,29 @@ class API(
         return try {
             val account = getAccount(query, network, null) ?: return null
             val details = AccountDetailsEntity(query, account, network)
-            if (details.walletVersion != WalletVersion.UNKNOWN) {
-                details
-            } else {
-                details.copy(
+            when (details.walletVersion) {
+                WalletVersion.WALLET_TG -> details.dropRotatedWalletTg(getPublicKey(account.address, network), network)
+                WalletVersion.UNKNOWN -> details.copy(
                     walletVersion = getWalletVersionByAddress(account.address, network)
                 )
+                else -> details
             }
         } catch (e: Throwable) {
             null
+        }
+    }
+
+    // After a key rotation a WalletTg holds a key its address is not derived from, so the wallet
+    // built from that key would get another address.
+    private fun AccountDetailsEntity.dropRotatedWalletTg(
+        publicKey: PublicKeyEd25519?,
+        network: TonNetwork,
+    ): AccountDetailsEntity {
+        val derived = publicKey?.let { WalletTgContract(it, network).address.toAccountId() }
+        return if (derived != null && address.equalsAddress(derived)) {
+            this
+        } else {
+            copy(walletVersion = WalletVersion.UNKNOWN)
         }
     }
 
@@ -834,16 +928,16 @@ class API(
                 wallet = it,
                 network = network
             ) }.map {
-                if (it.walletVersion == WalletVersion.UNKNOWN) {
-                    it.copy(
+                when (it.walletVersion) {
+                    WalletVersion.UNKNOWN -> it.copy(
                         walletVersion = BaseWalletContract.resolveVersion(
                             pk,
                             it.address.toRawAddress(),
                             network
                         )
                     )
-                } else {
-                    it
+                    WalletVersion.WALLET_TG -> it.dropRotatedWalletTg(pk, network)
+                    else -> it
                 }
             }
         } catch (e: Throwable) {
@@ -1174,7 +1268,7 @@ class API(
     }
 
     fun pushSubscribe(
-        locale: Locale,
+        locale: String,
         firebaseToken: String,
         deviceId: String,
         accounts: List<String>
@@ -1192,7 +1286,7 @@ class API(
         }
 
         val json = JSONObject()
-        json.put("locale", locale.toString())
+        json.put("locale", locale)
         json.put("device", deviceId)
         json.put("token", firebaseToken)
         json.put("accounts", accountsArray)
@@ -1312,7 +1406,7 @@ class API(
         }
     }
 
-    fun getBrowserApps(network: TonNetwork, locale: Locale, walletId: String?): JSONObject {
+    fun getBrowserApps(network: TonNetwork, locale: Locale, walletId: String?): GetPopularApps200ResponseData {
         return internalApi.getBrowserApps(network, locale, walletId)
     }
 
@@ -1329,7 +1423,7 @@ class API(
         }
     }
 
-    fun getFiatMethods(network: TonNetwork, locale: Locale, walletId: String?): JSONObject? {
+    fun getFiatMethods(network: TonNetwork, locale: Locale, walletId: String?): GetFiatMethods200ResponseData? {
         return withRetry { internalApi.getFiatMethods(network, locale, walletId) }
     }
 
@@ -1364,19 +1458,14 @@ class API(
     }
 
     fun getServerTime(network: TonNetwork): Int {
-        /*val time = serverTimeProvider.getServerTime(network)
-        if (time == null) {
-            val serverTimeSeconds = withRetry { liteServer(network).getRawTime().time }
-            if (serverTimeSeconds == null) {
-                return (System.currentTimeMillis() / 1000).toInt()
-            }
-            serverTimeProvider.setServerTime(network, serverTimeSeconds)
-            return serverTimeSeconds
+        if (serverTime.isSynced) {
+            return serverTime.currentTimeSeconds().toInt()
         }
-        return time*/
+
+        // Its response syncs serverTime for the next calls.
         val serverTimeSeconds = withRetry { liteServer(network).getRawTime().time }
         if (serverTimeSeconds == null) {
-            return (System.currentTimeMillis() / 1000).toInt()
+            return serverTime.currentTimeSeconds().toInt()
         }
         return serverTimeSeconds
     }

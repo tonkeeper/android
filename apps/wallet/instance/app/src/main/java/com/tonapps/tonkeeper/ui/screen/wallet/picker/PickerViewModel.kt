@@ -5,12 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.tonapps.portfolio.domain.WalletFiatBalanceInteractor
 import com.tonapps.portfolio.wallet.CommonWallet
 import com.tonapps.portfolio.wallet.WalletLookup
+import com.tonapps.tonkeeper.extensions.awaitSelectedTonWallet
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -18,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -56,7 +57,7 @@ class PickerViewModel(
     private val balancesFlow = _balancesFlow.asStateFlow()
 
     private val _walletsFlow = MutableStateFlow<List<WalletEntity>?>(null)
-    private val walletsFlow = _walletsFlow.asStateFlow().filterNotNull().filterNot { it.isEmpty() }
+    private val walletsFlow = _walletsFlow.asStateFlow().filterNotNull()
 
     private val _editModeFlow = MutableStateFlow(false)
     val editModeFlow = _editModeFlow.asStateFlow()
@@ -117,11 +118,26 @@ class PickerViewModel(
         accountRepository.safeSetSelectedWallet(wallet.id)
     }
 
+    fun setWalletAndOpen(wallet: WalletEntity, url: String) {
+        viewModelScope.launch {
+            accountRepository.setSelectedWallet(wallet.id)
+            if (unifiedAccountRepository.awaitSelectedTonWallet(wallet.id)) {
+                withContext(Dispatchers.Main) { navigation?.openURL(url) }
+            } else {
+                failureToast(Localization.unknown_error)
+            }
+            finish()
+        }
+    }
+
     private suspend fun getWallets(): List<PickerWallet> = withContext(Dispatchers.IO) {
         val entities = unifiedAccountRepository.getTonWallets().associateBy { it.id }
         walletLookup.getAllWallets().mapNotNull { common ->
             val entity = entities[common.id] ?: return@mapNotNull null
             if (mode is PickerMode.TonConnect && !entity.isTonConnectSupported) {
+                return@mapNotNull null
+            }
+            if (mode is PickerMode.Multichain && !mode.accepts(entity)) {
                 return@mapNotNull null
             }
             PickerWallet(entity, common)

@@ -32,7 +32,7 @@ object PortfolioAnalytics {
 
     private fun walletSource(wallet: WalletEntity): WalletOpenWalletSource {
         return when {
-            wallet.isLedger -> WalletOpenWalletSource.Ledger
+            wallet.signsWithLedger -> WalletOpenWalletSource.Ledger
             wallet.isKeystone -> WalletOpenWalletSource.Keystone
             wallet.signer -> WalletOpenWalletSource.Signer
             wallet.isWatchOnly -> WalletOpenWalletSource.Watchonly
@@ -52,6 +52,7 @@ object PortfolioAnalytics {
             WalletVersion.V4R1 -> WalletOpenWalletInterface.V4R1
             WalletVersion.V3R2 -> WalletOpenWalletInterface.V3R2
             WalletVersion.V3R1 -> WalletOpenWalletInterface.V3R1
+            WalletVersion.WALLET_TG -> WalletOpenWalletInterface.WalletTg
             WalletVersion.UNKNOWN -> null
         }
     }

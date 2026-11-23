@@ -235,9 +235,10 @@ class BatteryRechargeScreen(wallet: WalletEntity) :
             token: AccountTokenEntity? = null,
             isGift: Boolean = false,
             utm: UtmParameters = UtmParameters.Empty,
+            selectsCustomAmount: Boolean = false,
         ): BatteryRechargeScreen {
             val fragment = BatteryRechargeScreen(wallet)
-            fragment.setArgs(RechargeArgs(token, isGift, from, utm))
+            fragment.setArgs(RechargeArgs(token, isGift, from, utm, selectsCustomAmount))
             return fragment
         }
     }

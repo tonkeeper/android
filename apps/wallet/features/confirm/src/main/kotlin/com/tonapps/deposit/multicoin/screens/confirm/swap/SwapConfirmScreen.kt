@@ -19,8 +19,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
-import com.tonapps.chainkit.core.chain.model.account.Asset
-import com.tonapps.chainkit.core.chain.model.account.TokenType
 import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.chainkit.core.chain.model.num.toDisplayUnit
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
@@ -31,6 +29,7 @@ import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.Signing
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
+import com.tonapps.wallet.data.multichain.exchange.SwapSlippage
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonCircleIcon
 import ui.components.moon.MoonItemDivider
@@ -40,7 +39,6 @@ import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonPropertyBigCell
 import ui.components.moon.cell.MoonPropertyTitle
 import ui.components.moon.cell.MoonPropertyValue
-import ui.components.moon.cell.MoonTextCheckboxCell
 import ui.components.moon.cell.TextCell
 import ui.components.moon.container.BadgeDirection
 import ui.components.moon.container.MoonCutBadgedBox
@@ -65,31 +63,11 @@ fun SwapConfirmScreen(
         onConfirm = onConfirm,
         onTopUp = onTopUp,
         onOpenBattery = onOpenBattery,
-        footer = { tx -> UnlimitedApproveFooter(feature, tx) },
     ) { tx ->
         SwapConfirmBody(
             feature = feature,
             tx = tx,
             onOpenBattery = onOpenBattery,
-        )
-    }
-}
-
-@Composable
-private fun UnlimitedApproveFooter(feature: SwapConfirmFeature, tx: PendingTransaction) {
-    val sellAsset = tx.account.asset.value
-    val approves = sellAsset is Asset.Token &&
-        sellAsset.type == TokenType.Erc20 &&
-        tx.prerequisites.isNotEmpty()
-    if (approves) {
-        val isUnlimitedApprove by feature.isUnlimitedApprove.collectAsState()
-        val committed by feature.txCommitted.collectAsState()
-        MoonTextCheckboxCell(
-            text = stringResource(Localization.swap_avoid_extra_fees),
-            isChecked = isUnlimitedApprove,
-            onCheckedChanged = { feature.setUnlimitedApprove(it) },
-            onInfo = { },
-            enabled = !committed,
         )
     }
 }
@@ -126,12 +104,44 @@ private fun SwapConfirmBody(
 
     Spacer(Modifier.height(16.dp))
 
+    val rateProgress by feature.swapQuoteCountdown.collectAsState()
+    val slippageOptions by feature.slippage.collectAsState()
+    val selectedSlippageBps by feature.selectedSlippageBps.collectAsState()
+    SwapRouteRows(
+        rateLabel = tx.rateLabel,
+        rateProgress = rateProgress,
+        minReceived = tx.minReceived(),
+        slippage = slippageOptions,
+        selectedSlippageBps = selectedSlippageBps,
+        onSelectSlippage = feature::selectSlippage,
+        priceImpact = tx.priceImpact(),
+    ) {
+        TxFeeRow(
+            feature = feature,
+            tx = tx,
+            onOpenBattery = onOpenBattery,
+        )
+    }
+}
+
+/**
+ * The route's rows, in the swap confirm's card: the rate counting down to the next quote, what is
+ * received at least, the slippage to pick, a price impact worth telling, and [feeRow] last.
+ */
+@Composable
+internal fun SwapRouteRows(
+    rateLabel: String?,
+    rateProgress: Float,
+    minReceived: Pair<String, String?>?,
+    slippage: SwapSlippage?,
+    selectedSlippageBps: Int?,
+    onSelectSlippage: (Int) -> Unit,
+    priceImpact: PriceImpact?,
+    feeRow: @Composable () -> Unit,
+) {
     MoonBundleCell {
         Column {
-            val rateLabel = tx.rateLabel
             if (rateLabel != null) {
-                val rateProgress by feature.swapQuoteCountdown.collectAsState()
-
                 MoonPropertyBigCell(
                     title = {
                         MoonPropertyTitle(title = stringResource(Localization.rate))
@@ -154,7 +164,6 @@ private fun SwapConfirmBody(
                 )
             }
 
-            val minReceived = tx.minReceived()
             if (minReceived != null) {
                 MoonItemDivider()
                 MoonPropertyBigCell(
@@ -164,10 +173,7 @@ private fun SwapConfirmBody(
                 )
             }
 
-            val slippageOptions by feature.slippage.collectAsState()
-            val selectedSlippageBps by feature.selectedSlippageBps.collectAsState()
-            val options = slippageOptions
-            if (options != null) {
+            if (slippage != null) {
                 MoonItemDivider()
                 MoonPropertyBigCell(
                     title = {
@@ -178,38 +184,26 @@ private fun SwapConfirmBody(
                     },
                     content = {
                         SlippageSelector(
-                            slippage = options,
+                            slippage = slippage,
                             selectedBps = selectedSlippageBps,
-                            onSelect = feature::selectSlippage,
+                            onSelect = onSelectSlippage,
                         )
                     },
                 )
             }
 
-            val priceImpact = tx.priceImpact()
             if (priceImpact != null) {
                 MoonItemDivider()
                 PriceImpactCell(priceImpact)
             }
 
-            if (tx.fee.options.isNotEmpty()) {
-                TxFeeCell(
-                    feature = feature,
-                    tx = tx,
-                    onOpenBattery = onOpenBattery,
-                )
-            } else {
-                val fee = tx.fee()
-                if (fee != null) {
-                    FeeCell(fee)
-                }
-            }
+            feeRow()
         }
     }
 }
 
 @Composable
-private fun ConfirmSwapHeader(
+internal fun ConfirmSwapHeader(
     assetFrom: AssetEntity,
     fromAmount: String,
     assetTo: AssetEntity,

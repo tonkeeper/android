@@ -18,11 +18,13 @@ data class PerpsAutoCloseBounds(
     val leverage: BigDecimal,
     val currentPrice: BigDecimal,
     val liquidationPrice: BigDecimal?,
+    val closestTakeProfit: BigDecimal? = null,
+    val closestStopLoss: BigDecimal? = null,
 )
 
 data class PerpsAutoCloseIssue(
     @StringRes val text: Int,
-    val liquidationPrice: BigDecimal? = null,
+    val price: BigDecimal? = null,
 )
 
 data class PerpsAutoCloseCheck(
@@ -44,30 +46,46 @@ fun checkAutoClose(
         return PerpsAutoCloseCheck(takeProfit = null, stopLoss = null)
     }
     val liquidation = bounds.liquidationPrice?.takeIf { it.signum() > 0 }
+    val closestTakeProfit = bounds.closestTakeProfit?.takeIf { it.signum() > 0 }
+    val closestStopLoss = bounds.closestStopLoss?.takeIf { it.signum() > 0 }
     val tp = takeProfit?.takeIf { it.signum() > 0 }
     val sl = stopLoss?.takeIf { it.signum() > 0 }
 
     return if (side == PerpsOrderSide.LONG) {
         PerpsAutoCloseCheck(
-            takeProfit = PerpsAutoCloseIssue(Localization.perps_review_tp_update_text_long)
-                .takeIf { tp != null && tp <= current },
+            takeProfit = when {
+                tp == null -> null
+                tp <= current -> PerpsAutoCloseIssue(Localization.perps_review_tp_update_text_long)
+                closestTakeProfit != null && tp < closestTakeProfit ->
+                    PerpsAutoCloseIssue(Localization.perps_auto_close_tp_at_least, closestTakeProfit)
+                else -> null
+            },
             stopLoss = when {
                 sl == null -> null
                 sl >= current -> PerpsAutoCloseIssue(Localization.perps_auto_close_sl_below_current)
+                closestStopLoss != null && sl > closestStopLoss ->
+                    PerpsAutoCloseIssue(Localization.perps_auto_close_sl_at_most, closestStopLoss)
                 liquidation != null && sl <= liquidation ->
-                    PerpsAutoCloseIssue(Localization.perps_auto_close_sl_above_liquidation, liquidation)
+                    PerpsAutoCloseIssue(Localization.perps_auto_close_sl_liquidation_first_above, liquidation)
                 else -> null
             },
         )
     } else {
         PerpsAutoCloseCheck(
-            takeProfit = PerpsAutoCloseIssue(Localization.perps_review_tp_update_text_short)
-                .takeIf { tp != null && tp >= current },
+            takeProfit = when {
+                tp == null -> null
+                tp >= current -> PerpsAutoCloseIssue(Localization.perps_review_tp_update_text_short)
+                closestTakeProfit != null && tp > closestTakeProfit ->
+                    PerpsAutoCloseIssue(Localization.perps_auto_close_tp_at_most, closestTakeProfit)
+                else -> null
+            },
             stopLoss = when {
                 sl == null -> null
                 sl <= current -> PerpsAutoCloseIssue(Localization.perps_auto_close_sl_above_current)
+                closestStopLoss != null && sl < closestStopLoss ->
+                    PerpsAutoCloseIssue(Localization.perps_auto_close_sl_at_least, closestStopLoss)
                 liquidation != null && sl >= liquidation ->
-                    PerpsAutoCloseIssue(Localization.perps_auto_close_sl_below_liquidation, liquidation)
+                    PerpsAutoCloseIssue(Localization.perps_auto_close_sl_liquidation_first_below, liquidation)
                 else -> null
             },
         )
@@ -76,8 +94,8 @@ fun checkAutoClose(
 
 @Composable
 fun perpsAutoCloseIssueText(issue: PerpsAutoCloseIssue, priceDecimals: Int): String {
-    val liquidation = issue.liquidationPrice ?: return stringResource(issue.text)
-    return stringResource(issue.text, formatUsdPrice(liquidation.toDouble(), priceDecimals))
+    val price = issue.price ?: return stringResource(issue.text)
+    return stringResource(issue.text, formatUsdPrice(price.toDouble(), priceDecimals))
 }
 
 @Composable

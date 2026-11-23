@@ -1,20 +1,16 @@
 package com.tonapps.deposit.screens.ramp.amount
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -46,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import com.tonapps.core.components.withLocaleDecimalSeparator
 import com.tonapps.deposit.screens.provider.ProviderItem
 import com.tonapps.deposit.screens.provider.ProviderWithQuote
 import com.tonapps.deposit.screens.provider.SelectProviderDialog
@@ -58,6 +55,7 @@ import com.tonapps.mvi.props.observeSafeState
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import com.wallet.crypto.trustapp.common.ui.components.MoonEditText
+import com.wallet.crypto.trustapp.common.ui.components.amountFieldScroll
 import ui.components.moon.MoonBadgeButton
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
@@ -154,7 +152,7 @@ private fun DataContent(
     LaunchedEffect(state.initialAmount) {
         val initial = state.initialAmount
         if (initial != null && amountState.text.isEmpty()) {
-            amountState.onTextChange(initial)
+            amountState.onTextChange(initial.withLocaleDecimalSeparator())
         }
     }
 
@@ -177,7 +175,7 @@ private fun DataContent(
                 onAmountInput = onAmountInput,
                 onToggleInputCurrency = {
                     val newAmount = state.selectedProvider?.quote?.receiveCoins
-                        ?.let { Coins.string(it) }
+                        ?.let { Coins.string(it).withLocaleDecimalSeparator() }
                     onToggleInputCurrency()
                     if (newAmount != null) {
                         amountState.onTextChange(newAmount)
@@ -214,7 +212,7 @@ private fun DataContent(
                             MoonSmallItemTitle(stringResource(Localization.max).uppercased())
                         },
                         onClick = {
-                            val maxAmount = Coins.string(balance.uiBalance)
+                            val maxAmount = Coins.string(balance.uiBalance).withLocaleDecimalSeparator()
                             amountState.onTextChange(maxAmount)
                             onAmountInput(maxAmount)
                         },
@@ -282,7 +280,7 @@ private fun DataContent(
             currencyCode = state.inputCurrencyCode,
             onConfirm = { providerId, minAmount ->
                 if (minAmount != null) {
-                    val amountStr = Coins.string(minAmount)
+                    val amountStr = Coins.string(minAmount).withLocaleDecimalSeparator()
                     amountState.onTextChange(amountStr)
                     onAmountInput(amountStr)
                 }
@@ -336,9 +334,7 @@ private fun AmountInputCell(
                     modifier = Modifier
                         .focusRequester(focusRequester)
                         .weight(1f, fill = false)
-                        .horizontalScroll(scrollState)
-                        .width(IntrinsicSize.Min)
-                        .defaultMinSize(minWidth = 24.dp),
+                        .amountFieldScroll(scrollState),
                     value = amountState.value,
                     onValueChange = { newValue ->
                         amountState.onValueChange(newValue)
@@ -409,8 +405,8 @@ private fun AmountInputCell(
                     .alpha(if (error != null) 1f else 0f)
                     .padding(vertical = 12.dp, horizontal = 6.dp),
                 text = when (error) {
-                    is AmountError.AboveMax -> stringResource(Localization.max_amount, error.maxAmount.value)
-                    is AmountError.BelowMin -> stringResource(Localization.min_amount, error.minAmount.value)
+                    is AmountError.AboveMax -> stringResource(Localization.max_amount, Coins.string(error.maxAmount).withLocaleDecimalSeparator())
+                    is AmountError.BelowMin -> stringResource(Localization.min_amount, Coins.string(error.minAmount).withLocaleDecimalSeparator())
                     null -> ""
                 },
                 color = UIKit.colorScheme.accent.red,

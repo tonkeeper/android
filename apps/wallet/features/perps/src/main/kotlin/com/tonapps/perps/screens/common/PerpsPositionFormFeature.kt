@@ -1,6 +1,5 @@
 package com.tonapps.perps.screens.common
 
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.mvi.contract.MviAction
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.flow.anyOfFlows
@@ -75,7 +74,7 @@ abstract class PerpsPositionFormFeature<State : MviViewState, Action : MviAction
 
             FormContext(
                 walletId = walletId,
-                isMultichain = wallet.type == WalletType.Multichain,
+                isMultichain = wallet.supportsPerps,
                 attempt = attempt,
             )
         }

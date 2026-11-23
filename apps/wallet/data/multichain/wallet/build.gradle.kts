@@ -11,19 +11,21 @@ dependencies {
     implementation(libs.chainkit.models)
     implementation(libs.chainkit.mnemonic)
     implementation(libs.chainkit.op)
-    implementation(libs.walletcore)
     implementation(libs.kotlin.bignum)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bcprovjdk)
 
     implementation(projects.lib.blockchain)
     implementation(projects.tonapi.legacy)
     implementation(projects.tonapi.wallet)
     implementation(projects.tonapi.perps)
+    implementation(projects.tonapi.battery)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.data.account)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.cache)
+    implementation(projects.apps.wallet.data.earn)
     implementation(projects.apps.wallet.data.rates)
     implementation(projects.apps.wallet.data.tokens)
     implementation(projects.apps.wallet.api)
@@ -44,6 +46,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.wallet.core.jvm)
 }
 
 tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {

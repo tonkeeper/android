@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,8 +50,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ui.components.moon.ButtonColorsPrimary
@@ -68,6 +70,7 @@ import ui.components.moon.MoonAccentButton
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.MoonLoader
+import ui.excludeFromBackGestures
 import ui.painterResource
 import ui.theme.UIKit
 import ui.theme.modifiers.modifyIf
@@ -122,11 +125,14 @@ fun MoonSlideConfirmation(
     onDisabledClick: (() -> Unit)? = null,
     onDone: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
+
     Box(
         modifier = Modifier
             .padding(16.dp)
             .height(ItemHeight)
-            .then(modifier),
+            .then(modifier)
+            .excludeFromBackGestures(),
     ) {
         if (error != null) {
             Error(
@@ -140,6 +146,7 @@ fun MoonSlideConfirmation(
                     title = title,
                     subtitle = subtitle,
                     sliderState = sliderState,
+                    scope = scope,
                     enabled = enabled,
                     thumbColor = thumbColor,
                     onConfirm = onConfirm,
@@ -192,7 +199,11 @@ private fun Done(
     }
 
     val alpha by animateFloatAsState(
-        targetValue = if (animateIn) 1f else 0f,
+        targetValue = if (animateIn) {
+            1f
+        } else {
+            0f
+        },
         animationSpec = tween(durationMillis = 400),
         label = "doneAlpha",
     )
@@ -262,7 +273,11 @@ private fun ErrorMessage(text: String) {
     }
 
     val alpha by animateFloatAsState(
-        targetValue = if (animateIn) 1f else 0f,
+        targetValue = if (animateIn) {
+            1f
+        } else {
+            0f
+        },
         animationSpec = tween(durationMillis = FadeDurationMillis),
         label = "errorAlpha",
     )
@@ -322,22 +337,32 @@ private fun Slider(
     title: String,
     subtitle: String?,
     sliderState: SliderState,
+    scope: CoroutineScope,
     enabled: Boolean = true,
     thumbColor: Color = UIKit.colorScheme.buttonPrimary.primaryBackground,
     onConfirm: () -> Unit,
     onDisabledClick: (() -> Unit)? = null,
 ) {
     val colors = UIKit.colorScheme
-    val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
 
     val offsetX = sliderState.offsetX
     // offsetX is always a positive 0..maxDragPx travel distance; the sign converts it to raw
     // pixels, since translationX and pointer deltas are not mirrored by the layout direction.
-    val dragSign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
+    val dragSign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) {
+        -1f
+    } else {
+        1f
+    }
 
-    val contentAlpha = if (enabled) 1f else 0.2f
+    val contentAlpha = if (enabled) {
+        1f
+    } else {
+        0.2f
+    }
     val disabledClick = onDisabledClick.takeIf { !enabled }
+    val currentEnabled by rememberUpdatedState(enabled)
+    val currentOnConfirm by rememberUpdatedState(onConfirm)
 
     BoxWithConstraints(
         modifier = Modifier
@@ -346,6 +371,9 @@ private fun Slider(
             .semantics(mergeDescendants = false) {
                 testTagsAsResourceId = true
                 testTag = "slide_confirm_track"
+                if (!enabled) {
+                    disabled()
+                }
             }
             .clip(UIKit.shapes.large)
             .background(colors.background.content)
@@ -405,6 +433,9 @@ private fun Slider(
                 .semantics(mergeDescendants = false) {
                     testTagsAsResourceId = true
                     testTag = "slide_confirm_thumb"
+                    if (!enabled) {
+                        disabled()
+                    }
                 }
                 .graphicsLayer {
                     translationX = offsetX.value * dragSign
@@ -414,14 +445,20 @@ private fun Slider(
                 .fillMaxHeight()
                 .clip(UIKit.shapes.large)
                 .background(thumbColor)
-                .pointerInput(enabled) {
-                    if (!enabled) return@pointerInput
+                .pointerInput(sliderState, dragSign) {
+                    var dragging = false
                     detectHorizontalDragGestures(
+                        onDragStart = {
+                            dragging = currentEnabled
+                        },
+
                         onDragEnd = {
+                            val released = dragging
+                            dragging = false
                             scope.launch {
-                                if (offsetX.value >= maxDragPx) {
+                                if (released && currentEnabled && sliderState.isConfirmed) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onConfirm()
+                                    currentOnConfirm()
                                 } else {
                                     sliderState.reset()
                                 }
@@ -429,16 +466,24 @@ private fun Slider(
                         },
 
                         onDragCancel = {
+                            dragging = false
                             scope.launch { sliderState.reset() }
                         },
 
                         onHorizontalDrag = { change, dragAmount ->
-                            if (sliderState.isConfirmed) return@detectHorizontalDragGestures
                             change.consume()
-                            scope.launch {
-                                val newValue =
-                                    (offsetX.value + dragAmount * dragSign).coerceIn(0f, maxDragPx)
-                                offsetX.snapTo(newValue)
+                            when {
+                                !dragging -> Unit
+                                !currentEnabled -> {
+                                    dragging = false
+                                    scope.launch { sliderState.reset() }
+                                }
+                                sliderState.isConfirmed -> Unit
+                                else -> scope.launch {
+                                    val newValue = (offsetX.value + dragAmount * dragSign)
+                                        .coerceIn(0f, sliderState.maxDragPx)
+                                    offsetX.snapTo(newValue)
+                                }
                             }
                         },
                     )

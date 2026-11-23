@@ -3,13 +3,15 @@ package com.tonapps.deposit.multicoin.screens.confirm
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.deposit.multicoin.screens.confirm.base.BaseTransactionConfirmFeature
+import com.tonapps.deposit.multicoin.screens.confirm.base.SignatureGate
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeBuilder
 import com.tonapps.deposit.multicoin.screens.confirm.fee.GaslessSender
 import com.tonapps.mvi.flow.mapLatestCatching
 import com.tonapps.wallet.ChainKitProvider
+import com.tonapps.wallet.data.ledger.signing.LedgerSigningInteractor
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.tx.PostTransactionRefreshSchedule
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.data.settings.SettingsRepository
 
 /**
@@ -20,21 +22,25 @@ class TxConfirmFeature(
     provider: ChainKitProvider,
     accountRepo: McAccountRepository,
     postTransactionRefreshSchedule: PostTransactionRefreshSchedule,
-    passcodeManager: PasscodeManager,
+    walletUnlocker: WalletUnlocker,
+    signatureGate: SignatureGate,
     confirmResults: ConfirmResultListener,
     feeBuilder: TxFeeBuilder,
     gaslessSender: GaslessSender,
     settingsRepository: SettingsRepository,
+    ledgerSigner: LedgerSigningInteractor,
 ) : BaseTransactionConfirmFeature(
     request = request,
     provider = provider,
     accountRepo = accountRepo,
     postTransactionRefreshSchedule = postTransactionRefreshSchedule,
-    passcodeManager = passcodeManager,
+    walletUnlocker = walletUnlocker,
+    signatureGate = signatureGate,
     confirmResults = confirmResults,
     feeBuilder = feeBuilder,
     gaslessSender = gaslessSender,
     settingsRepository = settingsRepository,
+    ledgerSigner = ledgerSigner,
 ) {
 
     override val pendingTx = refreshToken
@@ -48,9 +54,11 @@ class TxConfirmFeature(
                     is ConfirmType.Message -> prepareMessage(type)
                     is ConfirmType.Call -> prepareCall(type)
                     is ConfirmType.Transfer -> prepareTransaction(type)
-                    is ConfirmType.Swap -> throw IllegalStateException("Swap is not handled by TxConfirmFeature")
+                    is ConfirmType.Swap,
+                    is ConfirmType.SwapOperation -> throw IllegalStateException("Swap is not handled by TxConfirmFeature")
                     is ConfirmType.PerpetualDeposit,
                     is ConfirmType.PerpetualWithdraw -> throw IllegalStateException("Perpetual is not handled by TxConfirmFeature")
+                    is ConfirmType.BatteryPurchase -> throw IllegalStateException("Battery purchase is not handled by TxConfirmFeature")
                 }
             }
         }

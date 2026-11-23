@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge
 
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Effect
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.MessageHandler
+import com.tonapps.webview.bridge.InAppBridgeContract.Effect
+import com.tonapps.webview.bridge.InAppBridgeContract.MessageHandler
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol.Message
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

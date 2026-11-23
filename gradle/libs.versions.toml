@@ -14,7 +14,7 @@ kotlin-bignum = "0.3.10"
 
 # KotlinX
 kotlinx-coroutines = "1.11.0"
-kotlinx-serialization = "1.11.0"
+kotlinx-serialization = "1.12.0"
 kotlinx-datetime = "0.8.0"
 kotlinx-io = "0.9.1"
 kotlinx-collections-immutable = "0.5.2"
@@ -81,13 +81,13 @@ firebase-crashlytics-plugin = "3.0.8"
 firebase-performance-plugin = "2.0.2"
 
 # Networking
-okhttp = "5.5.0"
+okhttp = "5.5.1"
 okio = "3.18.2"
 centrifuge = "0.7.0"
 coil = "3.6.3"
 
 # TON
-chainkit = "26.10.8"
+chainkit = "26.11.11"
 walletCoreKotlin = "4.8.4"
 ton = "0.5.0"
 
@@ -101,6 +101,7 @@ flexbox = "3.0.0"
 # Crypto & Security
 bcprov = "1.86"
 web3j = "5.0.0"
+nordic-ble = "2.11.0"
 
 # Utilities
 zxing = "3.5.4"
@@ -116,9 +117,7 @@ nav3ViewModel = "2.11.0"
 barcode-scanning = "17.3.0"
 
 # Analytics
-aptabase = "0.1.0"
-branch = "5.21.3"
-linkrunner = "4.3.0"
+appsflyer = "7.0.4"
 
 # Testing
 junit = "4.13.2"
@@ -164,6 +163,9 @@ chainkit-models = { module = "com.tonapps.chainkit:core-chain-model", version.re
 chainkit-op = { module = "com.tonapps.chainkit:core-op", version.ref = "chainkit" }
 chainkit-chain-ethereum = { module = "com.tonapps.chainkit:chain-ethereum", version.ref = "chainkit" }
 chainkit-chain-ton = { module = "com.tonapps.chainkit:chain-ton", version.ref = "chainkit" }
+chainkit-chain-tron = { module = "com.tonapps.chainkit:chain-tron", version.ref = "chainkit" }
+chainkit-chain-bitcoin = { module = "com.tonapps.chainkit:chain-bitcoin", version.ref = "chainkit" }
+chainkit-chain-solana = { module = "com.tonapps.chainkit:chain-solana", version.ref = "chainkit" }
 chainkit-api = { module = "com.tonapps.chainkit:core-chain-api", version.ref = "chainkit" }
 chainkit-swap = { module = "com.tonapps.chainkit:features-swap", version.ref = "chainkit" }
 chainkit-mnemonic = { module = "com.tonapps.chainkit:core-mnemonic", version.ref = "chainkit" }
@@ -298,6 +300,8 @@ flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbo
 # Crypto & Security
 bcprovjdk = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprov" }
 web3j = { module = "org.web3j:core", version.ref = "web3j" }
+nordic-ble = { module = "no.nordicsemi.android:ble", version.ref = "nordic-ble" }
+nordic-ble-ktx = { module = "no.nordicsemi.android:ble-ktx", version.ref = "nordic-ble" }
 
 # Utilities
 zxing = { module = "com.google.zxing:core", version.ref = "zxing" }
@@ -308,9 +312,7 @@ cbor = { module = "co.nstant.in:cbor", version.ref = "cbor" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcode-scanning" }
 
 # Analytics
-aptabase = { module = "com.github.aptabase:aptabase-kotlin", version.ref = "aptabase" }
-branch-sdk = { module = "io.branch.sdk.android:library", version.ref = "branch" }
-linkrunner-sdk = { module = "io.linkrunner:android-sdk", version.ref = "linkrunner" }
+appsflyer-sdk = { module = "com.appsflyer:af-android-sdk", version.ref = "appsflyer" }
 
 # Testing
 wallet-core-jvm = { module = "com.trustwallet:wallet-core-kotlin-jvm", version.ref = "walletCoreKotlin" }

@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 /**
- * OkHttp interceptor that implements rate limiting and automatic retry for 429 responses.
+ * OkHttp interceptor that limits the number of requests per second. It does not retry 429 responses.
  *
  * Uses a sliding window algorithm with ArrayDeque to track requests per second.
  * Implements non-blocking approach where possible using atomic operations.
@@ -23,10 +23,6 @@ class RateLimitInterceptor(
 
     init {
         require(requestsPerSecondLimit > 0) { "requestsPerSecondLimit must be positive" }
-    }
-
-    companion object {
-        private const val WINDOW_MS = 1000L
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -56,5 +52,9 @@ class RateLimitInterceptor(
 
             requestTimestamps.addLast(now)
         }
+    }
+
+    companion object {
+        private const val WINDOW_MS = 1000L
     }
 }

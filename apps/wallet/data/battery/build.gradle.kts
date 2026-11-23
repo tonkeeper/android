@@ -17,6 +17,7 @@ dependencies {
     implementation(projects.lib.security)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {

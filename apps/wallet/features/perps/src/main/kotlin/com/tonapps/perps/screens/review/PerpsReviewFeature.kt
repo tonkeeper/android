@@ -1,14 +1,14 @@
 package com.tonapps.perps.screens.review
 
-import android.content.Context
 import androidx.annotation.StringRes
 import com.tonapps.async.Async
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.bus.generated.Events.Perps.PerpsReason
 import com.tonapps.chainkit.perpetual.PerpetualReview
+import com.tonapps.chainkit.perpetual.PerpsFeeKind
 import com.tonapps.chainkit.perpetual.PerpsMarginSettings
 import com.tonapps.chainkit.perpetual.PerpsPositionState
 import com.tonapps.chainkit.perpetual.PerpsScale
+import com.tonapps.chainkit.perpetual.PerpsStepKind
 import com.tonapps.chainkit.perpetual.PerpsTradeError
 import com.tonapps.chainkit.perpetual.PerpsTradeIntent
 import com.tonapps.log.L
@@ -20,27 +20,28 @@ import com.tonapps.mvi.flow.withLatestFrom
 import com.tonapps.mvi.graph.GraphViewModel
 import com.tonapps.mvi.graph.KResult
 import com.tonapps.mvi.graph.KState
-import com.tonapps.perps.PerpsAnalytics
 import com.tonapps.perps.data.PERPS_EMPTY_VALUE
 import com.tonapps.perps.data.PerpsAutoCloseDraft
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsLivePrices
 import com.tonapps.perps.data.PerpsMarkQuote
+import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.PerpsSizeDirection
 import com.tonapps.perps.data.formatAutoClosePrice
-import com.tonapps.perps.data.formatPlainDecimal
-import com.tonapps.perps.data.formatQuoteAmount
+import com.tonapps.perps.data.formatLocalizedDecimal
+import com.tonapps.perps.data.formatPpmPercent
 import com.tonapps.perps.data.formatSignedPercent
 import com.tonapps.perps.data.formatSignedUsdAmount
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.perps.data.formatUsdPrice
 import com.tonapps.perps.data.perpsTicker
-import com.tonapps.perps.failureReason
 import com.tonapps.perps.screens.order.PerpsAutoCloseBounds
 import com.tonapps.perps.screens.order.autoCloseEstimate
 import com.tonapps.perps.screens.sizechange.withRestingLegs
+import com.tonapps.perps.trade.PERPS_RETRYABLE_PLAN_KINDS
 import com.tonapps.perps.trade.PerpsAccountService
 import com.tonapps.perps.trade.PerpsAutoCloseEdit
+import com.tonapps.perps.trade.PerpsOpenLeverageStore
 import com.tonapps.perps.trade.PerpsPlanFailure
 import com.tonapps.perps.trade.PerpsPlannedTrade
 import com.tonapps.perps.trade.PerpsPlannerAdapter
@@ -50,45 +51,63 @@ import com.tonapps.perps.trade.PerpsTradeExecutor
 import com.tonapps.perps.trade.PerpsTradeFailure
 import com.tonapps.perps.trade.PerpsTradeRequest
 import com.tonapps.perps.trade.PerpsUnlockFailure
+import com.tonapps.perps.trade.closesWhole
+import com.tonapps.perps.trade.displayedTakerFeePpm
+import com.tonapps.perps.trade.entryAutoCloseLimits
+import com.tonapps.perps.trade.isRateLimited
+import com.tonapps.perps.trade.toOrderSide
+import com.tonapps.perps.trade.youPay
+import com.tonapps.wallet.data.loyalty.LoyaltyRepository
+import com.tonapps.wallet.data.loyalty.LoyaltyReward
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.lighter.LighterSigningCredentials
 import com.tonapps.wallet.localization.Localization
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.UUID
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 interface PerpsReviewViewState : MviViewState {
+    val market: StateFlow<PerpsReviewMarket>
     val rows: StateFlow<PerpsReviewContent?>
     val status: StateFlow<PerpsReviewStatus>
     val sheet: StateFlow<PerpsReviewSheet?>
     val canConfirm: StateFlow<Boolean>
     val autoCloseEditor: StateFlow<PerpsReviewAutoCloseEditor?>
+    val loyaltyReward: StateFlow<String?>
 }
 
 sealed interface PerpsReviewAction : MviAction {
-    data class Attach(val context: Context) : PerpsReviewAction
+    data object Attach : PerpsReviewAction
     data object Retry : PerpsReviewAction
     data object Confirm : PerpsReviewAction
     data object DismissSheet : PerpsReviewAction
     data class UpdateAutoClose(val fix: PerpsAutoCloseFix) : PerpsReviewAction
+    data class ContinueWithoutAutoClose(val draft: PerpsAutoCloseDraft?) : PerpsReviewAction
     data class SetAutoClose(val draft: PerpsAutoCloseDraft?) : PerpsReviewAction
     data class SetVisible(val visible: Boolean) : PerpsReviewAction
 
@@ -96,7 +115,7 @@ sealed interface PerpsReviewAction : MviAction {
         data object Requote : Internal
         data object SubmitRequote : Internal
         data object PriceExpired : Internal
-        data class Planned(val intent: PerpsTradeIntent, val request: PerpsTradeRequest) : Internal
+        data class Planned(val planned: PerpsPlannedTrade) : Internal
     }
 }
 
@@ -110,18 +129,21 @@ sealed interface PerpsReviewEvent {
     data class SubmitFailed(@StringRes val text: Int) : PerpsReviewEvent
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PerpsReviewFeature(
     private val args: PerpsReviewArgs,
     livePrices: PerpsLivePrices,
     private val adapter: PerpsPlannerAdapter,
     private val executor: PerpsTradeExecutor,
     private val accountService: PerpsAccountService,
+    private val leverageStore: PerpsOpenLeverageStore,
     unifiedAccountRepository: UnifiedAccountRepository,
+    private val loyaltyRepository: LoyaltyRepository,
 ) : GraphViewModel<PerpsReviewViewState, PerpsReviewAction>(), PerpsReviewViewState {
 
     private enum class PlanTrigger { USER, LIVE, SUBMIT }
 
-    private data class UnlockContext(val wallet: WalletEntity, val context: Context, val attempt: Int)
+    private data class UnlockContext(val wallet: WalletEntity, val attempt: Int)
 
     private data class ReviewKey(val walletId: String, val credentials: LighterSigningCredentials)
 
@@ -130,21 +152,35 @@ class PerpsReviewFeature(
         val trigger: PlanTrigger,
         val autoClose: PerpsAutoCloseEdit,
         val held: Boolean = false,
+        val confirmWhenReady: Boolean = false,
     )
 
     private sealed interface AttemptCmd {
         data class Trigger(val trigger: PlanTrigger) : AttemptCmd
         data class AutoClose(val draft: PerpsAutoCloseDraft?) : AttemptCmd
+        data class DropAutoClose(val target: PerpsAutoCloseDraft?) : AttemptCmd
         data object Hold : AttemptCmd
     }
 
-    private data class PlanContext(val key: ReviewKey, val attempt: Int, val autoClose: PerpsAutoCloseEdit)
+    private data class PlanContext(
+        val key: ReviewKey,
+        val attempt: Int,
+        val trigger: PlanTrigger,
+        val autoClose: PerpsAutoCloseEdit,
+    )
 
     private data class PlanRun(
         val key: ReviewKey,
         val mark: PerpsMarkQuote?,
         val previous: PerpsTradeIntent?,
         val autoClose: PerpsAutoCloseEdit,
+        val reviewedWhole: Boolean?,
+        val trigger: PlanTrigger,
+    )
+
+    private data class PlanRefusal(
+        val failure: PerpsPlanFailure,
+        val staleAutoClose: Set<PerpsAutoCloseField>,
     )
 
     private data class ReplanRun(
@@ -173,7 +209,11 @@ class PerpsReviewFeature(
     }
 
     private sealed interface SheetCmd {
-        data class Failure(val failure: PerpsPlanFailure, val draft: PerpsAutoCloseDraft?) : SheetCmd
+        data class Failure(
+            val failure: PerpsPlanFailure,
+            val draft: PerpsAutoCloseDraft?,
+            val staleAutoClose: Set<PerpsAutoCloseField>,
+        ) : SheetCmd
         data object Clear : SheetCmd
     }
 
@@ -181,29 +221,40 @@ class PerpsReviewFeature(
 
     val events = relay.events
 
-    val symbol: String = args.symbol
-
-    val iconUrl: String? = args.iconUrl
-
     val side = args.side
 
     private val operationId = UUID.randomUUID().toString()
 
     private val initialAutoClose = args.initialAutoClose()
 
-    private val livePrice = livePrices
-        .observeQuotes(flowOf(setOf(perpsTicker(args.symbol))))
-        .map { it[perpsTicker(args.symbol)] }
+    private val signedSymbol = flow { emit(adapter.signedSymbol(args.marketIndex)) }
+        .cacheState(initialValue = null)
+
+    override val market = signedSymbol
+        .filterNotNull()
+        .map { symbol ->
+            PerpsReviewMarket(symbol = symbol, iconUrl = args.iconUrl.takeIf { symbol.equals(args.symbol, ignoreCase = true) })
+        }
+        .cacheState(initialValue = PerpsReviewMarket(symbol = args.symbol, iconUrl = args.iconUrl))
+
+    private val livePrice = signedSymbol
+        .transformLatest { symbol ->
+            if (symbol == null) {
+                emit(null)
+            } else {
+                emitAll(livePrices.observeQuotes(flowOf(setOf(perpsTicker(symbol)))).map { it[perpsTicker(symbol)] })
+            }
+        }
         .cacheState(initialValue = null)
 
     private val wallet = unifiedAccountRepository.selectedTonWalletFlow
         .cacheState()
 
-    // The passcode sheet is a dialog: it needs the screen's context, not the application one.
-    private val screenContext = actions
+    // The passcode prompt shows on the screen in front: it waits for this one to be up.
+    private val attached = actions
         .on<PerpsReviewAction.Attach>()
-        .map { it.context }
-        .cacheState(initialValue = null)
+        .map { true }
+        .cacheState(initialValue = false)
 
     // A failed activation leaves no key, so Retry has to run the unlock again, not just replan.
     private val unlockAttempt = actions
@@ -213,11 +264,11 @@ class PerpsReviewFeature(
 
     private val credentialsState = combine(
         wallet,
-        screenContext,
+        attached,
         unlockAttempt,
-        transform = { wallet, context, attempt ->
-            if (wallet != null && context != null) {
-                UnlockContext(wallet = wallet, context = context, attempt = attempt)
+        transform = { wallet, attached, attempt ->
+            if (wallet != null && attached) {
+                UnlockContext(wallet = wallet, attempt = attempt)
             } else {
                 null
             }
@@ -249,10 +300,10 @@ class PerpsReviewFeature(
 
     // The intent is immutable per operation, so a payload that lands late is redundant, never stale.
     // A position-scoped intent pins the position it read, so only an open re-quotes from the last one.
-    private val lastIntent = actions
+    private val lastPlanned = actions
         .on<PerpsReviewAction.Internal.Planned>()
-        .map { it.takeIf { planned -> planned.intent is PerpsTradeIntent.Open } }
-        .cacheState(initialValue = null)
+        .map { it.planned }
+        .cacheState()
 
     private val planAttempt = merge(
         actions
@@ -268,6 +319,9 @@ class PerpsReviewFeature(
             .on<PerpsReviewAction.SetAutoClose>()
             .map { AttemptCmd.AutoClose(it.draft) },
         actions
+            .on<PerpsReviewAction.ContinueWithoutAutoClose>()
+            .map { AttemptCmd.DropAutoClose(it.draft) },
+        actions
             .on<PerpsReviewAction.Confirm>()
             .map { AttemptCmd.Hold },
     )
@@ -280,26 +334,28 @@ class PerpsReviewFeature(
         transform = { key, attempt ->
             val key = key ?: return@combine null
 
-            PlanContext(key = key, attempt = attempt.count, autoClose = attempt.autoClose)
+            PlanContext(key = key, attempt = attempt.count, trigger = attempt.trigger, autoClose = attempt.autoClose)
         }
     )
         .distinctUntilChanged()
         .withLatestFrom(livePrice) { context, mark -> context to mark }
-        .withLatestFrom(lastIntent) { (context, mark), last ->
+        .withLatestFrom(lastPlanned) { (context, mark), last ->
             val context = context ?: return@withLatestFrom null
             val request = args.toRequest(context.key.walletId, context.autoClose)
 
             PlanRun(
                 key = context.key,
                 mark = mark?.takeIf { System.currentTimeMillis() - it.observedAtMs <= LIVE_MARK_MAX_AGE_MS },
-                previous = last?.takeIf { it.request == request }?.intent,
+                previous = last?.takeIf { it.intent is PerpsTradeIntent.Open && it.request == request }?.intent,
                 autoClose = context.autoClose,
+                reviewedWhole = last?.closesWhole().takeIf { context.trigger != PlanTrigger.USER },
+                trigger = context.trigger,
             )
         }
         .transformStateLatest { run ->
             val run = run ?: return@transformStateLatest null
 
-            plan(run)
+            planReview(run)
         }
         .cacheStateWithLoading()
 
@@ -309,13 +365,13 @@ class PerpsReviewFeature(
         .withLatestFrom(planAttempt) { result, attempt -> result.takeUnless { attempt.held } }
         .filterNotNull()
         .map { it.value }
-        .onEach { sendAction(PerpsReviewAction.Internal.Planned(it.intent, it.request)) }
+        .onEach { sendAction(PerpsReviewAction.Internal.Planned(it)) }
         .cacheState(initialValue = null)
 
     private val planRefusal = planState
         .filterAndMapStateData()
         .filterResultError()
-        .map { it.value }
+        .map { it.value.failure }
         .filter { !it.keepsReview() }
         .withLatestFrom(planAttempt) { failure, attempt -> failure to attempt.trigger }
         .onEach { (failure, trigger) ->
@@ -331,10 +387,19 @@ class PerpsReviewFeature(
         .map { it?.toContent(args) }
         .cacheState(initialValue = null)
 
+    override val loyaltyReward = plan
+        .map { it?.loyaltyRewardQuery() }
+        .distinctUntilChanged()
+        .throttleQueries(LOYALTY_REWARD_INTERVAL)
+        .mapLatest { query -> query?.let { loyaltyRepository.perpsReward(it.walletId, it.volumeUsd) } ?: LoyaltyReward.Hidden }
+        .filter { it != LoyaltyReward.Unavailable }
+        .map { (it as? LoyaltyReward.Ohms)?.total }
+        .cacheState(initialValue = null)
+
     private val confirmState = actions
         .on<PerpsReviewAction.Confirm>()
-        .withLatestFrom(plan) { _, planned -> planned }
-        .transformStateFirst { planned -> submit(planned) }
+        .withLatestFrom(plan, wallet) { _, planned, wallet -> planned to wallet }
+        .transformStateFirst { (planned, wallet) -> submit(planned, wallet) }
         .cacheStateWithLoading()
 
     private val confirmOutcome = confirmState
@@ -379,16 +444,16 @@ class PerpsReviewFeature(
         planState
             .filterAndMapStateData()
             .filterResultError()
-            .withLatestFrom(planAttempt) { failure, attempt -> failure.value to attempt.trigger }
-            .filter { (failure, trigger) -> trigger != PlanTrigger.LIVE && failure.keepsReview() }
-            .map { (failure, _) -> StatusCmd.Failed(failure.statusText()) },
+            .withLatestFrom(planAttempt) { refusal, attempt -> refusal.value to attempt.trigger }
+            .filter { (refusal, trigger) -> trigger != PlanTrigger.LIVE && refusal.failure.keepsReview() }
+            .map { (refusal, _) -> StatusCmd.Failed(refusal.failure.statusText(refusal.staleAutoClose)) },
         actions
             .on<PerpsReviewAction.Confirm>()
             .map { StatusCmd.Submitting },
         confirmOutcome
             .filterIsInstance<ConfirmOutcome.Rejected>()
             .filter { it.failure.keepsReview() }
-            .map { StatusCmd.Failed(it.failure.statusText()) },
+            .map { StatusCmd.Failed(it.failure.statusText(it.failure.refusedAutoClose())) },
         actions
             .on<PerpsReviewAction.Internal.PriceExpired>()
             .map { StatusCmd.PriceExpired },
@@ -414,21 +479,32 @@ class PerpsReviewFeature(
         planState
             .filterAndMapStateData()
             .filterResultError()
-            .withLatestFrom(planAttempt) { failure, attempt -> failure.value to attempt }
+            .withLatestFrom(planAttempt) { refusal, attempt -> refusal.value to attempt }
             .filter { (_, attempt) -> attempt.trigger != PlanTrigger.LIVE }
-            .map { (failure, attempt) ->
-                SheetCmd.Failure(failure, (attempt.autoClose as? PerpsAutoCloseEdit.Set)?.target)
+            .map { (refusal, attempt) ->
+                SheetCmd.Failure(
+                    failure = refusal.failure,
+                    draft = (attempt.autoClose as? PerpsAutoCloseEdit.Set)?.target,
+                    staleAutoClose = refusal.staleAutoClose,
+                )
             },
         confirmOutcome
             .filterIsInstance<ConfirmOutcome.Rejected>()
             .withLatestFrom(planAttempt) { rejected, attempt ->
-                SheetCmd.Failure(rejected.failure, (attempt.autoClose as? PerpsAutoCloseEdit.Set)?.target)
+                SheetCmd.Failure(
+                    failure = rejected.failure,
+                    draft = (attempt.autoClose as? PerpsAutoCloseEdit.Set)?.target,
+                    staleAutoClose = rejected.failure.refusedAutoClose(),
+                )
             },
         actions
             .on<PerpsReviewAction.Retry>()
             .map { SheetCmd.Clear },
         actions
             .on<PerpsReviewAction.DismissSheet>()
+            .map { SheetCmd.Clear },
+        actions
+            .on<PerpsReviewAction.ContinueWithoutAutoClose>()
             .map { SheetCmd.Clear },
         actions
             .on<PerpsReviewAction.UpdateAutoClose>()
@@ -446,6 +522,13 @@ class PerpsReviewFeature(
         }
     )
         .cacheState(initialValue = false)
+
+    private val continuedConfirm = canConfirm
+        .filter { it }
+        .withLatestFrom(planAttempt) { _, attempt -> attempt }
+        .filter { it.confirmWhenReady && !it.held }
+        .onEach { sendAction(PerpsReviewAction.Confirm) }
+        .cacheState(initialValue = null)
 
     private val priceUpdatedCountdown = status
         .map { current ->
@@ -503,10 +586,37 @@ class PerpsReviewFeature(
 
     // Loaders
     private suspend fun loadCredentials(attempt: UnlockContext): KResult<ReviewKey, PerpsUnlockFailure> {
-        return when (val result = accountService.unlock(attempt.wallet, attempt.context)) {
+        return when (val result = accountService.unlock(attempt.wallet)) {
             is KResult.Ok -> KResult.Ok(ReviewKey(walletId = attempt.wallet.id, credentials = result.value))
             is KResult.Err -> KResult.Err(result.value)
         }
+    }
+
+    private suspend fun planReview(run: PlanRun): KResult<PerpsPlannedTrade, PlanRefusal> {
+        return when (val result = plan(run)) {
+            is KResult.Ok -> KResult.Ok(result.value)
+            is KResult.Err -> KResult.Err(
+                PlanRefusal(
+                    failure = result.value,
+                    staleAutoClose = if (run.trigger == PlanTrigger.LIVE) {
+                        emptySet()
+                    } else {
+                        staleAutoClose(run, result.value)
+                    },
+                )
+            )
+        }
+    }
+
+    private suspend fun staleAutoClose(run: PlanRun, failure: PerpsPlanFailure): Set<PerpsAutoCloseField> {
+        val refused = failure.refusedAutoClose()
+        if (refused.isEmpty()) {
+            return refused
+        }
+        val rest =(run.autoClose as? PerpsAutoCloseEdit.Set)?.target?.without(refused) ?: return refused
+        val probe = plan(run.copy(previous = null, autoClose = PerpsAutoCloseEdit.Set(rest), reviewedWhole = null))
+
+        return refused + ((probe as? KResult.Err)?.value?.refusedAutoClose().orEmpty())
     }
 
     private suspend fun plan(run: PlanRun): KResult<PerpsPlannedTrade, PerpsPlanFailure> {
@@ -530,7 +640,18 @@ class PerpsReviewFeature(
             }
             if (result is KResult.Ok) {
                 L.d("Perps review plan ${result.value.plan.planId}: ${result.value.plan.review}")
-                return result
+                if (run.reviewedWhole == null || result.value.closesWhole() == run.reviewedWhole) {
+                    return result
+                }
+                return KResult.Err(
+                    PerpsPlanFailure.Planner(
+                        kind = PerpsTradeError.PositionChanged,
+                        message = "the whole-close decision moved since the review",
+                        field = null,
+                        suggestion = null,
+                        priceDecimals = null,
+                    )
+                )
             }
 
             val failure = (result as KResult.Err).value
@@ -541,23 +662,21 @@ class PerpsReviewFeature(
         }
     }
 
-    private suspend fun submit(planned: PerpsPlannedTrade?): ConfirmOutcome {
-        if (planned == null) {
+    private suspend fun submit(planned: PerpsPlannedTrade?, wallet: WalletEntity?): ConfirmOutcome {
+        if (planned == null || wallet == null) {
             return ConfirmOutcome.Failed(Localization.perps_review_failed)
         }
-        val open = args as? PerpsReviewArgs.Open
-        open?.let(PerpsAnalytics::orderSubmitted)
+
+        if (args is PerpsReviewArgs.Open) {
+            leverageStore.remember(wallet.id, args.marketIndex, args.leverage)
+        }
 
         val start = try {
-            executor.start(planned)
+            executor.start(planned) { accountService.unlockOwnerSigner(wallet) }
         } catch (t: Throwable) {
             verifyError(t)
             L.e(t)
-            open?.let { PerpsAnalytics.orderFailed(PerpsReason.Other) }
             return ConfirmOutcome.Failed(Localization.perps_review_failed)
-        }
-        if (open != null) {
-            start.failureReason()?.let(PerpsAnalytics::orderFailed)
         }
 
         return when (start) {
@@ -592,6 +711,13 @@ class PerpsReviewFeature(
                     ConfirmOutcome.None
                 }
 
+                PerpsTradeFailure.ApprovalCancelled -> {
+                    relay.emit(PerpsReviewEvent.Cancelled)
+                    ConfirmOutcome.None
+                }
+
+                is PerpsTradeFailure.SendRefused if failure.isRateLimited -> ConfirmOutcome.Failed(Localization.perps_too_many_requests)
+
                 else -> ConfirmOutcome.Failed(Localization.perps_review_failed)
             }
         }
@@ -618,6 +744,13 @@ class PerpsReviewFeature(
                     ?.let { cmd.draft.withRestingLegs(it.direction, it.restingDraft()) }
                     ?: cmd.draft,
             ),
+        )
+
+        is AttemptCmd.DropAutoClose -> PlanAttempt(
+            count = attempt.count + 1,
+            trigger = PlanTrigger.USER,
+            autoClose = PerpsAutoCloseEdit.Set(cmd.target),
+            confirmWhenReady = true,
         )
 
         AttemptCmd.Hold -> attempt.copy(held = true)
@@ -660,7 +793,7 @@ class PerpsReviewFeature(
             PerpsTradeError.InvalidAutoClose -> {
                 val fix = failure.toAutoCloseFix(cmd.draft)
                 if (fix != null) {
-                    PerpsReviewSheet.AutoCloseUpdate(fix)
+                    PerpsReviewSheet.AutoCloseUpdate(fix = fix, stale = cmd.staleAutoClose)
                 } else {
                     sheet
                 }
@@ -678,6 +811,7 @@ class PerpsReviewFeature(
 
         val REPLAN_TICK = 250.milliseconds
         val PRICE_UPDATED = 2.seconds
+        val LOYALTY_REWARD_INTERVAL = 3.seconds
 
         val SHEET_KINDS = setOf(
             PerpsTradeError.SlippageExceeded,
@@ -686,16 +820,17 @@ class PerpsReviewFeature(
     }
 }
 
-internal val PERPS_RETRYABLE_PLAN_KINDS = setOf(
-    PerpsTradeError.StaleInput,
-    PerpsTradeError.PlanExpired,
-    PerpsTradeError.PositionChanged,
-    PerpsTradeError.UnusableSnapshot,
-    PerpsTradeError.NeedsMoreDepth,
-)
+private fun PerpsPlanFailure.refusedAutoClose(): Set<PerpsAutoCloseField> {
+    val planner = this as? PerpsPlanFailure.Planner ?: return emptySet()
+    if (planner.kind != PerpsTradeError.InvalidAutoClose) {
+        return emptySet()
+    }
+
+    return setOfNotNull(planner.field.toAutoCloseField())
+}
 
 @StringRes
-private fun PerpsPlanFailure.statusText(): Int {
+private fun PerpsPlanFailure.statusText(staleAutoClose: Set<PerpsAutoCloseField> = emptySet()): Int {
     if (this is PerpsPlanFailure.ClockSkew) {
         return Localization.perps_review_wrong_device_time
     }
@@ -725,7 +860,7 @@ private fun PerpsPlanFailure.statusText(): Int {
         PerpsTradeError.InvalidInput,
         PerpsTradeError.UnrepresentableValue -> Localization.perps_review_invalid_amount
 
-        PerpsTradeError.InvalidAutoClose -> field.toAutoCloseField().invalidAutoCloseText()
+        PerpsTradeError.InvalidAutoClose -> staleAutoClose.autoCloseUpdateTitle()
 
         else -> Localization.perps_review_failed
     }
@@ -856,6 +991,7 @@ private fun PerpsPlannedTrade.autoCloseEditor(
         else -> return null
     }
     val leverage = ((request as? PerpsTradeRequest.Open)?.leverage ?: positionLeverage())?.takeIf { it > 0 } ?: 1
+    val entryLimits = entryAutoCloseLimits()
 
     return PerpsReviewAutoCloseEditor(
         priceDecimals = scale.priceDecimals,
@@ -868,6 +1004,8 @@ private fun PerpsPlannedTrade.autoCloseEditor(
                 markPrice
             },
             liquidationPrice = liquidation?.let(::price),
+            closestTakeProfit = entryLimits?.closestTakeProfit,
+            closestStopLoss = entryLimits?.closestStopLoss,
         ),
         initial = edit.legs(args),
         estimate = autoCloseEstimate(baseAmount(base, scale), entry),
@@ -900,6 +1038,31 @@ private fun autoCloseDraft(
     )
 }
 
+private data class LoyaltyRewardQuery(val walletId: String, val volumeUsd: BigDecimal)
+
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun Flow<LoyaltyRewardQuery?>.throttleQueries(interval: Duration): Flow<LoyaltyRewardQuery?> = flow {
+    var askedAt: TimeSource.Monotonic.ValueTimeMark? = null
+    val throttled = this@throttleQueries.transformLatest { query ->
+        if (query != null) {
+            askedAt?.let { delay(interval - it.elapsedNow()) }
+            askedAt = TimeSource.Monotonic.markNow()
+        }
+        emit(query)
+    }
+    emitAll(throttled)
+}
+
+private fun PerpsPlannedTrade.loyaltyRewardQuery(): LoyaltyRewardQuery? {
+    val volume = when (val review = plan.review) {
+        is PerpetualReview.Open -> review.notionalQuote
+        is PerpetualReview.Close -> review.notionalQuote.takeIf { review.fullExit }
+        else -> null
+    } ?: return null
+
+    return LoyaltyRewardQuery(walletId = request.walletId, volumeUsd = quoteAmount(volume, plan.review.scale))
+}
+
 private fun PerpetualReview.isMarginRisk(): Boolean {
     return this is PerpetualReview.Margin && !addToPosition && isImmediateRisk
 }
@@ -909,25 +1072,52 @@ private fun PerpsPlannedTrade.toContent(args: PerpsReviewArgs): PerpsReviewConte
     val legs = autoCloseLegs(args)
     val position = context.position as? PerpsPositionState.Present
     val leverage = positionLeverage() ?: 0
+    val setsIsolatedMargin = plan.steps.any { it.kind == PerpsStepKind.Leverage }
 
     return when (val review = plan.review) {
         is PerpetualReview.Open -> openContent(
             review = review,
+            side = args.side,
             scale = scale,
             leverage = (request as? PerpsTradeRequest.Open)?.leverage ?: leverage,
+            feePpm = displayedTakerFeePpm(PerpsFeeKind.Open),
             legs = legs,
             autoCloseEditable = (args as? PerpsReviewArgs.Open)?.autoCloseEditable == true,
+            setsIsolatedMargin = setsIsolatedMargin,
         )
 
         is PerpetualReview.Close -> if (review.fullExit) {
-            closeContent(review, scale, leverage)
+            closeContent(
+                review,
+                review.side.toOrderSide(),
+                scale,
+                leverage,
+                displayedTakerFeePpm(PerpsFeeKind.Close),
+            )
         } else {
-            reduceContent(review, args as? PerpsReviewArgs.SizeChange, position, scale, leverage, legs)
+            reduceContent(
+                review,
+                review.side.toOrderSide(),
+                args as? PerpsReviewArgs.SizeChange,
+                position,
+                scale,
+                leverage,
+                displayedTakerFeePpm(PerpsFeeKind.Close),
+                legs,
+            )
         }
 
-        is PerpetualReview.Add -> addContent(review, position, scale, leverage, legs)
+        is PerpetualReview.Add -> addContent(
+            review,
+            args.side,
+            position,
+            scale,
+            leverage,
+            displayedTakerFeePpm(PerpsFeeKind.Open),
+            legs,
+        )
 
-        is PerpetualReview.Margin -> marginContent(review, position, scale)
+        is PerpetualReview.Margin -> marginContent(review, args.side, position, scale)
 
         else -> null
     }
@@ -935,14 +1125,15 @@ private fun PerpsPlannedTrade.toContent(args: PerpsReviewArgs): PerpsReviewConte
 
 private fun openContent(
     review: PerpetualReview.Open,
+    side: PerpsOrderSide,
     scale: PerpsScale,
     leverage: Int,
+    feePpm: Long,
     legs: PerpsAutoCloseDraft?,
     autoCloseEditable: Boolean,
+    setsIsolatedMargin: Boolean,
 ): PerpsReviewContent {
-    val margin = quoteAmount(review.marginBudgetQuote, scale)
     val notional = quoteAmount(review.notionalQuote, scale)
-    val fee = quoteAmount(review.estimatedFeeQuote, scale)
     val autoClose = autoCloseRow(legs, scale.priceDecimals)
         ?: PerpsReviewRow(
             title = Localization.perps_order_auto_close,
@@ -950,12 +1141,15 @@ private fun openContent(
         ).takeIf { autoCloseEditable }
 
     return PerpsReviewContent(
-        title = Localization.perps_review_open_title,
+        title = if (side == PerpsOrderSide.LONG) {
+            Localization.perps_review_open_long_title
+        } else {
+            Localization.perps_review_open_short_title
+        },
         rows = listOfNotNull(
             PerpsReviewRow(
                 title = Localization.perps_review_you_pay,
-                value = PerpsReviewValue.Text(formatUsdAmount(margin)),
-                sub = PerpsReviewSub.Quote(formatQuoteAmount(margin)),
+                value = PerpsReviewValue.Text(formatUsdAmount(review.youPay())),
             ),
             PerpsReviewRow(
                 title = Localization.perps_review_entry_price,
@@ -965,13 +1159,14 @@ private fun openContent(
                 title = Localization.perps_order_leverage,
                 value = PerpsReviewValue.Leverage(leverage),
             ),
+            marginModeRow().takeIf { setsIsolatedMargin },
             liquidationRow(review.liquidationPrice, null, review.isImmediateRisk, scale),
             PerpsReviewRow(
                 title = Localization.perps_size,
                 value = PerpsReviewValue.Text(formatUsdAmount(notional)),
-                sub = PerpsReviewSub.Base(formatPlainDecimal(baseAmount(review.baseAmount, scale))),
+                sub = PerpsReviewSub.Base(formatLocalizedDecimal(baseAmount(review.baseAmount, scale))),
             ),
-            feeRow(fee),
+            feeRow(feePpm),
             autoClose,
         ),
     )
@@ -979,8 +1174,10 @@ private fun openContent(
 
 private fun closeContent(
     review: PerpetualReview.Close,
+    side: PerpsOrderSide,
     scale: PerpsScale,
     leverage: Int,
+    feePpm: Long,
 ): PerpsReviewContent {
     val returned = quoteAmount(review.estimatedReturnedMarginQuote, scale)
     val notional = quoteAmount(review.notionalQuote, scale)
@@ -988,12 +1185,15 @@ private fun closeContent(
     val receive = quoteAmount(review.estimatedReceiveQuote, scale)
 
     return PerpsReviewContent(
-        title = Localization.perps_review_close_title,
+        title = if (side == PerpsOrderSide.LONG) {
+            Localization.perps_review_close_long_title
+        } else {
+            Localization.perps_review_close_short_title
+        },
         rows = listOf(
             PerpsReviewRow(
                 title = Localization.perps_review_position,
                 value = PerpsReviewValue.Text(formatUsdAmount(returned)),
-                sub = PerpsReviewSub.Quote(formatQuoteAmount(returned)),
             ),
             PerpsReviewRow(
                 title = Localization.perps_order_leverage,
@@ -1003,10 +1203,10 @@ private fun closeContent(
                 title = Localization.perps_size,
                 value = PerpsReviewValue.Text(formatUsdAmount(notional)),
                 sub = PerpsReviewSub.Base(
-                    formatPlainDecimal(baseAmount(review.estimatedFillBaseAmount, scale)),
+                    formatLocalizedDecimal(baseAmount(review.estimatedFillBaseAmount, scale)),
                 ),
             ),
-            feeRow(quoteAmount(review.estimatedFeeQuote, scale)),
+            feeRow(feePpm),
             PerpsReviewRow(
                 title = Localization.perps_review_pnl,
                 value = PerpsReviewValue.Text(formatSignedUsdAmount(realized)),
@@ -1024,7 +1224,6 @@ private fun closeContent(
             PerpsReviewRow(
                 title = Localization.perps_review_you_receive,
                 value = PerpsReviewValue.Text(formatUsdAmount(receive)),
-                sub = PerpsReviewSub.Quote(formatQuoteAmount(receive)),
             ),
         ),
     )
@@ -1032,10 +1231,12 @@ private fun closeContent(
 
 private fun reduceContent(
     review: PerpetualReview.Close,
+    side: PerpsOrderSide,
     args: PerpsReviewArgs.SizeChange?,
     position: PerpsPositionState.Present?,
     scale: PerpsScale,
     leverage: Int,
+    feePpm: Long,
     legs: PerpsAutoCloseDraft?,
 ): PerpsReviewContent {
     val closed = args?.marginDelta?.let { BigDecimal(it) }
@@ -1044,12 +1245,15 @@ private fun reduceContent(
     val entryValue = entry?.let { BigDecimal.valueOf(it, scale.priceDecimals) } ?: BigDecimal.ZERO
 
     return PerpsReviewContent(
-        title = Localization.perps_review_reduce_title,
+        title = if (side == PerpsOrderSide.LONG) {
+            Localization.perps_review_reduce_long_title
+        } else {
+            Localization.perps_review_reduce_short_title
+        },
         rows = listOfNotNull(
             PerpsReviewRow(
                 title = Localization.perps_review_you_close,
                 value = PerpsReviewValue.Text(formatUsdAmount(closed)),
-                sub = PerpsReviewSub.Quote(formatQuoteAmount(closed)),
             ),
             PerpsReviewRow(
                 title = Localization.perps_review_entry_price,
@@ -1076,11 +1280,11 @@ private fun reduceContent(
                     )
                 },
                 sub = PerpsReviewSub.BaseDelta(
-                    amount = formatPlainDecimal(baseAmount(review.estimatedFillBaseAmount, scale)),
+                    amount = formatLocalizedDecimal(baseAmount(review.estimatedFillBaseAmount, scale)),
                     added = false,
                 ),
             ),
-            feeRow(quoteAmount(review.estimatedFeeQuote, scale)),
+            feeRow(feePpm),
             autoCloseRow(legs, scale.priceDecimals),
         ),
     )
@@ -1088,24 +1292,30 @@ private fun reduceContent(
 
 private fun addContent(
     review: PerpetualReview.Add,
+    side: PerpsOrderSide,
     position: PerpsPositionState.Present?,
     scale: PerpsScale,
     leverage: Int,
+    feePpm: Long,
     legs: PerpsAutoCloseDraft?,
 ): PerpsReviewContent {
-    val margin = quoteAmount(review.marginBudgetQuote, scale)
     val entryValue = position?.entryPrice?.let { BigDecimal.valueOf(it, scale.priceDecimals) }
         ?: BigDecimal.ZERO
     val mergedEntry = BigDecimal.valueOf(review.mergedEntryPrice, scale.priceDecimals)
 
     return PerpsReviewContent(
-        title = Localization.perps_review_add_title,
+        title = if (side == PerpsOrderSide.LONG) {
+            Localization.perps_review_add_long_title
+        } else {
+            Localization.perps_review_add_short_title
+        },
         rows = listOfNotNull(
-            PerpsReviewRow(
-                title = Localization.perps_review_you_pay,
-                value = PerpsReviewValue.Text(formatUsdAmount(margin)),
-                sub = PerpsReviewSub.Quote(formatQuoteAmount(margin)),
-            ),
+            position?.let {
+                PerpsReviewRow(
+                    title = Localization.perps_review_you_pay,
+                    value = PerpsReviewValue.Text(formatUsdAmount(review.youPay(it.allocatedMarginQuote))),
+                )
+            },
             PerpsReviewRow(
                 title = Localization.perps_review_entry_price,
                 value = PerpsReviewValue.Text(priceText(review.mergedEntryPrice, scale)),
@@ -1132,11 +1342,11 @@ private fun addContent(
                     )
                 },
                 sub = PerpsReviewSub.BaseDelta(
-                    amount = formatPlainDecimal(baseAmount(review.baseAmount, scale)),
+                    amount = formatLocalizedDecimal(baseAmount(review.baseAmount, scale)),
                     added = true,
                 ),
             ),
-            feeRow(quoteAmount(review.estimatedFeeQuote, scale)),
+            feeRow(feePpm),
             autoCloseRow(legs, scale.priceDecimals),
         ),
     )
@@ -1144,16 +1354,18 @@ private fun addContent(
 
 private fun marginContent(
     review: PerpetualReview.Margin,
+    side: PerpsOrderSide,
     position: PerpsPositionState.Present?,
     scale: PerpsScale,
 ): PerpsReviewContent {
     val amount = quoteAmount(review.amountQuote, scale)
 
     return PerpsReviewContent(
-        title = if (review.addToPosition) {
-            Localization.perps_review_margin_add_title
-        } else {
-            Localization.perps_review_margin_remove_title
+        title = when {
+            review.addToPosition && side == PerpsOrderSide.LONG -> Localization.perps_review_margin_add_long_title
+            review.addToPosition -> Localization.perps_review_margin_add_short_title
+            side == PerpsOrderSide.LONG -> Localization.perps_review_margin_remove_long_title
+            else -> Localization.perps_review_margin_remove_short_title
         },
         rows = listOfNotNull(
             PerpsReviewRow(
@@ -1163,7 +1375,6 @@ private fun marginContent(
                     Localization.perps_review_you_close
                 },
                 value = PerpsReviewValue.Text(formatUsdAmount(amount)),
-                sub = PerpsReviewSub.Quote(formatQuoteAmount(amount)),
             ),
             liquidationRow(
                 value = review.liquidationPrice,
@@ -1193,11 +1404,17 @@ private fun liquidationRow(
     )
 }
 
-private fun feeRow(fee: BigDecimal): PerpsReviewRow {
+private fun feeRow(feePpm: Long): PerpsReviewRow {
     return PerpsReviewRow(
         title = Localization.perps_review_fee,
-        value = PerpsReviewValue.Text(formatUsdAmount(fee)),
-        sub = PerpsReviewSub.Quote(formatQuoteAmount(fee)),
+        value = PerpsReviewValue.Text(formatPpmPercent(feePpm)),
+    )
+}
+
+private fun marginModeRow(): PerpsReviewRow {
+    return PerpsReviewRow(
+        title = Localization.perps_review_margin_mode,
+        value = PerpsReviewValue.Resource(Localization.perps_review_margin_isolated),
     )
 }
 
@@ -1242,17 +1459,21 @@ private const val PERCENT_SCALE = 2
 private val HUNDRED = BigDecimal(100)
 
 /*
+ *   signedSymbol? ──┬──► [notNull] market
+ *                   └──► [latest] livePrice?
+ *
  *          selectedTonWalletFlow ──► wallet? ──┐
- *                   Attach ──► screenContext? ─┼──► [distinct, latest] credentialsState
+ *                   Attach ──► attached ───────┼──► [distinct, latest] credentialsState
  *            Retry ──► [fold] unlockAttempt ───┘
  *
  *   credentialsState [dataOnly, errOnly] ──► credentialsFailure? ──┬──► events
  *                                                                  └──► status
  *   credentialsState [dataOnly, okOrNull] ──► credentials? ──────────┐
  *                                                                    │
- *                           Planned ──► lastIntent? ⋯────────────────┤
+ *                           Planned ──► lastPlanned? ⋯───────────────┤
  *   Retry / Requote / SubmitRequote ──┐                              │
  *                      SetAutoClose ──┤                              │
+ *          ContinueWithoutAutoClose ──┤                              │
  *                           Confirm ──┴──► [fold] planAttempt ───────┼──► [distinct, latest] planState
  *                                                    livePrice? ⋯────┘
  *
@@ -1266,8 +1487,9 @@ private val HUNDRED = BigDecimal(100)
  *                     planAttempt ⋯──┘
  *
  *                        Confirm ──┐
- *                                  ├──► [first] confirmState ──┬──► submitFailure? ──► events
- *                          plan? ⋯─┘                           ├──► events
+ *                          plan? ⋯─┤
+ *                        wallet? ⋯─┴──► [first] confirmState ──┬──► submitFailure? ──► events
+ *                                                              ├──► events
  *                                                              ├──► status
  *                                                              ├──► sheet
  *                                                              ╎
@@ -1286,11 +1508,19 @@ private val HUNDRED = BigDecimal(100)
  *                    planAttempt ⋯───┤
  *                           Retry ───┼──► [fold] sheet?
  *                    DismissSheet ───┤
+ *        ContinueWithoutAutoClose ───┤
  *                 UpdateAutoClose ───┴──► events
+ *
+ *   plan? ──► [distinct, throttle, latest, keep on failure] loyaltyReward?
  *
  *                           rows? ──┐
  *                                   ├──► canConfirm
  *                          status ──┘
+ *
+ *                     canConfirm ──┐
+ *                  planAttempt ⋯───┴──► continuedConfirm?
+ *                                              ╎
+ *                         Confirm ◄╌╌╌╌╌╌╌╌╌╌╌╌╌┘
  *
  *                           plan? ──┐
  *                     planAttempt ──┼──► autoCloseEditor?

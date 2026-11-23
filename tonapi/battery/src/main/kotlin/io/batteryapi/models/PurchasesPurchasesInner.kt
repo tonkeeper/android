@@ -37,6 +37,14 @@ data class PurchasesPurchasesInner(
     @SerialName(value = "for_account_id")
     val forAccountId: String? = null,
 
+    /* Set for a migration: the TON wallet the battery was moved from, raw. */
+    @SerialName(value = "from_address")
+    val fromAddress: String? = null,
+
+    /* Set for a migration-out: the wallet id of the wallet the battery was moved to. */
+    @SerialName(value = "to_wallet_id")
+    val toWalletId: String? = null,
+
     /* Amount describes the amount paid by the user for this purchase when we know it. For crypto purchases it is always set. */
     @SerialName(value = "amount")
     val amount: String? = null,
@@ -48,7 +56,7 @@ data class PurchasesPurchasesInner(
     val refundInformation: PurchasesPurchasesInnerRefundInformation? = null
 ) {
     /**
-     * Values: android,ios,promoMinusCode,crypto,gift,onMinusTheMinusWayMinusGift,unknown
+     * Values: android,ios,promoMinusCode,crypto,gift,onMinusTheMinusWayMinusGift,grant,migration,migrationMinusOut,unknown
      */
     @Serializable(with = TypeSerializer::class)
     enum class Type(val value: String) {
@@ -58,6 +66,9 @@ data class PurchasesPurchasesInner(
         @SerialName(value = "crypto") crypto("crypto"),
         @SerialName(value = "gift") gift("gift"),
         @SerialName(value = "on-the-way-gift") onMinusTheMinusWayMinusGift("on-the-way-gift"),
+        @SerialName(value = "grant") grant("grant"),
+        @SerialName(value = "migration") migration("migration"),
+        @SerialName(value = "migration-out") migrationMinusOut("migration-out"),
         @SerialName(value = "unknown") unknown("unknown");
     }
 

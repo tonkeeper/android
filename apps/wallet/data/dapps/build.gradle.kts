@@ -36,6 +36,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // The WalletConnect parser decodes calldata with wallet-core, which the shared rule loads.
+    testImplementation(testFixtures(projects.apps.wallet.testing))
+    testImplementation(libs.wallet.core.jvm)
 }
 
 tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {

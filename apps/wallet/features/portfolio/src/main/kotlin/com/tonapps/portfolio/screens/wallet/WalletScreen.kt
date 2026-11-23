@@ -16,14 +16,18 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -34,6 +38,7 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.Banner.BannerFrom
 import com.tonapps.bus.generated.Events.Banner.BannerWalletMode
 import com.tonapps.bus.generated.Events.EarnFlow.EarnEntryViewFrom
+import com.tonapps.bus.generated.Events.LedgerFlow.LedgerDeviceViewFrom
 import com.tonapps.bus.generated.Events.MysteryRaffle.MysteryRaffleSource
 import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.chainkit.core.chain.model.account.Chain
@@ -41,9 +46,11 @@ import com.tonapps.core.components.AccountCell
 import com.tonapps.core.components.AccountCellShimmer
 import com.tonapps.core.components.BannerAnalytics
 import com.tonapps.core.components.BannersViewer
-import com.tonapps.core.components.isNativeTon
+import com.tonapps.core.components.assetImageUrl
 import com.tonapps.core.deeplink.isRaffleDeeplink
 import com.tonapps.core.deeplink.withPerpsBannerEntry
+import com.tonapps.core.loyalty.LOYALTY_DEEPLINK
+import com.tonapps.core.loyalty.rememberLoyaltyBanner
 import com.tonapps.core.deeplink.withRaffleSource
 import com.tonapps.paging.collectAsStateWorkaround
 import com.tonapps.portfolio.LocalPortfolioIsTop
@@ -52,9 +59,12 @@ import com.tonapps.portfolio.screens.wallet.components.AllAssetsHiddenCell
 import com.tonapps.portfolio.screens.wallet.components.AssetsHeader
 import com.tonapps.portfolio.screens.wallet.components.CollectiblesSection
 import com.tonapps.portfolio.screens.wallet.components.EarnPositionsSection
+import com.tonapps.portfolio.screens.wallet.components.EarnPositionsUnavailableSection
 import com.tonapps.portfolio.screens.wallet.components.EarnSection
 import com.tonapps.portfolio.screens.wallet.components.FinishSetupCard
-import com.tonapps.portfolio.screens.wallet.components.MoreAssetsCell
+import com.tonapps.portfolio.screens.wallet.components.LoyaltyRow
+import com.tonapps.portfolio.screens.wallet.components.SectionMoreCell
+import com.tonapps.portfolio.screens.wallet.components.SectionMoreImage
 import com.tonapps.portfolio.screens.wallet.components.PerpsPositionsSection
 import com.tonapps.portfolio.screens.wallet.components.PerpsShelfSection
 import com.tonapps.portfolio.screens.wallet.components.RaffleRow
@@ -73,11 +83,22 @@ import ui.components.moon.MoonRefresh
 import ui.components.moon.cell.defaultBundleType
 import ui.components.moon.container.MoonScaffold
 import ui.moon.MoonToastHost
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+import ui.components.popup.LazyListTooltip
+import ui.components.popup.dismissTooltipOnTap
+import ui.components.popup.lazyListTooltipAnchor
+import ui.components.popup.rememberLazyListTooltipState
+import ui.components.popup.scrollToAnchor
 import ui.moon.rememberMoonToastHostState
 import ui.theme.UIKit
 import ui.theme.modifiers.rememberShimmerPhase
+import uikit.widget.ToastFeedback
 
-private const val PreviewAssetsLimit = 7
+private const val EARN_VAULTS_KEY = "earn_vaults"
+private const val PERPS_SHELF_KEY = "perps_shelf"
+private const val MAX_ASSETS_SHIMMER_ROWS = 7
+private const val MORE_ASSETS_PREVIEW_IMAGES = 2
 private val WalletBannerAnalytics = BannerAnalytics(BannerWalletMode.Multi, BannerFrom.Home)
 
 private sealed interface WalletAssetRow {
@@ -132,26 +153,42 @@ fun WalletScreen(
     onOpenPerpMarket: (marketIndex: Int, symbol: String, entryPoint: PerpsEntryPoint) -> Unit = { _, _, _ -> },
     onOpenEarn: (from: EarnEntryViewFrom) -> Unit = {},
     onOpenEarnVault: (network: String, vaultId: String, from: EarnEntryViewFrom) -> Unit = { _, _, _ -> },
+    onOpenLedgerDevice: (walletId: String, from: LedgerDeviceViewFrom) -> Unit = { _, _ -> },
 ) {
     val walletState by feature.wallet.collectAsStateWorkaround()
     val tonAddress by feature.tonAddress.collectAsStateWorkaround()
+    val actions by feature.actions.collectAsStateWorkaround()
     val settingsBadge by feature.settingsBadge.collectAsStateWorkaround()
     val finishSetup by feature.finishSetup.collectAsStateWorkaround()
     val pushEnabling by feature.pushEnabling.collectAsStateWorkaround()
     val totalState by feature.totalUi.collectAsStateWorkaround()
     val isTotalStale by feature.isTotalStale.collectAsStateWorkaround()
     val battery by feature.battery.collectAsStateWorkaround()
+    val batteryHint by feature.batteryHint.collectAsStateWorkaround()
     val banners by feature.banners.collectAsStateWorkaround()
+    val loyalty by feature.loyalty.collectAsStateWorkaround()
+    val hiddenBalances by feature.hiddenBalances.collectAsStateWorkaround()
+    val loyaltyBanner = rememberLoyaltyBanner()
+    val shownBanners = remember(banners, loyalty.showsBanner, loyaltyBanner) {
+        if (loyalty.showsBanner) {
+            listOf(loyaltyBanner) + banners
+        } else {
+            banners
+        }
+    }
     val raffleRows by feature.raffleRows.collectAsStateWorkaround()
     val collectibles by feature.collectibles.collectAsStateWorkaround()
-    val stakingApy by feature.stakingApy.collectAsStateWorkaround()
+    val assetApy by feature.assetApy.collectAsStateWorkaround()
     val staked by feature.staked.collectAsStateWorkaround()
     val sections by feature.sections.collectAsStateWorkaround()
+    val showsEarnTooltip by feature.showsEarnTooltip.collectAsStateWorkaround()
+    val showsPerpsTooltip by feature.showsPerpsTooltip.collectAsStateWorkaround()
     val pagingItems = feature.accountsFlow.collectAsLazyPagingItems()
+
+    val assetsLimit by feature.assetsLimit.collectAsStateWorkaround()
 
     val wallet = walletState ?: return
 
-    var assetsExpanded by remember(wallet.id) { mutableStateOf(false) }
     // earn_entry_view goes once per appearance of the screen: coming back to it or to another
     // wallet counts again, scrolling a block out and back does not.
     var appearance by remember { mutableIntStateOf(0) }
@@ -161,6 +198,24 @@ fun WalletScreen(
     val showsAssetsShimmer = isLoading && pagingItems.itemCount == 0 && staked.isEmpty()
     val showsTotalShimmer by remember { derivedStateOf { totalState == null } }
     val pullToRefreshState = rememberPullToRefreshState()
+    val earnTooltip = rememberLazyListTooltipState(listState)
+    val perpsTooltip = rememberLazyListTooltipState(listState)
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            val info = listState.layoutInfo
+            val top = info.viewportStartOffset + info.beforeContentPadding
+            val bottom = info.viewportEndOffset - info.afterContentPadding
+            val shelf = info.visibleItemsInfo.firstOrNull { it.key == PERPS_SHELF_KEY }
+            when {
+                shelf == null -> PerpsShelfVisibility.Gone
+                !listState.isScrollInProgress && shelf.offset >= top && shelf.offset + shelf.size <= bottom -> PerpsShelfVisibility.Full
+                else -> PerpsShelfVisibility.Partial
+            }
+        }
+            .distinctUntilChanged()
+            .collect(feature::setPerpsShelfVisibility)
+    }
+    val scope = rememberCoroutineScope()
     var userPullRefresh by remember { mutableStateOf(false) }
 
     LaunchedEffect(pagingItems.loadState.refresh) {
@@ -175,6 +230,7 @@ fun WalletScreen(
         if (isTop) {
             feature.refreshPerps()
             feature.setResumed(true)
+            feature.onScreenShown()
             appearance++
         }
         onPauseOrDispose { feature.setResumed(false) }
@@ -200,6 +256,7 @@ fun WalletScreen(
                 text = errorText,
                 icon = UIKitIcon.ic_exclamationmark_triangle_16,
                 iconColor = errorIconColor,
+                feedback = ToastFeedback.Failure,
             )
         }
     }
@@ -231,6 +288,30 @@ fun WalletScreen(
                 .then(compareByChainDisplayOrder { it.chain })
         )
     }
+
+    val appendEndReached = pagingItems.loadState.append.endOfPaginationReached
+    LaunchedEffect(pagingItems.itemCount, assetsLimit, pagingItems.loadState.refresh, appendEndReached) {
+        val lastPreviewIndex = (assetsLimit.count + MORE_ASSETS_PREVIEW_IMAGES).coerceAtMost(pagingItems.itemCount) - 1
+        if (lastPreviewIndex >= 0) {
+            pagingItems[lastPreviewIndex]
+        }
+    }
+
+    val refreshSettled = pagingItems.loadState.refresh is LoadState.NotLoading
+    val settledHasNextPage = remember { mutableStateOf(false) }
+    SideEffect {
+        if (refreshSettled) {
+            settledHasNextPage.value = !appendEndReached
+        }
+    }
+    val hasNextPage = if (refreshSettled) {
+        !appendEndReached
+    } else {
+        settledHasNextPage.value
+    }
+    val showsPendingMoreRow = hasNextPage &&
+            pagingItems.itemCount >= assetsLimit.count &&
+            assetRows.size >= assetsLimit.count
 
     Box(modifier = Modifier.fillMaxSize()) {
         MoonScaffold(
@@ -265,7 +346,16 @@ fun WalletScreen(
             ) {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .dismissTooltipOnTap(
+                            enabled = showsEarnTooltip,
+                            onDismiss = feature::dismissEarnTooltip,
+                        )
+                        .dismissTooltipOnTap(
+                            enabled = showsPerpsTooltip,
+                            onDismiss = feature::dismissPerpsTooltip,
+                        ),
                     contentPadding = PaddingValues(
                         bottom = WindowInsets.navigationBars.asPaddingValues()
                             .calculateBottomPadding() + 80.dp,
@@ -280,6 +370,7 @@ fun WalletScreen(
                                 onBalanceClick = feature::toggleHiddenBalances,
                                 stale = isTotalStale,
                                 battery = battery,
+                                batteryHint = batteryHint,
                                 address = tonAddress,
                                 onBatteryClick = onOpenBattery,
                                 onAddressClick = onAddressClick,
@@ -288,14 +379,14 @@ fun WalletScreen(
                     }
                     item(contentType = "action_buttons") {
                         ActionButtons(
-                            actions = feature.actions,
+                            actions = actions,
                             onClick = onAction,
                         )
                     }
-                    if (banners.isNotEmpty()) {
+                    if (shownBanners.isNotEmpty()) {
                         item(contentType = "banners") {
                             BannersViewer(
-                                banners = banners,
+                                banners = shownBanners,
                                 analytics = WalletBannerAnalytics,
                                 onClick = { button ->
                                     if (isRaffleDeeplink(button.payload)) {
@@ -306,6 +397,16 @@ fun WalletScreen(
                                     }
                                 },
                                 onHide = { banner -> feature.hideBanner(banner) },
+                            )
+                        }
+                    }
+
+                    if (loyalty.showsSection) {
+                        item(contentType = "loyalty") {
+                            LoyaltyRow(
+                                ohms = loyalty.positiveOhms,
+                                hiddenBalance = hiddenBalances,
+                                onClick = { onOpenLink(LOYALTY_DEEPLINK) },
                             )
                         }
                     }
@@ -337,6 +438,7 @@ fun WalletScreen(
                                 },
                                 onMigrationClick = onMigrationClick,
                                 onEnableBiometryClick = onEnableBiometryClick,
+                                onLedgerNetworksClick = { onOpenLedgerDevice(wallet.id, LedgerDeviceViewFrom.SetupSection) },
                                 onSkipClick = { feature.skipFinishSetup() },
                             )
                         }
@@ -346,9 +448,10 @@ fun WalletScreen(
                             item(contentType = "assets_header") {
                                 AssetsHeader(shimmerPhase = shimmerPhase)
                             }
-                            items(7, contentType = { "account_shimmer" }) { index ->
+                            val shimmerRows = assetsLimit.count.coerceAtMost(MAX_ASSETS_SHIMMER_ROWS)
+                            items(shimmerRows, contentType = { "account_shimmer" }) { index ->
                                 AccountCellShimmer(
-                                    position = defaultBundleType(7, index),
+                                    position = defaultBundleType(shimmerRows, index),
                                 )
                             }
                         }
@@ -383,13 +486,9 @@ fun WalletScreen(
                                                 AssetsHeader(onClick = onCryptoClick, onManageClick = onManageClick)
                                             }
                                             val loadedAssetsCount = assetRows.size
-                                            val hasMoreAssets = loadedAssetsCount > PreviewAssetsLimit
-                                            val showMoreButton = hasMoreAssets && !assetsExpanded
-                                            val visibleAssetsCount = when {
-                                                assetsExpanded -> loadedAssetsCount
-                                                hasMoreAssets -> PreviewAssetsLimit - 1
-                                                else -> loadedAssetsCount
-                                            }
+                                            val visibleAssetsCount = loadedAssetsCount.coerceAtMost(assetsLimit.count)
+                                            val showMoreButton = loadedAssetsCount > assetsLimit.count ||
+                                                    showsPendingMoreRow
                                             val bundleSize = visibleAssetsCount + if (showMoreButton) {
                                                 1
                                             } else {
@@ -407,13 +506,13 @@ fun WalletScreen(
                                             ) { index ->
                                                 when (val row = assetRows[index]) {
                                                     is WalletAssetRow.Account -> {
-                                                        val apy = stakingApy
+                                                        val apy = assetApy[row.account.asset.id]
                                                         AccountCell(
                                                             account = row.account,
                                                             position = defaultBundleType(bundleSize, index),
                                                             onClick = { onOpenAsset(row.account.asset) },
                                                             hiddenBalance = row.hiddenBalance,
-                                                            tags = if (apy != null && row.account.asset.isNativeTon()) {
+                                                            tags = if (apy != null) {
                                                                 {
                                                                     MoonLabel(
                                                                         text = "$apy ${stringResource(Localization.staking_apy)}",
@@ -444,16 +543,29 @@ fun WalletScreen(
                                             }
                                             if (showMoreButton) {
                                                 item(contentType = "more_assets") {
-                                                    val previewAssets = remember(assetRows, visibleAssetsCount) {
+                                                    val previewRows = remember(assetRows, visibleAssetsCount) {
                                                         assetRows
                                                             .drop(visibleAssetsCount)
-                                                            .take(2)
-                                                            .mapNotNull { (it as? WalletAssetRow.Account)?.account?.asset }
+                                                            .take(MORE_ASSETS_PREVIEW_IMAGES)
                                                     }
-                                                    MoreAssetsCell(
-                                                        assets = previewAssets,
+                                                    SectionMoreCell(
+                                                        title = stringResource(Localization.more_assets),
+                                                        images = previewRows.map { row ->
+                                                            when (row) {
+                                                                is WalletAssetRow.Account -> SectionMoreImage.Remote(
+                                                                    url = row.account.asset.assetImageUrl(),
+                                                                    preview = row.account.asset.symbol,
+                                                                )
+                                                                is WalletAssetRow.Staked -> SectionMoreImage.Local(
+                                                                    res = UIKitIcon.ic_gram_with_bg,
+                                                                )
+                                                            }
+                                                        },
+                                                        limit = assetsLimit,
+                                                        limitTestTag = "wallet_assets_limit",
                                                         position = defaultBundleType(bundleSize, bundleSize - 1),
-                                                        onClick = { assetsExpanded = true },
+                                                        onClick = onCryptoClick,
+                                                        onLimitSelect = feature::selectAssetsLimit,
                                                     )
                                                 }
                                             }
@@ -469,13 +581,18 @@ fun WalletScreen(
                                             },
                                         )
                                     }
-                                    is WalletSection.Perps.Shelf -> item(key = "perps_shelf", contentType = "perps_shelf") {
+                                    is WalletSection.Perps.Shelf -> item(key = PERPS_SHELF_KEY, contentType = "perps_shelf") {
                                         SectionSpacer(spaced)
                                         PerpsShelfSection(
                                             state = section,
                                             onOpenPerps = { onOpenPerps(PerpsEntryPoint.MainCarousel) },
                                             onOpenPerpMarket = { marketIndex, symbol ->
                                                 onOpenPerpMarket(marketIndex, symbol, PerpsEntryPoint.MainCarousel)
+                                            },
+                                            titleModifier = if (showsPerpsTooltip) {
+                                                Modifier.lazyListTooltipAnchor(perpsTooltip, PERPS_SHELF_KEY)
+                                            } else {
+                                                Modifier
                                             },
                                         )
                                     }
@@ -489,14 +606,24 @@ fun WalletScreen(
                                         EarnPositionsSection(
                                             totalFormat = section.totalFormat,
                                             positions = section.positions,
+                                            hiddenPositions = section.hiddenPositions,
+                                            isStale = section.isStale,
+                                            limit = section.limit,
                                             onOpenEarn = { onOpenEarn(EarnEntryViewFrom.EarnYourVaults) },
                                             onOpenPosition = { network, vaultId ->
                                                 onOpenEarnVault(network, vaultId, EarnEntryViewFrom.EarnYourVaults)
                                             },
+                                            onRetry = feature::retryEarn,
+                                            onLimitSelect = feature::selectEarnLimit,
                                         )
                                         SectionSpacer(!spaced)
                                     }
-                                    is WalletSection.Earn.Vaults -> item(key = "earn_vaults", contentType = "earn_vaults") {
+                                    is WalletSection.Earn.Unavailable -> item(key = "earn_unavailable", contentType = "earn_unavailable") {
+                                        SectionSpacer(spaced)
+                                        EarnPositionsUnavailableSection(onRetry = feature::retryEarn)
+                                        SectionSpacer(!spaced)
+                                    }
+                                    is WalletSection.Earn.Vaults -> item(key = EARN_VAULTS_KEY, contentType = "earn_vaults") {
                                         LaunchedEffect(shownEarnEntries) {
                                             if (appearance > 0 && shownEarnEntries.add(EarnEntryViewFrom.EarnFeatured)) {
                                                 feature.onEarnVaultsShown()
@@ -508,6 +635,11 @@ fun WalletScreen(
                                             onOpenEarn = { onOpenEarn(EarnEntryViewFrom.EarnFeatured) },
                                             onOpenVault = { network, vaultId ->
                                                 onOpenEarnVault(network, vaultId, EarnEntryViewFrom.EarnFeatured)
+                                            },
+                                            titleModifier = if (showsEarnTooltip) {
+                                                Modifier.lazyListTooltipAnchor(earnTooltip, EARN_VAULTS_KEY)
+                                            } else {
+                                                Modifier
                                             },
                                         )
                                     }
@@ -528,6 +660,36 @@ fun WalletScreen(
                             }
                         }
                     }
+                }
+                if (showsEarnTooltip) {
+                    LazyListTooltip(
+                        state = earnTooltip,
+                        itemKey = EARN_VAULTS_KEY,
+                        text = stringResource(Localization.tooltip_earn),
+                        badge = stringResource(Localization.badge_new),
+                        backgroundColor = UIKit.colorScheme.accent.blue,
+                        textColor = Color.White,
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    earnTooltip.scrollToAnchor(EARN_VAULTS_KEY)
+                                } finally {
+                                    feature.dismissEarnTooltip()
+                                }
+                            }
+                        },
+                    )
+                }
+                if (showsPerpsTooltip) {
+                    LazyListTooltip(
+                        state = perpsTooltip,
+                        itemKey = PERPS_SHELF_KEY,
+                        text = stringResource(Localization.tooltip_perps),
+                        badge = stringResource(Localization.badge_new),
+                        backgroundColor = UIKit.colorScheme.accent.blue,
+                        textColor = Color.White,
+                        onClick = feature::dismissPerpsTooltip,
+                    )
                 }
             }
         }

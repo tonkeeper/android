@@ -31,13 +31,14 @@ fun VerticalAssetCell(
     isSelected: Boolean = false,
     content: (@Composable () -> Unit)? = null,
     titleContent: (@Composable () -> Unit)? = null,
+    extendedNameMaxLines: Int = 2,
     onClick: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     VerticalAssetCell(
         name = currency.code,
-        extendedName = if (isAbstract) null else currency.title,
-        standard = if (isAbstract) null else currency.tokenType?.fmt,
+        extendedName = currency.title.takeUnless { isAbstract },
+        standard = currency.tokenType?.fmt.takeUnless { isAbstract },
         tagColor = currency.tokenType?.color(),
         assetImageUrl = currency.iconUri?.toString(),
 //        chainImageUrl = remember {
@@ -55,6 +56,7 @@ fun VerticalAssetCell(
             }
         },
         titleContent = titleContent,
+        extendedNameMaxLines = extendedNameMaxLines,
         onClick = onClick,
     )
 }
@@ -80,6 +82,7 @@ fun VerticalAssetCell(
     content: (@Composable () -> Unit)? = null,
     titleContent: (@Composable () -> Unit)? = null,
     tagColor: MoonLabelColors? = null,
+    extendedNameMaxLines: Int = 2,
     onClick: (() -> Unit)? = null,
 ) {
     TextCell(
@@ -96,7 +99,7 @@ fun VerticalAssetCell(
                 }
 
                 if (extendedName != null) {
-                    MoonLargeItemSubtitle(text = extendedName)
+                    MoonLargeItemSubtitle(text = extendedName, maxLines = extendedNameMaxLines)
                 }
 
                 titleContent?.invoke()

@@ -28,13 +28,17 @@ data class CrossSwapProviderError(
     @SerialName(value = "protocol")
     val protocol: String? = null,
 
-    /* On `min_amount_not_met`, where the aggregator can price it: the smallest source amount it quotes the route at now, in US dollars, two places, rounded up -- with headroom for the price and the gas to move within a quote's life, so asking again with that much is quoted. Today only `relay` deposits into Lighter say.  */
+    /* On `min_amount_not_met`, where the aggregator can price it: the smallest source amount it quotes the route at now, in US dollars, two places, rounded up -- with headroom for the price and the gas to move within a quote's life, so asking again with that much is quoted. `relay` deposits into Lighter price it themselves; for `swapsxyz` it is `min_source_amount` at our USD rate, without headroom.  */
     @SerialName(value = "min_amount_usd")
     val minAmountUsd: String? = null,
 
     /* On `min_amount_not_met`, where known: what the source amount asked for would have delivered, in US dollars, two places, rounded down. \"0.00\" when it does not even cover the fixed costs.  */
     @SerialName(value = "expected_amount_usd")
-    val expectedAmountUsd: String? = null
+    val expectedAmountUsd: String? = null,
+
+    /* On `min_amount_not_met`, where the aggregator states it: the smallest source amount it quotes, in base units of the source asset, rounded up. `swapsxyz` gives its own minimum as is; `relay` deposits into Lighter carry the same headroom as `min_amount_usd`.  */
+    @SerialName(value = "min_source_amount")
+    val minSourceAmount: String? = null
 ) {
 }
 

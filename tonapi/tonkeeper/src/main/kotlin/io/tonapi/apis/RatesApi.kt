@@ -14,10 +14,8 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
-import io.tonapi.models.GetChartRates200Response
-import io.tonapi.models.GetMarketsRates200Response
-import io.tonapi.models.GetOpenapiJsonDefaultResponse
 import io.tonapi.models.GetRates200Response
+import io.tonapi.models.StatusDefaultResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -42,113 +40,6 @@ class RatesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCli
         val defaultBasePath: String by lazy {
             System.getProperties().getProperty(ApiClient.baseUrlKey, "https://tonapi.io")
         }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getChartRates(token: String, currency: String? = null, startDate: Long? = null, endDate: Long? = null, pointsCount: Int? = 200): GetChartRates200Response {
-        val localVarResponse = getChartRatesWithHttpInfo(token = token, currency = currency, startDate = startDate, endDate = endDate, pointsCount = pointsCount)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GetChartRates200Response
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getChartRatesWithHttpInfo(token: String, currency: String?, startDate: Long?, endDate: Long?, pointsCount: Int?): ApiResponse<GetChartRates200Response?> {
-        val localVariableConfig = getChartRatesRequestConfig(token = token, currency = currency, startDate = startDate, endDate = endDate, pointsCount = pointsCount)
-
-        return request<Unit, GetChartRates200Response>(
-            localVariableConfig
-        )
-    }
-
-    fun getChartRatesRequestConfig(token: String, currency: String?, startDate: Long?, endDate: Long?, pointsCount: Int?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                put("token", listOf(token.toString()))
-                if (currency != null) {
-                    put("currency", listOf(currency.toString()))
-                }
-                if (startDate != null) {
-                    put("start_date", listOf(startDate.toString()))
-                }
-                if (endDate != null) {
-                    put("end_date", listOf(endDate.toString()))
-                }
-                if (pointsCount != null) {
-                    put("points_count", listOf(pointsCount.toString()))
-                }
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/rates/chart",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getMarketsRates(): GetMarketsRates200Response {
-        val localVarResponse = getMarketsRatesWithHttpInfo()
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GetMarketsRates200Response
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getMarketsRatesWithHttpInfo(): ApiResponse<GetMarketsRates200Response?> {
-        val localVariableConfig = getMarketsRatesRequestConfig()
-
-        return request<Unit, GetMarketsRates200Response>(
-            localVariableConfig
-        )
-    }
-
-    fun getMarketsRatesRequestConfig(): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/rates/markets",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
     }
 
     @Suppress("UNCHECKED_CAST")

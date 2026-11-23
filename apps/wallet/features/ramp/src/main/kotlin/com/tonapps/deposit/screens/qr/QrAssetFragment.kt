@@ -1,6 +1,5 @@
 package com.tonapps.deposit.screens.qr
 
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import com.tonapps.blockchain.model.legacy.TokenEntity
@@ -35,12 +34,7 @@ class QrAssetFragment: ComposableFragment(), BaseFragment.BottomSheet {
 
     private fun getData(): QrAssetData {
         requireArguments().apply {
-            val token = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                getParcelable(ARG_TOKEN, TokenEntity::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                getParcelable(ARG_TOKEN)
-            }
+            val token = getParcelableCompat<TokenEntity>(ARG_TOKEN)
             val withBuy = getBoolean(ARG_WITH_BUY)
             val walletId = getString(ARG_WALLET_ID)
             val analyticsFrom = requireNotNull(depositFlowFromOrNull(getString(ARG_FROM))) {

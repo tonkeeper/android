@@ -9,8 +9,8 @@ import com.tonapps.blockchain.model.legacy.CommentEncryption
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -35,7 +35,7 @@ object TxScope {
                 } ?: throw Exception("User canceled")
                 settingsRepository.showEncryptedCommentModal = !noShowAgain
             }
-            if (!passcodeManager.confirmation(context, context.getString(Localization.app_name))) {
+            if (!passcodeManager.confirmation(context, PasscodeReason.DECRYPT_COMMENT)) {
                 throw Exception("Wrong passcode")
             }
             val privateKey = accountRepository.getPrivateKey(wallet.id) ?: throw Exception("Private key not found")

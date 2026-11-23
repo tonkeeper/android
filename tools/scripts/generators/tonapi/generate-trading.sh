@@ -8,4 +8,6 @@ bash "$SCRIPT_DIR/generate-tonapi.sh" \
   "$SPEC" \
   "tradingapi" \
   "tonapi:trading" \
-  "true"
+  "true" \
+  "" \
+  "$(dirname "$SPEC")/filters/trading.yaml"

@@ -104,7 +104,7 @@ Paths below are relative to this directory, the Gradle root. In the private mono
 | Networking    | OkHttp (Cronet), SSE                                          |
 | Serialization | Kotlin Serialization                                          |
 | Database      | SQLite (bundled)                                              |
-| Blockchain    | ton-kotlin (tvm, crypto, tlb, contract), Web3j, Bouncy Castle |
+| Blockchain    | ton-kotlin, TrustWalletCore (wallet-core), Bouncy Castle      |
 | Firebase      | Analytics, Crashlytics, Messaging, Performance, Remote Config |
 | Image Loading | Coil                                                          |
 | Code Quality  | Detekt, R8/ProGuard, Baseline Profiles                        |
@@ -199,7 +199,6 @@ GitHub Actions workflows live in the repository's `.github/workflows/`:
 |-----------------------|-------------------------------------------|--------------------------------|
 | `android-debug.yml`   | PRs touching `android/`, weekday schedule | Debug APK builds               |
 | `ci.yml`              | Tagged commits                            | Release builds                 |
-| `baselineprofile.yml` | Manual                                    | Performance profile generation |
 | `publish.yml`         | Manual                                    | Mirror to public repository    |
 
 ## Key Configuration Files

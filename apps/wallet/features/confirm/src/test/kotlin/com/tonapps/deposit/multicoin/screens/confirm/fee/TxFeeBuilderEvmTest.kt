@@ -1,14 +1,18 @@
 package com.tonapps.deposit.multicoin.screens.confirm.fee
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
+import com.tonapps.blockchain.model.ConfirmOperations
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.chainkit.chain.ethereum.utils.Hermes
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
 import com.tonapps.chainkit.core.op.Operation
+import com.tonapps.chainkit.core.op.Payload
+import com.tonapps.chainkit.core.op.PayloadMeta
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.Authorization
 import com.tonapps.wallet.api.entity.ConfigEntity
@@ -17,7 +21,6 @@ import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
-import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
 import com.tonapps.wallet.testing.BaseUnitTest
@@ -28,6 +31,7 @@ import com.tonapps.wallet.testing.testAsset
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -49,7 +53,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     private val unifiedAccountRepository = mockk<UnifiedAccountRepository>()
     private val accountRepo = mockk<McAccountRepository>()
     private val settings = mockk<SettingsRepository>()
-    private val evmGasless = mockk<EvmGasless>()
+    private val gaslessRelayer = mockk<GaslessRelayer>()
     private val wallet = mockk<WalletEntity>()
 
     private val builder = TxFeeBuilder(
@@ -60,7 +64,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         settingsRepository = settings,
         tokenRepository = mockk(),
         sender = mockk(relaxed = true),
-        evmGasless = evmGasless,
+        gaslessRelayer = gaslessRelayer,
     )
 
     private val usdcAsset = testAsset(USDC_ID, "USDC", decimals = 6)
@@ -74,15 +78,16 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     private var preferred = PreferredFeeMethod.UNSPECIFIED
     private var gaslessChains = setOf("eth/mainnet")
     private var estimations = listOf(
-        EvmGasless.Estimation(Asset.Battery.ID, BigInteger.fromInt(18), available = true),
-        EvmGasless.Estimation(USDC_ID, BigInteger.fromInt(115_304), available = false),
-        EvmGasless.Estimation(USDT_ID, BigInteger.fromInt(115_304), available = true),
+        GaslessRelayer.Estimation(Asset.Battery.ID, BigInteger.fromInt(18), available = true),
+        GaslessRelayer.Estimation(USDC_ID, BigInteger.fromInt(115_304), available = false),
+        GaslessRelayer.Estimation(USDT_ID, BigInteger.fromInt(115_304), available = true),
     )
 
     @Before
     fun setUp() {
         every { wallet.id } returns TestWallet.ID
         every { wallet.network } returns TonNetwork.MAINNET
+        every { wallet.isMultichainLedger } returns false
         every { api.getConfig(any()) } returns mockk<ConfigEntity>(relaxed = true)
         coEvery { unifiedAccountRepository.getTonWalletById(TestWallet.ID) } returns wallet
         coEvery { unifiedAccountRepository.getAuthBy(TestWallet.ID) } returns Authorization(
@@ -100,9 +105,8 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
             }
         }
         every { settings.getPreferredFeeMethod(any()) } answers { preferred }
-        every { settings.batteryIsEnabledTx(any(), any()) } returns true
         every { wallet.accountId } returns TestWallet.TON_ADDRESS
-        every { evmGasless.estimate(any(), any()) } answers { estimations }
+        every { gaslessRelayer.estimate(any(), any()) } answers { estimations }
         coEvery { batteryRepository.getGaslessChains(any(), any()) } answers { gaslessChains }
     }
 
@@ -131,7 +135,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     fun aBatteryWithoutTheChargesIsListedLast() = runTest {
         coEvery { batteryRepository.getCharges(any(), any()) } returns 3
         estimations = estimations.map { estimation ->
-            EvmGasless.Estimation(estimation.assetId, estimation.fee, available = estimation.assetId == USDT_ID)
+            GaslessRelayer.Estimation(estimation.assetId, estimation.fee, available = estimation.assetId == USDT_ID)
         }
 
         val state = build(amount = 1_000_000)
@@ -152,11 +156,12 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     @Test
     fun aPreferredFeeInATokenStartsWithTheOneBeingSent() = runTest {
         preferred = PreferredFeeMethod.GASLESS
-        estimations = estimations.map { EvmGasless.Estimation(it.assetId, it.fee, available = true) }
+        estimations = estimations.map { GaslessRelayer.Estimation(it.assetId, it.fee, available = true) }
 
         val state = build(amount = 1_000_000)
 
-        assertEquals(listOf(usdt.asset.id, USDC_ID, Asset.Battery.ID, eth.asset.id), state.options.map { it.id })
+        // Only the sent token stands for the kind: another token stays below battery and the coin.
+        assertEquals(listOf(usdt.asset.id, Asset.Battery.ID, eth.asset.id, USDC_ID), state.options.map { it.id })
     }
 
     @Test
@@ -169,7 +174,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
     @Test
     fun anotherTokenOfTheWalletCanPay() = runTest {
-        estimations = estimations.map { EvmGasless.Estimation(it.assetId, it.fee, available = true) }
+        estimations = estimations.map { GaslessRelayer.Estimation(it.assetId, it.fee, available = true) }
 
         val state = build(amount = 1_000_000)
 
@@ -191,8 +196,8 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     fun aBscTokenTheRelayerLabelsErc20PaysFromTheWalletsBep20Account() = runTest {
         gaslessChains = setOf("bsc/mainnet")
         estimations = listOf(
-            EvmGasless.Estimation(Asset.Battery.ID, BigInteger.fromInt(2), available = true),
-            EvmGasless.Estimation(DOGE_RELAYER_ID, BigInteger.fromInt(1_000_000), available = true),
+            GaslessRelayer.Estimation(Asset.Battery.ID, BigInteger.fromInt(2), available = true),
+            GaslessRelayer.Estimation(DOGE_RELAYER_ID, BigInteger.fromInt(1_000_000), available = true),
         )
 
         val state = buildBsc(amount = 100_000_000)
@@ -205,8 +210,8 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     @Test
     fun aBscTokenIsEmulatedUnderTheRelayersAssetId() = runTest {
         gaslessChains = setOf("bsc/mainnet")
-        estimations = listOf(EvmGasless.Estimation(DOGE_RELAYER_ID, BigInteger.fromInt(1_000_000), available = true))
-        every { evmGasless.emulate(any(), any(), DOGE_RELAYER_ID) } returns emulation(DOGE_RELAYER_ID, fee = 1_100_000)
+        estimations = listOf(GaslessRelayer.Estimation(DOGE_RELAYER_ID, BigInteger.fromInt(1_000_000), available = true))
+        every { gaslessRelayer.emulate(any(), any(), DOGE_RELAYER_ID) } returns emulation(DOGE_RELAYER_ID, fee = 1_100_000)
 
         val quoted = TxFeeLogic.quote(buildBsc(amount = 100_000_000), pickedId = doge.asset.id)
 
@@ -216,8 +221,8 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
     @Test
     fun aMaxCoinTransferIsCarriedWholeWhileTheCoinCanStillPayItsGas() = runTest {
-        val calls = mutableListOf<EvmGasless.Call>()
-        every { evmGasless.estimate(any(), capture(calls)) } answers { estimations }
+        val calls = mutableListOf<GaslessRelayer.Call>()
+        every { gaslessRelayer.estimate(any(), capture(calls)) } answers { estimations }
 
         val state = buildWholeEthBalance(shrinkToFit = true)
 
@@ -234,7 +239,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
     @Test
     fun anEstimateThatFailsKeepsThePlainFee() = runTest {
-        every { evmGasless.estimate(any(), any()) } throws IllegalStateException("502")
+        every { gaslessRelayer.estimate(any(), any()) } throws IllegalStateException("502")
 
         val state = build(amount = 1_000_000)
 
@@ -244,7 +249,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
     @Test
     fun theSelectedMethodIsPricedByItsEmulation() = runTest {
-        every { evmGasless.emulate(any(), any(), Asset.Battery.ID) } returns emulation(Asset.Battery.ID, fee = 19)
+        every { gaslessRelayer.emulate(any(), any(), Asset.Battery.ID) } returns emulation(Asset.Battery.ID, fee = 19)
 
         val quoted = TxFeeLogic.quote(build(amount = 1_000_000), pickedId = null)
 
@@ -252,12 +257,12 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         assertEquals("19", quoted.findOption(Asset.Battery.ID)?.fee?.amount.toString())
         assertEquals("115304", quoted.findOption(usdt.asset.id)?.fee?.amount.toString())
         assertNotNull(quoted.relayer)
-        verify(exactly = 1) { evmGasless.emulate(any(), any(), any()) }
+        verify(exactly = 1) { gaslessRelayer.emulate(any(), any(), any()) }
     }
 
     @Test
     fun aPickedTokenIsEmulatedUnderTheRelayersAssetId() = runTest {
-        every { evmGasless.emulate(any(), any(), USDT_ID) } returns emulation(USDT_ID, fee = 123_433)
+        every { gaslessRelayer.emulate(any(), any(), USDT_ID) } returns emulation(USDT_ID, fee = 123_433)
 
         val quoted = TxFeeLogic.quote(build(amount = 1_000_000), pickedId = usdt.asset.id)
 
@@ -267,7 +272,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
     @Test
     fun anEmulationThatFailsRulesTheMethodOut() = runTest {
-        every { evmGasless.emulate(any(), any(), Asset.Battery.ID) } throws IllegalStateException("emulation_failed")
+        every { gaslessRelayer.emulate(any(), any(), Asset.Battery.ID) } throws IllegalStateException("emulation_failed")
 
         val quoted = TxFeeLogic.quote(build(amount = 1_000_000), pickedId = null)
 
@@ -278,8 +283,8 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
     @Test
     fun anEmulatedPriceTheBalanceCannotCoverHandsTheSelectionOn() = runTest {
-        every { evmGasless.emulate(any(), any(), USDT_ID) } returns emulation(USDT_ID, fee = 1_100_000)
-        every { evmGasless.emulate(any(), any(), Asset.Battery.ID) } returns emulation(Asset.Battery.ID, fee = 19)
+        every { gaslessRelayer.emulate(any(), any(), USDT_ID) } returns emulation(USDT_ID, fee = 1_100_000)
+        every { gaslessRelayer.emulate(any(), any(), Asset.Battery.ID) } returns emulation(Asset.Battery.ID, fee = 19)
 
         val quoted = TxFeeLogic.quote(build(amount = 1_000_000), pickedId = usdt.asset.id)
 
@@ -295,8 +300,19 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         assertEquals(listOf(Asset.Battery.ID, eth.asset.id, usdt.asset.id, USDC_ID), state.options.map { it.id })
         assertNotNull(state.quote)
         verify(exactly = 1) {
-            evmGasless.estimate(any(), match { it.type == EvmGasless.Call.Type.Swap && it.data == SWAP_CALLDATA })
+            gaslessRelayer.estimate(any(), match { it.type == GaslessRelayer.Call.Type.Swap && it.data == SWAP_CALLDATA })
         }
+    }
+
+    /** A swap call's tokens are inside its calldata: only what it is said to sell holds a fee in them to the balance. */
+    @Test
+    fun aFeeInTheTokenSoldHasToFitNextToWhatTheCallSells() = runTest {
+        val fits = buildSwap(swap(amount = 0, data = SWAP_CALLDATA), sold = BigInteger.fromInt(2006121 - 115_304))
+        val short = buildSwap(swap(amount = 0, data = SWAP_CALLDATA), sold = BigInteger.fromInt(2006121 - 115_303))
+
+        assertTrue(checkNotNull(fits.findOption(usdt.asset.id)).available)
+        assertFalse(checkNotNull(short.findOption(usdt.asset.id)).available)
+        assertTrue("a fee in another asset is not held to what is sold", checkNotNull(short.findOption(eth.asset.id)).available)
     }
 
     @Test
@@ -312,47 +328,35 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
         assertTrue(state.options.isEmpty())
         assertNull(state.quote)
-        verify(exactly = 0) { evmGasless.estimate(any(), any()) }
+        verify(exactly = 0) { gaslessRelayer.estimate(any(), any()) }
     }
 
+    /** Where the operation is sent whole, the relayer carries the approve with the swap: one batch, priced as one call. */
     @Test
-    fun aSwapWithBatteryTurnedOffForSwapsKeepsThePlainFee() = runTest {
-        every { settings.batteryIsEnabledTx(any(), BatteryTransaction.SWAP) } returns false
+    fun aSwapWithItsApproveIsRelayedAsOneBatch() = runTest {
+        val estimated = slot<GaslessRelayer.Call>()
+        val emulated = slot<List<GaslessRelayer.Call>>()
+        every { gaslessRelayer.estimate(any(), capture(estimated)) } answers { estimations }
+        every { gaslessRelayer.emulate(any(), capture(emulated), Asset.Battery.ID) } returns emulation(Asset.Battery.ID, fee = 19)
+        val approve = Transaction.Call(
+            account = usdt.value,
+            contract = Address.force(USDT_CONTRACT, Chain.Ethereum.Mainnet),
+            amount = BigInteger.ZERO,
+            data = APPROVE_ROUTER,
+        )
 
-        val state = buildSwap(swap(amount = 0, data = SWAP_CALLDATA))
-
-        assertTrue(state.options.isEmpty())
-        verify(exactly = 0) { evmGasless.estimate(any(), any()) }
-    }
-
-    @Test
-    fun aTokenTransferWithBatteryTurnedOffForTransfersKeepsThePlainFee() = runTest {
-        every { settings.batteryIsEnabledTx(any(), BatteryTransaction.JETTON) } returns false
-
-        val state = build(amount = 1_000_000)
-
-        assertTrue(state.options.isEmpty())
-        verify(exactly = 0) { evmGasless.estimate(any(), any()) }
-    }
-
-    @Test
-    fun aCoinTransferWithBatteryTurnedOffForTransfersKeepsThePlainFee() = runTest {
-        every { settings.batteryIsEnabledTx(any(), BatteryTransaction.JETTON) } returns false
-
-        val state = build(amount = 1_000, account = eth)
-
-        assertTrue(state.options.isEmpty())
-        verify(exactly = 0) { evmGasless.estimate(any(), any()) }
-    }
-
-    @Test
-    fun aSwapWithBatteryTurnedOffForTransfersIsStillOfferedTheRelayedMethods() = runTest {
-        every { settings.batteryIsEnabledTx(any(), BatteryTransaction.JETTON) } returns false
-
-        val state = buildSwap(swap(amount = 0, data = SWAP_CALLDATA))
+        val state = buildSwap(swap(amount = 0, data = SWAP_CALLDATA), approvals = listOf(approve), relayApprovals = true)
+        val quoted = TxFeeLogic.quote(state, pickedId = null)
 
         assertEquals(listOf(Asset.Battery.ID, eth.asset.id, usdt.asset.id, USDC_ID), state.options.map { it.id })
-        verify(exactly = 1) { evmGasless.estimate(any(), any()) }
+        // Priced as the call of the wallet to itself that runs both.
+        assertTrue(estimated.captured.to.equals(TestWallet.ETH_ADDRESS, ignoreCase = true))
+        assertEquals(BigInteger.ZERO, estimated.captured.value)
+        assertEquals(executeOf(approveThenRouterCall()), estimated.captured.data)
+        // Emulated, and so sent, as the approve and then the swap.
+        assertEquals(Asset.Battery.ID, quoted.quotedId)
+        assertEquals(listOf(USDT_CONTRACT.lowercase(), ROUTER.lowercase()), emulated.captured.map { it.to.lowercase() })
+        assertEquals(listOf(APPROVE_ROUTER, SWAP_CALLDATA), emulated.captured.map { it.data })
     }
 
     @Test
@@ -364,7 +368,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         assertTrue(state.options.isEmpty())
         assertNull(state.quote)
         assertEquals(nativeFee, state.estimated)
-        verify(exactly = 0) { evmGasless.estimate(any(), any()) }
+        verify(exactly = 0) { gaslessRelayer.estimate(any(), any()) }
     }
 
     @Test
@@ -375,7 +379,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
 
         assertTrue(state.options.isEmpty())
         assertNull(state.quote)
-        verify(exactly = 0) { evmGasless.estimate(any(), any()) }
+        verify(exactly = 0) { gaslessRelayer.estimate(any(), any()) }
     }
 
     @Test
@@ -385,7 +389,17 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         val state = build(amount = 1_000_000)
 
         assertTrue(state.options.isEmpty())
-        verify(exactly = 0) { evmGasless.estimate(any(), any()) }
+        verify(exactly = 0) { gaslessRelayer.estimate(any(), any()) }
+    }
+
+    @Test
+    fun aLedgerWalletKeepsThePlainFee() = runTest {
+        every { wallet.isMultichainLedger } returns true
+
+        val state = build(amount = 1_000_000)
+
+        assertTrue(state.options.isEmpty())
+        verify(exactly = 0) { gaslessRelayer.estimate(any(), any()) }
     }
 
     /** The relayer priced the battery and the charges fall short: recharging pays the fee. */
@@ -409,7 +423,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     @Test
     fun aBatteryTheRelayerRulesOutIsNotRechargeable() = runTest {
         coEvery { batteryRepository.getCharges(any(), any()) } returns 3
-        estimations = estimations.map { EvmGasless.Estimation(it.assetId, it.fee, available = it.assetId != Asset.Battery.ID) }
+        estimations = estimations.map { GaslessRelayer.Estimation(it.assetId, it.fee, available = it.assetId != Asset.Battery.ID) }
 
         val state = build(amount = 1_000_000)
 
@@ -420,7 +434,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     @Test
     fun anEstimateThatFailsIsNotRechargeable() = runTest {
         coEvery { batteryRepository.getCharges(any(), any()) } returns 0
-        every { evmGasless.estimate(any(), any()) } throws IllegalStateException("502")
+        every { gaslessRelayer.estimate(any(), any()) } throws IllegalStateException("502")
 
         val state = build(amount = 1_000_000)
 
@@ -477,6 +491,8 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
     private suspend fun buildSwap(
         transaction: Transaction.Swap,
         approvals: List<Transaction> = emptyList(),
+        sold: BigInteger? = null,
+        relayApprovals: Boolean = false,
     ): TxFeeState = builder.buildSwap(
         account = usdt,
         energy = eth,
@@ -486,7 +502,71 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         estimated = nativeFee,
         attachedEnergy = BigInteger.ZERO,
         shrinkToFit = false,
+        sold = sold,
+        relayApprovals = relayApprovals,
     )
+
+    @Test
+    fun aSelfCallBatchIsEstimatedWholeAndEmulatedAsItsCalls() = runTest {
+        val calls = slot<List<GaslessRelayer.Call>>()
+        every { gaslessRelayer.emulate(any(), capture(calls), Asset.Battery.ID) } returns emulation(Asset.Battery.ID, fee = 19)
+
+        val state = buildOperation(selfCall(executeOf(approveThenRouterCall())))
+        val quoted = TxFeeLogic.quote(state, pickedId = null)
+
+        assertEquals(Asset.Battery.ID, quoted.quotedId)
+        assertEquals(listOf(USDT_CONTRACT.lowercase(), ROUTER.lowercase()), calls.captured.map { it.to.lowercase() })
+        assertEquals(listOf(APPROVE_ROUTER, SWAP_CALLDATA), calls.captured.map { it.data })
+        verify(exactly = 1) { gaslessRelayer.estimate(any(), match { it.to.equals(TestWallet.ETH_ADDRESS, ignoreCase = true) }) }
+    }
+
+    @Test
+    fun aSelfCallThatIsNotAPlainBatchKeepsTheCoin() = runTest {
+        val state = buildOperation(selfCall(executeOf(approveThenRouterCall()) + "00"))
+
+        assertTrue(state.options.isEmpty())
+        assertEquals(nativeFee, state.estimated)
+        verify(exactly = 0) { gaslessRelayer.estimate(any(), any()) }
+    }
+
+    @Test
+    fun aCallToAnotherAddressIsEmulatedAsItIs() = runTest {
+        val calls = slot<List<GaslessRelayer.Call>>()
+        every { gaslessRelayer.emulate(any(), capture(calls), Asset.Battery.ID) } returns emulation(Asset.Battery.ID, fee = 19)
+
+        TxFeeLogic.quote(buildOperation(call(to = ROUTER, data = SWAP_CALLDATA)), pickedId = null)
+
+        assertEquals(listOf(ROUTER.lowercase()), calls.captured.map { it.to.lowercase() })
+        assertEquals(listOf(SWAP_CALLDATA), calls.captured.map { it.data })
+    }
+
+    private suspend fun buildOperation(payload: Payload): TxFeeState {
+        return builder.buildOperation(
+            account = usdt,
+            energy = eth,
+            walletId = TestWallet.ID,
+            payload = payload,
+            spentAmount = BigInteger.fromInt(1_000_000),
+            estimated = nativeFee,
+        )
+    }
+
+    private fun selfCall(data: String) = call(to = TestWallet.ETH_ADDRESS, data = data)
+
+    private fun call(to: String, data: String) = ConfirmOperations.payload(
+        index = 0,
+        chain = Chain.Ethereum.Mainnet,
+        meta = PayloadMeta.Evm.Main(to = Address.force(to, Chain.Ethereum.Mainnet), value = BigInteger.ZERO, data = data),
+    )
+
+    private fun approveThenRouterCall() = listOf(
+        Hermes.Call(Address.force(USDT_CONTRACT, Chain.Ethereum.Mainnet), BigInteger.ZERO, APPROVE_ROUTER),
+        Hermes.Call(Address.force(ROUTER, Chain.Ethereum.Mainnet), BigInteger.ZERO, SWAP_CALLDATA),
+    )
+
+    private fun executeOf(calls: List<Hermes.Call>): String {
+        return "0x" + Hermes.execute(Hermes.mode(), Hermes.encodeCalls(calls)).joinToString("") { "%02x".format(it) }
+    }
 
     private fun swap(amount: Int, data: String?) = Transaction.Swap(
         account = usdt.value,
@@ -497,7 +577,7 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         data = data,
     )
 
-    private fun emulation(assetId: String, fee: Int) = EvmGasless.Emulation(
+    private fun emulation(assetId: String, fee: Int) = GaslessRelayer.Emulation(
         assetId = assetId,
         fee = BigInteger.fromInt(fee),
         operation = Operation.build("bcef74e1-b940-4142-b7a7-76161850971e", emptyList()),
@@ -512,5 +592,6 @@ class TxFeeBuilderEvmTest : BaseUnitTest() {
         const val DOGE_RELAYER_ID = "bsc/mainnet/erc20/0xba2ae424d960c26247dd6c32edc70b295c744c43"
         const val ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
         const val SWAP_CALLDATA = "0x38ed1739"
+        const val APPROVE_ROUTER = "0x095ea7b30000000000000000000000007a250d5630b4cf539739df2c5dacb4c659f2488d00000000000000000000000000000000000000000000000000000000000f4240"
     }
 }

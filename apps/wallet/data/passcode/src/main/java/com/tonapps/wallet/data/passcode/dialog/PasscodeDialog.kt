@@ -6,6 +6,7 @@ import android.view.View
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.wallet.data.passcode.PasscodeHelper
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.apps.wallet.data.passcode.R
 import com.tonapps.lib.log.BuildConfig
 import com.tonapps.wallet.data.passcode.ui.PasscodeView
@@ -23,6 +24,7 @@ import kotlin.coroutines.resume
 
 class PasscodeDialog(
     context: Context,
+    reason: PasscodeReason,
     private val callback: ((code: String?) -> Unit)
 ): BaseDialog(context) {
 
@@ -43,6 +45,7 @@ class PasscodeDialog(
         headerView.doOnCloseClick = { dismiss() }
 
         passcodeView = findViewById(R.id.passcode)
+        passcodeView.setReason(reason)
         passcodeView.doOnCheck = { code ->
             passcodeView.isEnabled = false
             check(code)
@@ -101,18 +104,11 @@ class PasscodeDialog(
 
     companion object {
 
-        fun request(context: Context, callback: ((code: String?) -> Unit)) {
-            PasscodeDialog(context, callback).show()
-        }
-
-        suspend fun request(context: Context): String? = suspendCancellableCoroutine { continuation ->
-            request(context) { code ->
+        suspend fun request(context: Context, reason: PasscodeReason): String? = suspendCancellableCoroutine { continuation ->
+            PasscodeDialog(context, reason) { code ->
                 continuation.resume(code)
-            }
-        }
-
-        suspend fun confirmation(context: Context): Boolean {
-            return request(context) != null
+            }.show()
         }
     }
+
 }

@@ -1,13 +1,12 @@
 package com.tonapps.ledger.ton
 
 import com.tonapps.blockchain.model.legacy.TransferEntity
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.model.legacy.toGrams
 import com.tonapps.icu.Coins
 import org.ton.block.AddrStd
 
 fun TransferEntity.getLedgerTransaction(jettonTransferAmount: Coins): Transaction? {
-        if (wallet.type != WalletType.Ledger) {
+        if (!wallet.signsWithLedger) {
             return null
         }
         

@@ -175,13 +175,13 @@ private fun PerpsSizeChangeContent(
 
     val isAdd = direction == PerpsSizeDirection.ADD
     val markText = mark?.let { formatUsd(it) } ?: PERPS_EMPTY_VALUE
-    val sideText = stringResource(
-        if (side == PerpsOrderSide.LONG) {
-            Localization.perps_long
-        } else {
-            Localization.perps_short
-        }
-    )
+    val isLong = side == PerpsOrderSide.LONG
+    val titleRes = when {
+        isAdd && isLong -> Localization.perps_review_add_long_title
+        isAdd -> Localization.perps_review_add_short_title
+        isLong -> Localization.perps_review_reduce_long_title
+        else -> Localization.perps_review_reduce_short_title
+    }
     val sizeText = sizePreview?.let { preview ->
         val next = preview.next
         if (next != null) {
@@ -221,15 +221,7 @@ private fun PerpsSizeChangeContent(
             MoonTopAppBar(
                 title = {
                     MoonTopAppBarTitle(
-                        text = stringResource(
-                            if (isAdd) {
-                                Localization.perps_review_add_title
-                            } else {
-                                Localization.perps_review_reduce_title
-                            },
-                            sideText,
-                            symbol,
-                        ),
+                        text = stringResource(titleRes, symbol),
                     )
                 },
                 subtitle = {

@@ -2,6 +2,9 @@ package com.tonapps.perps.data
 
 import com.tonapps.mvi.graph.KResult
 
+private const val MAX_HELD_BARS = 20_000
+private const val HELD_TRIM_SLACK = 2_000
+
 sealed interface PerpsChartFeedEvent {
     data class Series(val candles: List<PerpsCandle>) : PerpsChartFeedEvent
     data object Reconnecting : PerpsChartFeedEvent
@@ -59,7 +62,7 @@ private fun PerpsChartFeedState.onSeries(candles: List<PerpsCandle>): PerpsChart
     val prior = held
     val contiguous = !prior.isNullOrEmpty() && candles.isNotEmpty() && prior.last().time >= candles.first().time
     return if (contiguous) {
-        publish(prior.prependTo(candles), staleEpoch = null)
+        publish(prior.prependTo(candles).trimmedToHeldLimit(), staleEpoch = null)
     } else {
         copy(historyExhausted = false).publish(candles, staleEpoch = null)
     }
@@ -73,7 +76,11 @@ private fun PerpsChartFeedState.onOlder(candles: List<PerpsCandle>, endTimeSecon
     if (candles.isEmpty()) {
         return PerpsChartFeedStep(state = copy(historyExhausted = true))
     }
-    return publish(candles.prependTo(frame), staleEpoch)
+    val composite = candles.prependTo(frame)
+    if (composite.size > MAX_HELD_BARS) {
+        return copy(historyExhausted = true).publish(composite.takeLast(MAX_HELD_BARS), staleEpoch)
+    }
+    return publish(composite, staleEpoch)
 }
 
 private fun PerpsChartFeedState.publish(composite: List<PerpsCandle>, staleEpoch: Long?): PerpsChartFeedStep {
@@ -86,6 +93,13 @@ private fun PerpsChartFeedState.publish(composite: List<PerpsCandle>, staleEpoch
         state = copy(held = composite, emitted = composite, parked = null, staleEpoch = staleEpoch),
         emission = KResult.Ok(PerpsChartSeries(composite, staleEpoch)),
     )
+}
+
+private fun List<PerpsCandle>.trimmedToHeldLimit(): List<PerpsCandle> {
+    if (size <= MAX_HELD_BARS) {
+        return this
+    }
+    return takeLast(MAX_HELD_BARS - HELD_TRIM_SLACK)
 }
 
 private fun List<PerpsCandle>.prependTo(candles: List<PerpsCandle>): List<PerpsCandle> {

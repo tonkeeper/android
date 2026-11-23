@@ -22,7 +22,11 @@ import kotlinx.serialization.encoding.Encoder
 @Serializable
 data class Status(
     @SerialName(value = "pending_transactions")
-    val pendingTransactions: List<StatusPendingTransactionsInner>
+    val pendingTransactions: List<StatusPendingTransactionsInner>,
+
+    /* The user's wallets a message to which /message refuses now (err-gasless-pending-messages): a message of theirs is accepted and has not landed, or a transaction of theirs is still running its trace. A wallet is busy from the moment /message accepts a message. Send the next message to a wallet once it is no longer listed here. */
+    @SerialName(value = "busy_wallets")
+    val busyWallets: List<StatusBusyWalletsInner>
 ) {
 }
 

@@ -272,6 +272,12 @@ fun View.hapticReject() {
     }
 }
 
+fun View.hapticSoftTap() {
+    post {
+        performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+    }
+}
+
 private fun View.performHapticFeedbackWithFallback(constant: Int) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && performHapticFeedback(constant)) {
         return

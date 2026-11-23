@@ -1,32 +1,26 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge
 
 import android.app.Application
-import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.bus.core.contract.TonAddressTags
 import com.tonapps.blockchain.ton.TonNetwork
-import com.tonapps.blockchain.ton.TonTransferHelper
-import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.equalsRawAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeSize
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeType
+import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.state
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
-import com.tonapps.blockchain.model.legacy.TransferEntity
-import com.tonapps.blockchain.model.legacy.toGrams
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.battery.recharge.asset.formatMinAmount
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.BatteryRechargeEvent
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackEntity
-import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.deposit.screens.send.state.SendDestination
-import com.tonapps.tonkeeper.ui.screen.send.transaction.BroadcastVia
-import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeperx.BuildConfig
 import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
@@ -39,9 +33,7 @@ import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.battery.entity.BatteryConfigEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodType
-import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
-import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
@@ -65,7 +57,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.ton.block.AddrStd
 import java.math.BigDecimal
 
 class BatteryRechargeViewModel(
@@ -76,9 +67,9 @@ class BatteryRechargeViewModel(
     private val batteryRepository: BatteryRepository,
     private val tokenRepository: TokenRepository,
     private val settingsRepository: SettingsRepository,
-    private val ratesRepository: RatesRepository,
     private val api: API,
-    private val analytics: AnalyticsHelper
+    private val analytics: AnalyticsHelper,
+    private val tonRecharge: BatteryTonRecharge,
 ) : BaseWalletVM(app) {
 
     private val _tokenFlow = MutableStateFlow<AccountTokenEntity?>(null)
@@ -117,7 +108,7 @@ class BatteryRechargeViewModel(
     private val _eventFlow = MutableEffectFlow<BatteryRechargeEvent>()
     val eventFlow = _eventFlow.asSharedFlow().filterNotNull()
 
-    private val _selectedPackTypeFlow = MutableStateFlow<RechargePackType?>(null)
+    private val _selectedPackTypeFlow = MutableStateFlow<String?>(null)
     private val _customAmountFlow = MutableStateFlow(false)
 
     private val _supportedTokensFlow = MutableStateFlow<List<AccountTokenEntity>?>(null)
@@ -156,13 +147,11 @@ class BatteryRechargeViewModel(
         val ton = tokenRepository.get(settingsRepository.currency, wallet.accountId, wallet.network)
             ?.find { it.isTon }
             ?: return@combine emptyList()
-        val hasEnoughTonBalance = ton.balance.value >= Coins.of(0.1)
-        val hasBatteryBalance = batteryBalance.balance > Coins.ZERO
-        val rechargeMethod = getRechargeMethod(wallet, token)
+        val willBePaidManually = tonRecharge.willBePaidManually(ton, batteryBalance)
+        val batteryConfig = getBatteryConfig(wallet)
+        val rechargeMethod = tonRecharge.rechargeMethod(batteryConfig, token) ?: return@combine emptyList()
         val shouldMinusReservedAmount =
             batteryBalance.reservedBalance.value == BigDecimal.ZERO || args.isGift
-
-        val batteryConfig = getBatteryConfig(wallet)
 
         val batteryReservedAmount = rechargeMethod.fromTon(batteryConfig.reservedAmount)
 
@@ -186,12 +175,7 @@ class BatteryRechargeViewModel(
             uiItems.add(Item.Space)
         }
 
-        val packs = getPacks(
-            rechargeMethod,
-            token,
-            hasEnoughTonBalance || hasBatteryBalance,
-            shouldMinusReservedAmount
-        )
+        val packs = tonRecharge.packs(wallet, token, batteryConfig, willBePaidManually)
 
         uiItems.addAll(uiItemsPacks(packs, selectedPackType, customAmount))
 
@@ -202,7 +186,7 @@ class BatteryRechargeViewModel(
 
         val remainingBalance = token.balance.value - amount
         val minAmount: Coins = when {
-            !hasBatteryBalance && !hasEnoughTonBalance && rechargeMethod.minBootstrapValue != null -> {
+            !willBePaidManually && rechargeMethod.minBootstrapValue != null -> {
                 Coins.of(rechargeMethod.minBootstrapValue!!)
             }
 
@@ -211,19 +195,17 @@ class BatteryRechargeViewModel(
         }
         val isLessThanMin = amount > Coins.ZERO && amount < minAmount
 
-        val calculateFiatFrom = if (shouldMinusReservedAmount) {
-            batteryReservedAmount
+        val customAmountCharges = if (customAmount) {
+            BatteryMapper.calculateCryptoCharges(
+                rechargeMethod,
+                batteryConfig.chargeCost,
+                amount
+            )
         } else {
-            Coins.ZERO
+            0
         }
 
         if (customAmount) {
-            val charges = BatteryMapper.calculateCryptoCharges(
-                getRechargeMethod(wallet, token),
-                batteryConfig.chargeCost,
-                amount.minus(calculateFiatFrom).coerceAtLeast(Coins.ZERO)
-            )
-
             uiItems.add(Item.Space)
 
             uiItems.add(
@@ -233,12 +215,19 @@ class BatteryRechargeViewModel(
                     formattedRemaining = CurrencyFormatter.format(
                         currency = token.symbol, value = remainingBalance
                     ),
-                    formattedMinAmount = CurrencyFormatter.format(
-                        currency = token.symbol, value = minAmount, scale = 3, // TODO maybe we shouldn't hardcode
+                    // Rounded up, in the separators of the "Remaining" this hint takes the place of.
+                    formattedMinAmount = formatMinAmount(
+                        symbol = CurrencyFormatter.symbol(token.symbol),
+                        min = minAmount.value,
+                        decimals = token.decimals,
+                        options = Formatter.defaultOptions.copy(
+                            decimalSeparator = CurrencyFormatter.decimalSeparator,
+                            groupingSeparator = CurrencyFormatter.groupingSeparator,
+                        ),
                     ),
                     isInsufficientBalance = remainingBalance.isNegative,
                     isLessThanMin = isLessThanMin,
-                    formattedCharges = charges.toString(),
+                    formattedCharges = customAmountCharges.toString(),
                     value = _amountFlow.value,
                 )
             )
@@ -251,7 +240,7 @@ class BatteryRechargeViewModel(
         }
 
         val isValidAmount = if (customAmount) {
-            amount.isPositive && !isLessThanMin && !remainingBalance.isNegative
+            customAmountCharges > 0 && !isLessThanMin && !remainingBalance.isNegative
         } else {
             packs.any { it.type == selectedPackType && it.isEnabled }
         }
@@ -265,6 +254,10 @@ class BatteryRechargeViewModel(
     }
 
     init {
+        if (args.selectsCustomAmount) {
+            onCustomAmountSelect()
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             val appliedPromo = batteryRepository.getAppliedPromo(wallet.network)
 
@@ -341,7 +334,7 @@ class BatteryRechargeViewModel(
         _amountFlow.value = amount
     }
 
-    fun setSelectedPack(packType: RechargePackType) {
+    fun setSelectedPack(packType: String) {
         _selectedPackTypeFlow.tryEmit(packType)
         _customAmountFlow.tryEmit(false)
     }
@@ -355,110 +348,26 @@ class BatteryRechargeViewModel(
         stateFlow,
         destinationFlow
     ) { (wallet, token), destination ->
-        val rechargeMethod = getRechargeMethod(wallet, token)
-        val batteryBalance = getBatteryBalance(wallet)
-        val config = getBatteryConfig(wallet)
-        val batteryMaxInputAmount = rechargeMethod.fromTon(api.getConfig(wallet.network).batteryMaxInputAmount)
-
-        val amount = _selectedPackTypeFlow.value?.let { packType ->
-            rechargeMethod.fromTon(
-                RechargePackEntity.getTonAmount(
-                    config.chargeCost,
-                    packType
-                )
-            )
-        } ?: Coins.of(_amountFlow.value, token.decimals)
-
-        if (amount > batteryMaxInputAmount) {
-            _eventFlow.tryEmit(
-                BatteryRechargeEvent.MaxAmountError(
-                    currency = token.symbol,
-                    maxAmount = batteryMaxInputAmount
-                )
-            )
-            return@combine
-        }
-
-        val fundReceiver = config.fundReceiver ?: return@combine
         val recipientAddress = if (destination is SendDestination.TonAccount) {
             destination.address
         } else {
             null
         }
-        val payload = wallet.contract.createBatteryBody(
-            recipientAddress,
-            appliedPromo = batteryRepository.getAppliedPromo(wallet.network)
+        val event = tonRecharge.request(
+            wallet = wallet,
+            token = token,
+            packType = _selectedPackTypeFlow.value,
+            customAmount = Coins.of(_amountFlow.value, token.decimals),
+            recipient = recipientAddress,
         )
-        val validUntil = accountRepository.getValidUntil(wallet.network)
-
-        val forceRelayer = when {
-            token.isTon -> false
-            batteryBalance.balance.value > BigDecimal.ZERO -> true
-            rechargeMethod.minBootstrapValue != null -> {
-                amount.value >= rechargeMethod.minBootstrapValue!!.toBigDecimal()
-            }
-
-            else -> false
-        }
-
-        if (token.isTon) {
-            val request = SignRequestEntity.Builder()
-                .setFrom(wallet.contract.address)
-                .setValidUntil(validUntil)
-                .setIgnoreInsufficientBalance(true)
-                .addMessage(
-                    RawMessageEntity(
-                        addressValue = fundReceiver,
-                        amount = amount.toBigInteger(),
-                        stateInitValue = null,
-                        payloadValue = payload.base64()
-                    )
-                )
-                .setNetwork(wallet.network)
-                .build("https://battery.tonkeeper.com/".toUri())
-
-            _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
-        } else {
-            val queryId = TransferEntity.newWalletQueryId()
-            val customPayload = if (token.isRequestMinting) {
-                api.getJettonCustomPayload(wallet.accountId, wallet.network, token.address)
-            } else {
-                null
-            }
-
-            val jettonPayload = TonTransferHelper.jetton(
-                queryId = queryId,
-                coins = amount.toGrams(),
-                toAddress = AddrStd.parse(fundReceiver),
-                responseAddress = wallet.contract.address,
-                forwardPayload = payload,
-                customPayload = customPayload?.customPayload
-            )
-
-            val request = SignRequestEntity.Builder()
-                .setFrom(wallet.contract.address)
-                .setValidUntil(validUntil)
-                .setIgnoreInsufficientBalance(true)
-                .addMessage(
-                    RawMessageEntity(
-                        addressValue = token.balance.walletAddress,
-                        amount = Coins.of(0.1).toBigInteger(), // TODO fees: forward fee?
-                        stateInitValue = null,
-                        payloadValue = jettonPayload.base64()
-                    )
-                )
-                .setNetwork(wallet.network)
-                .build("https://battery.tonkeeper.com/".toUri())
-
-            _eventFlow.tryEmit(BatteryRechargeEvent.Sign(request, forceRelayer))
-        }
+        _eventFlow.tryEmit(event)
     }.catch {
         _eventFlow.tryEmit(BatteryRechargeEvent.Error)
     }.take(1).flowOn(Dispatchers.IO).launchIn(viewModelScope)
 
     private fun uiItemsPacks(
         packs: List<RechargePackEntity>,
-        selectedPackType: RechargePackType?,
+        selectedPackType: String?,
         isCustomAmount: Boolean
     ): List<Item> {
         val uiItems = mutableListOf<Item>()
@@ -559,46 +468,6 @@ class BatteryRechargeViewModel(
         }
     }
 
-    private suspend fun getRechargeMethod(
-        wallet: WalletEntity, token: AccountTokenEntity
-    ): RechargeMethodEntity {
-        val rechargeMethods = getBatteryConfig(wallet).rechargeMethods
-        return rechargeMethods.first {
-            if (it.type == RechargeMethodType.TON) {
-                token.isTon
-            } else {
-                it.jettonMaster == token.address
-            }
-        }
-    }
-
-    private suspend fun getPacks(
-        rechargeMethod: RechargeMethodEntity,
-        token: AccountTokenEntity,
-        willBePaidManually: Boolean,
-        shouldMinusReservedAmount: Boolean
-    ): List<RechargePackEntity> {
-        val fiatRate = ratesRepository.getRates(wallet.network, settingsRepository.currency, token.address)
-            .getRate(token.address)
-        val serverConfig = api.getConfig(wallet.network)
-
-        return arrayOf(
-            RechargePackType.LARGE, RechargePackType.MEDIUM, RechargePackType.SMALL
-        ).map { type ->
-            RechargePackEntity(
-                type = type,
-                rechargeMethod = rechargeMethod,
-                fiatRate = fiatRate,
-                token = token,
-                config = serverConfig,
-                shouldMinusReservedAmount = shouldMinusReservedAmount,
-                willBePaidManually = willBePaidManually,
-                currency = settingsRepository.currency,
-                batteryConfig = getBatteryConfig(wallet)
-            )
-        }.filter { it.isAvailableToBuy }
-    }
-
     private suspend fun getDestinationAccount(
         userInput: String, network: TonNetwork
     ) = withContext(Dispatchers.IO) {
@@ -647,17 +516,7 @@ class BatteryRechargeViewModel(
     }
 
     fun sign(request: SignRequestEntity, forceRelayer: Boolean) = flow {
-        val boc = SendTransactionScreen.run(
-            context = context,
-            wallet = wallet,
-            request = request,
-            forceRelayer = forceRelayer,
-            broadcastVia = when (wallet.isMultichain) {
-                true -> BroadcastVia.Battery
-                else -> BroadcastVia.Default
-            },
-            utm = args.utm,
-        )
+        val boc = tonRecharge.sign(context, wallet, request, forceRelayer, args.utm, args.isGift)
 
         val size = if (_customAmountFlow.value) {
             BatteryNativeSize.Custom
@@ -676,10 +535,6 @@ class BatteryRechargeViewModel(
     }.flowOn(Dispatchers.IO)
 }
 
-private fun RechargePackType.batterySize(): BatteryNativeSize {
-    return when (this) {
-        RechargePackType.LARGE -> BatteryNativeSize.Large
-        RechargePackType.MEDIUM -> BatteryNativeSize.Medium
-        RechargePackType.SMALL -> BatteryNativeSize.Small
-    }
+internal fun String.batterySize(): BatteryNativeSize {
+    return BatteryNativeSize.entries.firstOrNull { it.key == this } ?: BatteryNativeSize.Custom
 }

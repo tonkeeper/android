@@ -7,6 +7,7 @@ plugins {
 dependencies {
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.api)
+    implementation(projects.tonapi.tonendpoint)
     implementation(projects.lib.blockchain)
     implementation(projects.lib.extensions)
     implementation(projects.tonapi.legacy)

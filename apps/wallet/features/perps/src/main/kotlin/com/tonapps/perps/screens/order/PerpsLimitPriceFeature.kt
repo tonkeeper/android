@@ -9,8 +9,11 @@ import com.tonapps.perps.data.PerpsLivePrices
 import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.formatOffsetPercent
 import com.tonapps.perps.data.formatPlainDecimal
+import com.tonapps.perps.data.formatTrimmedUsdPrice
 import com.tonapps.perps.data.formatUsdPrice
 import com.tonapps.perps.data.limitFractionDigits
+import com.tonapps.perps.data.limitPassesStopLoss
+import com.tonapps.perps.data.limitPassesTakeProfit
 import com.tonapps.perps.data.perpsTicker
 import com.tonapps.perps.data.sanitizeAmount
 import com.tonapps.perps.trade.PerpsPlannerAdapter
@@ -39,7 +42,7 @@ interface PerpsLimitPriceViewState : MviViewState {
     val input: StateFlow<PerpsLimitInput>
     val limitPrice: StateFlow<BigDecimal?>
     val chipText: StateFlow<String>
-    val warning: StateFlow<Int?>
+    val warning: StateFlow<PerpsLimitPriceWarning?>
     val canSet: StateFlow<Boolean>
 }
 
@@ -54,6 +57,7 @@ class PerpsLimitPriceFeature(
     symbol: String,
     private val side: PerpsOrderSide,
     initialPrice: BigDecimal?,
+    private val autoClose: PerpsLimitAutoClose?,
     private val adapter: PerpsPlannerAdapter,
     livePrices: PerpsLivePrices,
     unifiedAccountRepository: UnifiedAccountRepository,
@@ -149,12 +153,7 @@ class PerpsLimitPriceFeature(
         limitPrice,
         referencePrice,
         transform = { input, price, reference ->
-            when {
-                price == null || reference == null || input.quickFill?.signum() == 0 -> null
-                side == PerpsOrderSide.LONG && price > reference -> Localization.perps_limit_price_warning_below
-                side == PerpsOrderSide.SHORT && price < reference -> Localization.perps_limit_price_warning_above
-                else -> null
-            }
+            price?.let { currentPriceWarning(input, it, reference) ?: autoCloseWarning(it) }
         }
     )
         .cacheState(initialValue = null)
@@ -162,9 +161,54 @@ class PerpsLimitPriceFeature(
     override val canSet = combine(
         limitPrice,
         warning,
-        transform = { price, warning -> price != null && warning == null }
+        transform = { price, warning -> price != null && warning?.blocking != true }
     )
         .cacheState(initialValue = false)
+
+    private fun currentPriceWarning(
+        input: PerpsLimitInput,
+        price: BigDecimal,
+        reference: BigDecimal?,
+    ): PerpsLimitPriceWarning? {
+        val text = when {
+            reference == null || input.quickFill?.signum() == 0 -> null
+            side == PerpsOrderSide.LONG && price > reference -> Localization.perps_limit_price_warning_below
+            side == PerpsOrderSide.SHORT && price < reference -> Localization.perps_limit_price_warning_above
+            else -> null
+        }
+
+        return text?.let { PerpsLimitPriceWarning(text = it) }
+    }
+
+    private fun autoCloseWarning(price: BigDecimal): PerpsLimitPriceWarning? {
+        val autoClose = autoClose ?: return null
+        val stopLoss = autoClose.stopLoss?.takeIf { limitPassesStopLoss(side, price, it) }
+        val takeProfit = autoClose.takeProfit?.takeIf { limitPassesTakeProfit(side, price, it) }
+
+        return when {
+            stopLoss != null -> PerpsLimitPriceWarning(
+                text = if (side == PerpsOrderSide.LONG) {
+                    Localization.perps_limit_price_below_stop_loss
+                } else {
+                    Localization.perps_limit_price_above_stop_loss
+                },
+                price = formatTrimmedUsdPrice(stopLoss),
+                removal = Localization.perps_limit_price_stop_loss_removed.takeIf { autoClose.removesPassedLeg },
+            )
+
+            takeProfit != null -> PerpsLimitPriceWarning(
+                text = if (side == PerpsOrderSide.LONG) {
+                    Localization.perps_limit_price_above_take_profit
+                } else {
+                    Localization.perps_limit_price_below_take_profit
+                },
+                price = formatTrimmedUsdPrice(takeProfit),
+                removal = Localization.perps_limit_price_take_profit_removed.takeIf { autoClose.removesPassedLeg },
+            )
+
+            else -> null
+        }
+    }
 
     private fun reduceInput(input: PerpsLimitInput, cmd: LimitCmd): PerpsLimitInput = when (cmd) {
         is LimitCmd.Set -> input.copy(

@@ -3,7 +3,7 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp.evm
 import com.tonapps.async.Async
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.log.L
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.MessageHandler
+import com.tonapps.webview.bridge.InAppBridgeContract.MessageHandler
 import com.tonapps.wallet.data.dapps.confirm.ConfirmSheetQueue
 import com.tonapps.wallet.data.dapps.evm.EvmProviderRepository
 import com.tonapps.wallet.data.multichain.account.AccountEntity
@@ -301,7 +301,7 @@ internal class EvmProviderHandler(
                 METHOD_REQUEST_ACCOUNTS -> accounts(request.id)
                 METHOD_REQUEST_PERMISSIONS -> permissions(request.id)
                 METHOD_SWITCH_CHAIN -> switchChain(request)
-                METHOD_SEND_TRANSACTION -> sign(request, queued, methodParser::transaction)
+                EvmProviderProtocol.METHOD_SEND_TRANSACTION -> sign(request, queued, methodParser::transaction)
                 METHOD_PERSONAL_SIGN -> sign(request, queued, methodParser::personalSign)
                 METHOD_SIGN_TYPED_DATA_V4 -> sign(request, queued, methodParser::typedData)
                 else -> failure(request.id, ERROR_UNSUPPORTED, "Unsupported method: ${request.method}")
@@ -352,27 +352,31 @@ internal class EvmProviderHandler(
             parse: (EvmProviderProtocol.Message.Request, String, Chain.Evm, String) -> EvmMethodParser.Result,
         ): EvmProviderProtocol.Response? {
             val chain = chain
-            signListener?.onRequested(request.method, chain)
+            signListener?.onRequested(request, chain)
             val response = try {
                 signed(request, queued, chain, parse)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                signListener?.onFailed(request.method, chain, ERROR_INTERNAL, e.javaClass.simpleName)
+                signListener?.onFailed(request, chain, ERROR_INTERNAL, e.javaClass.simpleName)
                 throw e
             }
-            response?.let { report(request.method, chain, it) }
+            response?.let { report(request, chain, it) }
             return response
         }
 
-        private fun report(method: String, chain: Chain.Evm, response: EvmProviderProtocol.Response) {
+        private fun report(
+            request: EvmProviderProtocol.Message.Request,
+            chain: Chain.Evm,
+            response: EvmProviderProtocol.Response,
+        ) {
             val listener = signListener ?: return
             when (response) {
-                is EvmProviderProtocol.Response.Result -> listener.onSigned(method, chain)
+                is EvmProviderProtocol.Response.Result -> listener.onSigned(request, chain)
                 is EvmProviderProtocol.Response.Failure -> if (response.code == ERROR_REJECTED) {
-                    listener.onRejected(method, chain)
+                    listener.onRejected(request, chain)
                 } else {
-                    listener.onFailed(method, chain, response.code, response.message)
+                    listener.onFailed(request, chain, response.code, response.message)
                 }
                 else -> Unit
             }
@@ -395,7 +399,7 @@ internal class EvmProviderHandler(
                     sessionScope.launch(start = CoroutineStart.UNDISPATCHED) {
                         guarded(request) { awaitConfirmation(request.id, queued.document, result) }
                             ?.let {
-                                report(request.method, chain, it)
+                                report(request, chain, it)
                                 answer(queued, it)
                             }
                     }
@@ -456,7 +460,6 @@ internal class EvmProviderHandler(
         private const val METHOD_REQUEST_ACCOUNTS = "eth_requestAccounts"
         private const val METHOD_REQUEST_PERMISSIONS = "wallet_requestPermissions"
         private const val METHOD_SWITCH_CHAIN = "wallet_switchEthereumChain"
-        private const val METHOD_SEND_TRANSACTION = "eth_sendTransaction"
         private const val METHOD_PERSONAL_SIGN = "personal_sign"
         private const val METHOD_SIGN_TYPED_DATA_V4 = "eth_signTypedData_v4"
 

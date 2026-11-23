@@ -1,10 +1,9 @@
 package com.tonapps.wc
 
+import com.tonapps.blockchain.evm.EvmTypedData
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.DappConnectRequest
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.common.containsHexPrefix
-import com.tonapps.chainkit.core.common.hexToBigInteger
 import com.tonapps.log.L
 import com.tonapps.wc.chains.WcRequestData
 import com.tonapps.wc.chains.ethereum.WcEthTransaction
@@ -25,8 +24,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.serializer
-import org.json.JSONObject
-import kotlin.text.isNullOrEmpty
 
 @Suppress("UNUSED_EXPRESSION")
 class WcMethodParser(
@@ -81,21 +78,14 @@ class WcMethodParser(
         return when (method) {
             WcMethod.EthSignTypedDataV4 -> {
                 val result = parseListString(requestId, params)
-                val message = WcEthSignMessage(result, WcEthSignMessage.WcSignType.TypedMessage)
-                val chainId = runCatching {
-                    val chainId = JSONObject(message.data)
-                        .getJSONObject("domain")
-                        .getString("chainId")
-
-                    when (chainId.containsHexPrefix()) {
-                        true -> chainId.hexToBigInteger().toString()
-                        false -> chainId
-                    }
-                }.getOrNull()
-
-                if (!chainId.isNullOrEmpty() && chainId != chain.id) {
+                val typedData = EvmTypedData.decode(result[1])
+                if (typedData == null || !typedData.isAddressedTo(chain)) {
                     Result.Error(Result.Error.ERROR_PARSE)
                 } else {
+                    val message = WcEthSignMessage(
+                        raw = listOf(result[0], typedData.json),
+                        type = WcEthSignMessage.WcSignType.TypedMessage,
+                    )
                     val url = forceConvertRequest(requestId, walletId, chain, meta, message)
                     Result.Request(url)
                 }

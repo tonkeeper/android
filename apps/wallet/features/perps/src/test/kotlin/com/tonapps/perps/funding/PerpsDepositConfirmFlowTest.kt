@@ -1,19 +1,29 @@
 package com.tonapps.perps.funding
 
 import com.ionspin.kotlin.bignum.integer.BigInteger as ChainInteger
+import com.tonapps.blockchain.model.CommonTransactionData
+import com.tonapps.blockchain.model.ConfirmRequest
+import com.tonapps.blockchain.model.ConfirmType
+import com.tonapps.bus.generated.Events.Perps.PerpsSourceScreen
 import com.tonapps.chainkit.core.chain.api.models.ChainRes
 import com.tonapps.chainkit.core.chain.api.models.NodeRes
 import com.tonapps.chainkit.core.chain.api.models.SignRes
 import com.tonapps.chainkit.core.chain.model.account.Account
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.op.Payload
 import com.tonapps.chainkit.core.op.SignedPayload
+import com.tonapps.chainkit.core.op.ValidationRes
 import com.tonapps.deposit.multicoin.screens.confirm.base.SendingState
+import com.tonapps.deposit.multicoin.screens.confirm.base.SignatureGate
 import com.tonapps.deposit.multicoin.screens.confirm.base.operation.OperationConfirmAction
+import com.tonapps.deposit.multicoin.screens.confirm.fee.FeeAccount
+import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFee
+import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeState
 import com.tonapps.deposit.multicoin.screens.confirm.perpetual.PerpetualDepositConfirmFeature
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.DEPOSIT_EXECUTION_ID
+import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.GET_ACCOUNT
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.EVM_NONCE
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.GATEWAY
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.L1_ADDRESS
@@ -23,12 +33,13 @@ import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.USDC
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.USDC_TOKEN
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.WALLET_ID
 import com.tonapps.wallet.data.multichain.tx.PostTransactionRefreshSchedule
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.testing.BaseUnitTest
 import com.tonapps.wallet.testing.TestAssets
 import com.tonapps.wallet.testing.TestWallet
 import com.tonapps.wallet.testing.testAccount
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,6 +50,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -55,7 +67,7 @@ import java.math.BigInteger
 @OptIn(ExperimentalCoroutinesApi::class)
 class PerpsDepositConfirmFlowTest : BaseUnitTest() {
 
-    private val passcodeManager = mockk<PasscodeManager>()
+    private val walletUnlocker = mockk<WalletUnlocker>()
     private val refreshSchedule = mockk<PostTransactionRefreshSchedule>(relaxed = true)
     private val priced = mutableListOf<String>()
     private val signed = mutableListOf<Pair<String, Long>>()
@@ -66,7 +78,7 @@ class PerpsDepositConfirmFlowTest : BaseUnitTest() {
     @Before
     fun setUp() {
         env = PerpsFundingTestEnv()
-        coEvery { passcodeManager.unlockMultichainVault<CryptoWallet>(any(), any()) } returns mockk<CryptoWallet>()
+        coEvery { walletUnlocker.unlockWallet(any(), any()) } returns mockk<MnemonicWallet>()
         coEvery { env.provider.estimateFee(any<Payload>(), any(), any()) } answers {
             val payload = firstArg<Payload>()
             priced += payload.id
@@ -105,6 +117,7 @@ class PerpsDepositConfirmFlowTest : BaseUnitTest() {
             }
         }
         coEvery { env.provider.reportPayloadSent(any(), any(), any(), any(), any()) } returns Unit
+        coEvery { env.provider.validateOperation(any(), any(), any()) } returns ValidationRes.ok(Unit)
         coEvery { env.provider.broadcastPayload(any(), any()) } answers {
             broadcast += secondArg<Account>() to (firstArg<SignedPayload>().data as JsonPrimitive).content
             NodeRes.ok("0xhash-${broadcast.size}")
@@ -119,7 +132,7 @@ class PerpsDepositConfirmFlowTest : BaseUnitTest() {
                 env.evmPayload("deposit", to = GATEWAY, data = env.gatewayDepositData(L1_ADDRESS, AMOUNT)),
             )
         }
-        val request = env.depositService.confirmRequest(WALLET_ID, env.source(USDC.id), AMOUNT)
+        val request = env.depositService.confirmRequest(WALLET_ID, env.source(USDC.id), AMOUNT, PerpsSourceScreen.PerpsHome)
         assertEquals(listOf("approve", "deposit"), priced)
         priced.clear()
 
@@ -127,10 +140,13 @@ class PerpsDepositConfirmFlowTest : BaseUnitTest() {
             request = request,
             provider = env.provider,
             accountRepo = env.mcAccountRepository,
-            passcodeManager = passcodeManager,
+            walletUnlocker = walletUnlocker,
+            signatureGate = SignatureGate { false },
             postTransactionRefreshSchedule = refreshSchedule,
+            timeProvider = env.serverTime,
             tracker = null,
             authorizer = env.depositService,
+            depositFeeMethods = env.feeMethods,
         )
         runCurrent()
 
@@ -138,7 +154,7 @@ class PerpsDepositConfirmFlowTest : BaseUnitTest() {
         assertNotNull(feature.fee.value)
         assertTrue(broadcast.isEmpty())
 
-        feature.sendAction(OperationConfirmAction.Confirm(context))
+        feature.sendAction(OperationConfirmAction.Confirm)
         runCurrent()
 
         // The approve and the deposit are two transactions of one account, a nonce apart.
@@ -153,25 +169,29 @@ class PerpsDepositConfirmFlowTest : BaseUnitTest() {
         assertEquals(SendingState.Done, feature.sendingState.value)
         verify(exactly = 1) { refreshSchedule.notifyTransactionSent(WALLET_ID, Chain.Ethereum.Mainnet) }
         // Quoting is all the backend was asked for: the deposit reaches it through the chain.
-        assertEquals(listOf(QUOTE_DEPOSIT), env.endpoints)
+        assertEquals(listOf(GET_ACCOUNT, QUOTE_DEPOSIT), env.endpoints)
     }
 
     @Test
     fun aPreviewPaidFromAnotherChainOpensPricedAsItsSignatures() = runTest {
         env.accounts[TestAssets.ton.id] = testAccount(TestAssets.ton, balance = TON_AMOUNT.toString())
+        env.withoutAccount()
         env.quoteDeposits(provider = "relay", credited = AMOUNT, executionId = DEPOSIT_EXECUTION_ID) {
             listOf(env.authorizationPayload("authorization"), env.hermesPayload("execute"))
         }
-        val request = env.depositService.confirmRequest(WALLET_ID, env.source(TestAssets.ton.id), TON_AMOUNT)
+        val request = env.depositService.confirmRequest(WALLET_ID, env.source(TestAssets.ton.id), TON_AMOUNT, PerpsSourceScreen.PerpsHome)
 
         val feature = PerpetualDepositConfirmFeature(
             request = request,
             provider = env.provider,
             accountRepo = env.mcAccountRepository,
-            passcodeManager = passcodeManager,
+            walletUnlocker = walletUnlocker,
+            signatureGate = SignatureGate { false },
             postTransactionRefreshSchedule = refreshSchedule,
+            timeProvider = env.serverTime,
             tracker = null,
             authorizer = env.depositService,
+            depositFeeMethods = env.feeMethods,
         )
         runCurrent()
 
@@ -183,48 +203,138 @@ class PerpsDepositConfirmFlowTest : BaseUnitTest() {
 
     @Test
     fun aPreviewShowsItsEstimateAndIsAuthorizedOnTheSwipe() = runTest {
-        val previewed = { asked: JsonObject -> "operation" !in asked }
+        answerPaymentsAsTheConfirmScreenAsks()
+        env.withoutAccount()
+        val previewed = { asked: JsonObject -> "operation" !in asked && "change_pub_key" in asked }
         env.quoteDeposits(
             provider = "relay",
             credited = AMOUNT,
             executionId = DEPOSIT_EXECUTION_ID,
         ) { asked ->
             if (previewed(asked)) {
-                listOf(env.authorizationPayload("authorization"), env.hermesPayload("execute"))
+                listOf(env.hermesPayload("execute"))
             } else {
-                listOf(env.evmPayload("pay", to = RELAY_DEPOSITORY, value = ETH_AMOUNT))
+                listOf(env.evmPayload("pay", to = RELAY_DEPOSITORY, value = ETH_AMOUNT, data = env.nativeDepositData(), authorizationNonce = EVM_NONCE + 1))
             }
         }
-        val request = env.depositService.confirmRequest(WALLET_ID, env.source(TestAssets.eth.id), ETH_AMOUNT)
+        val request = env.depositService.confirmRequest(WALLET_ID, env.source(TestAssets.eth.id), ETH_AMOUNT, PerpsSourceScreen.PerpsHome)
+        assertEquals(listOf("pay"), priced)
+        priced.clear()
 
         val feature = PerpetualDepositConfirmFeature(
             request = request,
             provider = env.provider,
             accountRepo = env.mcAccountRepository,
-            passcodeManager = passcodeManager,
+            walletUnlocker = walletUnlocker,
+            signatureGate = SignatureGate { false },
             postTransactionRefreshSchedule = refreshSchedule,
+            timeProvider = env.serverTime,
             tracker = null,
             authorizer = env.depositService,
+            depositFeeMethods = env.feeMethods,
         )
         runCurrent()
 
-        // Before the passcode only the preview exists, priced as its signatures: nothing to pay yet.
-        assertEquals(listOf("authorization", "execute"), priced)
-        assertEquals("0", feature.fee.value?.amount.toString())
+        assertEquals(listOf("execute", "pay"), priced)
+        assertEquals(PAYLOAD_FEE, feature.fee.value?.amount.toString())
         assertNull(feature.confirmationError.value)
-        assertEquals(listOf(QUOTE_DEPOSIT), env.endpoints)
+        assertEquals(listOf(GET_ACCOUNT, QUOTE_DEPOSIT, QUOTE_DEPOSIT), env.endpoints)
+        assertTrue(feature.delegatesAddress)
 
-        feature.sendAction(OperationConfirmAction.Confirm(context))
+        feature.sendAction(OperationConfirmAction.Confirm)
         runCurrent()
 
         // The swipe signs the preview, quotes again with it, and signs and sends what that answered.
-        assertEquals(listOf(QUOTE_DEPOSIT, QUOTE_DEPOSIT), env.endpoints)
-        assertEquals(listOf("authorization", "execute", "pay"), priced)
-        assertEquals(listOf("authorization", "execute", "pay"), signed.map { it.first })
+        assertEquals(listOf(GET_ACCOUNT, QUOTE_DEPOSIT, QUOTE_DEPOSIT, QUOTE_DEPOSIT), env.endpoints)
+        assertEquals(listOf("execute", "pay", "pay"), priced)
+        assertEquals(listOf("execute", "pay"), signed.map { it.first })
         assertEquals(EVM_NONCE, signed.last().second)
         assertEquals(listOf("0xsigned-pay"), broadcast.map { it.second })
         assertNull(feature.confirmationError.value)
         assertEquals(SendingState.Done, feature.sendingState.value)
+    }
+
+    @Test
+    fun aPreviewThatCreditsLessOnTheSwipeShowsTheNewDepositAndTheNextSwipeSendsIt() = runTest {
+        answerPaymentsAsTheConfirmScreenAsks()
+        env.withoutAccount()
+        val previewed = { asked: JsonObject -> "operation" !in asked && "change_pub_key" in asked }
+        val quoteFirstDeposit = { credited: BigInteger ->
+            env.quoteDeposits(provider = "relay", credited = credited, executionId = DEPOSIT_EXECUTION_ID) { asked ->
+                if (previewed(asked)) {
+                    listOf(env.hermesPayload("execute"))
+                } else {
+                    listOf(env.evmPayload("pay", to = RELAY_DEPOSITORY, value = ETH_AMOUNT, data = env.nativeDepositData(), authorizationNonce = EVM_NONCE + 1))
+                }
+            }
+        }
+        quoteFirstDeposit(AMOUNT)
+        val request = env.depositService.confirmRequest(WALLET_ID, env.source(TestAssets.eth.id), ETH_AMOUNT, PerpsSourceScreen.PerpsHome)
+        val lowered = AMOUNT * BigInteger.valueOf(98L) / BigInteger.valueOf(100L)
+        quoteFirstDeposit(lowered)
+
+        val feature = PerpetualDepositConfirmFeature(
+            request = request,
+            provider = env.provider,
+            accountRepo = env.mcAccountRepository,
+            walletUnlocker = walletUnlocker,
+            signatureGate = SignatureGate { false },
+            postTransactionRefreshSchedule = refreshSchedule,
+            timeProvider = env.serverTime,
+            tracker = null,
+            authorizer = env.depositService,
+            depositFeeMethods = env.feeMethods,
+        )
+        runCurrent()
+
+        feature.sendAction(OperationConfirmAction.Confirm)
+        runCurrent()
+
+        assertTrue(broadcast.isEmpty())
+        assertEquals(listOf("execute"), signed.map { it.first })
+        assertTrue(feature.quoteChanged.value)
+        assertNull(feature.confirmationError.value)
+        assertEquals(SendingState.None, feature.sendingState.value)
+        assertEquals(lowered.toString(), feature.deposit.value.quote.depositAmount.toString())
+        assertEquals("pay", feature.deposit.value.operation.payloads.single().id)
+        assertEquals(PAYLOAD_FEE, feature.fee.value?.amount.toString())
+
+        feature.sendAction(OperationConfirmAction.Confirm)
+        runCurrent()
+
+        assertFalse(feature.quoteChanged.value)
+        assertTrue(feature.delegatesAddress)
+        assertEquals(listOf(GET_ACCOUNT, QUOTE_DEPOSIT, QUOTE_DEPOSIT, QUOTE_DEPOSIT), env.endpoints)
+        assertEquals(listOf("execute", "pay"), signed.map { it.first })
+        assertEquals(listOf("0xsigned-pay"), broadcast.map { it.second })
+        assertNull(feature.confirmationError.value)
+        assertEquals(SendingState.Done, feature.sendingState.value)
+    }
+
+    private fun answerPaymentsAsTheConfirmScreenAsks() {
+        coEvery { env.feeMethods.build(any(), any(), any(), any()) } answers {
+            val deposit = firstArg<ConfirmRequest>().type as ConfirmType.PerpetualDeposit
+            val native = TxFeeState(energy = thirdArg(), estimated = arg(3))
+            if (deposit.payableByRelayer) {
+                native
+            } else {
+                native.copy(options = listOf(TxFee(account = FeeAccount.Chain(thirdArg()), fee = arg(3))))
+            }
+        }
+        every { env.feeMethods.payment(any()) } answers {
+            val preview = firstArg<ConfirmRequest>()
+            val deposit = preview.type as ConfirmType.PerpetualDeposit
+            deposit.paymentOperation?.let { payment ->
+                ConfirmRequest(
+                    data = CommonTransactionData(
+                        assetId = preview.data.assetId,
+                        walletId = preview.data.walletId,
+                        expiresAt = preview.data.expiresAt,
+                    ),
+                    type = deposit.copy(operation = payment, paymentOperation = null),
+                )
+            }
+        }
     }
 
     private companion object {

@@ -1,5 +1,6 @@
 package com.tonapps.perps.screens.order
 
+import androidx.annotation.StringRes
 import com.tonapps.perps.data.PerpsError
 import java.math.BigDecimal
 
@@ -21,3 +22,18 @@ data class PerpsAutoCloseEstimate(
     val sizeBase: BigDecimal,
     val referencePrice: BigDecimal,
 )
+
+data class PerpsLimitAutoClose(
+    val takeProfit: BigDecimal?,
+    val stopLoss: BigDecimal?,
+    val removesPassedLeg: Boolean,
+)
+
+data class PerpsLimitPriceWarning(
+    @StringRes val text: Int,
+    val price: String? = null,
+    @StringRes val removal: Int? = null,
+) {
+    val blocking: Boolean
+        get() = removal == null
+}

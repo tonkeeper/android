@@ -16,18 +16,21 @@ import com.tonapps.wc.models.WcPendingEvent
 import com.tonapps.wc.models.WcSessionProposal
 import com.tonapps.wc.models.WcSessionRequest
 import com.tonapps.wc.models.WcValidation
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 internal class WcRequestController(
-    walletDelegate: WcEventDelegate,
+    private val walletDelegate: WcEventDelegate,
+    private val loadUnansweredRequests: () -> List<WcEventData.SessionRequest>,
 ) {
     private val eventsStore = ConcurrentHashMap<String, WcEventData>()
 
@@ -44,7 +47,12 @@ internal class WcRequestController(
                 is WcEventData.Error -> wcEvents.emit(WcEvent.Error(model.data.throwable))
                 is WcEventData.SessionUpdateResponse -> {}
 
-                is WcEventData.ConnectionState -> wcConnection.tryEmit(model.data.isAvailable)
+                is WcEventData.ConnectionState -> {
+                    wcConnection.tryEmit(model.data.isAvailable)
+                    if (model.data.isAvailable) {
+                        restoreUnansweredRequests()
+                    }
+                }
                 is WcEventData.SettledSessionResponse -> if (model.data is Wallet.Model.SettledSessionResponse.Result) {
                     wcEvents.emit(
                         WcEvent.StateChanged(
@@ -71,16 +79,7 @@ internal class WcRequestController(
                     if (proposal == null) {
                         wcEvents.emit(WcEvent.SessionError(id, model.data.pairingTopic, WcError.UNSUPPORTED_CHAIN))
                     } else {
-                        val validation = when (model.verifyContext.isScam) {
-                            true -> WcValidation.Scam
-                            else -> when (model.verifyContext.validation) {
-                                Wallet.Model.Validation.VALID -> WcValidation.Valid
-                                Wallet.Model.Validation.INVALID -> WcValidation.Invalid
-                                Wallet.Model.Validation.UNKNOWN -> WcValidation.Unknown
-                            }
-                        }
-
-                        wcEvents.emit(WcEvent.Session(id, proposal, validation))
+                        wcEvents.emit(WcEvent.Session(id, proposal, model.verifyContext.toValidation()))
                     }
                 }
                 is WcEventData.SessionRequest -> {
@@ -120,6 +119,7 @@ internal class WcRequestController(
                                 meta?.description.orEmpty(),
                                 meta?.icons?.firstOrNull(),
                             ),
+                            model.verifyContext.toValidation(),
                         )
                     }
 
@@ -145,6 +145,20 @@ internal class WcRequestController(
         eventsStore.remove(requestId)
     }
 
+    private fun restoreUnansweredRequests() {
+        Async.ioScope().launch {
+            val requests = try {
+                loadUnansweredRequests()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                L.e("WalletConnect", e)
+                return@launch
+            }
+            requests.forEach { walletDelegate.onSessionRequest(it.data, it.verifyContext) }
+        }
+    }
+
     // WalletKit drops a request whose id it has already seen, so topic and id name one request.
     private fun findRequestId(topic: String, wcRequestId: Long): String? {
         return eventsStore.entries.firstOrNull { (_, event) ->
@@ -152,6 +166,17 @@ internal class WcRequestController(
                 event.data.topic == topic &&
                 event.data.request.id == wcRequestId
         }?.key
+    }
+
+    private fun Wallet.Model.VerifyContext.toValidation(): WcValidation {
+        return when (isScam) {
+            true -> WcValidation.Scam
+            else -> when (validation) {
+                Wallet.Model.Validation.VALID -> WcValidation.Valid
+                Wallet.Model.Validation.INVALID -> WcValidation.Invalid
+                Wallet.Model.Validation.UNKNOWN -> WcValidation.Unknown
+            }
+        }
     }
 
     private fun Wallet.Model.SessionProposal.mapProposal(): WcSessionProposal? {

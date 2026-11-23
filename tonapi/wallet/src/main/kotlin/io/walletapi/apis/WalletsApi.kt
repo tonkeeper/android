@@ -24,7 +24,6 @@ import io.walletapi.models.Network
 import io.walletapi.models.Ok
 import io.walletapi.models.PendingTransaction
 import io.walletapi.models.RealtimeToken
-import io.walletapi.models.ReindexWalletRequest
 import io.walletapi.models.SaveWalletAssetsFiltersRequest
 import io.walletapi.models.SyncStatus
 import io.walletapi.models.Wallet
@@ -354,6 +353,7 @@ class WalletsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
          @SerialName(value = "offramp") offramp("offramp"),
          @SerialName(value = "p2p") p2p("p2p"),
          @SerialName(value = "perp_deposit") perp_deposit("perp_deposit"),
+         @SerialName(value = "battery_deposit") battery_deposit("battery_deposit"),
          @SerialName(value = "unknown") unknown("unknown");
 
         /**
@@ -502,6 +502,55 @@ class WalletsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun getWalletPerpsRealtimeToken(walletId: String, xWalletId: String? = walletId): RealtimeToken {
+        val localVarResponse = getWalletPerpsRealtimeTokenWithHttpInfo(walletId = walletId, xWalletId = xWalletId)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as RealtimeToken
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun getWalletPerpsRealtimeTokenWithHttpInfo(walletId: String, xWalletId: String?): ApiResponse<RealtimeToken?> {
+        val localVariableConfig = getWalletPerpsRealtimeTokenRequestConfig(walletId = walletId, xWalletId = xWalletId)
+
+        return request<Unit, RealtimeToken>(
+            localVariableConfig
+        )
+    }
+
+    fun getWalletPerpsRealtimeTokenRequestConfig(walletId: String, xWalletId: String?): RequestConfig<Unit> {
+        val localVariableBody = null
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.GET,
+            path = "/api/v1/wallets/{wallet_id}/perps-realtime-token".replace("{"+"wallet_id"+"}", encodeURIComponent(walletId.toString())),
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
     fun getWalletRealtimeToken(walletId: String, xWalletId: String? = walletId): RealtimeToken {
         val localVarResponse = getWalletRealtimeTokenWithHttpInfo(walletId = walletId, xWalletId = xWalletId)
 
@@ -594,59 +643,6 @@ class WalletsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/api/v1/wallets/{wallet_id}/sync_status".replace("{"+"wallet_id"+"}", encodeURIComponent(walletId.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = true,
-            requiresWalletAuthentication = true,
-            walletId = xWalletId,
-            body = localVariableBody
-        )
-    }
-
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun reindexWallet(walletId: String, reindexWalletRequest: ReindexWalletRequest? = null, xWalletId: String? = walletId): Unit {
-        @Suppress("DEPRECATION")
-        val localVarResponse = reindexWalletWithHttpInfo(walletId = walletId, reindexWalletRequest = reindexWalletRequest, xWalletId = xWalletId)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> Unit
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Throws(IllegalStateException::class, IOException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun reindexWalletWithHttpInfo(walletId: String, reindexWalletRequest: ReindexWalletRequest?, xWalletId: String?): ApiResponse<Unit?> {
-        @Suppress("DEPRECATION")
-        val localVariableConfig = reindexWalletRequestConfig(walletId = walletId, reindexWalletRequest = reindexWalletRequest, xWalletId = xWalletId)
-
-        return request<ReindexWalletRequest, Unit>(
-            localVariableConfig
-        )
-    }
-
-    @Deprecated(message = "This operation is deprecated.")
-    fun reindexWalletRequestConfig(walletId: String, reindexWalletRequest: ReindexWalletRequest?, xWalletId: String?): RequestConfig<ReindexWalletRequest> {
-        val localVariableBody = reindexWalletRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/api/v1/wallets/{wallet_id}/reindex".replace("{"+"wallet_id"+"}", encodeURIComponent(walletId.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

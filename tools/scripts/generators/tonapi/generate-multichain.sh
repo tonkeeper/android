@@ -8,4 +8,6 @@ bash "$SCRIPT_DIR/generate-tonapi.sh" \
   "$SPEC" \
   "walletapi" \
   "tonapi:wallet" \
-  "true"
+  "true" \
+  "" \
+  "$(dirname "$SPEC")/filters/multichain.yaml"

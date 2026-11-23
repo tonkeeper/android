@@ -26,6 +26,16 @@ class MnemonicCoder internal constructor(
         }
     }
 
+    fun encryptBytes(plain: ByteArray): ByteArray {
+        check(!isDisposed()) { "MnemonicCoder is already disposed" }
+        return CryptoSecure.sealToBytes(data, plain)
+    }
+
+    fun decryptBytes(encrypted: ByteArray): ByteArray {
+        check(!isDisposed()) { "MnemonicCoder is already disposed" }
+        return CryptoSecure.openBytes(data, encrypted)
+    }
+
     fun isDisposed(): Boolean = isDisposed.load()
 
     override fun close() {

@@ -13,6 +13,8 @@ import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.InappReview.InappReviewAction
+import com.tonapps.bus.generated.Events.LedgerFlow.LedgerDeviceViewFrom
+import com.tonapps.bus.generated.Events.LedgerFlow.LedgerMigrationStartFrom
 import com.tonapps.bus.generated.Events.Migration.MigrationFrom
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.core.flags.InAppReviewManager
@@ -41,6 +43,8 @@ import com.tonapps.tonkeeper.ui.screen.stories.w5.W5StoriesScreen
 import com.tonapps.tonkeeper.ui.screen.support.SupportScreen
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.SearchEngine
+import com.tonapps.wallet.features.ledger.pairing.LedgerPairingFragment
+import com.tonapps.wallet.features.ledger.wallet.LedgerWalletFragment
 import com.tonapps.wallet.localization.Localization
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.BaseFragment
@@ -86,6 +90,8 @@ class SettingsScreen : BaseListWalletScreen<ScreenContext.None>(ScreenContext.No
         val wallet = navigationWalletForScreens() ?: return
         when (item) {
             is Item.Backup -> navigation?.add(BackupScreen.newInstance(WalletFlowSource.Settings))
+            is Item.LedgerDevice -> navigation?.add(LedgerWalletFragment.newInstance(item.walletId, LedgerDeviceViewFrom.Settings))
+            is Item.LedgerMigration -> navigation?.add(LedgerPairingFragment.newMigrationInstance(item.walletId, LedgerMigrationStartFrom.Settings))
             is Item.Currency -> navigation?.add(CurrencyScreen.newInstance())
             is Item.Language -> navigation?.add(LanguageScreen.newInstance())
             is Item.Account -> navigation?.add(EditNameScreen.newInstance())
@@ -221,11 +227,13 @@ class SettingsScreen : BaseListWalletScreen<ScreenContext.None>(ScreenContext.No
     }
 
     private fun signOut() {
-        navigation?.toastLoading(true)
-        viewModel.signOut {
-            navigation?.toastLoading(false)
-            finish()
-        }
+        viewModel.signOut(
+            onConfirmed = { navigation?.toastLoading(true) },
+            onDeleted = {
+                navigation?.toastLoading(false)
+                finish()
+            },
+        )
     }
 
     companion object {

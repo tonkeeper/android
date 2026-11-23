@@ -92,8 +92,8 @@ class RafflesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getWalletRaffles(walletId: String, lang: String? = "en", ids: List<String>? = null, isNew: Boolean? = false, xWalletId: String? = walletId): GetWalletRaffles200Response {
-        val localVarResponse = getWalletRafflesWithHttpInfo(walletId = walletId, lang = lang, ids = ids, isNew = isNew, xWalletId = xWalletId)
+    fun getWalletRaffles(walletId: String, lang: String? = "en", ids: List<String>? = null, isNew: Boolean? = false, cfIPCountry: String? = null, xWalletId: String? = walletId): GetWalletRaffles200Response {
+        val localVarResponse = getWalletRafflesWithHttpInfo(walletId = walletId, lang = lang, ids = ids, isNew = isNew, cfIPCountry = cfIPCountry, xWalletId = xWalletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GetWalletRaffles200Response
@@ -112,15 +112,15 @@ class RafflesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getWalletRafflesWithHttpInfo(walletId: String, lang: String?, ids: List<String>?, isNew: Boolean?, xWalletId: String?): ApiResponse<GetWalletRaffles200Response?> {
-        val localVariableConfig = getWalletRafflesRequestConfig(walletId = walletId, lang = lang, ids = ids, isNew = isNew, xWalletId = xWalletId)
+    fun getWalletRafflesWithHttpInfo(walletId: String, lang: String?, ids: List<String>?, isNew: Boolean?, cfIPCountry: String?, xWalletId: String?): ApiResponse<GetWalletRaffles200Response?> {
+        val localVariableConfig = getWalletRafflesRequestConfig(walletId = walletId, lang = lang, ids = ids, isNew = isNew, cfIPCountry = cfIPCountry, xWalletId = xWalletId)
 
         return request<Unit, GetWalletRaffles200Response>(
             localVariableConfig
         )
     }
 
-    fun getWalletRafflesRequestConfig(walletId: String, lang: String?, ids: List<String>?, isNew: Boolean?, xWalletId: String?): RequestConfig<Unit> {
+    fun getWalletRafflesRequestConfig(walletId: String, lang: String?, ids: List<String>?, isNew: Boolean?, cfIPCountry: String?, xWalletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -135,6 +135,7 @@ class RafflesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        cfIPCountry?.apply { localVariableHeaders["CF-IPCountry"] = this.toString() }
         xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
         localVariableHeaders["Accept"] = "application/json"
 

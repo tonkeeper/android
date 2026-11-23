@@ -19,7 +19,7 @@ data class PrepareCrossSwapRouteRequest(
     @Contextual @SerialName(value = "approval_mode")
     val approvalMode: CrossSwapApprovalMode? = null,
 
-    /* Skip building the transaction on the aggregator side and return a deposit descriptor instead. Send false to get the built transaction back.  */
+    /* Skip building the transaction on the aggregator side and return a deposit descriptor instead. Send false to get the built transaction back. Routes paid by a contract call are always built.  */
     @SerialName(value = "disable_build_tx")
     val disableBuildTx: Boolean? = true
 ) {

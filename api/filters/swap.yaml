@@ -1,0 +1,34 @@
+filter:
+  operations:
+    - exchangeCalculate
+    - getExchangeMerchants
+    - createExchange
+    - getExchangeLayout
+    - getExchangeLayoutCards
+    - createP2PSession
+    - getCrossSwapConfig
+    - listCrossSwapAssets
+    - createCrossSwapQuote
+    - prepareCrossSwapRoute
+    # Swaps as Generic Payload API operations, parsed by chain-kit: both platforms sign them
+    - createCrossSwapQuoteV3
+    - prepareCrossSwapRouteV3
+    - getOnrampConfiguration
+    - getOnrampChains
+    - getOnrampAsset
+    - onrampQuote
+    - createOnrampOrder
+    - getOnrampOrder
+    - getOfframpConfiguration
+    - getOfframpAsset
+    - offrampQuote
+    - createOfframpOrder
+    - getOfframpOrder
+    - getMoonPayPaymentMethods
+    - createMoonPaySession
+    # Android's legacy swap and asset clients.
+    - calculateSwap
+    - swapGas
+    - swapAssets
+    - buildOmnistonSwap
+    - getAssetCapabilities

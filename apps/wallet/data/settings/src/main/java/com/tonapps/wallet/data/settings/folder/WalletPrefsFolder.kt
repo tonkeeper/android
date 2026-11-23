@@ -1,17 +1,13 @@
 package com.tonapps.wallet.data.settings.folder
 
 import android.content.Context
-import android.os.SystemClock
-import com.tonapps.log.L
-import com.tonapps.wallet.data.settings.BatteryTransaction
-import com.tonapps.wallet.data.settings.BatteryTransaction.Companion.toIntArray
-import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.SpamTransactionState
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
 import com.tonapps.wallet.data.settings.entities.PreferredTronFeeMethod
 import com.tonapps.wallet.data.settings.entities.WalletPrefsEntity
 import kotlinx.coroutines.CoroutineScope
 
+@Suppress("ClassOrdering")
 internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseSettingsFolder(context, scope, "wallet_prefs") {
 
     private companion object {
@@ -22,12 +18,12 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         private const val LAST_UPDATED_PREFIX = "last_updated_"
         private const val TELEGRAM_CHANNEL_PREFIX = "telegram_channel_"
         private const val SPAM_STATE_TRANSACTION_PREFIX = "spam_state_transaction_"
-        private const val BATTERY_TX_ENABLED_PREFIX = "batter_tx_enabled_"
         private const val USDT_W5_PREFIX = "usdt_w5_"
         private const val DAPP_CONFIRM_PREFIX = "dapp_confirm_"
         private const val SAFE_MODE_DISABLED_UNIX_PREFIX = "safe_mode_disabled_unix_"
         private const val PREFERRED_FEE_PREFIX = "preferred_fee_"
 		private const val PREFERRED_TRON_FEE_PREFIX = "preferred_tron_fee_"
+        private const val BATTERY_PAY_METHOD_PREFIX = "battery_pay_method_"
     }
 
     fun getSafeModeDisabledUnix(walletId: String): Long? {
@@ -49,17 +45,6 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
 
     fun disableUSDTW5(walletId: String) {
         putBoolean(keyUsdtW5(walletId), false)
-    }
-
-    fun getBatteryTxEnabled(accountId: String): Array<BatteryTransaction> {
-        val key = keyBatteryTxEnabled(accountId)
-        val value = getIntArray(key, BatteryTransaction.entries.toIntArray()) ?: return emptyArray()
-        return value.map { BatteryTransaction(it) }.toTypedArray()
-    }
-
-    fun setBatteryTxEnabled(accountId: String, types: Array<BatteryTransaction>) {
-        val key = keyBatteryTxEnabled(accountId)
-        putIntArray(key, types.distinct().toIntArray())
     }
 
     fun getSpamStateTransaction(
@@ -144,6 +129,10 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
         }
     }
 
+    fun setSortIndex(walletId: String, index: Int) {
+        putInt(keySort(walletId), index)
+    }
+
     fun setSort(walletIds: List<String>) {
         edit {
             for ((index, walletId) in walletIds.withIndex()) {
@@ -172,6 +161,14 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
 		putInt(key, method.id)
 	}
 
+    fun getBatteryPayMethod(walletId: String): String? {
+        return getString(key(BATTERY_PAY_METHOD_PREFIX, walletId))
+    }
+
+    fun setBatteryPayMethod(walletId: String, value: String) {
+        putString(key(BATTERY_PAY_METHOD_PREFIX, walletId), value, notify = false)
+    }
+
     private fun keyPreferredFeeMethod(walletId: String): String {
         return key(PREFERRED_FEE_PREFIX, walletId)
     }
@@ -180,9 +177,6 @@ internal class WalletPrefsFolder(context: Context, scope: CoroutineScope): BaseS
 		return key(PREFERRED_TRON_FEE_PREFIX, walletId)
 	}
 
-    private fun keyBatteryTxEnabled(accountId: String): String {
-        return key(BATTERY_TX_ENABLED_PREFIX, accountId)
-    }
 
     private fun keyUsdtW5(walletId: String): String {
         return key(USDT_W5_PREFIX, walletId)

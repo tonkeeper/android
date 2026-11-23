@@ -1,6 +1,6 @@
 package com.tonapps.perps.funding
 
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.lighter.LighterConstants
 import com.tonapps.chainkit.lighter.model.LighterTransferTxReq
 import com.tonapps.extensions.fromHex
@@ -14,12 +14,14 @@ import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsSendError
 import com.tonapps.perps.data.PerpsSendReason
 import com.tonapps.perps.data.USD_CURRENCY
+import com.tonapps.perps.data.toWireDecimalOrNull
 import com.tonapps.perps.data.withdrawableBalance
-import com.tonapps.perps.trade.PerpsAccountProofs
+import com.tonapps.perps.security.PerpsSecurityConfigRepository
 import com.tonapps.perps.trade.PerpsAccountService
 import com.tonapps.perps.trade.PerpsActivation
 import com.tonapps.perps.trade.isRoTokenUnavailable
 import com.tonapps.perps.trade.reissuingRoToken
+import com.tonapps.time.TimeProvider
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.lighter.LighterSigningCredentials
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
@@ -50,6 +52,8 @@ class PerpsWithdrawService(
     private val lighterApi: LighterPublicApi,
     private val tracker: PerpsWithdrawTracker,
     private val recovery: PerpsFundingRecovery,
+    private val timeProvider: TimeProvider,
+    private val securityConfig: PerpsSecurityConfigRepository,
 ) {
 
     suspend fun available(walletId: String): BigDecimal {
@@ -73,24 +77,22 @@ class PerpsWithdrawService(
 
     suspend fun destinations(walletId: String): List<PerpsWithdrawDestination> = coroutineScope {
         val account = async { repository.account(walletId).getOrNull() }
-        val usdc = async { sourceOf(walletId, PerpsFundingAssetId.USDC_ETHEREUM) }
-        val transferFee = async { transferFeeOrNull(account.await()?.accountIndex) }
         val relayed = RELAY_DESTINATION_ASSET_IDS.map { assetId -> async { relayDestinationOrNull(walletId, assetId) } }
-        val lighter = lighterDestination(account.await(), usdc.await())
-        val fee = transferFee.await()
-        listOf(lighter) + relayed.awaitAll()
-            .filterNotNull()
+        val accountIndex = account.await()?.accountIndex ?: throw PerpsWithdrawException.AccountUnavailable()
+        val fee = transferFeeOrNull(accountIndex)
+        val loaded = relayed.awaitAll().filterNotNull()
+        if (loaded.none { it.isUsdcEthereum }) {
+            throw PerpsWithdrawException.DestinationUnavailable(PerpsFundingAssetId.USDC_ETHEREUM)
+        }
+        loaded
             .map { it.copy(transferFeeUnits = fee) }
+            .sortedByDescending { it.source?.fiatValue ?: BigDecimal.ZERO }
     }
 
-    suspend fun limits(): PerpsWithdrawLimits = coroutineScope {
-        val minimums = async { lighterRead { lighterApi.assetMinimums(USDC_ASSET_INDEX) } }
-        val delay = async { lighterRead { lighterApi.withdrawalDelaySeconds() } }
-        val loaded = minimums.await()
-        PerpsWithdrawLimits(
-            minWithdrawalUnits = loaded?.withdrawal?.toUsdcUnitsRoundedUp() ?: DEFAULT_MIN_UNITS,
-            minTransferUnits = loaded?.transfer?.toUsdcUnitsRoundedUp() ?: DEFAULT_MIN_TRANSFER_UNITS,
-            delaySeconds = delay.await(),
+    suspend fun limits(): PerpsWithdrawLimits {
+        val minimums = lighterRead { lighterApi.assetMinimums(USDC_ASSET_INDEX) }
+        return PerpsWithdrawLimits(
+            minTransferUnits = minimums?.transfer?.toUsdcUnitsRoundedUp() ?: DEFAULT_MIN_TRANSFER_UNITS,
         )
     }
 
@@ -111,64 +113,48 @@ class PerpsWithdrawService(
         if (amountUnits > available.await()) {
             throw PerpsWithdrawException.InsufficientBalance()
         }
-        val quote = if (destination.isLighterWithdraw) {
-            null
-        } else {
-            quote(walletId, account, destination, amountUnits)
-        }
+        val accountIndex = account?.accountIndex ?: throw PerpsWithdrawException.AccountUnavailable()
+        val quote = quote(walletId, accountIndex, destination, amountUnits, relayAccounts())
         PerpsWithdrawPlan(
             walletId = walletId,
             amountUnits = amountUnits,
             destination = destination,
             limits = limits.await(),
             quote = quote,
-            cost = quote?.let { costOf(destination, it) },
+            cost = costOf(destination, quote),
         )
     }
 
-    suspend fun submit(plan: PerpsWithdrawPlan, wallet: CryptoWallet): PerpsFundingRecord {
+    suspend fun submit(plan: PerpsWithdrawPlan, wallet: MnemonicWallet): PerpsFundingRecord {
         val walletId = plan.walletId
         pendingWithdraw(walletId)?.let { throw PerpsWithdrawException.WithdrawInFlight(it.operationId) }
-        val quote = plan.quote
-        if (quote != null && !quote.isAlive(System.currentTimeMillis())) {
-            throw PerpsWithdrawException.QuoteExpired()
-        }
         if (plan.amountUnits > availableUnits(walletId)) {
             throw PerpsWithdrawException.InsufficientBalance()
         }
+        requireRelayRecipient(plan.quote, relayAccounts())
         val credentials = when (val activation = accountService.ensureActivated(walletId) { wallet }) {
             is PerpsActivation.Ready -> activation.credentials
             PerpsActivation.NoAccount -> throw PerpsWithdrawException.AccountUnavailable()
             PerpsActivation.Failed -> throw PerpsWithdrawException.ActivationFailed()
         }
-        if (quote != null) {
-            checkTransferFee(credentials.accountIndex, quote)
-        }
-        val sign: suspend () -> PerpsFundingStep = if (quote == null) {
-            { signStep(walletId, plan, credentials) }
-        } else {
-            { signTransferStep(walletId, quote, credentials, wallet) }
-        }
-        val step = sign()
+        val quote = signableQuote(plan, plan.quote, credentials.accountIndex, relayAccounts())
+        val sign: suspend (Long) -> PerpsFundingStep = { nonce -> signTransferStep(walletId, quote, credentials, wallet, nonce) }
+        val step = sign(nextNonce(walletId, credentials))
         val now = System.currentTimeMillis()
         var record = PerpsFundingRecord(
             operationId = UUID.randomUUID().toString(),
             walletId = walletId,
             kind = PerpsFundingKind.WITHDRAW,
             stage = PerpsDepositStage.SOURCE_SIGNED,
-            route = if (quote == null) {
-                PerpsDepositRoute.DIRECT_GATEWAY
-            } else {
-                PerpsDepositRoute.CROSSCHAIN_SWAP
-            },
+            route = PerpsDepositRoute.CROSSCHAIN_SWAP,
             beneficiary = plan.destination.recipient,
             sourceAssetId = LIGHTER_USDC_ASSET_ID,
             sourceSymbol = USDC_SYMBOL,
             sourceDecimals = PerpsFundingAmount.USDC_DECIMALS,
             sourceAmount = plan.amountUnits.toString(),
-            targetAmount = quote?.outputUnits?.toString() ?: plan.amountUnits.toString(),
-            quoteId = quote?.quoteId,
-            executionId = quote?.executionId,
+            targetAmount = quote.outputUnits.toString(),
+            quoteId = quote.quoteId,
+            executionId = quote.executionId,
             sourceTxHash = null,
             l1TxHash = null,
             steps = listOf(step),
@@ -190,19 +176,7 @@ class PerpsWithdrawService(
                 val first = tracker.send(record, firstAttempt = true)
                 val refusal = first.error as? PerpsSendError.Refused
                 if (refusal != null && refusal.reason == PerpsSendReason.RESIGN_REQUIRED) {
-                    val resigned = try {
-                        sign()
-                    } catch (e: Throwable) {
-                        if (e is CancellationException) {
-                            throw e
-                        }
-                        tracker.refused(first.record, refusal)
-                        throw e
-                    }
-                    val retry = journal.update(first.record.operationId, first.record.revision) {
-                        it.copy(stage = PerpsDepositStage.SOURCE_SIGNED, steps = listOf(resigned))
-                    }
-                    tracker.send(retry, firstAttempt = false)
+                    resign(first.record, sign)
                 } else {
                     first
                 }
@@ -225,24 +199,85 @@ class PerpsWithdrawService(
         }
     }
 
+    private suspend fun resign(
+        record: PerpsFundingRecord,
+        sign: suspend (Long) -> PerpsFundingStep,
+    ): PerpsWithdrawSend {
+        val nonce = record.steps.lastOrNull()?.nonce?.toLongOrNull() ?: return tracker.reconcile(record)
+        val resigned = try {
+            sign(nonce)
+        } catch (e: Throwable) {
+            if (e is CancellationException) {
+                throw e
+            }
+            L.e(e, "perps withdraw: ${record.operationId} could not be signed again")
+            return tracker.reconcile(record)
+        }
+        val retry = journal.update(record.operationId, record.revision) {
+            it.copy(stage = PerpsDepositStage.SOURCE_SIGNED, steps = it.steps + resigned)
+        }
+        return tracker.send(retry, firstAttempt = false)
+    }
+
     private suspend fun quote(
         walletId: String,
-        account: PerpsAccount?,
+        accountIndex: Long,
         destination: PerpsWithdrawDestination,
         amountUnits: BigInteger,
+        relayAccounts: Set<Long>,
     ): PerpsWithdrawQuote {
-        val accountIndex = account?.accountIndex ?: throw PerpsWithdrawException.AccountUnavailable()
         val request = WithdrawQuoteRequest(
             destinationAsset = destination.assetId,
             amount = amountUnits.toString(),
             recipientAddress = destination.recipient,
         )
+        val requestedAtMs = timeProvider.currentTimeMillis()
         return PerpsWithdrawQuoteReader.read(
             quote = repository.quoteWithdraw(walletId, request),
             request = request,
             accountIndex = accountIndex,
-            nowMs = System.currentTimeMillis(),
+            relayAccounts = relayAccounts,
+            requestedAtMs = requestedAtMs,
         )
+    }
+
+    private suspend fun signableQuote(
+        plan: PerpsWithdrawPlan,
+        shown: PerpsWithdrawQuote,
+        accountIndex: Long,
+        relayAccounts: Set<Long>,
+    ): PerpsWithdrawQuote {
+        requireRelayRecipient(shown, relayAccounts)
+        val lastsUntilSigned = shown.isAlive(timeProvider.currentTimeMillis() + QUOTE_RENEWAL_LEAD_MS)
+        if (lastsUntilSigned && changedTransferFee(accountIndex, shown) == null) {
+            return shown
+        }
+        val renewed = quote(plan.walletId, accountIndex, plan.destination, plan.amountUnits, relayAccounts)
+        if (!isAcceptableRenewal(shown, renewed)) {
+            throw PerpsWithdrawException.QuoteChanged(plan.copy(quote = renewed, cost = costOf(plan.destination, renewed)))
+        }
+        changedTransferFee(accountIndex, renewed)?.let { current ->
+            throw PerpsWithdrawException.FeeChanged(quoted = renewed.transfer.usdcFeeUnits, current = current)
+        }
+        return renewed
+    }
+
+    private fun requireRelayRecipient(shown: PerpsWithdrawQuote, relayAccounts: Set<Long>) {
+        if (shown.transfer.toAccountIndex !in relayAccounts) {
+            throw PerpsWithdrawException.QuoteExpired()
+        }
+    }
+
+    private suspend fun relayAccounts(): Set<Long> {
+        return securityConfig.verified()?.lighterRelayAccounts?.takeIf { it.isNotEmpty() }
+            ?: throw PerpsWithdrawException.RelayUnverified()
+    }
+
+    private fun isAcceptableRenewal(shown: PerpsWithdrawQuote, renewed: PerpsWithdrawQuote): Boolean {
+        val lowestShare = BPS_DENOMINATOR - QUOTE_RENEWAL_TOLERANCE_BPS
+        return renewed.outputUnits * BPS_DENOMINATOR >= shown.outputUnits * lowestShare &&
+            renewed.transfer.usdcFeeUnits <= shown.transfer.usdcFeeUnits &&
+            renewed.transfer.spentUnits <= shown.transfer.spentUnits
     }
 
     private suspend fun destination(
@@ -250,30 +285,12 @@ class PerpsWithdrawService(
         assetId: String,
         account: PerpsAccount?,
     ): PerpsWithdrawDestination? = coroutineScope {
-        when {
-            assetId.equals(PerpsFundingAssetId.USDC_ETHEREUM, ignoreCase = true) -> {
-                lighterDestination(account, sourceOf(walletId, PerpsFundingAssetId.USDC_ETHEREUM))
-            }
-
-            RELAY_DESTINATION_ASSET_IDS.any { it.equals(assetId, ignoreCase = true) } -> {
-                val relayed = async { relayDestination(walletId, assetId) }
-                val transferFee = async { transferFeeOrNull(account?.accountIndex) }
-                relayed.await()?.copy(transferFeeUnits = transferFee.await())
-            }
-
-            else -> null
+        if (RELAY_DESTINATION_ASSET_IDS.none { it.equals(assetId, ignoreCase = true) }) {
+            return@coroutineScope null
         }
-    }
-
-    private fun lighterDestination(account: PerpsAccount?, usdc: PerpsDepositSource?): PerpsWithdrawDestination {
-        val l1Address = account?.l1Address?.let(PerpsAccountProofs::normalizeL1AddressOrNull)
-            ?: throw PerpsWithdrawException.AccountUnavailable()
-        return PerpsWithdrawDestination(
-            assetId = PerpsFundingAssetId.USDC_ETHEREUM,
-            recipient = l1Address,
-            source = usdc,
-            transferFeeUnits = null,
-        )
+        val relayed = async { relayDestination(walletId, assetId) }
+        val transferFee = async { transferFeeOrNull(account?.accountIndex) }
+        relayed.await()?.copy(transferFeeUnits = transferFee.await())
     }
 
     private suspend fun relayDestination(walletId: String, assetId: String): PerpsWithdrawDestination? {
@@ -299,20 +316,18 @@ class PerpsWithdrawService(
         val usdPrice = source?.account?.rate
             ?.takeIf { it.currencyCode.equals(USD_CURRENCY, ignoreCase = true) }
             ?.price
-            ?.toBigDecimalOrNull()
+            .toWireDecimalOrNull()
         if (source == null || usdPrice == null) {
             return PerpsWithdrawCost(usd = lighterFee, isEstimate = false)
         }
-        val spent = PerpsFundingAmount.toDecimal(transfer.amountUnits + transfer.usdcFeeUnits, PerpsFundingAmount.USDC_DECIMALS)
+        val spent = PerpsFundingAmount.toDecimal(transfer.spentUnits, PerpsFundingAmount.USDC_DECIMALS)
         val received = PerpsFundingAmount.toDecimal(quote.outputUnits, source.decimals).multiply(usdPrice)
         return PerpsWithdrawCost(usd = spent.subtract(received).max(lighterFee), isEstimate = true)
     }
 
-    private suspend fun checkTransferFee(accountIndex: Long, quote: PerpsWithdrawQuote) {
-        val current = lighterRead { lighterApi.transferFeeUnits(accountIndex, quote.transfer.toAccountIndex) } ?: return
-        if (current != quote.transfer.usdcFeeUnits) {
-            throw PerpsWithdrawException.FeeChanged(quoted = quote.transfer.usdcFeeUnits, current = current)
-        }
+    private suspend fun changedTransferFee(accountIndex: Long, quote: PerpsWithdrawQuote): BigInteger? {
+        val current = lighterRead { lighterApi.transferFeeUnits(accountIndex, quote.transfer.toAccountIndex) } ?: return null
+        return current.takeIf { it != quote.transfer.usdcFeeUnits }
     }
 
     private suspend fun transferFeeOrNull(accountIndex: Long?): BigInteger? {
@@ -336,48 +351,16 @@ class PerpsWithdrawService(
         }
     }
 
-    private suspend fun sourceOf(walletId: String, assetId: String): PerpsDepositSource? {
-        return mcAccountRepository.findAccount(walletId, assetId)?.let { details ->
-            PerpsFundingAssetId.parse(details.asset.id)?.let { PerpsDepositSource(details, it) }
-        }
-    }
-
-    private suspend fun signStep(
-        walletId: String,
-        plan: PerpsWithdrawPlan,
-        credentials: LighterSigningCredentials,
-    ): PerpsFundingStep {
-        val nonce = nextNonce(walletId, credentials)
-        val expiredAtMs = expiredAtMs()
-        val signed = perpetualRepository.signWithdraw(
-            walletId = walletId,
-            assetIndex = USDC_ASSET_INDEX.toShort(),
-            routeType = LighterConstants.AssetRouteTypePerps,
-            amountUnits = plan.amountUnits.longValueExact(),
-            nonce = nonce,
-            expiredAtMs = expiredAtMs,
-        ) ?: throw PerpsWithdrawException.SigningFailed("no Lighter credentials")
-        return PerpsFundingStep(
-            stepId = signed.txHash,
-            kind = PerpsFundingStepKind.MAIN,
-            chainId = "$LIGHTER_CHAIN_LABEL/${credentials.chainId}",
-            to = plan.destination.recipient,
-            value = plan.amountUnits.toString(),
-            data = null,
-            txHash = signed.txHash,
-            signedData = signed.txInfo,
-            nonce = signed.nonce.toString(),
-            status = PerpsFundingStepStatus.SIGNED,
-        )
-    }
-
     private suspend fun signTransferStep(
         walletId: String,
         quote: PerpsWithdrawQuote,
         credentials: LighterSigningCredentials,
-        wallet: CryptoWallet,
+        wallet: MnemonicWallet,
+        nonce: Long,
     ): PerpsFundingStep {
-        val nonce = nextNonce(walletId, credentials)
+        if (!quote.isAlive(timeProvider.currentTimeMillis() + QUOTE_SIGNING_MARGIN_MS)) {
+            throw PerpsWithdrawException.QuoteExpired()
+        }
         val transfer = quote.transfer
         val signed = perpetualRepository.signTransfer(
             walletId = walletId,
@@ -421,7 +404,7 @@ class PerpsWithdrawService(
 
     private fun expiredAtMs(): Long {
         return minOf(
-            System.currentTimeMillis() + LighterConstants.DefaultExpireTimeMillis,
+            timeProvider.currentTimeMillis() + LighterConstants.DefaultExpireTimeMillis,
             LighterConstants.MaxTimestamp,
         )
     }
@@ -444,10 +427,15 @@ class PerpsWithdrawService(
         const val LIGHTER_USDC_ASSET_ID = "lighter/mainnet/usdc"
         private const val TON_COIN_ASSET_ID = "ton/mainnet/coin"
         private const val LIGHTER_CHAIN_LABEL = "lighter"
+        private const val QUOTE_RENEWAL_LEAD_MS = 10_000L
+        private const val QUOTE_SIGNING_MARGIN_MS = 5_000L
         val DEFAULT_MIN_UNITS: BigInteger = PerpsFundingAmount.GATEWAY_MINIMUM_USDC_UNITS
         private val DEFAULT_MIN_TRANSFER_UNITS: BigInteger = BigInteger.valueOf(1_000_000L)
+        private val QUOTE_RENEWAL_TOLERANCE_BPS: BigInteger = BigInteger.valueOf(25L)
+        private val BPS_DENOMINATOR: BigInteger = BigInteger.valueOf(10_000L)
 
         private val RELAY_DESTINATION_ASSET_IDS = listOf(
+            PerpsFundingAssetId.USDC_ETHEREUM,
             TON_COIN_ASSET_ID,
             "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
             "bsc/mainnet/bep20/0x55d398326f99059ff775485246999027b3197955",

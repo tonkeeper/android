@@ -35,6 +35,7 @@ import com.tonapps.perps.data.formatUsdPrice
 import com.tonapps.perps.data.limitFractionDigits
 import com.tonapps.perps.data.matches
 import com.tonapps.perps.data.sanitizeAmount
+import com.tonapps.perps.screens.common.PerpsDecimalInputTransformation
 import com.tonapps.perps.screens.review.PerpsAutoCloseField
 import com.tonapps.perps.screens.review.PerpsAutoCloseFix
 import com.tonapps.uikit.icon.UIKitIcon
@@ -302,7 +303,15 @@ private fun PerpsAutoCloseDialogBody(
 
             Spacer(Modifier.height(8.dp))
 
-            MoonBundleTitleCell(stringResource(Localization.perps_auto_close_stop_loss_when))
+            MoonBundleTitleCell(
+                title = stringResource(Localization.perps_auto_close_stop_loss_when),
+                description = liquidation?.let {
+                    stringResource(
+                        Localization.perps_auto_close_liquidation_at,
+                        formatUsdPrice(it.toDouble(), priceDecimals),
+                    )
+                },
+            )
             AmountFieldsRow(
                 percent = lossPercent,
                 onPercentChange = { value ->
@@ -446,6 +455,7 @@ private fun AmountFieldsRow(
             singleLine = true,
             disableClearButton = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            visualTransformation = PerpsDecimalInputTransformation,
         )
 
         MoonTextFieldCell(
@@ -459,6 +469,7 @@ private fun AmountFieldsRow(
             singleLine = true,
             disableClearButton = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            visualTransformation = PerpsDecimalInputTransformation,
         )
     }
 }
@@ -652,6 +663,32 @@ private fun PerpsAutoCloseDialogPreview() {
             estimate = PerpsAutoCloseEstimate(
                 sizeBase = BigDecimal("0.00781"),
                 referencePrice = BigDecimal("66141.70"),
+            ),
+            submit = null,
+            onSet = {},
+            onClose = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PerpsAutoCloseDialogStopLossPastLiquidationPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        PerpsAutoCloseDialogBody(
+            limitPrice = null,
+            priceDecimals = 2,
+            side = PerpsOrderSide.LONG,
+            bounds = PerpsAutoCloseBounds(
+                entryPrice = BigDecimal("90.38"),
+                leverage = BigDecimal(20),
+                currentPrice = BigDecimal("90.38"),
+                liquidationPrice = BigDecimal("86.10"),
+            ),
+            initial = PerpsAutoCloseDraft(takeProfit = null, stopLoss = BigDecimal.ONE),
+            estimate = PerpsAutoCloseEstimate(
+                sizeBase = BigDecimal("30.5"),
+                referencePrice = BigDecimal("90.38"),
             ),
             submit = null,
             onSet = {},

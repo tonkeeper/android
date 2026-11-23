@@ -20,14 +20,14 @@ object DeeplinkOpenAnalytics {
             return pairingUri == null || !isWalletConnectPairing(pairingUri)
         }
 
-    fun report(link: Uri, isColdStart: Boolean) {
+    fun report(link: Uri, isColdStart: Boolean, from: DeeplinkOpenFrom = from(link.toString())) {
         val deeplink = DeepLink(link, fromQR = false, referrer = null, fromExternal = true)
         val route = deeplink.route
         if (route is DeepLinkRoute.WalletConnect && route.isWakeUp) {
             return
         }
         AnalyticsHelper.Default.eventsTaggedWith(deeplink.utm).deeplinkOpen.deeplinkOpen(
-            from = from(link.toString()),
+            from = from,
             linkType = linkType(route),
             isColdStart = isColdStart,
         )
@@ -66,7 +66,10 @@ object DeeplinkOpenAnalytics {
             is DeepLinkRoute.Signer -> DeeplinkOpenLinkType.ExternalSign
             is DeepLinkRoute.TonConnect -> DeeplinkOpenLinkType.Tonconnect
             is DeepLinkRoute.WalletConnect -> DeeplinkOpenLinkType.WalletConnect
-            is DeepLinkRoute.DApp -> DeeplinkOpenLinkType.Dapp
+            is DeepLinkRoute.DApp,
+            is DeepLinkRoute.MultichainDApp,
+            is DeepLinkRoute.Loyalty,
+            is DeepLinkRoute.Earn -> DeeplinkOpenLinkType.Dapp
             is DeepLinkRoute.Battery -> DeeplinkOpenLinkType.Battery
             is DeepLinkRoute.Tabs.Browser -> DeeplinkOpenLinkType.Browser
             is DeepLinkRoute.Migrate -> DeeplinkOpenLinkType.Migration
@@ -78,6 +81,7 @@ object DeeplinkOpenAnalytics {
             is DeepLinkRoute.AddWallet -> DeeplinkOpenLinkType.AddWallet
             is DeepLinkRoute.Tabs.Main -> DeeplinkOpenLinkType.Main
             is DeepLinkRoute.Raffle -> DeeplinkOpenLinkType.Raffle
+            is DeepLinkRoute.Perps -> DeeplinkOpenLinkType.Perps
             is DeepLinkRoute.Unknown -> if (route.uri.hostOrNull == null) {
                 DeeplinkOpenLinkType.Main
             } else {
@@ -89,7 +93,6 @@ object DeeplinkOpenAnalytics {
             DeepLinkRoute.Camera,
             DeepLinkRoute.DnsRenew,
             is DeepLinkRoute.PickWallet,
-            is DeepLinkRoute.Perps,
             is DeepLinkRoute.Jetton -> DeeplinkOpenLinkType.Unknown
         }
     }

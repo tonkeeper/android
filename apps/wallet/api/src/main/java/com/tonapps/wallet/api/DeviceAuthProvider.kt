@@ -6,5 +6,7 @@ interface DeviceAuthProvider {
 
     fun refreshToken(expiredToken: String): String?
 
+    fun accessTokenExpiresAt(accessToken: String): Long?
+
     fun walletAuthToken(walletId: String, accessToken: String): String?
 }

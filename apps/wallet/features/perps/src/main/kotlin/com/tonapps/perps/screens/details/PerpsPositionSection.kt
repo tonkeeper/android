@@ -25,6 +25,7 @@ import com.tonapps.perps.data.PerpsAutoCloseAffordance
 import com.tonapps.perps.data.PerpsAutoCloseLegKind
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsLimitOrder
+import com.tonapps.perps.data.PerpsLimitOrderLeg
 import com.tonapps.perps.data.PerpsOpenPosition
 import com.tonapps.perps.data.PerpsPositionDetail
 import com.tonapps.perps.data.PerpsPositionSection
@@ -32,6 +33,7 @@ import com.tonapps.perps.data.PerpsPositionSide
 import com.tonapps.perps.data.PerpsTradingFlags
 import com.tonapps.perps.data.autoCloseAffordance
 import com.tonapps.perps.data.PERPS_EMPTY_VALUE
+import com.tonapps.perps.data.formatTrimmedUsdPrice
 import com.tonapps.perps.data.formatUsdPrice
 import com.tonapps.perps.screens.markets.PerpsSideLabel
 import com.tonapps.perps.screens.markets.perpsChangeColor
@@ -46,11 +48,11 @@ import ui.components.moon.MoonLabel
 import ui.components.moon.MoonLabelDefault
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundleTitleCell
-import ui.components.moon.cell.defaultBundleType
 import ui.components.moon.cell.MoonPropertyBigCell
 import ui.components.moon.cell.MoonPropertyTitle
 import ui.components.moon.cell.MoonPropertyValue
 import ui.theme.UIKit
+import ui.theme.modifiers.rememberShimmerPhase
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,6 +61,7 @@ import java.util.Locale
 internal fun PerpsPositionSection(
     section: PerpsPositionSection,
     card: PerpsPositionCardUi?,
+    expectsOpenPosition: Boolean,
     flags: PerpsTradingFlags,
     canTrade: Boolean,
     onAction: (PerpsAssetDetailsAction) -> Unit,
@@ -85,8 +88,11 @@ internal fun PerpsPositionSection(
             onRetry = { onAction(PerpsAssetDetailsAction.Retry) },
         )
 
-        PerpsPositionSection.Hidden,
-        PerpsPositionSection.Loading -> Unit
+        PerpsPositionSection.Loading -> if (expectsOpenPosition) {
+            PerpsPositionSkeleton(phase = rememberShimmerPhase())
+        }
+
+        PerpsPositionSection.Hidden -> Unit
     }
 }
 
@@ -368,8 +374,10 @@ internal fun PerpsLimitOrdersSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         MoonBundleTitleCell(title = stringResource(Localization.perps_limit_orders))
         orders.forEachIndexed { index, order ->
+            if (index > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             MoonBundleCell(
-                position = defaultBundleType(orders.size, index),
                 onClick = if (enabled) {
                     { onOrderClick(order) }
                 } else {
@@ -406,9 +414,42 @@ internal fun PerpsLimitOrdersSection(
                     PerpsSideLabel(side = order.side)
                 }
             }
+            PerpsLimitOrderAutoCloseCard(order = order)
         }
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+@Composable
+private fun PerpsLimitOrderAutoCloseCard(order: PerpsLimitOrder) {
+    val takeProfit = order.takeProfit
+    val stopLoss = order.stopLoss
+    if (takeProfit == null && stopLoss == null) {
+        return
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+    MoonBundleCell {
+        Column {
+            if (takeProfit != null) {
+                PerpsLimitOrderLegRow(title = stringResource(Localization.perps_take_profit), leg = takeProfit)
+            }
+            if (takeProfit != null && stopLoss != null) {
+                MoonItemDivider()
+            }
+            if (stopLoss != null) {
+                PerpsLimitOrderLegRow(title = stringResource(Localization.perps_stop_loss), leg = stopLoss)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PerpsLimitOrderLegRow(title: String, leg: PerpsLimitOrderLeg) {
+    MoonPropertyBigCell(
+        title = { MoonPropertyTitle(title = title) },
+        content = { MoonPropertyValue(title = formatTrimmedUsdPrice(leg.triggerPrice)) },
+    )
 }
 
 @Composable

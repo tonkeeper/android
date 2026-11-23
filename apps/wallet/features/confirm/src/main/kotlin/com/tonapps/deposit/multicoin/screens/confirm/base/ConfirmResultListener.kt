@@ -1,6 +1,7 @@
 package com.tonapps.deposit.multicoin.screens.confirm
 
 import com.tonapps.blockchain.model.ConfirmContext
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Where the confirmation sheet reports back. The request carries the transport it arrived on, so
@@ -14,4 +15,10 @@ interface ConfirmResultListener {
 
     // The user confirmed, but signing or sending did not go through.
     suspend fun failed(context: ConfirmContext.Dapp)
+
+    fun isGone(context: ConfirmContext.Dapp): Boolean
+
+    fun gone(context: ConfirmContext.Dapp): Flow<Unit>
+
+    suspend fun closedAsGone(context: ConfirmContext.Dapp)
 }

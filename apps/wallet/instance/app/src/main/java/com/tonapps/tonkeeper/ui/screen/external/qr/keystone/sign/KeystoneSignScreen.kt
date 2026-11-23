@@ -5,13 +5,13 @@ import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.qr.ui.QRView
 import com.tonapps.security.hex
-import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.screen.external.qr.QRSignScreen
 import com.tonapps.tonkeeper.ui.screen.external.qr.urFlow
 import com.tonapps.tonkeeperx.R
 import com.tonapps.ur.UREncoder
 import com.tonapps.ur.registry.TonSignature
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.tonkeeper.extensions.failureToast
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,7 +71,7 @@ class KeystoneSignScreen: QRSignScreen() {
         val qrView = view.findViewById<QRView>(R.id.qr)
 
         val signatureFlow = urFlow(TonSignature::class.java) {
-            navigation?.toast(Localization.unknown_error)
+            navigation?.failureToast(Localization.unknown_error)
         }
 
         collectFlow(signatureFlow, ::setResult)

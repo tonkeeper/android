@@ -12,7 +12,7 @@ sealed class TransportStatusException(message: String) : Exception(message) {
     class BlindSigningDisabled : TransportStatusException("Blind signing is disabled")
     class TxParsingFailed : TransportStatusException("Transaction parsing failed")
     class InternalError : TransportStatusException("Internal error, please report")
-    class UnknownError(code: Int) : TransportStatusException("Unknown error with status code: $code")
+    class UnknownError(val code: Int) : TransportStatusException("Unknown error with status code: $code")
 
     companion object {
         fun fromStatusCode(statusCode: Int): TransportStatusException {

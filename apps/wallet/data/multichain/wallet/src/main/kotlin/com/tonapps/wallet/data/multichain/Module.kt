@@ -4,7 +4,9 @@ import com.tonapps.security.multichain.McPasscodeStore
 import com.tonapps.security.multichain.SessionKeyCipher
 import com.tonapps.security.multichain.SessionKeyStore
 import com.tonapps.security.multichain.VaultStorage
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
+import com.tonapps.chainkit.core.net.module.NodeManifestHostProvider
 import com.tonapps.chainkit.core.net.module.SessionTokenProvider
 import com.tonapps.wallet.PendingTransactionReporter
 import com.tonapps.wallet.api.AuthorizationProvider
@@ -19,6 +21,7 @@ import com.tonapps.wallet.data.multichain.legacy.LegacySwapAccounts
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapAccountsImpl
 import com.tonapps.wallet.data.multichain.device.DeviceSessionTokenProvider
 import com.tonapps.wallet.data.multichain.device.SecureDeviceRepository
+import com.tonapps.wallet.data.multichain.fees.NetworkFeesRepository
 import com.tonapps.wallet.data.multichain.lighter.LighterAccountPrefs
 import com.tonapps.wallet.data.multichain.lighter.LighterCredentialsStore
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
@@ -54,16 +57,21 @@ val mcWalletModule = module {
     single { LighterAccountPrefs(get()) }
     single { LighterCredentialsStore(get(), get(), get()) }
     single { PerpetualRepository(get(), get()) }
+    single { NetworkFeesRepository(get()) }
     single(createdAtStart = true) {
         SecureDeviceRepository(get(), get(), get(), get()).also { get<API>().setDeviceAuthProvider(it) }
     }
     single<SessionTokenProvider> { DeviceSessionTokenProvider(get()) }
-    single<McAccountRepository> { AccountRepositoryImpl(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    single {
+        val api = get<API>()
+        NodeManifestHostProvider { api.getConfig(TonNetwork.MAINNET).multichainApiUrl }
+    }
+    single<McAccountRepository> { AccountRepositoryImpl(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     single { McTonWalletResolver(get(), get()) } bind MultichainWalletResolver::class
     single<UnifiedAccountRepository> { UnifiedAccountRepositoryImpl(get(), get(), get(), get()) }
     single<AuthorizationProvider> { get<UnifiedAccountRepository>() }
     single { RemotePendingTransactionReporter(get()) } bind PendingTransactionReporter::class
-    single(createdAtStart = true) { McWalletRealtimeProvider(get(), get(), get(), get()).also { it.start() } }
+    single { McWalletRealtimeProvider(get(), get(), get(), get()) }
     single { PostTransactionRefreshSchedule(get(), get(), get()) }
     single<LegacySwapAccounts> { LegacySwapAccountsImpl(get(), get(), get(), get()) }
 }

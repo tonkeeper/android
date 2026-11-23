@@ -19,7 +19,10 @@ import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.chainkit.core.chain.model.num.BaseUnit
+import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.core.components.AmountInputConverter
+import com.tonapps.core.components.AmountToggle
+import com.tonapps.core.components.withLocaleDecimalSeparator
 import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.deposit.multicoin.analytics.WithdrawAnalytics
@@ -27,8 +30,9 @@ import com.tonapps.extensions.toUriOrNull
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.mvi.MviRelay
 import com.tonapps.mvi.flow.mapLatestCatching
+import com.tonapps.time.TimeProvider
 import com.tonapps.wallet.api.API
-import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.ledger.LedgerTonComment
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
@@ -49,6 +53,7 @@ import kotlinx.coroutines.withContext
 private const val FORMAT_DECIMALS = 3
 
 class SendData(
+    val walletId: String,
     val initAssetId: String,
     val presetAddress: String? = null,
     val analyticsFrom: WithdrawFlowFrom,
@@ -96,10 +101,10 @@ sealed interface SendEvent {
 @OptIn(FlowPreview::class)
 class SendFeature(
     data: SendData,
-    private val oldAccount: AccountRepository,
     private val accountRepo: McAccountRepository,
     private val api: API,
     private val settingsRepository: SettingsRepository,
+    private val timeProvider: TimeProvider,
 ) : AsyncViewModel() {
 
     private val relay = MviRelay<SendEvent>()
@@ -115,7 +120,13 @@ class SendFeature(
             when {
                 account == null -> null
                 settingsRepository.hiddenBalances -> HIDDEN_BALANCE
-                else -> "${account.displayBalance.fmt()} ${account.asset.symbol}"
+                else -> {
+                    val balance = Formatter.formatNumber(
+                        value = account.displayBalance.value,
+                        options = Formatter.defaultOptions,
+                    )
+                    "$balance ${account.asset.symbol}"
+                }
             }
         }
         .cacheState()
@@ -157,6 +168,8 @@ class SendFeature(
 
     // Whether the amount field is entered in fiat (true) or in the token (false).
     val inputInFiat: StateFlow<Boolean> field = MutableStateFlow(false)
+
+    private var amountToggle: AmountToggle? = null
 
     /** Entered amount as a token unit, kept even when it exceeds the balance so the preview stays in sync. */
     val enteredAmount: StateFlow<BaseUnit?> = combine(amount, selectedAccount, inputInFiat)
@@ -221,8 +234,25 @@ class SendFeature(
 
     val commentEncrypted: StateFlow<Boolean> field = MutableStateFlow(false)
 
-    val encryptionAvailable: StateFlow<Boolean> = addressStatus
-        .map { (it as? AddressStatus.Valid)?.publicKey != null }
+    val encryptionAvailable: StateFlow<Boolean> = combine(addressStatus, selectedWallet) { status, wallet ->
+        (status as? AddressStatus.Valid)?.publicKey != null && wallet?.isHardware != true
+    }.cacheState(initialValue = false)
+
+    val ledgerCommentIssue: StateFlow<LedgerCommentIssue?> = combine(selectedWallet, selectedAccount, normalizedComment)
+        { wallet, account, memo ->
+            val chain = account?.data?.chain
+            val isCoin = account?.asset?.value is Asset.Coin
+            when {
+                wallet?.isHardware != true || memo == null || !isCoin -> null
+                chain is Chain.Ton && !LedgerTonComment.isClearSignable(memo) -> LedgerCommentIssue.TonRules
+                chain?.isEvm == true -> LedgerCommentIssue.NotShown
+                else -> null
+            }
+        }
+        .cacheState(initialValue = null)
+
+    val ledgerCommentUnsupported: StateFlow<Boolean> = ledgerCommentIssue
+        .map { it != null }
         .cacheState(initialValue = false)
 
     val commentTooLong: StateFlow<Boolean> = combine(commentEncrypted, encryptionAvailable, normalizedComment)
@@ -241,6 +271,7 @@ class SendFeature(
                 !(status.memoRequired && memo == null)
         }
         .combine(commentTooLong) { enabled, tooLong -> enabled && !tooLong }
+        .combine(ledgerCommentUnsupported) { enabled, unsupported -> enabled && !unsupported }
         .cacheState(initialValue = false)
 
     private val utm = data.utm
@@ -255,12 +286,12 @@ class SendFeature(
 
     // --- Init ---
     init {
-        loadAccounts(assetId = data.initAssetId, presetAmount = data.presetAmount)
+        loadAccounts(walletId = data.walletId, assetId = data.initAssetId, presetAmount = data.presetAmount)
     }
 
-    private fun loadAccounts(assetId: String, presetAmount: String?) {
+    private fun loadAccounts(walletId: String, assetId: String, presetAmount: String?) {
         bgScope.launch {
-            val wallet = oldAccount.getSelectedWalletId()?.let { accountRepo.getWallet(it) }
+            val wallet = accountRepo.getWallet(walletId)
             val account = wallet?.let {
                 runCatching { accountRepo.findAccount(it.id, assetId) }.getOrNull()
             }
@@ -358,7 +389,7 @@ class SendFeature(
     }
 
     private fun applyTransferLink(route: DeepLinkRoute.Transfer) {
-        if (route.isExpired) {
+        if (route.isExpired(timeProvider.currentTimeSeconds())) {
             relay.emit(SendEvent.ExpiredLink)
             return
         }
@@ -406,7 +437,8 @@ class SendFeature(
             return
         }
 
-        val text = parsed.fmt()
+        val text = parsed.fmt().withLocaleDecimalSeparator()
+        amountToggle = null
         inputInFiat.tryEmit(false)
         isMaxFlow.tryEmit(false)
         amount.tryEmit(text)
@@ -438,6 +470,7 @@ class SendFeature(
             formatted = converter.maxText(account.unitBalance, false) ?: return
         }
 
+        amountToggle = null
         inputInFiat.tryEmit(inFiat)
         amount.tryEmit(formatted)
         isMaxFlow.tryEmit(true)
@@ -454,13 +487,14 @@ class SendFeature(
         }
 
         val toFiat = !inputInFiat.value
-        val converted = converter.swapText(amount.value, toFiat)
+        val toggle = converter.toggle(amount.value, isMaxFlow.value, toFiat, amountToggle)
+        amountToggle = toggle
 
         inputInFiat.tryEmit(toFiat)
-        isMaxFlow.tryEmit(false)
-        amount.tryEmit(converted)
+        isMaxFlow.tryEmit(toggle.toggledIsMax)
+        amount.tryEmit(toggle.toggledText)
 
-        relay.emit(SendEvent.UpdateAmount(converted))
+        relay.emit(SendEvent.UpdateAmount(toggle.toggledText))
     }
 
     fun onContinue() {
@@ -476,7 +510,7 @@ class SendFeature(
             }
             val status = resolved as? AddressStatus.Valid ?: return@launch
             val memo = normalizedComment.value
-            if ((status.memoRequired && memo == null) || commentTooLong.value) {
+            if ((status.memoRequired && memo == null) || commentTooLong.value || ledgerCommentUnsupported.value) {
                 return@launch
             }
             val encryptionKey = status.publicKey?.takeIf { commentEncrypted.value && memo != null }
@@ -496,6 +530,7 @@ class SendFeature(
                         to = status.to,
                         amount = amt.value,
                         comment = memo,
+                        token = (account.asset.value as? Asset.Token)?.contract,
                     ),
                     domain = status.domain,
                     isMax = isMaxFlow.value,
@@ -540,4 +575,9 @@ private fun String.tonNetworkModeOrNull(): Network.Mode? {
             Network.Mode.Mainnet
         }
     }
+}
+
+enum class LedgerCommentIssue {
+    TonRules,
+    NotShown,
 }

@@ -37,6 +37,10 @@ data class OnrampAsset(
     /* Fiat codes (ISO 4217) supported for this asset in the current country */
     @SerialName(value = "available_fiats")
     val availableFiats: List<String>,
+
+    /* Human-readable asset name (e.g. \"Bitcoin\", \"Tether\") */
+    @SerialName(value = "name")
+    val name: String? = null,
     @SerialName(value = "network_name")
     val networkName: String? = null,
     @SerialName(value = "network_image")

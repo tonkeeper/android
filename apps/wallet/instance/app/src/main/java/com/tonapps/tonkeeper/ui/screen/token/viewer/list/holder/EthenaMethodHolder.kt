@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import com.tonapps.extensions.uri
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.koin.dappScreenFactory
 import com.tonapps.tonkeeper.ui.screen.token.viewer.list.Item
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.localization.Localization
@@ -35,7 +35,7 @@ class EthenaMethodHolder(parent: ViewGroup) :
 
     private fun openDapp(item: Item.EthenaMethod) {
         context.navigation?.add(
-            DAppScreen.newInstance(
+            context.dappScreenFactory.create(
                 wallet = item.wallet,
                 title = item.name,
                 url = item.url.toUri(),

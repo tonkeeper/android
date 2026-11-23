@@ -14,11 +14,9 @@ import java.io.IOException
 import okhttp3.Call
 import okhttp3.HttpUrl
 
-import io.tonapi.models.Auctions
 import io.tonapi.models.DnsRecord
-import io.tonapi.models.DomainBids
 import io.tonapi.models.DomainInfo
-import io.tonapi.models.GetOpenapiJsonDefaultResponse
+import io.tonapi.models.StatusDefaultResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -98,57 +96,6 @@ class DNSApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClien
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAllAuctions(tld: String? = null): Auctions {
-        val localVarResponse = getAllAuctionsWithHttpInfo(tld = tld)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as Auctions
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getAllAuctionsWithHttpInfo(tld: String?): ApiResponse<Auctions?> {
-        val localVariableConfig = getAllAuctionsRequestConfig(tld = tld)
-
-        return request<Unit, Auctions>(
-            localVariableConfig
-        )
-    }
-
-    fun getAllAuctionsRequestConfig(tld: String?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (tld != null) {
-                    put("tld", listOf(tld.toString()))
-                }
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/dns/auctions",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
     fun getDnsInfo(domainName: String): DomainInfo {
         val localVarResponse = getDnsInfoWithHttpInfo(domainName = domainName)
 
@@ -186,52 +133,6 @@ class DNSApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClien
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/dns/{domain_name}".replace("{"+"domain_name"+"}", encodeURIComponent(domainName.toString())),
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getDomainBids(domainName: String): DomainBids {
-        val localVarResponse = getDomainBidsWithHttpInfo(domainName = domainName)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as DomainBids
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getDomainBidsWithHttpInfo(domainName: String): ApiResponse<DomainBids?> {
-        val localVariableConfig = getDomainBidsRequestConfig(domainName = domainName)
-
-        return request<Unit, DomainBids>(
-            localVariableConfig
-        )
-    }
-
-    fun getDomainBidsRequestConfig(domainName: String): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/dns/{domain_name}/bids".replace("{"+"domain_name"+"}", encodeURIComponent(domainName.toString())),
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

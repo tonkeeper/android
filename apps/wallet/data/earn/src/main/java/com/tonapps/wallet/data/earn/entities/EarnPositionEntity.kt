@@ -7,7 +7,7 @@ data class EarnPositionEntity(
     val vaultId: String,
     val assetSymbol: String,
     val protocolName: String,
-    val balanceUsd: BigDecimal,
-    val earnedUsd: BigDecimal,
+    val balanceFiat: BigDecimal?,
+    val earnedFiat: BigDecimal?,
     val assetIconUrl: String?,
 )

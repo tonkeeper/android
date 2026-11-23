@@ -1,7 +1,9 @@
 package com.tonapps.perps.screens.review
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -36,7 +38,8 @@ import com.tonapps.paging.collectAsStateWorkaround
 import com.tonapps.perps.data.PerpsAutoCloseDraft
 import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.bidiIsolate
-import com.tonapps.perps.data.formatSlippagePercent
+import com.tonapps.perps.data.formatPpmPercent
+import com.tonapps.perps.screens.common.PerpsLoyaltyRewardCell
 import com.tonapps.perps.screens.markets.PerpsAssetIcon
 import com.tonapps.perps.screens.order.PerpsAutoCloseDialog
 import com.tonapps.perps.screens.order.perpsAutoCloseSummary
@@ -49,14 +52,15 @@ import ui.components.moon.MoonLargeItemSubtitle
 import ui.components.moon.MoonTopAppBar
 import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonBottomButtonCell
+import ui.components.moon.cell.MoonButtonCellDefaults
 import ui.components.moon.cell.MoonBundleCell
-import ui.components.moon.cell.MoonDescriptionCell
 import ui.components.moon.cell.MoonPropertyBigCell
 import ui.components.moon.cell.MoonSlideConfirmation
 import ui.components.moon.cell.MoonSlideConfirmationState
 import ui.components.moon.cell.rememberSliderState
 import ui.components.moon.container.MoonScaffold
 import ui.components.moon.container.MoonSurface
+import ui.components.moon.dialog.DialogNavigator
 import ui.components.moon.dialog.MoonModalDialog
 import ui.components.moon.dialog.rememberDialogNavigator
 import ui.components.moon.screen.MoonLoadingScreen
@@ -69,12 +73,16 @@ fun PerpsReviewScreen(
     onBack: () -> Unit,
     onClose: () -> Unit,
     onAutoCloseChanged: (PerpsAutoCloseDraft?) -> Unit,
+    onAutoCloseDropped: (PerpsAutoCloseDraft?) -> Unit,
+    onOpenLoyalty: () -> Unit,
 ) {
     val content by feature.rows.collectAsStateWorkaround()
+    val loyaltyReward by feature.loyaltyReward.collectAsStateWorkaround()
     val status by feature.status.collectAsStateWorkaround()
     val sheet by feature.sheet.collectAsStateWorkaround()
     val canConfirm by feature.canConfirm.collectAsStateWorkaround()
     val editor by feature.autoCloseEditor.collectAsStateWorkaround()
+    val market by feature.market.collectAsStateWorkaround()
     var showAutoClose by remember { mutableStateOf(false) }
 
     val isTopFragment = LocalIsTopFragment.current
@@ -86,10 +94,11 @@ fun PerpsReviewScreen(
     }
 
     PerpsReviewContent(
-        symbol = feature.symbol,
-        iconUrl = feature.iconUrl,
+        symbol = market.symbol,
+        iconUrl = market.iconUrl,
         side = feature.side,
         content = content,
+        loyaltyReward = loyaltyReward,
         status = status,
         canConfirm = canConfirm,
         onAction = feature::sendAction,
@@ -98,6 +107,7 @@ fun PerpsReviewScreen(
         } else {
             null
         },
+        onOpenLoyalty = onOpenLoyalty,
         onBack = onBack,
         onClose = onClose,
     )
@@ -110,8 +120,15 @@ fun PerpsReviewScreen(
         )
 
         is PerpsReviewSheet.AutoCloseUpdate -> PerpsAutoCloseUpdateSheet(
-            field = current.fix.field,
-            side = feature.side,
+            stale = current.stale,
+            onContinue = if (current.canContinue) {
+                {
+                    feature.sendAction(PerpsReviewAction.ContinueWithoutAutoClose(current.remaining))
+                    onAutoCloseDropped(current.remaining)
+                }
+            } else {
+                null
+            },
             onUpdate = { feature.sendAction(PerpsReviewAction.UpdateAutoClose(current.fix)) },
             onClose = { feature.sendAction(PerpsReviewAction.DismissSheet) },
         )
@@ -143,10 +160,12 @@ private fun PerpsReviewContent(
     iconUrl: String?,
     side: PerpsOrderSide,
     content: PerpsReviewContent?,
+    loyaltyReward: String?,
     status: PerpsReviewStatus,
     canConfirm: Boolean,
     onAction: (PerpsReviewAction) -> Unit,
     onAutoCloseClick: (() -> Unit)?,
+    onOpenLoyalty: () -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -188,15 +207,21 @@ private fun PerpsReviewContent(
                 PerpsReviewHeader(
                     symbol = symbol,
                     iconUrl = iconUrl,
-                    title = stringResource(
-                        content?.title ?: Localization.perps_review_title_pattern,
-                        sideText,
-                        symbol,
-                    ),
+                    title = if (content != null) {
+                        stringResource(content.title, symbol)
+                    } else {
+                        stringResource(Localization.perps_review_title_pattern, sideText, symbol)
+                    },
                 )
 
                 if (content != null) {
-                    PerpsReviewRowsCell(symbol = symbol, content = content, onAutoCloseClick = onAutoCloseClick)
+                    PerpsReviewRowsCell(
+                        symbol = symbol,
+                        content = content,
+                        loyaltyReward = loyaltyReward,
+                        onAutoCloseClick = onAutoCloseClick,
+                        onOpenLoyalty = onOpenLoyalty,
+                    )
                 } else if (status !is PerpsReviewStatus.Failed) {
                     MoonLoadingScreen()
                 }
@@ -256,7 +281,9 @@ private fun PerpsReviewHeader(symbol: String, iconUrl: String?, title: String) {
 private fun PerpsReviewRowsCell(
     symbol: String,
     content: PerpsReviewContent,
+    loyaltyReward: String?,
     onAutoCloseClick: (() -> Unit)?,
+    onOpenLoyalty: () -> Unit,
 ) {
     MoonBundleCell {
         Column {
@@ -265,6 +292,10 @@ private fun PerpsReviewRowsCell(
                     MoonItemDivider()
                 }
                 PerpsReviewRowCell(row = row, symbol = symbol, onAutoCloseClick = onAutoCloseClick)
+            }
+            if (loyaltyReward != null) {
+                MoonItemDivider()
+                PerpsLoyaltyRewardCell(amount = loyaltyReward, hiddenBalance = false, onClick = onOpenLoyalty)
             }
         }
     }
@@ -334,6 +365,7 @@ private fun PerpsReviewRowCell(row: PerpsReviewRow, symbol: String, onAutoCloseC
 private fun perpsReviewValueText(value: PerpsReviewValue): CharSequence {
     return when (value) {
         is PerpsReviewValue.Text -> value.text
+        is PerpsReviewValue.Resource -> stringResource(value.text)
         is PerpsReviewValue.Leverage -> stringResource(
             Localization.perps_leverage_value_pattern,
             value.value,
@@ -351,7 +383,6 @@ private fun perpsReviewValueText(value: PerpsReviewValue): CharSequence {
 private fun perpsReviewSubText(sub: PerpsReviewSub?, symbol: String): String? {
     return when (sub) {
         null -> null
-        is PerpsReviewSub.Quote -> stringResource(Localization.perps_review_quote_pattern, sub.amount)
         is PerpsReviewSub.Base -> stringResource(
             Localization.perps_review_base_pattern,
             sub.amount,
@@ -397,6 +428,95 @@ private fun PerpsOrderNotPlacedSheet(
 ) {
     val navigator = rememberDialogNavigator(onClose = onClose)
 
+    PerpsReviewAlertSheet(
+        navigator = navigator,
+        title = stringResource(Localization.perps_review_order_not_placed_title),
+        text = stringResource(
+            Localization.perps_review_order_not_placed_text,
+            formatPpmPercent(slippagePpm),
+        ),
+    ) {
+        MoonBottomButtonCell(
+            text = stringResource(Localization.perps_review_try_again),
+            onClick = {
+                navigator.close()
+                onTryAgain()
+            },
+        )
+    }
+}
+
+private data class PerpsAutoCloseUpdateCopy(
+    @StringRes val text: Int,
+    @StringRes val continueText: Int,
+    @StringRes val updateText: Int,
+)
+
+private fun autoCloseUpdateCopy(stale: Set<PerpsAutoCloseField>): PerpsAutoCloseUpdateCopy {
+    return when {
+        stale.size > 1 -> PerpsAutoCloseUpdateCopy(
+            text = Localization.perps_review_auto_close_update_text,
+            continueText = Localization.perps_review_continue_without_auto_close,
+            updateText = Localization.perps_review_update_auto_close,
+        )
+
+        PerpsAutoCloseField.TAKE_PROFIT in stale -> PerpsAutoCloseUpdateCopy(
+            text = Localization.perps_review_tp_update_text,
+            continueText = Localization.perps_review_continue_without_tp,
+            updateText = Localization.perps_review_update_tp,
+        )
+
+        else -> PerpsAutoCloseUpdateCopy(
+            text = Localization.perps_review_sl_update_text,
+            continueText = Localization.perps_review_continue_without_sl,
+            updateText = Localization.perps_review_update_sl,
+        )
+    }
+}
+
+@Composable
+private fun PerpsAutoCloseUpdateSheet(
+    stale: Set<PerpsAutoCloseField>,
+    onContinue: (() -> Unit)?,
+    onUpdate: () -> Unit,
+    onClose: () -> Unit,
+) {
+    val navigator = rememberDialogNavigator(onClose = onClose)
+    val copy = autoCloseUpdateCopy(stale)
+
+    PerpsReviewAlertSheet(
+        navigator = navigator,
+        title = stringResource(stale.autoCloseUpdateTitle()),
+        text = stringResource(copy.text),
+    ) {
+        if (onContinue != null) {
+            MoonBottomButtonCell(
+                text = stringResource(copy.continueText),
+                colors = MoonButtonCellDefaults.ButtonColorsSecondary,
+                contentPadding = remember { PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp) },
+                onClick = {
+                    navigator.close()
+                    onContinue()
+                },
+            )
+        }
+        MoonBottomButtonCell(
+            text = stringResource(copy.updateText),
+            onClick = {
+                navigator.close()
+                onUpdate()
+            },
+        )
+    }
+}
+
+@Composable
+private fun PerpsReviewAlertSheet(
+    navigator: DialogNavigator,
+    title: String,
+    text: String,
+    buttons: @Composable () -> Unit,
+) {
     MoonModalDialog(navigator = navigator) {
         MoonTopAppBarSimple(
             title = "",
@@ -419,7 +539,7 @@ private fun PerpsOrderNotPlacedSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp),
-                    text = stringResource(Localization.perps_review_order_not_placed_title),
+                    text = title,
                     style = UIKit.typography.h2,
                     color = UIKit.colorScheme.text.primary,
                     textAlign = TextAlign.Center,
@@ -429,73 +549,13 @@ private fun PerpsOrderNotPlacedSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp),
-                    text = stringResource(
-                        Localization.perps_review_order_not_placed_text,
-                        formatSlippagePercent(slippagePpm),
-                    ),
+                    text = text,
                     style = UIKit.typography.body1,
                     color = UIKit.colorScheme.text.secondary,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(16.dp))
-                MoonBottomButtonCell(
-                    text = stringResource(Localization.perps_review_try_again),
-                    onClick = {
-                        navigator.close()
-                        onTryAgain()
-                    },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PerpsAutoCloseUpdateSheet(
-    field: PerpsAutoCloseField,
-    side: PerpsOrderSide,
-    onUpdate: () -> Unit,
-    onClose: () -> Unit,
-) {
-    val navigator = rememberDialogNavigator(onClose = onClose)
-    val isTakeProfit = field == PerpsAutoCloseField.TAKE_PROFIT
-    val isLong = side == PerpsOrderSide.LONG
-    val textRes = when {
-        isTakeProfit && isLong -> Localization.perps_review_tp_update_text_long
-        isTakeProfit -> Localization.perps_review_tp_update_text_short
-        isLong -> Localization.perps_review_sl_update_text_long
-        else -> Localization.perps_review_sl_update_text_short
-    }
-
-    MoonModalDialog(navigator = navigator) {
-        MoonTopAppBarSimple(
-            title = stringResource(
-                if (isTakeProfit) {
-                    Localization.perps_review_tp_update_title
-                } else {
-                    Localization.perps_review_sl_update_title
-                }
-            ),
-            actionIconRes = UIKitIcon.ic_close_16,
-            onActionClick = { navigator.close() },
-        )
-        MoonSurface {
-            Column(Modifier.fillMaxWidth()) {
-                MoonDescriptionCell(text = stringResource(textRes))
-                Spacer(Modifier.height(16.dp))
-                MoonBottomButtonCell(
-                    text = stringResource(
-                        if (isTakeProfit) {
-                            Localization.perps_review_update_tp
-                        } else {
-                            Localization.perps_review_update_sl
-                        }
-                    ),
-                    onClick = {
-                        navigator.close()
-                        onUpdate()
-                    },
-                )
+                buttons()
             }
         }
     }

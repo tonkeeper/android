@@ -28,6 +28,9 @@ interface AccountDao {
         return getAccounts(chain.network.type.id, chain.network.mode.id)
     }
 
+    @Query("SELECT DISTINCT wallet_id FROM account WHERE network = :network AND mode = :mode AND display_address = :address")
+    suspend fun getWalletIdsByAddress(network: String, mode: String, address: String): List<String>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAccounts(accounts: List<AccountEntity>)
 

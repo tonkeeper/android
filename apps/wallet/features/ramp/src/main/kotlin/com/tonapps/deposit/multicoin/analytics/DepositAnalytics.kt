@@ -4,8 +4,12 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFailureReason
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowNetwork
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowOutcome
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowProviderMode
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.deposit.screens.ramp.RampType
@@ -17,6 +21,7 @@ class DepositAnalytics(
     private val from: DepositFlowFrom,
     private val walletMode: DepositFlowWalletMode,
     private val utm: UtmParameters = UtmParameters.Empty,
+    private val screen: DepositFlowDepositScreen,
 ) : RampAnalytics {
 
     private val events: Events.DepositFlow?
@@ -31,6 +36,7 @@ class DepositAnalytics(
         events?.depositStarted(
             from = from,
             walletMode = walletMode,
+            depositScreen = screen,
             availableOptions = availableOptions.toAnalyticsOptions { it.key },
         )
     }
@@ -44,6 +50,7 @@ class DepositAnalytics(
             from = from,
             walletMode = walletMode,
             addFundsOption = DepositFlowAddFundsOption.ReceiveTokens,
+            depositScreen = screen,
             network = network,
         )
     }
@@ -52,6 +59,7 @@ class DepositAnalytics(
         events?.depositViewFiatChooseAsset(
             from = from,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
             availableOptions = availableOptions.toAnalyticsOptions(),
         )
     }
@@ -60,6 +68,7 @@ class DepositAnalytics(
         events?.depositClickFiatAsset(
             from = from,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
             buyAsset = cryptoAsset,
         )
     }
@@ -72,6 +81,7 @@ class DepositAnalytics(
         events?.depositViewFiatPaymentMethod(
             from = from,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
             buyAsset = cryptoAsset,
             sellAsset = fiatCode,
             availableOptions = availableOptions.toAnalyticsOptions(),
@@ -86,17 +96,20 @@ class DepositAnalytics(
         events?.depositClickFiatPaymentMethod(
             from = from,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
             buyAsset = cryptoAsset,
             sellAsset = fiatCode,
             paymentMethod = paymentMethod,
         )
     }
 
-    fun continueToP2pMarket() {
+    // [addFundsOption] is the option the user came through: P2P is a payment method of `buy_with_fiat`, as on iOS.
+    fun continueToP2pMarket(addFundsOption: DepositFlowAddFundsOption) {
         events?.depositContinueToP2pMarket(
             from = from,
             walletMode = walletMode,
-            addFundsOption = DepositFlowAddFundsOption.BuyWithP2pMarket,
+            addFundsOption = addFundsOption,
+            depositScreen = screen,
         )
     }
 
@@ -106,16 +119,29 @@ class DepositAnalytics(
         paymentMethod: String,
         providerName: String,
     ) {
+        viewRampInsertAmount(cryptoAsset, fiatCode, paymentMethod, providerName, providerMode = null)
+    }
+
+    fun viewRampInsertAmount(
+        cryptoAsset: String,
+        fiatCode: String,
+        paymentMethod: String,
+        providerName: String,
+        providerMode: DepositFlowProviderMode?,
+    ) {
         events?.depositViewRampInsertAmount(
             from = from,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
             buyAsset = cryptoAsset,
             sellAsset = fiatCode,
             paymentMethod = paymentMethod,
             providerName = providerName,
+            providerMode = providerMode,
         )
     }
 
+    // The deposit events carry no amount: it comes from the onramp API by `tx_id`.
     override fun clickRampInsertAmountContinue(
         cryptoAsset: String,
         fiatCode: String,
@@ -123,14 +149,25 @@ class DepositAnalytics(
         providerName: String,
         amount: Double,
     ) {
+        clickRampInsertAmountContinue(cryptoAsset, fiatCode, paymentMethod, providerName, providerMode = null)
+    }
+
+    fun clickRampInsertAmountContinue(
+        cryptoAsset: String,
+        fiatCode: String,
+        paymentMethod: String,
+        providerName: String,
+        providerMode: DepositFlowProviderMode?,
+    ) {
         events?.depositClickRampInsertAmountContinue(
             from = from,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
             buyAsset = cryptoAsset,
             sellAsset = fiatCode,
             paymentMethod = paymentMethod,
             providerName = providerName,
-            amount = amount,
+            providerMode = providerMode,
         )
     }
 
@@ -142,16 +179,54 @@ class DepositAnalytics(
         amount: Double,
         txId: String,
     ) {
+        continueToRampProvider(cryptoAsset, fiatCode, paymentMethod, providerName, providerMode = null, txId)
+    }
+
+    fun continueToRampProvider(
+        cryptoAsset: String,
+        fiatCode: String,
+        paymentMethod: String,
+        providerName: String,
+        providerMode: DepositFlowProviderMode?,
+        txId: String,
+    ) {
         events?.depositContinueToRampProvider(
             from = from,
             walletMode = walletMode,
             addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
             buyAsset = cryptoAsset,
             sellAsset = fiatCode,
             paymentMethod = paymentMethod,
             providerName = providerName,
-            amount = amount,
+            providerMode = providerMode,
             txId = txId,
+        )
+    }
+
+    fun rampResult(
+        cryptoAsset: String,
+        fiatCode: String,
+        paymentMethod: String,
+        providerName: String,
+        providerMode: DepositFlowProviderMode,
+        txId: String,
+        outcome: DepositFlowOutcome,
+        failureReason: DepositFlowFailureReason?,
+    ) {
+        events?.depositRampResult(
+            from = from,
+            walletMode = walletMode,
+            addFundsOption = DepositFlowAddFundsOption.BuyWithFiat,
+            depositScreen = screen,
+            buyAsset = cryptoAsset,
+            sellAsset = fiatCode,
+            paymentMethod = paymentMethod,
+            providerName = providerName,
+            providerMode = providerMode,
+            txId = txId,
+            outcome = outcome,
+            failureReason = failureReason,
         )
     }
 

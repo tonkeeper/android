@@ -7,7 +7,6 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.core.flags.WalletFeature
@@ -26,6 +25,8 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.walletapi.models.Chain as WalletApiChain
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 
 class SearchFeature(
     data: SearchFeatureData,
@@ -50,6 +52,7 @@ class SearchFeature(
         MutableStateFlow(data.initialSort ?: CatalogSearchSort.MARKET_CAP)
     val queryFilter: StateFlow<String> field = MutableStateFlow("")
     val networkFilter: StateFlow<Network.Type?> field = MutableStateFlow(data.initialNetwork)
+    val availableNetworks: StateFlow<ImmutableList<Network.Type>?> field = MutableStateFlow(null)
     val assetType: StateFlow<SearchAssetType> field = MutableStateFlow(data.initialAssetType ?: SearchAssetType.ALL)
     val perpsSort: StateFlow<PerpsSort> field = MutableStateFlow(PerpsSort.VOLUME)
 
@@ -57,7 +60,7 @@ class SearchFeature(
     val debouncedQuery: StateFlow<String> = queryFilter.map { it.trim() }.debounce(300).cacheState(initialValue = "")
 
     private val perpsGate: Flow<Boolean> = unifiedAccountRepository.selectedTonWalletFlow
-        .map { wallet -> wallet?.type == WalletType.Multichain && WalletFeature.Perps.isEnabled }
+        .map { wallet -> wallet?.supportsPerps == true && WalletFeature.Perps.isEnabled }
         .distinctUntilChanged()
 
     val isPerpsVisible: StateFlow<Boolean> = perpsGate.cacheState(initialValue = false)
@@ -67,7 +70,7 @@ class SearchFeature(
         sortOrder,
         debouncedQuery,
         combine(networkFilter, perpsGate, assetType) { network, showPerps, type ->
-            Triple(network, showPerps, type)
+            Triple(network, showPerps, type.takeIf { it != SearchAssetType.PERPETUALS } ?: SearchAssetType.ALL)
         }.distinctUntilChanged(),
         settingsRepository.currencyFlow,
         settingsRepository.safeModeChangedFlow,
@@ -77,6 +80,7 @@ class SearchFeature(
             query = query,
             network = network,
             perps = showPerps,
+            type = type,
             filter = type.toMarketFilter(),
             currency = walletCurrency.code,
             verifiedOnly = accountRepoLegacy.getSelectedWalletId()?.let { walletId ->
@@ -103,15 +107,19 @@ class SearchFeature(
                         showPerps = request.perps,
                         currency = request.currency,
                         verifiedOnly = request.verifiedOnly,
+                        onAvailableNetworksLoaded = { networks ->
+                            onAvailableNetworksLoaded(request.filter, networks)
+                        },
                     )
                 },
             ).flow.map { data ->
                 data.map { SearchListItem.Row(it) }
                     .insertSeparators<SearchListItem.Row, SearchListItem> { before, after ->
-                        if (request.isSectioned) {
-                            sectionHeader(before?.row, after?.row)
-                        } else {
-                            null
+                        when {
+                            request.isSectioned -> sectionHeader(before?.row, after?.row)
+                            before == null && after != null ->
+                                SearchListItem.Header(request.type.listSection(), after.row.id)
+                            else -> null
                         }
                     }
             }
@@ -159,11 +167,22 @@ class SearchFeature(
     fun onPerpsSortSelected(sort: PerpsSort) {
         perpsSort.tryEmit(sort)
     }
+
+    private fun onAvailableNetworksLoaded(filter: PerpsMarketFilter, networks: List<Network.Type>?) {
+        if (filter != assetType.value.toMarketFilter()) {
+            return
+        }
+        availableNetworks.tryEmit(networks?.toImmutableList())
+        if (networks != null) {
+            networkFilter.update { selected -> selected?.takeIf { it in networks } }
+        }
+    }
 }
 
 private fun SearchAssetType.toMarketFilter(): PerpsMarketFilter = when (this) {
     SearchAssetType.ALL, SearchAssetType.PERPETUALS -> PerpsMarketFilter.ALL
     SearchAssetType.TOKENS -> PerpsMarketFilter.TOKENS
+    SearchAssetType.COMMODITIES -> PerpsMarketFilter.COMMODITIES
     SearchAssetType.STOCKS -> PerpsMarketFilter.STOCKS
     SearchAssetType.ETFS -> PerpsMarketFilter.ETFS
 }
@@ -173,12 +192,22 @@ private data class SearchRequest(
     val query: String,
     val network: Network.Type?,
     val perps: Boolean,
+    val type: SearchAssetType,
     val filter: PerpsMarketFilter,
     val currency: String,
     val verifiedOnly: Boolean,
 ) {
     val isSectioned: Boolean
         get() = perps && network == null && filter == PerpsMarketFilter.ALL && query.isNotEmpty()
+}
+
+private fun SearchAssetType.listSection(): SearchSection = when (this) {
+    SearchAssetType.ALL -> SearchSection.ALL_ASSETS
+    SearchAssetType.TOKENS -> SearchSection.TOKENS
+    SearchAssetType.COMMODITIES -> SearchSection.COMMODITIES
+    SearchAssetType.STOCKS -> SearchSection.STOCKS
+    SearchAssetType.ETFS -> SearchSection.ETFS
+    SearchAssetType.PERPETUALS -> SearchSection.PERPETUALS
 }
 
 private fun sectionHeader(before: CatalogSearchRow?, after: CatalogSearchRow?): SearchListItem.Header? {

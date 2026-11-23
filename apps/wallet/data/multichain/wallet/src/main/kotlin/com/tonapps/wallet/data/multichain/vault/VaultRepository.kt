@@ -150,7 +150,7 @@ class VaultRepository(
     fun saveDeviceSession(session: DeviceSession) {
         deviceSessionLock.write {
             dao.putAll(
-                listOf(
+                listOfNotNull(
                     VaultMetadataEntity(KEY_DEVICE_ID, session.deviceId.encodeToByteArray()),
                     VaultMetadataEntity(
                         KEY_DEVICE_ACCESS_TOKEN,
@@ -160,8 +160,18 @@ class VaultRepository(
                         KEY_DEVICE_REFRESH_TOKEN,
                         session.refreshToken.encodeToByteArray(),
                     ),
+                    session.accessTokenExpiresAtMs?.let {
+                        VaultMetadataEntity(
+                            KEY_DEVICE_ACCESS_TOKEN_EXPIRES_AT,
+                            it.toString().encodeToByteArray(),
+                        )
+                    },
                 )
             )
+
+            if (session.accessTokenExpiresAtMs == null) {
+                dao.delete(KEY_DEVICE_ACCESS_TOKEN_EXPIRES_AT)
+            }
 
             deviceSession = session
         }
@@ -184,6 +194,9 @@ class VaultRepository(
             deviceId = deviceId,
             accessToken = accessToken,
             refreshToken = refreshToken,
+            accessTokenExpiresAtMs = session[KEY_DEVICE_ACCESS_TOKEN_EXPIRES_AT]
+                ?.decodeToString()
+                ?.toLongOrNull(),
         )
     }
 
@@ -240,11 +253,13 @@ class VaultRepository(
         const val KEY_DEVICE_ID = "device_id"
         const val KEY_DEVICE_ACCESS_TOKEN = "device_access_token"
         const val KEY_DEVICE_REFRESH_TOKEN = "device_refresh_token"
+        const val KEY_DEVICE_ACCESS_TOKEN_EXPIRES_AT = "device_access_token_expires_at"
 
         val DEVICE_SESSION_KEYS = listOf(
             KEY_DEVICE_ID,
             KEY_DEVICE_ACCESS_TOKEN,
             KEY_DEVICE_REFRESH_TOKEN,
+            KEY_DEVICE_ACCESS_TOKEN_EXPIRES_AT,
         )
     }
 }

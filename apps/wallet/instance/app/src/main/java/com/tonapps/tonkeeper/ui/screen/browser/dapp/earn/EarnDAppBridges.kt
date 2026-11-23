@@ -3,15 +3,19 @@ package com.tonapps.tonkeeper.ui.screen.browser.dapp.earn
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.DappBrowser.DappAppClickFrom
+import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.tonkeeper.manager.earn.EarnUrlResolver
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderHandler
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderProtocol
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.BaseBridges
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.bridge.InAppBridge
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderProtocol.Message.Request
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmSignListener
+import com.tonapps.webview.bridge.InAppBridgeContract.BaseBridges
+import com.tonapps.webview.bridge.InAppBridge
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeHandler
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol
 import com.tonapps.wallet.data.dapps.confirm.ConfirmSheetQueue
 import com.tonapps.wallet.data.dapps.evm.EvmProviderRepository
+import com.tonapps.wallet.data.earn.EarnPortfolioDirtyFlags
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +30,7 @@ internal class EarnDAppBridges(
     private val settingsRepository: SettingsRepository,
     private val earnUrlResolver: EarnUrlResolver,
     private val confirmSheetQueue: ConfirmSheetQueue,
+    private val portfolioDirtyFlags: EarnPortfolioDirtyFlags,
     openedFrom: DappAppClickFrom,
 ) : BaseBridges() {
 
@@ -53,7 +58,14 @@ internal class EarnDAppBridges(
             dappName = DAPP_NAME,
             providerRepository = providerRepository,
             confirmSheetQueue = confirmSheetQueue,
-            signListener = earnAnalytics,
+            signListener = object : EvmSignListener by earnAnalytics {
+                override fun onSigned(request: Request, chain: Chain.Evm) {
+                    earnAnalytics.onSigned(request, chain)
+                    if (request.method == EvmProviderProtocol.METHOD_SEND_TRANSACTION) {
+                        portfolioDirtyFlags.markDirty(wallet.id)
+                    }
+                }
+            },
             resolveAccounts = {
                 if (wallet.isMultichain) {
                     accountRepository.getCoinAccounts(wallet.id)

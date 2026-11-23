@@ -77,6 +77,9 @@ data class ConfigEntity(
     val multichainDomain: String = Constants.MULTICHAIN_API,
     val multichainRealtime: String = Constants.REALTIME_WS,
     val tradingDomain: String = Constants.TRADING_API,
+    val keeperEarnUrl: String = "",
+    val perpsSecurity: String? = null,
+    val perpsAccess: PerpsAccess = PerpsAccess.Hidden,
 ): Parcelable {
 
     @IgnoredOnParcel
@@ -95,18 +98,17 @@ data class ConfigEntity(
 
     @IgnoredOnParcel
     val multichainOrigin: String by lazy {
-        multichainDomain.httpsUrlOr(Constants.MULTICHAIN_API).newBuilder()
-            .encodedPath("/")
-            .query(null)
-            .fragment(null)
-            .build()
-            .toString()
-            .removeSuffix("/")
+        multichainDomain.httpsUrlOr(Constants.MULTICHAIN_API).origin()
     }
 
     @IgnoredOnParcel
     val tradingApiUrl: String by lazy {
         tradingDomain.httpsUrlOr(Constants.TRADING_API).toString().removeSuffix("/")
+    }
+
+    @IgnoredOnParcel
+    val keeperEarnApiUrl: String by lazy {
+        keeperEarnUrl.httpsUrlOr(multichainOrigin).origin()
     }
 
     @IgnoredOnParcel
@@ -190,12 +192,15 @@ data class ConfigEntity(
         termsOfUseUrl = json.getString("terms_of_use"),
         webSwapsUrl = json.optString("web_swaps_url", Constants.SWAP_API),
         tronFeeFaqUrl = json.getString("faq_tron_fee_url"),
-        earnUrl = json.optString("earn_url", ""),
+        earnUrl = json.optString("earnUrl", ""),
         earnFeaturedVaults = json.optJSONArray("earn_featured_vaults")?.toString() ?: "[]",
         explorers = ExplorerEntity.of(json.optJSONArray("explorers")),
         multichainDomain = json.optJSONObject("multichain")?.optString("domain").orEmpty(),
         multichainRealtime = json.optJSONObject("multichain")?.optString("realtime").orEmpty(),
         tradingDomain = json.optJSONObject("trading")?.optString("domain").orEmpty(),
+        keeperEarnUrl = json.optString("keeperEarn", ""),
+        perpsSecurity = json.optJSONObject("perps_security")?.toString(),
+        perpsAccess = PerpsAccess.of(json),
     )
 
     constructor() : this(
@@ -248,7 +253,7 @@ data class ConfigEntity(
         tronSwapUrl = "https://widget.letsexchange.io/en?affiliate_id=ffzymmunvvyxyypo&coin_from=ton&coin_to=USDT-TRC20&is_iframe=true",
         tronSwapTitle = "LetsExchange",
         privacyPolicyUrl = "https://tonkeeper.com/privacy",
-        termsOfUseUrl = "https://tonkeeper.com/terms",
+        termsOfUseUrl = "https://www.keeperwallet.com/terms",
         webSwapsUrl = Constants.SWAP_API,
         tronFeeFaqUrl = "https://tonkeeper.helpscoutdocs.com/article/137-multichain",
         earnUrl = "",
@@ -288,6 +293,16 @@ data class ConfigEntity(
     companion object {
         val default = ConfigEntity()
     }
+}
+
+private fun HttpUrl.origin(): String {
+    return newBuilder()
+        .encodedPath("/")
+        .query(null)
+        .fragment(null)
+        .build()
+        .toString()
+        .removeSuffix("/")
 }
 
 private fun String.httpsUrlOr(fallback: String): HttpUrl {

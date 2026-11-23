@@ -10,7 +10,7 @@ fun Events.RedOperations.opTerminal(
     flow: RedOperationsFlow,
     operation: RedOperationsOperation,
     durationMs: Double,
-    finishedAtMs: Int,
+    finishedAtMs: Long,
     error: Throwable?,
     stage: String? = null,
     otherMetadata: String? = null,

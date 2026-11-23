@@ -7,8 +7,8 @@ import com.tonapps.blockchain.ton.TONOpCode
 import com.tonapps.bus.generated.Events
 import com.tonapps.blockchain.ton.extensions.storeOpCode
 import com.tonapps.blockchain.ton.extensions.storeQueryId
-import com.tonapps.extensions.currentTimeSeconds
 import com.tonapps.icu.Coins
+import com.tonapps.time.TimeProvider
 import com.tonapps.blockchain.model.legacy.TransferEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.dns.renew.list.Item
@@ -20,6 +20,7 @@ import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.core.entity.RawMessageEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -32,7 +33,8 @@ class DNSRenewViewModel(
     private val wallet: WalletEntity,
     private val entities: List<DnsExpiringEntity>,
     private val collectiblesRepository: CollectiblesRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val timeProvider: TimeProvider,
 ) : BaseWalletVM(app) {
 
     private val dnsExpiringFlow = flow {
@@ -66,7 +68,8 @@ class DNSRenewViewModel(
                 openScreen(DNSOnSaleScreen.newInstance())
             } else {
                 val seqNo = accountRepository.getSeqno(wallet)
-                val signRequests = createSignRequest(wallet, items, seqNo)
+                val validUntil = timeProvider.currentTimeSeconds() + 10 * 60
+                val signRequests = createSignRequest(wallet, items, seqNo, validUntil)
                 if (sign(signRequests)) {
                     successCallback()
                 }
@@ -78,7 +81,7 @@ class DNSRenewViewModel(
         for (signRequest in signRequests) {
             try {
                 SendTransactionScreen.run(
-                    context, wallet, signRequest,
+                    context, wallet, signRequest, PasscodeReason.CONFIRM_ACTION,
                     transactionSentDetail = Events.TransactionSent.TransactionSentCategoryDetail.DomainRenew
                 )
             } catch (e: Throwable) {
@@ -93,13 +96,14 @@ class DNSRenewViewModel(
         fun createSignRequest(
             wallet: WalletEntity,
             entities: List<DnsExpiringEntity>,
-            seqNo: Int
+            seqNo: Int,
+            validUntil: Long,
         ): List<SignRequestEntity> {
             val messagesChunks = entities.mapNotNull(::createMessage).chunked(wallet.maxMessages)
             val requests = mutableListOf<SignRequestEntity>()
             for ((index, messages) in messagesChunks.withIndex()) {
                 val request = SignRequestEntity.Builder()
-                    .setValidUntil(currentTimeSeconds() + 10 * 60)
+                    .setValidUntil(validUntil)
                     .setTestnet(wallet.testnet)
                     .setFrom(wallet.contract.address)
                     .addMessages(messages)

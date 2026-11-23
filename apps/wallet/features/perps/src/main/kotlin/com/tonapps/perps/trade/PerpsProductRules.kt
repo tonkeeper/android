@@ -14,7 +14,7 @@ internal object PerpsProductRules {
     const val QUOTE_ASSET = "USDC"
     const val PRICE_SLIPPAGE_PPM = 50_000L
     const val TPSL_PRICE_SLIPPAGE_PPM = 30_000L
-    const val TPSL_BUFFER_PPM = 2_000L
+    const val TPSL_BUFFER_PPM = 0L
     const val MIN_ADJUST_MARGIN_QUOTE = "1"
     const val MIN_OPEN_MARGIN_QUOTE = "1"
 
@@ -26,6 +26,8 @@ internal object PerpsProductRules {
     const val IMF_TICKS = 10_000
     const val DEFAULT_LEVERAGE = 20
     const val AUTO_CLOSE_EXPIRY_MS = 28L * 24 * 60 * 60 * 1000
+    const val AUTO_CLOSE_RENEWAL_LEAD_MS = 7L * 24 * 60 * 60 * 1000
+    const val REVIEW_DRIFT_PERCENT = 2L
     const val ENVIRONMENT = CredentialIds.LIGHTER_MAINNET
 
     const val CHAIN_ID = LighterConstants.ChainId

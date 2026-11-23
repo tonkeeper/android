@@ -60,7 +60,7 @@ internal class WcEventDelegate : WalletKit.WalletDelegate {
         verifyContext: Wallet.Model.VerifyContext
     ) {
         L.d("WalletConnect", "onSessionRequest")
-        wcMutableEventFlow.tryEmit(WcEventData.SessionRequest(sessionRequest))
+        wcMutableEventFlow.tryEmit(WcEventData.SessionRequest(sessionRequest, verifyContext))
     }
 
     override fun onSessionSettleResponse(settleSessionResponse: Wallet.Model.SettledSessionResponse) {

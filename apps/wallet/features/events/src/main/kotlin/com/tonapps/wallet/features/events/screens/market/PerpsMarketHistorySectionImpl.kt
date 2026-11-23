@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.tonapps.icu.TransactionDateFormatter
 import com.tonapps.perps.data.PerpMarket
 import com.tonapps.perps.screens.details.PerpsMarketHistoryRequest
 import com.tonapps.perps.screens.details.PerpsMarketHistorySection
@@ -67,7 +68,7 @@ internal class PerpsMarketHistorySectionImpl : PerpsMarketHistorySection {
                     hiddenBalance = entry.hiddenBalance,
                     position = MoonBundlePosition.default(size = items.size, index = index),
                     onClick = { selected = entry },
-                    showDate = true,
+                    dateFrom = TransactionDateFormatter.DateFrom.Always,
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))

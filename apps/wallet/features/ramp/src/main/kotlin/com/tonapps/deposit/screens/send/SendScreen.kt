@@ -60,11 +60,13 @@ import com.tonapps.deposit.utils.rememberSendCommentState
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.mvi.props.observeSafeState
+import com.tonapps.time.TimeProvider
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import org.koin.compose.koinInject
 import ui.components.moon.MoonBadgeButton
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
@@ -97,12 +99,14 @@ fun SendScreen(
         state = state,
         events = feature.events,
         scannerResult = scannerResult,
+        timeProvider = koinInject(),
         onClose = onClose,
         onBack = onBack,
         onAddressBook = onAddressBook,
         onAddressInput = { feature.sendAction(SendModel.Action.AddressInput(it)) },
         onAmountInput = { feature.sendAction(SendModel.Action.AmountInput(it)) },
         onCommentInput = { feature.sendAction(SendModel.Action.CommentInput(it)) },
+        onExchangeMemoInput = { feature.sendAction(SendModel.Action.ExchangeMemoInput(it)) },
         onSetMax = { feature.sendAction(SendModel.Action.SetMax) },
         onSwap = { feature.sendAction(SendModel.Action.Swap) },
         onEncryptedCommentToggle = { feature.sendAction(SendModel.Action.EncryptedCommentToggle(it)) },
@@ -121,12 +125,14 @@ private fun SendInputContent(
     state: SendModel.State,
     events: Flow<SendModel.Event>,
     scannerResult: String? = null,
+    timeProvider: TimeProvider,
     onClose: () -> Unit,
     onBack: () -> Unit,
     onAddressBook: ((onResult: (String) -> Unit) -> Unit)? = null,
     onAddressInput: (String) -> Unit,
     onAmountInput: (String) -> Unit,
     onCommentInput: (String?) -> Unit,
+    onExchangeMemoInput: (String) -> Unit,
     onSetMax: () -> Unit,
     onSwap: () -> Unit,
     onEncryptedCommentToggle: (Boolean) -> Unit,
@@ -176,7 +182,7 @@ private fun SendInputContent(
 
         val transfer = route as? DeepLinkRoute.Transfer
         if (transfer != null) {
-            if (transfer.isExpired) {
+            if (transfer.isExpired(timeProvider.currentTimeSeconds())) {
                 onShowError(expiredMessage)
                 return@LaunchedEffect
             }
@@ -609,6 +615,25 @@ private fun SendInputContent(
                 }
             } // end if (!state.isNft)
 
+            if (state.isExchangeMemoAvailable) {
+                Spacer(Modifier.height(16.dp))
+
+                MoonTextFieldCell(
+                    value = state.exchangeMemo,
+                    onValueChange = onExchangeMemoInput,
+                    hint = stringResource(Localization.memo_optional),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                )
+                MoonItemSubtitle(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                    text = stringResource(Localization.send_exchange_memo_hint),
+                    color = UIKit.colorScheme.text.secondary,
+                    maxLines = 3,
+                )
+            }
+
             // Comment input
             if (state.isCommentAvailable) {
                 Spacer(Modifier.height(16.dp))
@@ -729,12 +754,14 @@ private fun SendScreenPreview() {
         SendInputContent(
             state = SendModel.State(),
             events = flowOf(),
+            timeProvider = TimeProvider { System.currentTimeMillis() },
             onClose = {},
             onBack = {},
             onAddressBook = null,
             onAddressInput = {},
             onAmountInput = {},
             onCommentInput = {},
+            onExchangeMemoInput = {},
             onSetMax = {},
             onSwap = {},
             onEncryptedCommentToggle = {},

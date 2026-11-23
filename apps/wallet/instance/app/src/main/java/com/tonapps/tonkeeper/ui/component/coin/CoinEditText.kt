@@ -196,7 +196,8 @@ class CoinEditText @JvmOverloads constructor(
         if (0 >= value) {
             clear()
         } else {
-            editable.replaceAll(value.toString().removeSuffix(".0"))
+            val string = value.toBigDecimal().asString() ?: return
+            editable.replaceAll(string)
         }
     }
 

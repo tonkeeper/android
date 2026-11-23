@@ -17,7 +17,7 @@ internal class BatteryProvider(
 
     val emulation = SourceAPI(main.emulation, test.emulation)
 
-    val wallet = SourceAPI(main.wallet, test.wallet)
-
     val gasless = SourceAPI(main.gasless, test.gasless)
+
+    val wallet = SourceAPI(main.wallet, test.wallet)
 }

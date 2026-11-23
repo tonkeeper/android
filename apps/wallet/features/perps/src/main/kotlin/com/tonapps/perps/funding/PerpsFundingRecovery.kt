@@ -1,9 +1,11 @@
 package com.tonapps.perps.funding
 
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.log.L
+import com.tonapps.perps.data.PERPS_SLOW_POLL_MS
 import com.tonapps.perps.data.PerpsAccountRefresh
+import com.tonapps.perps.data.PerpsRealtime
+import com.tonapps.perps.data.PerpsRealtimeEvent
 import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.perps.PerpsDepositRoute
@@ -17,11 +19,14 @@ import io.perpsapi.models.FundingStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,6 +38,7 @@ class PerpsFundingRecovery(
     private val accountRefresh: PerpsAccountRefresh,
     private val unifiedAccountRepository: UnifiedAccountRepository,
     private val withdrawTracker: PerpsWithdrawTracker,
+    private val realtime: PerpsRealtime,
     private val scope: CoroutineScope,
 ) {
 
@@ -42,7 +48,7 @@ class PerpsFundingRecovery(
     fun start() {
         scope.launch {
             unifiedAccountRepository.selectedTonWalletFlow
-                .map { wallet -> wallet?.takeIf { it.type == WalletType.Multichain }?.id }
+                .map { wallet -> wallet?.takeIf { it.supportsPerps }?.id }
                 .filterNotNull()
                 .distinctUntilChanged()
                 .collect { walletId -> refresh(walletId) }
@@ -50,6 +56,18 @@ class PerpsFundingRecovery(
     }
 
     fun observe(walletId: String): Flow<List<PerpsFundingRecord>> = journal.observe(walletId)
+
+    fun observeNewOutcomes(walletId: String): Flow<Unit> = flow {
+        var reached: Set<String>? = null
+        journal.observe(walletId).collect { records ->
+            val outcomes = records.filter { it.stage.isOutcome }.mapTo(HashSet()) { it.operationId }
+            val previous = reached
+            reached = outcomes
+            if (previous != null && !previous.containsAll(outcomes)) {
+                emit(Unit)
+            }
+        }
+    }
 
     fun refresh(walletId: String) {
         loops.compute(walletId) { _, existing ->
@@ -67,33 +85,42 @@ class PerpsFundingRecovery(
         }
     }
 
-    private suspend fun loop(walletId: String) {
-        var failures = 0
-        while (true) {
-            val pass = try {
-                pass(walletId)
-            } catch (e: Throwable) {
-                if (e is CancellationException) {
-                    throw e
+    private suspend fun loop(walletId: String) = coroutineScope {
+        val perpsEvents = realtime.wakeups(
+            walletId = walletId,
+            unsubscribedPeriodMs = PERPS_SLOW_POLL_MS,
+            subscribedTimeoutMs = PERPS_SLOW_POLL_MS,
+            wakeOn = { it is PerpsRealtimeEvent.Deposit || it is PerpsRealtimeEvent.Withdrawal },
+        ).produceIn(this)
+        try {
+            var failures = 0
+            while (true) {
+                val pass = try {
+                    pass(walletId)
+                } catch (e: Throwable) {
+                    if (e is CancellationException) {
+                        throw e
+                    }
+                    L.e(e)
+                    Pass(shouldPoll = true, failed = true)
                 }
-                L.e(e)
-                Pass(shouldPoll = true, failed = true)
-            }
-            if (!pass.shouldPoll) {
-                return
-            }
-            if (pass.failed) {
-                failures = (failures + 1).coerceAtMost(MAX_BACKOFF_SHIFT)
-                delay(BASE_DELAY_MS shl failures)
-            } else {
-                failures = 0
-                val pollDelay = if (pass.backgroundOnly) {
-                    BACKGROUND_POLL_DELAY_MS
+                if (!pass.shouldPoll) {
+                    break
+                }
+                if (pass.failed) {
+                    failures = (failures + 1).coerceAtMost(MAX_BACKOFF_SHIFT)
+                    delay(BASE_DELAY_MS shl failures)
                 } else {
-                    POLL_DELAY_MS
+                    failures = 0
+                    when {
+                        pass.backgroundOnly -> delay(BACKGROUND_POLL_DELAY_MS)
+                        pass.awaitsPerpsEvents -> perpsEvents.receive()
+                        else -> delay(POLL_DELAY_MS)
+                    }
                 }
-                delay(pollDelay)
             }
+        } finally {
+            perpsEvents.cancel()
         }
     }
 
@@ -102,12 +129,15 @@ class PerpsFundingRecovery(
         var shouldPoll = false
         var failed = false
         var foreground = false
+        var timerDriven = false
         for (record in journal.list(walletId).filter { it.stage.isUnresolved && it.operationId !in held }) {
             try {
                 val updated = advance(record) ?: continue
                 val polls = updated.stage.isUnresolved && updated.stage != PerpsDepositStage.NEEDS_AUTHORIZATION
+                val pollsInForeground = polls && !updated.stage.isTrackingInBackground
                 shouldPoll = shouldPoll || polls
-                foreground = foreground || polls && !updated.stage.isTrackingInBackground
+                foreground = foreground || pollsInForeground
+                timerDriven = timerDriven || pollsInForeground && !updated.awaitsPerpsEvent()
                 if (updated.stage.isSucceeded && !record.stage.isSucceeded) {
                     accountRefresh.notifyChanged()
                 }
@@ -119,9 +149,20 @@ class PerpsFundingRecovery(
                 shouldPoll = true
                 failed = true
                 foreground = true
+                timerDriven = true
             }
         }
-        return Pass(shouldPoll, failed, backgroundOnly = shouldPoll && !foreground)
+        return Pass(
+            shouldPoll = shouldPoll,
+            failed = failed,
+            backgroundOnly = shouldPoll && !foreground,
+            awaitsPerpsEvents = foreground && !timerDriven,
+        )
+    }
+
+    private fun PerpsFundingRecord.awaitsPerpsEvent(): Boolean = when (kind) {
+        PerpsFundingKind.WITHDRAW -> stage == PerpsDepositStage.SOURCE_SENDING || stage == PerpsDepositStage.SOURCE_UNKNOWN
+        PerpsFundingKind.DEPOSIT -> stage == PerpsDepositStage.REGISTERED_PENDING
     }
 
     private suspend fun advance(record: PerpsFundingRecord): PerpsFundingRecord? {
@@ -254,7 +295,12 @@ class PerpsFundingRecovery(
         }
     }
 
-    private class Pass(val shouldPoll: Boolean, val failed: Boolean, val backgroundOnly: Boolean = false)
+    private class Pass(
+        val shouldPoll: Boolean,
+        val failed: Boolean,
+        val backgroundOnly: Boolean = false,
+        val awaitsPerpsEvents: Boolean = false,
+    )
 
     private companion object {
         const val POLL_DELAY_MS = 5_000L

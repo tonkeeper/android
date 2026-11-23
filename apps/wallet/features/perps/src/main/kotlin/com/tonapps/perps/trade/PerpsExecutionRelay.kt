@@ -11,11 +11,13 @@ import com.tonapps.mvi.graph.KResult
 import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsSendError
 import com.tonapps.perps.data.PerpsSendReason
+import com.tonapps.perps.data.PerpsSentTx
 import com.tonapps.perps.data.PerpsSignedTx
 import com.tonapps.perps.data.toExecutionErrorKind
 import com.tonapps.wallet.data.multichain.perps.PerpsOperationJournal
 import com.tonapps.wallet.data.multichain.perps.PerpsOrderRef
 import com.tonapps.wallet.data.multichain.perps.PerpsStepStatus
+import java.util.concurrent.ConcurrentHashMap
 
 internal class PerpsExecutionRelay(
     private val repository: PerpsRepository,
@@ -23,14 +25,44 @@ internal class PerpsExecutionRelay(
     private val nonces: PerpsNonceCoordinator,
 ) : PerpsExecutionDelegate {
 
+    private data class Owner(val walletId: String, val accountIndex: Long)
+
+    private val refusedSteps = ConcurrentHashMap<Owner, String>()
+
+    private val noncesToReuse = ConcurrentHashMap<Owner, Long>()
+
+    private val retryNonces = ConcurrentHashMap<Owner, Long>()
+
+    // chainkit re-signs a refused step with its now and its expiry both from here, and checks the
+    // snapshots' receipts, stamped on the device clock, against that now: it stays the device's.
     override suspend fun currentTimeUnixMs(): Long = System.currentTimeMillis()
 
     override suspend fun nextNonce(scope: PerpsScope): PerpsExecutionNonce {
+        val retryNonce = retryNonces.remove(scope.owner())
+        if (retryNonce != null) {
+            return PerpsExecutionNonce(retryNonce)
+        }
+
         return PerpsExecutionNonce(nonces.next(scope) { fetchNonce(scope) })
     }
 
     override suspend fun resyncNonce(scope: PerpsScope) {
-        nonces.resync(scope) { fetchNonce(scope) }
+        val refusedNonce = noncesToReuse.remove(scope.owner())
+        if (refusedNonce != null) {
+            retryNonces[scope.owner()] = refusedNonce
+        } else {
+            nonces.resync(scope) { fetchNonce(scope) }
+        }
+    }
+
+    suspend fun catchUpNonce(scope: PerpsScope) {
+        retryNonces.remove(scope.owner())
+        noncesToReuse.remove(scope.owner())
+        nonces.catchUp(scope) { fetchNonce(scope) }
+    }
+
+    suspend fun markNonceAccepted(scope: PerpsScope, nonce: Long) {
+        nonces.markAccepted(scope, nonce)
     }
 
     override suspend fun persistSigned(step: PerpsSignedStep) {
@@ -63,12 +95,48 @@ internal class PerpsExecutionRelay(
     }
 
     override suspend fun submit(step: PerpsSignedStep): PerpsSubmissionOutcome {
-        return submitTransaction(
+        val stepKey = "${step.operationId}/${step.stepId}"
+        val owner = step.scope.owner()
+        noncesToReuse.remove(owner)
+        val earlier = refusedSteps.remove(owner)?.takeIf { it == stepKey }
+        val result = send(
             walletId = step.scope.walletId,
             txType = step.txType,
             txInfo = step.txInfo,
             txHash = step.txHash,
         )
+        if (earlier == null && result is KResult.Err && result.value.leavesNonceUnconsumed()) {
+            nonces.returnUnconsumed(step.scope, step.nonce)
+        }
+        val outcome = try {
+            outcome(result, step.txType, step.txHash)
+        } catch (e: PerpsExecutionException) {
+            if (earlier == null) {
+                throw e
+            }
+            nonces.forget(step.scope)
+            throw PerpsExecutionException(
+                PerpsExecutionErrorKind.SubmitUnknown,
+                "the retry of a refused step failed: ${e.message}",
+            )
+        }
+        if (outcome == PerpsSubmissionOutcome.Accepted) {
+            nonces.markAccepted(step.scope, step.nonce)
+        }
+        if (outcome != PerpsSubmissionOutcome.ResignRequired) {
+            return outcome
+        }
+        if (earlier != null) {
+            nonces.forget(step.scope)
+            throw PerpsExecutionException(
+                PerpsExecutionErrorKind.SubmitUnknown,
+                "the venue refused the same nonce twice",
+            )
+        }
+        refusedSteps[owner] = stepKey
+        noncesToReuse[owner] = step.nonce
+
+        return outcome
     }
 
     suspend fun submitTransaction(
@@ -77,9 +145,26 @@ internal class PerpsExecutionRelay(
         txInfo: String,
         txHash: String,
     ): PerpsSubmissionOutcome {
+        return outcome(send(walletId, txType, txInfo, txHash), txType, txHash)
+    }
+
+    private suspend fun send(
+        walletId: String,
+        txType: Int,
+        txInfo: String,
+        txHash: String,
+    ): KResult<List<PerpsSentTx>, PerpsSendError> {
         val tx = PerpsSignedTx(txType = txType, txInfo = txInfo, txHash = txHash)
 
-        return when (val result = repository.sendTransactions(walletId, listOf(tx))) {
+        return repository.sendTransactions(walletId, listOf(tx))
+    }
+
+    private fun outcome(
+        result: KResult<List<PerpsSentTx>, PerpsSendError>,
+        txType: Int,
+        txHash: String,
+    ): PerpsSubmissionOutcome {
+        return when (result) {
             is KResult.Ok -> {
                 val sent = result.value.singleOrNull()
                 val hash = normalizeHash(sent?.txHash.orEmpty())
@@ -130,6 +215,16 @@ internal class PerpsExecutionRelay(
                 result.value.toExecutionErrorKind(),
                 "the nonce is unavailable",
             )
+        }
+    }
+
+    private fun PerpsScope.owner(): Owner = Owner(walletId, accountIndex)
+
+    private fun PerpsSendError.leavesNonceUnconsumed(): Boolean {
+        return when (this) {
+            is PerpsSendError.Refused -> reason != PerpsSendReason.RESIGN_REQUIRED
+            is PerpsSendError.Failed -> true
+            PerpsSendError.Unknown -> false
         }
     }
 

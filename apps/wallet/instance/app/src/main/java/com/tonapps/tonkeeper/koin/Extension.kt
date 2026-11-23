@@ -14,6 +14,7 @@ import com.tonapps.tonkeeper.manager.push.PushManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.base.compose.ComposeWalletScreen
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreenFactory
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.ConfigEntity
@@ -120,3 +121,6 @@ val Context.analytics: AnalyticsHelper?
 
 val Context.environment: Environment?
     get() = koin?.get<Environment>()
+
+val Context.dappScreenFactory: DAppScreenFactory
+    get() = requireNotNull(koin).get()

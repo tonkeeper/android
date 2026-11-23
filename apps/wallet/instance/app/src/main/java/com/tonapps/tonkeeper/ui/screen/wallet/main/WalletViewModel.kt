@@ -6,8 +6,15 @@ import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.screenrender.ScreenRenderErrorKind
+import com.tonapps.bus.screenrender.ScreenRenderErrors
+import com.tonapps.bus.screenrender.ScreenRenderId
+import com.tonapps.bus.screenrender.ScreenRenderStage
+import com.tonapps.bus.screenrender.ScreenRenderTracker
 import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.core.flags.AddMcWalletTooltipInteractor
+import com.tonapps.core.flags.LedgerMigrationTooltipInteractor
 import com.tonapps.extensions.AppLifecycleProvider
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
@@ -35,6 +42,7 @@ import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.DnsExpiringEntity
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.ScreenCacheSource
+import com.tonapps.wallet.data.ledger.LedgerLegacyTwins
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.plugins.PluginsRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -80,6 +88,7 @@ class WalletViewModel(
     private val stakingRepository: StakingRepository,
     private val bannerRepository: BannerRepository,
     private val addMcWalletTooltip: AddMcWalletTooltipInteractor,
+    private val ledgerMigrationTooltip: LedgerMigrationTooltipInteractor,
     private val passcodeManager: PasscodeManager,
     private val appLifecycle: AppLifecycleProvider,
 ) : BaseWalletVM(app) {
@@ -143,10 +152,18 @@ class WalletViewModel(
         _lastLtFlow
     ) { _, _, _, lastLt -> lastLt }
 
+    private val screenRender = ScreenRenderTracker.shared
+
+    @Volatile
+    private var balanceErrorKind: ScreenRenderErrorKind? = null
+
     init {
         viewModelScope.launch {
-            val cached = screenCacheSource.getWalletScreen(wallet) ?: listOf(Item.Skeleton(true))
-            _uiItemsFlow.value = cached
+            val cached = screenCacheSource.getWalletScreen(wallet)
+            _uiItemsFlow.value = cached ?: listOf(Item.Skeleton(true))
+            if (cached != null) {
+                screenRender.contentApplied(ScreenRenderStage.Cached, ScreenRenderId.Portfolio)
+            }
         }
 
         requestDnsExpiring()
@@ -210,7 +227,7 @@ class WalletViewModel(
             if (localAssets != null) {
                 val batteryBalance = getBatteryBalance(wallet)
                 val banners = getBanners(wallet)
-                val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network)
+                val plugins = pluginsRepository.getPlugins(wallet)
                 val maxStakingApy = getMaxStakingApy(wallet)
                 val collectibles = getCollectibles(refresh = false)
                 val state = State.Main(
@@ -220,7 +237,7 @@ class WalletViewModel(
                     battery = State.Battery(
                         balance = batteryBalance,
                         beta = api.getConfig(wallet.network).batteryBeta,
-                        disabled = (api.getConfig(wallet.network).flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey),
+                        disabled = (api.getConfig(wallet.network).flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey || !wallet.supportsBattery),
                         viewed = settingsRepository.batteryViewed,
                     ),
                     lt = currentLt,
@@ -239,14 +256,20 @@ class WalletViewModel(
                     state.totalBalanceFiat
                 )
                 _stateMainFlow.value = state
+                screenRender.contentApplied(ScreenRenderStage.Cached, ScreenRenderId.Portfolio)
             }
 
             if (isRequestUpdate) {
                 try {
-                    val remoteAssets = getAssets(walletCurrency, true)
+                    screenRender.requestStarted(ScreenRenderId.Portfolio)
+                    val remoteAssets = try {
+                        getAssets(walletCurrency, true)
+                    } finally {
+                        screenRender.requestFinished(ScreenRenderId.Portfolio)
+                    }
                     val batteryBalance = getBatteryBalance(wallet, true)
                     val banners = getBanners(wallet, true)
-                    val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network, true)
+                    val plugins = pluginsRepository.getPlugins(wallet, true)
                     val maxStakingApy = getMaxStakingApy(wallet, ignoreCache = true)
                     val collectibles = getCollectibles(refresh = true)
                     if (remoteAssets != null) {
@@ -257,7 +280,7 @@ class WalletViewModel(
                             battery = State.Battery(
                                 balance = batteryBalance,
                                 beta = api.getConfig(wallet.network).batteryBeta,
-                                disabled = (api.getConfig(wallet.network).flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey),
+                                disabled = (api.getConfig(wallet.network).flags.disableBattery && batteryBalance.value == BigDecimal.ZERO || !wallet.hasPrivateKey || !wallet.supportsBattery),
                                 viewed = settingsRepository.batteryViewed,
                             ),
                             lt = currentLt,
@@ -279,9 +302,20 @@ class WalletViewModel(
                         settingsRepository.setWalletLastUpdated(wallet.id)
                         balanceStale.value = false
                         setStatus(Status.Default)
+                        balanceErrorKind = null
+                        screenRender.contentApplied(ScreenRenderStage.Fresh, ScreenRenderId.Portfolio)
+                    } else {
+                        // The repository swallows the failure; only the connection says why.
+                        val errorKind = if (currentIsOnline) {
+                            ScreenRenderErrorKind.Unknown
+                        } else {
+                            ScreenRenderErrorKind.Offline
+                        }
+                        reportBalanceFailure(errorKind)
                     }
                 } catch (e: Throwable) {
                     L.e(e, "Balance loading error")
+                    reportBalanceFailure(ScreenRenderErrors.kind(e))
                     throw e
                 }
             }
@@ -364,9 +398,24 @@ class WalletViewModel(
     }
 
     // The balloon is a PopupWindow, drawn above the in-activity lockscreen overlay.
-    suspend fun consumeAddMcTooltip(): Boolean {
+    suspend fun consumeHeaderTooltip(wallet: WalletEntity): WalletHeaderTooltip? {
         passcodeManager.lockscreenHiddenFlow.first { it }
-        return addMcWalletTooltip.consume(AddMcWalletTooltipInteractor.Placement.MAIN)
+        return when {
+            LedgerLegacyTwins.isMigratable(wallet) && ledgerMigrationTooltip.shouldShow() -> {
+                AnalyticsHelper.Default.events.ledgerFlow.ledgerMigrationTooltipView()
+                WalletHeaderTooltip.LedgerMigration
+            }
+            addMcWalletTooltip.consume(AddMcWalletTooltipInteractor.Placement.MAIN) -> WalletHeaderTooltip.AddMultichain
+            else -> null
+        }
+    }
+
+    fun onLedgerMigrationTooltipSeen() {
+        ledgerMigrationTooltip.onSeen()
+    }
+
+    fun onLedgerMigrationTooltipDismissedByUser() {
+        ledgerMigrationTooltip.onDismissedByUser()
     }
 
     private fun updateCuntryByIP() {
@@ -535,6 +584,28 @@ class WalletViewModel(
 
     private fun setCached(wallet: WalletEntity, items: List<Item>) {
         screenCacheSource.set(CACHE_NAME, wallet.id, items)
+    }
+
+    private fun reportBalanceFailure(kind: ScreenRenderErrorKind) {
+        balanceErrorKind = kind
+        screenRender.failed(ScreenRenderId.Portfolio, kind)
+    }
+
+    /** The tab is shown again. The balance is not reloaded on that, so the visit ends with what is on screen. */
+    fun onScreenShown() {
+        val errorKind = balanceErrorKind
+        if (_stateMainFlow.value == null && errorKind == null) {
+            // Still loading: the session ends with that load.
+            return
+        }
+        if (_stateMainFlow.value != null) {
+            screenRender.contentApplied(ScreenRenderStage.Cached, ScreenRenderId.Portfolio)
+        }
+        if (errorKind != null) {
+            screenRender.failed(ScreenRenderId.Portfolio, errorKind)
+        } else {
+            screenRender.finish(ScreenRenderId.Portfolio)
+        }
     }
 
     override fun onCleared() {

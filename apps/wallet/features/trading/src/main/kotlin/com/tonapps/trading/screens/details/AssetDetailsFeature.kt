@@ -4,7 +4,6 @@ import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.CoinType
@@ -25,12 +24,13 @@ import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.props.MviProperty
 import com.tonapps.perps.data.PerpsPortfolioSnapshot
 import com.tonapps.perps.data.PerpsPortfolioStore
+import com.tonapps.perps.security.PerpsMarketListing
 import com.tonapps.perps.screens.portfolio.PerpsPositionUi
 import com.tonapps.perps.screens.portfolio.toUi
 import com.tonapps.trading.AssetPerpMarket
 import com.tonapps.trading.asTokenEntity
 import com.tonapps.trading.isTonOrTronChain
-import com.tonapps.trading.perpMarket
+import com.tonapps.trading.perpMarkets
 import com.tonapps.trading.data.TradingRepository
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
@@ -54,6 +54,7 @@ import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import com.tonapps.wallet.features.events.data.McEventsRepository
 import io.tradingapi.models.AssetCapability
 import io.tradingapi.models.AssetDetailsResponse
+import io.tradingapi.models.AssetRef
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -79,6 +80,8 @@ sealed interface AssetDetailsAction : MviAction {
     data object RefreshBalanceAndHistory : AssetDetailsAction
     data object RealtimeUpdate : AssetDetailsAction
     data object ConfirmBalance : AssetDetailsAction
+    data object LoadEarnOffer : AssetDetailsAction
+    data object ApyBadgeChanged : AssetDetailsAction
     data object PullToRefresh : AssetDetailsAction
     data class SetChartPeriod(val period: ChartPeriod) : AssetDetailsAction
     data object OpenTokenExplorer : AssetDetailsAction
@@ -174,6 +177,7 @@ class AssetDetailsFeature(
     private val appLifecycle: AppLifecycleProvider,
     private val api: API,
     private val perpsPortfolioStore: PerpsPortfolioStore,
+    private val perpsMarketListing: PerpsMarketListing,
     private val legacySwapAccounts: LegacySwapAccounts,
     val assetId: String,
     private val from: AssetScreenFrom,
@@ -193,7 +197,7 @@ class AssetDetailsFeature(
         perpLink,
         unifiedAccountRepository.selectedTonWalletFlow,
     ) { market, wallet ->
-        if (market != null && wallet?.type == WalletType.Multichain && WalletFeature.Perps.isEnabled) {
+        if (market != null && wallet?.supportsPerps == true && WalletFeature.Perps.isEnabled) {
             PerpsGate(market, wallet.id)
         } else {
             null
@@ -212,6 +216,15 @@ class AssetDetailsFeature(
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, AssetPerpsState.Hidden)
+
+    private val stakingBadge = MutableStateFlow<AssetApyBadge.Staking?>(null)
+    private val earnBadge = MutableStateFlow<AssetApyBadge.Earn?>(null)
+
+    // One asset never has both: vaults.fyi covers EVM networks and staking covers TON. The order
+    // below is only a tie-break, and it follows iOS, which routes TON to staking and the rest to a
+    // vault.
+    private val shownApyBadge: AssetApyBadge?
+        get() = earnBadge.value ?: stakingBadge.value
 
     private var apyViewPending = false
 
@@ -234,6 +247,9 @@ class AssetDetailsFeature(
             },
         ) {
             sendAction(AssetDetailsAction.RefreshBalanceAndHistory)
+        }
+        collectFlow(merge(stakingBadge, earnBadge)) {
+            sendAction(AssetDetailsAction.ApyBadgeChanged)
         }
         collectFlow(transactionManager.tronUpdatedFlow) {
             sendAction(AssetDetailsAction.RefreshBalanceAndHistory)
@@ -284,6 +300,11 @@ class AssetDetailsFeature(
                 refreshBalanceAndHistory(forceRefresh = true)
             }
             AssetDetailsAction.ConfirmBalance -> refreshStaleBalance()
+            AssetDetailsAction.LoadEarnOffer -> loadEarnBadge()
+            AssetDetailsAction.ApyBadgeChanged -> {
+                setState<AssetDetailsState.Data> { copy(apyBadge = shownApyBadge) }
+                reportApyView()
+            }
             AssetDetailsAction.PullToRefresh -> refresh()
             is AssetDetailsAction.SetChartPeriod -> {
                 val data = obtainSpecificState<AssetDetailsState.Data>() ?: return
@@ -370,7 +391,7 @@ class AssetDetailsFeature(
             } else {
                 null
             }
-            val apyBadge = buildApyBadge(details, isMultichainWallet)
+            stakingBadge.value = loadStakingBadge(details)
             val isHidden = resolveAssetHidden(details, accountToken, account)
             val isFavorite = tradingRepository.isFavoriteAsset(assetId)
             val hasBalance = isMultichainWallet || details.asset.isTonOrTronChain()
@@ -385,7 +406,7 @@ class AssetDetailsFeature(
                 recentActivities = recentActivities,
                 recentActivitiesWallet = recentActivitiesWallet,
             )
-            perpLink.value = details.asset.perpMarket()
+            perpLink.value = listedPerpMarket(details.asset)
             setState {
                 AssetDetailsState.Data(
                     details = details,
@@ -393,7 +414,7 @@ class AssetDetailsFeature(
                     sections = sections,
                     chartPeriod = InitialChartPeriod,
                     isChartLoading = true,
-                    apyBadge = apyBadge,
+                    apyBadge = shownApyBadge,
                     isHidden = isHidden,
                     isFavorite = isFavorite,
                     isMultichainWallet = isMultichainWallet,
@@ -403,6 +424,7 @@ class AssetDetailsFeature(
                 )
             }
             reportApyView()
+            sendAction(AssetDetailsAction.LoadEarnOffer)
             if (hasBalance) {
                 sendAction(AssetDetailsAction.ConfirmBalance)
             }
@@ -444,12 +466,10 @@ class AssetDetailsFeature(
         try {
             val isMultichainWallet = isMultichainWallet(accountRepoLegacy.getSelectedWalletId())
             val details = tradingRepository.getAssetDetails(assetId, isMultichainWallet)
-            val refreshedBadge = buildApyBadge(details, isMultichainWallet)
-            perpLink.value = details.asset.perpMarket()
-            setState<AssetDetailsState.Data> {
-                copy(details = details, apyBadge = refreshedBadge ?: apyBadge as? AssetApyBadge.Staking)
-            }
-            reportApyView()
+            stakingBadge.value = loadStakingBadge(details)
+            perpLink.value = listedPerpMarket(details.asset)
+            setState<AssetDetailsState.Data> { copy(details = details) }
+            sendAction(AssetDetailsAction.LoadEarnOffer)
         } catch (e: Throwable) {
             L.e(e)
         }
@@ -543,24 +563,34 @@ class AssetDetailsFeature(
         }
     }
 
-    // One asset never has both: vaults.fyi covers EVM networks and staking covers TON. The order
-    // below is only a tie-break, and it follows iOS, which routes TON to staking and the rest to a
-    // vault.
-    // Earn vaults live on EVM networks, so only a multichain wallet can use them; staking stays for TON.
-    private suspend fun buildApyBadge(details: AssetDetailsResponse, isMultichainWallet: Boolean): AssetApyBadge? {
-        if (isMultichainWallet && WalletFeature.Earn.isEnabled) {
-            val offer = earnRepository.assetOffer(details.asset.id)
-            if (offer != null) {
-                return AssetApyBadge.Earn(
-                    assetId = details.asset.id,
-                    apyFormatted = CurrencyFormatter.formatPercent(offer.apy).toString(),
-                    network = offer.network,
-                    vaultId = offer.vaultId,
-                )
-            }
-        }
+    private suspend fun loadStakingBadge(details: AssetDetailsResponse): AssetApyBadge.Staking? {
         val stakingApyFormatted = loadMaxStakingApy(details) ?: return null
         return AssetApyBadge.Staking(stakingApyFormatted)
+    }
+
+    // Earn vaults live on EVM networks, so only a multichain wallet can use them; staking stays for TON.
+    private suspend fun loadEarnBadge() {
+        val data = obtainSpecificState<AssetDetailsState.Data>() ?: return
+        if (!data.isMultichainWallet || !WalletFeature.Earn.isEnabled) {
+            return
+        }
+        val assetId = data.details.asset.id
+        val offer = try {
+            earnRepository.loadAssetOffer(assetId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            L.w(e, "Earn offer failed", assetId)
+            return
+        }
+        earnBadge.value = offer?.let {
+            AssetApyBadge.Earn(
+                assetId = assetId,
+                apyFormatted = CurrencyFormatter.formatPercent(it.apy).toString(),
+                network = it.network,
+                vaultId = it.vaultId,
+            )
+        }
     }
 
     private suspend fun loadAccount(walletId: String, currencyCode: String, forceRefresh: Boolean): AccountLoad {
@@ -580,6 +610,10 @@ class AssetDetailsFeature(
             account = accountRepo.findAccount(walletId = walletId, assetId = assetId, currencyOverride = currencyCode),
             fromNetwork = false,
         )
+    }
+
+    private suspend fun listedPerpMarket(asset: AssetRef): AssetPerpMarket? {
+        return asset.perpMarkets().firstOrNull { perpsMarketListing.isListed(it.marketIndex, it.symbol) }
     }
 
     private fun resolvePerps(gate: PerpsGate, snapshot: PerpsPortfolioSnapshot?): AssetPerpsState {

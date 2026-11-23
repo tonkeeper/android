@@ -35,24 +35,6 @@ class EmptyEventDelegate : EventDelegate {
     override fun tcViewConfirm(url: String, address: String) = Unit
     override fun tcSendSuccess(url: String, address: String, feePaid: String) = Unit
 
-    override fun onRampOpen(source: String) = Unit
-    override fun onRampEnterAmount(
-        type: String,
-        sellAsset: String,
-        buyAsset: String,
-        countryCode: String
-    ) = Unit
-
-    override fun onRampOpenWebview(
-        type: String,
-        sellAsset: String,
-        buyAsset: String,
-        countryCode: String,
-        paymentMethod: String?,
-        providerName: String,
-        providerDomain: String
-    ) = Unit
-
     override fun onRampClick(
         type: String,
         placement: String,
@@ -70,4 +52,5 @@ class EmptyEventDelegate : EventDelegate {
 
     override fun trackStoryView(storiesId: String, index: Int) = Unit
     override fun trackStoryOpen(storiesId: String, from: String) = Unit
+    override fun trackStoryCloseAlert(storiesId: String, pageNumber: Int, outcome: String) = Unit
 }

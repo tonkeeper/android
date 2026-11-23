@@ -2,10 +2,7 @@ package com.tonapps.signer.screen.crash
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.TextView
 import com.tonapps.signer.App
 import com.tonapps.signer.R
@@ -16,30 +13,6 @@ import java.io.StringWriter
 import uikit.extensions.setMoonOnClickListener
 
 class CrashActivity: BaseActivity() {
-
-    companion object {
-        private const val EXTRA_STACK_TRACE = "EXTRA_STACK_TRACE"
-
-        fun open(e: Throwable, context: Context = App.instance) {
-            val mainLooper = Looper.getMainLooper()
-            if (!mainLooper.isCurrentThread) {
-                Handler(Looper.getMainLooper()).post {
-                    open(e, context)
-                }
-                return
-            }
-
-            val sw = StringWriter()
-            val pw = PrintWriter(sw)
-            e.printStackTrace(pw)
-            val stackTraceString = sw.toString()
-
-            val intent = Intent(context, CrashActivity::class.java)
-            intent.putExtra(EXTRA_STACK_TRACE, stackTraceString)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            context.startActivity(intent)
-        }
-    }
 
     private val stack: String by lazy { intent.getStringExtra(EXTRA_STACK_TRACE) ?: "" }
 
@@ -52,6 +25,22 @@ class CrashActivity: BaseActivity() {
         val copyButton = findViewById<TextView>(R.id.copy)
         copyButton.setMoonOnClickListener {
             copyToClipboard(stack)
+        }
+    }
+
+    companion object {
+        private const val EXTRA_STACK_TRACE = "EXTRA_STACK_TRACE"
+
+        fun open(e: Throwable, context: Context = App.instance) {
+            val sw = StringWriter()
+            val pw = PrintWriter(sw)
+            e.printStackTrace(pw)
+            val stackTraceString = sw.toString()
+
+            val intent = Intent(context, CrashActivity::class.java)
+            intent.putExtra(EXTRA_STACK_TRACE, stackTraceString)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
         }
     }
 }

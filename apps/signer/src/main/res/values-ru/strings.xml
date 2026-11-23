@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="intro_subtitle">Безопасное место для хранения ключей и подписи транзакций в Tonkeeper</string>
+    <string name="intro_subtitle">Безопасное место для хранения ключей и подписи транзакций в Keeper</string>
     <string name="new_key">Создать новый ключ</string>
     <string name="import_key">Добавить существующий</string>
     <string name="create_password">Задайте новый пароль</string>
@@ -32,9 +32,9 @@
     <string name="wrong_url">Неверный URL</string>
     <string name="unknown_error">Неизвестная ошибка</string>
     <string name="key_export_qr_title">Подключить на другом устройстве</string>
-    <string name="key_export_qr_subtitle">Откройте Tonkeeper » Добавить кошелёк » Подключить Signer</string>
-    <string name="key_export_tonkeeper">Подключить к Tonkeeper</string>
-    <string name="key_export_tonkeeper_web">Подключить к Tonkeeper Web</string>
+    <string name="key_export_qr_subtitle">Откройте Keeper » Добавить кошелёк » Подключить Signer</string>
+    <string name="key_export_tonkeeper">Подключить к Keeper</string>
+    <string name="key_export_tonkeeper_web">Подключить к Keeper Web</string>
     <string name="open_settings">Открыть настройки</string>
     <string name="camera_permission">Включите доступ к камере, чтобы можно было сканировать QR-коды.</string>
     <string name="add_key_dialog">Добавить ключ</string>
@@ -52,13 +52,28 @@
     <string name="sign_transaction">Подписать транзакцию</string>
     <string name="audit_transaction">Проверить транзакцию</string>
     <string name="slide_to_sign">Свайп для подписи</string>
-    <string name="unknown">Неизвестно</string>
+    <string name="sign_unrecognized_title">Содержимое не распознано</string>
+    <string name="sign_unrecognized_warning">Запрос не удалось полностью распознать — он не будет подписан</string>
+    <string name="sign_set_extension">Установка расширения кошелька</string>
+    <string name="sign_remove_extension">Удаление расширения кошелька</string>
+    <string name="sign_enable_signature_auth">Включение подписи ключом</string>
+    <string name="sign_disable_signature_auth">Отключение подписи ключом</string>
+    <string name="sign_extension_warning">Даёт другому ключу полный контроль над кошельком</string>
+    <string name="sign_install_plugin">Установка плагина кошелька</string>
+    <string name="sign_remove_plugin">Удаление плагина кошелька</string>
+    <string name="sign_plugin_warning">Плагин сможет списывать средства с кошелька без вашей подписи</string>
+    <string name="sign_entire_balance">Весь баланс</string>
+    <string name="sign_destroy_warning">Контракт кошелька будет уничтожен</string>
+    <string name="sign_unknown_operation">Неизвестная операция %1$s</string>
+    <string name="sign_token_address">Токен · %1$s</string>
+    <string name="sign_nft_address">NFT · %1$s</string>
+    <string name="sign_excess_to">Сдача на %1$s</string>
     <string name="emulate">Эмулировать</string>
     <string name="save">Сохранить</string>
     <string name="cancel">Отмена</string>
     <string name="scan_qr_code">Отсканируйте QR-код</string>
-    <string name="scan_qr_code_subtitle">Со страницы подтверждения действия в Tonkeeper</string>
-    <string name="qr_sign_title">Отсканируйте QR-код с помощью Tonkeeper</string>
+    <string name="scan_qr_code_subtitle">Со страницы подтверждения действия в Keeper</string>
+    <string name="qr_sign_title">Отсканируйте QR-код с помощью Keeper</string>
     <string name="qr_sign_subtitle">После сканирования транзакция будет отправлена в сеть.</string>
     <string name="recovery_phrase">Секретный ключ</string>
     <string name="signed_transaction">Подписанная Транзакция</string>

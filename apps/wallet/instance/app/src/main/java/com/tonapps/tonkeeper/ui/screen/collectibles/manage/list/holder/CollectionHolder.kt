@@ -41,6 +41,12 @@ class CollectionHolder(
         } else {
             chevronView.visibility = View.GONE
             actionView.visibility = View.VISIBLE
+            // UI tests tell hide from show by id, as on iOS.
+            actionView.id = if (item.visible) {
+                R.id.filter_minus
+            } else {
+                R.id.filter_plus
+            }
             actionView.setImageResource(if (item.visible) {
                 UIKitIcon.ic_minus
             } else {

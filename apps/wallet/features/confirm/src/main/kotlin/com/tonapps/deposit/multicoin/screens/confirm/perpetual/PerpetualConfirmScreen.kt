@@ -22,14 +22,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tonapps.deposit.multicoin.screens.confirm.base.operation.OperationImage
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonItemDivider
-import ui.components.moon.MoonItemSubtitle
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.MoonPropertyBigCell
@@ -37,6 +35,7 @@ import ui.components.moon.cell.MoonSlideConfirmation
 import ui.components.moon.cell.MoonSlideConfirmationState
 import ui.components.moon.cell.rememberSliderState
 import ui.components.moon.container.MoonScaffold
+import ui.shortAddress
 import ui.theme.UIKit
 
 @Composable
@@ -51,7 +50,6 @@ fun PerpetualConfirmScreen(
     val loadError by feature.loadError.collectAsState()
     val sending by feature.sending.collectAsState()
     val submitError by feature.submitError.collectAsState()
-    val context = LocalContext.current
     val sliderState = rememberSliderState()
 
     val error = submitError ?: loadError
@@ -113,8 +111,8 @@ fun PerpetualConfirmScreen(
             subtitle = stringResource(Localization.swipe_right),
             buttonTitle = stringResource(Localization.try_again),
             enabled = review != null && !loading && loadError == null && sending == PerpetualSendingState.None && !blocking,
-            onConfirm = { feature.confirm(context) },
-            onClick = { feature.retry(context) },
+            onConfirm = { feature.confirm() },
+            onClick = { feature.retry() },
             onDone = {},
         )
     }
@@ -136,25 +134,25 @@ private fun LoadErrorMessage(text: String) {
 
 @Composable
 private fun ConfirmBody(display: PerpetualReview.Display) {
-    Spacer(Modifier.height(16.dp))
     OperationImage(image = display.image, size = 96.dp)
     Spacer(Modifier.height(20.dp))
-    MoonItemSubtitle(
+    Text(
         text = stringResource(Localization.confirm_action),
+        style = UIKit.typography.body1,
         color = UIKit.colorScheme.text.secondary,
     )
     Spacer(Modifier.height(4.dp))
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = stringResource(Localization.perps_withdraw_confirm_title, display.symbol),
-            style = UIKit.typography.h2,
+            style = UIKit.typography.h3,
             color = UIKit.colorScheme.text.primary,
         )
         display.network?.let { network ->
             Text(
                 text = network,
-                style = UIKit.typography.h2,
-                color = UIKit.colorScheme.text.secondary,
+                style = UIKit.typography.h3,
+                color = UIKit.colorScheme.text.tertiary,
             )
         }
     }
@@ -187,6 +185,22 @@ private fun WithdrawRows(display: PerpetualReview.Withdraw) {
                 MoonPropertyBigCell(
                     title = stringResource(Localization.perps_withdraw_you_receive),
                     value = display.receive,
+                    valueDescription = null,
+                )
+            }
+            MoonItemDivider()
+            ConfirmRow {
+                MoonPropertyBigCell(
+                    title = stringResource(Localization.recipient_address),
+                    value = display.recipient.shortAddress,
+                    valueDescription = null,
+                )
+            }
+            MoonItemDivider()
+            ConfirmRow {
+                MoonPropertyBigCell(
+                    title = stringResource(Localization.provider),
+                    value = display.provider,
                     valueDescription = null,
                 )
             }
@@ -240,6 +254,8 @@ private fun errorText(error: PerpetualConfirmError): String {
         PerpetualConfirmError.InFlight -> stringResource(Localization.perps_withdraw_in_flight)
         PerpetualConfirmError.AccountUnavailable -> stringResource(Localization.perps_withdraw_account_unavailable)
         PerpetualConfirmError.ServiceUnavailable -> stringResource(Localization.perps_service_unavailable)
+        PerpetualConfirmError.WithdrawalRateLimited -> stringResource(Localization.perps_withdraw_rate_limited)
+        PerpetualConfirmError.TooManyRequests -> stringResource(Localization.perps_too_many_requests)
         PerpetualConfirmError.Refused -> stringResource(Localization.perps_withdraw_refused)
         PerpetualConfirmError.QuoteExpired -> stringResource(Localization.perps_deposit_quote_expired)
         PerpetualConfirmError.PrepareFailed -> stringResource(Localization.perps_withdraw_prepare_failed)

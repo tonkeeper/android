@@ -20,8 +20,7 @@ import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.koin.environment
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppType
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreenFactory
 import com.tonapps.tonkeeper.ui.screen.browser.safe.DAppSafeScreen
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.browser.search.list.Item
@@ -30,8 +29,6 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.backgroundTransparentColor
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import kotlinx.coroutines.launch
-import com.tonapps.tonkeeper.manager.earn.EarnUrlResolver
-import com.tonapps.tonkeeperx.BuildConfig
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -48,7 +45,7 @@ import uikit.extensions.setMoonOnClickListener
 
 class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_browser_search, wallet) {
 
-    private val earnUrlResolver: EarnUrlResolver by inject()
+    private val dappScreenFactory: DAppScreenFactory by inject()
 
     override val fragmentName: String = "BrowserSearchScreen"
 
@@ -163,27 +160,16 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
             dappAnalytics.click()
             BrowserHelper.open(requireContext(), url)
         } else {
-            navigation?.add(DAppScreen.newInstance(
+            navigation?.add(dappScreenFactory.create(
                 wallet = screenContext.wallet,
                 title = title,
                 url = uri,
                 iconUrl = iconUrl,
                 source = SOURCE_SEARCH,
                 analytics = dappAnalytics,
-                type = dappType(uri)
             ))
         }
         finish()
-    }
-
-    // Until the native Earn entry points exist, opening the dapp by hand in the browser is the
-    // only way to reach it; release builds route to Earn from those entry points only.
-    private fun dappType(uri: Uri): DAppType {
-        return if (BuildConfig.DEBUG && earnUrlResolver.isEarn(uri)) {
-            DAppType.Earn
-        } else {
-            DAppType.Browser
-        }
     }
 
     private fun inputDone() {
@@ -198,13 +184,12 @@ class BrowserSearchScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
                 if (viewModel.isScamUri(uri)) {
                     navigation?.add(DAppSafeScreen.newInstance(wallet))
                 } else {
-                    navigation?.add(DAppScreen.newInstance(
+                    navigation?.add(dappScreenFactory.create(
                         wallet = wallet,
                         title = uri.host ?: "unknown",
                         url = uri,
                         iconUrl = "",
                         source = "browser_search_direct",
-                        type = dappType(uri)
                     ))
                 }
             }

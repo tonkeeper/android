@@ -61,4 +61,9 @@
     <color name="separatorCommonDark">#14FFFFFF</color>
     <color name="separatorAlternateDark">#14FFFFFF</color>
 
+    <color name="glassRimTopDark">#2BFFFFFF</color>
+    <color name="glassRimBottomDark">#1AFFFFFF</color>
+    <color name="glassShadowDark">#33000000</color>
+    <color name="glassBorderDark">#00000000</color>
+
 </resources>

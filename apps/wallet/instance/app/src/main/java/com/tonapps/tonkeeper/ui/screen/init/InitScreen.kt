@@ -45,6 +45,7 @@ import ui.theme.MoonTheme
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
 import uikit.extensions.runAnimation
+import uikit.extensions.setDraggable
 import uikit.extensions.swallowClicks
 import uikit.extensions.withAlpha
 import uikit.widget.BottomSheetLayout
@@ -259,7 +260,7 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
 
     private fun updateDraggable() {
         val busy = loaderContainerView.visibility == View.VISIBLE || viewModel.loaderState.value != null
-        (view as? BottomSheetLayout)?.behavior?.isDraggable = !busy
+        (view as? BottomSheetLayout)?.setDraggable(!busy)
     }
 
     companion object {
@@ -275,7 +276,22 @@ class InitScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_init, S
             withNew: Boolean = true,
             raffleSourceWalletId: String? = null,
             importStartedTracked: Boolean = false,
-        ) = newInstance(InitArgs(type, name, publicKeyEd25519, ledgerConnectData, accounts, keystone, watchRecoveryAccountId, withNew, raffleSourceWalletId, importStartedTracked))
+            openUrlAfterCreated: String? = null,
+        ) = newInstance(
+            InitArgs(
+                type = type,
+                name = name,
+                publicKey = publicKeyEd25519,
+                ledgerConnectData = ledgerConnectData,
+                accounts = accounts,
+                keystone = keystone,
+                watchRecoveryAccountId = watchRecoveryAccountId,
+                withNew = withNew,
+                raffleSourceWalletId = raffleSourceWalletId,
+                importStartedTracked = importStartedTracked,
+                openUrlAfterCreated = openUrlAfterCreated,
+            ),
+        )
 
         fun newInstance(args: InitArgs): InitScreen {
             val fragment = InitScreen()

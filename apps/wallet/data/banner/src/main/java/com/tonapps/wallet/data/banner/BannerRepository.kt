@@ -2,6 +2,7 @@ package com.tonapps.wallet.data.banner
 
 import android.content.Context
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.BannerEntity
 import com.tonapps.wallet.data.banner.entities.BannerDataEntity
@@ -65,10 +66,7 @@ class BannerRepository(
 
     fun filterHidden(walletId: String, banners: List<BannerEntity>): List<BannerEntity> {
         val hidden = hiddenDataSource.getHidden(walletId)
-        if (hidden.isEmpty()) {
-            return banners
-        }
-        return banners.filter { it.id !in hidden }
+        return banners.filter { it.id !in hidden && !WalletFeature.Perps.isPromoHidden(it.id) }
     }
 
     private fun loadLocal(walletId: String?): BannerDataEntity? {

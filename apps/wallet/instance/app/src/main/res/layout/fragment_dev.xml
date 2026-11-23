@@ -167,6 +167,14 @@
                     app:position="middle" />
 
                 <uikit.widget.item.ItemSwitchView
+                    android:id="@+id/moonpay_sandbox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Use MoonPay sandbox"
+                    app:position="middle" />
+
+                <uikit.widget.item.ItemSwitchView
                     android:id="@+id/logs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -244,6 +252,22 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="@dimen/offsetMedium"
                     android:text="Tooltips"
+                    app:position="middle" />
+
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/glass"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Glass"
+                    app:position="middle" />
+
+                <uikit.widget.item.ItemTextView
+                    android:id="@+id/reset_swap_battery_promo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="@dimen/offsetMedium"
+                    android:text="Reset swap battery promo"
                     app:position="last" />
 
 

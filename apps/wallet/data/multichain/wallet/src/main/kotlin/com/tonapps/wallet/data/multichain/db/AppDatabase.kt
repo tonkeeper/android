@@ -53,6 +53,19 @@ private val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+private val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `perps_funding` ADD COLUMN `pending_step` TEXT")
+        connection.execSQL("ALTER TABLE `perps_funding` ADD COLUMN `estimated_duration_seconds` INTEGER")
+    }
+}
+
+private val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `perps_funding` ADD COLUMN `status_acknowledged` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Database(
     entities = [
         AccountEntity::class,
@@ -64,7 +77,7 @@ private val MIGRATION_4_5 = object : Migration(4, 5) {
         PerpsOperationStepEntity::class,
         PerpsFundingEntity::class,
     ],
-    version = 5
+    version = 7
 )
 internal abstract class AppDatabase : RoomDatabase() {
 
@@ -92,7 +105,7 @@ internal abstract class AppDatabase : RoomDatabase() {
                     .setDriver(BundledSQLiteDriver())
                     .setQueryCoroutineContext(Dispatchers.IO)
                     .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }

@@ -107,12 +107,14 @@ private fun ActionMenuRow(
             text = item.text,
             painter = item.iconPainter,
             onClick = onClick,
+            leadingImage = item.leadingImage,
         )
     } else {
         ActionMenuItem(
             text = item.text,
             icon = item.icon,
             onClick = onClick,
+            leadingImage = item.leadingImage,
         )
     }
 }

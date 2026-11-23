@@ -37,27 +37,6 @@ sealed class HistoryItem(
     type: Int,
 ): BaseListItem(type), Parcelable {
 
-    companion object {
-        const val TYPE_ACTION = 1
-        const val TYPE_HEADER = 2
-        const val TYPE_LOADER = 3
-        const val TYPE_APP = 4
-        const val TYPE_EMPTY = 5
-        const val TYPE_FAILED = 6
-
-        fun createFromParcel(parcel: Parcel): HistoryItem {
-            return when (parcel.readInt()) {
-                TYPE_ACTION -> Event(parcel)
-                TYPE_HEADER -> Header(parcel)
-                TYPE_LOADER -> Loader(parcel)
-                TYPE_APP -> App(parcel)
-                TYPE_EMPTY -> Empty(parcel)
-                TYPE_FAILED -> Failed(parcel)
-                else -> throw IllegalArgumentException("Unknown type")
-            }
-        }
-    }
-
     val timestampForSort: Long by lazy {
         when (this) {
             is Event -> this.timestamp - this.index
@@ -90,6 +69,27 @@ sealed class HistoryItem(
 
     override fun describeContents(): Int {
         return 0
+    }
+
+    companion object {
+        const val TYPE_ACTION = 1
+        const val TYPE_HEADER = 2
+        const val TYPE_LOADER = 3
+        const val TYPE_APP = 4
+        const val TYPE_EMPTY = 5
+        const val TYPE_FAILED = 6
+
+        fun createFromParcel(parcel: Parcel): HistoryItem {
+            return when (parcel.readInt()) {
+                TYPE_ACTION -> Event(parcel)
+                TYPE_HEADER -> Header(parcel)
+                TYPE_LOADER -> Loader(parcel)
+                TYPE_APP -> App(parcel)
+                TYPE_EMPTY -> Empty(parcel)
+                TYPE_FAILED -> Failed(parcel)
+                else -> throw IllegalArgumentException("Unknown type")
+            }
+        }
     }
 
     abstract class Service(type: Int): HistoryItem(type)
@@ -324,10 +324,11 @@ sealed class HistoryItem(
         val sendFee: SendFee? = null,
         /** Replaces the [action] name in the row, e.g. "Fee" for a relayer's jetton transfer. */
         val actionTitle: CharSequence? = null,
+        val contractPayload: String? = null,
     ): HistoryItem(TYPE_ACTION) {
 
         val account: Account?
-            get() = if (isOut) recipient else sender
+            get() = if (isOut) { recipient } else { sender }
 
         val isStake: Boolean
             get() = action == ActionType.WithdrawStake || action == ActionType.WithdrawStakeRequest || action == ActionType.DepositStake
@@ -337,6 +338,9 @@ sealed class HistoryItem(
             val type: Type,
             val body: String,
         ): Parcelable {
+
+            val isEncrypted: Boolean
+                get() = type != Type.Text && type != Type.OriginalEncrypted
 
             enum class Type {
                 Text, Simple, OriginalEncrypted
@@ -362,9 +366,6 @@ sealed class HistoryItem(
                     return null
                 }
             }
-
-            val isEncrypted: Boolean
-                get() = type != Type.Text && type != Type.OriginalEncrypted
         }
 
         @IgnoredOnParcel

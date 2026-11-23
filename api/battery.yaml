@@ -104,6 +104,14 @@ paths:
         - $ref: '#/components/parameters/walletId'
         - $ref: '#/components/parameters/walletToken'
         - $ref: '#/components/parameters/walletAuth'
+        - name: X-Pro-Auth
+          in: header
+          required: false
+          schema:
+            type: string
+          description: >-
+            JWT token from Pro service. On TRON a Pro subscription's free transfers pay instead of
+            charges, as on /tron/estimate and /tron/send.
       requestBody:
         required: true
         content:
@@ -135,6 +143,14 @@ paths:
         - $ref: '#/components/parameters/walletId'
         - $ref: '#/components/parameters/walletToken'
         - $ref: '#/components/parameters/walletAuth'
+        - name: X-Pro-Auth
+          in: header
+          required: false
+          schema:
+            type: string
+          description: >-
+            JWT token from Pro service. On TRON a Pro subscription's free transfers pay instead of
+            charges, as on /tron/estimate and /tron/send.
       requestBody:
         required: true
         content:
@@ -156,7 +172,8 @@ paths:
     post:
       description: >-
         Takes the signed payloads of an emulated operation, checks them against it one to one, and
-        broadcasts.
+        broadcasts. A battery purchase from /purchase-battery/emulate is sent here as well:
+        the balance grows once its transfer succeeds on chain.
       operationId: gaslessSend
       tags:
         - Gasless
@@ -165,6 +182,14 @@ paths:
         - $ref: '#/components/parameters/walletId'
         - $ref: '#/components/parameters/walletToken'
         - $ref: '#/components/parameters/walletAuth'
+        - name: X-Pro-Auth
+          in: header
+          required: false
+          schema:
+            type: string
+          description: >-
+            JWT token from Pro service. On TRON a Pro subscription's free transfers pay instead of
+            charges, as on /tron/estimate and /tron/send.
       requestBody:
         required: true
         content:
@@ -193,6 +218,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Config'
+        'default':
+          $ref: '#/components/responses/Error'
+  /network-fees:
+    get:
+      description: >-
+        What a swap and a perps deposit of an asset cost when the wallet pays the gas itself in the
+        chain's native coin, for the native coin of every chain /gasless/battery/config serves and
+        every asset it lists on its own chain (not battery charges, nor TON listed under TRON as a
+        way to pay), and for BTC. It is the fee spent, not
+        the balance a transaction needs up front (an EVM gas limit at the max fee, TON attached to a
+        jetton transfer, rent for a new Solana token account). The gas an operation takes is fixed,
+        from our users' transactions; on EVM chains it is priced at the network's current gas price, on
+        Bitcoin at the fee rate our users' wallets pay now.
+      operationId: getNetworkFees
+      responses:
+        '200':
+          description: One entry per asset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkFees'
         'default':
           $ref: '#/components/responses/Error'
   /promo-used:
@@ -250,6 +296,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Balance'
+        'default':
+          $ref: '#/components/responses/Error'
+  /wallet/migrate:
+    post:
+      description: >-
+        Moves the battery of a TON wallet's old public-key user -- the one X-TonConnect-Auth signs
+        for -- to the new wallet-id user. Only a positive balance moves; a negative one stays with
+        the old user, as does its purchase history. One-way and once: a second request answers 409.
+        The new user's purchases show it as one "migration" of the charges moved, from
+        `from_address`: the TON wallet migrated, which has to be one of the old key's wallets.
+        `proof` shows the old key agrees to this destination: a hex ed25519 signature, by the old
+        wallet's key, over LP("keeper.battery.migrate.v1") | LP(X-Wallet-ID) | LP(old public key),
+        where LP(x) is one length byte followed by x and the public key is its 32 raw bytes.
+      operationId: migrateBattery
+      tags:
+        - Wallet
+      parameters:
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ proof, from_address ]
+              properties:
+                proof:
+                  type: string
+                  pattern: '^[0-9a-fA-F]{128}$'
+                  description: hex of the 64-byte ed25519 signature described above
+                from_address:
+                  type: string
+                  description: the TON wallet the battery is moved from, raw or user-friendly
+      responses:
+        '200':
+          description: The battery was migrated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatteryMigration'
         'default':
           $ref: '#/components/responses/Error'
   /wallet/emulate:
@@ -322,6 +411,13 @@ paths:
           description: "success"
           headers:
             X-Battery-Protocol-Name:
+              schema:
+                type: string
+            X-Battery-Relayer-Message-Hash:
+              description: >-
+                Hex hash of the external message the relayer sent for this request: the one that
+                carries a W5 wallet's signed message, or the top-up of another wallet. Absent when the
+                relayer has not sent it yet.
               schema:
                 type: string
         'default':
@@ -638,6 +734,330 @@ paths:
                 $ref: '#/components/schemas/promoCodeBatteryPurchaseStatus'
         'default':
           $ref: '#/components/responses/Error'
+  /purchase-battery/estimate:
+    post:
+      description: |
+        What /purchase-battery/emulate would answer, without building or keeping the operation: the
+        same checks and the same figures -- the network fee and the charges the purchase adds -- for
+        a client to show while the amount is typed in. Nothing is to be signed or sent from it.
+      operationId: purchaseBatteryEstimate
+      tags:
+        - Gasless
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseBatteryEmulateRequest'
+      responses:
+        '200':
+          description: The purchase's figures.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseBatteryEstimateResponse'
+        '4XX':
+          $ref: '#/components/responses/GaslessV2Error'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/emulate:
+    post:
+      description: |
+        Quote a battery purchase paid in crypto on a chain other than TON, and build the operation to
+        sign, in the shape of /gasless/emulate (docs/generic payload). `asset_id` is one of
+        /recharge-methods?multichain=true outside TON, on `chain_id`. The operation is a USDT TRC-20
+        transfer as a "prebuild" payload on TRON, a sponsored batch as an "eip7821/hermes/delegate"
+        payload on an EVM chain (after an "eip7702/authorization" one for an account never
+        delegated), and a "prebuild" payload on Solana. The battery pays the transfer's network fee
+        -- TRON energy and bandwidth, EVM gas, the Solana fee -- and `fee` is what it takes off the
+        purchase, in charges: `charges` is what the balance grows by; /purchase-battery/estimate gives
+        the same figures without building anything. Sign the operation as any other
+        and send it to /gasless/send before `expires_at`; it checks the signatures against it.
+      operationId: purchaseBatteryEmulate
+      tags:
+        - Gasless
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseBatteryEmulateRequest'
+      responses:
+        '200':
+          description: The operation to sign.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseBatteryEmulateResponse'
+        '4XX':
+          $ref: '#/components/responses/GaslessV2Error'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/tron/estimate:
+    get:
+      deprecated: true
+      description: |
+        Quote a battery purchase paid in USDT TRC-20, and the operation to sign (docs/generic payload):
+        one "prebuild" payload on tron/mainnet, `meta.data` the unsigned USDT transfer of `amount` from
+        `wallet` to `funds_receiver` as TronGrid builds it. The client signs it, does not broadcast it,
+        and sends the signed operation to /purchase-battery/tron before `expires_at`.
+        The energy and bandwidth for that transfer are bought by the battery and paid from the
+        purchase: `charges` is what the balance grows by, `resources_charges` already taken off.
+      operationId: tronBatteryPurchaseEstimate
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+        - name: wallet
+          in: query
+          required: true
+          description: the TRON address the USDT is sent from
+          schema:
+            type: string
+        - name: amount
+          in: query
+          required: true
+          description: USDT, in whole units
+          schema:
+            type: string
+            example: "10.5"
+        - name: promo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the quote and the operation to sign
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TronBatteryPurchaseEstimate'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/tron:
+    post:
+      deprecated: true
+      summary: superseded by /gasless/send, which takes the operation of /purchase-battery/emulate
+      description: |
+        Charge the battery with USDT TRC-20: send the operation from /purchase-battery/tron/estimate
+        signed, its payload as "prebuild/signed" with `meta.data` the signed transaction (hex
+        protobuf, as for /wallet/broadcasthex). The battery buys the energy for it, broadcasts it, and
+        credits the balance once the transfer succeeds on chain.
+      operationId: tronBatteryPurchase
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/optionalToken'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - operation
+              properties:
+                operation:
+                  $ref: '#/components/schemas/GaslessV2SignedOperation'
+      responses:
+        '200':
+          description: accepted; the balance grows once the transfer lands
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TronBatteryPurchaseEstimate'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/evm/emulate:
+    post:
+      deprecated: true
+      summary: superseded by /purchase-battery/emulate, the same for every chain, sent to /gasless/send
+      description: |
+        Quote a battery purchase paid in USDT or USDC on an EVM chain, and the operation to sign
+        (docs/generic payload). The battery builds the transfer of `amount` from `from` to the
+        purchases wallet as a battery-sponsored batch: `operation` has an "eip7821/hermes/delegate"
+        payload, preceded by an "eip7702/authorization" one for an account never delegated, as
+        /gasless/emulate gives them. The relay pays the gas, and `gas_charges` of it are taken off
+        what the purchase adds: `charges` is what the balance grows by. Send the signed operation to
+        /purchase-battery/evm before `expires_at`.
+      operationId: evmBatteryPurchaseEmulate
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ chain, token, amount, from ]
+              properties:
+                chain:
+                  type: string
+                  description: EVM chain key
+                  example: base
+                token:
+                  type: string
+                  description: USDT or USDC
+                  example: USDC
+                amount:
+                  type: string
+                  description: in whole tokens
+                  example: "10"
+                from:
+                  type: string
+                  description: the EVM account the tokens are sent from
+                promo:
+                  type: string
+      responses:
+        '200':
+          description: the purchase to sign
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvmBatteryPurchaseQuote'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/evm:
+    post:
+      deprecated: true
+      summary: superseded by /gasless/send, which takes the operation of /purchase-battery/emulate
+      description: |
+        Charge the battery with USDT or USDC on an EVM chain: send the operation from
+        /purchase-battery/evm/emulate signed, every payload of it, as for /gasless/send:
+        "eip7702/authorization/signed" and "eip7821/hermes/delegate/signed". The relay sends the
+        transfer, and the balance grows once it is mined.
+      operationId: evmBatteryPurchase
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ operation ]
+              properties:
+                operation:
+                  $ref: '#/components/schemas/GaslessV2SignedOperation'
+      responses:
+        '200':
+          description: sent; the balance grows once the transfer is mined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvmSendResponse'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/solana/emulate:
+    post:
+      deprecated: true
+      summary: superseded by /purchase-battery/emulate, the same for every chain, sent to /gasless/send
+      description: |
+        Quote a battery purchase paid on Solana in USDT, USDC or SOL, and the operation to sign
+        (docs/generic payload): one "prebuild" payload on sol/mainnet, `meta.data` the transfer of
+        `amount` from `from` to the purchases wallet with the relay as the fee payer, base64, for a
+        wallet's signTransaction. The relay pays the network fee, and `gas_charges` of it are taken
+        off what the purchase adds: `charges` is what the balance grows by. Send the signed operation
+        to /purchase-battery/solana before `expires_at`: the transaction carries a recent blockhash and
+        lapses with it, in about a minute.
+      operationId: solanaBatteryPurchaseEmulate
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ token, amount, from ]
+              properties:
+                token:
+                  type: string
+                  description: USDT, USDC or SOL
+                  example: USDC
+                amount:
+                  type: string
+                  description: in whole units of the token
+                  example: "10"
+                from:
+                  type: string
+                  description: the Solana account the payment is sent from, base58
+                promo:
+                  type: string
+      responses:
+        '200':
+          description: the purchase to sign
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolanaBatteryPurchaseQuote'
+        'default':
+          $ref: '#/components/responses/Error'
+  /purchase-battery/solana:
+    post:
+      deprecated: true
+      summary: superseded by /gasless/send, which takes the operation of /purchase-battery/emulate
+      description: |
+        Charge the battery on Solana: send the operation from /purchase-battery/solana/emulate signed,
+        its payload as "prebuild/signed" with `meta.data` the transaction with the user's signature in
+        its slot, base64. The relay adds its own and broadcasts it, and the balance grows once the
+        transaction is finalized.
+      operationId: solanaBatteryPurchase
+      parameters:
+        - $ref: '#/components/parameters/i18n'
+        - $ref: '#/components/parameters/walletId'
+        - $ref: '#/components/parameters/walletToken'
+        - $ref: '#/components/parameters/walletAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ operation ]
+              properties:
+                operation:
+                  $ref: '#/components/schemas/GaslessV2SignedOperation'
+      responses:
+        '200':
+          description: sent; the balance grows once the transaction is finalized
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ signature ]
+                properties:
+                  signature:
+                    type: string
+                    description: the transaction's signature, base58
+        'default':
+          $ref: '#/components/responses/Error'
   /purchase-battery/verify-purchase-promo:
     get:
       operationId: verifyPurchasePromo
@@ -672,6 +1092,23 @@ paths:
           schema:
             type: boolean
             default: true
+        - name: multichain
+          in: query
+          description: >-
+            Also list the assets the battery is bought with on the other chains: USDT TRC-20, and the
+            dollar tokens and native coins of the EVM chains. Off by default, so that a client which
+            knows only the "jetton" and "ton" types is not sent the others.
+          schema:
+            type: boolean
+            default: false
+        - name: asset_id
+          in: query
+          description: >-
+            Only this asset, looked for on every chain whatever `multichain` says; no methods when the
+            battery is not bought with it.
+          schema:
+            type: string
+            example: base/mainnet/erc20/0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
       responses:
         '200':
           description: TBD
@@ -1139,6 +1576,100 @@ paths:
                 example: { }
         'default':
           $ref: '#/components/responses/Error'
+  /restricted/solana-relay-topup:
+    post:
+      operationId: solanaRelayTopup
+      description: |
+        Swaps TON from the main relayer into SOL through Changelly, paid out to one of the battery's
+        Solana wallets: the relay, the fee payer of gasless transactions (the default), the purchases
+        wallet, or the fee wallet. Without confirm it only quotes; with confirm it creates the swap and
+        sends the TON. The relayer keeps at least 2000 TON.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: string
+                  description: Amount in TON (not nano) to swap
+                confirm:
+                  type: boolean
+                  description: Create the swap and send the TON; otherwise only quote
+                  default: false
+                currency:
+                  type: string
+                  description: Changelly ticker to receive, overriding sol
+                to:
+                  type: string
+                  description: >-
+                    the wallet paid: relay (SOLANA_RELAY_PRIVATE_KEY's), purchases
+                    (SOLANA_PURCHASES_WALLET_ADDRESS) or fee (SOLANA_FEE_RECIPIENT); only these, so the
+                    admin token cannot send the relayer's TON anywhere else
+                  enum: [ relay, purchases, fee ]
+                  default: relay
+      responses:
+        '200':
+          description: "the quote, or the created swap"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/evm-fee-wallet-topup:
+    post:
+      operationId: evmFeeWalletTopup
+      description: |
+        Sends the native coin of an EVM chain from the relay wallet to one of our wallets that pays
+        gas of its own: the fee wallet (EVM_FEE_RECIPIENT), for the daily settlement's swaps and
+        transfers, or the purchases wallet (EVM_PURCHASES_WALLET_ADDRESS), for refunds and the
+        purchases settlement. Without confirm it only shows both balances; with confirm it sends.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chain
+                - amount
+              properties:
+                chain:
+                  type: string
+                  description: EVM chain key
+                  example: eth
+                amount:
+                  type: string
+                  description: Amount of the chain's native coin, in whole units (ETH, not wei)
+                  example: "0.003"
+                wallet:
+                  type: string
+                  enum: [ fee, purchases ]
+                  default: fee
+                  description: The wallet to top up
+                confirm:
+                  type: boolean
+                  description: Send; otherwise only show the balances
+                  default: false
+      responses:
+        '200':
+          description: "the balances, and the transaction when sent"
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                example: { }
+        'default':
+          $ref: '#/components/responses/Error'
   /restricted/migrate-old-battery:
     post:
       operationId: migrateOldBattery
@@ -1249,6 +1780,42 @@ paths:
                 example: { }
         'default':
           $ref: '#/components/responses/Error'
+  /restricted/users/{user_id}/clear-public-key:
+    post:
+      operationId: clearUserPublicKey
+      description: >-
+        Takes the public key off a wallet-id user, so the public-key user of the same wallet can be
+        merged into it (the merge refuses a wallet-id user holding another key). A one-off: only the
+        users in clearPublicKeyUsers are accepted. The key it held is returned, to put it back by hand.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: user_id
+          in: path
+          schema:
+            type: integer
+            format: int64
+          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/resetUserBalance"
+      responses:
+        '200':
+          description: the key taken off
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ user_id, wallet_id, public_key_before ]
+                properties:
+                  user_id:
+                    type: integer
+                    format: int64
+                  wallet_id:
+                    type: string
+                  public_key_before:
+                    type: string
+                    description: the column as it was, in hex of its bytes; empty when there was no key
+        'default':
+          $ref: '#/components/responses/Error'
   /restricted/ton-purchases/{purchase_id}/reassign:
     post:
       operationId: reassignTonPurchase
@@ -1289,6 +1856,218 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TonPurchaseReassignment'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/users/merge-candidates:
+    get:
+      operationId: getUserMergeCandidates
+      description: >-
+        Pairs of a public-key user and a wallet-id user tied to the same address since `since`: both
+        have a TON purchase for it, or the public-key user redeemed a promo campaign made out to it
+        (a campaign credits the user of the wallet's public key). With several wallet-id users for one public-key user, the one
+        created last is returned. Each pair is a candidate for /restricted/users/{user_id}/merge,
+        which checks the address against multichain before it moves anything.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: since
+          in: query
+          description: Only purchases made since this time are looked at; 30 days back by default.
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: the candidates
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ candidates ]
+                properties:
+                  candidates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserMergeCandidate'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/user-merges:
+    get:
+      operationId: getUserMerges
+      description: >-
+        The merges recorded in battery.user_merges, newest first: of one user, as either side, or all
+        of them. Each comes with where both users stand now, to check a merge against: the balance and
+        public key of each.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: user_id
+          in: query
+          description: Only the merges this user was merged from or into.
+          schema:
+            type: integer
+            format: int64
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: the merges
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ merges ]
+                properties:
+                  merges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserMergeRecord'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/users/{user_id}/merge:
+    post:
+      operationId: mergeUsers
+      description: >-
+        Merges a public-key user into the wallet-id user of the same wallet: the whole balance, the
+        purchases (TON, iOS, Android, TRON, promo codes), the sent messages of every chain, the linked
+        TON addresses and the public key move over, so a TonConnect sign-in with that key lands on the wallet-id user from then on. The
+        public-key user's row stays, with neither a key nor a balance. Other pods may keep signing the
+        key in as the old user for up to 15 minutes (their cache); anything credited to it meanwhile is
+        merged by calling this again. Purchases with a refund stay where they are. Refused when the
+        addresses of the public-key user -- those it bought for, promo campaigns made out to, linked,
+        and the wallets of its key -- and the wallet-id user's wallet (as multichain lists it) have
+        none in common, unless the pair was merged before, when another wallet-id user with one of those addresses was
+        created later (the merge goes into the newest one), or while the public-key user has a message or a refund in flight.
+        Everything is applied in one transaction; dry_run checks and reports without changing anything.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: user_id
+          in: path
+          description: The public-key user to merge.
+          schema:
+            type: integer
+            format: int64
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ to_user_id, reason ]
+              properties:
+                to_user_id:
+                  type: integer
+                  format: int64
+                  description: The wallet-id user to merge into.
+                reason:
+                  type: string
+                dry_run:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: the merge, done or as it would be done
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMerge'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/accounts/{account_id}/merge:
+    post:
+      operationId: mergeAccountUsers
+      description: >-
+        Merges the users of one address: the public-key user with TON purchases for it goes into the
+        wallet-id user with TON purchases for it created last, as /restricted/users/{user_id}/merge
+        does, with the same checks. Refused when the address has no such pair, or more than one
+        public-key user. dry_run checks and reports without changing anything.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: account_id
+          in: path
+          description: The address the purchases were for, raw or user-friendly.
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ reason ]
+              properties:
+                reason:
+                  type: string
+                dry_run:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: the merge, done or as it would be done
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMerge'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/indexes:
+    get:
+      operationId: getManualIndexes
+      description: >-
+        The indexes of pkg/storage/create_indexes.sql, too slow to build in a migration, and the
+        state of each: missing, building (with its phase and progress), valid, or invalid (a
+        concurrent build that stopped half way).
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+      responses:
+        '200':
+          description: the indexes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ indexes ]
+                properties:
+                  indexes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ManualIndex'
+        'default':
+          $ref: '#/components/responses/Error'
+  /restricted/indexes/{name}:
+    post:
+      operationId: buildManualIndex
+      description: >-
+        Starts building an index of pkg/storage/create_indexes.sql, concurrently and in the
+        background, and answers at once; GET /restricted/indexes follows it. Builds take turns, on
+        every instance: one asked for while another runs waits for it. An invalid index left
+        by an earlier build is dropped and built again; a valid or building one is left as it is.
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the index, as it is now
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualIndex'
         'default':
           $ref: '#/components/responses/Error'
   /restricted/purchases/{purchase_id}/extend-refund-period:
@@ -1564,10 +2343,10 @@ paths:
           in: query
           required: true
           description: >-
-            tron, ton, or an EVM network the relay serves: eth, bsc, arb, base, polygon.
+            tron, ton, sol, or an EVM network the relay serves: eth, bsc, arb, base, polygon, robinhood.
           schema:
             type: string
-            enum: [ tron, ton, eth, bsc, arb, base, polygon ]
+            enum: [ tron, ton, sol, eth, bsc, arb, base, polygon, robinhood ]
         - name: hash
           in: query
           required: true
@@ -1575,7 +2354,7 @@ paths:
             transaction hash. For TRON this is the txid. For TON it is either the on-chain
             transaction hash or the hash of the external message the wallet signed; both hex
             and base64 are accepted. For an EVM network it is the hash /send returned, 0x-prefixed
-            hex.
+            hex. For Solana it is the transaction signature, base58.
           schema:
             type: string
             example: 6c4e6d3a2b1f0e9d8c7b6a5948372615043f2e1d0c9b8a7968574635241302f1
@@ -1590,7 +2369,7 @@ paths:
                 properties:
                   chain:
                     type: string
-                    enum: [ tron, ton, eth, bsc, arb, base, polygon ]
+                    enum: [ tron, ton, sol, eth, bsc, arb, base, polygon, robinhood ]
                   hash:
                     type: string
                   charges:
@@ -2094,6 +2873,52 @@ components:
                 type: string
                 example: "1234567890"
   schemas:
+    TronBatteryPurchaseEstimate:
+      type: object
+      required:
+        - funds_receiver
+        - usdt_contract
+        - amount
+        - min_amount
+        - markup_percent
+        - gross_charges
+        - resources_charges
+        - charges
+      properties:
+        funds_receiver:
+          type: string
+          description: the TRON address the USDT goes to
+        usdt_contract:
+          type: string
+          example: TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+        amount:
+          type: string
+          description: USDT, in whole units
+        min_amount:
+          type: string
+        markup_percent:
+          type: string
+        promo_bonus_percent:
+          type: string
+        gross_charges:
+          type: integer
+          description: charges the USDT buys, promo bonus included
+        resources_charges:
+          type: integer
+          description: charges taken for the energy and bandwidth of the transfer
+        charges:
+          type: integer
+          description: what the balance grows by
+        energy:
+          type: integer
+        bandwidth:
+          type: integer
+        operation:
+          $ref: '#/components/schemas/GaslessV2Operation'
+        expires_at:
+          type: string
+          format: date-time
+          description: the operation is to be sent by then
     Error:
       type: object
       required:
@@ -2106,6 +2931,7 @@ components:
       type: object
       required:
         - pending_transactions
+        - busy_wallets
       properties:
         pending_transactions:
           type: array
@@ -2116,6 +2942,26 @@ components:
             properties:
               id:
                 type: string
+        busy_wallets:
+          type: array
+          description: >-
+            The user's wallets a message to which /message refuses now (err-gasless-pending-messages):
+            a message of theirs is accepted and has not landed, or a transaction of theirs is still
+            running its trace. A wallet is busy from the moment /message accepts a message. Send the
+            next message to a wallet once it is no longer listed here.
+          items:
+            type: object
+            required:
+              - address
+              - since
+            properties:
+              address:
+                type: string
+                description: raw address
+                example: "0:945c7be88b0d0c8250cbf42cbffa9137cecc4a98e3581fafa4413cf2dfe2c25d"
+              since:
+                type: string
+                format: date-time
     EnterpriseWalletConfig:
       type: object
       required:
@@ -2321,6 +3167,8 @@ components:
           items:
             type: object
             required:
+              - chain
+              - asset_id
               - type
               - symbol
               - decimals
@@ -2328,6 +3176,16 @@ components:
               - support_gasless
               - support_recharge
             properties:
+              chain:
+                type: string
+                description: the chain the asset is on, as in /gasless/battery/config
+                example: "tron/mainnet"
+              asset_id:
+                type: string
+                description: >-
+                  the asset, as in /gasless/battery/config: "<chain>/coin" for the chain's native coin,
+                  "<chain>/jetton/<master, raw>", "<chain>/trc20/<contract>", "<chain>/erc20/<address>"
+                example: "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
               image:
                 type: string
                 example: "https://example.com/image.png"
@@ -2335,15 +3193,29 @@ components:
                 type: string
               min_bootstrap_value:
                 type: string
+                description: >-
+                  the least amount accepted, in units of the asset; for the other chains, the least
+                  purchase
                 example: "10.0"
               type:
                 type: string
                 enum:
                   - jetton
                   - ton
+                  - trc20
+                  - erc20
+                  - spl
+                  - coin
               rate:
                 type: string
+                description: TON credited for one unit of the asset, after the markup
                 example: "10.250"
+              charges_rate:
+                type: string
+                description: >-
+                  charges credited for one unit of the asset, after the markup: rate at the price of a
+                  charge. Before the network fee of the transfer, which /purchase-battery/estimate takes off.
+                example: "3942.3077"
               symbol:
                 type: string
                 example: "usdt"
@@ -2356,6 +3228,54 @@ components:
               support_recharge:
                 type: boolean
                 example: true
+    NetworkFees:
+      type: object
+      required: [ assets ]
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkFee'
+    NetworkFee:
+      type: object
+      description: >-
+        A swap is any swap from the asset but a deposit into perps; perps is that deposit (through
+        Relay or fun.xyz) and is absent where perps take no deposits from the chain.
+      required: [ asset_id, fee_asset_id, fee_decimals, swap ]
+      properties:
+        asset_id:
+          type: string
+          description: The asset, as in /gasless/battery/config.
+          example: eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7
+        fee_asset_id:
+          type: string
+          description: The native coin the fee is paid in.
+          example: eth/mainnet/coin
+        fee_decimals:
+          type: integer
+          description: Decimals of the native coin.
+          example: 18
+        swap:
+          $ref: '#/components/schemas/NetworkFeeAmounts'
+        perps:
+          $ref: '#/components/schemas/NetworkFeeAmounts'
+    NetworkFeeAmounts:
+      type: object
+      description: Amounts of the native coin, in its smallest units.
+      required: [ typical, high, safe ]
+      properties:
+        typical:
+          type: string
+          description: What it usually costs.
+          example: "118000000000000"
+        high:
+          type: string
+          description: Covers almost every transaction.
+          example: "694000000000000"
+        safe:
+          type: string
+          description: High with a 30% margin.
+          example: "902200000000000"
     Purchases:
       type: object
       required:
@@ -2397,6 +3317,15 @@ components:
                   - crypto
                   - gift
                   - on-the-way-gift
+                  - grant
+                  - migration
+                  - migration-out
+              from_address:
+                description: "Set for a migration: the TON wallet the battery was moved from, raw."
+                type: string
+              to_wallet_id:
+                description: "Set for a migration-out: the wallet id of the wallet the battery was moved to."
+                type: string
               amount:
                 description: "Amount describes the amount paid by the user for this purchase when we know it. For crypto purchases it is always set."
                 type: string
@@ -2483,21 +3412,38 @@ components:
     # type, so they are free-form objects here and checked in code.
     GaslessV2Fee:
       type: object
+      description: >-
+        The battery answers "value" only. "gas" and "eip1559" are the generic payload's network fees,
+        which other services' quotes (tk-perps /funding/quote) put on a payload a client passes on
+        here as it is. The battery ignores the fee of any payload it is sent.
       required: [ type, asset_id, data ]
       properties:
         type:
           type: string
-          enum: [ value ]
+          enum: [ value, gas, eip1559 ]
         asset_id:
           type: string
           example: battery/mainnet
         data:
           type: object
-          required: [ amount ]
           properties:
             amount:
               type: string
-              description: In the asset's smallest units; charges for "battery/mainnet".
+              description: >-
+                "value": in the asset's smallest units; charges for "battery/mainnet". Always set in
+                what the battery answers.
+            limit:
+              type: string
+              description: '"gas", "eip1559": the gas limit.'
+            price:
+              type: string
+              description: '"gas": the gas price, in wei.'
+            max_fee_per_gas:
+              type: string
+              description: '"eip1559": the max fee per gas, in wei.'
+            max_priority_fee_per_gas:
+              type: string
+              description: '"eip1559": the max priority fee per gas, in wei.'
 
     GaslessV2Payload:
       type: object
@@ -2507,7 +3453,7 @@ components:
           type: string
         type:
           type: string
-          description: main | prebuild | batch | eip7702/authorization | eip7821/hermes/delegate | solana/message
+          description: "main | prebuild (TRON, Solana) | batch | eip7702/authorization | eip7821/hermes/delegate. On TRON a main (to: the token's contract, data: the transfer(address,uint256) call, memo: hex, optional) is built into the prebuild to sign. A TON payload to sign says in meta.format how: ext_msg or int_msg"
         chain_id:
           type: string
           example: ton/mainnet
@@ -2541,7 +3487,7 @@ components:
       properties:
         type:
           type: string
-          description: signed | eip7702/authorization/signed | eip7821/hermes/delegate/signed (eip7821/hermes/1/signed is accepted too) | solana/message/signed
+          description: "the payload type + /signed: prebuild/signed (TRON, Solana; signed is accepted too) | eip7702/authorization/signed | eip7821/hermes/delegate/signed (eip7821/hermes/1/signed is accepted too); main/signed and batch/signed (TON; signed is accepted too)"
         chain_id:
           type: string
         payload_id:
@@ -2577,10 +3523,6 @@ components:
           type: integer
         image:
           type: string
-        chain:
-          type: string
-          nullable: true
-          description: null for battery, which is not chain-scoped
 
     GaslessV2ErrorBody:
       type: object
@@ -2590,9 +3532,12 @@ components:
           type: string
           description: >-
             unsupported_chain | unsupported_asset | unsupported_payload | insufficient_funds |
-            emulation_failed | emulation_expired | payload_mismatch | invalid_signature |
-            broadcast_failed | operation_not_found | already_sent | bad_request | unauthorized |
-            not_implemented | internal_error
+            emulation_failed | route_not_sponsorable | emulation_expired | payload_mismatch |
+            invalid_signature | broadcast_failed | operation_not_found | already_sent | bad_request |
+            unauthorized | not_implemented | internal_error. route_not_sponsorable: the payload calls a
+            contract that only accepts transactions the wallet sends and pays for itself (it checks
+            tx.origin), so neither the battery nor a gasless fee can pay for it; the client should ask
+            for another route or offer to pay in the native coin.
         message:
           type: string
         details:
@@ -2607,6 +3552,7 @@ components:
           type: string
         payload_types:
           type: array
+          description: The payload types /gasless/estimate and /gasless/emulate take on this chain.
           items:
             type: string
         assets:
@@ -2644,6 +3590,11 @@ components:
           type: string
         sender_address:
           type: string
+        sender_public_key:
+          type: string
+          description: >-
+            TON only: the wallet's public key, hex. Needed only while the wallet is not deployed yet;
+            a deployed wallet's key is read from the chain.
         payload:
           $ref: '#/components/schemas/GaslessV2Payload'
 
@@ -2674,6 +3625,11 @@ components:
           type: string
         sender_address:
           type: string
+        sender_public_key:
+          type: string
+          description: >-
+            TON only: the wallet's public key, hex. Needed only while the wallet is not deployed yet;
+            a deployed wallet's key is read from the chain.
         type:
           type: string
           description: The operation type, echoed back in operation.type.
@@ -2733,6 +3689,183 @@ components:
           description: |
             The transaction that was sent. EVM: the transaction hash, 0x-prefixed. TON: the
             normalized hash of the external message, hex.
+
+    ManualIndex:
+      type: object
+      required: [ name, table, statement, state ]
+      properties:
+        name:
+          type: string
+        table:
+          type: string
+        statement:
+          type: string
+        state:
+          type: string
+          enum: [ missing, building, valid, invalid ]
+        phase:
+          type: string
+          description: The phase of the build, while it is building.
+        progress:
+          type: number
+          description: The share of the blocks of the current phase done, while it is building.
+        error:
+          type: string
+          description: Why the last build started by this instance failed.
+    UserMergeRecord:
+      type: object
+      required: [ id, from_user_id, to_user_id, from_balance_before, to_balance_before, moved_balance, to_balance_after,
+                  moved_purchases, kept_purchases, moved_accounts, moved_messages, moved_purchase_ids, kept_purchase_ids, moved_account_ids,
+                  created_at, from_balance_now, to_balance_now, from_has_public_key_now, to_public_key_now ]
+      properties:
+        id:
+          type: integer
+          format: int64
+        from_user_id:
+          type: integer
+          format: int64
+        to_user_id:
+          type: integer
+          format: int64
+        from_balance_before:
+          type: string
+        to_balance_before:
+          type: string
+        moved_balance:
+          type: string
+        to_balance_after:
+          type: string
+        moved_purchases:
+          type: integer
+        kept_purchases:
+          type: integer
+        moved_accounts:
+          type: integer
+        moved_messages:
+          type: integer
+        moved_purchase_ids:
+          type: array
+          items:
+            type: string
+          description: "kind:id of each purchase that moved: ton:123, ios:<transaction id>, ..."
+        kept_purchase_ids:
+          type: array
+          items:
+            type: string
+        moved_account_ids:
+          type: array
+          items:
+            type: string
+        moved_public_key:
+          type: string
+          description: the public key that moved, hex; absent when the user had none left
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        from_balance_now:
+          type: string
+          description: the merged user's balance now; 0 unless something was credited to it since
+        to_balance_now:
+          type: string
+        from_has_public_key_now:
+          type: boolean
+          description: false once the key has moved
+        to_public_key_now:
+          type: string
+          description: the user merged into's public key now, hex; empty when it has none
+    UserMergeCandidate:
+      type: object
+      required: [ from_user_id, to_user_id, to_wallet_id, account_id, from_balance, wallet_users ]
+      properties:
+        from_user_id:
+          type: integer
+          format: int64
+          description: The public-key user.
+        to_user_id:
+          type: integer
+          format: int64
+          description: The wallet-id user.
+        to_wallet_id:
+          type: string
+        account_id:
+          type: string
+          description: The address both bought for.
+        from_balance:
+          type: string
+        wallet_users:
+          type: integer
+          description: >-
+            How many wallet-id users share an address with the public-key user; to_user_id is the
+            one created last, the one to merge into.
+    UserMerge:
+      type: object
+      required: [ from_user_id, to_user_id, shared_accounts, moved_balance, to_balance, moved_purchases, kept_purchases, moved_accounts, moved_messages, moved_public_key, already_merged, dry_run ]
+      properties:
+        from_user_id:
+          type: integer
+          format: int64
+        to_user_id:
+          type: integer
+          format: int64
+        shared_accounts:
+          type: array
+          items:
+            type: string
+          description: Addresses the public-key user bought for that multichain lists in the wallet-id user's wallet.
+        moved_balance:
+          type: string
+          description: The public-key user's balance, which moves over whole.
+        to_balance:
+          type: string
+          description: The wallet-id user's balance after the merge.
+        moved_purchases:
+          type: integer
+        kept_purchases:
+          type: integer
+          description: TON purchases with a refund, which stay with the public-key user.
+        moved_accounts:
+          type: integer
+          description: Linked TON addresses that now point to the wallet-id user.
+        moved_messages:
+          type: integer
+          description: Sent messages, of every chain, that now belong to the wallet-id user.
+        already_merged:
+          type: boolean
+          description: The pair was merged before; this merge takes what reached the public-key user since.
+        moved_public_key:
+          type: boolean
+          description: The public-key user still had its key, and it moves to the wallet-id user.
+        moved_purchase_ids:
+          type: array
+          items:
+            type: string
+          description: "The purchases that move, as kind:id: ton:123, ios:<transaction id>, android, tron, evm, promo."
+        kept_purchase_ids:
+          type: array
+          items:
+            type: string
+        moved_account_ids:
+          type: array
+          items:
+            type: string
+          description: The raw TON addresses whose link moves.
+        dry_run:
+          type: boolean
+    BatteryMigration:
+      type: object
+      required: [ moved, moved_charges, balance ]
+      properties:
+        moved:
+          type: string
+          description: The balance moved, in the units of the balance (TON).
+        moved_charges:
+          type: integer
+          format: int64
+        balance:
+          type: string
+          description: The wallet-id user's balance after the migration, in TON.
 
     TonPurchaseReassignment:
       type: object
@@ -3136,6 +4269,189 @@ components:
         fee_native_wei:
           type: string
           description: charged gas at the quoted price, in wei.
+
+    PurchaseBatteryEmulateRequest:
+      type: object
+      required: [ chain_id, sender_address, asset_id, amount ]
+      properties:
+        chain_id:
+          type: string
+          example: base/mainnet
+        sender_address:
+          type: string
+          description: the account the payment is sent from, on chain_id
+        asset_id:
+          type: string
+          description: the asset paid in, as /recharge-methods lists it
+          example: base/mainnet/erc20/0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
+        amount:
+          type: string
+          description: in the asset's smallest units
+          example: "10000000"
+        promo:
+          type: string
+    PurchaseBatteryEstimateResponse:
+      type: object
+      required: [ chain_id, sender_address, created_at, asset_id, amount, fee, gross_charges, charges, funds_receiver ]
+      properties:
+        chain_id:
+          type: string
+        sender_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        asset_id:
+          type: string
+        amount:
+          type: string
+          description: in the asset's smallest units
+        fee:
+          $ref: '#/components/schemas/GaslessV2Fee'
+        gross_charges:
+          type: integer
+          format: int64
+          description: what the purchase adds before the fee
+        charges:
+          type: integer
+          format: int64
+          description: what the balance grows by, gross_charges less the fee
+        funds_receiver:
+          type: string
+          description: the purchases wallet the payment goes to
+        promo_bonus_percent:
+          type: string
+          description: the promo's bonus, when a valid promo was given
+    PurchaseBatteryEmulateResponse:
+      type: object
+      required: [ chain_id, sender_address, created_at, expires_at, asset_id, amount, fee, gross_charges, charges, funds_receiver, operation ]
+      properties:
+        chain_id:
+          type: string
+        sender_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        asset_id:
+          type: string
+        amount:
+          type: string
+          description: in the asset's smallest units
+        fee:
+          $ref: '#/components/schemas/GaslessV2Fee'
+        gross_charges:
+          type: integer
+          format: int64
+          description: what the purchase adds before the fee
+        charges:
+          type: integer
+          format: int64
+          description: what the balance grows by, gross_charges less the fee
+        funds_receiver:
+          type: string
+          description: the purchases wallet the payment goes to
+        promo_bonus_percent:
+          type: string
+          description: the promo's bonus, when a valid promo was given
+        operation:
+          $ref: '#/components/schemas/GaslessV2Operation'
+
+    EvmBatteryPurchaseQuote:
+      type: object
+      required: [ quote, chain, funds_receiver, token, token_address, amount, min_amount, markup_percent, gross_charges, gas_charges, charges, operation, expires_at ]
+      properties:
+        quote:
+          $ref: '#/components/schemas/EvmEstimateResponse'
+        operation:
+          $ref: '#/components/schemas/GaslessV2Operation'
+        expires_at:
+          type: string
+          format: date-time
+          description: the operation is to be sent by then
+        chain:
+          type: string
+        funds_receiver:
+          type: string
+          description: the purchases wallet the transfer goes to
+        token:
+          type: string
+        token_address:
+          type: string
+        amount:
+          type: string
+        min_amount:
+          type: string
+          description: the least purchase, in dollars
+        markup_percent:
+          type: string
+        gross_charges:
+          type: integer
+          format: int64
+          description: what the purchase adds before its gas
+        gas_charges:
+          type: integer
+          format: int64
+          description: the gas of the transfer, taken off; settled from the receipt
+        charges:
+          type: integer
+          format: int64
+          description: what the balance grows by, gross_charges less gas_charges
+
+    SolanaBatteryPurchaseQuote:
+      type: object
+      required: [ id, transaction, funds_receiver, token, token_mint, amount, min_amount, markup_percent, gross_charges, gas_charges, charges, fee_lamports, last_valid_block_height, expires_at, operation ]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: the operation's id
+        operation:
+          $ref: '#/components/schemas/GaslessV2Operation'
+        transaction:
+          type: string
+          description: >-
+            the transaction to sign, base64 wire format, its two signature slots empty: the relay's
+            first, the sender's second
+        funds_receiver:
+          type: string
+          description: the purchases wallet the payment goes to
+        token:
+          type: string
+        token_mint:
+          type: string
+          description: the token's mint, or SOL for the native coin
+        amount:
+          type: string
+        min_amount:
+          type: string
+          description: the least purchase, in dollars
+        markup_percent:
+          type: string
+        gross_charges:
+          type: integer
+          format: int64
+          description: what the purchase adds before its network fee
+        gas_charges:
+          type: integer
+          format: int64
+          description: the network fee the relay pays for the transaction, taken off
+        charges:
+          type: integer
+          format: int64
+          description: what the balance grows by, gross_charges less gas_charges
+        fee_lamports:
+          type: integer
+          format: int64
+        last_valid_block_height:
+          type: integer
+          format: int64
+        expires_at:
+          type: string
+          format: date-time
 
     EvmSendRequest:
       type: object

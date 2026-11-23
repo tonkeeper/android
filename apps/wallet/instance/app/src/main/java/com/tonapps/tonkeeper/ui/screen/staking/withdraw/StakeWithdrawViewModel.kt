@@ -23,7 +23,6 @@ import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.generateUuid
 import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
@@ -31,8 +30,12 @@ import com.tonapps.ledger.ton.Transaction
 import com.tonapps.legacy.enteties.SendMetadataEntity
 import com.tonapps.legacy.enteties.StakedEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.staking.StakingInsufficientFundsUiState
+import com.tonapps.tonkeeper.ui.screen.staking.unstakeReserveHint
+import com.tonapps.tonkeeper.ui.screen.staking.walletFees
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
@@ -49,6 +52,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,6 +86,8 @@ class StakeWithdrawViewModel(
     private val _poolFlow = MutableStateFlow<Pair<StakedEntity, PoolDetailsEntity>?>(null)
     private val poolFlow = _poolFlow.asStateFlow().filterNotNull()
 
+    private val _networkFeeFlow = MutableStateFlow<Coins?>(null)
+
     val stakeFlow = poolFlow.map { it.first }
     val poolDetailsFlow = poolFlow.map { it.second }
 
@@ -111,7 +117,7 @@ class StakeWithdrawViewModel(
         }
     }
 
-    private fun requestExtra() = unsignedBodyFlow().map { message ->
+    private fun requestEmulation() = unsignedBodyFlow().map { message ->
         val operationId = generateUuid()
         val startedAtMs = currentTimeMillis()
         AnalyticsHelper.Default.events.redOperations.opAttempt(
@@ -119,21 +125,21 @@ class StakeWithdrawViewModel(
             flow = Events.RedOperations.RedOperationsFlow.Stake,
             operation = Events.RedOperations.RedOperationsOperation.Emulate,
             attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
+            startedAtMs = startedAtMs,
             otherMetadata = null,
         )
         try {
-            val result = emulationUseCase(message, wallet.testnet).extra
+            val emulated = emulationUseCase(message, params = true)
             val finishedAtMs = currentTimeMillis()
             AnalyticsHelper.Default.events.redOperations.opTerminal(
                 operationId = operationId,
                 flow = Events.RedOperations.RedOperationsFlow.Stake,
                 operation = Events.RedOperations.RedOperationsOperation.Emulate,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = null,
             )
-            result
+            emulated.takeUnless { it.failed }
         } catch (e: Throwable) {
             val finishedAtMs = currentTimeMillis()
             AnalyticsHelper.Default.events.redOperations.opTerminal(
@@ -141,20 +147,23 @@ class StakeWithdrawViewModel(
                 flow = Events.RedOperations.RedOperationsFlow.Stake,
                 operation = Events.RedOperations.RedOperationsOperation.Emulate,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = e,
             )
-            Emulated.defaultExtra
+            null
         }
     }
 
     fun requestFee() = combine(
-        requestExtra(),
+        // A failed emulation's placeholder is shown, but not counted in the balance check. The check takes the
+        // wallet's own fee: the event's extra also holds what the pool keeps from the attached TON.
+        requestEmulation().onEach { _networkFeeFlow.value = it?.walletFees },
         stakeFlow
-    ) { extra, stake ->
+    ) { emulated, stake ->
+        val extra = emulated?.extra
         val currency = settingsRepository.currency
         val rates = ratesRepository.getTONRates(wallet.network, currency)
-        val fee = StakingPool.getTotalFee(extra.value, stake.pool.implementation)
+        val fee = StakingPool.getTotalFee((extra ?: Emulated.defaultExtra).value, stake.pool.implementation)
 
         val amount = CurrencyFormatter.format(TokenEntity.TON.symbol, fee)
         val fiat = CurrencyFormatter.format(currency.code, rates.convertTON(fee), replaceSymbol = false)
@@ -234,7 +243,7 @@ class StakeWithdrawViewModel(
             }
         }
 
-        this.coins = Coins.of(0.2).toGrams() // TODO fees: hardcoded value
+        this.coins = StakingPool.getUnstakeTemporaryReserve(StakingPool.Implementation.Whales).toGrams()
         this.destination = AddrStd.parse(pool.address)
         this.messageData = MessageData.raw(body, stateInitRef)
     }
@@ -245,12 +254,28 @@ class StakeWithdrawViewModel(
             storeBytes("w".toByteArray())
         }
 
-        this.coins = Coins.ONE.toGrams() // TODO fees: hardcoded value
+        this.coins = StakingPool.getUnstakeTemporaryReserve(StakingPool.Implementation.TF).toGrams()
         this.destination = AddrStd.parse(pool.address)
         this.messageData = MessageData.raw(body, stateInitRef)
     }
 
-    fun send(context: Context) = (if (wallet.isLedger) {
+    suspend fun checkInsufficientFunds(): StakingInsufficientFundsUiState? {
+        val stake = _poolFlow.value?.first ?: return null
+        val reserve = StakingPool.getUnstakeTemporaryReserve(stake.pool.implementation)
+        val required = StakingPool.getUnstakeRequired(stake.pool.implementation, _networkFeeFlow.value)
+        val token = tokenRepository.getFreshTON(currency, wallet.accountId, wallet.network, cacheFallback = true)
+        val balance = token?.balance?.value ?: return null
+        if (balance >= required) {
+            return null
+        }
+        return StakingInsufficientFundsUiState(
+            requiredFormat = CurrencyFormatter.format(TokenEntity.TON.symbol, required),
+            balanceFormat = CurrencyFormatter.format(TokenEntity.TON.symbol, balance),
+            reserveHint = unstakeReserveHint(stake.pool.implementation, reserve, isCollect = true),
+        )
+    }
+
+    fun send(context: Context) = (if (wallet.signsWithLedger) {
         createLedgerStakeFlow(context, wallet)
     } else {
         createUnStakeFlow(wallet)
@@ -287,7 +312,7 @@ class StakeWithdrawViewModel(
             flow = Events.RedOperations.RedOperationsFlow.Stake,
             operation = Events.RedOperations.RedOperationsOperation.Unstake,
             attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
+            startedAtMs = startedAtMs,
             otherMetadata = null,
         )
         try {
@@ -303,7 +328,7 @@ class StakeWithdrawViewModel(
                 flow = Events.RedOperations.RedOperationsFlow.Stake,
                 operation = Events.RedOperations.RedOperationsOperation.Unstake,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = null,
             )
         } catch (e: Throwable) {
@@ -313,7 +338,7 @@ class StakeWithdrawViewModel(
                 flow = Events.RedOperations.RedOperationsFlow.Stake,
                 operation = Events.RedOperations.RedOperationsOperation.Unstake,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = e,
             )
             throw e
@@ -330,13 +355,13 @@ class StakeWithdrawViewModel(
             flow = Events.RedOperations.RedOperationsFlow.Stake,
             operation = Events.RedOperations.RedOperationsOperation.Unstake,
             attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
+            startedAtMs = startedAtMs,
             otherMetadata = null,
         )
         try {
             val cell = message.createUnsignedBody(false)
 
-            val boc = signUseCase(context, wallet, cell, message.seqNo)
+            val boc = signUseCase(context, wallet, cell, message.seqNo, PasscodeReason.CONFIRM_ACTION)
 
             taskStateFlow.tryEmit(ProcessTaskView.State.LOADING)
 
@@ -348,7 +373,7 @@ class StakeWithdrawViewModel(
                 flow = Events.RedOperations.RedOperationsFlow.Stake,
                 operation = Events.RedOperations.RedOperationsOperation.Unstake,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = null,
             )
         } catch (e: Throwable) {
@@ -358,7 +383,7 @@ class StakeWithdrawViewModel(
                 flow = Events.RedOperations.RedOperationsFlow.Stake,
                 operation = Events.RedOperations.RedOperationsOperation.Unstake,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = e,
             )
             throw e

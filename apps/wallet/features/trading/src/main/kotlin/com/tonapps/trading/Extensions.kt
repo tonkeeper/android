@@ -145,7 +145,7 @@ fun AssetRef.isTokenized(): Boolean =
 
 data class AssetPerpMarket(val marketIndex: Int, val symbol: String, val maxLeverage: Int?)
 
-fun AssetRef.perpMarket(): AssetPerpMarket? = perpMarkets.orEmpty().firstNotNullOfOrNull { link ->
+fun AssetRef.perpMarkets(): List<AssetPerpMarket> = perpMarkets.orEmpty().mapNotNull { link ->
     perpsMarketIndexOrNull(link.id)?.let { AssetPerpMarket(it, link.symbol, link.maxLeverage) }
 }
 

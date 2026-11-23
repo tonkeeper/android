@@ -6,18 +6,19 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.TransactionDateFormatter
+import com.tonapps.perps.data.formatTokenAmount
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
+import com.tonapps.wallet.features.events.data.PerpsBalanceChangeStatus
 import com.tonapps.wallet.features.events.data.PerpsEventKind
 import com.tonapps.wallet.features.events.data.PerpsResultEntity
 import com.tonapps.wallet.features.events.data.PerpsSide
 import com.tonapps.wallet.localization.Localization
+import io.walletapi.models.ActivityStatus
 import io.walletapi.models.ActivityType
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 
@@ -98,11 +99,31 @@ private fun PerpsEventKind.titleRes(): Int = when (this) {
     }
     PerpsEventKind.TakeProfit -> Localization.history_perps_tp_executed
     PerpsEventKind.StopLoss -> Localization.history_perps_sl_executed
-    PerpsEventKind.Deposit -> Localization.deposit
-    PerpsEventKind.Withdrawal -> Localization.withdraw
+    PerpsEventKind.Deposit -> Localization.history_perps_deposit
+    PerpsEventKind.Withdrawal -> Localization.history_perps_withdrawal
 }
 
-private fun PerpsEventKind.iconRes(): Int = when (this) {
+internal fun HistoryEventEntity.perpsBalanceChangeTitleRes(): Int? {
+    val kind = perpsKind?.takeIf { isPerpsBalanceChange } ?: return null
+    if (status == ActivityStatus.confirmed) {
+        return if (kind == PerpsEventKind.Deposit) {
+            Localization.history_perps_deposited
+        } else {
+            Localization.history_perps_withdrawn
+        }
+    }
+    return kind.titleRes()
+}
+
+internal fun HistoryEventEntity.isPerpsAmountMuted(): Boolean = when (perpsKind) {
+    PerpsEventKind.Deposit -> perpsBalanceChangeStatus != PerpsBalanceChangeStatus.Done
+    PerpsEventKind.Withdrawal -> isFailed
+    is PerpsEventKind.Opened, is PerpsEventKind.Increased, is PerpsEventKind.Reduced,
+    is PerpsEventKind.Closed, is PerpsEventKind.Liquidated,
+    PerpsEventKind.TakeProfit, PerpsEventKind.StopLoss, null -> false
+}
+
+internal fun PerpsEventKind.iconRes(): Int = when (this) {
     is PerpsEventKind.Opened, is PerpsEventKind.Increased -> UIKitIcon.ic_open_lock_28
     is PerpsEventKind.Reduced, is PerpsEventKind.Closed -> UIKitIcon.ic_lock_28
     PerpsEventKind.TakeProfit -> UIKitIcon.ic_chart_up_28
@@ -113,22 +134,14 @@ private fun PerpsEventKind.iconRes(): Int = when (this) {
 }
 
 @Composable
-internal fun HistoryEventEntity.perpsSubtitle(labelsBalanceChanges: Boolean = true): String? = when (perpsKind) {
+internal fun HistoryEventEntity.perpsSubtitle(): String? = when (perpsKind) {
     is PerpsEventKind.Opened, is PerpsEventKind.Increased, is PerpsEventKind.Reduced,
     is PerpsEventKind.Closed, is PerpsEventKind.Liquidated,
     PerpsEventKind.TakeProfit, PerpsEventKind.StopLoss -> perps?.symbol?.let { symbol ->
         stringResource(Localization.history_perps_subtitle, symbol)
     }
-    PerpsEventKind.Deposit -> if (labelsBalanceChanges) {
-        stringResource(Localization.history_perps_to_perps)
-    } else {
-        null
-    }
-    PerpsEventKind.Withdrawal -> if (labelsBalanceChanges) {
-        stringResource(Localization.history_perps_from_perps)
-    } else {
-        null
-    }
+    PerpsEventKind.Deposit -> stringResource(Localization.history_perps_to_perps)
+    PerpsEventKind.Withdrawal -> stringResource(Localization.history_perps_from_perps)
     null -> null
 }
 
@@ -137,16 +150,11 @@ internal fun HistoryEventEntity.perpsResultText(): String? = perpsResult?.let { 
     remember(result) { result.formatted() }
 }
 
-@Composable
-internal fun HistoryEventEntity.perpsFeeText(): String? = perpsFee?.let { fee ->
-    remember(fee) { fee.formatted() }
-}
-
-private fun PerpsResultEntity.formatted(): String {
+internal fun PerpsResultEntity.formatted(): String {
     return if (isDollar) {
         formatUsdAmount(value.value)
     } else {
-        CurrencyFormatter.format(symbol, value, replaceSymbol = false).toString()
+        formatTokenAmount(value.value, symbol, value.decimals)
     }
 }
 
@@ -181,16 +189,8 @@ internal fun HistoryEventEntity.hasStakingProviderIcon(): Boolean =
     HistoryStakingProvider.of(this) != null
 
 @Composable
-internal fun HistoryEventEntity.formattedTime(): String {
-    val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
-    val zone = ZoneId.systemDefault()
-    val zdt = blockTime.atZoneSameInstant(zone)
-    return DateTimeFormatter.ofPattern("HH:mm", locale).format(zdt)
-}
-
-@Composable
-internal fun HistoryEventEntity.formattedDateTime(): String {
+internal fun HistoryEventEntity.formattedDateTime(dateFrom: TransactionDateFormatter.DateFrom): String {
     val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
     val zdt = blockTime.atZoneSameInstant(ZoneId.systemDefault())
-    return TransactionDateFormatter.format(zdt, locale, TransactionDateFormatter.DateFrom.Today)
+    return TransactionDateFormatter.format(zdt, locale, dateFrom)
 }

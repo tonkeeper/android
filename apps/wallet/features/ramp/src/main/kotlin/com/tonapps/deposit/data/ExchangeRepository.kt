@@ -11,8 +11,6 @@ import com.tonapps.log.L
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
-import io.exchangeapi.infrastructure.ApiResult
-import io.exchangeapi.infrastructure.extractApiErrorMessage
 import io.exchangeapi.models.CreateExchangeRequest
 import io.exchangeapi.models.CreateP2PSessionRequest
 import io.exchangeapi.models.ExchangeCalculateRequest
@@ -22,10 +20,13 @@ import io.exchangeapi.models.ExchangeLayout
 import io.exchangeapi.models.ExchangeLayoutCards
 import io.exchangeapi.models.ExchangeLayoutItemType
 import io.exchangeapi.models.ExchangeMerchantInfo
+import io.exchangeapi.models.MoonPayPaymentMethod
 import io.exchangeapi.models.ExchangeResult
 import io.exchangeapi.models.P2PSessionResult
 import io.exchangeapi.models.Platform
+import io.infrastructure.ApiResult
 import io.infrastructure.ClientException
+import io.infrastructure.extractApiErrorMessage
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
@@ -40,6 +41,7 @@ class ExchangeRepository(
         data object LayoutOff : Keys
         data object Merchants : Keys
         data object Currencies : Keys
+        data object MoonPayMethods : Keys
     }
 
     private val cache = TimedCacheMemory<Keys>()
@@ -49,6 +51,10 @@ class ExchangeRepository(
 
     private suspend fun multichainWalletId(): String? {
         return unifiedAccountRepository.getSelectedWallet()?.multichainWalletId
+    }
+
+    private suspend fun multichainWalletId(walletId: String): String? {
+        return unifiedAccountRepository.getTonWalletById(walletId)?.multichainWalletId
     }
 
     suspend fun clearRampCache(rampType: RampType) {
@@ -104,6 +110,7 @@ class ExchangeRepository(
                 isVpnActive = environment.isVpnActive(),
                 platform = Platform.android,
                 currency = currency?.code,
+                lang = environment.locale(),
             )
         }
     }
@@ -151,9 +158,9 @@ class ExchangeRepository(
         }
     }
 
-    suspend fun getMerchants(): List<ExchangeMerchantInfo> {
-        val walletId = multichainWalletId()
-        return cache.getOrLoad(Keys.Merchants, payload = walletId) {
+    suspend fun getMerchants(walletId: String): List<ExchangeMerchantInfo> {
+        val multichainWalletId = multichainWalletId(walletId)
+        return cache.getOrLoad(Keys.Merchants, payload = multichainWalletId) {
             withContext(Async.Io) {
                 api.exchange.exchange.getExchangeMerchants(
                     storeCountryCode = environment.storeCountry(),
@@ -163,9 +170,18 @@ class ExchangeRepository(
                     isVpnActive = environment.isVpnActive(),
                     platform = Platform.android,
                     lang = environment.locale(),
-                    xWalletID = walletId,
+                    xWalletID = multichainWalletId,
                     F = settingsRepository.installId,
                 )
+            }
+        }
+    }
+
+    suspend fun getMoonPayPaymentMethods(): List<MoonPayPaymentMethod> {
+        val lang = environment.locale()
+        return cache.getOrLoad(Keys.MoonPayMethods, payload = lang) {
+            withContext(Async.Io) {
+                api.exchange.moonpay.getMoonPayPaymentMethods(lang = lang).methods
             }
         }
     }

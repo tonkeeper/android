@@ -30,7 +30,7 @@ class ReceiveAccountsInteractorTest {
             Chain.Ton.Mainnet,
         ).map(::account)
 
-        val chains = interactor(stored).getAccounts().map { it.chain }
+        val chains = interactor(stored).getAccounts(WALLET_ID).map { it.chain }
 
         assertEquals(
             listOf(
@@ -59,17 +59,27 @@ class ReceiveAccountsInteractorTest {
             account(Chain.Ton.Mainnet, "ton-v4"),
         )
 
-        val addresses = interactor(stored).getAccounts().map { it.displayAddress }
+        val addresses = interactor(stored).getAccounts(WALLET_ID).map { it.displayAddress }
 
         assertEquals(listOf("ton-v5", "ton-v4", "bc1-segwit", "bc1-taproot"), addresses)
     }
 
-    private fun interactor(stored: List<AccountEntity>): ReceiveAccountsInteractor {
+    @Test
+    fun `accounts are the asked wallet's while another wallet is selected`() = runBlocking {
+        val stored = listOf(account(Chain.Ton.Mainnet, "ton-asked"))
+
+        val addresses = interactor(stored, selectedId = SELECTED_ID).getAccounts(WALLET_ID).map { it.displayAddress }
+
+        assertEquals(listOf("ton-asked"), addresses)
+    }
+
+    private fun interactor(stored: List<AccountEntity>, selectedId: String = WALLET_ID): ReceiveAccountsInteractor {
         val oldAccount = mockk<AccountRepository> {
-            every { getSelectedWalletId() } returns WALLET_ID
+            every { getSelectedWalletId() } returns selectedId
         }
         val accountRepo = mockk<McAccountRepository> {
             coEvery { getCoinAccounts(WALLET_ID) } returns stored
+            coEvery { getCoinAccounts(SELECTED_ID) } returns listOf(account(Chain.Ton.Mainnet, "ton-selected"))
         }
         return ReceiveAccountsInteractor(oldAccount, accountRepo)
     }
@@ -85,5 +95,6 @@ class ReceiveAccountsInteractorTest {
 
     private companion object {
         const val WALLET_ID = "wallet"
+        const val SELECTED_ID = "selected"
     }
 }

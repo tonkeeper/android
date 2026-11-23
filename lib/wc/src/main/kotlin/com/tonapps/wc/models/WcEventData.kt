@@ -27,6 +27,7 @@ internal sealed interface WcEventData {
 
     data class SessionRequest(
         val data: Wallet.Model.SessionRequest,
+        val verifyContext: Wallet.Model.VerifyContext,
     ) : WcEventData
 
     data class SettledSessionResponse(

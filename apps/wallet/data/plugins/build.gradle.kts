@@ -9,7 +9,11 @@ dependencies {
     implementation(projects.apps.wallet.api)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.lib.blockchain)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
-
-
+tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+    enabled = true
+}

@@ -23,6 +23,7 @@ class AmountInputConverter(
     private val formatDecimals: Int,
 ) {
 
+    private val assetId = account.asset.id
     private val asset = account.asset.value
     private val rate = account.rate?.value
 
@@ -56,16 +57,26 @@ class AmountInputConverter(
         }.getOrDefault("")
     }
 
+    fun toggle(input: String, isMax: Boolean, toFiat: Boolean, previous: AmountToggle?): AmountToggle {
+        return previous?.toggledBack(assetId, input, toFiat, isMax) ?: AmountToggle(
+            assetId = assetId,
+            sourceText = input,
+            toggledText = swapText(input, toFiat),
+            toFiat = toFiat,
+            sourceIsMax = isMax,
+        )
+    }
+
     fun maxText(max: BaseUnit, inFiat: Boolean): String? {
         return if (inFiat) {
             fiatText(max)
         } else {
-            max.toDisplayUnit().fmt()
+            max.toDisplayUnit().fmt().withLocaleDecimalSeparator()
         }
     }
 
     private fun fiatText(value: CoinValue): String? {
         val rate = rate ?: return null
-        return value.toFiatAmount(rate, RoundingMode.FLOOR)
+        return value.toFiatAmount(rate, RoundingMode.FLOOR).withLocaleDecimalSeparator()
     }
 }

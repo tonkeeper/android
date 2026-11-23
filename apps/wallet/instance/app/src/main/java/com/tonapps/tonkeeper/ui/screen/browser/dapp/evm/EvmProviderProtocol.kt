@@ -1,7 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.evm
 
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Protocol
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Script
+import com.tonapps.webview.bridge.InAppBridgeContract.Protocol
+import com.tonapps.webview.bridge.InAppBridgeContract.Script
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -24,6 +24,7 @@ internal class EvmProviderProtocol(
             val method: String,
             val params: List<Any?>,
             val host: String = "",
+            val pageUrl: String? = null,
         ) : Message
     }
 
@@ -82,7 +83,7 @@ internal class EvmProviderProtocol(
         return json.toString()
     }
 
-    override fun parse(data: String, host: String): Message? {
+    override fun parse(data: String, host: String, pageUrl: String?): Message? {
         val json = try {
             JSONObject(data)
         } catch (_: JSONException) {
@@ -93,7 +94,7 @@ internal class EvmProviderProtocol(
             return Message.Handshake
         }
         val id = json.optLong("id", -1L).takeIf { it >= 0 } ?: return null
-        return Message.Request(id, method, params(json), host)
+        return Message.Request(id, method, params(json), host, pageUrl)
     }
 
     override fun route(message: Message): Protocol.Route {
@@ -140,6 +141,8 @@ internal class EvmProviderProtocol(
     }
 
     companion object {
+
+        const val METHOD_SEND_TRANSACTION = "eth_sendTransaction"
 
         private const val JS_INTERFACE = "TonkeeperEvm"
 

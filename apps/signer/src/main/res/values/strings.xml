@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">Signer</string>
     <string name="web_wallet_host" translatable="false">wallet.tonkeeper.com</string>
-    <string name="intro_subtitle">The storage place for your keys to sign transactions in Tonkeeper.</string>
+    <string name="intro_subtitle">The storage place for your keys to sign transactions in Keeper.</string>
     <string name="new_key">Create New Key</string>
     <string name="import_key">Import Existing Key</string>
     <string name="create_password">Create Password</string>
@@ -34,9 +34,9 @@
     <string name="wrong_url">Invalid URL</string>
 
     <string name="key_export_qr_title">Link to another device</string>
-    <string name="key_export_qr_subtitle">Open Tonkeeper » Import Existing Wallet » Pair with Signer</string>
-    <string name="key_export_tonkeeper">Link to Tonkeeper</string>
-    <string name="key_export_tonkeeper_web">Link to Tonkeeper Web</string>
+    <string name="key_export_qr_subtitle">Open Keeper » Add wallet » Pair with Signer</string>
+    <string name="key_export_tonkeeper">Link with Keeper</string>
+    <string name="key_export_tonkeeper_web">Link with Keeper Web</string>
     <string name="open_settings">Open Settings</string>
     <string name="unknown_error">Unknown error</string>
     <string name="camera_permission">Enable access to your camera in order to can scan QR codes</string>
@@ -55,13 +55,28 @@
     <string name="sign_transaction">Sign transaction</string>
     <string name="audit_transaction">Audit transaction</string>
     <string name="slide_to_sign">Slide to sign</string>
-    <string name="unknown">Unknown</string>
+    <string name="sign_unrecognized_title">Content not recognized</string>
+    <string name="sign_unrecognized_warning">This request can\'t be fully decoded and will not be signed</string>
+    <string name="sign_set_extension">Set wallet extension</string>
+    <string name="sign_remove_extension">Remove wallet extension</string>
+    <string name="sign_enable_signature_auth">Enable signature auth</string>
+    <string name="sign_disable_signature_auth">Disable signature auth</string>
+    <string name="sign_extension_warning">Grants full control of the wallet to another key</string>
+    <string name="sign_install_plugin">Install wallet plugin</string>
+    <string name="sign_remove_plugin">Remove wallet plugin</string>
+    <string name="sign_plugin_warning">Lets the plugin withdraw funds from the wallet without your signature</string>
+    <string name="sign_entire_balance">Entire balance</string>
+    <string name="sign_destroy_warning">Wallet contract will be destroyed</string>
+    <string name="sign_unknown_operation">Unknown operation %1$s</string>
+    <string name="sign_token_address">Token · %1$s</string>
+    <string name="sign_nft_address">NFT · %1$s</string>
+    <string name="sign_excess_to">Excess to %1$s</string>
     <string name="emulate">Emulate in browser</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="scan_qr_code">Scan QR code</string>
-    <string name="scan_qr_code_subtitle">From Tonkeeper on the action confirmation page</string>
-    <string name="qr_sign_title">Scan the QR code with Tonkeeper</string>
+    <string name="scan_qr_code_subtitle">From Keeper on the action confirmation page</string>
+    <string name="qr_sign_title">Scan the QR code with Keeper</string>
     <string name="qr_sign_subtitle">After scanning, the transaction will be sent to the network.</string>
     <string name="recovery_phrase">Recovery Phrase</string>
     <string name="signed_transaction">Signed Transaction</string>

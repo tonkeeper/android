@@ -2,17 +2,21 @@ package com.tonapps.signer.screen.sign
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.toBigInteger
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.hex
-import com.tonapps.blockchain.ton.extensions.loadString
-import com.tonapps.blockchain.ton.tlb.JettonTransfer
-import com.tonapps.blockchain.ton.tlb.NftTransfer
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.Coins as IcuCoins
 import com.tonapps.signer.core.repository.KeyRepository
 import com.tonapps.signer.password.Password
+import com.tonapps.signer.screen.sign.body.SendPayload
+import com.tonapps.signer.screen.sign.body.SignAction
+import com.tonapps.signer.screen.sign.body.SignBody
+import com.tonapps.signer.screen.sign.body.SignBodyException
+import com.tonapps.signer.screen.sign.body.SignBodyParser
 import com.tonapps.signer.screen.sign.list.SignItem
 import com.tonapps.signer.vault.SignerVault
 import kotlinx.coroutines.Dispatchers
@@ -21,24 +25,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
 import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.block.AddrStd
 import org.ton.block.Coins
-import org.ton.block.CommonMsgInfoRelaxed
-import org.ton.block.CurrencyCollection
-import org.ton.block.Either
-import org.ton.block.MessageRelaxed
 import org.ton.block.MsgAddressInt
 import org.ton.cell.Cell
-import org.ton.cell.CellType
-import org.ton.tlb.CellRef
-import org.ton.tlb.constructor.AnyTlbConstructor
-import org.ton.tlb.loadTlb
 import com.tonapps.security.vault.safeArea
 import com.tonapps.uikit.list.ListCell
-import org.ton.cell.loadRef
 import java.math.BigDecimal
 
 class SignViewModel(
@@ -53,25 +48,24 @@ class SignViewModel(
 
     val keyEntity = repository.getKey(id).filterNotNull()
 
-    private var normalizedV = v
+    private val signBody: SignBody? = parseSignBody()
 
-    private val _actionsFlow = MutableStateFlow<List<SignItem>?>(null)
-    val actionsFlow = _actionsFlow.asStateFlow().filterNotNull()
+    val signable: Boolean
+        get() = signBody != null
 
-    init {
-        viewModelScope.launch {
-            _actionsFlow.value = parseBoc()
-        }
-    }
+    val actionsFlow = MutableStateFlow(createItems(signBody)).asStateFlow()
 
-    fun sign(context: Context) = Password.authenticate(context).safeArea {
+    fun sign(context: Context) = Password.authenticate(context).onStart {
+        check(signable) { "Body was not fully recognized" }
+    }.safeArea {
         vault.getPrivateKey(it, id)
     }.map {
         sign(it)
     }.flowOn(Dispatchers.IO).take(1)
 
     fun openEmulate() = keyEntity.map {
-        val contract = BaseWalletContract.create(it.publicKey, normalizedV, network.value)
+        val version = signBody?.version ?: SignBodyParser.requestedVersion(v) ?: WalletVersion.V4R2
+        val contract = BaseWalletContract.create(it.publicKey, version.title, network.value)
         val cell = contract.createTransferMessageCell(
             address = contract.address,
             privateKey = EmptyPrivateKeyEd25519.invoke(),
@@ -82,167 +76,95 @@ class SignViewModel(
     }.flowOn(Dispatchers.IO).take(1)
 
     private fun sign(privateKey: PrivateKeyEd25519): ByteArray {
-        return privateKey.sign(unsignedBody.hash().toByteArray())
+        return privateKey.signToByteArray(unsignedBody.hash().toByteArray())
     }
 
-    private fun parseV4Boc(): List<SignItem> {
-        val items = mutableListOf<SignItem>()
-        try {
-            val slice = unsignedBody.beginParse()
-            val refs = slice.refs
-            for ((index, ref) in slice.refs.withIndex()) {
-                val position = ListCell.getPosition(refs.size, index)
-                if (ref.type != CellType.ORDINARY) {
-                    items.add(SignItem.Unknown(position))
-                    continue
-                }
-                val msg = ref.parse { loadTlb(MessageRelaxed.tlbCodec(AnyTlbConstructor)) }
-                val item = parseMessage(msg, position)
-                items.add(item)
-            }
-        } catch (_: Throwable) {}
-        return items
-    }
-
-    private fun parseV5Boc(): List<SignItem> {
-        val items = mutableListOf<SignItem>()
-        try {
-            val slice = unsignedBody.beginParse()
-            val opCode = slice.loadUInt(32)
-            val serialized = slice.loadInt(32)
-            val seqno = slice.loadUInt(32)
-            val validUntil = slice.loadUInt(32)
-
-            var list = slice.loadRef()
-            while (!list.bits.isEmpty() || list.refs.isNotEmpty()) {
-                val cellSlice = list.beginParse()
-
-                val prev = cellSlice.loadRef()
-                val tag = cellSlice.loadUInt(32)
-                val sendMode = cellSlice.loadUInt(8)
-                val msg = cellSlice.loadRef {
-                    loadTlb(MessageRelaxed.tlbCodec(AnyTlbConstructor))
-                }
-                val position = ListCell.getPosition(1, 0)
-                items.add(parseMessage(msg, position))
-
-                list = prev
-            }
-        } catch (_: Throwable) {}
-        return items
-    }
-
-    private fun parseBoc(): List<SignItem> {
-        val items = mutableListOf<SignItem>()
-        items.addAll(parseV4Boc())
-
-        val v5Boc = parseV5Boc()
-        if (!v5Boc.isEmpty()) {
-            items.addAll(parseV5Boc())
-            normalizedV = "v5r1"
+    private fun parseSignBody(): SignBody? {
+        return try {
+            SignBodyParser.parse(unsignedBody, v)
+        } catch (_: SignBodyException) {
+            null
         }
-
-        if (items.isEmpty()) {
-            items.add(SignItem.Unknown(ListCell.Position.SINGLE))
-        }
-        return items
     }
 
-    private fun parseMessage(msg: MessageRelaxed<Cell>, position: ListCell.Position): SignItem {
-        try {
-            val info = msg.info as CommonMsgInfoRelaxed.IntMsgInfoRelaxed
-            val body = getBody(msg.body)
-            val opCode = parseOpCode(body)
-            val jettonTransfer = parseJettonTransfer(opCode, body)
-            val nftTransfer = parseNftTransfer(opCode, body)
+    private fun createItems(body: SignBody?): List<SignItem> {
+        if (body == null) {
+            return listOf(SignItem.Unknown(ListCell.Position.SINGLE))
+        }
+        return body.actions.mapIndexed { index, action ->
+            createItem(action, ListCell.getPosition(body.actions.size, index))
+        }
+    }
 
-            val target = nftTransfer?.newOwnerAddress?: (jettonTransfer?.toAddress ?: info.dest)
-
-            val value = if (nftTransfer != null) {
-                "NFT"
-            } else if (jettonTransfer != null) {
-                "TOKEN"
-            } else {
-                parseValue(info.value)
-            }
-            val value2 = if (nftTransfer != null || jettonTransfer != null) {
-                parseAddress(info.dest)
-            } else {
-                null
-            }
-
-            return SignItem.Send(
-                target = parseAddress(target, false),
-                value = value,
-                comment = parseComment(body, jettonTransfer, nftTransfer),
-                position = position,
-                value2 = value2,
-                extra = nftTransfer != null || jettonTransfer != null
+    private fun createItem(action: SignAction, position: ListCell.Position): SignItem {
+        return when (action) {
+            is SignAction.Send -> createSendItem(action, position)
+            is SignAction.AddExtension -> SignItem.WalletAction(
+                actionType = SignItem.WalletActionType.ADD_EXTENSION,
+                address = parseAddress(action.address),
+                value = null,
+                position = position
             )
-        } catch (_: Throwable) {
-            return SignItem.Unknown(position)
+            is SignAction.RemoveExtension -> SignItem.WalletAction(
+                actionType = SignItem.WalletActionType.REMOVE_EXTENSION,
+                address = parseAddress(action.address),
+                value = null,
+                position = position
+            )
+            is SignAction.SetSignatureAuth -> SignItem.WalletAction(
+                actionType = if (action.allowed) {
+                    SignItem.WalletActionType.ENABLE_SIGNATURE_AUTH
+                } else {
+                    SignItem.WalletActionType.DISABLE_SIGNATURE_AUTH
+                },
+                address = null,
+                value = null,
+                position = position
+            )
+            is SignAction.InstallPlugin -> SignItem.WalletAction(
+                actionType = SignItem.WalletActionType.INSTALL_PLUGIN,
+                address = parseAddress(action.address),
+                value = formatCoins(action.amount),
+                position = position
+            )
+            is SignAction.RemovePlugin -> SignItem.WalletAction(
+                actionType = SignItem.WalletActionType.REMOVE_PLUGIN,
+                address = parseAddress(action.address),
+                value = formatCoins(action.amount),
+                position = position
+            )
         }
     }
 
-    private fun parseJettonTransfer(opCode: Int, cell: Cell?): JettonTransfer? {
-        return if (opCode == 0xf8a7ea5) {
-            cell?.parse { loadTlb(JettonTransfer.tlbCodec()) }
-        } else {
-            null
+    private fun createSendItem(action: SignAction.Send, position: ListCell.Position): SignItem.Send {
+        val payload = action.payload
+        val target = when (payload) {
+            is SendPayload.Jetton -> payload.recipient
+            is SendPayload.Nft -> payload.newOwner
+            SendPayload.Ton, is SendPayload.Unknown -> action.destination
         }
-    }
-
-    private fun parseNftTransfer(opCode: Int, cell: Cell?): NftTransfer? {
-        return if (opCode == 0x5fcc3d14) {
-            cell?.parse { loadTlb(NftTransfer.tlbCodec()) }
-        } else {
-            null
+        val excess = when (payload) {
+            is SendPayload.Jetton -> payload.excess
+            is SendPayload.Nft -> payload.excess
+            SendPayload.Ton, is SendPayload.Unknown -> null
         }
-    }
-
-    private fun getBody(body: Either<Cell, CellRef<Cell>>): Cell? {
-        var cell = body.x
-        if (cell == null || cell.isEmpty()) {
-            cell = body.y?.value
-        }
-        return cell
-    }
-
-    private fun parseOpCode(cell: Cell?): Int {
-        val slice = cell?.beginParse() ?: return 0
-        val opCode = if (slice.isEmpty()) {
-            0
-        } else {
-            slice.loadUInt32().toInt()
-        }
-        return opCode
-    }
-
-    private fun parseComment(
-        cell: Cell?,
-        jettonTransfer: JettonTransfer?,
-        nftTransfer: NftTransfer?
-    ): String? {
-        val string = if (jettonTransfer != null) {
-            jettonTransfer.comment
-        } else if (nftTransfer != null) {
-            nftTransfer.comment
-        } else {
-            cell?.parse { loadString() }
-        }
-        if (string != null) {
-            return string
-        }
-        return null
-    }
-
-    private fun parseValue(value: CurrencyCollection): String {
-        return formatCoins(value.coins)
+        return SignItem.Send(
+            target = parseAddress(target, false),
+            value = formatCoins(action.value),
+            sendsEntireBalance = action.sendsEntireBalance,
+            destroysContract = action.destroysContract,
+            tokenAddress = (payload as? SendPayload.Jetton)?.let { parseAddress(action.destination) },
+            nftAddress = (payload as? SendPayload.Nft)?.let { parseAddress(action.destination) },
+            excessAddress = excess?.let { parseAddress(it) },
+            unknownOpCode = (payload as? SendPayload.Unknown)?.let { "0x${it.opCode.toString(16)}" },
+            comment = action.comment,
+            position = position
+        )
     }
 
     private fun formatCoins(coins: Coins): String {
-        val value = BigDecimal(coins.amount.toLong() / 1000000000L.toDouble())
-        return CurrencyFormatter.format("TON", value).toString()
+        val value = BigDecimal(coins.amount.value.toBigInteger(), TON_DECIMALS)
+        return CurrencyFormatter.formatFull("TON", IcuCoins.of(value, TON_DECIMALS), TON_DECIMALS).toString()
     }
 
     private fun parseAddress(address: MsgAddressInt, bounceable: Boolean = true): String {
@@ -252,3 +174,5 @@ class SignViewModel(
         return "none"
     }
 }
+
+private const val TON_DECIMALS = 9

@@ -37,7 +37,10 @@ dependencies {
     implementation(projects.tonapi.wallet)
     implementation(projects.tonapi.perps)
     implementation(projects.tonapi.kandelabr)
+    implementation(projects.tonapi.earn)
+    implementation(projects.tonapi.tonendpoint)
     implementation(projects.lib.network)
+    implementation(projects.lib.time)
     implementation(projects.lib.blockchain)
     implementation(projects.lib.wallet)
     implementation(projects.lib.extensions)
@@ -46,4 +49,13 @@ dependencies {
     implementation(projects.lib.bus)
     implementation(projects.lib.features)
     implementation(projects.apps.wallet.data.features)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    // android.jar only stubs org.json: a jvm test parses with the real one.
+    testImplementation(libs.org.json)
+}
+
+tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+    enabled = true
 }

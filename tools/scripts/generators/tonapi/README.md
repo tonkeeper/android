@@ -149,17 +149,22 @@ Edit the sed commands in `generate-tonapi.sh` to add additional transformations.
 - `open-enums`: `true` decodes a string enum value the spec does not list as `unknown` instead of
   failing the whole response (trading, perps, battery, multichain)
 - `schema-mappings`: `Schema=fully.qualified.Type,...` to use instead of a generated model
+- `operation-filter`: the shared `shared/api/filters/<api>.yaml` (`api/filters/` in the public mirror);
+  both platforms use the same `filter.operations` and `filter.schemas`. New endpoints require an explicit opt-in.
 
 Specs shared with iOS live in `shared/api/` in the monorepo (`api/` in the public mirror).
-They are updated by the monorepo's `shared/tools/api-sync.sh` (trading, perps, battery, multichain, tonapi); the rest are still under
+They are updated by the monorepo's `shared/tools/api-sync.sh` (trading, perps, battery, multichain, swap, earn, tonkeeper, kandelabr, tonapi); the rest are still under
 `openapi/`. Optional per-package settings live in `configs/<package-name>.yaml`; Battery separates
 the legacy TRON send body from the multichain body and avoids the enum entry `value` colliding
-with its value property. It also keeps ChainKit's signed operation as raw JSON.
+with its value property. It also keeps ChainKit's signed operation as raw JSON. Tonendpoint
+(`tonkeeper.yaml`) keeps its free-form `keys/all` config as raw JSON.
 `prepare-spec.py` adapts a temporary parsed copy of the spec; the generated Kotlin is not patched:
 
 - the spec is read by YAML 1.2 like on iOS (`on`, `yes`, `0755` stay strings) and handed to the
   generator as JSON, since the generator's own parser follows YAML 1.1;
 - wallet authentication and credential defaults become template metadata;
+- `tonendpointapi` reads string enums as plain strings: callers use them as ids (providers,
+  categories), so a value an older app does not know must stay itself;
 - with open enums, every string enum gains an `unknown` value, the decoding fallback of the
   `openEnums` templates (numeric enums stay strict);
 - `additionalProperties: true` maps to `io.JsonAny`;

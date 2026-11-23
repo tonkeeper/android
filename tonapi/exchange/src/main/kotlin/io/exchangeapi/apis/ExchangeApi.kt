@@ -15,19 +15,15 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.exchangeapi.models.CalculateSwap400Response
+import io.exchangeapi.models.CalculateSwap500Response
 import io.exchangeapi.models.CreateExchangeRequest
 import io.exchangeapi.models.ExchangeCalculateRequest
 import io.exchangeapi.models.ExchangeCalculation
-import io.exchangeapi.models.ExchangeCurrencies
-import io.exchangeapi.models.ExchangeDirection
 import io.exchangeapi.models.ExchangeFlow
 import io.exchangeapi.models.ExchangeLayout
 import io.exchangeapi.models.ExchangeLayoutCards
 import io.exchangeapi.models.ExchangeMerchantInfo
-import io.exchangeapi.models.ExchangePairs
-import io.exchangeapi.models.ExchangePaymentMethod
 import io.exchangeapi.models.ExchangeResult
-import io.exchangeapi.models.Healthcheck500Response
 import io.exchangeapi.models.Platform
 
 import kotlinx.serialization.SerialName
@@ -199,87 +195,6 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
             headers = localVariableHeaders,
             requiresAuthentication = false,
             walletId = xWalletID,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getExchangeCurrencies(F: String? = null, country: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null, direction: ExchangeDirection? = null): ExchangeCurrencies {
-        @Suppress("DEPRECATION")
-        val localVarResponse = getExchangeCurrenciesWithHttpInfo(F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, direction = direction)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as ExchangeCurrencies
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getExchangeCurrenciesWithHttpInfo(F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, direction: ExchangeDirection?): ApiResponse<ExchangeCurrencies?> {
-        @Suppress("DEPRECATION")
-        val localVariableConfig = getExchangeCurrenciesRequestConfig(F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, direction = direction)
-
-        return request<Unit, ExchangeCurrencies>(
-            localVariableConfig
-        )
-    }
-
-    @Deprecated(message = "This operation is deprecated.")
-    fun getExchangeCurrenciesRequestConfig(F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, direction: ExchangeDirection?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (country != null) {
-                    put("country", listOf(country.toString()))
-                }
-                if (deviceCountryCode != null) {
-                    put("device_country_code", listOf(deviceCountryCode.toString()))
-                }
-                if (storeCountryCode != null) {
-                    put("store_country_code", listOf(storeCountryCode.toString()))
-                }
-                if (simCountry != null) {
-                    put("sim_country", listOf(simCountry.toString()))
-                }
-                if (timezone != null) {
-                    put("timezone", listOf(timezone.toString()))
-                }
-                if (isVpnActive != null) {
-                    put("is_vpn_active", listOf(isVpnActive.toString()))
-                }
-                if (build != null) {
-                    put("build", listOf(build.toString()))
-                }
-                if (platform != null) {
-                    put("platform", listOf(platform.toString()))
-                }
-                if (direction != null) {
-                    put("direction", listOf(direction.toString()))
-                }
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        F?.apply { localVariableHeaders["F"] = this.toString() }
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/onramp/currencies",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
             body = localVariableBody
         )
     }
@@ -505,173 +420,6 @@ class ExchangeApi(basePath: String = defaultBasePath, client: Call.Factory = Api
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/v2/onramp/merchants",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            walletId = xWalletID,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getExchangePairs(xWalletID: String? = null, F: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, direction: ExchangeDirection? = null, fiat: String? = null, crypto: String? = null, network: String? = null, platform: Platform? = null, build: String? = null): ExchangePairs {
-        @Suppress("DEPRECATION")
-        val localVarResponse = getExchangePairsWithHttpInfo(xWalletID = xWalletID, F = F, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, direction = direction, fiat = fiat, crypto = crypto, network = network, platform = platform, build = build)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as ExchangePairs
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getExchangePairsWithHttpInfo(xWalletID: String?, F: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, direction: ExchangeDirection?, fiat: String?, crypto: String?, network: String?, platform: Platform?, build: String?): ApiResponse<ExchangePairs?> {
-        @Suppress("DEPRECATION")
-        val localVariableConfig = getExchangePairsRequestConfig(xWalletID = xWalletID, F = F, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, direction = direction, fiat = fiat, crypto = crypto, network = network, platform = platform, build = build)
-
-        return request<Unit, ExchangePairs>(
-            localVariableConfig
-        )
-    }
-
-    @Deprecated(message = "This operation is deprecated.")
-    fun getExchangePairsRequestConfig(xWalletID: String?, F: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, direction: ExchangeDirection?, fiat: String?, crypto: String?, network: String?, platform: Platform?, build: String?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (deviceCountryCode != null) {
-                    put("device_country_code", listOf(deviceCountryCode.toString()))
-                }
-                if (storeCountryCode != null) {
-                    put("store_country_code", listOf(storeCountryCode.toString()))
-                }
-                if (simCountry != null) {
-                    put("sim_country", listOf(simCountry.toString()))
-                }
-                if (timezone != null) {
-                    put("timezone", listOf(timezone.toString()))
-                }
-                if (isVpnActive != null) {
-                    put("is_vpn_active", listOf(isVpnActive.toString()))
-                }
-                if (direction != null) {
-                    put("direction", listOf(direction.toString()))
-                }
-                if (fiat != null) {
-                    put("fiat", listOf(fiat.toString()))
-                }
-                if (crypto != null) {
-                    put("crypto", listOf(crypto.toString()))
-                }
-                if (network != null) {
-                    put("network", listOf(network.toString()))
-                }
-                if (platform != null) {
-                    put("platform", listOf(platform.toString()))
-                }
-                if (build != null) {
-                    put("build", listOf(build.toString()))
-                }
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
-        F?.apply { localVariableHeaders["F"] = this.toString() }
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/onramp/pairs",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            walletId = xWalletID,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getExchangePaymentMethods(xWalletID: String? = null, F: String? = null, country: String? = null, deviceCountryCode: String? = null, storeCountryCode: String? = null, simCountry: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, build: String? = null, platform: Platform? = null, currency: String? = null): List<ExchangePaymentMethod> {
-        val localVarResponse = getExchangePaymentMethodsWithHttpInfo(xWalletID = xWalletID, F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, currency = currency)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as List<ExchangePaymentMethod>
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getExchangePaymentMethodsWithHttpInfo(xWalletID: String?, F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, currency: String?): ApiResponse<List<ExchangePaymentMethod>?> {
-        val localVariableConfig = getExchangePaymentMethodsRequestConfig(xWalletID = xWalletID, F = F, country = country, deviceCountryCode = deviceCountryCode, storeCountryCode = storeCountryCode, simCountry = simCountry, timezone = timezone, isVpnActive = isVpnActive, build = build, platform = platform, currency = currency)
-
-        return request<Unit, List<ExchangePaymentMethod>>(
-            localVariableConfig
-        )
-    }
-
-    fun getExchangePaymentMethodsRequestConfig(xWalletID: String?, F: String?, country: String?, deviceCountryCode: String?, storeCountryCode: String?, simCountry: String?, timezone: String?, isVpnActive: Boolean?, build: String?, platform: Platform?, currency: String?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
-            .apply {
-                if (country != null) {
-                    put("country", listOf(country.toString()))
-                }
-                if (deviceCountryCode != null) {
-                    put("device_country_code", listOf(deviceCountryCode.toString()))
-                }
-                if (storeCountryCode != null) {
-                    put("store_country_code", listOf(storeCountryCode.toString()))
-                }
-                if (simCountry != null) {
-                    put("sim_country", listOf(simCountry.toString()))
-                }
-                if (timezone != null) {
-                    put("timezone", listOf(timezone.toString()))
-                }
-                if (isVpnActive != null) {
-                    put("is_vpn_active", listOf(isVpnActive.toString()))
-                }
-                if (build != null) {
-                    put("build", listOf(build.toString()))
-                }
-                if (platform != null) {
-                    put("platform", listOf(platform.toString()))
-                }
-                if (currency != null) {
-                    put("currency", listOf(currency.toString()))
-                }
-            }
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletID?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
-        F?.apply { localVariableHeaders["F"] = this.toString() }
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/v2/onramp/payment_methods",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = false,

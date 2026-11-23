@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.bus.generated.Events
-import com.tonapps.extensions.currentTimeSeconds
+import com.tonapps.time.TimeProvider
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.screen.dns.renew.DNSRenewViewModel
@@ -16,6 +16,7 @@ import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.TokenPrefsEntity
 import com.tonapps.wallet.localization.Localization
@@ -43,6 +44,7 @@ class NftViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val collectiblesRepository: CollectiblesRepository,
+    private val timeProvider: TimeProvider,
 ) : BaseWalletVM(app) {
 
     val hiddenBalance: Boolean
@@ -105,7 +107,7 @@ class NftViewModel(
         val wallet = walletFlow.value ?: return
         val nft = nftFlow.value ?: return
         val request = SignRequestEntity.Builder()
-            .setValidUntil(currentTimeSeconds() + 10 * 60)
+            .setValidUntil(timeProvider.currentTimeSeconds() + 10 * 60)
             .setTestnet(wallet.testnet)
             .addMessage(DNSRenewViewModel.createMessage(nft.address))
             .setFrom(wallet.contract.address)
@@ -114,7 +116,7 @@ class NftViewModel(
         viewModelScope.launch {
             try {
                 SendTransactionScreen.run(
-                    context, wallet, request,
+                    context, wallet, request, PasscodeReason.CONFIRM_ACTION,
                     transactionSentDetail = Events.TransactionSent.TransactionSentCategoryDetail.DomainRenew
                 )
                 toast(Localization.renew_dns_done)

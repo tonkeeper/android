@@ -13,9 +13,9 @@ import java.nio.ByteOrder
 /**
  * Lighter credentials per wallet. The L2 key is sealed with the session key in the shared
  * `credential` table: kept there from the wallet's creation or its first unlock, and the same key
- * once an account is registered with it. The account binding is not a secret and lives in
- * [accounts]. Saves propagate failures, and key arrays crossing this store stay caller-owned:
- * never zeroed here.
+ * once an account is registered with it. The account binding and the integrator approval record
+ * are not secrets and live in [accounts]. Saves propagate failures, and key arrays crossing this
+ * store stay caller-owned: never zeroed here.
  */
 internal class LighterCredentialsStore(
     private val dao: CredentialDao,
@@ -59,6 +59,16 @@ internal class LighterCredentialsStore(
     /** Drops what is kept outside the `credential` table; the wallet's rows go with the wallet. */
     fun forgetAccount(walletId: String) {
         accounts.remove(walletId)
+    }
+
+    fun integratorApproval(walletId: String): StoredIntegratorApproval? = accounts.loadIntegratorApproval(walletId)
+
+    fun saveIntegratorApproval(walletId: String, approval: StoredIntegratorApproval) {
+        accounts.saveIntegratorApproval(walletId, approval)
+    }
+
+    fun forgetIntegratorApproval(walletId: String) {
+        accounts.removeIntegratorApproval(walletId)
     }
 
     // Accounts were sealed in the `credential` table before they moved to prefs: moved on first read.

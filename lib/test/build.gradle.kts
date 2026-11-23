@@ -17,4 +17,5 @@ dependencies {
     testFixturesApi(libs.kotlinx.coroutines.test)
 
     testFixturesImplementation(projects.kmp.async)
+    testFixturesImplementation(projects.lib.log)
 }

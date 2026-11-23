@@ -41,7 +41,7 @@ data class AssetInfo(
     @SerialName(value = "image")
     val image: String,
 
-    /* Union of verify and is_scam */
+    /* Asset verification status */
     @SerialName(value = "verification")
     val verification: Verification,
 
@@ -49,12 +49,12 @@ data class AssetInfo(
     @SerialName(value = "chain")
     val chain: String? = null,
 
-    /* True when the asset appears on a curated list (main core coins, Trust Wallet assets, ton-blockchain jettons). Clients can use this for a verified badge and/or a 'show unverified' toggle. */
+    /* True when verification is whitelist or trusted, or the asset is a main core coin. Use verification instead. */
     @SerialName(value = "verified")
     @Deprecated(message = "This property is deprecated.")
     val verified: Boolean? = null,
 
-    /* Backend-classified scam flag on the token itself (global, not per-wallet). Clients may render a warning badge or hide by default in balances and activities. */
+    /* Always false. Use verification instead. */
     @SerialName(value = "is_scam")
     @Deprecated(message = "This property is deprecated.")
     val isScam: Boolean? = null,
@@ -62,7 +62,7 @@ data class AssetInfo(
     val capabilities: AssetCapabilities? = null
 ) {
     /**
-     * Union of verify and is_scam
+     * Asset verification status
      *
      * Values: blacklist,none,whitelist,trusted,unknown
      */

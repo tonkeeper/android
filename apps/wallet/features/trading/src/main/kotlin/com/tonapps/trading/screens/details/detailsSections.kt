@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,13 +39,14 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.legacy.TokenEntity
+import com.tonapps.icu.TransactionDateFormatter
 import com.tonapps.perps.screens.portfolio.PerpsPositionsCard
 import com.tonapps.trading.percentDiffColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import com.tonapps.wallet.features.events.components.ActivityEventCell
 import com.tonapps.wallet.features.events.data.EncryptedCommentEntity
-import com.tonapps.wallet.features.events.data.HistoryEventEntity
+import com.tonapps.wallet.features.events.data.OpenedHistoryEvent
 import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsAction
 import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsFeature
 import com.tonapps.wallet.features.events.screens.details.EventDetailsModal
@@ -348,6 +350,7 @@ internal fun PerpsSection(
             is AssetPerpsState.Position -> PerpsPositionsCard(
                 positions = listOf(state.position.copy(position = state.position.position.copy(iconUrl = imageUrl))),
                 onOpenMarket = onOpenMarket,
+                onOpenMore = {},
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -495,7 +498,12 @@ internal fun ActivitiesSection(
                 )
             },
         )
-        var selectedActivity by remember { mutableStateOf<HistoryEventEntity?>(null) }
+        var openedActivity by remember { mutableStateOf<OpenedHistoryEvent?>(null) }
+        var shownActivity by remember(openedActivity) { mutableStateOf(openedActivity?.event) }
+        LaunchedEffect(openedActivity, recentActivities.items) {
+            val opened = openedActivity ?: return@LaunchedEffect
+            opened.latestVersionIn(recentActivities.items)?.let { shownActivity = it }
+        }
         val comments = koinViewModel<EncryptedCommentsFeature>()
         val decryptedComments by comments.decrypted.collectAsState()
         val context = LocalContext.current
@@ -510,22 +518,22 @@ internal fun ActivitiesSection(
                     size = recentActivities.items.size,
                     index = index,
                 ),
-                onClick = { selectedActivity = activity },
+                onClick = { openedActivity = OpenedHistoryEvent(event = activity, shownHistory = recentActivities.items) },
                 decryptedComment = activity.encryptedComment?.let { decryptedComments[it.cipherText] },
                 onDecryptComment = activity.encryptedComment?.let { c -> { onDecrypt(c) } },
-                showDate = true,
+                dateFrom = TransactionDateFormatter.DateFrom.Today,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        selectedActivity?.let { activity ->
+        shownActivity?.let { activity ->
             EventDetailsModal(
                 event = activity,
                 wallet = recentActivities.wallet,
                 hiddenBalance = recentActivities.hiddenBalance,
                 decryptedComment = activity.encryptedComment?.let { decryptedComments[it.cipherText] },
                 onDecryptComment = activity.encryptedComment?.let { c -> { onDecrypt(c) } },
-                onDismiss = { selectedActivity = null },
+                onDismiss = { openedActivity = null },
             )
         }
     }

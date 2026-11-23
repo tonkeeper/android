@@ -1,5 +1,7 @@
 package com.wallet.crypto.trustapp.common.ui.components
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.text.BasicTextField
@@ -13,9 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import ui.theme.UIKit
 
@@ -130,6 +134,21 @@ fun MoonEditText(
         }
     )
 }
+
+fun Modifier.amountFieldScroll(state: ScrollState): Modifier = horizontalScroll(state)
+    .layout { measurable, constraints ->
+        val width = constraints.constrainWidth(
+            maxOf(
+                measurable.minIntrinsicWidth(constraints.maxHeight) + AmountFieldCaretWidth.roundToPx(),
+                AmountFieldMinWidth.roundToPx(),
+            ),
+        )
+        val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+        layout(placeable.width, placeable.height) { placeable.placeRelative(0, 0) }
+    }
+
+private val AmountFieldCaretWidth = 2.dp
+private val AmountFieldMinWidth = 24.dp
 
 private object EditTextDefaults {
     @Composable

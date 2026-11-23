@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.extensions.setFailedLabel
 import com.tonapps.tonkeeper.ui.base.BaseHolderWalletScreen
 import com.tonapps.tonkeeper.ui.screen.staking.StakingInsufficientFundsDialog
 import com.tonapps.tonkeeper.ui.screen.staking.applyStakingReserve
@@ -96,7 +97,7 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
                 setTaskState(ProcessTaskView.State.DEFAULT)
                 StakingInsufficientFundsDialog(
                     context = requireContext(),
-                    walletId = primaryFragment.screenContext.wallet.id,
+                    wallet = primaryFragment.screenContext.wallet,
                 ).show(insufficientFunds)
             } else {
                 sendStake()
@@ -106,7 +107,11 @@ class StakeConfirmFragment: BaseHolderWalletScreen.ChildFragment<StakingScreen, 
 
     private fun sendStake() {
         primaryViewModel.stake(requireContext()).catch { e ->
-            val state = if (e is CancellationException) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
+            val state = when (e) {
+                is CancellationException -> ProcessTaskView.State.DEFAULT
+                else -> ProcessTaskView.State.FAILED
+            }
+            taskView.setFailedLabel(e)
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)

@@ -1,8 +1,6 @@
 package com.tonapps.tonkeeper.os
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.telephony.TelephonyManager
 import java.util.Locale
 import java.util.TimeZone
@@ -25,22 +23,6 @@ object DeviceCountry {
 
     fun timeZone(): String {
         return TimeZone.getDefault().id
-    }
-
-    fun isUsingVpn(context: Context): Boolean {
-        try {
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-            val activeNetwork = connectivityManager.activeNetwork
-                ?: return false
-
-            val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-                ?: return false
-
-            return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
-        } catch (e: Throwable) {
-            return false
-        }
     }
 
     fun fromNetwork(context: Context) = try {

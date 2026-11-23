@@ -5,10 +5,15 @@ import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EvmProviderRepositoryTest {
@@ -83,6 +88,64 @@ class EvmProviderRepositoryTest {
     @Test
     fun `an unknown id has no request`() {
         assertNull(repository.pendingRequest(REQUEST_ID))
+    }
+
+    @Test
+    fun `a pending request is not gone`() = runTest {
+        repository.expect(REQUEST_ID, request)
+
+        val gone = async { repository.requestGone(REQUEST_ID).first() }
+        runCurrent()
+
+        assertFalse(gone.isCompleted)
+        gone.cancel()
+    }
+
+    @Test
+    fun `a request is gone once rejected`() = runTest {
+        repository.expect(REQUEST_ID, request)
+        val gone = async { repository.requestGone(REQUEST_ID).first() }
+        runCurrent()
+
+        repository.reject(REQUEST_ID)
+        runCurrent()
+
+        assertTrue(gone.isCompleted)
+    }
+
+    @Test
+    fun `a request is gone once approved`() = runTest {
+        repository.expect(REQUEST_ID, request)
+        val gone = async { repository.requestGone(REQUEST_ID).first() }
+        runCurrent()
+
+        repository.approve(REQUEST_ID, "0xsigned")
+        runCurrent()
+
+        assertTrue(gone.isCompleted)
+    }
+
+    @Test
+    fun `a request is gone once its waiter is cancelled`() = runTest {
+        val pending = repository.expect(REQUEST_ID, request)
+        val waiter = launch { pending.await() }
+        val gone = async { repository.requestGone(REQUEST_ID).first() }
+        runCurrent()
+        assertFalse(gone.isCompleted)
+
+        waiter.cancel()
+        runCurrent()
+
+        assertTrue(gone.isCompleted)
+        assertNull(repository.pendingRequest(REQUEST_ID))
+    }
+
+    @Test
+    fun `an unknown id is gone at once`() = runTest {
+        val gone = async { repository.requestGone(REQUEST_ID).first() }
+        runCurrent()
+
+        assertTrue(gone.isCompleted)
     }
 
     private companion object {

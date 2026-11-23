@@ -17,9 +17,11 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.token.entities.TokenRateEntity
+import com.tonapps.wallet.data.token.entities.hasTron
 import com.tonapps.wallet.data.token.source.LocalDataSource
 import com.tonapps.wallet.data.token.source.RemoteDataSource
 import io.tonapi.models.TokenRates
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
@@ -91,6 +93,49 @@ class TokenRepository(
     ): AccountTokenEntity? {
         val tokens = get(currency, accountId, network, refresh) ?: return null
         return tokens.firstOrNull { it.isTon }
+    }
+
+    /**
+     * Reads the TON balance straight from the API: only the account, not its jettons, unlike
+     * `getTON(refresh = true)`. Doesn't touch the token cache.
+     */
+    suspend fun getRemoteTON(
+        currency: WalletCurrency,
+        accountId: String,
+        network: TonNetwork,
+    ): AccountTokenEntity? = withContext(Dispatchers.IO) {
+        val balance = remoteDataSource.loadTON(currency, accountId, network) ?: return@withContext null
+        val fiatRates = if (network.isTestnet) {
+            RatesEntity.empty(currency)
+        } else {
+            ratesRepository.getRates(network, currency, balance.token.address)
+        }
+        buildTokens(currency, listOf(balance), fiatRates, network).firstOrNull()
+    }
+
+    /**
+     * TON of [accountId] from the API, the token cache only when the API fails and [cacheFallback]
+     * is set. Not the cache first: nothing refreshes it for a multichain wallet.
+     */
+    suspend fun getFreshTON(
+        currency: WalletCurrency,
+        accountId: String,
+        network: TonNetwork,
+        cacheFallback: Boolean,
+    ): AccountTokenEntity? = withContext(Dispatchers.IO) {
+        val remote = safeCall { getRemoteTON(currency, accountId, network) }
+        if (remote != null || !cacheFallback) {
+            return@withContext remote
+        }
+        safeCall { getTON(currency, accountId, network) }
+    }
+
+    private suspend fun <T> safeCall(block: suspend () -> T?): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        null
     }
 
     suspend fun getTonBalance(
@@ -205,6 +250,10 @@ class TokenRepository(
         buildTokens(
             currency = currency, balances = balances, fiatRates = fiatRates, network = network
         )
+    }
+
+    suspend fun hasTronLocal(accountId: String, network: TonNetwork): Boolean = withContext(Dispatchers.IO) {
+        cache(accountId, network)?.hasTron() == true
     }
 
     suspend fun getLocal(

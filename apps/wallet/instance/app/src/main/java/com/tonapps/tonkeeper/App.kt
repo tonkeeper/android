@@ -4,14 +4,25 @@ import android.app.Application
 import android.content.res.Configuration
 import android.view.View
 import androidx.core.text.layoutDirection
+import com.tonapps.extensions.AppContext
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.perps.data.configurePerpsMagnitudes
 import com.tonapps.wallet.data.core.Theme
+import com.tonapps.wallet.data.passcode.ForegroundActivityTracker
 import com.tonapps.wallet.localization.Localization
 import uikit.R
 import java.util.Locale
 import com.tonapps.chainkit.core.chain.model.num.Formatter as ChainKitFormatter
 
 open class App : Application() {
+
+    /** Registered before any screen starts, so the passcode prompt always knows the one on top. */
+    val foregroundActivityTracker = ForegroundActivityTracker()
+
+    override fun onCreate() {
+        super.onCreate()
+        registerActivityLifecycleCallbacks(foregroundActivityTracker)
+    }
 
     fun updateThemes() {
         Theme.clear()
@@ -48,6 +59,7 @@ open class App : Application() {
                     isolateLtr = locale.layoutDirection == View.LAYOUT_DIRECTION_RTL,
                 )
             )
+            configurePerpsMagnitudes(AppContext.value, locale)
         }
     }
 }

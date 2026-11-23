@@ -51,7 +51,15 @@ data class Integrator(
 
     /* How far ahead of now the approval_expiry signed into ApproveIntegrator should sit, in milliseconds. Zero alongside a zero account index means there is nothing to approve. */
     @SerialName(value = "approval_ttl_ms")
-    val approvalTtlMs: Long
+    val approvalTtlMs: Long,
+
+    /* Lighter's own taker fee for the caller's account tier, in millionths, charged on top of integrator_taker_fee. For display only, never signed. Read from Lighter's fee table for the last tier this service saw, without volume or staking discounts. Absent while the tier is not known. */
+    @SerialName(value = "venue_taker_fee")
+    val venueTakerFee: Int? = null,
+
+    /* Lighter's own maker fee for the caller's account tier, as venue_taker_fee. */
+    @SerialName(value = "venue_maker_fee")
+    val venueMakerFee: Int? = null
 ) {
 }
 

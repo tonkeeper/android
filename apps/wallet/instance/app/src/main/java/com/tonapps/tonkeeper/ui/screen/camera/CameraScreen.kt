@@ -17,6 +17,10 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.tron.isValidTronAddress
+import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.bus.generated.Events.Scanner.ScannerErrorType
+import com.tonapps.bus.generated.Events.Scanner.ScannerInput
+import com.tonapps.bus.scanner.ScanAnalytics
 import com.tonapps.core.deeplink.DeepLink
 import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.core.deeplink.DeepLinkRoute
@@ -24,7 +28,6 @@ import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.icu.Coins
 import com.tonapps.tonkeeper.extensions.toast
-import com.tonapps.tonkeeper.koin.analytics
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
@@ -61,6 +64,10 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
     private val chains: List<Blockchain> by lazy {
        requireArguments().getStringArrayList(ARG_CHAINS)!!.map { Blockchain.valueOf(it) }
     }
+    private val entryUtm: UtmParameters by lazy {
+        requireArguments().getParcelableCompat(ARG_UTM) ?: UtmParameters.Empty
+    }
+    private val scanAnalytics = ScanAnalytics.default()
 
     private val imagePickerLauncher =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -78,7 +85,7 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        context?.analytics?.simpleTrackEvent("scan_open")
+        scanAnalytics.open(entryUtm)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -117,15 +124,16 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
         }
         lastScanValue = value
         lastScanAt = now
-        handleValue(value)
+        handleValue(value, ScannerInput.Camera)
     }
 
-    private fun handleValue(value: String) {
+    private fun handleValue(value: String, input: ScannerInput) {
         val uri = createUri(value)
         if (uri == null) {
             showInvalidLink()
+            scanAnalytics.error(value, input, ScannerErrorType.InvalidLink)
         } else {
-            handleUri(uri)
+            handleUri(uri, value, input)
         }
     }
 
@@ -138,15 +146,17 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
         navigation?.toast(Localization.invalid_link)
     }
 
-    private fun handleUri(uri: Uri) {
+    private fun handleUri(uri: Uri, code: String, input: ScannerInput) {
+        val deeplink = DeepLink(DeepLink.fixBadUri(uri), true, null)
+        val route = deeplink.route
         if (mode == CameraMode.Default) {
-            rootViewModel.processDeepLink(uri, true, null, false, null)
+            val opened = rootViewModel.processDeepLink(uri, true, null, false, null)
+            reportOutcome(code, input, errorTypeFor(route) ?: ScannerErrorType.InvalidLink.takeUnless { opened })
             finish()
             return
         }
 
-        val deeplink = DeepLink(DeepLink.fixBadUri(uri), true, null)
-        val route = deeplink.route
+        reportOutcome(code, input, errorTypeFor(route))
         if (mode == CameraMode.Address && route is DeepLinkRoute.Transfer) {
             rootViewModel.processTransferDeepLink(deeplink, route)
             finish()
@@ -161,6 +171,29 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
         }
     }
 
+    // The legacy scanner hands links over with internal = false, so an Internal route closes it without opening anything.
+    private fun errorTypeFor(route: DeepLinkRoute): ScannerErrorType? {
+        val accepted = when (mode) {
+            CameraMode.Default -> route !is DeepLinkRoute.Internal
+            CameraMode.Address -> route is DeepLinkRoute.Transfer
+            CameraMode.TonConnect -> route is DeepLinkRoute.TonConnect
+            CameraMode.Signer -> route is DeepLinkRoute.Signer
+        }
+        return when {
+            route is DeepLinkRoute.Unknown -> ScannerErrorType.InvalidLink
+            !accepted -> ScannerErrorType.UnsupportedHere
+            else -> null
+        }
+    }
+
+    private fun reportOutcome(code: String, input: ScannerInput, errorType: ScannerErrorType?) {
+        if (errorType == null) {
+            scanAnalytics.success(code, input)
+        } else {
+            scanAnalytics.error(code, input, errorType)
+        }
+    }
+
     private fun readQRCodeFromImage(uri: Uri) {
         lifecycleScope.launch(Dispatchers.Main) {
             val value = readQRCode(uri)
@@ -168,8 +201,9 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
             lastErrorAt = 0L
             if (value == null) {
                 showInvalidLink()
+                scanAnalytics.noCode(ScannerInput.Gallery)
             } else {
-                handleValue(value)
+                handleValue(value, ScannerInput.Gallery)
             }
         }
     }
@@ -247,18 +281,21 @@ class CameraScreen : QRCameraScreen(R.layout.fragment_camera), BaseFragment.Bott
 
         private const val ARG_MODE = "mode"
         private const val ARG_CHAINS = "chains"
+        private const val ARG_UTM = "utm"
 
         // Outlasts the error toast: ToastView hides a toast when the same one is shown again.
         private const val REPEAT_SCAN_DELAY = 3000L
 
         fun newInstance(
             mode: CameraMode = CameraMode.Default,
-            chains: List<Blockchain> = listOf(Blockchain.TON)
+            chains: List<Blockchain> = listOf(Blockchain.TON),
+            utm: UtmParameters = UtmParameters.Empty,
         ): CameraScreen {
             val fragment = CameraScreen()
             val bundle = Bundle().apply {
                 putParcelable(ARG_MODE, mode)
                 putStringArrayList(ARG_CHAINS, ArrayList(chains.map { it.name }))
+                putParcelable(ARG_UTM, utm)
             }
             fragment.setArgs(bundle)
             return fragment

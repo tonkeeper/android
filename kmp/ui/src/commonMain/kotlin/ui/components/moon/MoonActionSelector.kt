@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -51,6 +52,8 @@ fun MoonActionSelector(
     leadingIcon: Painter? = null,
     menuAlignment: ActionMenuHorizontalAlignment = ActionMenuHorizontalAlignment.Center,
     menuOffset: DpOffset = DpOffset(0.dp, 12.dp),
+    itemImages: List<String?>? = null,
+    label: String? = null,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -64,6 +67,7 @@ fun MoonActionSelector(
             } else {
                 null
             },
+            leadingImage = itemImages?.getOrNull(index),
         )
     }
 
@@ -108,9 +112,12 @@ fun MoonActionSelector(
                 )
             }
             Text(
-                text = items.getOrNull(selectedIndex).orEmpty(),
+                text = label ?: items.getOrNull(selectedIndex).orEmpty(),
+                modifier = Modifier.weight(1f, fill = false),
                 color = UIKit.colorScheme.text.primary,
                 style = UIKit.typography.label2,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             MoonItemIcon(
                 painter = painterResource(Res.drawable.ic_switch_16),

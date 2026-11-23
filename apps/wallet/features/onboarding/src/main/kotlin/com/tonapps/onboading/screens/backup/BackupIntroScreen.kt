@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.tonapps.core.extensions.rememberActivity
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.ButtonColorsPrimary
@@ -39,7 +38,6 @@ fun BackupIntroScreen(
     onContinue: () -> Unit,
 ) {
     val isLoading by feature.isLoading.collectAsState()
-    val activity = rememberActivity()
 
     MoonScaffold(
         modifier = Modifier.fillMaxSize(),
@@ -89,7 +87,7 @@ fun BackupIntroScreen(
                     buttonColors = ButtonColorsPrimary,
                     loading = isLoading,
                     onClick = {
-                        feature.loadWords(activity, onContinue)
+                        feature.loadWords(onContinue)
                     },
                 )
             }

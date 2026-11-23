@@ -1,5 +1,6 @@
 package com.tonapps.perps.data
 
+import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.wallet.data.multichain.asset.AssetWithDetails
 
 enum class CatalogSearchSort {
@@ -24,6 +25,7 @@ sealed interface CatalogSearchRow {
 data class CatalogSearchPage(
     val rows: List<CatalogSearchRow>,
     val nextCursor: String?,
+    val availableNetworks: List<Network.Type>?,
 )
 
 const val CATALOG_SEARCH_PAGE_SIZE = 50

@@ -14,6 +14,7 @@ import com.tonapps.chart.options.PriceScaleOptions
 import com.tonapps.chart.options.RoundedCandlestickSeriesOptions
 import com.tonapps.chart.options.RoundedHistogramSeriesOptions
 import com.tonapps.perps.data.PerpsChartMode
+import com.tonapps.perps.data.localDecimalSeparator
 import kotlin.math.pow
 
 internal data class PerpsChartPalette(
@@ -107,6 +108,7 @@ internal fun PerpsChartPalette.rightPriceScaleOptions(): PriceScaleOptions {
 internal fun PerpsChartPalette.markersOptions(priceDecimals: Int, mode: PerpsChartMode): PriceLevelMarkersOptions {
     return PriceLevelMarkersOptions(
         priceDecimals = priceDecimals,
+        priceDecimalSeparator = localDecimalSeparator().toString(),
         currentPriceUpLabelColor = ChartColor(green),
         currentPriceUpLabelBackgroundColor = ChartColor(labelBackground(green)),
         currentPriceDownLabelColor = ChartColor(red),

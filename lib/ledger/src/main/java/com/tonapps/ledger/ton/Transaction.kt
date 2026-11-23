@@ -22,6 +22,19 @@ data class Transaction(
     val stateInit: StateInit? = null,
     val payload: TonPayloadFormat? = null
 ): Parcelable {
+
+    fun withWhalesHintSupportedBy(isAppAtLeast: (String) -> Boolean): Transaction {
+        if (isAppAtLeast(TonPayloadFormat.WHALES_MIN_APP_VERSION)) {
+            return this
+        }
+        val message = when (val hint = payload) {
+            is TonPayloadFormat.WhalesDeposit -> hint.toCell()
+            is TonPayloadFormat.WhalesWithdraw -> hint.toCell()
+            else -> return this
+        }
+        return copy(payload = TonPayloadFormat.Unsafe(message))
+    }
+
     companion object {
         fun fromWalletTransfer(
             walletTransfer: WalletTransfer,

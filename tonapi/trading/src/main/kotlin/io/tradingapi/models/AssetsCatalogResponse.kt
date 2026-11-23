@@ -30,7 +30,11 @@ data class AssetsCatalogResponse(
     @SerialName(value = "next_cursor")
     val nextCursor: String? = null,
     @SerialName(value = "warnings")
-    val warnings: List<Warning>? = null
+    val warnings: List<Warning>? = null,
+
+    /* Только v2, только первая страница (без cursor и ids). Сети, в которых при текущих tab и filter есть ассеты, — значения для параметра chain (ton, eth, sol, ...), по алфавиту. Клиент показывает чипы только этих сетей. Не зависит от chain и q. При tab=perpetuals пустой: с выбранной сетью perp-рынки не отдаются. Если поля нет — сервер не смог посчитать список, клиент оставляет свои чипы.  */
+    @SerialName(value = "chains")
+    val chains: List<String>? = null
 ) {
 }
 

@@ -28,7 +28,9 @@ data class GetCandlesResponse(
     @SerialName(value = "start_ts")
     val startTs: Long,
     @SerialName(value = "candles")
-    val candles: List<Candle>
+    val candles: List<Candle>,
+    @SerialName(value = "sourceTickers")
+    val sourceTickers: List<SourceTicker>? = null
 ) {
 }
 

@@ -4,6 +4,7 @@ import com.tonapps.log.L
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsLoadException
 import com.tonapps.perps.data.toPerpsError
+import com.tonapps.perps.data.toWireDecimalOrNull
 import io.JsonAny
 import io.Serializer
 import io.infrastructure.ClientError
@@ -29,6 +30,12 @@ sealed interface PerpsFundingError {
 
         val needsAuthorization: Boolean
             get() = code in AUTHORIZATION_CODES
+
+        val blocksSender: Boolean
+            get() = reason == REASON_INVALID_SENDER_ADDRESS
+
+        val regionRestricted: Boolean
+            get() = code == CODE_REGION_RESTRICTED
     }
 
     data class Transport(val error: PerpsError) : PerpsFundingError {
@@ -46,17 +53,42 @@ sealed interface PerpsFundingError {
 sealed interface PerpsDepositQuoteError {
     data class BelowMinimum(val minUsd: BigDecimal?) : PerpsDepositQuoteError
     data object InsufficientBalance : PerpsDepositQuoteError
-    data class InsufficientNetworkFee(val symbol: String) : PerpsDepositQuoteError
+    data class InsufficientNetworkFee(val symbol: String, val required: BigDecimal) : PerpsDepositQuoteError
     data object ServiceUnavailable : PerpsDepositQuoteError
     data object QuoteFailed : PerpsDepositQuoteError
+    data object AddressBlocked : PerpsDepositQuoteError
     data object Failed : PerpsDepositQuoteError
 }
+
+val PerpsDepositQuoteError.retryable: Boolean
+    get() = when (this) {
+        PerpsDepositQuoteError.ServiceUnavailable,
+        PerpsDepositQuoteError.Failed -> true
+        is PerpsDepositQuoteError.BelowMinimum,
+        PerpsDepositQuoteError.QuoteFailed,
+        PerpsDepositQuoteError.AddressBlocked,
+        PerpsDepositQuoteError.InsufficientBalance,
+        is PerpsDepositQuoteError.InsufficientNetworkFee -> false
+    }
+
+val PerpsDepositQuoteError.refusesAmount: Boolean
+    get() = when (this) {
+        is PerpsDepositQuoteError.BelowMinimum,
+        PerpsDepositQuoteError.InsufficientBalance,
+        PerpsDepositQuoteError.AddressBlocked,
+        is PerpsDepositQuoteError.InsufficientNetworkFee -> true
+        PerpsDepositQuoteError.ServiceUnavailable,
+        PerpsDepositQuoteError.QuoteFailed,
+        PerpsDepositQuoteError.Failed -> false
+    }
 
 fun Throwable.toDepositQuoteError(): PerpsDepositQuoteError {
     return when (this) {
         is PerpsDepositException.InsufficientBalance -> PerpsDepositQuoteError.InsufficientBalance
-        is PerpsDepositException.InsufficientNetworkFee -> PerpsDepositQuoteError.InsufficientNetworkFee(symbol)
+        is PerpsDepositException.InsufficientNetworkFee -> PerpsDepositQuoteError.InsufficientNetworkFee(symbol, required)
         is PerpsDepositException.QuoteRejected -> PerpsDepositQuoteError.QuoteFailed
+        is PerpsDepositException.AddressBlocked -> PerpsDepositQuoteError.AddressBlocked
+        is PerpsDepositException.NetworkFeeUnavailable -> PerpsDepositQuoteError.ServiceUnavailable
         // A quote the client can't read is no quote at all.
         is SerializationException -> PerpsDepositQuoteError.QuoteFailed
         is PerpsDepositException -> PerpsDepositQuoteError.Failed
@@ -69,6 +101,7 @@ fun Throwable.toDepositQuoteError(): PerpsDepositQuoteError {
         else -> when (val error = toPerpsFundingError()) {
             is PerpsFundingError.Transport -> PerpsDepositQuoteError.ServiceUnavailable
             is PerpsFundingError.Refused -> when {
+                error.blocksSender -> PerpsDepositQuoteError.AddressBlocked
                 error.retryable -> PerpsDepositQuoteError.ServiceUnavailable
                 error.reason == REASON_AMOUNT_TOO_LOW -> PerpsDepositQuoteError.BelowMinimum(error.minUsdAmount)
                 error.reason == REASON_INSUFFICIENT_BALANCE -> PerpsDepositQuoteError.InsufficientBalance
@@ -79,6 +112,9 @@ fun Throwable.toDepositQuoteError(): PerpsDepositQuoteError {
         }
     }
 }
+
+fun Throwable.isRegionRestricted(): Boolean =
+    (toPerpsFundingError() as? PerpsFundingError.Refused)?.regionRestricted == true
 
 fun Throwable.toPerpsFundingError(): PerpsFundingError {
     return when (this) {
@@ -104,7 +140,7 @@ private fun envelope(statusCode: Int, body: Any?): PerpsFundingError? {
         reason = error.detail(DETAIL_REASON),
         statusCode = statusCode,
         retryable = error.retryable,
-        minUsdAmount = error.detail(DETAIL_MIN_USD_AMOUNT)?.toBigDecimalOrNull()?.takeIf { it.signum() > 0 },
+        minUsdAmount = error.detail(DETAIL_MIN_USD_AMOUNT).toWireDecimalOrNull()?.takeIf { it.signum() > 0 },
     )
 }
 
@@ -112,6 +148,8 @@ private fun ErrorResponse.detail(key: String): String? = (details?.get(key) as? 
 
 internal const val REASON_AMOUNT_TOO_LOW = "amount_too_low"
 private const val REASON_INSUFFICIENT_BALANCE = "insufficient_balance"
+private const val REASON_INVALID_SENDER_ADDRESS = "invalid_sender_address"
+private const val CODE_REGION_RESTRICTED = "region_restricted"
 private const val DETAIL_REASON = "reason"
 private const val DETAIL_MIN_USD_AMOUNT = "min_usd_amount"
 

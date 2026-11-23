@@ -12,10 +12,13 @@ import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.net.toUri
 import com.tonapps.extensions.logError
 import com.tonapps.extensions.max24
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
+import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.core.history.HistoryHelper
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
 import com.tonapps.wallet.features.events.iconRes
@@ -40,6 +43,8 @@ import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import uikit.extensions.clearDrawables
 import uikit.extensions.dp
 import uikit.extensions.drawable
@@ -51,13 +56,16 @@ import uikit.widget.AsyncImageView
 import uikit.widget.LoaderView
 import uikit.widget.ResizeOptions
 import uikit.extensions.setMoonOnClickListener
+import ui.theme.MoonTheme
 
 class HistoryActionHolder(
     parent: ViewGroup,
     private val disableOpenAction: Boolean,
     private val shouldShowFeeToggle: () -> Boolean,
     private val showFeeMethods: (currentFee: SendFee, targetView: View) -> Unit
-) : HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action) {
+) : HistoryHolder<HistoryItem.Event>(parent, R.layout.view_history_action), KoinComponent {
+
+    private val environment: Environment by inject()
 
     private val amountColorReceived = context.accentGreenColor
     private val amountColorDefault = context.textPrimaryColor
@@ -68,6 +76,9 @@ class HistoryActionHolder(
     private val titleView = findViewById<AppCompatTextView>(R.id.title)
     private val subtitleView = findViewById<AppCompatTextView>(R.id.subtitle)
     private val commentView = findViewById<AppCompatTextView>(R.id.comment)
+    private val contractPayloadView = findViewById<ComposeView>(R.id.contract_payload).apply {
+        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool)
+    }
     private val amountView = findViewById<AppCompatTextView>(R.id.amount)
     private val amount2View = findViewById<AppCompatTextView>(R.id.amount2)
     private val dateView = findViewById<AppCompatTextView>(R.id.date)
@@ -155,6 +166,7 @@ class HistoryActionHolder(
         } else {
             bindComment(item.comment, item.txId, item.sender?.address ?: "")
         }
+        bindContractPayload(item.contractPayload)
 
         bindNft(item)
         bindAmount(item)
@@ -223,6 +235,19 @@ class HistoryActionHolder(
         }
     }
 
+    private fun bindContractPayload(payload: String?) {
+        if (payload == null) {
+            contractPayloadView.visibility = View.GONE
+            return
+        }
+        contractPayloadView.visibility = View.VISIBLE
+        contractPayloadView.setContent {
+            MoonTheme(colorScheme = environment.theme) {
+                ContractPayloadBubble(payload)
+            }
+        }
+    }
+
     private fun requestDecryptComment(
         comment: HistoryItem.Event.Comment,
         txId: String,
@@ -253,7 +278,7 @@ class HistoryActionHolder(
         }
         loadNftImage(nft.mediumUri, item.hiddenBalance)
         if (item.unverifiedToken) {
-            nftNameView.text = if (item.hiddenBalance) HIDDEN_BALANCE else nft.name
+            nftNameView.text = if (item.hiddenBalance) { HIDDEN_BALANCE } else { nft.name }
             nftCollectionView.text = getString(Localization.nft_unverified)
             nftCollectionView.setTextColor(context.accentOrangeColor)
         } else if (item.hiddenBalance) {

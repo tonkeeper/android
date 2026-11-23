@@ -96,14 +96,28 @@ class BrowserRepository(context: Context, private val api: API) {
         return null
     }
 
+    /**
+     * The cached data, then the fresh one. [onCached] runs once the cache was emitted, [onRemoteStarted] before
+     * the network load and [onRemoteFinished] once its result was emitted; a failed load emits nothing and
+     * finishes with `false`.
+     */
     fun dataFlow(
         country: String,
         network: TonNetwork,
         locale: Locale,
         walletId: String?,
+        onCached: () -> Unit = {},
+        onRemoteStarted: () -> Unit = {},
+        onRemoteFinished: (isLoaded: Boolean) -> Unit = {},
     ) = flow {
-        loadLocal(country, locale, walletId)?.let { emit(it) }
-        loadRemote(country, network, locale, walletId)?.let { emit(it) }
+        loadLocal(country, locale, walletId)?.let {
+            emit(it)
+            onCached()
+        }
+        onRemoteStarted()
+        val remote = loadRemote(country, network, locale, walletId)
+        remote?.let { emit(it) }
+        onRemoteFinished(remote != null)
     }
 
     suspend fun load(

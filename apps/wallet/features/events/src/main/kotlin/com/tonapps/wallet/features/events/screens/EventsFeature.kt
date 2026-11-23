@@ -8,18 +8,35 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.insertSeparators
 import androidx.paging.map
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.bus.screenrender.ScreenRenderErrors
+import com.tonapps.bus.screenrender.ScreenRenderId
+import com.tonapps.bus.screenrender.ScreenRenderLifecycle
+import com.tonapps.bus.screenrender.ScreenRenderStage
+import com.tonapps.bus.screenrender.ScreenRenderTracker
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.core.flags.WalletFeature
+import com.tonapps.log.L
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.perps.data.PerpMarket
+import com.tonapps.perps.data.PerpsRealtime
+import com.tonapps.perps.data.PerpsRealtimeEvent
+import com.tonapps.perps.funding.PerpsDepositStatus
+import com.tonapps.perps.funding.PerpsFundingAmount
+import com.tonapps.perps.funding.PerpsFundingRecovery
+import com.tonapps.perps.funding.perpsTransactionHash
+import com.tonapps.perps.funding.toDepositStatus
+import com.tonapps.perps.screens.depositstatus.PerpsDepositStatusUi
+import com.tonapps.perps.screens.depositstatus.toStatusUi
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.account.toApiChain
+import com.tonapps.wallet.data.multichain.perps.PerpsDepositRoute
+import com.tonapps.wallet.data.multichain.perps.PerpsDepositStage
+import com.tonapps.wallet.data.multichain.perps.PerpsFundingRecord
 import com.tonapps.wallet.data.multichain.realtime.McWalletRealtimeProvider
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
@@ -27,7 +44,14 @@ import com.tonapps.wallet.features.events.data.HistoryNft
 import com.tonapps.wallet.features.events.data.HistoryNftResolver
 import com.tonapps.wallet.features.events.data.HistoryPerpsMarketResolver
 import com.tonapps.wallet.features.events.data.McEventsRepository
+import com.tonapps.wallet.features.events.data.OpenedHistoryEvent
+import com.tonapps.wallet.features.events.data.PerpsBalanceChangeStatus
+import com.tonapps.wallet.features.events.data.PerpsDepositOrigin
+import com.tonapps.wallet.features.events.data.PerpsDepositOriginRecord
+import com.tonapps.wallet.features.events.data.PerpsEventKind
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,9 +64,13 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map as flowMap
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -59,6 +87,11 @@ private data class EventsQuery(
     val hideDust: Boolean,
     val showPerps: Boolean,
     val hiddenBalance: Boolean,
+)
+
+private data class ActivitySelection(
+    val opened: OpenedHistoryEvent,
+    val shown: WalletActivityListItem.Entry,
 )
 
 internal data class EventsTypeSelectorState(
@@ -80,6 +113,8 @@ class EventsFeature(
     networkMonitor: NetworkMonitor,
     private val realtimeProvider: McWalletRealtimeProvider,
     unifiedAccountRepository: UnifiedAccountRepository,
+    private val fundingRecovery: PerpsFundingRecovery,
+    perpsRealtime: PerpsRealtime,
     private val assetId: String? = null,
     private val mode: EventsScreenMode = EventsScreenMode.General,
     awaitsFundingActivity: Boolean = false,
@@ -88,7 +123,14 @@ class EventsFeature(
     val isOnline: StateFlow<Boolean> = networkMonitor.isOnlineFlow
         .cacheState(initialValue = true)
 
+    // Asset and perps histories use the same screen; only the wallet history reports its render timing.
+    private val reportsScreenRender = mode == EventsScreenMode.General && assetId == null
+    private val screenRender = ScreenRenderTracker.shared
+
     init {
+        if (reportsScreenRender) {
+            screenRender.lifecycle(ScreenRenderLifecycle.Created, ScreenRenderId.History, this)
+        }
         eventsRepository.invalidateFirstPageCache()
         bgScope.launch {
             accountRepo.refreshTrigger.collect { eventsRepository.invalidateFirstPageCache() }
@@ -118,7 +160,7 @@ class EventsFeature(
     } else {
         unifiedAccountRepository.selectedTonWalletFlow
             .flowMap { wallet ->
-                assetId == null && wallet?.type == WalletType.Multichain && WalletFeature.Perps.isEnabled
+                assetId == null && wallet?.supportsPerps == true && WalletFeature.Perps.isEnabled
             }
             .cacheState(initialValue = false)
     }
@@ -161,9 +203,28 @@ class EventsFeature(
         .filter { walletId -> walletId == wallet.value?.id }
         .flowMap { }
 
+    private val perpsFundingRefreshSignal: Flow<Unit> = perpsRealtime.events
+        .filter { event ->
+            (event is PerpsRealtimeEvent.Deposit || event is PerpsRealtimeEvent.Withdrawal) &&
+                event.walletId == wallet.value?.id
+        }
+        .flowMap { }
+
+    private val fundingRefreshMode: Flow<FundingRefreshMode> = combine(
+        isOnline,
+        wallet,
+        realtimeProvider.subscribedWalletId,
+    ) { online, wallet, subscribedWalletId ->
+        when {
+            !online -> FundingRefreshMode.OFFLINE
+            wallet != null && wallet.id == subscribedWalletId -> FundingRefreshMode.REALTIME
+            else -> FundingRefreshMode.POLLING
+        }
+    }.distinctUntilChanged()
+
     private val fundingActivityRefreshSignal: Flow<Unit> = if (awaitsFundingActivity) {
-        isOnline.flatMapLatest { online ->
-            if (online) {
+        fundingRefreshMode.flatMapLatest { mode ->
+            if (mode == FundingRefreshMode.POLLING) {
                 pendingActivitiesTicker().take(PENDING_REFRESH_FAST_TICKS)
             } else {
                 emptyFlow()
@@ -173,8 +234,29 @@ class EventsFeature(
         emptyFlow()
     }
 
-    internal val activitiesRefreshSignal: Flow<Unit> =
-        merge(pendingActivitiesRefreshSignal, realtimeRefreshSignal, fundingActivityRefreshSignal)
+    private val fundingOutcomes = Channel<Unit>(Channel.CONFLATED)
+
+    private val fundingOutcomeRefreshSignal: Flow<Unit> = fundingOutcomes.receiveAsFlow()
+        .flatMapLatest {
+            fundingRefreshMode.flatMapLatest { mode ->
+                when (mode) {
+                    FundingRefreshMode.OFFLINE -> emptyFlow()
+                    FundingRefreshMode.REALTIME -> flowOf(Unit)
+                    FundingRefreshMode.POLLING -> flow {
+                        emit(Unit)
+                        emitAll(pendingActivitiesTicker().take(PENDING_REFRESH_FAST_TICKS))
+                    }
+                }
+            }
+        }
+
+    internal val activitiesRefreshSignal: Flow<Unit> = merge(
+        pendingActivitiesRefreshSignal,
+        realtimeRefreshSignal,
+        perpsFundingRefreshSignal,
+        fundingActivityRefreshSignal,
+        fundingOutcomeRefreshSignal,
+    )
 
     val resolvedNfts: StateFlow<Map<String, HistoryNft>> = nftResolver.nfts
 
@@ -208,11 +290,122 @@ class EventsFeature(
         )
     }
 
+    init {
+        bgScope.launch {
+            queryFlow
+                .flowMap { query -> query.walletId.takeIf { query.showPerps } }
+                .distinctUntilChanged()
+                .flatMapLatest { walletId ->
+                    walletId?.let(fundingRecovery::observeNewOutcomes) ?: emptyFlow()
+                }
+                .collect { fundingOutcomes.trySend(Unit) }
+        }
+    }
+
+    private val depositStatuses: StateFlow<List<PerpsDepositStatus>> = queryFlow
+        .flowMap { query -> query.walletId.takeIf { query.showPerps } }
+        .distinctUntilChanged()
+        .flatMapLatest { walletId ->
+            if (walletId == null) {
+                flowOf(emptyList())
+            } else {
+                fundingRecovery.observe(walletId).flowMap { records -> records.mapNotNull { it.toDepositStatus() } }
+            }
+        }
+        .cacheState(initialValue = emptyList())
+
+    internal val depositOrigins: StateFlow<List<PerpsDepositOriginRecord>> = queryFlow
+        .flowMap { query -> query.walletId.takeIf { query.showPerps } }
+        .distinctUntilChanged()
+        .flatMapLatest { walletId ->
+            if (walletId == null) {
+                flowOf(emptyList())
+            } else {
+                fundingRecovery.observe(walletId)
+                    .flowMap { records -> records.filter { it.stage == PerpsDepositStage.CREDITED } }
+                    .distinctUntilChanged()
+                    .mapLatest { records -> records.mapNotNull { record -> depositOriginOf(walletId, record) } }
+            }
+        }
+        .cacheState(initialValue = emptyList())
+
+    private val openedDepositId = MutableStateFlow<String?>(null)
+
+    val openedDeposit: StateFlow<PerpsDepositStatusUi?> = combine(depositStatuses, openedDepositId) { deposits, id ->
+        id?.let { deposits.firstOrNull { deposit -> deposit.id == it } }
+    }
+        .toStatusUi(hiddenBalance = { settingsRepository.hiddenBalances })
+        .cacheState(initialValue = null)
+
+    private val activitySelection = MutableStateFlow<ActivitySelection?>(null)
+
+    val openedActivity: StateFlow<WalletActivityListItem.Entry?> = activitySelection
+        .flowMap { it?.shown }
+        .cacheState(initialValue = null)
+
     val activitiesFlow: Flow<PagingData<WalletActivityListItem>> = queryFlow
         .flatMapLatest(::createActivitiesFlow)
         .cachedIn(viewModelScope)
 
     val hideDust: StateFlow<Boolean> = settingsRepository.hideDustActivitiesFlow
+
+    fun openDeposit(activity: HistoryEventEntity): Boolean {
+        if (activity.perpsKind != PerpsEventKind.Deposit || !activity.isPerpsBalanceChange) {
+            return false
+        }
+        if (activity.perpsBalanceChangeStatus == PerpsBalanceChangeStatus.Done) {
+            return false
+        }
+        val hashes = activity.txIds.mapNotNullTo(HashSet()) { perpsTransactionHash(it) }
+        val deposit = depositStatuses.value.firstOrNull { deposit -> deposit.transactions.any(hashes::contains) }
+            ?: return false
+        openedDepositId.value = deposit.id
+        return true
+    }
+
+    fun closeDeposit() {
+        openedDepositId.value = null
+    }
+
+    fun openActivity(entry: WalletActivityListItem.Entry, shownItems: List<WalletActivityListItem>) {
+        val shownHistory = shownItems.mapNotNull { (it as? WalletActivityListItem.Entry)?.activity }
+        activitySelection.value = ActivitySelection(
+            opened = OpenedHistoryEvent(event = entry.activity, shownHistory = shownHistory),
+            shown = entry,
+        )
+    }
+
+    fun closeActivity() {
+        activitySelection.value = null
+    }
+
+    private fun syncOpenedActivity(loaded: List<HistoryEventEntity>, hiddenBalance: Boolean) {
+        activitySelection.update { selection ->
+            val latest = selection?.opened?.latestVersionIn(loaded) ?: return@update selection
+            selection.copy(shown = WalletActivityListItem.Entry(activity = latest, hiddenBalance = hiddenBalance))
+        }
+    }
+
+    private suspend fun depositOriginOf(walletId: String, record: PerpsFundingRecord): PerpsDepositOriginRecord? {
+        val status = record.toDepositStatus() ?: return null
+        val units = record.sourceAmount.toBigIntegerOrNull() ?: return null
+        val asset = try {
+            accountRepo.findAccount(walletId, record.sourceAssetId)?.asset
+        } catch (e: Throwable) {
+            if (e is CancellationException) {
+                throw e
+            }
+            L.e(e, "perps history: no account for the deposit source ${record.sourceAssetId}")
+            null
+        } ?: return null
+        return PerpsDepositOriginRecord(
+            transactions = status.transactions,
+            expectedCredit = status.creditedAmount ?: status.expectedAmount,
+            viaAggregator = record.route == PerpsDepositRoute.CROSSCHAIN_SWAP,
+            createdAt = status.createdAt,
+            origin = PerpsDepositOrigin(asset = asset, amount = PerpsFundingAmount.toDecimal(units, asset.decimals)),
+        )
+    }
 
     fun onHideDustChanged() {
         settingsRepository.hideDustActivities = !settingsRepository.hideDustActivities
@@ -246,6 +439,32 @@ class EventsFeature(
         eventsRepository.invalidateFirstPageCache()
     }
 
+    fun onScreenStarted() {
+        if (!reportsScreenRender) {
+            return
+        }
+        screenRender.lifecycle(ScreenRenderLifecycle.WillShow, ScreenRenderId.History, this)
+        screenRender.lifecycle(ScreenRenderLifecycle.Shown, ScreenRenderId.History, this)
+    }
+
+    fun onScreenStopped() {
+        if (reportsScreenRender) {
+            screenRender.abandon(ScreenRenderId.History, this)
+        }
+    }
+
+    private fun reportInitialLoad(error: Throwable?) {
+        if (!reportsScreenRender) {
+            return
+        }
+        screenRender.requestFinished(ScreenRenderId.History, this)
+        if (error == null) {
+            screenRender.contentApplied(ScreenRenderStage.Fresh, ScreenRenderId.History, this)
+        } else {
+            screenRender.failed(ScreenRenderId.History, ScreenRenderErrors.kind(error), this)
+        }
+    }
+
     private fun createActivitiesFlow(
         query: EventsQuery,
     ): Flow<PagingData<WalletActivityListItem>> = flow {
@@ -270,9 +489,16 @@ class EventsFeature(
                     hideDust = query.hideDust,
                     showPerps = query.showPerps,
                     onInitialLoad = { hasAnyActivity.value = it },
+                    onInitialRequestStarted = {
+                        if (reportsScreenRender) {
+                            screenRender.requestStarted(ScreenRenderId.History, this@EventsFeature)
+                        }
+                    },
+                    onInitialRequestFinished = { error -> reportInitialLoad(error) },
                     onPageLoaded = { activities, isInitialLoad ->
                         if (isInitialLoad) {
                             hasPendingActivities.value = activities.any { it.isPending }
+                            syncOpenedActivity(activities, query.hiddenBalance)
                         }
                         if (activities.isNotEmpty()) {
                             viewModelScope.launch {
@@ -346,4 +572,10 @@ class EventsFeature(
                 )
             }
     }
+}
+
+private enum class FundingRefreshMode {
+    OFFLINE,
+    REALTIME,
+    POLLING,
 }

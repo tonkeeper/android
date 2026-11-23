@@ -1,6 +1,7 @@
 package com.tonapps.blockchain.ton.contract
 
 enum class WalletVersion(val id: Int, val title: String, val index: Int) {
+    WALLET_TG(6, "walletTg", 7),
     V5R1(5, "v5R1", 6),
     V5BETA(4, "v5Beta", 5),
     V4R2(0, "v4R2", 4),

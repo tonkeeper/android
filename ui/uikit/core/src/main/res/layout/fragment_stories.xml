@@ -14,6 +14,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
+        <uikit.widget.LoaderView
+            android:id="@+id/story_loader"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:color="@color/constantWhite"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
+
         <uikit.widget.RowLayout
             android:id="@+id/stories_lines"
             android:layout_width="match_parent"

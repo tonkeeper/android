@@ -3,7 +3,6 @@ package com.tonapps.blockchain.ton.connect
 import android.os.Parcel
 import android.os.Parcelable
 import com.tonapps.base64.encodeBase64
-import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519.sign
 import com.tonapps.extensions.readParcelableCompat
 import com.tonapps.extensions.toByteArray
 import io.ktor.util.hex
@@ -23,8 +22,10 @@ object TONProof {
         secretKey: PrivateKeyEd25519,
         payload: String,
         domain: String,
+        timestamp: Long,
     ): Result {
         val request = Request(
+            timestamp = timestamp,
             payload = payload,
             domain = TCDomain(domain),
             address = TCAddress(address)
@@ -42,7 +43,8 @@ object TONProof {
     }
 
     data class Request(
-        val timestamp: Long = System.currentTimeMillis() / 1000L,
+        // Server time in seconds: the verifier checks it against its own clock.
+        val timestamp: Long,
         val payload: String,
         val domain: TCDomain,
         val address: TCAddress

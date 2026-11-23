@@ -1,6 +1,5 @@
 package com.tonapps.tonkeeper.ui.screen.battery.recharge.list
 
-import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
 import com.tonapps.tonkeeper.ui.screen.battery.refill.entity.PromoState
 import com.tonapps.uikit.list.BaseListItem
 import com.tonapps.uikit.list.ListCell
@@ -21,7 +20,7 @@ sealed class Item(type: Int) : BaseListItem(type) {
 
     data class RechargePack(
         val position: ListCell.Position,
-        val packType: RechargePackType,
+        val packType: String,
         val charges: Int,
         val formattedAmount: CharSequence,
         val formattedFiatAmount: CharSequence,

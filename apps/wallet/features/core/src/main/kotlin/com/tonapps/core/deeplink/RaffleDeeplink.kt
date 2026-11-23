@@ -44,6 +44,10 @@ fun String.withRaffleSource(source: String): String {
     if (query.split('&').any { it.startsWith("source=") }) {
         return this
     }
-    val separator = if (contains('?')) "&" else "?"
+    val separator = if (contains('?')) {
+        "&"
+    } else {
+        "?"
+    }
     return "$this${separator}source=${Uri.encode(source)}"
 }

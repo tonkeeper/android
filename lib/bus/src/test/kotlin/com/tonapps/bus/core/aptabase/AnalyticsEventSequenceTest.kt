@@ -1,6 +1,5 @@
 package com.tonapps.bus.core.aptabase
 
-import com.tonapps.core.flags.FeatureSource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -37,19 +36,13 @@ class AnalyticsEventSequenceTest {
     fun decorateAddsTransportProps() {
         val props = hashMapOf<String, Any>("own" to "value")
 
-        AnalyticsTransportProps.decorate(
-            props = props,
-            transport = AnalyticsTransport.Cache,
-            cohortSource = FeatureSource.Remote,
-            sequence = 7L,
-        )
+        AnalyticsTransportProps.decorate(props = props, sequence = 7L)
 
         assertEquals(
             mapOf(
                 "own" to "value",
                 "event_seq" to 7L,
                 "analytics_transport" to "cache",
-                "analytics_cohort_source" to "remote",
             ),
             props,
         )

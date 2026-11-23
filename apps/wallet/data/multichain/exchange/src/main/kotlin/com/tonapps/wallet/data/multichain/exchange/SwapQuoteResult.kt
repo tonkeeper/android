@@ -11,5 +11,6 @@ enum class SwapNoRouteReason {
     PairUnavailable,
     AssetUnavailable,
     ProviderUnavailable,
+    WalletScreened,
     Unknown,
 }

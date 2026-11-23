@@ -5,7 +5,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import com.tonapps.dapp.component.bindBrowserNetworkIcon
 import com.tonapps.tonkeeper.koin.environment
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.koin.dappScreenFactory
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListHolder
 import uikit.navigation.Navigation
@@ -27,7 +27,7 @@ class ConnectedAppHolder(
     override fun onBind(item: ConnectedItem) {
         itemView.setMoonOnClickListener {
             Navigation.from(context)?.add(
-                DAppScreen.newInstance(
+                context.dappScreenFactory.create(
                     wallet = item.wallet,
                     title = item.name,
                     url = item.url,

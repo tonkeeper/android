@@ -2,6 +2,7 @@ package com.tonapps.portfolio.screens.search
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.mvi.graph.KResult
 import com.tonapps.perps.data.CatalogSearchRepository
 import com.tonapps.perps.data.CatalogSearchRow
@@ -20,17 +21,23 @@ internal class SearchPagingSource(
     private val showPerps: Boolean,
     private val currency: String,
     private val verifiedOnly: Boolean,
+    private val onAvailableNetworksLoaded: (List<Network.Type>?) -> Unit,
 ) : PagingSource<String, CatalogSearchRow>() {
 
     private val loadedIds = ConcurrentHashMap.newKeySet<String>()
 
     override suspend fun load(params: LoadParams<String>): LoadResult<String, CatalogSearchRow> {
         return when (val result = repository.search(query, filter, sort, chain, showPerps, currency, params.key)) {
-            is KResult.Ok -> LoadResult.Page(
-                data = result.value.rows.filter { it.isAllowed() && loadedIds.add(it.id) },
-                prevKey = null,
-                nextKey = result.value.nextCursor,
-            )
+            is KResult.Ok -> {
+                if (params.key == null) {
+                    onAvailableNetworksLoaded(result.value.availableNetworks)
+                }
+                LoadResult.Page(
+                    data = result.value.rows.filter { it.isAllowed() && loadedIds.add(it.id) },
+                    prevKey = null,
+                    nextKey = result.value.nextCursor,
+                )
+            }
 
             is KResult.Err -> if (result.value == PerpsError.BadRequest && params.key == null && query.isNotBlank()) {
                 LoadResult.Page(data = emptyList(), prevKey = null, nextKey = null)

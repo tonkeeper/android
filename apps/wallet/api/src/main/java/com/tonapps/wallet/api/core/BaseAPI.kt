@@ -13,8 +13,6 @@ import io.tonapi.apis.MigrationApi
 import io.tonapi.apis.NFTApi
 import io.tonapi.apis.RatesApi
 import io.tonapi.apis.StakingApi
-import io.tonapi.apis.StorageApi
-import io.tonapi.apis.TracesApi
 import io.tonapi.apis.UtilitiesApi
 import io.tonapi.apis.WalletApi
 import okhttp3.OkHttpClient
@@ -47,10 +45,6 @@ class BaseAPI(
     val rates: RatesApi by lazy { RatesApi(basePath, okHttpClient) }
 
     val staking: StakingApi by lazy { StakingApi(basePath, okHttpClient) }
-
-    val storage: StorageApi by lazy { StorageApi(basePath, okHttpClient) }
-
-    val traces: TracesApi by lazy { TracesApi(basePath, okHttpClient) }
 
     val wallet: WalletApi by lazy { WalletApi(basePath, okHttpClient) }
 

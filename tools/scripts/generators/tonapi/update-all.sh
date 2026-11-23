@@ -34,4 +34,12 @@ echo "🌐 Generating Multichain API..."
 bash "$SCRIPT_DIR/generate-multichain.sh"
 
 echo ""
+echo "💰 Generating Earn API..."
+bash "$SCRIPT_DIR/generate-earn.sh"
+
+echo ""
+echo "⚙️ Generating Tonendpoint API..."
+bash "$SCRIPT_DIR/generate-tonendpoint.sh"
+
+echo ""
 echo "✅ All APIs generated successfully!"

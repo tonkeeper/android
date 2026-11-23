@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.multichain.lighter
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.chainkit.core.op.OpError
 import com.tonapps.chainkit.core.op.Operation
@@ -8,7 +9,7 @@ import com.tonapps.wallet.data.multichain.perps.PerpsDepositRoute
 data class PerpetualDepositQuote(
     val quoteId: String,
     val executionId: String?,
-    val route: PerpsDepositRoute,
+    val provider: PerpetualDepositProvider,
     val expiresAtMs: Long,
     val sourceAmount: BigInteger,
     val depositAmount: BigInteger,
@@ -18,7 +19,33 @@ data class PerpetualDepositQuote(
      * back in the change_pub_key of the next quote.
      */
     val preview: Boolean = false,
+    val activatesAccount: Boolean = false,
     val estimatedDurationSeconds: Long? = null,
+    val providerFees: PerpetualDepositProviderFees? = null,
+) {
+    val route: PerpsDepositRoute
+        get() = if (provider == PerpetualDepositProvider.Direct) {
+            PerpsDepositRoute.DIRECT_GATEWAY
+        } else {
+            PerpsDepositRoute.CROSSCHAIN_SWAP
+        }
+}
+
+enum class PerpetualDepositProvider(val id: String) {
+    Direct("direct"),
+    Relay("relay"),
+    FunXyz("funxyz"),
+    Omniston("omniston"),
+    ;
+
+    companion object {
+        fun find(id: String): PerpetualDepositProvider? = entries.firstOrNull { it.id == id }
+    }
+}
+
+data class PerpetualDepositProviderFees(
+    val destinationGasUsd: BigDecimal,
+    val providerUsd: BigDecimal,
 )
 
 sealed interface PerpsQuoteError {
@@ -30,4 +57,6 @@ sealed interface PerpsQuoteError {
 
     /** A quote asked for again whose [field] no longer matches the one the user confirmed. */
     data class Changed(val field: String) : PerpsQuoteError
+
+    data class MalformedKeyRegistration(val field: String) : PerpsQuoteError
 }

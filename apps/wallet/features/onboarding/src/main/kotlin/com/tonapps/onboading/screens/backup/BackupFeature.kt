@@ -1,12 +1,12 @@
 package com.tonapps.onboading.screens.backup
 
-import android.content.Context
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,20 +16,23 @@ import kotlinx.coroutines.withContext
 class BackupFeature(
     private val accountRepository: AccountRepository,
     private val mcAccountRepository: McAccountRepository,
-    private val passcodeManager: PasscodeManager,
+    private val walletUnlocker: WalletUnlocker,
     private val backupRepository: BackupRepository,
 ) : AsyncViewModel() {
 
     val words: StateFlow<List<String>> field = MutableStateFlow(emptyList())
     val isLoading: StateFlow<Boolean> field = MutableStateFlow(false)
 
-    fun loadWords(context: Context, onSuccess: () -> Unit) {
-        if (isLoading.value) return
+    fun loadWords(onSuccess: () -> Unit) {
+        if (isLoading.value) {
+            return
+        }
+
         bgScope.launch {
             isLoading.tryEmit(true)
             try {
                 val walletId = accountRepository.getSelectedWalletId() ?: return@launch
-                val mnemonic = passcodeManager.unlockMultichainVault(context) { coder ->
+                val mnemonic = walletUnlocker.unlockVault(PasscodeReason.BACKUP) { coder ->
                     mcAccountRepository.getMnemonic(walletId, coder)
                         ?: throw IllegalStateException("No mnemonic for wallet")
                 }

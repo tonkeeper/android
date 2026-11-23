@@ -7,7 +7,7 @@ import com.tonapps.extensions.lazyUnsafe
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.earn.EarnUrlResolver
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Effect
+import com.tonapps.webview.bridge.InAppBridgeContract.Effect
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppDAppScreen
 import com.tonapps.wallet.api.API
 import org.koin.android.ext.android.inject
@@ -16,6 +16,8 @@ import org.koin.core.parameter.parametersOf
 internal class EarnDAppScreen(wallet: WalletEntity) : InAppDAppScreen(wallet) {
 
     override val fragmentName: String = "EarnDAppScreen"
+
+    override val drawsOwnPagesUnderSystemBars: Boolean = true
 
     override val dappBridges: EarnDAppViewModel by walletViewModel {
         parametersOf(dappAnalytics.from)

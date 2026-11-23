@@ -1,7 +1,6 @@
 package com.tonapps.wallet.api.internal
 
 import android.content.Context
-import androidx.collection.ArrayMap
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.ton.TonNetwork
@@ -10,6 +9,7 @@ import com.tonapps.extensions.isDebug
 import com.tonapps.extensions.locale
 import com.tonapps.extensions.map
 import com.tonapps.network.get
+import com.tonapps.network.isVpnActive
 import com.tonapps.wallet.api.Constants
 import com.tonapps.wallet.api.configs.CountryConfig
 import com.tonapps.wallet.api.entity.BannerEntity
@@ -18,13 +18,27 @@ import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.wallet.api.entity.NotificationEntity
 import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.api.withRetry
+import io.Serializer
+import io.tonendpointapi.apis.ContentApi
+import io.tonendpointapi.apis.EthenaApi
+import io.tonendpointapi.apis.FiatApi
+import io.tonendpointapi.apis.KeysApi
+import io.tonendpointapi.apis.NotificationsApi
+import io.tonendpointapi.apis.StoriesApi
+import io.tonendpointapi.apis.SystemApi
+import io.tonendpointapi.models.Currency
+import io.tonendpointapi.models.GetFiatMethods200ResponseData
+import io.tonendpointapi.models.GetPopularApps200ResponseData
+import io.tonendpointapi.models.StoryInfo
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonArray
+import okhttp3.Call
 import okhttp3.OkHttpClient
-import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val MULTICHAIN_FEATURE = "multichain"
 
@@ -34,7 +48,13 @@ internal class InternalApi(
     private val appVersionName: String
 ) {
 
+    @Volatile
     private var config: CountryConfig? = null
+
+    val hasCountryConfig: Boolean
+        get() = config != null
+
+    private val configFailureRecorded = AtomicBoolean(false)
 
     private var _apiEndpoint = Constants.TONKEEPER_API.toUri()
 
@@ -49,107 +69,38 @@ internal class InternalApi(
         _apiEndpoint = url.toUri()
     }
 
-    private fun endpoint(
-        path: String,
-        network: TonNetwork,
-        platform: String,
-        build: String,
-        boot: Boolean = false,
-        queryParams: Map<String, String> = emptyMap(),
-        bootFallback: Boolean = false,
-        walletId: String? = null,
-    ): String = runBlocking {
-        val builder = if (bootFallback) {
-            "https://block.tonkeeper.com".toUri().buildUpon()
-        } else if (boot) {
-            "https://boot.tonkeeper.com".toUri().buildUpon()
-        } else {
-            _apiEndpoint.buildUpon()
+    // The context the app sends to every endpoint, whether its operation declares the parameter or not.
+    // It replaces what the generated client fills in: its `lang` defaults to "en".
+    private fun client(network: TonNetwork, locale: Locale, walletId: String?): Call.Factory {
+        val query = buildMap {
+            put("lang", context.locale.language)
+            put("build", appVersionName)
+            put("platform", "android")
+            put("chainName", when (network) {
+                TonNetwork.TESTNET -> "testnet"
+                TonNetwork.MAINNET -> "mainnet"
+            })
+            put("bundle_id", context.packageName)
+            config?.storeCountry?.let { put("store_country_code", it) }
+            config?.deviceCountry?.let { put("device_country_code", it) }
+            config?.simCountry?.let { put("sim_country", it) }
+            config?.timezone?.let { put("timezone", it) }
+            put("is_vpn_active", context.isVpnActive().toString())
+            walletId?.let { put("wallet_id", it) }
+            put("features", MULTICHAIN_FEATURE)
         }
-        val chainName = when (network) {
-            TonNetwork.TESTNET -> "testnet"
-            TonNetwork.MAINNET -> "mainnet"
-        }
-        builder
-            .appendEncodedPath(path)
-            .appendQueryParameter("lang", context.locale.language)
-            .appendQueryParameter("build", build)
-            .appendQueryParameter("platform", platform)
-            .appendQueryParameter("chainName", chainName)
-            .appendQueryParameter("bundle_id", context.packageName)
-
-        config?.storeCountry?.let {
-            builder.appendQueryParameter("store_country_code", it)
-        }
-        config?.deviceCountry?.let {
-            builder.appendQueryParameter("device_country_code", it)
-        }
-        config?.simCountry?.let {
-            builder.appendQueryParameter("sim_country", it)
-        }
-        config?.timezone?.let {
-            builder.appendQueryParameter("timezone", it)
-        }
-        config?.isVpn?.let {
-            builder.appendQueryParameter("is_vpn_active", it.toString())
-        }
-        walletId?.let {
-            builder.appendQueryParameter("wallet_id", it)
-        }
-        builder.appendQueryParameter("features", MULTICHAIN_FEATURE)
-
-        queryParams.forEach {
-            builder.appendQueryParameter(it.key, it.value)
-        }
-
-        builder.build().toString()
+        return okHttpClient.withQuery(query, locale.toString())
     }
 
-    private fun request(
-        path: String,
-        network: TonNetwork,
-        platform: String = "android",
-        build: String = appVersionName,
-        locale: Locale,
-        boot: Boolean = false,
-        queryParams: Map<String, String> = emptyMap(),
-        bootFallback: Boolean = false,
+    private fun <A, T> request(
+        api: (String, Call.Factory) -> A,
+        network: TonNetwork = TonNetwork.MAINNET,
+        locale: Locale = context.locale,
         walletId: String? = null,
-    ): JSONObject {
-        return JSONObject(
-            requestRaw(
-                path,
-                network,
-                platform,
-                build,
-                locale,
-                boot,
-                queryParams,
-                bootFallback,
-                walletId,
-            )
-        )
-    }
-
-    private fun requestRaw(
-        path: String,
-        network: TonNetwork,
-        platform: String = "android",
-        build: String = appVersionName,
-        locale: Locale,
-        boot: Boolean = false,
-        queryParams: Map<String, String> = emptyMap(),
-        bootFallback: Boolean = false,
-        walletId: String? = null,
-    ): String {
-        val url = endpoint(path, network, platform, build, boot, queryParams, bootFallback, walletId)
-        val headers = ArrayMap<String, String>()
-        headers["Accept-Language"] = locale.toString()
-        val body = withRetry {
-            okHttpClient.get(url, headers)
-        } ?: throw IllegalStateException("Internal API request failed")
-        return body
-    }
+        host: String = _apiEndpoint.toString(),
+        call: A.() -> T,
+    ): T = withRetry { api(host, client(network, locale, walletId)).call() }
+        ?: throw IllegalStateException("Internal API request failed")
 
     private fun swapEndpoint(prefix: String, path: String): String {
         val builder = prefix.toUri().buildUpon()
@@ -166,9 +117,7 @@ internal class InternalApi(
         config?.timezone?.let {
             builder.appendQueryParameter("timezone", it)
         }
-        config?.isVpn?.let {
-            builder.appendQueryParameter("is_vpn_active", it.toString().lowercase())
-        }
+        builder.appendQueryParameter("is_vpn_active", context.isVpnActive().toString())
         return builder.build().toString()
     }
 
@@ -187,19 +136,9 @@ internal class InternalApi(
     }
 
     fun getNotifications(walletId: String?): List<NotificationEntity> {
-        val json = request(
-            path = "notifications",
-            network = TonNetwork.MAINNET,
-            locale = context.locale,
-            boot = false,
-            walletId = walletId,
-        )
-        val array = json.getJSONArray("notifications")
-        val list = mutableListOf<NotificationEntity>()
-        for (i in 0 until array.length()) {
-            list.add(NotificationEntity(array.getJSONObject(i)))
-        }
-        return list.toList()
+        return request(::NotificationsApi, walletId = walletId) { getNotifications() }
+            .notifications
+            .map(::NotificationEntity)
     }
 
     fun getScamDomains(): Array<String> {
@@ -227,9 +166,9 @@ internal class InternalApi(
         return (maskDomains + cleanDomains + telegramBots).toTypedArray()
     }
 
-    fun getBrowserApps(network: TonNetwork, locale: Locale, walletId: String?): JSONObject {
-        val data = request("apps/popular", network, locale = locale, walletId = walletId)
-        return data.getJSONObject("data")
+    fun getBrowserApps(network: TonNetwork, locale: Locale, walletId: String?): GetPopularApps200ResponseData {
+        // The app never sent `with_ads`; the generated client would send its default, false.
+        return request(::ContentApi, network, locale, walletId) { getPopularApps(withAds = null) }.data
     }
 
     fun getBanners(
@@ -237,42 +176,37 @@ internal class InternalApi(
         walletId: String?,
         isNew: Boolean,
     ): List<BannerEntity> = withRetry {
-        val json = request(
-            path = "banners",
-            network = network,
-            locale = context.locale,
-            boot = false,
-            queryParams = mapOf("is_new" to isNew.toString()),
-            walletId = walletId,
-        )
-        BannerEntity.parse(json.getJSONArray("banners"))
+        request(::ContentApi, network, walletId = walletId) { getBanners(isNew = isNew) }
+            .banners
+            .map(::BannerEntity)
     } ?: emptyList()
 
-    fun getCurrencies(network: TonNetwork = TonNetwork.MAINNET, locale: Locale, walletId: String?): JSONArray {
-        val data = request("currencies", network, locale = locale, walletId = walletId)
-        return data.getJSONArray("currencies")
+    fun getCurrencies(network: TonNetwork = TonNetwork.MAINNET, locale: Locale, walletId: String?): List<Currency> {
+        return request(::ContentApi, network, locale, walletId) { getCurrencies() }.currencies
     }
 
-    fun getFiatMethods(network: TonNetwork = TonNetwork.MAINNET, locale: Locale, walletId: String?): JSONObject {
-        val data = request("fiat/methods", network, locale = locale, walletId = walletId)
-        return data.getJSONObject("data")
+    fun getFiatMethods(network: TonNetwork = TonNetwork.MAINNET, locale: Locale, walletId: String?): GetFiatMethods200ResponseData? {
+        return request(::FiatApi, network, locale, walletId) { getFiatMethods() }.data
     }
 
     fun downloadConfig(fallback: Boolean = false): ConfigResponseEntity? {
         return try {
-            val json = request(
-                "keys/all",
-                network = TonNetwork.MAINNET,
-                locale = context.locale,
-                boot = true,
-                bootFallback = fallback,
-            )
-            ConfigResponseEntity(json, context.isDebug)
+            val host = if (fallback) {
+                "https://block.tonkeeper.com"
+            } else {
+                "https://boot.tonkeeper.com"
+            }
+            val json = request(::KeysApi, host = host) { getAllKeys() }
+            val config = ConfigResponseEntity(JSONObject(json.toString()), context.isDebug)
+            configFailureRecorded.set(false)
+            config
         } catch (e: Throwable) {
             if (!fallback) {
                 downloadConfig(true)
             } else {
-                IssueHelper.recordException(e)
+                if (configFailureRecorded.compareAndSet(false, true)) {
+                    IssueHelper.recordException(e)
+                }
                 null
             }
         }
@@ -280,15 +214,8 @@ internal class InternalApi(
 
     fun getStories(id: String, walletId: String?, isNew: Boolean): StoryEntity.Stories? {
         return try {
-            val json = request(
-                path = "stories/$id",
-                network = TonNetwork.MAINNET,
-                locale = context.locale,
-                boot = false,
-                queryParams = mapOf("is_new" to isNew.toString()),
-                walletId = walletId,
-            )
-            parseStories(id, json.getJSONArray("pages"), json.optBoolean("is_auto_show"))
+            val story = request(::StoriesApi, walletId = walletId) { getStories(storyId = id, isNew = isNew) }
+            parseStories(story)
         } catch (e: Throwable) {
             IssueHelper.recordException(e)
             null
@@ -305,60 +232,35 @@ internal class InternalApi(
             return emptyList()
         }
         return try {
-            val json = request(
-                path = "stories",
-                network = network,
-                locale = context.locale,
-                boot = false,
-                queryParams = mapOf(
-                    "ids" to ids.joinToString(","),
-                    "is_new" to isNew.toString(),
-                ),
-                walletId = walletId,
-            )
-            val array = json.getJSONArray("stories")
-            val list = mutableListOf<StoryEntity.Stories>()
-            for (i in 0 until array.length()) {
+            request(::StoriesApi, network, walletId = walletId) {
+                getStoriesBatch(ids = ids.joinToString(","), isNew = isNew)
+            }.getValue("stories").jsonArray.mapNotNull { item ->
                 try {
-                    val item = array.getJSONObject(i)
-                    parseStories(
-                        item.getString("story_id"),
-                        item.getJSONArray("pages"),
-                        item.optBoolean("is_auto_show"),
-                    )?.let(list::add)
+                    parseStories(Serializer.JSON.decodeFromJsonElement<StoryInfo>(item))
                 } catch (e: Throwable) {
                     IssueHelper.recordException(e)
+                    null
                 }
             }
-            list.toList()
         } catch (e: Throwable) {
             IssueHelper.recordException(e)
             emptyList()
         }
     }
 
-    private fun parseStories(id: String, pages: JSONArray, isAutoShow: Boolean): StoryEntity.Stories? {
-        val list = mutableListOf<StoryEntity>()
-        for (i in 0 until pages.length()) {
-            list.add(StoryEntity(pages.getJSONObject(i)))
-        }
+    private fun parseStories(story: StoryInfo): StoryEntity.Stories? {
+        val list = story.pages.map(::StoryEntity)
         return if (list.isEmpty()) {
             null
         } else {
-            StoryEntity.Stories(id, list.toList(), isAutoShow)
+            StoryEntity.Stories(story.storyId, list, story.isAutoShow ?: false)
         }
     }
 
     suspend fun resolveCountry(): String? = withContext(Dispatchers.IO) {
         try {
-            val json = request(
-                path = "my/ip",
-                network = TonNetwork.MAINNET,
-                locale = context.locale,
-                boot = false
-            )
-            val country = json.getString("country")
-            if (country.isNullOrBlank()) {
+            val country = request(::SystemApi) { myIp() }.country
+            if (country.isBlank()) {
                 null
             } else {
                 country.uppercase()
@@ -370,15 +272,14 @@ internal class InternalApi(
     }
 
     fun getEthena(accountId: String, walletId: String?): EthenaEntity? = withRetry {
-        val json = request(
-            path = "staking/ethena",
-            network = TonNetwork.MAINNET,
-            locale = context.locale,
-            boot = false,
-            queryParams = mapOf("address" to accountId),
-            walletId = walletId,
-        )
-        EthenaEntity(json)
+        EthenaEntity(request(::EthenaApi, walletId = walletId) { getStakingEthenaMethods(address = accountId) })
     }
 
+}
+
+internal fun Call.Factory.withQuery(query: Map<String, String>, acceptLanguage: String) = Call.Factory { request ->
+    val url = request.url.newBuilder().apply {
+        query.forEach { (name, value) -> setQueryParameter(name, value) }
+    }.build()
+    newCall(request.newBuilder().url(url).header("Accept-Language", acceptLanguage).build())
 }

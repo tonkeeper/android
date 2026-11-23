@@ -1,0 +1,274 @@
+{
+  "quote_id": "469fee52-4837-471a-9223-db6b7b6026ba",
+  "routes": [
+    {
+      "route_id": "9462c7d9-637c-460e-8a36-a883c00b6f40",
+      "provider_route_id": "7051aec3-70bf-4e09-903b-8c00c4094baa",
+      "aggregator": "swapsxyz",
+      "route_type": "same_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "8678161447483770",
+      "minimum_destination_amount": "8591379833008932",
+      "total_slippage_bps": 100,
+      "source_usd_price": 0.998937,
+      "destination_usd_price": 2289.08,
+      "tags": [
+        "recommended"
+      ],
+      "fees": [
+        {
+          "type": "protocol",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "20000",
+          "amount_usd": "0.02"
+        },
+        {
+          "type": "application",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "140000",
+          "amount_usd": "0.14"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-11-02T15:50:31Z",
+      "risk_level": "medium"
+    },
+    {
+      "route_id": "4a3f8fb1-0c24-46da-838e-410f29509202",
+      "provider_route_id": "9de4b81f-3686-4dcd-be35-c0a580966cf1",
+      "aggregator": "swapkit",
+      "protocol": "1inch",
+      "route_type": "same_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "8661502944501240",
+      "minimum_destination_amount": "8574887915056228",
+      "estimated_time": {
+        "inbound_seconds": 13,
+        "swap_seconds": 0,
+        "outbound_seconds": 0,
+        "total_seconds": 13
+      },
+      "total_slippage_bps": -80,
+      "source_usd_price": 0.99894,
+      "destination_usd_price": 2288.13,
+      "tags": [
+        "fastest"
+      ],
+      "warnings": [
+        "insufficient_native_balance"
+      ],
+      "fees": [
+        {
+          "type": "affiliate",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "140000",
+          "amount_usd": "0.139846"
+        },
+        {
+          "type": "service",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "30000",
+          "amount_usd": "0.029967"
+        },
+        {
+          "type": "liquidity",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "5949",
+          "amount_usd": "0.005942"
+        },
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/coin",
+          "chain_id": "eth/mainnet",
+          "amount": "41949986767550",
+          "amount_usd": "0.095954"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "from_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "to_asset": "eth/mainnet/coin",
+          "protocol": "1inch"
+        }
+      ],
+      "date_expire": "2026-11-02T16:49:32Z",
+      "risk_level": "medium"
+    },
+    {
+      "route_id": "3279a9e2-aaad-4832-a153-2638bfeb8803",
+      "provider_route_id": "754536dc-1911-47a9-98ba-6e6323c4c005",
+      "aggregator": "swapkit",
+      "protocol": "chainflip",
+      "route_type": "same_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "8337406423924903",
+      "minimum_destination_amount": "8254032359685654",
+      "estimated_time": {
+        "inbound_seconds": 13,
+        "swap_seconds": 48,
+        "outbound_seconds": 96,
+        "total_seconds": 157
+      },
+      "total_slippage_bps": -451,
+      "value_difference_bps": -451,
+      "source_usd_price": 0.99894,
+      "destination_usd_price": 2288.13,
+      "warnings": [
+        "insufficient_native_balance"
+      ],
+      "fees": [
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "amount": "161616",
+          "amount_usd": "0.161438"
+        },
+        {
+          "type": "liquidity",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "500000",
+          "amount_usd": "0.499836"
+        },
+        {
+          "type": "affiliate",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "135368",
+          "amount_usd": "0.135324"
+        },
+        {
+          "type": "service",
+          "asset": "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "amount": "29008",
+          "amount_usd": "0.028998"
+        },
+        {
+          "type": "outbound",
+          "asset": "eth/mainnet/coin",
+          "amount": "61444058130000",
+          "amount_usd": "0.140543"
+        },
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/coin",
+          "chain_id": "eth/mainnet",
+          "amount": "21568116590000",
+          "amount_usd": "0.049334"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "from_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "to_asset": "eth/mainnet/coin",
+          "protocol": "chainflip"
+        }
+      ],
+      "date_expire": "2026-11-02T16:49:32Z",
+      "risk_level": "medium"
+    },
+    {
+      "route_id": "f5a848a2-59b2-47bc-a2e6-eed867ba9474",
+      "provider_route_id": "6cfcbbfb-6eb9-4414-89f5-d60d39eab35a",
+      "aggregator": "swapkit",
+      "protocol": "flashnet",
+      "route_type": "same_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "8267594413379042",
+      "minimum_destination_amount": "8184918469245252",
+      "estimated_time": {
+        "inbound_seconds": 13,
+        "swap_seconds": 30,
+        "outbound_seconds": 13,
+        "total_seconds": 55
+      },
+      "total_slippage_bps": -531,
+      "value_difference_bps": -531,
+      "source_usd_price": 0.99894,
+      "destination_usd_price": 2288.13,
+      "warnings": [
+        "insufficient_native_balance"
+      ],
+      "fees": [
+        {
+          "type": "liquidity",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "10000",
+          "amount_usd": "0.009989"
+        },
+        {
+          "type": "affiliate",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "139930",
+          "amount_usd": "0.139776"
+        },
+        {
+          "type": "service",
+          "asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "chain_id": "eth/mainnet",
+          "amount": "29985",
+          "amount_usd": "0.029952"
+        },
+        {
+          "type": "inbound",
+          "asset": "eth/mainnet/coin",
+          "chain_id": "eth/mainnet",
+          "amount": "21568116590000",
+          "amount_usd": "0.049334"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "swap",
+          "chain_id": "eth/mainnet",
+          "chain_family": "EVM",
+          "from_asset": "eth/mainnet/erc20/0xdac17f958d2ee523a2206206994597c13d831ec7",
+          "to_asset": "eth/mainnet/coin",
+          "protocol": "flashnet"
+        }
+      ],
+      "date_expire": "2026-11-02T16:04:32Z",
+      "risk_level": "medium"
+    }
+  ],
+  "provider_errors": [
+    {
+      "aggregator": "swapkit",
+      "protocol": "chainflip_streaming",
+      "code": "min_amount_not_met",
+      "message": "sellAssetAmountTooSmall: Sell asset amount too small for provider CHAINFLIP_STREAMING."
+    },
+    {
+      "aggregator": "swapkit",
+      "protocol": "harbor",
+      "code": "provider_error",
+      "message": "insufficientLiquidity: Insufficient liquidity for trade"
+    },
+    {
+      "aggregator": "swapkit",
+      "protocol": "mayachain_streaming",
+      "code": "provider_error",
+      "message": "swapHalted: swap is halted"
+    },
+    {
+      "aggregator": "swapkit",
+      "protocol": "dex_other",
+      "code": "no_route",
+      "message": "noRoutesFound: No routes found for ETH.USDT-0xdAC17F958D2ee523a2206206994597C13D831ec7 -> ETH.ETH"
+    }
+  ]
+}

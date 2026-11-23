@@ -90,23 +90,25 @@ sealed interface PerpsSendError {
 }
 
 internal fun Throwable.toPerpsSendError(): PerpsSendError {
-    if (this !is ClientException) {
-        return PerpsSendError.Unknown
+    val (statusCode, body) = when (this) {
+        is ClientException -> statusCode to (response as? ClientError<*>)?.body?.toString()
+        is ServerException -> statusCode to (response as? ServerError<*>)?.body?.toString()
+        else -> return PerpsSendError.Unknown
     }
     if (statusCode == HTTP_UNAUTHORIZED || statusCode == HTTP_FORBIDDEN) {
         return PerpsSendError.Failed(toPerpsError())
     }
-    if (statusCode != HTTP_BAD_REQUEST && statusCode != HTTP_CONFLICT) {
+    val error = body?.let(::decodeErrorResponseOrNull)
+    val reasonName = (error?.details?.get("reason") as? JsonAny.Primitive)?.value as? String
+    if (error != null && !error.retryable && (error.code == WITHDRAWAL_RATE_LIMITED || reasonName == WITHDRAWAL_RATE_LIMITED)) {
+        return PerpsSendError.Refused(PerpsSendReason.WITHDRAWAL_RATE_LIMITED, error.code)
+    }
+    if (statusCode == HTTP_TOO_MANY_REQUESTS) {
+        return PerpsSendError.Refused(PerpsSendReason.RATE_LIMITED, error?.code.orEmpty())
+    }
+    if (error == null || this !is ClientException || (statusCode != HTTP_BAD_REQUEST && statusCode != HTTP_CONFLICT)) {
         return PerpsSendError.Unknown
     }
-    val body = (response as? ClientError<*>)?.body?.toString() ?: return PerpsSendError.Unknown
-    val error = try {
-        Serializer.JSON.decodeFromString<ErrorResponse>(body)
-    } catch (e: Throwable) {
-        L.e(e)
-        return PerpsSendError.Unknown
-    }
-    val reasonName = (error.details?.get("reason") as? JsonAny.Primitive)?.value as? String
     if (statusCode == HTTP_CONFLICT && reasonName != NO_RO_TOKEN_REASON) {
         return PerpsSendError.Unknown
     }
@@ -124,7 +126,18 @@ internal fun Throwable.toPerpsSendError(): PerpsSendError {
     return PerpsSendError.Refused(reason, error.code)
 }
 
+private fun decodeErrorResponseOrNull(body: String): ErrorResponse? {
+    return try {
+        Serializer.JSON.decodeFromString<ErrorResponse>(body)
+    } catch (e: IllegalArgumentException) {
+        L.e(e)
+        null
+    }
+}
+
 class PerpsLoadException(val error: PerpsError) : Exception()
+
+internal const val WITHDRAWAL_RATE_LIMITED = "withdrawal_rate_limited"
 
 private const val CODE_RO_TOKEN_UNAVAILABLE = "readonly_token_unavailable"
 private const val NO_RO_TOKEN_REASON = "no_ro_token"
@@ -132,4 +145,5 @@ private const val HTTP_BAD_REQUEST = 400
 private const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
 private const val HTTP_CONFLICT = 409
+private const val HTTP_TOO_MANY_REQUESTS = 429
 private const val HTTP_UNAVAILABLE = 503

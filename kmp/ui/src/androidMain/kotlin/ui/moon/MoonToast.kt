@@ -1,8 +1,14 @@
 package ui.moon
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -23,6 +29,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -35,7 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CancellableContinuation
@@ -47,11 +54,18 @@ import androidx.annotation.DrawableRes
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import ui.confirm
+import ui.reject
+import ui.softTap
 import ui.theme.UIKit
+import uikit.widget.ToastFeedback
+import uikit.widget.ToastPresence
 import kotlin.coroutines.resume
 
-private const val AnimationDuration = 160
+private const val ShowDuration = 300
+private const val HideDuration = 200
 private const val AutoDismissDelay = 2000L
+private val ToastSlideOffset = 8.dp
 private val ToastShape = RoundedCornerShape(24.dp)
 private val ToastTopOffset = 8.dp
 private val ToastMinHeight = 48.dp
@@ -61,12 +75,15 @@ private val ToastHorizontalPadding = 24.dp
 private val ToastHorizontalPaddingWithIcon = 16.dp
 private val ToastIconSpacing = 8.dp
 
+val MoonToastEasing = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)
+
 data class MoonToastData internal constructor(
     val text: CharSequence,
     val loading: Boolean,
     val color: Color,
     @DrawableRes val icon: Int?,
     val iconColor: Color,
+    val feedback: ToastFeedback,
     private val continuation: CancellableContinuation<Unit>,
 ) {
     internal fun dismiss() {
@@ -90,6 +107,7 @@ class MoonToastHostState {
         color: Color = Color.Unspecified,
         @DrawableRes icon: Int? = null,
         iconColor: Color = Color.Unspecified,
+        feedback: ToastFeedback = ToastFeedback.Neutral,
     ) {
         mutex.withLock {
             try {
@@ -100,6 +118,7 @@ class MoonToastHostState {
                         color = color,
                         icon = icon,
                         iconColor = iconColor,
+                        feedback = feedback,
                         continuation = continuation,
                     )
                 }
@@ -132,17 +151,24 @@ fun MoonToastHost(
     if (data != null) {
         lastData = data
     }
+    val shown = lastData != null
+    DisposableEffect(hostState, shown) {
+        ToastPresence.set(hostState, shown)
+        onDispose { ToastPresence.set(hostState, false) }
+    }
 
     val visibleState = remember { MutableTransitionState(false) }
     visibleState.targetState = data != null
 
     LaunchedEffect(data) {
-        if (data != null) {
-            haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-            if (!data.loading) {
-                delay(AutoDismissDelay)
-                hostState.dismiss()
+        if (data != null && !data.loading) {
+            when (data.feedback) {
+                ToastFeedback.Neutral -> haptic.softTap()
+                ToastFeedback.Success -> haptic.confirm()
+                ToastFeedback.Failure -> haptic.reject()
             }
+            delay(AutoDismissDelay)
+            hostState.dismiss()
         }
     }
 
@@ -165,18 +191,26 @@ fun MoonToastHost(
     ) {
         AnimatedVisibility(
             visibleState = visibleState,
-            enter = slideInVertically(
-                initialOffsetY = { -it * 2 },
-                animationSpec = tween(AnimationDuration),
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it * 2 },
-                animationSpec = tween(AnimationDuration),
-            ),
+            enter = moonToastEnter(),
+            exit = moonToastExit(),
         ) {
             lastData?.let { toast(it) }
         }
     }
+}
+
+@Composable
+fun moonToastEnter(): EnterTransition {
+    val offset = with(LocalDensity.current) { ToastSlideOffset.roundToPx() }
+    return fadeIn(tween(ShowDuration, easing = MoonToastEasing)) +
+        slideInVertically(tween(ShowDuration, easing = MoonToastEasing)) { -offset }
+}
+
+@Composable
+fun moonToastExit(): ExitTransition {
+    val offset = with(LocalDensity.current) { ToastSlideOffset.roundToPx() }
+    return fadeOut(tween(HideDuration, easing = EaseIn)) +
+        slideOutVertically(tween(HideDuration, easing = EaseIn)) { -offset }
 }
 
 @Composable

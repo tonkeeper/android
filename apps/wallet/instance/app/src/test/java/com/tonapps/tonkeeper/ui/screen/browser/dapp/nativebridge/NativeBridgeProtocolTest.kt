@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge
 
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Protocol
+import com.tonapps.webview.bridge.InAppBridgeContract.Protocol
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol.Message
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol.Response
 import org.json.JSONObject
@@ -14,7 +14,7 @@ class NativeBridgeProtocolTest {
 
     @Test
     fun `ready opens the document's session`() {
-        val message = protocol.parse("""{"type":"ready"}""", "earn.example")
+        val message = protocol.parse("""{"type":"ready"}""", "earn.example", null)
 
         assertEquals(Message.Ready, message)
         assertEquals(Protocol.Route.Handshake, protocol.route(Message.Ready))
@@ -22,12 +22,12 @@ class NativeBridgeProtocolTest {
 
     @Test
     fun `a request without an id is ignored`() {
-        assertNull(protocol.parse("""{"method":"ui.close"}""", "earn.example"))
+        assertNull(protocol.parse("""{"method":"ui.close"}""", "earn.example", null))
     }
 
     @Test
     fun `a malformed message is ignored`() {
-        assertNull(protocol.parse("not json", "earn.example"))
+        assertNull(protocol.parse("not json", "earn.example", null))
     }
 
     @Test

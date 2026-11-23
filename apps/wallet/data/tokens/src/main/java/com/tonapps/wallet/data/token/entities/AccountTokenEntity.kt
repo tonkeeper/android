@@ -119,3 +119,8 @@ data class AccountTokenEntity(
         }
     }
 }
+
+fun List<AccountTokenEntity>.hasTron(): Boolean = map { it.balance }.hasTron()
+
+@JvmName("hasTronBalance")
+fun List<BalanceEntity>.hasTron(): Boolean = any { it.token.blockchain == Blockchain.TRON }

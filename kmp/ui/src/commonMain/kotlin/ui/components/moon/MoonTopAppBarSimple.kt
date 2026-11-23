@@ -43,8 +43,8 @@ fun MoonTopAppBarSimple(
     backgroundColor: Color = UIKit.colorScheme.background.page,
     iconTintColor: Color = UIKit.colorScheme.buttonSecondary.primaryForeground,
     iconBackgroundColor: Color = UIKit.colorScheme.buttonSecondary.primaryBackground,
+    actionModifier: Modifier = Modifier,
 ) {
-
     CenterAlignedTopAppBar(
         scrollBehavior = scrollBehavior,
         windowInsets = windowInsets,
@@ -93,6 +93,7 @@ fun MoonTopAppBarSimple(
         actions = {
             if (actionIconRes != null && onActionClick != null) {
                 MoonActionIcon(
+                    modifier = actionModifier,
                     painter = painterResource(id = actionIconRes),
                     onClick = onActionClick,
                     tintColor = iconTintColor,

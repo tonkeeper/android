@@ -11,17 +11,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.perps.screens.common.PerpsFundingTopBar
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonItemDivider
-import ui.components.moon.MoonItemSubtitle
-import ui.components.moon.MoonTopAppBarSimple
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.TextCheckCell
 import ui.components.moon.container.MoonSurface
 import ui.components.moon.dialog.MoonModalDialog
 import ui.components.moon.dialog.rememberDialogNavigator
-import ui.theme.UIKit
 
 @Composable
 fun PerpsDepositAssetDialog(
@@ -33,10 +30,11 @@ fun PerpsDepositAssetDialog(
     val navigator = rememberDialogNavigator(onClose = onClose)
 
     MoonModalDialog(navigator = navigator) {
-        MoonTopAppBarSimple(
+        PerpsFundingTopBar(
             title = stringResource(Localization.choose_asset),
-            actionIconRes = UIKitIcon.ic_close_16,
-            onActionClick = { navigator.close() },
+            onClose = { navigator.close() },
+            subtitle = stringResource(Localization.perps_deposit_converted_note),
+            closeIdentifier = "bottom_sheet_close",
         )
 
         MoonSurface {
@@ -46,13 +44,6 @@ fun PerpsDepositAssetDialog(
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                MoonItemSubtitle(
-                    text = stringResource(Localization.perps_deposit_converted_note),
-                    color = UIKit.colorScheme.text.secondary,
-                )
-
-                Spacer(Modifier.height(16.dp))
-
                 MoonBundleCell {
                     Column {
                         sources.forEachIndexed { index, item ->
@@ -63,7 +54,6 @@ fun PerpsDepositAssetDialog(
                             TextCheckCell(
                                 title = source.symbol,
                                 subtitle = sourceSubtitle(item),
-                                tags = { SourceTags(source) },
                                 isChecked = source.assetId == selectedAssetId,
                                 onCheckedChange = {
                                     navigator.close()

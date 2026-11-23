@@ -4,6 +4,7 @@ import com.tonapps.chainkit.lighter.trading.LighterRisk
 import com.tonapps.chainkit.lighter.trading.LighterTradeSide
 import com.tonapps.perps.trade.PerpsProductRules
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 fun perpsLiquidationPrice(
     side: PerpsOrderSide,
@@ -11,12 +12,23 @@ fun perpsLiquidationPrice(
     markPrice: BigDecimal?,
     leverage: Int,
     maintenanceMarginBps: Int?,
+    priceDecimals: Int,
 ): BigDecimal? {
     val entry = entryPrice?.toDouble()?.takeIf { it > 0.0 } ?: return null
     val mark = markPrice?.toDouble()?.takeIf { it > 0.0 } ?: return null
     val maintenanceFraction = (maintenanceMarginBps ?: return null) / LighterRisk.MARGIN_FRACTION_DENOMINATOR
     val initialFraction = PerpsProductRules.initialMarginBps(leverage) / LighterRisk.MARGIN_FRACTION_DENOMINATOR
     val baseSize = PREVIEW_NOTIONAL / entry
+    val marginPrice = if (side == PerpsOrderSide.LONG) {
+        minOf(mark, entry)
+    } else {
+        maxOf(mark, entry)
+    }
+    val rounding = if (side == PerpsOrderSide.LONG) {
+        RoundingMode.CEILING
+    } else {
+        RoundingMode.FLOOR
+    }
 
     val estimate = LighterRisk.isolatedLiquidation(
         side = if (side == PerpsOrderSide.LONG) {
@@ -28,9 +40,9 @@ fun perpsLiquidationPrice(
         entryPrice = entry,
         markPrice = mark,
         maintenanceFraction = maintenanceFraction,
-        collateralUsd = baseSize * mark * initialFraction,
+        collateralUsd = baseSize * marginPrice * initialFraction,
     )
-    return estimate.price?.toBigDecimal()
+    return estimate.price?.toFiniteBigDecimalOrNull()?.setScale(priceDecimals, rounding)
 }
 
 data class PerpsLiquidationPreview(
@@ -63,7 +75,7 @@ fun perpsPositionLiquidation(
     )
 
     return PerpsLiquidationPreview(
-        price = estimate.price?.toBigDecimal(),
+        price = estimate.price?.toFiniteBigDecimalOrNull(),
         isImmediateRisk = estimate.isImmediateRisk,
     )
 }

@@ -23,6 +23,7 @@ import com.tonapps.log.L
 import com.tonapps.security.Security
 import com.tonapps.settings.dev.DevSettingsFragment
 import com.tonapps.settings.dev.ROUTE_FEATURE_FLAGS
+import com.tonapps.settings.dev.ROUTE_GLASS
 import com.tonapps.settings.dev.ROUTE_TOOLTIPS
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.copyToClipboard
@@ -57,6 +58,7 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
     private lateinit var iconsView: RecyclerView
     private lateinit var blurView: ItemSwitchView
     private lateinit var tonConnectLogsView: ItemSwitchView
+    private lateinit var moonPaySandboxView: ItemSwitchView
     private lateinit var logs: ItemSwitchView
     private lateinit var shareLogs: ItemTextView
     private lateinit var importMnemonicAgainView: View
@@ -125,6 +127,17 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             if (byUser) {
                 DevSettings.tonConnectLogs = isChecked
                 toastAfterChange()
+            }
+        }
+
+        moonPaySandboxView = view.findViewById(R.id.moonpay_sandbox)
+        if (!BuildConfig.DEBUG) {
+            moonPaySandboxView.visibility = View.GONE
+        }
+        moonPaySandboxView.setChecked(DevSettings.moonPaySandbox, false)
+        moonPaySandboxView.doOnCheckedChanged = { isChecked, byUser ->
+            if (byUser) {
+                DevSettings.moonPaySandbox = isChecked
             }
         }
 
@@ -261,6 +274,25 @@ class DevScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_dev, Scr
             }
             setMoonOnClickListener {
                 navigation?.add(DevSettingsFragment.newInstance(ROUTE_TOOLTIPS))
+            }
+        }
+
+        view.findViewById<View>(R.id.glass).apply {
+            if (!BuildConfig.DEBUG) {
+                visibility = View.GONE
+            }
+            setMoonOnClickListener {
+                navigation?.add(DevSettingsFragment.newInstance(ROUTE_GLASS))
+            }
+        }
+
+        view.findViewById<View>(R.id.reset_swap_battery_promo).apply {
+            if (!BuildConfig.DEBUG) {
+                visibility = View.GONE
+            }
+            setMoonOnClickListener {
+                viewModel.resetSwapBatteryPromo()
+                navigation?.toast("Swap battery promo reset")
             }
         }
     }

@@ -26,6 +26,7 @@ dependencies {
 
     implementation(projects.apps.wallet.data.account)
     implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.loyalty)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.banner)
     implementation(projects.apps.wallet.data.raffle)
@@ -53,4 +54,12 @@ dependencies {
     implementation(projects.lib.extensions)
     implementation(projects.lib.icu)
     implementation(projects.lib.bus)
+
+    testImplementation(libs.junit)
+}
+
+// The convention plugin disables host tests repo-wide. These are plain JUnit tests of the shelves'
+// mappings, so they belong here rather than on a device.
+tasks.withType<Test>().configureEach {
+    enabled = true
 }

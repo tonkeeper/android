@@ -1,15 +1,13 @@
 package com.tonapps.deposit.multicoin.screens.ramp.amount
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,8 +15,8 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -35,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -46,16 +43,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tonapps.core.components.withLocaleDecimalSeparator
 import com.tonapps.deposit.screens.provider.ProviderItem
 import com.tonapps.deposit.screens.provider.SelectProviderDialog
 import com.tonapps.deposit.utils.AmountError
+import com.tonapps.deposit.utils.ProviderAmountState
 import com.tonapps.deposit.utils.rememberProviderAmountState
 import com.tonapps.icu.Coins
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import com.wallet.crypto.trustapp.common.ui.components.MoonEditText
+import com.wallet.crypto.trustapp.common.ui.components.amountFieldScroll
+import kotlinx.coroutines.flow.SharedFlow
 import ui.components.moon.MoonBadgeButton
 import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
@@ -69,10 +71,10 @@ import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.TextCell
 import ui.components.moon.container.MoonScaffold
 import ui.painterResource
+import ui.preview.ThemedPreview
 import ui.theme.UIKit
 import ui.theme.modifiers.rememberShimmerPhase
 import ui.theme.modifiers.shimmer
-import ui.theme.outlineStoke
 import ui.utils.uppercased
 
 @Composable
@@ -86,8 +88,8 @@ fun RampAmountScreen(
 
     LaunchedEffect(feature) {
         feature.events.collect { event ->
-            when (event) {
-                is RampAmountEvent.Continue -> onContinue(event.widgetUrl)
+            if (event is RampAmountEvent.Continue) {
+                onContinue(event.widgetUrl)
             }
         }
     }
@@ -103,7 +105,9 @@ fun RampAmountScreen(
             is RampAmountState.Data -> {
                 DataContent(
                     state = current,
+                    events = feature.events,
                     onAmountInput = feature::onAmountInput,
+                    onToggleInputCurrency = feature::toggleInputCurrency,
                     onProviderSelected = feature::selectProvider,
                     onContinue = feature::continueWithProvider,
                 )
@@ -115,19 +119,28 @@ fun RampAmountScreen(
 @Composable
 private fun DataContent(
     state: RampAmountState.Data,
+    events: SharedFlow<RampAmountEvent>,
     onAmountInput: (String) -> Unit,
-    onProviderSelected: (String) -> Unit,
+    onToggleInputCurrency: (String) -> Unit,
+    onProviderSelected: (String, Coins?) -> Unit,
     onContinue: () -> Unit,
 ) {
-    val amountState = rememberProviderAmountState(
-        provider = state.selectedProvider?.info ?: state.selectedErrorProvider,
-    )
+    val amountState = rememberProviderAmountState(provider = null)
+
+    LaunchedEffect(events) {
+        events.collect { event ->
+            if (event is RampAmountEvent.UpdateAmount) {
+                amountState.onTextChange(event.text)
+            }
+        }
+    }
 
     LaunchedEffect(state.initialAmount) {
         val initial = state.initialAmount
         val amount = if (initial != null && amountState.text.isEmpty()) {
-            amountState.onTextChange(initial)
-            initial
+            val localizedInitial = initial.withLocaleDecimalSeparator()
+            amountState.onTextChange(localizedInitial)
+            localizedInitial
         } else {
             amountState.text
         }
@@ -143,6 +156,11 @@ private fun DataContent(
         amountState.coins.isPositive && amountState.coins > it
     } ?: false
 
+    val canContinue = state.canContinue
+            && amountState.hasAmount
+            && !insufficientBalance
+            && state.isQuotedFor(amountState.coins)
+
     Column(Modifier.fillMaxSize()) {
         Column(
             Modifier
@@ -153,11 +171,16 @@ private fun DataContent(
             AmountInputCell(
                 amountState = amountState,
                 currencyCode = state.inputCurrencyCode,
-                receiveAmount = selected?.quote?.receiveAmount ?: state.defaultReceiveAmount,
+                convertedAmount = state.convertedAmount,
                 isLoading = state.isCalculating,
+                onToggle = if (state.canToggleInput) {
+                    { onToggleInputCurrency(amountState.text) }
+                } else {
+                    null
+                },
                 onAmountInput = onAmountInput,
                 onDone = {
-                    if (amountState.isValid) {
+                    if (canContinue) {
                         onContinue()
                     }
                 },
@@ -174,7 +197,7 @@ private fun DataContent(
                     MoonBadgeButton(
                         content = { MoonSmallItemTitle(stringResource(Localization.max).uppercased()) },
                         onClick = {
-                            val maxAmount = Coins.string(balance)
+                            val maxAmount = Coins.string(balance).withLocaleDecimalSeparator()
                             amountState.onTextChange(maxAmount)
                             onAmountInput(maxAmount)
                         },
@@ -202,14 +225,19 @@ private fun DataContent(
                 ProviderCell(
                     modifier = Modifier.shimmer(shimmer),
                     provider = ProviderItem.EMPTY,
-                    rateFormatted = "",
-                    onClick = null,
+                    subtitle = "",
                 )
-            } else if (selected?.quote != null) {
+            } else if (selected != null && (selected.quote != null || state.amountError != null)) {
                 val keyboardController = LocalSoftwareKeyboardController.current
+                val amountError = state.amountError
                 ProviderCell(
                     provider = selected.info,
-                    rateFormatted = selected.rate?.rateFormatted,
+                    subtitle = if (amountError != null) {
+                        amountLimitText(amountError, state.limitCurrencyCode)
+                    } else {
+                        selected.rate?.rateFormatted
+                    },
+                    isSubtitleWarning = amountError != null,
                     onClick = {
                         keyboardController?.hide()
                         showProviderDialog = true
@@ -222,10 +250,8 @@ private fun DataContent(
 
         MoonBottomButtonCell(
             text = stringResource(Localization.continue_action),
-            enabled = state.canContinue
-                    && amountState.isValid
-                    && !insufficientBalance
-                    && amountState.coins.isSame(state.selectedProvider?.quote?.amount),
+            enabled = canContinue,
+            loading = state.isContinuing,
         ) {
             onContinue()
         }
@@ -235,38 +261,52 @@ private fun DataContent(
         SelectProviderDialog(
             providers = state.providers,
             selectedProviderId = state.selectedProviderId,
-            currencyCode = state.inputCurrencyCode,
-            onConfirm = { providerId, minAmount ->
-                if (minAmount != null) {
-                    val amountStr = Coins.string(minAmount)
-                    amountState.onTextChange(amountStr)
-                    onAmountInput(amountStr)
-                }
-                onProviderSelected(providerId)
-            },
+            currencyCode = state.limitCurrencyCode,
+            onConfirm = onProviderSelected,
             onClose = { showProviderDialog = false },
+            amount = state.requestAmount,
+        )
+    }
+}
+
+@Composable
+private fun amountLimitText(error: AmountError, currencyCode: String): String {
+    return when (error) {
+        is AmountError.BelowMin -> stringResource(
+            Localization.deposit_min_amount_with_currency,
+            Coins.string(error.minAmount).withLocaleDecimalSeparator(),
+            currencyCode,
+        )
+        is AmountError.AboveMax -> stringResource(
+            Localization.deposit_max_amount_with_currency,
+            Coins.string(error.maxAmount).withLocaleDecimalSeparator(),
+            currencyCode,
         )
     }
 }
 
 @Composable
 private fun AmountInputCell(
-    amountState: com.tonapps.deposit.utils.ProviderAmountState,
+    amountState: ProviderAmountState,
     currencyCode: String,
-    receiveAmount: String,
+    convertedAmount: String,
     isLoading: Boolean,
+    onToggle: (() -> Unit)?,
     onAmountInput: (String) -> Unit,
     onDone: () -> Unit,
 ) {
     MoonBundleCell {
         Column(
             Modifier
-                .padding(remember { PaddingValues(top = 39.dp, bottom = 6.dp) })
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .height(188.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
             Row(
-                modifier = Modifier.padding(vertical = 4.dp),
+                modifier = Modifier
+                    .height(77.dp)
+                    .wrapContentHeight(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.Bottom,
             ) {
@@ -283,9 +323,7 @@ private fun AmountInputCell(
                     modifier = Modifier
                         .focusRequester(focusRequester)
                         .weight(1f, fill = false)
-                        .horizontalScroll(scrollState)
-                        .width(IntrinsicSize.Min)
-                        .defaultMinSize(minWidth = 24.dp),
+                        .amountFieldScroll(scrollState),
                     value = amountState.value,
                     onValueChange = { newValue ->
                         amountState.onValueChange(newValue)
@@ -310,13 +348,17 @@ private fun AmountInputCell(
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
-
             Row(
                 modifier = Modifier
-                    .padding(4.dp)
                     .clip(CircleShape)
-                    .border(border = outlineStoke(), shape = CircleShape)
+                    .border(width = 1.5.dp, color = UIKit.colorScheme.background.contentTint, shape = CircleShape)
+                    .run {
+                        if (onToggle != null) {
+                            clickable(onClick = onToggle)
+                        } else {
+                            this
+                        }
+                    }
                     .run {
                         if (isLoading) {
                             val shimmer by rememberShimmerPhase()
@@ -325,29 +367,24 @@ private fun AmountInputCell(
                             this
                         }
                     }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .height(40.dp)
+                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = receiveAmount,
+                    text = convertedAmount,
                     color = UIKit.colorScheme.text.secondary,
                     style = UIKit.typography.body1,
                 )
+                if (onToggle != null) {
+                    MoonItemIcon(
+                        painter = painterResource(UIKitIcon.ic_swap_vertical_16),
+                        size = 16.dp,
+                        color = UIKit.colorScheme.icon.secondary,
+                    )
+                }
             }
-
-            val error = if (isLoading) null else amountState.error
-            MoonItemSubtitle(
-                modifier = Modifier
-                    .alpha(if (error != null) 1f else 0f)
-                    .padding(vertical = 12.dp, horizontal = 6.dp),
-                text = when (error) {
-                    is AmountError.AboveMax -> stringResource(Localization.max_amount, error.maxAmount.value)
-                    is AmountError.BelowMin -> stringResource(Localization.min_amount, error.minAmount.value)
-                    null -> ""
-                },
-                color = UIKit.colorScheme.accent.red,
-            )
         }
     }
 }
@@ -374,15 +411,21 @@ private fun EmptyProviderCell() {
 @Composable
 private fun ProviderCell(
     provider: ProviderItem,
-    rateFormatted: String?,
+    subtitle: String?,
     modifier: Modifier = Modifier,
+    isSubtitleWarning: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     MoonBundleCell {
         TextCell(
             modifier = modifier,
             title = provider.title,
-            subtitle = rateFormatted,
+            subtitle = subtitle,
+            subtitleColor = if (isSubtitleWarning) {
+                UIKit.colorScheme.accent.orange
+            } else {
+                UIKit.colorScheme.text.secondary
+            },
             tags = {
                 if (provider.isBest) {
                     MoonLabel(stringResource(Localization.best), colors = MoonLabelDefault.blue())
@@ -399,5 +442,30 @@ private fun ProviderCell(
                 )
             },
         )
+    }
+}
+
+@Preview
+@Composable
+private fun RampAmountBelowMinimumPreview() {
+    ThemedPreview {
+        Column {
+            AmountInputCell(
+                amountState = remember { ProviderAmountState().apply { onTextChange("1") } },
+                currencyCode = "TON",
+                convertedAmount = "1.17 USD",
+                isLoading = false,
+                onToggle = {},
+                onAmountInput = {},
+                onDone = {},
+            )
+            Spacer(Modifier.height(24.dp))
+            ProviderCell(
+                provider = ProviderItem(id = "moonpay", title = "MoonPay", imageUrl = "", isBest = true),
+                subtitle = "Min. amount: 25 USD",
+                isSubtitleWarning = true,
+                onClick = {},
+            )
+        }
     }
 }

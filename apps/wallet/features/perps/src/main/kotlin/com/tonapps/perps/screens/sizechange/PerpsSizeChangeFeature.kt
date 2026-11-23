@@ -8,11 +8,13 @@ import com.tonapps.perps.data.PERPS_QUOTE_INPUT_SCALE
 import com.tonapps.perps.data.PerpsAutoCloseDraft
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsLivePrices
+import com.tonapps.perps.data.PerpsMarketRules
 import com.tonapps.perps.data.PerpsOpenPosition
 import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsSizeDirection
 import com.tonapps.perps.data.autoCloseLeverage
+import com.tonapps.perps.data.floorToSizeStep
 import com.tonapps.perps.data.formatPlainDecimal
 import com.tonapps.perps.data.formatTokenAmount
 import com.tonapps.perps.data.formatUsdAmount
@@ -28,6 +30,7 @@ import com.tonapps.perps.screens.order.repriced
 import com.tonapps.perps.trade.PerpsAutoCloseEdit
 import com.tonapps.perps.trade.PerpsPositionBounds
 import com.tonapps.perps.trade.PerpsPlannerAdapter
+import com.tonapps.perps.trade.closesWholePosition
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -63,6 +66,7 @@ sealed interface PerpsSizeChangeAction : MviAction {
     data object ToggleSizeMode : PerpsSizeChangeAction
     data object Max : PerpsSizeChangeAction
     data class SetAutoClose(val draft: PerpsAutoCloseDraft?) : PerpsSizeChangeAction
+    data class ReplaceAutoClose(val target: PerpsAutoCloseDraft?) : PerpsSizeChangeAction
     data object Retry : PerpsSizeChangeAction
     data class ShowRefusal(@StringRes val text: Int) : PerpsSizeChangeAction
 }
@@ -133,10 +137,6 @@ class PerpsSizeChangeFeature(
         data class Max(val amount: BigDecimal?) : AmountCmd
     }
 
-    private val sizeDecimals = rules
-        .map { it?.sizeDecimals }
-        .cacheState(initialValue = null)
-
     private val amountInput = merge(
         actions
             .on<PerpsSizeChangeAction.SetAmount>()
@@ -171,10 +171,8 @@ class PerpsSizeChangeFeature(
         marginDelta,
         sizeInToken,
         mark,
-        sizeDecimals,
-        transform = { position, delta, inToken, mark, decimals ->
-            preview(position, delta, inToken, mark, decimals)
-        }
+        rules,
+        transform = ::preview,
     )
         .cacheState(initialValue = null)
 
@@ -191,16 +189,21 @@ class PerpsSizeChangeFeature(
         position,
         marginDelta,
         mark,
-        sizeDecimals,
+        rules,
         transform = ::estimate,
     )
         .cacheState(initialValue = null)
 
-    private val autoCloseRequest = actions
-        .on<PerpsSizeChangeAction.SetAutoClose>()
-        .withLatestFrom(detail) { action, detail ->
-            PerpsAutoCloseEdit.Set(action.draft.withRestingLegs(direction, detail?.legsDraft())) as PerpsAutoCloseEdit
-        }
+    private val autoCloseRequest = merge(
+        actions
+            .on<PerpsSizeChangeAction.SetAutoClose>()
+            .withLatestFrom(detail) { action, detail ->
+                PerpsAutoCloseEdit.Set(action.draft.withRestingLegs(direction, detail?.legsDraft())) as PerpsAutoCloseEdit
+            },
+        actions
+            .on<PerpsSizeChangeAction.ReplaceAutoClose>()
+            .map { PerpsAutoCloseEdit.Set(it.target) },
+    )
         .cacheState(initialValue = PerpsAutoCloseEdit.Keep)
 
     override val autoCloseEdit = combine(
@@ -295,6 +298,7 @@ class PerpsSizeChangeFeature(
                 }
             }
 
+            margin != null && closesWholePosition(delta, margin) -> null
             margin != null && delta >= margin -> exceedsMargin(margin)
             bounds == null -> null
             bounds.minReduceMargin != null && delta < bounds.minReduceMargin ->
@@ -320,9 +324,10 @@ class PerpsSizeChangeFeature(
         delta: BigDecimal,
         inToken: Boolean,
         mark: BigDecimal?,
-        decimals: Int?,
+        rules: PerpsMarketRules?,
     ): PerpsSizePreview? {
         position ?: return null
+        val decimals = rules?.sizeDecimals
         val current = if (inToken) {
             position.size
         } else {
@@ -334,7 +339,7 @@ class PerpsSizeChangeFeature(
             formatUsdAmount(current)
         }
         val change = if (delta.signum() > 0) {
-            change(position, current, delta, inToken, mark, decimals)
+            change(position, current, delta, inToken, mark, rules)
         } else {
             null
         } ?: return PerpsSizePreview(current = currentText, next = null)
@@ -368,12 +373,12 @@ class PerpsSizeChangeFeature(
         position: PerpsOpenPosition?,
         delta: BigDecimal,
         mark: BigDecimal?,
-        decimals: Int?,
+        rules: PerpsMarketRules?,
     ): PerpsAutoCloseEstimate? {
         val current = position?.size ?: return null
         val entry = position.avgEntryPrice ?: mark
         val change = if (delta.signum() > 0) {
-            change(position, current, delta, inToken = true, mark = mark, decimals = decimals)
+            change(position, current, delta, inToken = true, mark = mark, rules = rules)
         } else {
             null
         }
@@ -397,12 +402,21 @@ class PerpsSizeChangeFeature(
         delta: BigDecimal,
         inToken: Boolean,
         mark: BigDecimal?,
-        decimals: Int?,
+        rules: PerpsMarketRules?,
     ): BigDecimal? {
-        val scale = decimals ?: DEFAULT_SIZE_DECIMALS
+        val scale = rules?.sizeDecimals ?: DEFAULT_SIZE_DECIMALS
         if (direction == PerpsSizeDirection.REDUCE) {
             val margin = position.margin?.takeIf { it.signum() > 0 } ?: return null
-            return current.multiply(delta).divide(margin, scale, RoundingMode.DOWN)
+            if (closesWholePosition(delta, margin)) {
+                return current
+            }
+            val size = position.size?.takeIf { it.signum() > 0 } ?: return null
+            val proportional = size.multiply(delta).divide(margin, scale, RoundingMode.DOWN)
+            val stepped = rules?.let { floorToSizeStep(proportional, it) } ?: proportional
+            if (inToken) {
+                return stepped
+            }
+            return current.multiply(stepped).divide(size, current.scale().coerceAtLeast(2), RoundingMode.DOWN)
         }
         val notional = delta.multiply(BigDecimal(position.leverage ?: return null))
         if (!inToken) {
@@ -470,17 +484,15 @@ private fun PerpsPositionBounds.noPartialReduce(margin: BigDecimal?): Boolean {
  *   PerpsPositionFormFeature ──► availableBalance? / rules? / detail? / position? / mark? / bounds? / gate
  *   availableBalance? / position? ──► availableFormat
  *
- *   rules? ──► sizeDecimals?
- *
  *                                SetAmount ──┐
  *                             ToggleSizeMode ┼──► [fold] amountInput ──┬──► amount ──► marginDelta
  *   Max, availableBalance? ⋯, bounds? ⋯──────┘                          └──► sizeInToken
  *
- *   position? / marginDelta / sizeInToken / mark? / sizeDecimals? ──► unmaskedSizePreview? ──┐
- *                                                   hiddenBalancesFlow ──┴──► sizePreview?
- *   position? / marginDelta / mark? / sizeDecimals? ──► autoCloseEstimate?
+ *   position? / marginDelta / sizeInToken / mark? / rules? ──► unmaskedSizePreview? ──┐
+ *                                            hiddenBalancesFlow ──┴──► sizePreview?
+ *   position? / marginDelta / mark? / rules? ──► autoCloseEstimate?
  *
- *   SetAutoClose, detail? ⋯──► autoCloseRequest ──┐
+ *   SetAutoClose, detail? ⋯ / ReplaceAutoClose ──► autoCloseRequest ──┐
  *   autoCloseEstimate? / position? / mark? / priceDecimals ──┴──► autoCloseEdit ──┐
  *                                                                     detail? ──┴──► autoClose?
  *

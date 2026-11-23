@@ -1,9 +1,11 @@
 package com.tonapps.wallet.data.multichain.lighter
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.async.Async
 import com.tonapps.chainkit.CryptoKitClient
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.core.common.getOrElse
 import com.tonapps.chainkit.core.common.hexWithPrefix
 import com.tonapps.chainkit.core.op.OpError
@@ -15,12 +17,11 @@ import com.tonapps.chainkit.lighter.model.L2ApproveIntegratorTxInfo
 import com.tonapps.chainkit.lighter.model.LighterApproveIntegratorTxReq
 import com.tonapps.chainkit.lighter.model.LighterTransactOpts
 import com.tonapps.chainkit.lighter.model.LighterTransferTxReq
-import com.tonapps.chainkit.lighter.model.LighterWithdrawTxReq
 import com.tonapps.chainkit.perpetual.PerpetualChain
 import com.tonapps.mvi.graph.KResult
-import com.tonapps.wallet.data.multichain.perps.PerpsDepositRoute
 import com.tonapps.wallet.data.multichain.wallet.CredentialIds
 import io.perpsapi.models.DepositQuote
+import io.perpsapi.models.DepositQuoteFee
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -86,6 +87,7 @@ class PerpetualRepository internal constructor(
         request: LighterApproveIntegratorTxReq,
         nonce: Long,
         expiredAtMs: Long,
+        signOwnerMessage: suspend (String) -> String?,
     ): L2ApproveIntegratorTxInfo? = withContext(Async.Io) {
         val account = credentialsStore.loadAccount(walletId) ?: return@withContext null
         val privateKey = credentialsStore.loadL2PrivateKey(walletId) ?: return@withContext null
@@ -100,44 +102,26 @@ class PerpetualRepository internal constructor(
             ).getApproveIntegratorTransaction(
                 req = request,
                 ops = LighterTransactOpts(expiredAt = expiredAtMs, nonce = nonce),
+                l1Signer = signOwnerMessage,
             )
         } finally {
             privateKey.fill(0)
         }
     }
 
-    suspend fun signWithdraw(
-        walletId: String,
-        assetIndex: Short,
-        routeType: Int,
-        amountUnits: Long,
-        nonce: Long,
-        expiredAtMs: Long,
-    ): SignedLighterTransaction? = withContext(Async.Io) {
-        val account = credentialsStore.loadAccount(walletId) ?: return@withContext null
-        val privateKey = credentialsStore.loadL2PrivateKey(walletId) ?: return@withContext null
+    suspend fun integratorApproval(walletId: String): StoredIntegratorApproval? = withContext(Async.Io) {
+        credentialsStore.integratorApproval(walletId)
+    }
 
-        try {
-            lighter.initialize()
-            val txClient = lighter.newTxClient(
-                privateKeyHex = privateKey.hexWithPrefix(),
-                accountIndex = account.accountIndex,
-                apiKeyIndex = account.apiKeyIndex,
-                chainId = LighterConstants.ChainId,
-            )
-            val txInfo = txClient.getWithdrawTransaction(
-                req = LighterWithdrawTxReq(assetIndex = assetIndex, routeType = routeType, amount = amountUnits),
-                ops = LighterTransactOpts(nonce = nonce, expiredAt = expiredAtMs),
-            )
-            SignedLighterTransaction(
-                txType = txInfo.txType,
-                txInfo = txInfo.getTxInfo(),
-                txHash = txInfo.getTxHash(),
-                nonce = nonce,
-                expiredAtMs = expiredAtMs,
-            )
-        } finally {
-            privateKey.fill(0)
+    suspend fun saveIntegratorApproval(walletId: String, approval: StoredIntegratorApproval) {
+        withContext(Async.Io) {
+            credentialsStore.saveIntegratorApproval(walletId, approval)
+        }
+    }
+
+    suspend fun forgetIntegratorApproval(walletId: String) {
+        withContext(Async.Io) {
+            credentialsStore.forgetIntegratorApproval(walletId)
         }
     }
 
@@ -181,7 +165,7 @@ class PerpetualRepository internal constructor(
      * can name it without asking for the passcode. A slot that holds a key already is left as it is:
      * the key an account is registered with is replaced only by [saveActivation].
      */
-    suspend fun saveTradingKey(walletId: String, wallet: CryptoWallet) = withContext(Async.Io) {
+    suspend fun saveTradingKey(walletId: String, wallet: MnemonicWallet) = withContext(Async.Io) {
         val key = client.perpetual.getAccountMediator(PerpetualChain.Lighter).keySource(wallet).deriveTradingKey()
         try {
             credentialsStore.keepL2Key(walletId, key)
@@ -225,22 +209,21 @@ class PerpetualRepository internal constructor(
         val depositAmount = quote.output.minAmount.toUnits()
             ?: return KResult.Err(PerpsQuoteError.MalformedAmount("output.min_amount"))
         val operation = operation(quote.operation).getOrElse { return KResult.Err(PerpsQuoteError.InvalidOperation(it)) }
-        val route = if (quote.provider == PROVIDER_DIRECT) {
-            PerpsDepositRoute.DIRECT_GATEWAY
-        } else {
-            PerpsDepositRoute.CROSSCHAIN_SWAP
-        }
+        val provider = PerpetualDepositProvider.find(quote.provider)
+            ?: return KResult.Err(PerpsQuoteError.UnexpectedOperation("provider ${quote.provider}"))
         return KResult.Ok(
             PerpetualDepositQuote(
                 quoteId = quote.quoteId,
                 executionId = quote.tracking?.executionId,
-                route = route,
+                provider = provider,
                 expiresAtMs = quote.expiresAt.toInstant().toEpochMilli(),
                 sourceAmount = sourceAmount,
                 depositAmount = depositAmount,
                 operation = operation,
                 preview = quote.preview,
+                activatesAccount = quote.accountUninitialized == true,
                 estimatedDurationSeconds = quote.estimatedDurationSeconds?.takeIf { it >= 0 }?.toLong(),
+                providerFees = providerFees(quote.fees.orEmpty()),
             ),
         )
     }
@@ -257,8 +240,34 @@ class PerpetualRepository internal constructor(
         return takeIf { it.isNotEmpty() && it.all(Char::isDigit) }?.let(BigInteger::parseString)
     }
 
+    private fun providerFees(fees: List<DepositQuoteFee>): PerpetualDepositProviderFees? {
+        var destinationGasUsd = BigDecimal.ZERO
+        var providerUsd = BigDecimal.ZERO
+        for (fee in fees) {
+            val amount = fee.amountUsd.toUsdOrNull() ?: return null
+            if (fee.type == FEE_DESTINATION_GAS) {
+                destinationGasUsd += amount
+            } else {
+                providerUsd += amount
+            }
+        }
+        return PerpetualDepositProviderFees(destinationGasUsd = destinationGasUsd, providerUsd = providerUsd)
+    }
+
+    private fun String.toUsdOrNull(): BigDecimal? {
+        val amount = trim().takeIf { it.length <= MAX_USD_AMOUNT_LENGTH && USD_AMOUNT.matches(it) } ?: return null
+        val normalized = if (amount.startsWith(".")) {
+            "0$amount"
+        } else {
+            amount
+        }
+        return normalized.toBigDecimal()
+    }
+
     private companion object {
-        const val PROVIDER_DIRECT = "direct"
         const val OPERATION_ID = "id"
+        const val FEE_DESTINATION_GAS = "destination_gas"
+        const val MAX_USD_AMOUNT_LENGTH = 64
+        val USD_AMOUNT = Regex("(\\d+(\\.\\d+)?|\\.\\d+)([eE][+-]?\\d{1,2})?")
     }
 }

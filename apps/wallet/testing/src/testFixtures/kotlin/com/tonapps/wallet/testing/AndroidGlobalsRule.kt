@@ -2,6 +2,7 @@ package com.tonapps.wallet.testing
 
 import android.app.Application
 import android.content.SharedPreferences
+import com.tonapps.core.flags.BootFlags
 import com.tonapps.core.flags.FeatureKey
 import com.tonapps.core.flags.FeatureManager
 import com.tonapps.core.flags.RemoteConfigProvider
@@ -14,7 +15,8 @@ import org.junit.runner.Description
 
 /**
  * The globals a feature reaches for before it has a screen, set up the way the app sets them up at
- * startup: the chainkit native lib, [AppContext], and [FeatureManager] backed by [features].
+ * startup: the chainkit native lib, [AppContext], and [FeatureManager] backed by [features]. [BootFlags]
+ * start off, like every flag of [features]: a test turns on what it exercises.
  *
  * The Context is a mock with just enough behaviour for that: a package name (asset image urls are
  * built from it), preferences that never override a flag, and strings that resolve to their name.
@@ -31,10 +33,12 @@ class AndroidGlobalsRule : TestWatcher() {
 
         AppContext.initialize(context)
         FeatureManager.initialize(context, features)
+        BootFlags.update(BootFlags.Values(oneClickSwap = false, txValidation = false))
     }
 
     override fun finished(description: Description) {
         features.clear()
+        BootFlags.reset()
     }
 }
 

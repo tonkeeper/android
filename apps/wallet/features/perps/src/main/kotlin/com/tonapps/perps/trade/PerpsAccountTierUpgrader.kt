@@ -4,6 +4,7 @@ import com.tonapps.log.L
 import com.tonapps.mvi.graph.KResult
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsRepository
+import com.tonapps.time.TimeProvider
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +18,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 class PerpsAccountTierUpgrader(
     private val repository: PerpsRepository,
     private val perpetualRepository: PerpetualRepository,
+    private val timeProvider: TimeProvider,
     private val scope: CoroutineScope,
     private val nowMs: () -> Long = System::currentTimeMillis,
 ) {
@@ -104,7 +106,7 @@ class PerpsAccountTierUpgrader(
             L.d("perps: account $accountIndex is on $tier")
             return KResult.Ok(Unit)
         }
-        val authorization = perpetualRepository.authorization(walletId, nowMs() / 1_000 + AUTH_SECONDS)
+        val authorization = perpetualRepository.authorization(walletId, timeProvider.currentTimeSeconds() + AUTH_SECONDS)
             ?: return KResult.Err(PerpsError.NoAccount)
         val changed = repository.changeAccountTier(walletId, authorization, PLUS_TIER)
         if (changed is KResult.Ok) {

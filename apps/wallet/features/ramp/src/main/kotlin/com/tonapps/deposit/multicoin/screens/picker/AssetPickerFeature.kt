@@ -11,7 +11,6 @@ import com.tonapps.bus.generated.Events.WithdrawFlow.WithdrawFlowFrom
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.deposit.multicoin.analytics.WithdrawAnalytics
 import com.tonapps.mvi.AsyncViewModel
-import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -31,9 +30,9 @@ data class AssetPickerAccount(
 )
 
 class AssetPickerFeature(
+    private val walletId: String,
     private val analyticsFrom: WithdrawFlowFrom,
     private val utm: UtmParameters,
-    private val oldAccount: AccountRepository,
     private val accountRepo: McAccountRepository,
     private val settingsRepository: SettingsRepository,
 ) : AsyncViewModel() {
@@ -64,7 +63,7 @@ class AssetPickerFeature(
                 ),
                 pagingSourceFactory = {
                     AssetPickerPagingSource(
-                        oldAccount = oldAccount,
+                        walletId = walletId,
                         accountRepo = accountRepo,
                         currency = currencyCode,
                         query = query,

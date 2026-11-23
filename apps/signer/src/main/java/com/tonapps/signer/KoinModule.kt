@@ -8,6 +8,7 @@ import com.tonapps.signer.screen.key.KeyViewModel
 import com.tonapps.signer.screen.main.MainViewModel
 import com.tonapps.signer.screen.root.RootViewModel
 import com.tonapps.signer.screen.sign.SignViewModel
+import com.tonapps.signer.screen.storage.StorageViewModel
 import com.tonapps.signer.vault.SignerVault
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -32,4 +33,5 @@ val koinModel = module {
         vault = get<SignerVault>()
     ) }
     viewModel { ChangeViewModel(get(), get()) }
+    viewModel { StorageViewModel(get(), get()) }
 }

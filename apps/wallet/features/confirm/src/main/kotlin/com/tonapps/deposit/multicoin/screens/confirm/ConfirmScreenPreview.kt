@@ -1,14 +1,14 @@
 package com.tonapps.deposit.multicoin.screens.confirm
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,6 +22,7 @@ import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.num.FiatCurrency
 import com.tonapps.chainkit.core.chain.model.num.FiatRate
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
+import com.tonapps.deposit.multicoin.screens.confirm.base.operation.PrepareErrorMessage
 import com.tonapps.deposit.multicoin.screens.confirm.fee.FeeAccount
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFee
 import com.tonapps.wallet.data.multichain.account.AccountBalanceEntity
@@ -37,7 +38,6 @@ import ui.components.moon.cell.MoonPropertyTitle
 import ui.components.moon.cell.MoonPropertyValue
 import ui.components.moon.cell.MoonSlideConfirmation
 import ui.components.moon.cell.MoonSlideConfirmationState
-import ui.components.moon.cell.MoonTextCheckboxCell
 import ui.preview.ThemedPreview
 import ui.theme.UIKit
 
@@ -133,7 +133,7 @@ private fun FeeMethodPickerPreview() {
     }
 }
 
-@Preview
+@Preview(heightDp = 1600)
 @Composable
 private fun PriceImpactWarningDangerPreview() {
     ThemedPreview {
@@ -148,7 +148,7 @@ private fun PriceImpactWarningDangerPreview() {
     }
 }
 
-@Preview
+@Preview(heightDp = 1600)
 @Composable
 private fun PriceImpactWarningWarningPreview() {
     ThemedPreview {
@@ -158,6 +158,36 @@ private fun PriceImpactWarningWarningPreview() {
                 impact = "-3.2%",
                 onConfirm = {},
                 onClose = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun UnavailableFeePreview() {
+    ThemedPreview {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            MoonBundleCell {
+                Column {
+                    MoonPropertyBigCell(
+                        title = stringResource(Localization.amount),
+                        value = "5 GRAM",
+                        valueDescription = "$ 6.86",
+                    )
+                    UnavailableFeeCell(onRetry = {})
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            PrepareErrorMessage(stringResource(Localization.fee_calculation_failed))
+            MoonSlideConfirmation(
+                state = MoonSlideConfirmationState.Slider,
+                title = stringResource(Localization.confirm),
+                subtitle = stringResource(Localization.swipe_right),
+                buttonTitle = stringResource(Localization.try_again),
+                enabled = false,
+                onConfirm = {},
+                onDone = {},
             )
         }
     }
@@ -235,14 +265,6 @@ private fun ExpandendScreenPreview() {
                 }
             }
 
-
-            MoonTextCheckboxCell(
-                text = "Avoid extra fees on future swaps",
-                contentPadding = remember { PaddingValues(16.dp, 10.dp) },
-                isChecked = true,
-                onCheckedChanged = { },
-                onInfo = { },
-            )
 
             MoonSlideConfirmation(
                 state = MoonSlideConfirmationState.Slider,

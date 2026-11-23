@@ -33,7 +33,7 @@ class SignerVault(
     suspend fun getPrivateKey(secret: SecretKey, id: Long): PrivateKeyEd25519 {
         val mnemonic = getMnemonic(secret, id)
         val seed = Mnemonic(mnemonic).toSeed()
-        val privateKey = PrivateKeyEd25519(seed)
+        val privateKey = PrivateKeyEd25519(seed.copyOf(32))
         seed.clear()
         tryCallGC()
         return privateKey

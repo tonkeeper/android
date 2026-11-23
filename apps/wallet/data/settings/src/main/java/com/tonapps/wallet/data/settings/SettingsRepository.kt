@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.icu.util.Currency
-import androidx.core.app.LocaleManagerCompat
 import androidx.core.os.LocaleListCompat
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.ton.TonNetwork
@@ -14,6 +13,7 @@ import com.tonapps.extensions.locale
 import com.tonapps.extensions.putBoolean
 import com.tonapps.extensions.putInt
 import com.tonapps.extensions.putString
+import com.tonapps.extensions.remove
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.SearchEngine
 import com.tonapps.wallet.data.core.Theme
@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
 
 // TODO need to be refactored
 class SettingsRepository(
@@ -97,7 +98,7 @@ class SettingsRepository(
         get() = tokenPrefsFolder.changedFlow
 
     val installId: String
-        get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
+        @Synchronized get() = prefs.getString(INSTALL_ID_KEY, null) ?: run {
             val id = java.util.UUID.randomUUID().toString()
             prefs.putString(INSTALL_ID_KEY, id)
             id
@@ -137,7 +138,7 @@ class SettingsRepository(
             }
         }
 
-    var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, "Google")!!)
+    var searchEngine: SearchEngine = SearchEngine(prefs.getString(SEARCH_ENGINE_KEY, SearchEngine.DUCKDUCKGO.title)!!)
         set(value) {
             if (value != field) {
                 prefs.putString(SEARCH_ENGINE_KEY, value.title)
@@ -253,16 +254,28 @@ class SettingsRepository(
             prefs.putBoolean(LOCK_SCREEN_DISABLED_KEY, value)
         }
 
-    var biometric: Boolean =
-        if (isAvailableBiometric(context)) {
-            prefs.getBoolean(BIOMETRIC_KEY, false)
-        } else {
-            false
-        }
+    var perpsTermsAccepted: Boolean
+        get() = prefs.getBoolean(PERPS_TERMS_ACCEPTED_KEY, false)
         set(value) {
-            if (value != field) {
+            prefs.putBoolean(PERPS_TERMS_ACCEPTED_KEY, value)
+        }
+
+    var swapBatteryPromoShown: Boolean
+        get() = prefs.getBoolean(SWAP_BATTERY_PROMO_SHOWN_KEY, false)
+        set(value) {
+            prefs.putBoolean(SWAP_BATTERY_PROMO_SHOWN_KEY, value)
+        }
+
+    private val biometricValue by lazy {
+        AtomicBoolean(isAvailableBiometric(context) && prefs.getBoolean(BIOMETRIC_KEY, false))
+    }
+
+    var biometric: Boolean
+        get() = biometricValue.get()
+        set(value) {
+            if (value != biometricValue.get()) {
                 prefs.putBoolean(BIOMETRIC_KEY, value)
-                field = value
+                biometricValue.set(value)
                 _biometricFlow.tryEmit(value)
                 migrationHelper.setBiometryEnabled(value)
             }
@@ -271,7 +284,9 @@ class SettingsRepository(
     @Deprecated("Use Environment.countryFlow instead")
     var country: String = fixCountryCode(prefs.getString(COUNTRY_KEY, null))
         set(value) {
-            if (value != field) {
+            // The initial value is a locale fallback that was never stored: persist a pick that
+            // equals it too, or the "chosen" country would keep following the system region.
+            if (value != field || value != prefs.getString(COUNTRY_KEY, null)) {
                 prefs.putString(COUNTRY_KEY, value)
                 field = value
                 _countryFlow.tryEmit(value)
@@ -289,11 +304,17 @@ class SettingsRepository(
             }
         }
 
+    private val _batteryHintFlow = MutableStateFlow(false)
+    val batteryHintFlow = _batteryHintFlow.asStateFlow()
+
     var batteryViewed: Boolean = prefs.getBoolean(BATTERY_VIEWED_KEY, false)
         set(value) {
             if (value != field) {
                 prefs.putBoolean(BATTERY_VIEWED_KEY, value)
                 field = value
+            }
+            if (value) {
+                _batteryHintFlow.value = false
             }
         }
 
@@ -380,6 +401,10 @@ class SettingsRepository(
         _walletPush.tryEmit(Unit)
     }
 
+    fun enableBatteryHint() {
+        _batteryHintFlow.value = !batteryViewed
+    }
+
     fun getSafeModeState(walletId: String): SafeModeState {
         val disabledUnix = walletPrefsFolder.getSafeModeDisabledUnix(walletId)
             ?: prefs.getLong(SAFE_MODE_DISABLED_UNIX_KEY, -5)
@@ -412,6 +437,20 @@ class SettingsRepository(
 
     fun setStoriesViewed(storyId: String) {
         prefs.putBoolean(STORIES_VIEWED_PREFIX + storyId, true)
+    }
+
+    fun getStoryWatchedPage(storyId: String): Int {
+        return prefs.getInt(STORY_WATCHED_PAGE_PREFIX + storyId, -1)
+    }
+
+    fun setStoryWatchedPage(storyId: String, index: Int) {
+        if (index > getStoryWatchedPage(storyId)) {
+            prefs.putInt(STORY_WATCHED_PAGE_PREFIX + storyId, index)
+        }
+    }
+
+    fun clearStoryWatchedPage(storyId: String) {
+        prefs.remove(STORY_WATCHED_PAGE_PREFIX + storyId)
     }
 
     fun setSafeModeState(walletId: String, state: SafeModeState) {
@@ -489,12 +528,6 @@ class SettingsRepository(
         }
     }
 
-    fun getBatteryTxEnabled(accountId: String) = walletPrefsFolder.getBatteryTxEnabled(accountId)
-
-    fun setBatteryTxEnabled(accountId: String, types: Array<BatteryTransaction>) {
-        walletPrefsFolder.setBatteryTxEnabled(accountId, types)
-    }
-
     fun isSafeModeEnabled(walletId: String, network: TonNetwork): Boolean {
         val state = getSafeModeState(walletId)
         if (state == SafeModeState.Default) {
@@ -502,28 +535,6 @@ class SettingsRepository(
         }
 
         return state == SafeModeState.Enabled
-    }
-
-    fun batteryEnableTx(
-        accountId: String,
-        type: BatteryTransaction,
-        enable: Boolean
-    ): Array<BatteryTransaction> {
-        val types = getBatteryTxEnabled(accountId).toMutableSet()
-        if (enable && !types.contains(type)) {
-            types.add(type)
-        } else if (!enable && !types.remove(type)) {
-            return types.toTypedArray()
-        }
-        setBatteryTxEnabled(accountId, types.toTypedArray())
-        return types.toTypedArray()
-    }
-
-    fun batteryIsEnabledTx(accountId: String, type: BatteryTransaction): Boolean {
-        if (type == BatteryTransaction.UNKNOWN) {
-            return false
-        }
-        return getBatteryTxEnabled(accountId).contains(type)
     }
 
     fun getLocale(): Locale {
@@ -535,10 +546,12 @@ class SettingsRepository(
 
     fun getPushLocale(): Locale {
         if (language.code == Language.DEFAULT) {
-            return LocaleManagerCompat.getSystemLocales(context).get(0) ?: context.locale
+            return getSystemLocale()
         }
         return language.locale
     }
+
+    fun getSystemLocale(): Locale = context.systemLocale
 
     fun getDeviceCurrency(): WalletCurrency {
         val locale = context.locale
@@ -585,6 +598,10 @@ class SettingsRepository(
 
     fun getWalletSortIndex(walletId: String): Int? = walletPrefsFolder.getSortIndex(walletId)
 
+    fun setWalletSortIndex(walletId: String, index: Int) {
+        walletPrefsFolder.setSortIndex(walletId, index)
+    }
+
     fun getWalletLastUpdated(walletId: String) = walletPrefsFolder.getLastUpdated(walletId)
 
     fun setWalletLastUpdated(walletId: String) {
@@ -595,6 +612,11 @@ class SettingsRepository(
 
     fun setPreferredFeeMethod(walletId: String, method: PreferredFeeMethod) =
         walletPrefsFolder.setPreferredFeeMethod(walletId, method)
+
+    fun getBatteryPayMethod(walletId: String) = walletPrefsFolder.getBatteryPayMethod(walletId)
+
+    fun setBatteryPayMethod(walletId: String, value: String) =
+        walletPrefsFolder.setBatteryPayMethod(walletId, value)
 
     fun getPreferredTronFeeMethod(walletId: String) =
         walletPrefsFolder.getPreferredTronFeeMethod(walletId)
@@ -687,7 +709,7 @@ class SettingsRepository(
 
     private fun fixCountryCode(code: String?): String {
         return if (code.isNullOrBlank()) {
-            getLocale().country
+            context.systemLocale.country
         } else {
             code
         }
@@ -718,6 +740,9 @@ class SettingsRepository(
         private const val SHOW_SAFE_MODE_SETUP_KEY = "show_safe_mode_setup"
         private const val ADDRESS_COPY_COUNT_KEY = "address_copy_count"
         private const val STORIES_VIEWED_PREFIX = "stories_viewed_"
+        private const val STORY_WATCHED_PAGE_PREFIX = "stories_watched_page_"
+        private const val PERPS_TERMS_ACCEPTED_KEY = "perps_terms_accepted"
+        private const val SWAP_BATTERY_PROMO_SHOWN_KEY = "swap_battery_promo_shown"
         private const val LEDGER_CONNECT_USB = "ledger_connect_usb"
         private const val SEND_TOOLTIP_SHOWN_KEY = "send_tooltip_shown"
         private const val HAD_WALLETS_ON_MULTICHAIN_RELEASE_KEY =

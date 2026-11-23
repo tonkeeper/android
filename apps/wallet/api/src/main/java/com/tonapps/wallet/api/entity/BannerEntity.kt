@@ -1,9 +1,8 @@
 package com.tonapps.wallet.api.entity
 
 import android.os.Parcelable
+import io.tonendpointapi.models.Banner
 import kotlinx.parcelize.Parcelize
-import org.json.JSONArray
-import org.json.JSONObject
 
 @Parcelize
 data class BannerEntity(
@@ -37,35 +36,15 @@ data class BannerEntity(
                 }
             }
         }
-
-        constructor(json: JSONObject) : this(
-            type = Type.of(json.getString("type")),
-            payload = json.getString("payload"),
-            title = json.getString("title")
-        )
     }
 
-    constructor(json: JSONObject) : this(
-        id = json.getString("id"),
-        title = json.getString("title"),
-        description = json.getString("description"),
-        image = json.optStringOrNull("image"),
-        textColor = json.optStringOrNull("textColor"),
-        backgroundColor = json.optStringOrNull("backgroundColor"),
-        button = json.optJSONObject("button")?.let { Button(it) }
+    constructor(banner: Banner) : this(
+        id = banner.id,
+        title = banner.title,
+        description = banner.description,
+        image = banner.image?.takeIf { it.isNotBlank() },
+        textColor = banner.textColor?.takeIf { it.isNotBlank() },
+        backgroundColor = banner.backgroundColor?.takeIf { it.isNotBlank() },
+        button = banner.button?.let { Button(Button.Type.of(it.type), it.payload, it.title) }
     )
-
-    companion object {
-
-        fun parse(array: JSONArray): List<BannerEntity> {
-            return (0 until array.length()).map { BannerEntity(array.getJSONObject(it)) }
-        }
-
-        private fun JSONObject.optStringOrNull(name: String): String? {
-            if (!has(name) || isNull(name)) {
-                return null
-            }
-            return optString(name).takeIf { it.isNotBlank() }
-        }
-    }
 }

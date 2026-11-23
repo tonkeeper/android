@@ -21,7 +21,7 @@ class DeeplinkOpenImpl(
     /**
      * deeplink_open
      *
-     * A link opened the app: a `tonkeeper://` / `ton://` app link, or a universal `https://app.tonkeeper.com/...` link — either launching the app or arriving while it was already running. Sent once per link, before the app routes it, so links the app cannot use are visible too (`link_type: unknown`). A push tap is not counted here: it reports `push_click`, and links opened from inside the app (banners, stories, dapps) report their own placement events.
+     * A link opened the app: a `tonkeeper://` / `ton://` app link, a universal `https://app.tonkeeper.com/...` link, or an AppsFlyer campaign link (OneLink: `keeper.onelink.me`, `go.tonkeeper.com`) — either launching the app or arriving while it was already running. Sent once per link, before the app routes it, so links the app cannot use are visible too (`link_type: unknown`). A campaign link is reported with the screen its `deep_link_value` names (none is `main`, a name the app does not know is `unknown`) and with its utm. A push tap is not counted here: it reports `push_click`, and links opened from inside the app (banners, stories, dapps) report their own placement events.
 
      */
     @AnyThread

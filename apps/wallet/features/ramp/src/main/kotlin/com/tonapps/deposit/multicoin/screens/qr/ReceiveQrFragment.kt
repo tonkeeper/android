@@ -20,6 +20,10 @@ class ReceiveQrFragment : ComposableFragment(), BaseFragment.BottomSheet {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val walletId = requireNotNull(requireArguments().getString(ARG_WALLET_ID)) {
+            "ReceiveQrFragment requires $ARG_WALLET_ID — create it via create(walletId, assetId, analyticsFrom)"
+        }
+
         val assetId = requireNotNull(requireArguments().getString(ARG_ASSET_ID)) {
             "ReceiveQrFragment requires $ARG_ASSET_ID — create it via create(assetId)"
         }
@@ -30,13 +34,14 @@ class ReceiveQrFragment : ComposableFragment(), BaseFragment.BottomSheet {
 
         setContent {
             val feature = koinViewModel<ReceiveQrFeature> {
-                parametersOf(ReceiveQrData(assetId = assetId, analyticsFrom = analyticsFrom))
+                parametersOf(ReceiveQrData(walletId = walletId, assetId = assetId, analyticsFrom = analyticsFrom))
             }
             ReceiveQrScreen(
                 feature = feature,
                 onFallbackToList = {
                     navigation?.add(
                         DepositMulticoinFragment.create(
+                            walletId = walletId,
                             initial = DepositMulticoinRoutes.Receive,
                             analyticsFrom = analyticsFrom,
                         )
@@ -49,15 +54,18 @@ class ReceiveQrFragment : ComposableFragment(), BaseFragment.BottomSheet {
     }
 
     companion object {
+        private const val ARG_WALLET_ID = "wallet_id"
         private const val ARG_ASSET_ID = "asset_id"
         private const val ARG_FROM = "arg_from"
 
         fun create(
+            walletId: String,
             assetId: String,
             analyticsFrom: DepositFlowFrom,
         ): ReceiveQrFragment {
             return ReceiveQrFragment().apply {
                 arguments = Bundle().apply {
+                    putString(ARG_WALLET_ID, walletId)
                     putString(ARG_ASSET_ID, assetId)
                     putString(ARG_FROM, analyticsFrom.key)
                 }

@@ -10,6 +10,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.async.Async
 import com.tonapps.log.L
 import com.tonapps.tonkeeper.extensions.loading
+import com.tonapps.tonkeeper.extensions.showFailureToast
 import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.extensions.showWarningToast
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -98,6 +99,14 @@ abstract class BaseWalletVM(
 
     suspend fun warningToast(@StringRes resId: Int) = withContext(Dispatchers.Main) {
         context.showWarningToast(resId)
+    }
+
+    suspend fun failureToast(@StringRes resId: Int) = withContext(Dispatchers.Main) {
+        context.showFailureToast(resId)
+    }
+
+    suspend fun failureToast(text: String) = withContext(Dispatchers.Main) {
+        context.showFailureToast(text)
     }
 
     suspend fun loading(loading: Boolean) = withContext(Dispatchers.Main) {

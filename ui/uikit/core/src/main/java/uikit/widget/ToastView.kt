@@ -1,6 +1,6 @@
 package uikit.widget
 
-import android.animation.Animator
+import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
@@ -12,16 +12,20 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowInsets
+import android.view.animation.PathInterpolator
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.animation.doOnEnd
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
 import com.tonapps.uikit.color.backgroundContentTintColor
 import uikit.R
 import uikit.extensions.dp
 import uikit.extensions.hapticConfirm
+import uikit.extensions.hapticReject
+import uikit.extensions.hapticSoftTap
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -29,8 +33,7 @@ class ToastView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0,
-) : RowLayout(context, attrs, defStyle), ValueAnimator.AnimatorUpdateListener,
-    Animator.AnimatorListener {
+) : RowLayout(context, attrs, defStyle) {
 
     private data class Data(
         val loading: Boolean,
@@ -38,7 +41,8 @@ class ToastView @JvmOverloads constructor(
         val color: Int,
         val duration: Long,
         @DrawableRes val iconRes: Int,
-        @ColorInt val iconTint: Int
+        @ColorInt val iconTint: Int,
+        val feedback: ToastFeedback,
     )
 
     private var statusBarHeight: Int = 0
@@ -53,16 +57,9 @@ class ToastView @JvmOverloads constructor(
     private val iconView: AppCompatImageView
     private val textView: AppCompatTextView
 
-    private val animator: ValueAnimator by lazy {
-        val startY = -height.toFloat()
-        val endY = statusBarHeight + TOP_OFFSET_DP.dp
-
-        val valueAnimator = ValueAnimator.ofFloat(startY, endY)
-        valueAnimator.duration = 160L
-        valueAnimator.addListener(this@ToastView)
-        valueAnimator.addUpdateListener(this@ToastView)
-        valueAnimator
-    }
+    private var shownFraction = 0f
+    private var fractionTarget = 0f
+    private var fractionAnimator: ValueAnimator? = null
 
     private val horizontalOffset = 24.dp
     private val horizontalOffsetWithIcon = 16.dp
@@ -74,7 +71,11 @@ class ToastView @JvmOverloads constructor(
     private var velocityTracker: VelocityTracker? = null
     private var swipeStartX = 0f
     private var swipeDragging = false
+    private var gestureData: Data? = null
     private var hideAtUptime = 0L
+
+    // The current toast is set but waits for layout to start appearing.
+    private var showPending = false
 
     init {
         inflate(context, R.layout.view_toast, this)
@@ -94,30 +95,36 @@ class ToastView @JvmOverloads constructor(
         color: Int = context.backgroundContentTintColor,
         duration: Long = DURATION_DEFAULT,
         @DrawableRes iconRes: Int = 0,
-        @ColorInt iconTint: Int = Color.TRANSPARENT
+        @ColorInt iconTint: Int = Color.TRANSPARENT,
+        feedback: ToastFeedback = ToastFeedback.Neutral,
     ) {
-        val data = createData(loading, text, color, duration, iconRes, iconTint)
+        val data = createData(loading, text, color, duration, iconRes, iconTint, feedback)
         run(data)
     }
 
     private fun run(data: Data) {
         // Showing the same toast again dismisses it; `loading` stays out of the comparison because
         // that is how the loading toast is hidden — same text and color, only the flag flips.
-        val current = currentData
-        val cancelCurrent = current != null &&
-                current.text == data.text &&
-                current.color == data.color &&
-                current.iconRes == data.iconRes &&
-                current.iconTint == data.iconTint
+        // Compared on the frame that sets the current toast: a hide sent right after its show would
+        // otherwise miss it and wait in the queue behind a loading toast that never hides.
         postOnAnimation {
-            if (cancelCurrent) {
-                hide()
-            } else if (currentData == null) {
-                currentData = data
-            } else {
-                dataQueue.add(data)
+            val current = currentData
+            val queuedLoading = dataQueue.indexOfFirst { it.loading && !data.loading && it.sameToast(data) }
+            when {
+                current != null && current.sameToast(data) -> dismissCurrent()
+                current == null -> currentData = data
+                // A loading toast still waiting behind another one is cancelled in the queue too.
+                queuedLoading >= 0 -> dataQueue.removeAt(queuedLoading)
+                else -> dataQueue.add(data)
             }
         }
+    }
+
+    private fun Data.sameToast(other: Data): Boolean {
+        return text == other.text &&
+                color == other.color &&
+                iconRes == other.iconRes &&
+                iconTint == other.iconTint
     }
 
     private fun createData(
@@ -126,7 +133,8 @@ class ToastView @JvmOverloads constructor(
         color: Int,
         duration: Long,
         @DrawableRes iconRes: Int,
-        @ColorInt iconTint: Int
+        @ColorInt iconTint: Int,
+        feedback: ToastFeedback,
     ): Data {
         return Data(
             loading = loading,
@@ -138,7 +146,8 @@ class ToastView @JvmOverloads constructor(
             },
             duration = duration,
             iconRes = iconRes,
-            iconTint = iconTint
+            iconTint = iconTint,
+            feedback = feedback,
         )
     }
 
@@ -148,7 +157,9 @@ class ToastView @JvmOverloads constructor(
 
     private fun runData() {
         val data = currentData ?: return
-        hapticConfirm()
+        if (!data.loading) {
+            playHaptic(data.feedback)
+        }
         textView.text = data.text
         applyIcon(data)
         val startOffset = if (data.loading || data.iconRes != 0) {
@@ -160,14 +171,17 @@ class ToastView @JvmOverloads constructor(
         background.setTint(data.color)
         removeCallbacks(hideRunnable)
         animate().cancel()
+        stopFractionAnimation()
         translationX = 0f
-        alpha = 1f
+        applyFraction(0f)
         visibility = View.VISIBLE
 
+        showPending = true
         doOnLayout {
             if (data !== currentData) {
                 return@doOnLayout
             }
+            showPending = false
             if (data.loading) {
                 showLoading()
             } else if (loaderView.visibility == View.VISIBLE) {
@@ -175,6 +189,14 @@ class ToastView @JvmOverloads constructor(
             } else {
                 showDefault(data.duration)
             }
+        }
+    }
+
+    private fun playHaptic(feedback: ToastFeedback) {
+        when (feedback) {
+            ToastFeedback.Neutral -> hapticSoftTap()
+            ToastFeedback.Success -> hapticConfirm()
+            ToastFeedback.Failure -> hapticReject()
         }
     }
 
@@ -213,7 +235,65 @@ class ToastView @JvmOverloads constructor(
     }
 
     private fun show() {
+        animateFraction(target = 1f, duration = SHOW_DURATION, interpolator = showInterpolator)
+    }
+
+    private fun shownTranslationY(): Float = statusBarHeight + TOP_OFFSET_DP.dp
+
+    private fun applyFraction(fraction: Float) {
+        shownFraction = fraction
+        alpha = fraction
+        translationY = shownTranslationY() - (1f - fraction) * SLIDE_OFFSET_DP.dp
+    }
+
+    private fun animateFraction(target: Float, duration: Long, interpolator: TimeInterpolator) {
+        stopFractionAnimation()
+        fractionTarget = target
+        val animator = ValueAnimator.ofFloat(shownFraction, target)
+        animator.duration = duration
+        animator.interpolator = interpolator
+        animator.addUpdateListener { applyFraction(it.animatedValue as Float) }
+        animator.doOnEnd {
+            if (fractionAnimator !== animator) {
+                return@doOnEnd
+            }
+            fractionAnimator = null
+            if (target == 0f) {
+                onHidden()
+            }
+        }
+        fractionAnimator = animator
         animator.start()
+    }
+
+    private fun stopFractionAnimation() {
+        val animator = fractionAnimator ?: return
+        fractionAnimator = null
+        animator.cancel()
+    }
+
+    private fun onHidden() {
+        loaderView.visibility = View.GONE
+        visibility = View.GONE
+        nextQueue()
+    }
+
+    // A loading toast dismissed before it started appearing is dropped on the spot: hiding it would let
+    // the pending layout show it afterwards, and it would then stay up for good. A regular toast shown
+    // twice before it appears is shown once.
+    private fun dismissCurrent() {
+        if (!showPending) {
+            hide()
+            return
+        }
+        if (currentData?.loading != true) {
+            return
+        }
+        showPending = false
+        removeCallbacks(hideRunnable)
+        loaderView.visibility = View.GONE
+        visibility = View.GONE
+        nextQueue()
     }
 
     private fun hide() {
@@ -221,12 +301,17 @@ class ToastView @JvmOverloads constructor(
         if (visibility != View.VISIBLE) {
             return
         }
-        animator.reverse()
+        animateFraction(target = 0f, duration = HIDE_DURATION, interpolator = hideInterpolator)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val data = currentData
-        if (data == null || data.loading) {
+        val hiding = fractionAnimator != null && fractionTarget == 0f
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            gestureData = data
+        }
+        if (data == null || data.loading || hiding || data !== gestureData) {
+            gestureData = null
             recycleVelocityTracker()
             swipeDragging = false
             return super.onTouchEvent(event)
@@ -235,6 +320,10 @@ class ToastView @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 removeCallbacks(hideRunnable)
                 animate().cancel()
+                if (fractionAnimator != null) {
+                    stopFractionAnimation()
+                    applyFraction(1f)
+                }
                 recycleVelocityTracker()
                 velocityTracker = VelocityTracker.obtain()
                 trackVelocity(event)
@@ -322,21 +411,13 @@ class ToastView @JvmOverloads constructor(
         if (data !== currentData) {
             return
         }
-        animator.cancel()
-        if (data !== currentData) {
-            return
-        }
+        stopFractionAnimation()
         removeCallbacks(hideRunnable)
         loaderView.visibility = View.GONE
         visibility = View.GONE
         translationX = 0f
-        translationY = -height.toFloat()
-        alpha = 1f
+        applyFraction(0f)
         nextQueue()
-    }
-
-    override fun onAnimationUpdate(animation: ValueAnimator) {
-        translationY = animation.animatedValue as Float
     }
 
     override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
@@ -345,32 +426,32 @@ class ToastView @JvmOverloads constructor(
         return super.onApplyWindowInsets(insets)
     }
 
-    override fun onAnimationStart(animation: Animator) {
-        visibility = View.VISIBLE
-    }
-
-    override fun onAnimationEnd(animation: Animator) {
-        if (translationY <= -height.toFloat() + 1) {
-            loaderView.visibility = View.GONE
-            visibility = View.GONE
-            nextQueue()
+    override fun onVisibilityChanged(changedView: View, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+        if (changedView === this) {
+            ToastPresence.set(this, visibility == View.VISIBLE)
         }
     }
 
-    override fun onAnimationCancel(animation: Animator) {
-    }
-
-    override fun onAnimationRepeat(animation: Animator) {
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        ToastPresence.set(this, false)
     }
 
     companion object {
         const val DURATION_DEFAULT = 2000L
         const val DURATION_LONG = 3000L
 
+        private const val SHOW_DURATION = 300L
+        private const val HIDE_DURATION = 200L
+        private const val SLIDE_OFFSET_DP = 8f
         private const val SWIPE_ANIMATION_DURATION = 160L
         private const val MIN_DISMISS_VELOCITY_DPS = 400
         private const val TOP_OFFSET_DP = 8f
         private const val MIN_HEIGHT_DP = 48
         private const val ELEVATION_DP = 4f
+
+        private val showInterpolator = PathInterpolator(0.16f, 1f, 0.3f, 1f)
+        private val hideInterpolator = PathInterpolator(0.42f, 0f, 1f, 1f)
     }
 }

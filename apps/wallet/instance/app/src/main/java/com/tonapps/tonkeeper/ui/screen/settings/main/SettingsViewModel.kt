@@ -12,6 +12,7 @@ import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.blockchain.ton.extensions.toAccountId
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.legacy.enteties.AssetsEntity
 import com.tonapps.legacy.enteties.AssetsExtendedEntity
 import com.tonapps.tonkeeper.Environment
@@ -33,10 +34,12 @@ import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.backup.entities.BackupEntity
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.core.SearchEngine
+import com.tonapps.wallet.data.ledger.LedgerLegacyTwins
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.plugins.PluginsRepository
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -126,11 +129,7 @@ class SettingsViewModel(
             }
 
             val hasNonMultichainWallets = withContext(Dispatchers.IO) {
-                accountRepository.getWallets().any { candidate ->
-                    candidate.hasPrivateKey &&
-                        !candidate.testnet &&
-                        candidate.type != WalletType.Multichain
-                }
+                accountRepository.getWallets().any { it.canMigrateToMultichain }
             }
 
             buildUiItems(
@@ -209,7 +208,7 @@ class SettingsViewModel(
     }
 
     fun setSearchEngine(searchEngine: SearchEngine?) {
-        val engine = searchEngine ?: SearchEngine.GOOGLE
+        val engine = searchEngine ?: SearchEngine.DUCKDUCKGO
         settingsRepository.searchEngine = engine
         FirebaseHelper.searchEngine(engine.title)
     }
@@ -228,23 +227,41 @@ class SettingsViewModel(
         }
     }
 
-    fun signOut(callback: () -> Unit) {
-        analytics.simpleTrackEvent("delete_wallet")
+    fun signOut(onConfirmed: () -> Unit, onDeleted: () -> Unit) {
+        val wallet = walletFlow.value ?: return
 
-        when (val wallet = walletFlow.value) {
+        viewModelScope.launch {
+            if (hasSeed(wallet) && !passcodeManager.confirmation(context, PasscodeReason.DELETE_WALLET)) {
+                return@launch
+            }
+            onConfirmed()
+            analytics.simpleTrackEvent("delete_wallet")
+            deleteWallet(wallet, onDeleted)
+        }
+    }
+
+    private fun hasSeed(wallet: Wallet): Boolean = when (wallet) {
+        is Wallet.Legacy -> wallet.entity.hasPrivateKey
+        is Wallet.Multichain -> !wallet.entity.isHardware
+    }
+
+    private fun deleteWallet(wallet: Wallet, callback: () -> Unit) {
+        when (wallet) {
             is Wallet.Legacy -> {
                 val entity = wallet.entity
 
                 viewModelScope.launch(Dispatchers.IO) {
-                    tonConnectManager.clear(entity)
-                    PushToggleWorker.run(context, entity, PushManager.State.Delete)
-                    delay(2000)
+                    withContext(NonCancellable) {
+                        tonConnectManager.clear(entity)
+                        PushToggleWorker.run(context, entity, PushManager.State.Delete)
+                        delay(2000)
 
-                    withContext(Dispatchers.Main) {
-                        callback()
+                        withContext(Dispatchers.Main) {
+                            callback()
+                        }
+
+                        unifiedAccountRepository.deleteWallet(entity.id)
                     }
-
-                    unifiedAccountRepository.deleteWallet(entity.id)
                 }
             }
 
@@ -267,8 +284,6 @@ class SettingsViewModel(
                     }
                 }
             }
-
-            null -> Unit
         }
     }
 
@@ -277,7 +292,7 @@ class SettingsViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             val passcode = withContext(Dispatchers.Main) {
-                passcodeManager.legacyGetPasscode(context)
+                passcodeManager.legacyGetPasscode(context, PasscodeReason.ADD_WALLET)
             } ?: return@launch
 
             val newLabel = TonWallet.Label(
@@ -366,6 +381,7 @@ class SettingsViewModel(
                 language = language,
                 searchEngine = searchEngine,
                 hasBackup = hasBackup,
+                hasSeed = hasSeed(kind),
             )
 
             is Wallet.Multichain -> buildMultichainUiItems(
@@ -375,6 +391,7 @@ class SettingsViewModel(
                 searchEngine = searchEngine,
                 hasBackup = hasBackup,
                 hasNonMultichainWallets = hasNonMultichainWallets,
+                hasSeed = hasSeed(kind),
             )
         }
     }
@@ -385,6 +402,7 @@ class SettingsViewModel(
         language: Language,
         searchEngine: SearchEngine,
         hasBackup: Boolean,
+        hasSeed: Boolean,
     ): List<Item> {
         val config = api.getConfig(wallet.network)
         val hasW5Wallet = computeHasW5(wallet)
@@ -394,6 +412,11 @@ class SettingsViewModel(
         uiItems.add(Item.Account(wallet))
 
         uiItems.add(Item.Space)
+
+        if (WalletFeature.LedgerMultichain.isEnabled && LedgerLegacyTwins.isMigratable(wallet)) {
+            uiItems.add(Item.LedgerMigration(ListCell.Position.SINGLE, wallet.id))
+            uiItems.add(Item.Space)
+        }
 
         if (wallet.hasPrivateKey) {
             uiItems.add(Item.Backup(ListCell.Position.FIRST, hasBackup))
@@ -414,7 +437,8 @@ class SettingsViewModel(
             ListCell.Position.FIRST
         }
 
-        if (wallet.hasPrivateKey) {
+        // A Telegram wallet has no other version of itself to add.
+        if (wallet.hasPrivateKey && !wallet.isWalletTg) {
             if (!hasW5Wallet) {
                 uiItems.add(Item.W5(secondCellPosition))
                 secondCellPosition = ListCell.Position.MIDDLE
@@ -451,6 +475,7 @@ class SettingsViewModel(
 
         if (
             wallet.hasPrivateKey &&
+            wallet.supportsBattery &&
             (!config.flags.disableBattery || getBatteryCharges(wallet) > 0)
         ) {
             uiItems.add(Item.Battery(ListCell.Position.MIDDLE))
@@ -473,7 +498,7 @@ class SettingsViewModel(
                 Item.Logout(
                     ListCell.Position.SINGLE,
                     wallet.label,
-                    !wallet.hasPrivateKey
+                    delete = !hasSeed,
                 )
             )
         }
@@ -491,6 +516,7 @@ class SettingsViewModel(
         searchEngine: SearchEngine,
         hasBackup: Boolean,
         hasNonMultichainWallets: Boolean,
+        hasSeed: Boolean,
     ): List<Item> {
         val displayWallet = mcToDisplayEntity(mc)
         val config = api.getConfig(TonNetwork.MAINNET)
@@ -509,7 +535,11 @@ class SettingsViewModel(
             uiItems.add(Item.Space)
         }
 
-        uiItems.add(Item.Backup(ListCell.Position.FIRST, hasBackup))
+        if (mc.isHardware) {
+            uiItems.add(Item.LedgerDevice(ListCell.Position.FIRST, mc.id))
+        } else {
+            uiItems.add(Item.Backup(ListCell.Position.FIRST, hasBackup))
+        }
         var cellPosition = ListCell.Position.MIDDLE
 
         if (environment.isGooglePlayServicesAvailable) {
@@ -552,7 +582,7 @@ class SettingsViewModel(
             Item.Logout(
                 ListCell.Position.SINGLE,
                 displayWallet.label,
-                delete = false
+                delete = !hasSeed,
             )
         )
         uiItems.add(Item.Space)
@@ -579,7 +609,7 @@ class SettingsViewModel(
     }
 
     private suspend fun hasInstalledExtensions(wallet: WalletEntity): Boolean = withContext(Dispatchers.IO) {
-        val plugins = pluginsRepository.getPlugins(wallet.accountId, wallet.network)
+        val plugins = pluginsRepository.getPlugins(wallet)
         plugins.isNotEmpty()
     }
 }

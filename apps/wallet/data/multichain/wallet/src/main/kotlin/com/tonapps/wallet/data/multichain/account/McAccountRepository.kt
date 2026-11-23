@@ -8,9 +8,11 @@ import com.tonapps.chainkit.core.chain.model.account.Account
 import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.LedgerWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
-import com.tonapps.chainkit.core.chain.model.account.WalletKind
+import com.tonapps.chainkit.core.common.getOrElse
 import com.tonapps.chainkit.core.secure.mnemonic.EntropySize
 import com.tonapps.chainkit.core.secure.mnemonic.Mnemonic
 import com.tonapps.extensions.lazyUnsafe
@@ -30,10 +32,14 @@ import com.tonapps.wallet.data.multichain.wallet.WalletDao
 import com.tonapps.wallet.data.cache.JsonResponseCache
 import com.tonapps.wallet.data.cache.JsonCacheRepository
 import com.tonapps.wallet.data.multichain.device.SecureDeviceRepository
+import com.tonapps.wallet.data.multichain.hardware.HardwareAccountDraft
+import com.tonapps.wallet.data.multichain.hardware.HardwareWalletDescriptor
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
 import com.tonapps.wallet.data.multichain.vault.WalletKeyRepository
 import com.tonapps.wallet.data.cache.JsonResponseCacheScope
+import com.tonapps.wallet.data.earn.EarnRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
+import io.walletapi.models.Asset
 import io.walletapi.models.GetDeviceBindingsRequest
 import io.walletapi.models.GetWalletAssets200Response
 import io.walletapi.models.RegisterWalletsRequest
@@ -49,9 +55,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -103,7 +114,33 @@ interface McAccountRepository {
         tonWalletType: Address.Type = Address.Type.TonV5R1,
     ): McWalletEntity
 
-    suspend fun getCryptoWallet(walletId: String, mnemonicCoder: MnemonicCoder): CryptoWallet?
+    suspend fun createHardwareWallet(
+        descriptor: HardwareWalletDescriptor,
+        accounts: List<HardwareAccountDraft>,
+        walletSeed: ByteArray,
+        mnemonicCoder: MnemonicCoder,
+        name: String,
+        emoji: CharSequence,
+        color: Int,
+    ): McWalletEntity
+
+    suspend fun addHardwareAccounts(
+        walletId: String,
+        descriptor: HardwareWalletDescriptor,
+        accounts: List<HardwareAccountDraft>,
+    )
+
+    suspend fun getHardwareDescriptor(walletId: String): HardwareWalletDescriptor?
+
+    suspend fun updateHardwareDescriptor(walletId: String, descriptor: HardwareWalletDescriptor)
+
+    suspend fun findWalletIdsByAddress(chain: Chain, address: String): List<String>
+
+    suspend fun hasHardwareWalletsWithoutReadableAppKey(): Boolean
+
+    suspend fun restoreHardwareAppKeys(mnemonicCoder: MnemonicCoder)
+
+    suspend fun getCryptoWallet(walletId: String, mnemonicCoder: MnemonicCoder): MnemonicWallet?
 
     suspend fun getWalletKeyPair(walletId: String): WalletKeyPair?
 
@@ -164,6 +201,8 @@ interface McAccountRepository {
 
     suspend fun fetchWalletTotals(walletId: String, currency: String): WalletTotals
 
+    fun observeCachedAccounts(query: WalletAssetsQuery): Flow<List<AccountWithDetails>>
+
     suspend fun getCachedAccounts(
         walletId: String,
         currency: String? = null,
@@ -197,6 +236,7 @@ class AccountRepositoryImpl(
     private val settings: SettingsRepository,
     private val api: API,
     private val perpetualRepository: PerpetualRepository,
+    private val earnRepository: EarnRepository,
 ) : McAccountRepository {
 
     private val _refreshTrigger = MutableSharedFlow<Unit>(
@@ -222,9 +262,6 @@ class AccountRepositoryImpl(
             .toSet()
     }
 
-    // v2 multichain registration parameters. The server binds these into the wallet_id and the
-    // register proof, so the same values must feed both the local wallet_id derivation and the proof.
-    private val walletKind = WalletKind.Multichain
     private var _accounts = ConcurrentHashMap<String, CachedAccount>()
     private val requestCounter = AtomicLong()
 
@@ -240,7 +277,7 @@ class AccountRepositoryImpl(
 
     // Materialize the mnemonic words only inside this call and zero the array afterwards (the joined
     // String passed to HDWallet is immutable and cannot be zeroed — confined here and short-lived).
-    private fun cryptoWallet(mnemonic: Mnemonic): CryptoWallet {
+    private fun cryptoWallet(mnemonic: Mnemonic): MnemonicWallet {
         return CryptoWallet.fromMnemonic(mnemonic)
     }
 
@@ -269,10 +306,10 @@ class AccountRepositoryImpl(
 
         val accounts = createAccountsForWallet(wallet, cryptoWallet)
 
-        val keyPair = cryptoWallet.walletKeyPair(walletKind)
+        val keyPair = cryptoWallet.walletKeyPair()
         try {
             bindingsMutex.withLock {
-                registerWallet(WalletRegistration(wallet.id, keyPair, accounts))
+                registerWallet(WalletRegistration(wallet.id, keyPair, accounts, isHardware = false))
 
                 val walletAppCredential = appKeyRepository.sealedEntity(
                     walletId = wallet.id,
@@ -296,12 +333,174 @@ class AccountRepositoryImpl(
         wallet
     }
 
+    override suspend fun createHardwareWallet(
+        descriptor: HardwareWalletDescriptor,
+        accounts: List<HardwareAccountDraft>,
+        walletSeed: ByteArray,
+        mnemonicCoder: MnemonicCoder,
+        name: String,
+        emoji: CharSequence,
+        color: Int,
+    ): McWalletEntity = withContext(Dispatchers.IO) {
+        try {
+            require(accounts.any { it.chain is Chain.Ton }) { "A hardware wallet needs a TON account" }
+            val ledgerWallet = LedgerWallet.fromSeed(walletSeed).getOrElse { throw it }
+            storeHardwareWallet(descriptor, accounts, ledgerWallet.walletKeyPair(), walletSeed, mnemonicCoder, name, emoji, color)
+        } finally {
+            walletSeed.fill(0)
+        }
+    }
+
+    private suspend fun storeHardwareWallet(
+        descriptor: HardwareWalletDescriptor,
+        accounts: List<HardwareAccountDraft>,
+        keyPair: WalletKeyPair,
+        walletSeed: ByteArray,
+        mnemonicCoder: MnemonicCoder,
+        name: String,
+        emoji: CharSequence,
+        color: Int,
+    ): McWalletEntity {
+        try {
+            val walletId = keyPair.walletIdV2()
+            val descriptorCredential = CredentialEntity(
+                data = descriptor.encode(),
+                id = CredentialIds.hardwareDescriptor(walletId),
+            )
+            val recoveryCredential = CredentialEntity(
+                data = mnemonicCoder.encryptBytes(walletSeed),
+                id = CredentialIds.hardwareAppKey(walletId),
+            )
+            val wallet = McWalletEntity(
+                id = walletId,
+                credentialId = descriptorCredential.id,
+                name = name,
+                emoji = emoji.toString(),
+                color = color,
+                type = McWalletType.Multicoin,
+                tonWalletType = Address.Type.TonV4R2,
+            )
+            val entities = accounts.map { it.toEntity(walletId) }
+            bindingsMutex.withLock {
+                registerWallet(WalletRegistration(walletId, keyPair, entities, isHardware = true))
+                val sessionCredential = appKeyRepository.sealedEntity(walletId, keyPair.privateKey.copyOf())
+                    ?: throw IllegalStateException("Session is locked, the hardware wallet app key cannot be stored")
+                walletBundleDao.insertNewHardwareWallet(
+                    credentials = listOf(descriptorCredential, recoveryCredential, sessionCredential),
+                    wallet = wallet,
+                    accounts = entities,
+                )
+                _refreshTrigger.tryEmit(Unit)
+            }
+            return wallet
+        } finally {
+            keyPair.privateKey.fill(0)
+        }
+    }
+
+    override suspend fun addHardwareAccounts(
+        walletId: String,
+        descriptor: HardwareWalletDescriptor,
+        accounts: List<HardwareAccountDraft>,
+    ) = withContext(Dispatchers.IO) {
+        val wallet = walletDao.getWallet(walletId)?.takeIf { it.isHardware }
+            ?: throw IllegalStateException("Hardware wallet not found (walletId=$walletId)")
+        bindingsMutex.withLock {
+            val existing = accountDao.getAccountsByWalletId(walletId)
+            val added = accounts
+                .filterNot { draft -> existing.any { it.chain == draft.chain && it.addressType == draft.addressType } }
+                .map { it.toEntity(walletId) }
+            val keyPair = getWalletAppKeyPair(walletId)
+            try {
+                registerWallet(WalletRegistration(walletId, keyPair, existing + added, isHardware = true))
+            } finally {
+                keyPair.privateKey.fill(0)
+            }
+            credentialDao.insertCredential(CredentialEntity(data = descriptor.encode(), id = wallet.credentialId))
+            accountDao.insertAccounts(added)
+            _refreshTrigger.tryEmit(Unit)
+        }
+        Unit
+    }
+
+    override suspend fun getHardwareDescriptor(walletId: String): HardwareWalletDescriptor? = withContext(Dispatchers.IO) {
+        val wallet = walletDao.getWallet(walletId)?.takeIf { it.isHardware } ?: return@withContext null
+        val data = credentialDao.getData(wallet.credentialId) ?: return@withContext null
+        try {
+            HardwareWalletDescriptor.decode(data)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            L.e(e)
+            null
+        }
+    }
+
+    override suspend fun updateHardwareDescriptor(
+        walletId: String,
+        descriptor: HardwareWalletDescriptor,
+    ) = withContext(Dispatchers.IO) {
+        val wallet = walletDao.getWallet(walletId)?.takeIf { it.isHardware } ?: return@withContext
+        credentialDao.insertCredential(CredentialEntity(data = descriptor.encode(), id = wallet.credentialId))
+        _refreshTrigger.tryEmit(Unit)
+        Unit
+    }
+
+    override suspend fun findWalletIdsByAddress(chain: Chain, address: String): List<String> = withContext(Dispatchers.IO) {
+        accountDao.getWalletIdsByAddress(chain.network.type.id, chain.network.mode.id, address)
+    }
+
+    override suspend fun hasHardwareWalletsWithoutReadableAppKey(): Boolean = withContext(Dispatchers.IO) {
+        walletDao.getWallets().any { it.isHardware && !hasReadableAppKey(it.id) }
+    }
+
+    override suspend fun restoreHardwareAppKeys(mnemonicCoder: MnemonicCoder) = withContext(Dispatchers.IO) {
+        for (wallet in walletDao.getWallets()) {
+            if (!wallet.isHardware || hasReadableAppKey(wallet.id)) {
+                continue
+            }
+            val sealed = credentialDao.getData(CredentialIds.hardwareAppKey(wallet.id)) ?: continue
+            try {
+                val walletSeed = mnemonicCoder.decryptBytes(sealed)
+                val ledgerWallet = try {
+                    LedgerWallet.fromSeed(walletSeed).getOrElse { throw it }
+                } finally {
+                    walletSeed.fill(0)
+                }
+                appKeyRepository.save(wallet.id, ledgerWallet.walletKeyPair().privateKey)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                L.e(e)
+            }
+        }
+    }
+
+    private suspend fun hasReadableAppKey(walletId: String): Boolean {
+        if (!appKeyRepository.hasAppKey(walletId)) {
+            return false
+        }
+        val key = appKeyRepository.getAppPrivateKey(walletId) ?: return false
+        key.fill(0)
+        return true
+    }
+
+    private fun HardwareAccountDraft.toEntity(walletId: String): AccountEntity = AccountEntity(
+        walletId = walletId,
+        network = chain.network.type.id,
+        mode = chain.network.mode.id,
+        displayAddress = displayAddress,
+        publicKey = publicKeyHex,
+        segwitPublicKey = extendedPublicKey,
+        addressType = addressType,
+    )
+
     override suspend fun hasMissingChains(): Boolean = withContext(Dispatchers.IO) {
         val accounts = accountDao.getAllAccounts()
             .groupBy { it.walletId }
 
         walletDao.getWallets().any {
-            missingChains(accounts[it.id].orEmpty()).isNotEmpty()
+            !it.isHardware && missingChains(accounts[it.id].orEmpty()).isNotEmpty()
         }
     }
 
@@ -310,6 +509,7 @@ class AccountRepositoryImpl(
             .groupBy { it.walletId }
 
         val missing = walletDao.getWallets()
+            .filterNot { it.isHardware }
             .flatMap { missingChains(accounts[it.id].orEmpty()) }
             .toSet()
         Chain.displayOrder.filter { it in missing }
@@ -351,7 +551,7 @@ class AccountRepositoryImpl(
             try {
                 for (wallet in wallets) {
                     val existing = accounts[wallet.id].orEmpty()
-                    val chainSync = mnemonicCoder?.let { coder ->
+                    val chainSync = mnemonicCoder?.takeUnless { wallet.isHardware }?.let { coder ->
                         chainSync(wallet.id, existing, credentials[wallet.credentialId], coder)
                     }
                     val sync = when {
@@ -434,7 +634,7 @@ class AccountRepositoryImpl(
                 .use { cryptoWallet(it) }
             val added = accountEntities(walletId, cryptoWallet, missing)
             WalletSync(
-                registration = WalletRegistration(walletId, cryptoWallet.walletKeyPair(walletKind), existing + added),
+                registration = WalletRegistration(walletId, cryptoWallet.walletKeyPair(), existing + added, isHardware = false),
                 added = added,
             )
         } catch (e: Throwable) {
@@ -456,9 +656,9 @@ class AccountRepositoryImpl(
     override suspend fun getCryptoWallet(
         walletId: String,
         mnemonicCoder: MnemonicCoder,
-    ): CryptoWallet? {
+    ): MnemonicWallet? {
         return withContext(Dispatchers.IO) {
-            val wallet = walletDao.getWallet(walletId) ?: return@withContext null
+            val wallet = walletDao.getWallet(walletId)?.takeUnless { it.isHardware } ?: return@withContext null
             val credential =
                 credentialDao.getCredential(wallet.credentialId) ?: return@withContext null
             val cryptoWallet = mnemonicCoder.decryptMnemonic(credential.data)
@@ -467,7 +667,7 @@ class AccountRepositoryImpl(
             if (!appKeyRepository.hasAppKey(walletId)) {
                 appKeyRepository.save(
                     walletId,
-                    cryptoWallet.walletKeyPair(walletKind).privateKey
+                    cryptoWallet.walletKeyPair().privateKey
                 )
             }
             cryptoWallet
@@ -478,7 +678,7 @@ class AccountRepositoryImpl(
         walletId: String,
         mnemonicCoder: MnemonicCoder,
     ): Array<String>? = withContext(Dispatchers.IO) {
-        val w = walletDao.getWallet(walletId) ?: return@withContext null
+        val w = walletDao.getWallet(walletId)?.takeUnless { it.isHardware } ?: return@withContext null
         val credential = credentialDao.getCredential(w.credentialId) ?: return@withContext null
         mnemonicCoder.decryptMnemonic(credential.data)
             .use { it.toWordsUnsafe().toList().toTypedArray() } // TODO replace with indexes
@@ -492,14 +692,14 @@ class AccountRepositoryImpl(
         walletDao.walletExists(walletId(cryptoWallet(mnemonic)))
     }
 
-    private fun walletId(cryptoWallet: CryptoWallet): String {
-        return cryptoWallet.walletIdV2(walletKind)
+    private fun walletId(cryptoWallet: MnemonicWallet): String {
+        return cryptoWallet.walletIdV2()
     }
 
     override suspend fun getWalletKeyPair(walletId: String): WalletKeyPair? {
         val appPrivateKey = appKeyRepository.getAppPrivateKey(walletId)
             ?: return null
-        return WalletKeyPair.fromPrivateKey(appPrivateKey, walletKind)
+        return WalletKeyRepository.keyPair(walletId, appPrivateKey)
     }
 
     private suspend fun getWalletAppKeyPair(walletId: String): WalletKeyPair {
@@ -568,6 +768,7 @@ class AccountRepositoryImpl(
         bindingsMutex.withLock {
             val wallet = walletDao.getWallet(walletId) ?: return@withLock
             unregisterWalletBindings(listOf(walletId))
+            earnRepository.forgetWallet(walletId)
             jsonCacheRepository.deleteByWalletId(walletId)
             walletBundleDao.deleteWallet(
                 walletId = walletId,
@@ -602,6 +803,7 @@ class AccountRepositoryImpl(
         val walletId: String,
         val keyPair: WalletKeyPair,
         val accounts: List<AccountEntity>,
+        val isHardware: Boolean,
     )
 
     /** [added] are the accounts to store once [registration] is accepted. */
@@ -641,7 +843,7 @@ class AccountRepositoryImpl(
             val challenge = api.multichain.wallets.getWalletChallenge()
                 .challenge
 
-            val items = batch.map { registration ->
+            val signed = batch.mapNotNull { registration ->
                 val apiAccounts = registration.accounts.mapNotNull { entity ->
                     val apiChain = entity.chain.toApiChain() ?: return@mapNotNull null
                     entity to apiChain
@@ -653,8 +855,12 @@ class AccountRepositoryImpl(
                     challenge = challenge,
                     accounts = apiAccounts.map { (entity, _) -> entity.toProofAccount() },
                 )
+                if (registration.isHardware && proof.walletId != registration.walletId) {
+                    L.e(IllegalStateException("Register proof wallet id does not match (walletId=${registration.walletId})"))
+                    return@mapNotNull null
+                }
 
-                WalletRegisterItem(
+                registration to WalletRegisterItem(
                     accounts = apiAccounts.map { (entity, apiChain) ->
                         WalletAccount(
                             chain = apiChain,
@@ -666,13 +872,16 @@ class AccountRepositoryImpl(
                     walletProof = proof.signature,
                 )
             }
+            if (signed.isEmpty()) {
+                return emptyMap()
+            }
 
             val response = api.multichain.auth.registerWallets(
-                RegisterWalletsRequest(challenge = challenge, wallets = items)
+                RegisterWalletsRequest(challenge = challenge, wallets = signed.map { it.second })
             )
 
             return response.results.mapNotNull { result ->
-                batch.getOrNull(result.index)?.let { it.walletId to result }
+                signed.getOrNull(result.index)?.let { it.first.walletId to result }
             }.toMap()
         } catch (e: Throwable) {
             L.e(e)
@@ -716,7 +925,7 @@ class AccountRepositoryImpl(
             return null
         }
 
-        return WalletRegistration(walletId, keyPair, accounts)
+        return WalletRegistration(walletId, keyPair, accounts, isHardware = walletDao.getWallet(walletId)?.isHardware == true)
     }
 
     private fun AccountEntity.toProofAccount(): Account {
@@ -774,25 +983,28 @@ class AccountRepositoryImpl(
             currencies = listOf(currencyCode),
         )
         val asset = item.asset.toAssetEntity()
+        val chain = asset.valueOrNull?.chain ?: run {
+            _accounts.remove(cacheKey)
+            return@withContext null
+        }
         val wallet = walletDao.getWallet(walletId)
         val account = resolvePrimaryAccount(
             accounts = accountDao.getAccountsByWalletId(walletId),
-            chain = asset.value.chain,
+            chain = chain,
             tonWalletType = wallet?.tonWalletType,
         ) ?: run {
             _accounts.remove(cacheKey)
             return@withContext null
         }
 
-        // A wallet registers both TON contract variants, and this endpoint answers with one of them,
-        // not necessarily the primary one the account stands for. The list carries a row per variant,
-        // so the primary's balance is read there, the way the asset list reads it.
-        val balance = when {
-            account.chain !is Chain.Ton -> item.balance
-            // Wallets from before the two variants have one untyped TON account: nothing to choose.
-            account.addressType == Address.Type.Default -> item.balance
-            item.type.toAddressType() == account.addressType -> item.balance
-            else -> fetchPrimaryBalance(walletId, assetId, currencyCode, account)
+        // A wallet may register more than one account on a chain — both TON contract variants, a second
+        // Solana address — and this endpoint answers with one of them, not necessarily the primary one
+        // the account stands for. The list carries a row per account, so the primary's balance is read
+        // there, the way the asset list reads it; a primary missing from the list holds none of the asset.
+        val balance = if (item.belongsTo(account)) {
+            item.balance
+        } else {
+            fetchPrimaryBalance(walletId, assetId, currencyCode, account) ?: "0"
         }
 
         cacheAccount(
@@ -808,13 +1020,13 @@ class AccountRepositoryImpl(
         )
     }
 
-    // The balance [account] holds of [assetId]; no row for it means it holds none.
+    // The balance [account] holds of [assetId], or null when the list has no row of its.
     private fun fetchPrimaryBalance(
         walletId: String,
         assetId: String,
         currency: String,
         account: AccountEntity,
-    ): String {
+    ): String? {
         val response = api.multichain.wallets.getWalletAssets(
             walletId = walletId,
             currencies = listOf(currency),
@@ -823,8 +1035,18 @@ class AccountRepositoryImpl(
             showAll = true,
             xWalletId = walletId,
         )
-        val row = response.assets.firstOrNull { it.asset.assetId == assetId && it.type.toAddressType() == account.addressType }
-        return row?.balance ?: "0"
+        val row = response.assets.firstOrNull { it.asset.assetId == assetId && it.belongsTo(account) }
+        return row?.balance
+    }
+
+    // A row of the wallet's assets is [account]'s by its contract variant on TON, by its address elsewhere.
+    // TODO: compare addresses as chainkit normalizes them (Address.force(…, chain)): a backend echoing a
+    //  non-TON address in another form than the one registered would drop that chain's rows from the list.
+    private fun Asset.belongsTo(account: AccountEntity): Boolean = when {
+        account.chain !is Chain.Ton -> address.equals(account.displayAddress, ignoreCase = account.chain.isEvm)
+        // Wallets from before the two variants have one untyped TON account: nothing to choose.
+        account.addressType == Address.Type.Default -> true
+        else -> type.toAddressType() == account.addressType
     }
 
     private class CachedAccount(
@@ -974,6 +1196,44 @@ class AccountRepositoryImpl(
         }
     }
 
+    override fun observeCachedAccounts(query: WalletAssetsQuery): Flow<List<AccountWithDetails>> = jsonCacheRepository.observeJson(
+        scope = JsonResponseCacheScope.WALLET_ASSETS,
+        cacheKey = walletAssetsCacheKey(
+            walletId = query.walletId,
+            currency = query.currency,
+            availableOnly = query.availableOnly,
+            showHidden = query.showHidden,
+            showAll = query.showAll,
+            query = query.query,
+            network = query.network,
+            capabilities = query.capabilities,
+            verifiedOnly = query.verifiedOnly,
+            hideDust = query.hideDust,
+        ),
+        walletId = query.walletId,
+    ).mapNotNull { json ->
+        if (json == null) {
+            return@mapNotNull emptyList()
+        }
+        try {
+            val response = JsonResponseCache.decode<GetWalletAssets200Response>(json)
+                ?: return@mapNotNull null
+            mapWalletAssetsResponse(
+                walletId = query.walletId,
+                currency = query.currency,
+                response = response,
+                requestNumber = DISK_SNAPSHOT_REQUEST_NUMBER,
+            ).accounts
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            L.e(e)
+            null
+        }
+    }.catch { e ->
+        L.e(e)
+    }.flowOn(Dispatchers.IO)
+
     private fun latestFetchedOr(
         walletId: String,
         currency: String,
@@ -1040,12 +1300,18 @@ class AccountRepositoryImpl(
 
         val accounts = response.assets.mapNotNull { item ->
             val asset = item.asset.toAssetEntity()
-            val chain = asset.value.chain
+            // Skip assets on chains this build doesn't know (e.g. a chain added in a newer app
+            // version and registered for this wallet there) instead of failing the whole list.
+            val chain = asset.valueOrNull?.chain ?: return@mapNotNull null
             val addressType = item.type.toAddressType()
             val account = walletAccounts.firstOrNull { it.chain == chain && it.addressType == addressType }
                 ?: walletAccounts.firstOrNull { it.chain == chain }
                 ?: return@mapNotNull null
             if (account.chain is Chain.Ton && account.id != primaryTonAccountId) {
+                return@mapNotNull null
+            }
+            // Another address of the chain's, a second Solana one, is not the account the list shows.
+            if (account.chain !is Chain.Ton && !item.belongsTo(account)) {
                 return@mapNotNull null
             }
 
@@ -1121,17 +1387,17 @@ class AccountRepositoryImpl(
 
     private suspend fun createAccountsForWallet(
         wallet: McWalletEntity,
-        cryptoWallet: CryptoWallet,
+        cryptoWallet: MnemonicWallet,
     ): List<AccountEntity> = withContext(Dispatchers.IO) {
         accountEntities(wallet.id, cryptoWallet, mainnetChains)
     }
 
     // TON and BTC each register two wallet variants per chain; every other chain has a single
     // default account. Each variant becomes its own AccountEntity carrying its addressType, and the
-    // address is derived per type via CryptoWallet.getAddress(chain, type).
+    // address is derived per type via MnemonicWallet.getAddress(chain, type).
     private fun accountEntities(
         walletId: String,
-        cryptoWallet: CryptoWallet,
+        cryptoWallet: MnemonicWallet,
         chains: Collection<Chain>,
     ): List<AccountEntity> = chains.flatMap { chain ->
         val pubKey = cryptoWallet.getPublicKey(chain)

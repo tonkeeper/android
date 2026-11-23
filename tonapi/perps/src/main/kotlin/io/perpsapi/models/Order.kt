@@ -93,6 +93,10 @@ data class Order(
     @SerialName(value = "roi")
     val roi: String? = null,
 
+    /* Take-profit and stop-loss placed with this order. They wait for the order to fill, then protect the new position. Null if there are none or the order is not on the book. */
+    @SerialName(value = "auto_close")
+    val autoClose: OrderAutoClose? = null,
+
     /* Fee breakdown, null if not yet known. Always null today: nothing populates it, so a client must not rely on it. Lighter reports per-order fees and this service does not map them yet. */
     @SerialName(value = "fees")
     val fees: OrderFees? = null,

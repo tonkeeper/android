@@ -3,7 +3,6 @@ package com.tonapps.tonkeeper.ui.screen.battery.recharge.list.holder
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import com.tonapps.tonkeeper.ui.screen.battery.recharge.entity.RechargePackType
 import com.tonapps.tonkeeper.ui.screen.battery.recharge.list.Item
 import uikit.widget.BatteryView
 import com.tonapps.tonkeeperx.R
@@ -19,7 +18,7 @@ import uikit.extensions.setMoonOnClickListener
 
 class RechargePackHolder(
     parent: ViewGroup,
-    private val onPackSelect: (RechargePackType) -> Unit,
+    private val onPackSelect: (String) -> Unit,
 ) : Holder<Item.RechargePack>(parent, R.layout.view_cell_recharge_pack) {
 
     private val titleView = itemView.findViewById<AppCompatTextView>(R.id.title)

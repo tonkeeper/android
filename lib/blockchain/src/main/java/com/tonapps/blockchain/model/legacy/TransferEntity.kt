@@ -70,7 +70,7 @@ data class TransferEntity(
 
     val isValidComment: Boolean
         get() {
-            if (wallet.isLedger && comment != null) {
+            if (wallet.signsWithLedger && comment != null) {
                 return comment.all { it.code in 32..126 }
             }
 

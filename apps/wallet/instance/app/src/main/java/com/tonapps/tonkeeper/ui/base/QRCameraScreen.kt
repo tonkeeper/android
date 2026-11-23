@@ -63,8 +63,12 @@ abstract class QRCameraScreen(
     private val activityResultLauncher = registerForPermission { isGranted: Boolean ->
         if (isGranted) {
             startCamera()
+        } else {
+            onCameraPermissionDenied()
         }
     }
+
+    private var isCameraStarted = false
 
     abstract var cameraView: PreviewView
 
@@ -95,7 +99,27 @@ abstract class QRCameraScreen(
         }
     }
 
+    protected open fun onCameraStarted() = Unit
+
+    protected open fun onCameraPermissionDenied() = Unit
+
+    override fun onResume() {
+        super.onResume()
+        if (!isCameraStarted && view != null && hasPermission(android.Manifest.permission.CAMERA)) {
+            startCamera()
+        }
+    }
+
+    override fun onDestroyView() {
+        isCameraStarted = false
+        super.onDestroyView()
+    }
+
     private fun startCamera() {
+        if (isCameraStarted) {
+            return
+        }
+        isCameraStarted = true
         cameraController.setImageAnalysisAnalyzer(cameraExecutor, qrAnalyzer)
         cameraController.torchState.observe(viewLifecycleOwner) { state ->
             _flashConfigFlow.update {
@@ -109,6 +133,7 @@ abstract class QRCameraScreen(
         cameraView.implementationMode = PreviewView.ImplementationMode.PERFORMANCE
         cameraView.controller = cameraController
         cameraController.bindToLifecycle(this)
+        onCameraStarted()
     }
 
     fun toggleFlash() {

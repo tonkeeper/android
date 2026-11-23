@@ -9,6 +9,7 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.LaunchApp.LaunchAppAppIcon
 import com.tonapps.bus.generated.Events.LaunchApp.LaunchAppPushPermission
 import com.tonapps.bus.generated.Events.LaunchApp.LaunchAppTheme
+import com.tonapps.bus.screenrender.ScreenRenderTracker
 import com.tonapps.core.flags.WalletFeatureKey
 import com.tonapps.extensions.areNotificationsEnabled
 import com.tonapps.tonkeeper.core.LauncherIcon
@@ -33,11 +34,13 @@ class AnalyticProcessLifecycleObserver(
         AnalyticsHelper.Default.onAppForeground()
         Async.defaultScope().launch {
             api.configFlow.first { !it.empty }
+            val pushPermission = currentLaunchAppPushPermission()
             AnalyticsHelper.Default.events.launchApp.launchApp(
                 theme = currentLaunchAppTheme(),
                 appIcon = currentLaunchAppIcon(),
                 walletsCount = unifiedAccountRepository.getWalletsCount(),
-                pushPermission = currentLaunchAppPushPermission(),
+                pushPermission = pushPermission,
+                pushMismatchWalletsCount = pushMismatchWalletsCount(pushPermission),
                 featureFlags = WalletFeatureKey.asAnalyticsProps(),
             )
         }
@@ -45,6 +48,7 @@ class AnalyticProcessLifecycleObserver(
 
     override fun onStop(owner: LifecycleOwner) {
         AnalyticsHelper.Default.onAppBackground()
+        ScreenRenderTracker.shared.appDidEnterBackground()
     }
 
     private fun currentLaunchAppTheme(): LaunchAppTheme? {
@@ -69,6 +73,14 @@ class AnalyticProcessLifecycleObserver(
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                     !settingsRepository.pushPermissionRequested -> LaunchAppPushPermission.NotRequested
             else -> LaunchAppPushPermission.Denied
+        }
+    }
+
+    private suspend fun pushMismatchWalletsCount(permission: LaunchAppPushPermission): Int {
+        return if (permission == LaunchAppPushPermission.Granted) {
+            unifiedAccountRepository.getWalletIds().count { !settingsRepository.getPushWallet(it) }
+        } else {
+            0
         }
     }
 

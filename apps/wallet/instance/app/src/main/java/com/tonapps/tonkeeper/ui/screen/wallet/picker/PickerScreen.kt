@@ -8,14 +8,18 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.updateLayoutParams
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
+import com.tonapps.tonkeeper.ui.screen.init.InitArgs
+import com.tonapps.tonkeeper.ui.screen.init.InitScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Adapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.Item.Companion.height
+import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.TitleAdapter
 import com.tonapps.tonkeeper.ui.screen.wallet.picker.list.holder.WalletHolder
 import com.tonapps.uikit.color.buttonSecondaryForegroundColor
 import com.tonapps.blockchain.model.legacy.WalletEntity
@@ -55,15 +59,13 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
 
     override val viewModel: PickerViewModel by viewModel { parametersOf(mode) }
 
-    private val adapter = Adapter { wallet ->
-        if (mode is PickerMode.TonConnect) {
-            setResult(contract.createResult(wallet))
-        } else {
-            hasWalletPicked = true
-            viewModel.setWallet(wallet)
-            finish()
-        }
-    }
+    private val adapter = Adapter(
+        onClick = ::onWalletClick,
+        onAddWallet = ::onAddWalletClick,
+    )
+
+    private var titleAdapter: TitleAdapter? = null
+    private var measuredTitleHeight = 0
 
     private lateinit var actionButton: AppCompatTextView
 
@@ -74,15 +76,22 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
 
         actionButton = createActionButton(view.context)
         actionButton.setMoonOnClickListener { viewModel.toggleEditMode() }
-        if (mode is PickerMode.TonConnect) {
+        if (mode is PickerMode.TonConnect || mode is PickerMode.Multichain) {
             actionButton.visibility = View.GONE
         }
         addViewHeader(actionButton, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, 32.dp, Gravity.CENTER_VERTICAL).also {
             it.marginEnd = horizontalOffset
             it.marginStart = horizontalOffset
         })
-        setTitle(getString(Localization.wallets))
-        setAdapter(adapter)
+        val subtitleResId = (mode as? PickerMode.Multichain)?.subtitleResId
+        if (subtitleResId == null) {
+            setTitle(getString(Localization.wallets))
+            setAdapter(adapter)
+        } else {
+            val titleAdapter = TitleAdapter(getString(Localization.wallets), getString(subtitleResId))
+            this.titleAdapter = titleAdapter
+            setAdapter(ConcatAdapter(titleAdapter, adapter))
+        }
 
         setTouchHelperCallback(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
 
@@ -130,13 +139,52 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
         collectFlow(viewModel.uiItemsFlow, ::setNewList)
     }
 
+    private fun onWalletClick(wallet: WalletEntity) {
+        when (val pickerMode = mode) {
+            is PickerMode.TonConnect -> setResult(contract.createResult(wallet))
+            is PickerMode.Multichain -> {
+                if (!hasWalletPicked) {
+                    hasWalletPicked = true
+                    viewModel.setWalletAndOpen(wallet, pickerMode.openUrl)
+                }
+            }
+            PickerMode.Default,
+            is PickerMode.Focus -> {
+                hasWalletPicked = true
+                viewModel.setWallet(wallet)
+                finish()
+            }
+        }
+    }
+
+    private fun onAddWalletClick() {
+        when (val pickerMode = mode) {
+            is PickerMode.Multichain -> {
+                navigation?.add(InitScreen.newInstance(InitArgs.Type.New, openUrlAfterCreated = pickerMode.openUrl))
+                finish()
+            }
+            PickerMode.Default,
+            is PickerMode.Focus,
+            is PickerMode.TonConnect -> navigation?.add(InitScreen.newInstance(InitArgs.Type.AddWallet))
+        }
+    }
+
     private fun setNewList(list: List<Item>) {
         if (hasWalletPicked) {
             return
         }
 
-        updateBottomSheetHeight(list.height + headerContainer.height + (16.dp * 2))
+        updateBottomSheetHeight(list.height + headerContainer.height + titleHeight() + (16.dp * 2))
         adapter.submitList(list)
+    }
+
+    private fun titleHeight(): Int {
+        val titleAdapter = titleAdapter ?: return 0
+        val width = listView.measuredWidth - listView.paddingLeft - listView.paddingRight
+        if (measuredTitleHeight == 0 && width > 0) {
+            measuredTitleHeight = titleAdapter.measureHeight(requireContext(), width)
+        }
+        return measuredTitleHeight
     }
 
     private fun updateBottomSheetHeight(height: Int) {
@@ -154,7 +202,13 @@ class PickerScreen: BaseListWalletScreen<ScreenContext.None>(ScreenContext.None)
             return
         }
 
-        actionButton.setText(if (edit) Localization.done else Localization.edit)
+        actionButton.setText(
+            if (edit) {
+                Localization.done
+            } else {
+                Localization.edit
+            },
+        )
 
         adapter.submitList(adapter.currentList.map {
             if (it is Item.Wallet) {

@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.ViewCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.TonNetwork
@@ -30,6 +31,7 @@ import com.tonapps.signer.screen.root.RootViewModel
 import com.tonapps.signer.screen.sign.list.SignAdapter
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.color.textTertiaryColor
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -41,7 +43,6 @@ import uikit.extensions.hapticReject
 import uikit.base.BaseFragment
 import uikit.extensions.bottomBarsOffset
 import uikit.extensions.collectFlow
-import uikit.extensions.pinToBottomInsets
 import uikit.extensions.setColor
 import uikit.navigation.Navigation.Companion.navigation
 import uikit.widget.LoaderView
@@ -50,22 +51,6 @@ import uikit.widget.SlideActionView
 import uikit.extensions.setMoonOnClickListener
 
 class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
-
-    companion object {
-
-        fun newInstance(
-            id: Long,
-            body: Cell,
-            v: String,
-            returnResult: ReturnResultEntity,
-            seqno: Int,
-            network: TonNetwork
-        ): SignFragment {
-            val fragment = SignFragment()
-            fragment.arguments = SignArgs.bundle(id, body, v, returnResult, seqno, network)
-            return fragment
-        }
-    }
 
     private val args: SignArgs by lazy { SignArgs(requireArguments()) }
     private val signViewModel: SignViewModel by viewModel { parametersOf(args.id, args.body, args.v, args.seqno, args.network) }
@@ -127,6 +112,7 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         qrView.setMoonOnClickListener { emulateBody(true) }
 
         actionView = view.findViewById(R.id.action)
+        actionView.isVisible = signViewModel.signable
 
         slideView = view.findViewById(R.id.slide)
         slideView.doOnDone = { sign() }
@@ -185,16 +171,31 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         val returnResult = args.returnResult
         when (returnResult.source) {
             DeeplinkSource.App -> rootViewModel.responseSignature(signature)
-            DeeplinkSource.Default -> returnSignature(returnResult.uri!!, signature)
-            else -> showQR(signature)
+            DeeplinkSource.Default -> returnSignatureOrShowQR(returnResult.uri, signature)
+            DeeplinkSource.QR -> showQR(signature)
         }
     }
 
-    private fun returnSignature(uri: Uri, signature: ByteArray) {
+    private fun returnSignatureOrShowQR(uri: Uri?, signature: ByteArray) {
+        if (uri == null) {
+            showQR(signature)
+            return
+        }
         val intent = Intent(Intent.ACTION_VIEW, uri.buildUpon().appendQueryParameter(Key.SIGN, hex(signature)).build())
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-        finish()
+        val launched = try {
+            startActivity(intent)
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: RuntimeException) {
+            false
+        }
+        if (launched) {
+            finish()
+        } else {
+            showQR(signature)
+        }
     }
 
     private fun showQR(signature: ByteArray) {
@@ -248,5 +249,21 @@ class SignFragment: BaseFragment(R.layout.fragment_sign), BaseFragment.Modal {
         span.setColor(requireContext().textTertiaryColor,0, label.length)
         span.setColor(requireContext().textSecondaryColor, label.length, span.length)
         subtitleView.text = span
+    }
+
+    companion object {
+
+        fun newInstance(
+            id: Long,
+            body: Cell,
+            v: String,
+            returnResult: ReturnResultEntity,
+            seqno: Int,
+            network: TonNetwork
+        ): SignFragment {
+            val fragment = SignFragment()
+            fragment.arguments = SignArgs.bundle(id, body, v, returnResult, seqno, network)
+            return fragment
+        }
     }
 }

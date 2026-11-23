@@ -37,6 +37,7 @@ import uikit.widget.InputView
 import uikit.widget.LoaderView
 import androidx.core.view.isGone
 import uikit.extensions.setMoonOnClickListener
+import com.tonapps.core.extensions.walletColor
 
 abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None>(R.layout.fragment_name, ScreenContext.None) {
 
@@ -156,7 +157,7 @@ abstract class NameFragment(mode: NameMode): BaseWalletScreen<ScreenContext.None
 
     fun setColor(newColor: Int) {
         scrollToColor(newColor)
-        walletColor.backgroundTintList = ColorStateList.valueOf(newColor)
+        walletColor.backgroundTintList = ColorStateList.valueOf(requireContext().walletColor(newColor))
         colorAdapter.activeColor = newColor
     }
 

@@ -1,8 +1,8 @@
 package com.tonapps.wallet.data.account.source
 
 import android.content.Context
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.blockchain.MnemonicHelper
+import com.tonapps.blockchain.ton.MnemonicType
 import com.tonapps.blockchain.ton.extensions.decodePrivateKey
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.bus.core.IssueHelper
@@ -15,16 +15,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.kotlin.crypto.PublicKeyEd25519
-import org.ton.kotlin.crypto.mnemonic.Mnemonic
 
 internal class VaultSource(context: Context) {
-
-    private companion object {
-        private const val NAME = "vault"
-        private const val PRIVATE_KEY_PREFIX = "private_key"
-        private const val MNEMONIC_KEY_PREFIX = "mnemonic"
-        private const val KEY_ALIAS = "_com_tonapps_vault_master_key_"
-    }
 
     private val prefs = Security.pref(context, KEY_ALIAS, NAME)
 
@@ -45,8 +37,8 @@ internal class VaultSource(context: Context) {
         return mnemonic
     }
 
-    fun addMnemonic(mnemonic: List<String>): PublicKeyEd25519 {
-        val privateKey = MnemonicHelper.privateKey(mnemonic)
+    fun addMnemonic(mnemonic: List<String>, type: MnemonicType = MnemonicType.Both): PublicKeyEd25519 {
+        val privateKey = MnemonicHelper.privateKey(mnemonic, type)
         val seed = privateKey.key.toByteArray()
         val publicKey = privateKey.publicKey()
 
@@ -96,12 +88,12 @@ internal class VaultSource(context: Context) {
         }
     }
 
+    // The words alone do not tell which scheme the key was derived with, so only a key matching
+    // the wallet's public key is returned.
     private fun getPrivateKeyFromMnemonic(publicKey: PublicKeyEd25519): PrivateKeyEd25519? {
         val mnemonic = getMnemonic(publicKey) ?: return null
-        val seed = Mnemonic(mnemonic.toList()).toSeed()
-        val privateKey = PrivateKeyEd25519(seed)
-        seed.clear()
-        return privateKey
+        return MnemonicHelper.candidatePrivateKeys(mnemonic.toList())
+            .firstOrNull { it.publicKey() == publicKey }
     }
 
     private fun pkKey(publicKey: PublicKeyEd25519) = key(PRIVATE_KEY_PREFIX, publicKey)
@@ -110,5 +102,12 @@ internal class VaultSource(context: Context) {
 
     private fun key(prefix: String, publicKey: PublicKeyEd25519): String {
         return "${prefix}_${publicKey.hex()}"
+    }
+
+    private companion object {
+        private const val NAME = "vault"
+        private const val PRIVATE_KEY_PREFIX = "private_key"
+        private const val MNEMONIC_KEY_PREFIX = "mnemonic"
+        private const val KEY_ALIAS = "_com_tonapps_vault_master_key_"
     }
 }

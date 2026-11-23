@@ -1,5 +1,6 @@
 package com.tonapps.core.components
 
+import com.tonapps.chainkit.core.chain.model.num.Formatter
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -103,5 +104,20 @@ class AmountInputTest {
         assertEquals("1.", "1.5".sanitizeAmountInput(maxDecimals = 0))
         assertEquals("123.45", "۱۲۳٫۴۵۶".sanitizeAmountInput(maxDecimals = 2))
         assertEquals("1.23456789", "1.23456789".sanitizeAmountInput(maxDecimals = 9))
+    }
+
+    @Test
+    fun localeSeparatorReplacesTheDotOnlyWhenTheFieldAcceptsIt() {
+        val defaults = Formatter.defaultOptions
+        try {
+            Formatter.configureDefaults(defaults.copy(decimalSeparator = ","))
+            assertEquals("1,5", "1.5".withLocaleDecimalSeparator())
+            assertEquals("15", "15".withLocaleDecimalSeparator())
+
+            Formatter.configureDefaults(defaults.copy(decimalSeparator = "\u066B"))
+            assertEquals("1.5", "1.5".withLocaleDecimalSeparator())
+        } finally {
+            Formatter.configureDefaults(defaults)
+        }
     }
 }

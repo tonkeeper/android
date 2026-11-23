@@ -82,6 +82,8 @@ internal class PerpsChartController(
         positionLevels: PerpsPositionLevels?,
         priceDecimals: Int,
         palette: PerpsChartPalette,
+        awaitingPaint: Boolean = false,
+        onFirstPaint: () -> Unit = {},
     ) {
         val chart = chart ?: return
 
@@ -158,6 +160,10 @@ internal class PerpsChartController(
         if (candles.isNotEmpty() && timeframe != renderedTimeframe) {
             chart.resetTimeScale()
             renderedTimeframe = timeframe
+        }
+        // Asked again on every render while the caller waits, so a lost paint signal cannot keep it waiting.
+        if (awaitingPaint && candles.isNotEmpty()) {
+            chart.afterNextPaint(onFirstPaint)
         }
     }
 

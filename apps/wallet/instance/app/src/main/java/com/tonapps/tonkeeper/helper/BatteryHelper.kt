@@ -9,7 +9,6 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.settings.BatteryTransaction
-import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -58,17 +57,21 @@ object BatteryHelper {
             emulated.extra.value.value,
             batteryConfig.chargeCost
         )
-        return if (charges > chargesBalance && !forceRelayer) null else emulated
+        return if (charges > chargesBalance && !forceRelayer) {
+            null
+        } else {
+            emulated
+        }
     }
 
     suspend fun isBatteryIsEnabledTx(
         wallet: WalletEntity,
         txType: BatteryTransaction,
-        settingsRepository: SettingsRepository,
         accountRepository: AccountRepository,
         batteryRepository: BatteryRepository
     ): Boolean = withContext(Dispatchers.IO) {
-        if (!settingsRepository.batteryIsEnabledTx(wallet.accountId, txType)) {
+        // A request of no known kind (a dapp's message) is not one the battery pays.
+        if (wallet.isMultichainLedger || !wallet.supportsBattery || txType == BatteryTransaction.UNKNOWN) {
             return@withContext false
         }
         getBalance(wallet, accountRepository, batteryRepository).isPositive

@@ -101,6 +101,7 @@ data class PerpsReviewRow(
 
 sealed interface PerpsReviewValue {
     data class Text(val text: String) : PerpsReviewValue
+    data class Resource(@StringRes val text: Int) : PerpsReviewValue
     data class Leverage(val value: Int) : PerpsReviewValue
     data class AutoClose(val takeProfit: String?, val stopLoss: String?) : PerpsReviewValue {
         val isUnset: Boolean get() = takeProfit == null && stopLoss == null
@@ -108,7 +109,6 @@ sealed interface PerpsReviewValue {
 }
 
 sealed interface PerpsReviewSub {
-    data class Quote(val amount: String) : PerpsReviewSub
     data class Base(val amount: String) : PerpsReviewSub
     data class BaseDelta(val amount: String, val added: Boolean) : PerpsReviewSub
     data class Percent(val text: String) : PerpsReviewSub
@@ -143,6 +143,30 @@ internal fun PerpsAutoCloseField?.invalidAutoCloseText(): Int {
     }
 }
 
+@StringRes
+internal fun Set<PerpsAutoCloseField>.autoCloseUpdateTitle(): Int {
+    return if (size > 1) {
+        Localization.perps_review_auto_close_update_title
+    } else {
+        firstOrNull().invalidAutoCloseText()
+    }
+}
+
+internal fun PerpsAutoCloseDraft.without(fields: Set<PerpsAutoCloseField>): PerpsAutoCloseDraft? {
+    val keepTakeProfit = takeProfit != null && PerpsAutoCloseField.TAKE_PROFIT !in fields
+    val keepStopLoss = stopLoss != null && PerpsAutoCloseField.STOP_LOSS !in fields
+    if (!keepTakeProfit && !keepStopLoss) {
+        return null
+    }
+
+    return PerpsAutoCloseDraft(
+        takeProfit = takeProfit.takeIf { keepTakeProfit },
+        stopLoss = stopLoss.takeIf { keepStopLoss },
+        takeProfitRoi = takeProfitRoi.takeIf { keepTakeProfit },
+        stopLossRoi = stopLossRoi.takeIf { keepStopLoss },
+    )
+}
+
 data class PerpsAutoCloseFix(
     val field: PerpsAutoCloseField,
     val suggestion: BigDecimal?,
@@ -159,7 +183,16 @@ data class PerpsReviewAutoCloseEditor(
 
 sealed interface PerpsReviewSheet {
     data class OrderNotPlaced(val slippagePpm: Long) : PerpsReviewSheet
-    data class AutoCloseUpdate(val fix: PerpsAutoCloseFix) : PerpsReviewSheet
+    data class AutoCloseUpdate(
+        val fix: PerpsAutoCloseFix,
+        val stale: Set<PerpsAutoCloseField>,
+    ) : PerpsReviewSheet {
+        val canContinue: Boolean
+            get() = fix.draft != null
+
+        val remaining: PerpsAutoCloseDraft?
+            get() = fix.draft?.without(stale)
+    }
 }
 
 sealed interface PerpsReviewStatus {
@@ -169,3 +202,8 @@ sealed interface PerpsReviewStatus {
     data object Submitting : PerpsReviewStatus
     data class Failed(@StringRes val text: Int) : PerpsReviewStatus
 }
+
+data class PerpsReviewMarket(
+    val symbol: String,
+    val iconUrl: String?,
+)

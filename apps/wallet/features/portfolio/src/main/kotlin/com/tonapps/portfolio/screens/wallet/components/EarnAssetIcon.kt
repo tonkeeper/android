@@ -13,7 +13,7 @@ import ui.components.moon.container.MoonCutBadgedBox
 import ui.painterResource
 import ui.theme.UIKit
 
-private val AssetIconSize = 44.dp
+internal val EarnAssetIconSize = 44.dp
 private val NetworkIconSize = 20.dp
 
 @Composable
@@ -42,7 +42,7 @@ internal fun EarnAssetIcon(
         MoonRichItemImage(
             image = assetIconUrl,
             preview = assetSymbol,
-            size = AssetIconSize,
+            size = EarnAssetIconSize,
         )
     }
 }

@@ -14,4 +14,13 @@ class PerpetualArrivalTimeTest {
         assertEquals(2L, arrivalMinutes(115L))
         assertEquals(18L, arrivalMinutes(1072L))
     }
+
+    @Test
+    fun depositArrivalRoundsToTheNearestMinuteAndIsAtLeastOne() {
+        assertEquals(1, approximateArrivalMinutes(0L))
+        assertEquals(1, approximateArrivalMinutes(89L))
+        assertEquals(2, approximateArrivalMinutes(90L))
+        assertEquals(2, approximateArrivalMinutes(146L))
+        assertEquals(3, approximateArrivalMinutes(150L))
+    }
 }

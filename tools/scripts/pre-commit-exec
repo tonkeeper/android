@@ -117,12 +117,17 @@ done | tr '\n' ',' | sed 's/,$//')
 
 # Run detekt with auto-correct
 echo -e "${YELLOW}Running detekt with auto-correct...${NC}"
-java -jar "$DETEKT_CLI_JAR" \
+# Its complexity report and the JVM's warnings are noise unless it fails.
+DETEKT_OUTPUT=$(java -jar "$DETEKT_CLI_JAR" \
     --input "$DETEKT_INPUT_ABSOLUTE" \
     --plugins "$DETEKT_FORMATTING_JAR" \
     --config "$ANDROID_ROOT/detekt/detekt.yml" \
     --report "xml:$ANDROID_ROOT/build/reports/detekt-report.xml" \
-    --auto-correct
+    --auto-correct 2>&1) || {
+    DETEKT_EXIT_CODE=$?
+    printf '%s\n' "$DETEKT_OUTPUT"
+    exit $DETEKT_EXIT_CODE
+}
 
 DETEKT_EXIT_CODE=$?
 

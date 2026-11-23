@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -46,7 +47,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -547,6 +551,7 @@ internal fun AssetDetailsBottomBar(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun AssetActionButtonsRow(
     modifier: Modifier = Modifier,
@@ -561,19 +566,20 @@ internal fun AssetActionButtonsRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .semantics { testTagsAsResourceId = true }
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (showSend) {
             AssetActionButton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).testTag("trade_asset_details_send"),
                 painter = painterResource(UIKitIcon.ic_link_small_16),
                 title = stringResource(Localization.send),
                 onClick = onSendClick,
             )
         }
         AssetActionButton(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).testTag("trade_asset_details_receive"),
             painter = painterResource(UIKitIcon.ic_qr_code_16),
             title = stringResource(Localization.receive),
             onClick = onReceiveClick,

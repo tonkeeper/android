@@ -10,6 +10,8 @@ import com.tonapps.wallet.data.battery.entity.BatteryPackageEntity
 import com.tonapps.wallet.data.battery.entity.BatteryPurchaseEntity
 import com.tonapps.wallet.data.battery.entity.GaslessChainsEntity
 import com.tonapps.wallet.data.battery.entity.RechargeMethodEntity
+import com.tonapps.wallet.data.battery.entity.RechargeMethodsEntity
+import io.batteryapi.models.PackageItem
 import io.batteryapi.models.PurchasesPurchasesInner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -56,6 +58,13 @@ internal class RemoteDataSource(
         GaslessChainsEntity(config.chains.map { it.chainId })
     }
 
+    suspend fun fetchMultichainRechargeMethods(
+        network: TonNetwork
+    ): RechargeMethodsEntity? = withContext(Dispatchers.IO) {
+        val response = api.getBatteryRechargeMethods(network, multichain = true) ?: return@withContext null
+        RechargeMethodsEntity(response.methods.mapNotNull { RechargeMethodEntity.of(it, multichain = true) })
+    }
+
     suspend fun fetchConfig(
         network: TonNetwork
     ): BatteryConfigEntity? = withContext(Dispatchers.IO) {
@@ -79,13 +88,15 @@ internal class RemoteDataSource(
             ),
             chargeCost = config.chargeCost,
             reservedAmount = config.batteryReservedAmount,
-            packages = config.packages.map { item ->
+            packages = config.packages.filter { it.name != PackageItem.Name.unknown }.map { item ->
                 BatteryPackageEntity(
                     name = item.name.value,
                     image = item.image,
                     charges = item.charges,
                 )
-            }
+            },
+            transferCostDefault = config.transferCost.default,
+            transferCostJettons = config.transferCost.jettons.associate { it.jettonMaster to it.value },
         )
     }
 

@@ -7,6 +7,7 @@ import com.tonapps.migration.data.MigrationRepository
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.mvi.MviRelay
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,7 @@ class MigrationPrepareFeature(
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
     private val backupRepository: BackupRepository,
+    private val mcAccountRepository: McAccountRepository,
 ) : AsyncViewModel() {
 
     val wallets: StateFlow<List<MigratableWallet>> field = MutableStateFlow(emptyList())
@@ -102,7 +104,8 @@ class MigrationPrepareFeature(
                 val outcome = withContext(bgDispatcher) {
                     val destinationId = accountRepository.getSelectedWalletId()
                         ?: return@withContext ContinueOutcome.Failed
-                    val hasBackup = backupRepository.stream.first().any { it.walletId == destinationId }
+                    val isHardware = mcAccountRepository.getWallet(destinationId)?.isHardware == true
+                    val hasBackup = isHardware || backupRepository.stream.first().any { it.walletId == destinationId }
                     if (!hasBackup) {
                         return@withContext ContinueOutcome.NeedBackup
                     }

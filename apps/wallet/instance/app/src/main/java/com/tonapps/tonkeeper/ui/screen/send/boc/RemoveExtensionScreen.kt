@@ -16,6 +16,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.extensions.setFailedLabel
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
@@ -149,6 +150,7 @@ class RemoveExtensionScreen(
             if (it is CancellationException) {
                 setDefaultTask()
             } else {
+                taskView.setFailedLabel(it)
                 setErrorTask(BridgeException(cause = it))
             }
         }.onEach { _ ->

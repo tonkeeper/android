@@ -1,8 +1,8 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge
 
 import com.tonapps.async.Async
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Protocol
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Script
+import com.tonapps.webview.bridge.InAppBridgeContract.Protocol
+import com.tonapps.webview.bridge.InAppBridgeContract.Script
 import kotlinx.coroutines.withContext
 import org.json.JSONException
 import org.json.JSONObject
@@ -39,7 +39,7 @@ internal class NativeBridgeProtocol(
         withContext(Async.Io) { injectionScript(config()) }
     }
 
-    override fun parse(data: String, host: String): Message? {
+    override fun parse(data: String, host: String, pageUrl: String?): Message? {
         val json = try {
             JSONObject(data)
         } catch (_: JSONException) {

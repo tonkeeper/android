@@ -156,12 +156,17 @@ class RemotePendingTransactionReporter(
     }
 
     private fun PayloadMeta.toActivityType(): ActivityType {
-        val calldata = when (this) {
-            is PayloadMeta.Evm.Main -> data
-            is PayloadMeta.Tron.Main -> data
-            else -> null
+        val (calldata, value) = when (this) {
+            is PayloadMeta.Evm.Main -> data to value
+            is PayloadMeta.Tron.Main -> data to value
+            else -> null to null
         }
-        return if (calldata.isNullOrBlank() || calldata == EMPTY_CALLDATA) {
+
+        // A token send is the token contract's `transfer` call: a send, as long as it moves no coin too.
+        val tokenTransfer = value?.isZero() == true &&
+            calldata?.removePrefix("0x")?.startsWith(TRANSFER_SELECTOR, ignoreCase = true) == true
+
+        return if (calldata.isNullOrBlank() || calldata == EMPTY_CALLDATA || tokenTransfer) {
             ActivityType.send
         } else {
             ActivityType.contract_call
@@ -190,5 +195,8 @@ class RemotePendingTransactionReporter(
 
     private companion object {
         const val EMPTY_CALLDATA = "0x"
+
+        /** `transfer(address,uint256)`, ERC-20's and TRC-20's alike. */
+        const val TRANSFER_SELECTOR = "a9059cbb"
     }
 }

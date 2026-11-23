@@ -26,6 +26,7 @@ sealed interface HermesCandleEvent {
     data class Candles(val feedId: String?, val response: GetCandlesResponse) : HermesCandleEvent
     data object LoggedIn : HermesCandleEvent
     data object LoginRejected : HermesCandleEvent
+    data object LoginFailed : HermesCandleEvent
     data class FeedError(val feedId: String?, val permanent: Boolean) : HermesCandleEvent
     data object Terminated : HermesCandleEvent
 }
@@ -40,6 +41,9 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
     private var socket: WebSocket? = null
 
     private val subscriptions = ConcurrentHashMap<Long, String>()
+
+    @Volatile
+    private var loginRequestId: Long = 0L
 
     val events: ReceiveChannel<HermesCandleEvent>
         get() = inbound
@@ -75,7 +79,8 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
     }
 
     fun login(token: String) {
-        request(CHANNEL_LOGIN, NAME_LOGIN, buildJsonObject { put("token", token) })
+        loginRequestId = nextRequestId.incrementAndGet()
+        request(CHANNEL_LOGIN, NAME_LOGIN, buildJsonObject { put("token", token) }, loginRequestId)
     }
 
     fun subscribe(feedId: String) {
@@ -115,21 +120,27 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
         try {
             val envelope = hermesJson.decodeFromString<InboundEnvelope>(text)
             val message = envelope.message ?: return null
+            val loginReply = message.loginReply(loginRequestId)
+            if (loginReply != null) {
+                if (loginReply != HermesLoginReply.ACCEPTED) {
+                    val error = message.payload?.let { hermesJson.decodeFromJsonElement<ErrorPayload>(it) }
+                    L.e("hermes ${envelope.channel} error: ${error?.code} ${error?.description}")
+                }
+                return when (loginReply) {
+                    HermesLoginReply.ACCEPTED -> HermesCandleEvent.LoggedIn
+                    HermesLoginReply.REJECTED -> HermesCandleEvent.LoginRejected
+                    HermesLoginReply.FAILED -> HermesCandleEvent.LoginFailed
+                }
+            }
             if (envelope.channel == CHANNEL_CANDLES && message.name == NAME_CANDLES_PUSH) {
                 val payload = message.payload ?: return null
                 val push = hermesJson.decodeFromJsonElement<CandlesPush>(payload)
                 return HermesCandleEvent.Candles(push.feedId, push.data)
             }
-            if (envelope.channel == CHANNEL_LOGIN && message.name == NAME_LOGIN_RESPONSE) {
-                return HermesCandleEvent.LoggedIn
-            }
             if (message.name == NAME_ERROR_RESPONSE || message.name == NAME_ERROR_MESSAGE) {
                 val error = message.payload?.let { hermesJson.decodeFromJsonElement<ErrorPayload>(it) }
                 L.e("hermes ${envelope.channel} error: ${error?.code} ${error?.description}")
                 val code = error?.code.orEmpty()
-                if (envelope.channel == CHANNEL_LOGIN) {
-                    return HermesCandleEvent.LoginRejected.takeIf { code == HERMES_ERROR_INVALID_CREDENTIALS }
-                }
                 if (envelope.channel != CHANNEL_SUBSCRIBE) {
                     return null
                 }
@@ -161,12 +172,9 @@ class HermesCandleSocket(private val hermes: HermesAPI) {
 
         const val NAME_PING = "ping"
         const val NAME_LOGIN = "loginRequest"
-        const val NAME_LOGIN_RESPONSE = "loginResponse"
         const val NAME_SUBSCRIBE = "subscribeCandleFeedRequest"
         const val NAME_UNSUBSCRIBE = "unsubscribeCandleFeedRequest"
         const val NAME_CANDLES_PUSH = "candlesFeedMessage"
-        const val NAME_ERROR_RESPONSE = "errorResponse"
-        const val NAME_ERROR_MESSAGE = "errorMessage"
 
         val PERMANENT_FEED_ERRORS = setOf("invalid.request", "not.found", "unauthorized")
 

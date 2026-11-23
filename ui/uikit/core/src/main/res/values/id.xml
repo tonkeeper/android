@@ -3,4 +3,5 @@
     <item name="root_container" type="id"/>
     <item name="sheet_container" type="id"/>
     <item name="press_scale_attached" type="id"/>
+    <item name="swipe_back_exclusions" type="id"/>
 </resources>

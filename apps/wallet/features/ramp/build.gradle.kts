@@ -25,7 +25,18 @@ android {
             )
         }
     }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
 }
+
+configurations.matching { it.name.startsWith("testDebug") || it.name.startsWith("testRelease") }
+    .configureEach {
+        exclude(group = "com.trustwallet", module = "wallet-core-kotlin-android")
+    }
 
 dependencies {
     implementation(platform(libs.compose.bom))
@@ -43,16 +54,22 @@ dependencies {
     implementation(libs.bundles.nav3)
     implementation(libs.kotlin.bignum)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
+    implementation(libs.bcprovjdk)
     implementation(libs.koin.core)
     implementation(libs.koin.compose)
     implementation(libs.coil.compose) // TODO remove, use from DesSys
 
     implementation(projects.tonapi.legacy)
 
+    implementation(projects.lib.network)
+
     implementation(projects.apps.wallet.api)
     implementation(projects.apps.wallet.localization)
 
     implementation(projects.apps.wallet.data.multichain.wallet)
+    implementation(projects.apps.wallet.data.ledger)
     implementation(projects.apps.wallet.data.multichain.exchange)
 
     implementation(projects.apps.wallet.data.settings)
@@ -65,9 +82,11 @@ dependencies {
     implementation(projects.apps.wallet.data.events)
     implementation(projects.apps.wallet.data.rn)
     implementation(projects.apps.wallet.data.passcode)
+    implementation(projects.apps.wallet.data.plugins)
     implementation(projects.apps.wallet.data.collectibles)
 
     implementation(projects.apps.wallet.data.tx)
+    implementation(projects.apps.wallet.data.features)
 
     implementation(projects.tonapi.exchange)
     implementation(projects.tonapi.battery)
@@ -75,7 +94,6 @@ dependencies {
 
     implementation(projects.apps.wallet.features.core)
     implementation(projects.apps.wallet.features.confirm)
-    implementation(projects.apps.wallet.features.dapp)
     implementation(projects.apps.wallet.features.embeded.scanner)
     implementation(projects.apps.wallet.data.dapps)
 
@@ -96,6 +114,9 @@ dependencies {
     implementation(projects.lib.ledger)
     implementation(projects.lib.extensions)
     implementation(projects.lib.blockchain)
+    implementation(projects.lib.time)
+    implementation(projects.lib.webviewBridge)
+    implementation(libs.androidx.webkit)
 
     // Instrumented tests (src/androidTest) — build & encode real swap transactions on-device.
     androidTestImplementation(libs.junit)
@@ -113,6 +134,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    testImplementation(testFixtures(projects.lib.test))
+    testImplementation(testFixtures(projects.apps.wallet.testing))
+    testImplementation(libs.wallet.core.jvm)
 }
 
 tasks.withType<Test>().configureEach {

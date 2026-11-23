@@ -4,6 +4,7 @@ import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.chainkit.core.chain.model.num.BaseUnit
 import com.tonapps.extensions.lazyUnsafe
 import com.tonapps.icu.Coins
+import com.tonapps.wallet.data.multichain.activity.TronResourceEntity
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import io.walletapi.models.ActivityDirection
 import io.walletapi.models.ActivityStatus
@@ -44,6 +45,8 @@ data class HistoryEventEntity(
     val batteryCharges: Int? = null,
     val perps: PerpsMetaEntity? = null,
     val encryptedComment: EncryptedCommentEntity? = null,
+    val fromName: String? = null,
+    val toName: String? = null,
 ) {
     val isPending: Boolean
         get() = status == ActivityStatus.pending
@@ -117,8 +120,10 @@ data class HistoryEventEntity(
         val outgoing = outAmount?.let { amount ->
             outAsset?.let { it to perpsResult(amount, it, incoming = false) }
         }
+        // A withdrawal's out leg already holds the fee: the payout is that amount less the fee.
+        // Without an out leg, the payout is the only amount the event carries.
         val leg = if (perpsKind == PerpsEventKind.Withdrawal) {
-            outgoing?.let { (asset, result) -> asset to result.withFeeIn(asset) } ?: incoming
+            outgoing ?: incoming
         } else {
             incoming ?: outgoing
         } ?: return@lazyUnsafe null
@@ -131,9 +136,6 @@ data class HistoryEventEntity(
 
     val perpsResult: PerpsResultEntity?
         get() = perpsResultLeg?.second
-
-    val perpsResultAsset: AssetEntity?
-        get() = perpsResultLeg?.first
 
     val isPerpsBalanceChange: Boolean
         get() = perpsKind == PerpsEventKind.Deposit || perpsKind == PerpsEventKind.Withdrawal
@@ -149,6 +151,31 @@ data class HistoryEventEntity(
         val asset = feeAsset ?: return@lazyUnsafe null
         perpsResult(amount, asset, incoming = false).takeIf { it.value.isPositive }
     }
+
+    val perpsReceived: PerpsResultEntity? by lazyUnsafe {
+        if (perpsKind != PerpsEventKind.Withdrawal || outAmount == null || outAsset == null) {
+            return@lazyUnsafe null
+        }
+        val amount = inAmount ?: return@lazyUnsafe null
+        val asset = inAsset ?: return@lazyUnsafe null
+        perpsResult(amount, asset, incoming = true)
+    }
+
+    val perpsReceivedAsset: AssetEntity?
+        get() = inAsset?.takeIf { perpsReceived != null && it.valueOrNull != null }
+
+    val perpsBalanceChangeStatus: PerpsBalanceChangeStatus?
+        get() {
+            if (!isPerpsBalanceChange) {
+                return null
+            }
+            return when (status) {
+                ActivityStatus.confirmed -> PerpsBalanceChangeStatus.Done
+                ActivityStatus.failed -> PerpsBalanceChangeStatus.Failed
+                ActivityStatus.dropped -> PerpsBalanceChangeStatus.Dropped
+                ActivityStatus.pending, ActivityStatus.unknown -> null
+            }
+        }
 
     val isIncomingLike: Boolean
         get() = when {
@@ -170,6 +197,16 @@ data class HistoryEventEntity(
                 else -> toAddress
             }
             return address?.takeIf { it.isNotBlank() }
+        }
+
+    val counterpartyName: String?
+        get() {
+            val name = when {
+                activityType == ActivityType.swap || counterpartyAddress == null -> null
+                isIncomingLike -> fromName
+                else -> toName
+            }
+            return name?.takeIf { it.isNotBlank() }
         }
 
     val unitInAmount: BaseUnit? by lazyUnsafe {
@@ -205,11 +242,6 @@ data class HistoryEventEntity(
         }
     }
 
-    private fun PerpsResultEntity.withFeeIn(asset: AssetEntity): PerpsResultEntity {
-        val fee = perpsFee?.takeIf { feeAsset?.id.equals(asset.id, ignoreCase = true) } ?: return this
-        return copy(value = value + fee.value)
-    }
-
     private fun perpsResult(amount: String, asset: AssetEntity, incoming: Boolean): PerpsResultEntity {
         val negative = amount.startsWith("-")
         return PerpsResultEntity(
@@ -233,9 +265,4 @@ private fun isTonNftAssetId(assetId: String): Boolean {
     }
     return parts[2].startsWith("nft", ignoreCase = true)
 }
-
-data class TronResourceEntity(
-    val energy: Long,
-    val bandwidth: Long,
-)
 

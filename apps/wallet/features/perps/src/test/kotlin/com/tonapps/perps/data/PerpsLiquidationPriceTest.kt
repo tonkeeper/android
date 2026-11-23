@@ -13,7 +13,7 @@ class PerpsLiquidationPriceTest {
         val liquidation = liquidation(PerpsOrderSide.SHORT, ENTRY, MARK)!!
 
         assertTrue(liquidation > ENTRY)
-        assertEquals((2950.0 + 2900.0 * 0.05) / 1.03, liquidation.toDouble(), DELTA)
+        assertEquals(BigDecimal("3007.28"), liquidation)
     }
 
     @Test
@@ -21,7 +21,7 @@ class PerpsLiquidationPriceTest {
         val liquidation = liquidation(PerpsOrderSide.LONG, ENTRY, MARK)!!
 
         assertTrue(liquidation < ENTRY)
-        assertEquals((2950.0 - 2900.0 * 0.05) / 0.97, liquidation.toDouble(), DELTA)
+        assertEquals(BigDecimal("2891.76"), liquidation)
     }
 
     @Test
@@ -38,11 +38,11 @@ class PerpsLiquidationPriceTest {
         markPrice = mark,
         leverage = 20,
         maintenanceMarginBps = 300,
+        priceDecimals = 2,
     )
 
     private companion object {
         val ENTRY = BigDecimal("2950")
         val MARK = BigDecimal("2900")
-        const val DELTA = 1e-6
     }
 }

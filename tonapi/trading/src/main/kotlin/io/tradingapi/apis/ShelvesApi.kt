@@ -113,8 +113,8 @@ class ShelvesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getShelvesConfigV2(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null): ShelvesConfigResponseV2 {
-        val localVarResponse = getShelvesConfigV2WithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive)
+    fun getShelvesConfigV2(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, walletId: String? = null): ShelvesConfigResponseV2 {
+        val localVarResponse = getShelvesConfigV2WithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, walletId = walletId)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as ShelvesConfigResponseV2
@@ -133,15 +133,15 @@ class ShelvesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getShelvesConfigV2WithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?): ApiResponse<ShelvesConfigResponseV2?> {
-        val localVariableConfig = getShelvesConfigV2RequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive)
+    fun getShelvesConfigV2WithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, walletId: String?): ApiResponse<ShelvesConfigResponseV2?> {
+        val localVariableConfig = getShelvesConfigV2RequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, walletId = walletId)
 
         return request<Unit, ShelvesConfigResponseV2>(
             localVariableConfig
         )
     }
 
-    fun getShelvesConfigV2RequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?): RequestConfig<Unit> {
+    fun getShelvesConfigV2RequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, walletId: String?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -162,6 +162,9 @@ class ShelvesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
                 }
                 if (isVpnActive != null) {
                     put("is_vpn_active", listOf(isVpnActive.toString()))
+                }
+                if (walletId != null) {
+                    put("wallet_id", listOf(walletId.toString()))
                 }
             }
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()

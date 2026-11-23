@@ -140,7 +140,7 @@ class EarnFlowImpl(
 
      */
     @AnyThread
-    override fun earnClose(from: EarnSignRequestFrom, exitMethod: EarnFlowExitMethod, durationMs: Int) {
+    override fun earnClose(from: EarnSignRequestFrom, exitMethod: EarnFlowExitMethod, durationMs: Long) {
         val props = hashMapOf(
             "from" to from.key,
             "exit_method" to exitMethod.key,

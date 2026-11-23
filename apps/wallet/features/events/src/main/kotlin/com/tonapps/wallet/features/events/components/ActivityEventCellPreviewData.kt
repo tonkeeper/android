@@ -21,6 +21,7 @@ private const val PREVIEW_LP_ASSET_ID =
 private const val PREVIEW_SPAM_ASSET_ID =
     "ton/mainnet/jetton/0:9f8e7d6c5b4a39281706f5e4d3c2b1a09f8e7d6c5b4a39281706f5e4d3c2b1a0"
 private const val PREVIEW_PERPS_USDC_ASSET_ID = "lighter/mainnet/usdc"
+private const val PREVIEW_PERPS_PROTOCOL = "lighter"
 private const val PREVIEW_NFT_ASSET_ID =
     "ton/mainnet/nft/0:5c4b3a2918f7e6d5c4b3a2918f7e6d5c4b3a2918f7e6d5c4b3a2918f7e6d5c4b"
 private const val PREVIEW_FROM_ADDRESS = "UQAjKz9pQ8xVn2sT4bLmR7dYfH3kW6cX1uZaE5gJvNqT_ZxP"
@@ -100,6 +101,7 @@ private fun previewActivity(
     activityType: ActivityType,
     inAsset: AssetEntity? = null,
     inAmount: String? = null,
+    inAmountUsd: Double? = null,
     outAsset: AssetEntity? = null,
     outAmount: String? = null,
     status: ActivityStatus = ActivityStatus.confirmed,
@@ -126,7 +128,7 @@ private fun previewActivity(
         toChain = Chain.ton,
         inAmount = inAmount,
         outAmount = outAmount,
-        inAmountUsd = null,
+        inAmountUsd = inAmountUsd,
         outAmountUsd = null,
         feeAmount = feeAmount,
         feeAmountUsd = null,
@@ -285,10 +287,14 @@ internal fun previewPerpsLiquidatedShort() = previewActivity(
     ),
 )
 
-internal fun previewPerpsDeposit() = previewActivity(
+internal fun previewPerpsDeposit(
+    status: ActivityStatus = ActivityStatus.confirmed,
+) = previewActivity(
     activityType = ActivityType.perpsPeriodBalance_deposit,
     inAsset = PREVIEW_PERPS_USDC_ASSET,
     inAmount = "50000000",
+    status = status,
+    protocol = PREVIEW_PERPS_PROTOCOL,
     perps = PerpsMetaEntity(
         symbol = null,
         side = null,
@@ -301,6 +307,7 @@ internal fun previewPerpsFailedDeposit() = previewActivity(
     inAsset = PREVIEW_PERPS_USDC_ASSET,
     inAmount = "1130000",
     status = ActivityStatus.failed,
+    protocol = PREVIEW_PERPS_PROTOCOL,
     perps = PerpsMetaEntity(
         symbol = null,
         side = null,
@@ -308,12 +315,32 @@ internal fun previewPerpsFailedDeposit() = previewActivity(
     ),
 )
 
-internal fun previewPerpsWithdrawal() = previewActivity(
+internal fun previewPerpsDroppedDeposit() = previewActivity(
+    activityType = ActivityType.perpsPeriodBalance_deposit,
+    inAsset = PREVIEW_PERPS_USDC_ASSET,
+    inAmount = "2005752",
+    status = ActivityStatus.dropped,
+    protocol = PREVIEW_PERPS_PROTOCOL,
+    perps = PerpsMetaEntity(
+        symbol = null,
+        side = null,
+        reason = null,
+    ),
+)
+
+internal fun previewPerpsWithdrawal(
+    status: ActivityStatus = ActivityStatus.confirmed,
+) = previewActivity(
     activityType = ActivityType.perpsPeriodBalance_withdrawal,
     outAsset = PREVIEW_PERPS_USDC_ASSET,
     outAmount = "12400000",
     inAsset = PREVIEW_TON_ASSET,
     inAmount = "7960000000",
+    inAmountUsd = 10.39,
+    feeAsset = PREVIEW_PERPS_USDC_ASSET,
+    feeAmount = "1000000",
+    status = status,
+    protocol = PREVIEW_PERPS_PROTOCOL,
     perps = PerpsMetaEntity(
         symbol = null,
         side = null,

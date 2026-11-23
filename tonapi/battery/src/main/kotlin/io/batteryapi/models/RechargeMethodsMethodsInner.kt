@@ -21,8 +21,17 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class RechargeMethodsMethodsInner(
+    /* the chain the asset is on, as in /gasless/battery/config */
+    @SerialName(value = "chain")
+    val chain: String,
+
+    /* the asset, as in /gasless/battery/config: \"<chain>/coin\" for the chain's native coin, \"<chain>/jetton/<master, raw>\", \"<chain>/trc20/<contract>\", \"<chain>/erc20/<address>\" */
+    @SerialName(value = "asset_id")
+    val assetId: String,
     @SerialName(value = "type")
     val type: Type,
+
+    /* TON credited for one unit of the asset, after the markup */
     @SerialName(value = "rate")
     val rate: String,
     @SerialName(value = "symbol")
@@ -37,16 +46,26 @@ data class RechargeMethodsMethodsInner(
     val image: String? = null,
     @SerialName(value = "jetton_master")
     val jettonMaster: String? = null,
+
+    /* the least amount accepted, in units of the asset; for the other chains, the least purchase */
     @SerialName(value = "min_bootstrap_value")
-    val minBootstrapValue: String? = null
+    val minBootstrapValue: String? = null,
+
+    /* charges credited for one unit of the asset, after the markup: rate at the price of a charge. Before the network fee of the transfer, which /purchase-battery/estimate takes off. */
+    @SerialName(value = "charges_rate")
+    val chargesRate: String? = null
 ) {
     /**
-     * Values: jetton,ton,unknown
+     * Values: jetton,ton,trc20,erc20,spl,coin,unknown
      */
     @Serializable(with = TypeSerializer::class)
     enum class Type(val value: String) {
         @SerialName(value = "jetton") jetton("jetton"),
         @SerialName(value = "ton") ton("ton"),
+        @SerialName(value = "trc20") trc20("trc20"),
+        @SerialName(value = "erc20") erc20("erc20"),
+        @SerialName(value = "spl") spl("spl"),
+        @SerialName(value = "coin") coin("coin"),
         @SerialName(value = "unknown") unknown("unknown");
     }
 

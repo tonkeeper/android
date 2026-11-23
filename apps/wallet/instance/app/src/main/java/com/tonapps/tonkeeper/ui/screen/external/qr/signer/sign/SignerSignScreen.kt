@@ -11,6 +11,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.core.net.toUri
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.blockchain.ton.contract.WalletVersion
 import com.tonapps.qr.ui.QRView
 import com.tonapps.tonkeeper.core.signer.SignerApp
 import com.tonapps.tonkeeper.ui.screen.external.qr.QRSignScreen
@@ -23,7 +25,6 @@ import uikit.base.BaseDrawable
 import uikit.extensions.collectFlow
 import uikit.extensions.dp
 import uikit.extensions.getDimension
-import uikit.extensions.setBackground
 import uikit.extensions.setBackgroundColor
 import uikit.extensions.setChildText
 import java.util.concurrent.CancellationException
@@ -67,13 +68,15 @@ class SignerSignScreen: QRSignScreen() {
 
         val qrView = view.findViewById<QRView>(R.id.qr)
         qrView.color = orangeColor
-        qrView.setContent(SignerApp.createSignUri(args.unsignedBody, args.publicKey))
+        qrView.setContent(SignerApp.createSignUri(args.unsignedBody, args.publicKey, args.walletVersion, args.network))
 
         collectFlow(readerFlow, ::readQRCode)
     }
 
     private fun readQRCode(value: String) {
-        if (isReady.get()) return
+        if (isReady.get()) {
+            return
+        }
 
         if (value.startsWith("tonkeeper://")) {
             if (chunks.size > 0) {
@@ -100,10 +103,12 @@ class SignerSignScreen: QRSignScreen() {
         fun newInstance(
             publicKey: PublicKeyEd25519,
             unsignedBody: Cell,
+            walletVersion: WalletVersion,
+            network: TonNetwork,
             label: String = ""
         ): SignerSignScreen {
             val fragment = SignerSignScreen()
-            fragment.setArgs(SignerSignArgs(publicKey, unsignedBody, label))
+            fragment.setArgs(SignerSignArgs(publicKey, unsignedBody, walletVersion, network, label))
             return fragment
         }
 

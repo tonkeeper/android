@@ -4,7 +4,6 @@ import com.tonapps.async.Async
 import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.extensions.hex
 import com.tonapps.blockchain.tron.TronTransaction
@@ -21,11 +20,14 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
+import com.tonapps.wallet.data.tx.TransactionManager
 import io.Serializer
+import io.batteryapi.models.MigrateBatteryRequest
 import io.infrastructure.ClientError
 import io.infrastructure.ClientException
 import io.tonapi.models.GetBlockchainRawAccountsRequest
@@ -50,6 +52,8 @@ class MigrationRepository(
     private val batteryRepository: BatteryRepository,
     private val api: API,
     private val authorizationProvider: AuthorizationProvider,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
+    private val transactionManager: TransactionManager,
 ) {
 
     @Volatile
@@ -443,6 +447,49 @@ class MigrationRepository(
             throw e
         } catch (e: Exception) {
             L.e("MigrationRepository", "Failed to report raffle migration", e)
+        }
+    }
+
+    /** False when the charges did not move: they stay with the legacy key. A battery with nothing to move is not a failure. */
+    suspend fun migrateBattery(
+        wallet: WalletEntity,
+        mcWalletId: String,
+        proof: String,
+    ): Boolean = withContext(Async.Io) {
+        try {
+            val auth = authorizationProvider.getAuthBy(wallet.id)
+            val tonProof = checkNotNull(auth.tonProof) {
+                "No TonConnect auth for the legacy wallet"
+            }
+            val balance = checkNotNull(batteryRepository.fetchBalance(wallet, auth)?.balance) {
+                "Legacy battery balance is unavailable"
+            }
+            if (!balance.isPositive) {
+                return@withContext true
+            }
+            try {
+                transactionManager.waitUntilBatteryIdle(wallet, auth)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: IllegalStateException) {
+                L.w("MigrationRepository", "Battery still has pending messages, migrating it anyway", e)
+            }
+            val migration = api.batteryWallet(wallet.network).migrateBattery(
+                migrateBatteryRequest = MigrateBatteryRequest(proof = proof, fromAddress = wallet.accountId),
+                tonConnectAuth = tonProof,
+                xWalletId = mcWalletId,
+            )
+            L.i("MigrationRepository", "Battery migrated: ${migration.movedCharges} charges")
+            batteryRepository.fetchBalance(wallet, auth)
+            unifiedAccountRepository.getTonWalletById(mcWalletId)?.let {
+                batteryRepository.getBalance(it, ignoreCache = true)
+            }
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            L.e("MigrationRepository", "Failed to migrate battery", e)
+            false
         }
     }
 
@@ -919,11 +966,7 @@ class MigrationRepository(
     )
 
     private suspend fun candidateWallets(): List<WalletEntity> {
-        return accountRepository.getWallets().filter { wallet ->
-            wallet.hasPrivateKey &&
-                !wallet.testnet &&
-                wallet.type != WalletType.Multichain
-        }
+        return accountRepository.getWallets().filter { it.canMigrateToMultichain }
     }
 
     private fun fetchMigrationValues(

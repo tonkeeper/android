@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
+import com.tonapps.bus.walletimport.WalletImportPairingSession
+import com.tonapps.bus.walletimport.WalletImportPairingSessions
 import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.ui.screen.init.WalletImportAnalytics
 import com.tonapps.tonkeeper.ui.screen.ledger.steps.LedgerConnectionFragment
@@ -35,6 +37,14 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
     private val connectionViewModel: LedgerConnectionViewModel by viewModel()
 
     private val importAnalytics: WalletImportAnalytics by inject()
+
+    private val pairingSessions: WalletImportPairingSessions by inject()
+
+    private val pairingSession: WalletImportPairingSession? by lazy {
+        pairingSessions.active(WalletFlowWalletSource.Ledger)
+    }
+
+    private var isHandedOff = false
 
     private val ledgerConnectionFragment: LedgerConnectionFragment by lazy {
         LedgerConnectionFragment.newInstance()
@@ -98,17 +108,26 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
             }
 
             is LedgerEvent.Error -> {
+                pairingSession?.setBlocked(WalletImportPairingSession.Blocker.ConnectionError)
                 trackImportError(event.message)
                 navigation?.toast(event.message)
             }
 
             is LedgerEvent.Next -> {
+                isHandedOff = true
                 rootViewModel.connectLedger(event.connectData, event.accounts)
                 finish()
             }
 
             else -> {}
         }
+    }
+
+    override fun onDestroy() {
+        if (!isHandedOff && activity?.isChangingConfigurations != true) {
+            pairingSession?.exit()
+        }
+        super.onDestroy()
     }
 
     private fun trackImportError(message: String) {
@@ -126,7 +145,9 @@ class PairLedgerScreen : BaseFragment(R.layout.fragment_ledger_pair), BaseFragme
     companion object {
 
         fun newInstance(): PairLedgerScreen {
-            return PairLedgerScreen()
+            val fragment = PairLedgerScreen()
+            fragment.putBooleanArg(LedgerConnectionViewModel.ARG_IMPORT_PAIRING, true)
+            return fragment
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.tonapps.wallet.data.raffle.entities
 
+import java.math.BigDecimal
 import java.time.OffsetDateTime
 
 /** Domain view of one raffle campaign; the generated API models stay inside the repository. */
@@ -23,13 +24,19 @@ data class RaffleEntity(
     val banner: Banner? = null,
     val stories: List<Story> = emptyList(),
     val progress: Progress? = null,
+    val leaderboard: Leaderboard? = null,
 ) {
+
+    val hasLeaderboard: Boolean
+        get() = leaderboard != null
 
     val isOfferPhase: Boolean
         get() = (status == Status.NotJoined || status == Status.Joined) &&
             prizes.isEmpty() && milestones.isEmpty()
 
     fun hasStarted(now: OffsetDateTime): Boolean = !startsAt.isAfter(now)
+
+    fun hasEnded(now: OffsetDateTime): Boolean = !endsAt.isAfter(now)
 
     enum class Status {
         NotJoined, Joined, EndedPending, Won, Lost
@@ -128,5 +135,9 @@ data class RaffleEntity(
     data class WinningPrize(
         val title: String,
         val image: String,
+    )
+
+    data class Leaderboard(
+        val points: BigDecimal?,
     )
 }

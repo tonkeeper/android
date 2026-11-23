@@ -1,5 +1,6 @@
 package com.tonapps.deposit.multicoin.screens.confirm
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
@@ -7,7 +8,10 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.num.Formatter
+import com.tonapps.chainkit.core.chain.model.transaction.Transaction
+import androidx.compose.ui.tooling.preview.Preview
 import com.tonapps.core.components.InsufficientFundsAction
+import com.tonapps.core.components.InsufficientFundsContent
 import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.Signing
 import com.tonapps.core.components.InsufficientFundsDialog as SharedInsufficientFundsDialog
@@ -15,11 +19,12 @@ import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeLogic
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.localization.Localization
+import ui.preview.ThemedPreview
 
 private val BatteryIllustration = UIKitIcon.ic_empty_battery_accent_flash_128
 
 @Composable
-internal fun PendingTransaction.InsufficientFundsDialog(
+fun PendingTransaction.InsufficientFundsDialog(
     onTopUp: (assetId: String) -> Unit,
     onOpenBattery: (walletId: String, from: BatteryNativeFrom) -> Unit,
     onClose: () -> Unit,
@@ -64,7 +69,7 @@ private fun PendingTransaction.FeeShortageDialog(
         title = stringResource(Localization.confirmation_insufficient_balance, shortfall.symbol),
         messages = listOf(
             stringResource(
-                Localization.confirmation_insufficient_balance_description,
+                feeShortageDescription(),
                 shortfall.network,
                 shortfall.fee,
                 shortfall.symbol,
@@ -174,7 +179,7 @@ private fun PendingTransaction.genericShortfall(): InsufficientFunds {
 }
 
 @Composable
-private fun formatAmountWithBalance(
+internal fun formatAmountWithBalance(
     amount: BigInteger,
     account: AccountWithDetails,
 ): Pair<String, String> {
@@ -209,6 +214,21 @@ internal fun PendingTransaction.isShortOnFeeOnly(): Boolean {
     return account.asset.value !is Asset.Coin || amount <= account.unitBalance.value
 }
 
+@StringRes
+private fun PendingTransaction.feeShortageDescription(): Int = when (signing) {
+    is Signing.Msg -> Localization.confirmation_insufficient_balance_transaction_description
+    is Signing.Tx -> when (signing.value) {
+        is Transaction.Swap -> Localization.confirmation_insufficient_balance_description
+        is Transaction.Transfer -> Localization.confirmation_insufficient_balance_transfer_description
+        is Transaction.Call,
+        is Transaction.Staking.Claim,
+        is Transaction.Staking.Compound,
+        is Transaction.Staking.Stake,
+        is Transaction.Staking.Unstake,
+        is Transaction.Staking.Restake -> Localization.confirmation_insufficient_balance_transaction_description
+    }
+}
+
 // Only a battery the relayer priced for this transaction, and whose charges fall short, is worth
 // recharging: a failed estimate, enough charges or an operation the battery does not pay leave the
 // chain's coin as the only way out.
@@ -237,7 +257,48 @@ private fun PendingTransaction.feeShortfall(): FeeShortfall {
             assetId = energy.asset.id,
             symbol = symbol,
             network = account.asset.value.chain.name,
-            fee = amount?.let { "${Formatter.formatAsset(value = it)} $symbol" } ?: symbol,
+            fee = amount?.let { "${Formatter.formatShort(value = it)} $symbol" } ?: symbol,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SwapFeeShortageBatteryPreview() {
+    ThemedPreview {
+        InsufficientFundsContent(
+            title = stringResource(Localization.confirmation_insufficient_balance, "TRX"),
+            messages = listOf(
+                stringResource(Localization.confirmation_insufficient_balance_description, "TRON", "3.2 TRX", "TRX"),
+            ),
+            actions = listOf(
+                InsufficientFundsAction(text = stringResource(Localization.recharge_battery), primary = true, onClick = {}),
+                InsufficientFundsAction(text = stringResource(Localization.deposit_asset, "TRX"), onClick = {}),
+            ),
+            iconRes = BatteryIllustration,
+            tintIcon = false,
+            wallet = null,
+            note = null,
+            onClose = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SwapFeeShortageCoinPreview() {
+    ThemedPreview {
+        InsufficientFundsContent(
+            title = stringResource(Localization.insufficient_balance_title),
+            messages = listOf(stringResource(Localization.insufficient_balance_fees, "0.0004 BNB", "0 BNB")),
+            actions = listOf(
+                InsufficientFundsAction(text = stringResource(Localization.buy_ton, "BNB"), primary = true, onClick = {}),
+            ),
+            iconRes = BatteryIllustration,
+            tintIcon = false,
+            wallet = null,
+            note = null,
+            onClose = {},
         )
     }
 }

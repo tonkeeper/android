@@ -7,18 +7,22 @@ import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmOperations
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.EventExecutor
+import com.tonapps.bus.generated.DefaultEvents
 import com.tonapps.chainkit.core.chain.api.models.ChainError
+import com.tonapps.core.flags.InAppReviewManager
 import com.tonapps.chainkit.core.chain.api.models.ChainRes
 import com.tonapps.chainkit.core.chain.api.models.NodeRes
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
 import com.tonapps.chainkit.transaction.GasReserveResult
 import com.tonapps.deposit.multicoin.screens.confirm.base.ConfirmationError
 import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.SendingState
+import com.tonapps.deposit.multicoin.screens.confirm.base.SignatureGate
 import com.tonapps.deposit.multicoin.screens.confirm.fee.FeeAccount
 import com.tonapps.deposit.multicoin.screens.confirm.fee.RelayerQuote
 import com.tonapps.deposit.multicoin.screens.confirm.fee.RelayerQuoteExpiredException
@@ -28,7 +32,7 @@ import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeBuilder
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeState
 import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.testing.BaseUnitTest
 import com.tonapps.wallet.testing.TestAssets
 import com.tonapps.wallet.testing.TestWallet
@@ -36,12 +40,16 @@ import com.tonapps.wallet.testing.testAccount
 import com.tonapps.wallet.testing.testWallet
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -63,7 +71,7 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
     private val accountRepo = mockk<McAccountRepository>()
     private val provider = mockk<ChainKitProvider>()
     private val feeBuilder = mockk<TxFeeBuilder>()
-    private val passcodeManager = mockk<PasscodeManager>()
+    private val walletUnlocker = mockk<WalletUnlocker>()
     private val confirmResults = mockk<ConfirmResultListener>(relaxed = true)
     private val store = ViewModelStore()
     private val collection by lazy { CoroutineScope(dispatchers.main) }
@@ -102,6 +110,7 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
             relayer = RelayerSend { _, selected ->
                 relayed += selected.id
                 relayerAnswer()
+                null
             },
             quotedId = priced.id,
         )
@@ -130,13 +139,14 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
                 quote = quote,
             )
         }
-        coEvery { passcodeManager.unlockMultichainVault<CryptoWallet>(any(), any()) } returns mockk()
+        coEvery { walletUnlocker.unlockWallet(any(), any()) } returns mockk()
     }
 
     @After
     fun tearDown() {
         collection.cancel()
         store.clear()
+        unmockkObject(AnalyticsHelper.Companion, InAppReviewManager)
     }
 
     @Test
@@ -247,7 +257,7 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
         val (feature, shown) = open()
         scheduler.runCurrent()
 
-        feature.sendTransaction(context, shown.last()!!)
+        feature.sendTransaction(shown.last()!!)
         scheduler.runCurrent()
 
         assertEquals(listOf(Asset.Battery.ID), relayed.toList())
@@ -255,7 +265,7 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
         assertEquals(SendingState.None, feature.sendingState.value)
 
         relayerAnswer = {}
-        feature.retry(context)
+        feature.retry()
         scheduler.runCurrent()
 
         assertNull(feature.confirmationError.value)
@@ -269,7 +279,7 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
         val (feature, shown) = open(context = DAPP)
         scheduler.runCurrent()
 
-        feature.sendTransaction(context, shown.last()!!)
+        feature.sendTransaction(shown.last()!!)
         scheduler.runCurrent()
         feature.reject()
         scheduler.runCurrent()
@@ -280,18 +290,81 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
 
     @Test
     fun aDismissedPasscodeIsAnsweredAsRejected() {
-        coEvery { passcodeManager.unlockMultichainVault<CryptoWallet>(any(), any()) } throws
+        coEvery { walletUnlocker.unlockWallet(any(), any()) } throws
             CancellationException("passcode dismissed")
         val (feature, shown) = open(context = DAPP)
         scheduler.runCurrent()
 
-        feature.sendTransaction(context, shown.last()!!)
+        feature.sendTransaction(shown.last()!!)
         scheduler.runCurrent()
         feature.reject()
         scheduler.runCurrent()
 
         coVerify(exactly = 1) { confirmResults.rejected(DAPP) }
         coVerify(exactly = 0) { confirmResults.failed(any()) }
+    }
+
+    @Test
+    fun aBatterySendIsARedSendPaidInBatteryCharges() {
+        // A sent transfer counts towards the in-app review prompt, which needs the app context.
+        mockkObject(InAppReviewManager)
+        every { InAppReviewManager.onTransactionSent() } returns Unit
+        val events = recordAnalytics()
+        val (feature, shown) = open()
+        scheduler.runCurrent()
+
+        feature.sendTransaction(shown.last()!!)
+        scheduler.runCurrent()
+
+        assertEquals(listOf(Asset.Battery.ID), relayed.toList())
+        val attempt = events.sendEvent("op_attempt")
+        assertEquals("transfer", attempt["flow"])
+        assertEquals("send", attempt["operation"])
+        assertEquals("native_ui", attempt["attempt_source"])
+        val metadata = JSONObject(attempt["other_metadata"] as String)
+        assertEquals("battery_charges", metadata.getString("fee_paid_in"))
+        assertEquals(TestAssets.usdtEth.id, metadata.getString("asset"))
+        val terminal = events.sendEvent("op_terminal")
+        assertEquals(attempt["operation_id"], terminal["operation_id"])
+        assertEquals("success", terminal["outcome"])
+    }
+
+    @Test
+    fun aRelayerSendThatFailsEndsTheRedSendAsFailed() {
+        relayerAnswer = { throw IllegalStateException("relayer is down") }
+        val events = recordAnalytics()
+        val (feature, shown) = open()
+        scheduler.runCurrent()
+
+        feature.sendTransaction(shown.last()!!)
+        scheduler.runCurrent()
+
+        val terminal = events.sendEvent("op_terminal")
+        assertEquals("fail", terminal["outcome"])
+        assertEquals("IllegalStateException", terminal["error_type"])
+        assertEquals(ConfirmationError.Unknown, feature.confirmationError.value)
+    }
+
+    // The emulation the screen runs first is a RED operation of its own.
+    private fun List<Pair<String, Map<String, Any>>>.sendEvent(name: String): Map<String, Any> {
+        return single { (event, props) -> event == name && props["operation"] == "send" }.second
+    }
+
+    // ConfirmAnalytics reads AnalyticsHelper.Default when the feature is built: call before open().
+    private fun recordAnalytics(): List<Pair<String, Map<String, Any>>> {
+        val tracked = CopyOnWriteArrayList<Pair<String, Map<String, Any>>>()
+        val recording = object : EventExecutor {
+            override fun trackEvent(eventName: String, props: Map<String, Any>) {
+                tracked += eventName to props
+            }
+        }
+        val helper = mockk<AnalyticsHelper> {
+            every { eventsTaggedWith(any()) } returns DefaultEvents(recording)
+            every { events } returns DefaultEvents(recording)
+        }
+        mockkObject(AnalyticsHelper.Companion)
+        every { AnalyticsHelper.Default } returns helper
+        return tracked
     }
 
     private fun offer(vararg options: TxFee) {
@@ -321,11 +394,13 @@ class TxConfirmFeeQuoteTest : BaseUnitTest() {
             provider = provider,
             accountRepo = accountRepo,
             postTransactionRefreshSchedule = mockk(relaxed = true),
-            passcodeManager = passcodeManager,
+            walletUnlocker = walletUnlocker,
+            signatureGate = SignatureGate { false },
             confirmResults = confirmResults,
             feeBuilder = feeBuilder,
             gaslessSender = mockk(relaxed = true),
             settingsRepository = mockk(relaxed = true),
+            ledgerSigner = mockk(relaxed = true),
         )
         store.put("tx-confirm", feature)
 

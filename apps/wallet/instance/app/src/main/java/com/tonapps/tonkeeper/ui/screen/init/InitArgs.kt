@@ -23,11 +23,14 @@ data class InitArgs(
     val withNew: Boolean = true,
     val raffleSourceWalletId: String? = null,
     val importStartedTracked: Boolean = false,
+    val ledgerImport: String? = null,
+    val ledgerMigrationFrom: String? = null,
+    val openUrlAfterCreated: String? = null,
 ) : BaseArgs() {
 
     enum class Type {
         // AddWallet opens the flow on the type selector; the concrete type is picked there.
-        AddWallet, New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone
+        AddWallet, New, Import, Watch, Testnet, Signer, SignerQR, Ledger, Keystone, LedgerMultichain
     }
 
     private val ledgerAccountName: String?
@@ -53,6 +56,9 @@ data class InitArgs(
         withNew = bundle.getBoolean(ARG_WITH_NEW, true),
         raffleSourceWalletId = bundle.getString(ARG_RAFFLE_SOURCE_WALLET_ID),
         importStartedTracked = bundle.getBoolean(ARG_IMPORT_STARTED_TRACKED, false),
+        ledgerImport = bundle.getString(ARG_LEDGER_IMPORT),
+        ledgerMigrationFrom = bundle.getString(ARG_LEDGER_MIGRATION_FROM),
+        openUrlAfterCreated = bundle.getString(ARG_OPEN_URL_AFTER_CREATED),
     )
 
     override fun toBundle(): Bundle = Bundle().apply {
@@ -66,6 +72,9 @@ data class InitArgs(
         putBoolean(ARG_WITH_NEW, withNew)
         raffleSourceWalletId?.let { putString(ARG_RAFFLE_SOURCE_WALLET_ID, it) }
         putBoolean(ARG_IMPORT_STARTED_TRACKED, importStartedTracked)
+        ledgerImport?.let { putString(ARG_LEDGER_IMPORT, it) }
+        ledgerMigrationFrom?.let { putString(ARG_LEDGER_MIGRATION_FROM, it) }
+        openUrlAfterCreated?.let { putString(ARG_OPEN_URL_AFTER_CREATED, it) }
     }
 
     private companion object {
@@ -79,5 +88,8 @@ data class InitArgs(
         private const val ARG_WITH_NEW = "with_new"
         private const val ARG_RAFFLE_SOURCE_WALLET_ID = "raffle_source_wallet_id"
         private const val ARG_IMPORT_STARTED_TRACKED = "import_started_tracked"
+        private const val ARG_LEDGER_IMPORT = "ledger_import"
+        private const val ARG_LEDGER_MIGRATION_FROM = "ledger_migration_from"
+        private const val ARG_OPEN_URL_AFTER_CREATED = "open_url_after_created"
     }
 }

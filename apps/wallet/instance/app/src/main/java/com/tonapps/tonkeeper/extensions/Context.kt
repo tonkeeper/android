@@ -92,6 +92,14 @@ fun Context.showWarningToast(@StringRes resId: Int) {
     navigation?.warningToast(resId)
 }
 
+fun Context.showFailureToast(@StringRes resId: Int) {
+    navigation?.failureToast(resId)
+}
+
+fun Context.showFailureToast(text: String) {
+    navigation?.failureToast(text)
+}
+
 fun Context.loading(loading: Boolean = true) {
     navigation?.toastLoading(loading)
 }
@@ -211,6 +219,10 @@ fun Context.getWalletBadges(
             Localization.w5
         }
         builder = builder.badgeGreen(this, resId)
+    }
+
+    if (version == WalletVersion.WALLET_TG) {
+        builder = builder.badgeBlue(this, Localization.telegram)
     }
 
     if (type != WalletType.Default) {

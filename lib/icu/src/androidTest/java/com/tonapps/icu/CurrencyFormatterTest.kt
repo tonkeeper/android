@@ -56,4 +56,31 @@ class CurrencyFormatterTest {
 
         assertEquals("12,34", CurrencyFormatter.format(value = BigDecimal("12.34")).toString())
     }
+
+    @Test
+    fun compactOutputCarriesTheExposedDecimalSeparator() {
+        CurrencyFormatter.setLocale(Locale.GERMANY)
+        assertEquals("1,5K", CurrencyFormatter.format(value = BigDecimal("1500"), compact = true).toString())
+
+        CurrencyFormatter.setLocale(Locale.US)
+        assertEquals("1.5K", CurrencyFormatter.format(value = BigDecimal("1500"), compact = true).toString())
+    }
+
+    @Test
+    fun exactFiatKeepsEveryDigitAndTheCurrencyDecimals() {
+        CurrencyFormatter.setLocale(Locale.US)
+
+        assertEquals("$\u20091,234.50", CurrencyFormatter.formatFiatExact("USD", BigDecimal("1234.5")).toString())
+        assertEquals("$\u20092.955", CurrencyFormatter.formatFiatExact("USD", BigDecimal("2.955")).toString())
+        assertEquals("¥\u20091,234", CurrencyFormatter.formatFiatExact("JPY", BigDecimal("1234")).toString())
+    }
+
+    @Test
+    fun percentFollowsTheFormatterLocale() {
+        CurrencyFormatter.setLocale(Locale.GERMANY)
+        assertEquals("-\u20091,25%", Formatter.percent(-1.25f))
+
+        CurrencyFormatter.setLocale(Locale("ar", "EG"))
+        assertEquals("+\u20091.25%", Formatter.percent(1.25f))
+    }
 }

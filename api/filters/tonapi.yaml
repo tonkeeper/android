@@ -1,0 +1,46 @@
+# Usage by platform; both generators consume the entire list.
+filter:
+  operations:
+    # Both platforms
+    - getAccount
+    - getAccountJettonsBalances
+    - getAccountEvents
+    - getAccountJettonHistoryByID
+    - getAccountEvent
+    - getAccountNftItems
+    - getAccountSeqno
+    - getWalletInfo
+    - emulateMessageToWallet
+    - sendBlockchainMessage
+    - getNftItemsByAddresses
+    - getJettonInfo
+    - getJettonTransferPayload
+    - getRates
+    - getStakingPools
+    - getAccountNominatorsPools
+    - getMigrationWallets
+    - getRawTime
+    - status
+    # iOS only
+    - dnsResolve
+    - getDnsInfo
+    - execGetMethodForBlockchainAccount
+    - tonConnectProof
+    - getTonConnectPayload
+    - gaslessConfig
+    # Android only
+    - prepareMigration
+    - getBlockchainConfig
+    - getAccountDnsExpiring
+    - getEvent
+    - getAccountJettonBalance
+    - getWalletsByPublicKeyBulk
+    - getWalletsByPublicKey
+    - getNftItemByAddress
+    - getAccountPublicKey
+  schemas:
+    # iOS only
+    - MigrationOutMessage
+    # Android only
+    - Error
+    - ExtraCurrencies

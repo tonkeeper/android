@@ -19,6 +19,7 @@ import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.wallet.data.multichain.account.displayOrder
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +60,10 @@ class DevViewModel(
         lines.add("Smart Locale: ${it.byLocale ?: "unknown"}")
         lines.add("Debug: ${it.debug ?: "unknown"}")
         lines.joinToString("\n")
+    }
+
+    fun resetSwapBatteryPromo() {
+        settingsRepository.swapBatteryPromoShown = false
     }
 
     fun getLegacyStorage(callback: (result: String) -> Unit) {
@@ -217,7 +222,7 @@ class DevViewModel(
                         lines.add("\n")
                     }
                     val activity = context.activity ?: throw IllegalStateException("Activity not found")
-                    val vaultState = rnLegacy.requestVault(activity)
+                    val vaultState = rnLegacy.requestVault(activity, PasscodeReason.ADD_WALLET)
                     if (vaultState.keys.isEmpty()) {
                         lines.add("No keys in vault")
                     } else {

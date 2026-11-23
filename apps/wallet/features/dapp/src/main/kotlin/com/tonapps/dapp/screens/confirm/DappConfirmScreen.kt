@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +43,7 @@ import ui.components.moon.cell.MoonTextContentCell
 import ui.preview.ThemedPreview
 import ui.theme.Dimens
 import ui.theme.UIKit
+import ui.theme.modifiers.modalSheetMaxHeight
 
 @Preview
 @Composable
@@ -83,6 +86,7 @@ private fun Content(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .modalSheetMaxHeight()
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
         MoonTopAppBar(
@@ -96,7 +100,8 @@ private fun Content(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             DAppIcon(icon = remember(data.iconUrl) { data.iconUrl.toUri() })

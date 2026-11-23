@@ -1,5 +1,7 @@
 package com.tonapps.wallet.data.multichain.vault
 
+import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
+import com.tonapps.chainkit.core.chain.model.account.WalletKind
 import com.tonapps.log.L
 import com.tonapps.security.multichain.SessionKeyStore
 import com.tonapps.wallet.data.multichain.wallet.CredentialDao
@@ -82,5 +84,13 @@ class WalletKeyRepository(
 
     fun delete(walletId: String) {
         dao.deleteCredential(CredentialIds.appKey(walletId))
+    }
+
+    companion object {
+
+        fun keyPair(walletId: String, appPrivateKey: ByteArray): WalletKeyPair {
+            return WalletKeyPair.fromPrivateKey(appPrivateKey, walletId).getOrNull()
+                ?: WalletKeyPair.fromPrivateKey(appPrivateKey, WalletKind.Multichain)
+        }
     }
 }

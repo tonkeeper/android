@@ -12,6 +12,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.tonapps.core.components.withLocaleDecimalSeparator
+import com.tonapps.deposit.utils.AmountError
 import com.tonapps.icu.Coins
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
@@ -36,6 +38,7 @@ fun SelectProviderDialog(
     currencyCode: String,
     onConfirm: (providerId: String, minAmount: Coins?) -> Unit,
     onClose: () -> Unit,
+    amount: Coins? = null,
 ) {
     var localSelectedId by remember { mutableStateOf(selectedProviderId) }
     val navigator = rememberDialogNavigator(onClose = onClose)
@@ -59,36 +62,47 @@ fun SelectProviderDialog(
                             providers.sortedByDescending { it.quote != null }
                         }
                         sorted.forEachIndexed { index, entry ->
-                            if (index > 0) MoonItemDivider()
+                            if (index > 0) {
+                                MoonItemDivider()
+                            }
                             val isAvailable = entry.quote != null
                             val isChecked = isAvailable && entry.info.id == localSelectedId
+                            val limit = if (isAvailable) { null } else { entry.info.unavailableLimit(amount) }
 
                             TextCheckCell(
                                 title = entry.info.title,
                                 subtitle = entry.rate?.rateFormatted,
-                                subtitleColor = if (isAvailable) UIKit.colorScheme.text.secondary else UIKit.colorScheme.text.tertiary,
-                                description = if (!isAvailable) {
-                                    when {
-                                        entry.info.minAmount.isPositive -> {
-                                            {
-                                                MoonItemSubtitle(
-                                                    text = stringResource(Localization.deposit_min_amount_with_currency, entry.info.minAmount.value, currencyCode),
-                                                    color = UIKit.colorScheme.accent.orange,
-                                                )
-                                            }
-                                        }
-                                        entry.info.maxAmount != null -> {
-                                            {
-                                                MoonItemSubtitle(
-                                                    text = stringResource(Localization.deposit_max_amount_with_currency, entry.info.maxAmount.value, currencyCode),
-                                                    color = UIKit.colorScheme.accent.orange,
-                                                )
-                                            }
-                                        }
-                                        else -> null
-                                    }
+                                subtitleColor = if (isAvailable) {
+                                    UIKit.colorScheme.text.secondary
                                 } else {
-                                    null
+                                    UIKit.colorScheme.text.tertiary
+                                },
+                                description = when (limit) {
+                                    is AmountError.BelowMin -> {
+                                        {
+                                            MoonItemSubtitle(
+                                                text = stringResource(
+                                                    Localization.deposit_min_amount_with_currency,
+                                                    Coins.string(limit.minAmount).withLocaleDecimalSeparator(),
+                                                    currencyCode,
+                                                ),
+                                                color = UIKit.colorScheme.accent.orange,
+                                            )
+                                        }
+                                    }
+                                    is AmountError.AboveMax -> {
+                                        {
+                                            MoonItemSubtitle(
+                                                text = stringResource(
+                                                    Localization.deposit_max_amount_with_currency,
+                                                    Coins.string(limit.maxAmount).withLocaleDecimalSeparator(),
+                                                    currencyCode,
+                                                ),
+                                                color = UIKit.colorScheme.accent.orange,
+                                            )
+                                        }
+                                    }
+                                    null -> null
                                 },
                                 tags = {
                                     if (entry.info.isBest) {
@@ -101,16 +115,12 @@ fun SelectProviderDialog(
                                 isChecked = isChecked,
                                 onCheckedChange = {
                                     navigator.close()
-                                    if (isAvailable) {
-                                        onConfirm(entry.info.id, null)
-                                    } else {
-                                        val limitAmount = when {
-                                            entry.info.minAmount.isPositive -> entry.info.minAmount
-                                            entry.info.maxAmount != null -> entry.info.maxAmount
-                                            else -> null
-                                        }
-                                        onConfirm(entry.info.id, limitAmount)
+                                    val limitAmount = when (limit) {
+                                        is AmountError.BelowMin -> limit.minAmount
+                                        is AmountError.AboveMax -> limit.maxAmount
+                                        null -> null
                                     }
+                                    onConfirm(entry.info.id, limitAmount)
                                 },
                                 minHeight = 76.dp,
                                 image = {

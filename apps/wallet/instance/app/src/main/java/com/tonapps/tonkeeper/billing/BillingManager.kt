@@ -2,8 +2,10 @@ package com.tonapps.tonkeeper.billing
 
 import android.app.Activity
 import android.content.Context
+import android.os.SystemClock
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClient.ProductType
+import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ConsumeParams
@@ -16,35 +18,44 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.consumePurchase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.tonapps.extensions.MutableEffectFlow
-import com.tonapps.extensions.filterList
+import com.tonapps.extensions.ErrorForUserException
 import com.tonapps.log.L
-import com.tonapps.tonkeeper.Environment
-import com.tonapps.blockchain.model.legacy.WalletEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration.Companion.seconds
 
+private const val PURCHASE_RESULTS_BUFFER = 16
+private const val CONNECTION_TIMEOUT_MILLIS = 10_000L
+
 class BillingManager(
-    context: Context,
-    scope: CoroutineScope,
-    private val environment: Environment,
+    private val context: Context,
 ) : PurchasesUpdatedListener {
 
-    private var billingClient: BillingClient = BillingClient.newBuilder(context)
+    @Volatile
+    private var billingClient: BillingClient = newClient()
+
+    private var billingClientConnected = false
+
+    private val _productsFlow = MutableStateFlow<List<ProductDetails>?>(null)
+    val productsFlow = _productsFlow.asStateFlow()
+
+    private val _purchaseResultsFlow = MutableSharedFlow<PurchasesUpdated>(extraBufferCapacity = PURCHASE_RESULTS_BUFFER)
+    val purchaseResultsFlow = _purchaseResultsFlow.asSharedFlow()
+
+    private var connection: CompletableDeferred<BillingClient>? = null
+
+    private var connectionStartedAt = 0L
+
+    private fun newClient(): BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
         .enablePendingPurchases(
             PendingPurchasesParams
@@ -55,23 +66,73 @@ class BillingManager(
         )
         .build()
 
-    private val _productsFlow = MutableStateFlow<List<ProductDetails>?>(null)
-    val productsFlow = _productsFlow.asStateFlow().filterNotNull()
+    private suspend fun <T> ready(block: suspend (client: BillingClient) -> T): T {
+        val current = billingClient
+        if (current.isReady && current.connectionState == BillingClient.ConnectionState.CONNECTED) {
+            return block(current)
+        }
+        val client = withTimeoutOrNull(CONNECTION_TIMEOUT_MILLIS) { connect().await() }
+            ?: throw ErrorForUserException.of("Google Play is not responding")
+        return block(client)
+    }
 
-    private val _purchasesUpdatedFlow = MutableEffectFlow<PurchasesUpdated>()
-    val purchasesUpdatedFlow = _purchasesUpdatedFlow.shareIn(scope, SharingStarted.Lazily, 0).distinctUntilChanged()
+    @Synchronized
+    private fun connect(): Deferred<BillingClient> {
+        val pending = connection?.takeIf { it.isActive }
+        val now = SystemClock.elapsedRealtime()
+        if (pending != null) {
+            if (billingClientConnected || now - connectionStartedAt < CONNECTION_TIMEOUT_MILLIS) {
+                return pending
+            }
+            billingClient.endConnection()
+            billingClient = newClient()
+        }
+        val client = billingClient
+        val result = pending ?: CompletableDeferred()
+        connection = result
+        connectionStartedAt = now
+        val listener = object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                onSetupFinished(client, result, billingResult)
+            }
+
+            override fun onBillingServiceDisconnected() { }
+        }
+        try {
+            client.startConnection(listener)
+        } catch (e: Exception) {
+            result.completeExceptionally(e)
+        }
+        return result
+    }
+
+    @Synchronized
+    private fun onSetupFinished(
+        client: BillingClient,
+        result: CompletableDeferred<BillingClient>,
+        billingResult: BillingResult,
+    ) {
+        if (client !== billingClient) {
+            return
+        }
+        if (billingResult.isSuccess) {
+            billingClientConnected = true
+            result.complete(client)
+        } else {
+            val message = billingResult.debugMessage ?: "unknown error"
+            result.completeExceptionally(ErrorForUserException.of(message))
+        }
+    }
 
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
         if (!result.isSuccess) {
             log("Purchases updated", BillingException(result))
         }
 
-        if (result.isSuccess && !purchases.isNullOrEmpty()) {
-            _purchasesUpdatedFlow.tryEmit(PurchasesUpdated(result, purchases))
-        }
+        _purchaseResultsFlow.tryEmit(PurchasesUpdated(result, purchases.orEmpty()))
     }
 
-    suspend fun consumeProduct(purchaseToken: String) = billingClient.ready { client ->
+    suspend fun consumeProduct(purchaseToken: String) = ready { client ->
         val params = ConsumeParams.newBuilder().setPurchaseToken(purchaseToken).build()
         client.consumePurchase(params)
     }
@@ -83,6 +144,8 @@ class BillingManager(
         val products = withTimeoutOrNull(5.seconds) {
             try {
                 getProducts(productIds, productType)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Throwable) {
                 L.e(e)
                 null
@@ -109,7 +172,7 @@ class BillingManager(
     private suspend fun getProducts(
         productIds: List<String>,
         productType: String = ProductType.INAPP
-    ): List<ProductDetails> = billingClient.ready { client ->
+    ): List<ProductDetails> = ready { client ->
         if (productIds.isEmpty()) {
             return@ready emptyList()
         }
@@ -127,6 +190,8 @@ class BillingManager(
                 .build()
 
             getProductDetails(client, params)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             log("Failed to get products", e)
             FirebaseCrashlytics.getInstance().recordException(e)
@@ -149,6 +214,8 @@ class BillingManager(
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(ProductType.INAPP)
             return queryPurchases(client, params.build())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             log("Failed to get pending purchases", e)
             return emptyList()
@@ -167,9 +234,8 @@ class BillingManager(
 
     suspend fun requestPurchase(
         activity: Activity,
-        wallet: WalletEntity,
         productDetails: ProductDetails
-    ) = billingClient.ready { client ->
+    ) = ready { client ->
         val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(productDetails)
             .build()
@@ -179,10 +245,10 @@ class BillingManager(
             .build()
 
         val result = client.launchBillingFlow(activity, billingFlowParams)
-        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+        if (!result.isSuccess) {
             log("Failed to launch billing flow", BillingException(result))
         }
-        Unit
+        result.isSuccess
     }
 
     private suspend fun requestCountry(client: BillingClient): String? = suspendCancellableCoroutine { continuation ->
@@ -195,18 +261,11 @@ class BillingManager(
         }
     }
 
-    suspend fun getCountry() = billingClient.ready { client ->
+    suspend fun getCountry() = ready { client ->
         requestCountry(client)
     }
 
-    @OptIn(FlowPreview::class)
-    fun productFlow(productId: String) = productsFlow
-        .take(1)
-        .filterList { product -> product.productId == productId }
-        .mapNotNull { it.firstOrNull() }
-        .timeout(5.seconds)
-
-    suspend fun restorePurchases(): List<Purchase> = billingClient.ready {
+    suspend fun restorePurchases(): List<Purchase> = ready {
         getPendingPurchases(it)
     }
 }

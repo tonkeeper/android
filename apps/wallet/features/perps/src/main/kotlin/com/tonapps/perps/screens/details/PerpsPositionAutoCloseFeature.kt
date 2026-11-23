@@ -1,6 +1,5 @@
 package com.tonapps.perps.screens.details
 
-import android.content.Context
 import com.tonapps.async.Async
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.chainkit.perpetual.PerpsTradeError
@@ -14,9 +13,9 @@ import com.tonapps.mvi.graph.KState
 import com.tonapps.perps.data.PerpsAutoCloseDraft
 import com.tonapps.perps.screens.order.PerpsAutoCloseSubmit
 import com.tonapps.perps.screens.order.PerpsAutoCloseSubmitError
-import com.tonapps.perps.screens.review.PERPS_RETRYABLE_PLAN_KINDS
 import com.tonapps.perps.screens.review.invalidAutoCloseText
 import com.tonapps.perps.screens.review.toAutoCloseField
+import com.tonapps.perps.trade.PERPS_RETRYABLE_PLAN_KINDS
 import com.tonapps.perps.trade.PerpsAccountService
 import com.tonapps.perps.trade.PerpsPlanFailure
 import com.tonapps.perps.trade.PerpsPlannerAdapter
@@ -25,6 +24,7 @@ import com.tonapps.perps.trade.PerpsTradeExecutor
 import com.tonapps.perps.trade.PerpsTradeFailure
 import com.tonapps.perps.trade.PerpsTradeRequest
 import com.tonapps.perps.trade.PerpsUnlockFailure
+import com.tonapps.perps.trade.isRateLimited
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.perps.PerpsOperationStatus
 import com.tonapps.wallet.localization.Localization
@@ -42,7 +42,7 @@ interface PerpsPositionAutoCloseViewState : MviViewState {
 }
 
 sealed interface PerpsPositionAutoCloseAction : MviAction {
-    data class Submit(val context: Context, val draft: PerpsAutoCloseDraft?) : PerpsPositionAutoCloseAction
+    data class Submit(val draft: PerpsAutoCloseDraft?) : PerpsPositionAutoCloseAction
 }
 
 class PerpsPositionAutoCloseFeature(
@@ -82,7 +82,7 @@ class PerpsPositionAutoCloseFeature(
         val operationId = UUID.randomUUID().toString()
 
         return try {
-            val credentials = when (val unlock = accountService.unlock(wallet, action.context)) {
+            val credentials = when (val unlock = accountService.unlock(wallet)) {
                 is KResult.Ok -> unlock.value
                 is KResult.Err -> return if (unlock.value == PerpsUnlockFailure.CANCELLED) {
                     Outcome.Cancelled
@@ -101,10 +101,16 @@ class PerpsPositionAutoCloseFeature(
                     adapter.plan(request, credentials, mark = null, operationId = operationId)
                 }
                 when (result) {
-                    is KResult.Ok -> when (val start = executor.start(result.value)) {
+                    is KResult.Ok -> when (
+                        val start = executor.start(result.value) { accountService.unlockOwnerSigner(wallet) }
+                    ) {
                         is PerpsSubmitStart.Started -> return settle(wallet.id, start.operationId)
                         is PerpsSubmitStart.Blocked -> return Outcome.Failed(IN_PROGRESS_ERROR)
-                        is PerpsSubmitStart.Failed -> return Outcome.Failed(start.failure.toSubmitError())
+                        is PerpsSubmitStart.Failed -> return if (start.failure != PerpsTradeFailure.ApprovalCancelled) {
+                            Outcome.Failed(start.failure.toSubmitError())
+                        } else {
+                            Outcome.Cancelled
+                        }
                         is PerpsSubmitStart.Requote -> Unit
                     }
 
@@ -157,6 +163,8 @@ class PerpsPositionAutoCloseFeature(
 
         val IN_PROGRESS_ERROR = PerpsAutoCloseSubmitError(field = null, text = Localization.perps_operation_in_progress)
 
+        val TOO_MANY_REQUESTS_ERROR = PerpsAutoCloseSubmitError(field = null, text = Localization.perps_too_many_requests)
+
         fun PerpsPlanFailure.toSubmitError(): PerpsAutoCloseSubmitError {
             return when (this) {
                 PerpsPlanFailure.ClockSkew ->
@@ -174,6 +182,8 @@ class PerpsPositionAutoCloseFeature(
                     invalidAutoCloseError(field)
 
                 this == PerpsTradeFailure.OperationInProgress -> IN_PROGRESS_ERROR
+
+                isRateLimited -> TOO_MANY_REQUESTS_ERROR
 
                 else -> GENERIC_ERROR
             }

@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge
 
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Effect
+import com.tonapps.webview.bridge.InAppBridgeContract.Effect
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.json.JSONObject

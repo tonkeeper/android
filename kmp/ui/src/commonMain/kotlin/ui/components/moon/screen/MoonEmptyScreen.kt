@@ -4,16 +4,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -51,9 +53,8 @@ fun MoonEmptyScreen(
     buttonIconRes: Int? = UIKitIcon.ic_refresh_16,
     onButtonClick: () -> Unit = {},
     minHeight: Dp? = 350.dp,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
 ) {
-    val navBarPadding = WindowInsets.ime.union(WindowInsets.navigationBars).asPaddingValues()
-
     val lottieFileName = when (type) {
         MoonEmptyScreenType.Empty -> "magnifying_glass.json"
         MoonEmptyScreenType.EmptyActivity -> "clock.json"
@@ -65,7 +66,7 @@ fun MoonEmptyScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(32.dp)
-            .padding(bottom = navBarPadding.calculateBottomPadding())
+            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars).only(WindowInsetsSides.Bottom))
             .then(
                 if (minHeight != null) {
                     Modifier.defaultMinSize(minHeight = minHeight)
@@ -74,7 +75,7 @@ fun MoonEmptyScreen(
                 },
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(16.dp, verticalAlignment),
     ) {
         MoonLottie(
             fileName = lottieFileName,

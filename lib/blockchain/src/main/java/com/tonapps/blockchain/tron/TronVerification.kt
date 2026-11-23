@@ -9,18 +9,22 @@ internal fun TronTransactionRequest.requireMatches(actual: TronContract) {
             requireEquals("amount", amountSun, transfer.amount)
         }
 
-        is TronTransactionRequest.Trc20 -> {
-            val call = actual.require<TronContract.SmartContractCall>("TriggerSmartContract")
-            requireEquals("owner_address", transfer.from.tronHex(), call.ownerAddress)
-            requireEquals("contract_address", transfer.contractAddress.tronHex(), call.contractAddress)
-            requireEquals("data", transfer.callData, call.callData)
-            requireEquals("call_value", callValue, call.callValue)
-            requireEquals("call_token_value", 0, call.callTokenValue)
-            requireEquals("token_id", 0, call.tokenId)
-        }
+        is TronTransactionRequest.Trc20 -> requireCall(actual, transfer.from, transfer.contractAddress, transfer.callData, callValue)
+
+        is TronTransactionRequest.Call -> requireCall(actual, from, contractAddress, callData, callValue)
     }
 
     requireAtMost("fee_limit", feeLimit, actual.feeLimit)
+}
+
+private fun requireCall(actual: TronContract, from: String, contractAddress: String, callData: String, callValue: Long) {
+    val call = actual.require<TronContract.SmartContractCall>("TriggerSmartContract")
+    requireEquals("owner_address", from.tronHex(), call.ownerAddress)
+    requireEquals("contract_address", contractAddress.tronHex(), call.contractAddress)
+    requireEquals("data", callData, call.callData)
+    requireEquals("call_value", callValue, call.callValue)
+    requireEquals("call_token_value", 0, call.callTokenValue)
+    requireEquals("token_id", 0, call.tokenId)
 }
 
 private inline fun <reified T : TronContract> TronContract.require(expected: String): T {

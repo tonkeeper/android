@@ -32,6 +32,8 @@ interface UnifiedAccountRepository : AuthorizationProvider {
 
     suspend fun getWalletsCount(): Int
 
+    suspend fun getWalletIds(): List<String>
+
     fun getSelectedWalletId(): String?
 
     suspend fun getSelectedWallet(): WalletEntity?
@@ -92,6 +94,10 @@ class UnifiedAccountRepositoryImpl(
 
     override suspend fun getWalletsCount(): Int = withContext(Async.Io) {
         accountRepository.getWalletsCount() + mcAccountRepository.getWalletsCount()
+    }
+
+    override suspend fun getWalletIds(): List<String> = withContext(Async.Io) {
+        accountRepository.getWallets().map { it.id } + mcAccountRepository.getWallets().map { it.id }
     }
 
     override fun getSelectedWalletId(): String? {

@@ -134,7 +134,7 @@ class PasscodeDeviceCredentialTest {
         coEvery { DeviceCredential.confirm(context, any()) } returns false
         val manager = passcodeManager()
 
-        assertFalse(manager.confirmation(context, TITLE))
+        assertFalse(manager.confirmation(context, PasscodeReason.CONFIRM_ACTION))
         coVerify(exactly = 1) { DeviceCredential.confirm(context, any()) }
     }
 
@@ -145,7 +145,7 @@ class PasscodeDeviceCredentialTest {
             coEvery { DeviceCredential.confirm(context, any()) } returns false
             val manager = passcodeManager()
 
-            manager.requestValidPasscode(context)
+            manager.requestValidPasscode(context, PasscodeReason.CONFIRM_ACTION)
         }
     }
 
@@ -166,6 +166,5 @@ class PasscodeDeviceCredentialTest {
 
     private companion object {
         const val PIN = "1234"
-        const val TITLE = "Tonkeeper"
     }
 }

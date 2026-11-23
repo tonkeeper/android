@@ -46,6 +46,10 @@ import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.account.AccountEntity
 import com.tonapps.wallet.data.multichain.account.toChainAssetEntity
 import com.tonapps.wallet.localization.Localization
+import ui.DisableNavigationBarContrast
+import ui.components.moon.ButtonColorsSecondary
+import ui.components.moon.ButtonSizeLarge
+import ui.components.moon.MoonAccentButton
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonLabel
 import ui.components.moon.MoonLabelColors
@@ -62,9 +66,10 @@ import ui.theme.pressScale
 fun QrDialog(
     account: AccountEntity,
     onClose: () -> Unit = {},
+    onVerifyOnLedger: (() -> Unit)? = null,
 ) {
     QrModalSheet(onClose) {
-        QrSheetContent(account = account, onClose = onClose)
+        QrSheetContent(account = account, onClose = onClose, onVerifyOnLedger = onVerifyOnLedger)
     }
 }
 
@@ -95,6 +100,7 @@ private fun QrModalSheet(
         sheetState = sheetState,
         dragHandle = null,
     ) {
+        DisableNavigationBarContrast()
         MoonSurface {
             content()
         }
@@ -107,6 +113,7 @@ private fun QrModalSheet(
 fun QrSheetContent(
     account: AccountEntity,
     onClose: () -> Unit = {},
+    onVerifyOnLedger: (() -> Unit)? = null,
 ) {
     val asset = remember(account) { account.toChainAssetEntity() }
     val networkName = asset.value.chain.name
@@ -120,6 +127,7 @@ fun QrSheetContent(
         address = account.displayAddress,
         assetImage = account.chain.coin.chainImageUrl(),
         onClose = onClose,
+        onVerifyOnLedger = onVerifyOnLedger,
     )
 }
 
@@ -132,6 +140,7 @@ fun QrSheetContent(
     assetImage: String,
     chainImage: String? = null,
     onClose: () -> Unit = {},
+    onVerifyOnLedger: (() -> Unit)? = null,
 ) {
     val shareManager = rememberShareManager()
     val clipboard = rememberClipboardManager()
@@ -157,7 +166,7 @@ fun QrSheetContent(
         Spacer(Modifier.height(32.dp))
 
         QrContent(
-            walletType = WalletType.Default,
+            walletType = if (onVerifyOnLedger != null) { WalletType.Ledger } else { WalletType.Default },
             walletAddress = address,
             content = address,
             tokenImage = assetImage,
@@ -165,6 +174,20 @@ fun QrSheetContent(
             onCopyClick = { clipboard.copy(address) },
             onShareClick = { shareManager.share(address) }
         )
+
+        if (onVerifyOnLedger != null) {
+            Spacer(Modifier.height(16.dp))
+            MoonAccentButton(
+                modifier = Modifier
+                    .widthIn(max = 380.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                text = stringResource(Localization.ledger_mc_verify_on_ledger),
+                buttonColors = ButtonColorsSecondary,
+                size = ButtonSizeLarge,
+                onClick = onVerifyOnLedger,
+            )
+        }
     }
 }
 

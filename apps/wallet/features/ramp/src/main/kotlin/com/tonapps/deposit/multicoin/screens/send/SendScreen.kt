@@ -331,6 +331,8 @@ fun SendScreen(
                 val commentEncrypted by feature.commentEncrypted.collectAsState()
                 val encryptionAvailable by feature.encryptionAvailable.collectAsState()
                 val commentTooLong by feature.commentTooLong.collectAsState()
+                val ledgerCommentUnsupported by feature.ledgerCommentUnsupported.collectAsState()
+                val ledgerCommentIssue by feature.ledgerCommentIssue.collectAsState()
                 val isEncrypted = commentEncrypted && encryptionAvailable
 
                 MoonTextFieldCell(
@@ -341,7 +343,7 @@ fun SendScreen(
                         isEncrypted -> stringResource(Localization.encrypted_comment)
                         else -> stringResource(Localization.comment)
                     },
-                    isError = commentTooLong,
+                    isError = commentTooLong || ledgerCommentUnsupported,
                     hintColor = if (isEncrypted && comment.isNotBlank()) {
                         UIKit.colorScheme.accent.green
                     } else {
@@ -361,6 +363,21 @@ fun SendScreen(
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                         text = stringResource(Localization.send_request_comment),
                         color = UIKit.colorScheme.accent.orange,
+                        maxLines = 3,
+                    )
+                }
+
+                if (ledgerCommentUnsupported) {
+                    MoonItemSubtitle(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                        text = stringResource(
+                            if (ledgerCommentIssue == LedgerCommentIssue.NotShown) {
+                                Localization.ledger_mc_comment_not_shown
+                            } else {
+                                Localization.ledger_mc_comment_rules
+                            },
+                        ),
+                        color = UIKit.colorScheme.accent.red,
                         maxLines = 3,
                     )
                 }

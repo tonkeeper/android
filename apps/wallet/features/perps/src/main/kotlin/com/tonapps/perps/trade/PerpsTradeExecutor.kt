@@ -10,8 +10,8 @@ import com.tonapps.chainkit.perpetual.PerpetualReview
 import com.tonapps.chainkit.perpetual.PerpetualStep
 import com.tonapps.chainkit.perpetual.PerpetualValidation
 import com.tonapps.chainkit.perpetual.PerpsAppliedPrerequisite
-import com.tonapps.chainkit.perpetual.PerpsAutoCloseSpec
 import com.tonapps.chainkit.perpetual.PerpsMarginSettings
+import com.tonapps.chainkit.perpetual.PerpsScope
 import com.tonapps.chainkit.perpetual.PerpsSigningValidationContext
 import com.tonapps.chainkit.perpetual.PerpsTradeError
 import com.tonapps.chainkit.perpetual.PerpsTradeException
@@ -21,12 +21,16 @@ import com.tonapps.log.L
 import com.tonapps.mvi.graph.KResult
 import com.tonapps.perps.data.PerpsAccountRefresh
 import com.tonapps.perps.data.PerpsError
+import com.tonapps.perps.data.PERPS_SLOW_POLL_MS
 import com.tonapps.perps.data.PerpsPositionState
+import com.tonapps.perps.data.PerpsRealtime
+import com.tonapps.perps.data.PerpsRealtimeEvent
 import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsSendReason
 import com.tonapps.perps.data.isDeadOrderStatus
 import com.tonapps.perps.data.isFilledOrderStatus
 import com.tonapps.perps.data.isWorkingOrderStatus
+import com.tonapps.time.TimeProvider
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
 import com.tonapps.wallet.data.multichain.perps.PerpsOperationJournal
 import com.tonapps.perps.data.PerpsPositionSide
@@ -52,6 +56,7 @@ import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.TimeSource
 import com.tonapps.chainkit.perpetual.PerpsPositionState as PerpsContextPosition
 import com.tonapps.chainkit.perpetual.PerpsStepKind as PerpsPlanStepKind
 
@@ -77,28 +82,53 @@ sealed interface PerpsTradeFailure {
     data object StaleInput : PerpsTradeFailure
     data object Interrupted : PerpsTradeFailure
     data object Unresolved : PerpsTradeFailure
+    data object ApprovalCancelled : PerpsTradeFailure
 }
 
+@Suppress("LargeClass")
 class PerpsTradeExecutor(
     private val repository: PerpsRepository,
     private val journal: PerpsOperationJournal,
     private val accountRefresh: PerpsAccountRefresh,
     private val adapter: PerpsPlannerAdapter,
     perpetualRepository: PerpetualRepository,
+    private val timeProvider: TimeProvider,
+    private val realtime: PerpsRealtime,
+    private val confirmedAutoClose: PerpsConfirmedAutoCloseStore,
     private val scope: CoroutineScope,
 ) {
 
     private val relay = PerpsExecutionRelay(repository, journal, PerpsNonceCoordinator())
 
-    private val approval = PerpsIntegratorApproval(perpetualRepository, relay)
+    private val approval = PerpsIntegratorApproval(perpetualRepository, relay, timeProvider)
 
     private val venue = PerpsVenueWitness(repository)
+
+    private val autoCloseFromEntry = PerpsAutoCloseFromEntry(
+        planner = adapter,
+        start = { start(it) { null } },
+        pacer = { walletId, marketIndex, attempt ->
+            var attemptedAt = 0L
+            realtime.pollUntil(
+                walletId = walletId,
+                unsubscribedPeriodMs = AUTO_CLOSE_RETRY_GAP_MS,
+                subscribedTimeoutMs = STATE_FALLBACK_MS,
+                wakeOn = { it.concernsMarket(marketIndex) },
+            ) {
+                if (attemptedAt > 0) {
+                    delay(attemptedAt + AUTO_CLOSE_RETRY_GAP_MS - System.currentTimeMillis())
+                }
+                attemptedAt = System.currentTimeMillis()
+                Unit.takeIf { attempt() }
+            }
+        },
+    )
 
     private val walletLocks = ConcurrentHashMap<String, Mutex>()
 
     private val settling = ConcurrentHashMap.newKeySet<String>()
 
-    private val running = PerpsRunningOperations()
+    private val running = PerpsRunningOperations(repository, scope)
 
     private val reconcilers = ConcurrentHashMap<String, Job>()
 
@@ -119,8 +149,11 @@ class PerpsTradeExecutor(
         unknownOperations.update { it - operationId }
     }
 
-    suspend fun start(planned: PerpsPlannedTrade): PerpsSubmitStart = withContext(Async.Io) {
-        walletLock(planned.request.walletId).withLock { gate(planned) }
+    suspend fun start(planned: PerpsPlannedTrade, unlock: suspend () -> PerpsOwnerMessageSigner?): PerpsSubmitStart {
+        val startedAt = TimeSource.Monotonic.markNow()
+        return withContext(Async.Io) {
+            walletLock(planned.request.walletId).withLock { gate(planned, unlock, startedAt) }
+        }
     }
 
     suspend fun recover(walletId: String, resume: Boolean): Boolean {
@@ -140,7 +173,12 @@ class PerpsTradeExecutor(
     }
 
     private suspend fun reconcileLoop(walletId: String) {
-        while (true) {
+        realtime.pollUntil(
+            walletId = walletId,
+            unsubscribedPeriodMs = PERPS_SLOW_POLL_MS,
+            subscribedTimeoutMs = PERPS_SLOW_POLL_MS,
+            wakeOn = { it is PerpsRealtimeEvent.Market || it is PerpsRealtimeEvent.Account },
+        ) {
             val unresolved = try {
                 recover(walletId, resume = true)
             } catch (e: Throwable) {
@@ -148,24 +186,24 @@ class PerpsTradeExecutor(
                     throw e
                 }
                 L.e(e)
-                return
+                false
             }
-            if (!unresolved) {
-                return
-            }
-            delay(RETRY_DELAY_MS)
+            Unit.takeUnless { unresolved }
         }
     }
 
-    private suspend fun gate(planned: PerpsPlannedTrade): PerpsSubmitStart {
+    private suspend fun gate(
+        planned: PerpsPlannedTrade,
+        unlock: suspend () -> PerpsOwnerMessageSigner?,
+        startedAt: TimeSource.Monotonic.ValueTimeMark,
+    ): PerpsSubmitStart {
         val request = planned.request
         recoverOperations(request.walletId, resume = false)
 
-        val now = System.currentTimeMillis()
         val steps = journal.getSteps(request.walletId).groupBy { it.operationId }
         val blocking = journal.getOpenOperations(request.walletId).firstOrNull { operation ->
             val unfinished = operation.operationId in running ||
-                steps[operation.operationId].orEmpty().any { it.blocksPositionOrders(now) }
+                steps[operation.operationId].orEmpty().any { it.blocksPositionOrders(timeProvider) }
 
             operation.marketIndex == request.marketIndex && unfinished
         }
@@ -176,6 +214,9 @@ class PerpsTradeExecutor(
 
         val step = planned.plan.steps.firstOrNull()
             ?: return PerpsSubmitStart.Failed(PerpsTradeFailure.Interrupted)
+        approval.ensure(request.walletId, planned.plan.scope, planned.integrator, unlock)
+            ?.let { return PerpsSubmitStart.Failed(it) }
+
         when (
             val verdict = adapter.mediator.validateForSigning(
                 plan = planned.plan,
@@ -196,9 +237,6 @@ class PerpsTradeExecutor(
                 PerpsTradeFailure.OperationInProgress,
             )
         }
-
-        withContext(NonCancellable) { approval.ensure(request.walletId, planned.plan.scope, planned.integrator) }
-            ?.let { return PerpsSubmitStart.Failed(it) }
 
         val operationId = planned.plan.operationId
         val createdAt = System.currentTimeMillis()
@@ -222,12 +260,15 @@ class PerpsTradeExecutor(
             if (!inserted) {
                 return@withContext PerpsSubmitStart.Blocked(operationId)
             }
-            running.start(operationId, request.kind)
+            running.start(operationId, request, startedAt)
             scope.launch {
-                try {
-                    run(planned, operationId)
+                val settled = try {
+                    run(planned, operationId, unlock)
                 } finally {
                     running.finish(operationId)
+                }
+                if (settled) {
+                    autoCloseFromEntry.afterFill(planned)
                 }
             }
 
@@ -235,31 +276,31 @@ class PerpsTradeExecutor(
         }
     }
 
-    private fun PerpsStepRecord.blocksPositionOrders(now: Long): Boolean {
-        if (kind !in BLOCKING_KINDS) {
-            return false
-        }
-
-        val expiry = txExpiry ?: return false
-
-        return status in BLOCKING_STATUSES && now <= expiry + SETTLEMENT_GRACE_MS
-    }
-
-    private suspend fun run(planned: PerpsPlannedTrade, operationId: String) {
+    private suspend fun run(
+        planned: PerpsPlannedTrade,
+        operationId: String,
+        unlock: suspend () -> PerpsOwnerMessageSigner?,
+    ): Boolean {
         val executed = walletLock(planned.request.walletId).withLock {
-            execute(planned, operationId)
-        } ?: return
+            catchUpNonce(planned.plan.scope)
+            execute(planned, operationId, unlock)
+        } ?: return false
 
         for (step in executed.plan.steps) {
             val outcome = settle(executed, operationId, step)
             applyOutcome(executed.request.walletId, operationId, step.stepId, outcome)
             if (outcome != StepOutcome.Accepted && outcome != StepOutcome.PartiallyFilled) {
-                return
+                return false
             }
         }
+        return true
     }
 
-    private suspend fun execute(planned: PerpsPlannedTrade, operationId: String): PerpsPlannedTrade? {
+    private suspend fun execute(
+        planned: PerpsPlannedTrade,
+        operationId: String,
+        unlock: suspend () -> PerpsOwnerMessageSigner?,
+    ): PerpsPlannedTrade? {
         var current = planned
         var state = PerpsMarketState(rules = planned.rules, context = planned.context)
         val applied = mutableListOf<PerpsAppliedPrerequisite>()
@@ -293,11 +334,13 @@ class PerpsTradeExecutor(
                     )
                     when (outcome) {
                         StepOutcome.Accepted, StepOutcome.PartiallyFilled -> {
+                            running.reportSent(operationId, step, clientOrderIndex(current, step))
                             applied += appliedPrerequisite(current, step)
                             completed += step.stepId
                         }
 
                         StepOutcome.Unknown -> {
+                            running.reportSent(operationId, step, clientOrderIndex(current, step))
                             holdOperationUnknown(operationId, step.stepId)
                             reconcile(planned.request.walletId)
                             return null
@@ -310,13 +353,21 @@ class PerpsTradeExecutor(
                             ) {
                                 integratorApprovalRenewed = true
                                 L.d("Perps operation $operationId: integrator not approved, renewing the approval")
-                                val renewal = withContext(NonCancellable) {
-                                    approval.renew(planned.request.walletId, current.plan.scope, current.integrator)
-                                }
+                                val renewal = approval.renew(
+                                    planned.request.walletId,
+                                    current.plan.scope,
+                                    current.integrator,
+                                    unlock,
+                                )
                                 if (renewal == null) {
                                     continue
                                 }
-                                fail(planned.request.walletId, operationId, step.stepId, renewal)
+                                fail(
+                                    planned.request.walletId,
+                                    operationId,
+                                    step.stepId,
+                                    renewal.takeUnless { it == PerpsTradeFailure.ApprovalCancelled } ?: failure,
+                                )
                                 return null
                             }
                             fail(planned.request.walletId, operationId, step.stepId, failure)
@@ -341,7 +392,7 @@ class PerpsTradeExecutor(
                 }
 
                 is PerpetualValidation.RequiresPrepare -> {
-                    val replanned = replan(current, operationId, applied, verdict)
+                    val replanned = replan(current, planned, operationId, applied, verdict)
                     if (replanned == null) {
                         fail(planned.request.walletId, operationId, step.stepId, PerpsTradeFailure.StaleInput)
                         return null
@@ -358,8 +409,17 @@ class PerpsTradeExecutor(
         }
     }
 
+    private suspend fun catchUpNonce(scope: PerpsScope) {
+        try {
+            relay.catchUpNonce(scope)
+        } catch (e: PerpsExecutionException) {
+            L.e(e)
+        }
+    }
+
     private suspend fun replan(
         planned: PerpsPlannedTrade,
+        reviewed: PerpsPlannedTrade,
         operationId: String,
         applied: List<PerpsAppliedPrerequisite>,
         verdict: PerpetualValidation.RequiresPrepare,
@@ -377,7 +437,10 @@ class PerpsTradeExecutor(
                 previous = planned.intent.takeIf { it is PerpsTradeIntent.Open },
             )
         ) {
-            is KResult.Ok -> result.value
+            is KResult.Ok -> result.value.takeIf { it.keepsWithin(reviewed) } ?: run {
+                L.e("Perps operation $operationId: the re-plan drifted from the review")
+                return null
+            }
             is KResult.Err -> {
                 L.e("Perps operation $operationId re-plan failed: ${result.value}")
                 return null
@@ -389,6 +452,7 @@ class PerpsTradeExecutor(
                 operationId = operationId,
                 planDigest = replanned.plan.planDigest,
                 expectedBaseSize = expectedBaseSize(replanned)?.toPlainString(),
+                baseBefore = replanned.baseBefore(),
                 steps = replanned.plan.steps.map { stepRecord(replanned, operationId, it, updatedAt) },
                 updatedAt = updatedAt,
             )
@@ -407,8 +471,11 @@ class PerpsTradeExecutor(
         currentContext: PerpsSigningValidationContext,
         approval: PerpetualApproval,
     ): StepOutcome {
+        // chainkit checks the snapshots' receipts, stamped on the device clock, against nowUnixMs;
+        // Lighter reads the expiry on its own clock.
         val nowMs = System.currentTimeMillis()
         try {
+            confirmedAutoClose.record(planned.request.walletId, planned.intent.autoCloseSpec())
             adapter.mediator.executeStep(
                 plan = planned.plan,
                 stepId = step.stepId,
@@ -418,10 +485,7 @@ class PerpsTradeExecutor(
                 execution = relay,
                 attemptId = UUID.randomUUID().toString(),
                 nowUnixMs = nowMs,
-                transactionExpiryUnixMs = minOf(
-                    nowMs + LighterConstants.DefaultExpireTimeMillis,
-                    LighterConstants.MaxTimestamp,
-                ),
+                transactionExpiryUnixMs = transactionExpiryUnixMs(timeProvider),
             )
         } catch (e: PerpsExecutionException) {
             L.e(e)
@@ -557,27 +621,23 @@ class PerpsTradeExecutor(
                 deadline = deadline,
             )
 
-            PerpsStepKind.ORDER_CANCEL -> {
-                val witness = venue.of(operation, step) ?: return StepOutcome.Unknown
-
-                pollCancel(
-                    operationId = operation.operationId,
-                    stepId = step.stepId,
-                    orderIndex = step.clientOrderIndex,
-                    witness = if (operation.kind == PerpsOperationKind.ORDER_CANCEL) {
-                        { venue.cancelOutcome(operation, step)?.outcome() }
-                    } else {
-                        { StepOutcome.Accepted.takeIf { witness() == true } }
-                    },
-                    submittedAtMs = step.submittedAt,
-                    deadline = deadline,
-                )
-            }
+            PerpsStepKind.ORDER_CANCEL -> pollCancel(
+                walletId = walletId,
+                marketIndex = operation.marketIndex,
+                operationId = operation.operationId,
+                stepId = step.stepId,
+                orderIndex = step.clientOrderIndex,
+                witness = { venue.cancelOutcome(operation, step)?.outcome() },
+                submittedAtMs = step.submittedAt,
+                deadline = deadline,
+            )
 
             PerpsStepKind.ORDER_MODIFY -> {
                 val price = operation.marginQuote.toBigDecimalOrNull() ?: return StepOutcome.Unknown
 
                 pollCancel(
+                    walletId = walletId,
+                    marketIndex = operation.marketIndex,
                     operationId = operation.operationId,
                     stepId = step.stepId,
                     orderIndex = step.clientOrderIndex,
@@ -616,8 +676,7 @@ class PerpsTradeExecutor(
                 clientOrderIndex = step.clientOrderIndex,
                 expectedBase = operation.expectedBase().takeIf { operation.kind != PerpsOperationKind.OPEN_LIMIT },
                 acceptWorking = operation.kind == PerpsOperationKind.OPEN_LIMIT,
-                fullExit = step.kind == PerpsStepKind.CLOSE &&
-                    operation.kind == PerpsOperationKind.CLOSE,
+                fullExit = step.kind == PerpsStepKind.CLOSE && operation.closesPosition(),
                 witness = venue.of(operation, step),
                 submittedAtMs = step.submittedAt,
                 deadline = deadline,
@@ -643,7 +702,7 @@ class PerpsTradeExecutor(
         var held = false
         var venueCheckedAt = 0L
         var closingEpisodeId: String? = null
-        while (true) {
+        return awaitOutcome(walletId, wakeOn = { it.concernsMarket(marketIndex) }) {
             val state = repository.positionState(
                 walletId = walletId,
                 marketIndex = marketIndex,
@@ -651,30 +710,30 @@ class PerpsTradeExecutor(
             )
             if (state is KResult.Ok) {
                 closingEpisodeId = state.value.open?.episodeId?.takeIf { fullExit } ?: closingEpisodeId
-                val outcome = state.value.classify(submittedAtMs, expectedBase, closingEpisodeId, acceptWorking)
+                val outcome = state.value.classify(expectedBase, closingEpisodeId, acceptWorking)
                 if (outcome != null) {
-                    return outcome
+                    return@awaitOutcome outcome
                 }
             }
             val now = System.currentTimeMillis()
             if (now >= deadline) {
-                return StepOutcome.Unknown
+                return@awaitOutcome StepOutcome.Unknown
             }
             // `/state` is silent for a whole class of accounts, so the venue is asked in parallel
             // rather than once the hold has already made the user wait a minute.
             if (witness != null && now - submittedAtMs >= VENUE_GRACE_MS &&
-                now - venueCheckedAt >= VENUE_CHECK_INTERVAL_MS
+                now - venueCheckedAt >= venueCheckIntervalMs(walletId)
             ) {
                 venueCheckedAt = now
                 if (witness() == true) {
-                    return StepOutcome.Accepted
+                    return@awaitOutcome StepOutcome.Accepted
                 }
             }
             if (!held && now - submittedAtMs >= UNKNOWN_HOLD_MS) {
                 held = true
                 holdOperationUnknown(operationId, stepId)
             }
-            delay(POLL_INTERVAL_MS)
+            null
         }
     }
 
@@ -688,9 +747,12 @@ class PerpsTradeExecutor(
         deadline: Long,
     ): StepOutcome {
         val pending = indexes.filter { it > LighterConstants.NilClientOrderIndex }.toMutableSet()
+        if (pending.isEmpty()) {
+            return StepOutcome.Accepted
+        }
         var held = false
         var venueCheckedAt = 0L
-        while (pending.isNotEmpty()) {
+        return awaitOutcome(walletId, wakeOn = { it.concernsMarket(marketIndex) }) {
             for (index in pending.toList()) {
                 val state = repository.positionState(
                     walletId = walletId,
@@ -702,37 +764,37 @@ class PerpsTradeExecutor(
                 }
                 val dead = state.value.orders.firstOrNull { it.status.isDeadOrderStatus() }
                 if (dead != null) {
-                    return StepOutcome.Failed(PerpsTradeFailure.OrderRejected(dead.status))
+                    return@awaitOutcome StepOutcome.Failed(PerpsTradeFailure.OrderRejected(dead.status))
                 }
                 if (state.value.orders.isNotEmpty()) {
                     pending.remove(index)
                 }
             }
             if (pending.isEmpty()) {
-                break
+                return@awaitOutcome StepOutcome.Accepted
             }
             val now = System.currentTimeMillis()
             if (now >= deadline) {
-                return StepOutcome.Unknown
+                return@awaitOutcome StepOutcome.Unknown
             }
-            if (now - submittedAtMs >= VENUE_GRACE_MS && now - venueCheckedAt >= VENUE_CHECK_INTERVAL_MS) {
+            if (now - submittedAtMs >= VENUE_GRACE_MS && now - venueCheckedAt >= venueCheckIntervalMs(walletId)) {
                 venueCheckedAt = now
                 pending.removeAll(venue.legsOnVenue(walletId, marketIndex).orEmpty())
                 if (pending.isEmpty()) {
-                    break
+                    return@awaitOutcome StepOutcome.Accepted
                 }
             }
             if (!held && now - submittedAtMs >= UNKNOWN_HOLD_MS) {
                 held = true
                 holdOperationUnknown(operationId, stepId)
             }
-            delay(POLL_INTERVAL_MS)
+            null
         }
-
-        return StepOutcome.Accepted
     }
 
     private suspend fun pollCancel(
+        walletId: String,
+        marketIndex: Int,
         operationId: String,
         stepId: String,
         orderIndex: Long,
@@ -744,17 +806,17 @@ class PerpsTradeExecutor(
             return StepOutcome.Accepted
         }
         var held = false
-        while (true) {
-            witness()?.let { return it }
+        return awaitOutcome(walletId, wakeOn = { it.concernsMarket(marketIndex) }) {
+            witness()?.let { return@awaitOutcome it }
             val now = System.currentTimeMillis()
             if (now >= deadline) {
-                return StepOutcome.Unknown
+                return@awaitOutcome StepOutcome.Unknown
             }
             if (!held && now - submittedAtMs >= UNKNOWN_HOLD_MS) {
                 held = true
                 holdOperationUnknown(operationId, stepId)
             }
-            delay(POLL_INTERVAL_MS)
+            null
         }
     }
 
@@ -772,12 +834,15 @@ class PerpsTradeExecutor(
     ): StepOutcome {
         val tolerance = amount.abs().multiply(MARGIN_TOLERANCE_RATIO).max(MIN_MARGIN_TOLERANCE)
         var held = false
-        while (true) {
+        return awaitOutcome(
+            walletId = walletId,
+            wakeOn = { it.concernsMarket(marketIndex) || it is PerpsRealtimeEvent.Account },
+        ) {
             val position = repository.getOpenPosition(marketIndex, walletId)
             val now = System.currentTimeMillis()
             if (position is KResult.Ok) {
                 val detail = position.value
-                    ?: return StepOutcome.Failed(PerpsTradeFailure.OrderRejected(POSITION_GONE))
+                    ?: return@awaitOutcome StepOutcome.Failed(PerpsTradeFailure.OrderRejected(POSITION_GONE))
                 val margin = detail.position.margin
                 if (margin != null) {
                     val moved = if (add) {
@@ -786,22 +851,41 @@ class PerpsTradeExecutor(
                         before.subtract(margin)
                     }
                     if (moved.add(tolerance) >= amount) {
-                        return StepOutcome.Accepted
+                        return@awaitOutcome StepOutcome.Accepted
                     }
-                    if (txExpiry != null && now > txExpiry + MARGIN_SETTLE_GRACE_MS) {
-                        return StepOutcome.Failed(PerpsTradeFailure.OrderRejected(MARGIN_UNCHANGED))
+                    // The expiry was signed on the server's clock.
+                    if (txExpiry != null && timeProvider.currentTimeMillis() > txExpiry + MARGIN_SETTLE_GRACE_MS) {
+                        return@awaitOutcome StepOutcome.Failed(PerpsTradeFailure.OrderRejected(MARGIN_UNCHANGED))
                     }
                 }
             }
             if (now >= deadline) {
-                return StepOutcome.Unknown
+                return@awaitOutcome StepOutcome.Unknown
             }
             if (!held && now - submittedAtMs >= UNKNOWN_HOLD_MS) {
                 held = true
                 holdOperationUnknown(operationId, stepId)
             }
-            delay(POLL_INTERVAL_MS)
+            null
         }
+    }
+
+    private suspend fun awaitOutcome(
+        walletId: String,
+        wakeOn: (PerpsRealtimeEvent) -> Boolean,
+        attempt: suspend () -> StepOutcome?,
+    ): StepOutcome = realtime.pollUntil(
+        walletId = walletId,
+        unsubscribedPeriodMs = POLL_INTERVAL_MS,
+        subscribedTimeoutMs = STATE_FALLBACK_MS,
+        wakeOn = wakeOn,
+        attempt = attempt,
+    )
+
+    private fun venueCheckIntervalMs(walletId: String): Long = if (realtime.isSubscribed(walletId)) {
+        STATE_FALLBACK_MS
+    } else {
+        VENUE_CHECK_INTERVAL_MS
     }
 
     private suspend fun recoverOperations(walletId: String, resume: Boolean): Boolean {
@@ -880,7 +964,7 @@ class PerpsTradeExecutor(
 
             return StepOutcome.Failed(PerpsTradeFailure.Interrupted)
         }
-        if (resume && status == PerpsStepStatus.SENT && !step.unresolvable()) {
+        if (resume && status == PerpsStepStatus.SENT && !step.unresolvable(timeProvider)) {
             resumeSettle(walletId, operation, step)
             return null
         }
@@ -896,11 +980,11 @@ class PerpsTradeExecutor(
             if (seen == true) {
                 return StepOutcome.Accepted
             }
-            if (seen == false && step.unresolvable() && venue.movedOnVenue(operation, step) == true) {
+            if (seen == false && step.unresolvable(timeProvider) && venue.movedOnVenue(operation, step) == true) {
                 return StepOutcome.PartiallyFilled
             }
 
-            return giveUp(step, venueAnswered = seen == false)
+            return giveUp(step, venueAnswered = seen == false, serverTime = timeProvider)
         }
 
         return outcome
@@ -1007,7 +1091,7 @@ class PerpsTradeExecutor(
         if (accepted) {
             val status = PerpsOperationStatus.PARTIALLY_FILLED.takeIf { steps.any { it.error == PARTIAL_FILL } }
                 ?: PerpsOperationStatus.SUCCEEDED
-            write {
+            val written = write {
                 journal.updateOperation(
                     operationId = operationId,
                     status = status,
@@ -1016,6 +1100,9 @@ class PerpsTradeExecutor(
                 )
             }
             accountRefresh.notifyChanged()
+            if (written) {
+                running.reportSettled(operationId, status)
+            }
             L.d("Perps operation $operationId settled: ${status.value}")
         } else {
             failOperation(
@@ -1093,7 +1180,7 @@ class PerpsTradeExecutor(
                 updatedAt = System.currentTimeMillis(),
             )
         }
-        if (announcedUnknowns.add(operationId)) {
+        if (!isRenewalOperation(operationId) && announcedUnknowns.add(operationId)) {
             unknownOperations.update { it + operationId }
         }
     }
@@ -1141,8 +1228,9 @@ class PerpsTradeExecutor(
 
     // A failed operation can still have moved the venue: a partial fill leaves a real position.
     private fun markFailed(operationId: String, error: String) {
-        running.reportFailure(operationId, error)
-        failedOperations.update { it + operationId }
+        if (!isRenewalOperation(operationId)) {
+            failedOperations.update { it + operationId }
+        }
         accountRefresh.notifyChanged()
         L.e("Perps operation $operationId failed: $error")
     }
@@ -1156,7 +1244,7 @@ class PerpsTradeExecutor(
                 updatedAt = System.currentTimeMillis(),
             )
         }
-        if (announcedUnknowns.add(operationId)) {
+        if (!isRenewalOperation(operationId) && announcedUnknowns.add(operationId)) {
             unknownOperations.update { it + operationId }
         }
     }
@@ -1208,28 +1296,12 @@ class PerpsTradeExecutor(
         const val POLL_CEILING_MS = 300_000L
         const val VENUE_GRACE_MS = 3_000L
         const val VENUE_CHECK_INTERVAL_MS = 3_000L
+        const val STATE_FALLBACK_MS = 5_000L
+        const val AUTO_CLOSE_RETRY_GAP_MS = 2_000L
         const val UNKNOWN_HOLD_MS = 60_000L
         const val ITERATION_LIMIT = 32
         const val FRESH_READ_LIMIT = 10
         const val REFRESH_DELAY_MS = 1_000L
-        const val RETRY_DELAY_MS = 5_000L
-
-        val BLOCKING_KINDS = setOf(
-            PerpsStepKind.OPEN,
-            PerpsStepKind.CLOSE,
-            PerpsStepKind.ADD,
-            PerpsStepKind.MARGIN,
-            PerpsStepKind.AUTO_CLOSE,
-            PerpsStepKind.ORDER_CANCEL,
-        )
-
-        val BLOCKING_STATUSES = setOf(
-            PerpsStepStatus.SIGNED,
-            PerpsStepStatus.SENDING,
-            PerpsStepStatus.SENT,
-            PerpsStepStatus.UNKNOWN,
-            PerpsStepStatus.ACCEPTED,
-        )
 
         val REPLAN_REASONS = setOf(
             PerpsTradeError.StaleInput,
@@ -1263,7 +1335,7 @@ private fun operationRecord(
     val quoteDecimals = planned.plan.review.scale.quoteDecimals
     val review = planned.plan.review
     val amount = when (request) {
-        is PerpsTradeRequest.Open -> request.marginQuote
+        is PerpsTradeRequest.Open -> (review as? PerpetualReview.Open)?.allocatedMargin() ?: request.marginQuote
         is PerpsTradeRequest.Close -> BigDecimal.valueOf(
             (review as? PerpetualReview.Close)?.estimatedReturnedMarginQuote ?: 0L,
             quoteDecimals,
@@ -1278,6 +1350,8 @@ private fun operationRecord(
             ?: BigDecimal.ZERO
 
         is PerpsTradeRequest.AutoClose,
+        is PerpsTradeRequest.AutoCloseRenewal,
+        is PerpsTradeRequest.AutoCloseFromEntry,
         is PerpsTradeRequest.OrderCancel -> BigDecimal.ZERO
     }
 
@@ -1301,8 +1375,7 @@ private fun operationRecord(
         reviewJson = null,
         planDigest = planned.plan.planDigest,
         expectedBaseSize = expectedBaseSize(planned)?.toPlainString(),
-        baseBefore = position
-            ?.let { BigDecimal.valueOf(it.baseAmount, review.scale.baseDecimals).abs().toPlainString() },
+        baseBefore = planned.baseBefore(),
         marginBefore = position
             ?.let { BigDecimal.valueOf(it.allocatedMarginQuote, quoteDecimals).toPlainString() },
         status = PerpsOperationStatus.IN_PROGRESS,
@@ -1310,6 +1383,11 @@ private fun operationRecord(
         createdAt = createdAt,
         updatedAt = createdAt,
     )
+}
+
+private fun PerpsPlannedTrade.baseBefore(): String? {
+    return (context.position as? PerpsContextPosition.Present)
+        ?.let { BigDecimal.valueOf(it.baseAmount, plan.review.scale.baseDecimals).abs().toPlainString() }
 }
 
 private fun stepRecord(
@@ -1424,8 +1502,8 @@ internal fun PerpsOperationRecord.expectedBase(): BigDecimal? {
     return expectedBaseSize?.takeIf { it.isNotBlank() }?.toBigDecimalOrNull()
 }
 
-private fun giveUp(step: PerpsStepRecord, venueAnswered: Boolean): StepOutcome {
-    if ((venueAnswered && step.unresolvable()) ||
+private fun giveUp(step: PerpsStepRecord, venueAnswered: Boolean, serverTime: TimeProvider): StepOutcome {
+    if ((venueAnswered && step.unresolvable(serverTime)) ||
         System.currentTimeMillis() - step.submittedAt >= UNKNOWN_GIVE_UP_MS
     ) {
         return StepOutcome.Failed(PerpsTradeFailure.Unresolved)
@@ -1434,15 +1512,31 @@ private fun giveUp(step: PerpsStepRecord, venueAnswered: Boolean): StepOutcome {
     return StepOutcome.Unknown
 }
 
-// A signed transaction cannot be included past its expiry, so a still-missing outcome is final.
-private fun PerpsStepRecord.unresolvable(): Boolean {
-    val now = System.currentTimeMillis()
-    val expiry = txExpiry
-    if (expiry != null) {
-        return now > expiry + SETTLEMENT_GRACE_MS
+/** A step's ExpiredAt: Lighter reads it on its own clock, so it counts from [serverTime]'s now. */
+internal fun transactionExpiryUnixMs(serverTime: TimeProvider): Long {
+    return minOf(serverTime.currentTimeMillis() + LighterConstants.DefaultExpireTimeMillis, LighterConstants.MaxTimestamp)
+}
+
+// The expiry was signed on [serverTime]'s clock.
+internal fun PerpsStepRecord.blocksPositionOrders(serverTime: TimeProvider): Boolean {
+    if (kind !in BLOCKING_KINDS) {
+        return false
     }
 
-    return now - submittedAt >= UNKNOWN_GIVE_UP_MS
+    val expiry = txExpiry ?: return false
+
+    return status in BLOCKING_STATUSES && serverTime.currentTimeMillis() <= expiry + SETTLEMENT_GRACE_MS
+}
+
+// A signed transaction cannot be included past its expiry, so a still-missing outcome is final.
+// The expiry is on [serverTime]'s clock, submittedAt on the device's that wrote it.
+internal fun PerpsStepRecord.unresolvable(serverTime: TimeProvider): Boolean {
+    val expiry = txExpiry
+    if (expiry != null) {
+        return serverTime.currentTimeMillis() > expiry + SETTLEMENT_GRACE_MS
+    }
+
+    return System.currentTimeMillis() - submittedAt >= UNKNOWN_GIVE_UP_MS
 }
 
 internal fun PerpsOperationRecord.baseAfter(grew: Boolean): BigDecimal? {
@@ -1456,18 +1550,12 @@ internal fun PerpsOperationRecord.baseAfter(grew: Boolean): BigDecimal? {
     }
 }
 
-internal fun PerpsStepRecord.legIndexes(): List<Long> {
-    return orderRefs.map { it.clientOrderIndex }.ifEmpty { listOf(clientOrderIndex) }
+internal fun PerpsOperationRecord.closesPosition(): Boolean {
+    return kind == PerpsOperationKind.CLOSE || baseAfter(grew = false)?.let { it.signum() <= 0 } == true
 }
 
-private fun PerpsTradeIntent.autoCloseSpec(): PerpsAutoCloseSpec? {
-    return when (this) {
-        is PerpsTradeIntent.Open -> autoClose
-        is PerpsTradeIntent.Close -> autoClose
-        is PerpsTradeIntent.Add -> autoClose
-        is PerpsTradeIntent.AutoClose -> autoClose
-        else -> null
-    }
+internal fun PerpsStepRecord.legIndexes(): List<Long> {
+    return orderRefs.map { it.clientOrderIndex }.ifEmpty { listOf(clientOrderIndex) }
 }
 
 private fun PerpsTradeIntent.cancelledLeg(stepId: String): Long? {
@@ -1490,7 +1578,6 @@ private fun PerpsTradeIntent.legIndexes(): List<Long> {
 }
 
 private fun PerpsPositionState.classify(
-    submittedAtMs: Long,
     expectedBase: BigDecimal?,
     closingEpisodeId: String?,
     acceptWorking: Boolean,
@@ -1527,12 +1614,6 @@ private fun PerpsPositionState.classify(
             return StepOutcome.Failed(PerpsTradeFailure.OrderRejected(dead.status))
         }
     }
-    // The order event for our index can be missed entirely; an episode of our own age settles it.
-    val episode = open ?: lastClosed
-    if (episode != null && episode.openedAtMs >= submittedAtMs - EPISODE_SKEW_MS) {
-        return StepOutcome.Accepted
-    }
-
     return null
 }
 
@@ -1542,9 +1623,25 @@ internal fun BigDecimal.coversBase(expectedBase: BigDecimal): Boolean {
     return add(tolerance) >= expectedBase
 }
 
-private const val EPISODE_SKEW_MS = 5_000L
 private const val UNKNOWN_GIVE_UP_MS = 86_400_000L
 private const val SETTLEMENT_GRACE_MS = 60_000L
+
+private val BLOCKING_KINDS = setOf(
+    PerpsStepKind.OPEN,
+    PerpsStepKind.CLOSE,
+    PerpsStepKind.ADD,
+    PerpsStepKind.MARGIN,
+    PerpsStepKind.AUTO_CLOSE,
+    PerpsStepKind.ORDER_CANCEL,
+)
+
+private val BLOCKING_STATUSES = setOf(
+    PerpsStepStatus.SIGNED,
+    PerpsStepStatus.SENDING,
+    PerpsStepStatus.SENT,
+    PerpsStepStatus.UNKNOWN,
+    PerpsStepStatus.ACCEPTED,
+)
 private const val POSITION_GONE = "position_gone"
 private const val PARTIAL_FILL = "partial_fill"
 internal const val ORDER_GONE_STATUS = "order_gone"
@@ -1567,8 +1664,12 @@ fun PerpsTradeFailure.tag(): String {
         PerpsTradeFailure.StaleInput -> "stale_input"
         PerpsTradeFailure.Interrupted -> "interrupted"
         PerpsTradeFailure.Unresolved -> "unresolved"
+        PerpsTradeFailure.ApprovalCancelled -> "approval_cancelled"
     }
 }
+
+val PerpsTradeFailure.isRateLimited: Boolean
+    get() = this is PerpsTradeFailure.SendRefused && reason == PerpsSendReason.RATE_LIMITED
 
 fun PerpsOperationRecord.failure(): PerpsTradeFailure? {
     return error?.takeIf { it.isNotBlank() }?.toTradeFailure()
@@ -1620,4 +1721,8 @@ private fun PerpsPlanStepKind.toJournalKind(): PerpsStepKind {
         PerpsPlanStepKind.OrderCancel -> PerpsStepKind.ORDER_CANCEL
         PerpsPlanStepKind.OrderModify -> PerpsStepKind.ORDER_MODIFY
     }
+}
+
+private fun PerpsRealtimeEvent.concernsMarket(marketIndex: Int): Boolean {
+    return this is PerpsRealtimeEvent.Market && this.marketIndex == marketIndex
 }

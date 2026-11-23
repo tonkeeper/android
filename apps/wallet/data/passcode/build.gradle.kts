@@ -14,6 +14,7 @@ dependencies {
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.rn)
+    implementation(projects.apps.wallet.data.features)
     implementation(projects.lib.extensions)
     implementation(projects.lib.security)
     implementation(projects.lib.bus)

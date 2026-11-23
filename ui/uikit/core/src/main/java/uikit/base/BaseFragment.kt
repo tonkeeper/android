@@ -68,6 +68,10 @@ open class BaseFragment(
 
     interface Modal {
 
+        // False for a sheet whose operation must not be cut off when a screen opens under it.
+        val dismissedByScreens: Boolean
+            get() = true
+
         private val fragment: BaseFragment
             get() = this as BaseFragment
 
@@ -144,6 +148,18 @@ open class BaseFragment(
     private val resultKey: String? by lazy {
         arguments?.getString(ARG_RESULT_KEY)?.ifBlank { null }
     }
+
+    private val canPredictiveBack: Boolean
+        get() {
+            view ?: return false
+            if (isFinished.get()) {
+                return false
+            }
+            if (activity?.supportFragmentManager?.primaryNavigationFragment == this) {
+                return false
+            }
+            return predictiveBackPreviewEnabled
+        }
 
     fun setArgs(bundle: Bundle) {
         val args = arguments ?: Bundle()
@@ -243,7 +259,7 @@ open class BaseFragment(
                 else -> setupScreenEnter(contentView, savedInstanceState)
             }
         }
-        view.setOnClickListener {  }
+        view.isClickable = true
         return view
     }
 
@@ -253,7 +269,11 @@ open class BaseFragment(
         val modalView = ModalView(context)
         modalView.scaleBackground = scaleBackground
         modalView.setContentView(view)
-        modalView.doOnHide = { finishInternal() }
+        modalView.doOnHide = {
+            // A swiped sheet is finished too: if it could not be removed yet, onResume removes it.
+            isFinished.set(true)
+            finishInternal()
+        }
         modalView.fragment = this
         if (savedInstanceState == null && !disableShowAnimation) {
             onEndShowingAnimation()
@@ -335,24 +355,16 @@ open class BaseFragment(
         return false
     }
 
-    private val canPredictiveBack: Boolean
-        get() {
-            view ?: return false
-            if (isFinished.get()) {
-                return false
-            }
-            if (activity?.supportFragmentManager?.primaryNavigationFragment == this) {
-                return false
-            }
-            return predictiveBackPreviewEnabled
-        }
-
     override fun onPredictiveOnBackStarted(backEvent: BackEventCompat) {
         if (!canPredictiveBack) {
             return
         }
         predictiveBackActive = true
-        predictiveBackDir = if (backEvent.swipeEdge == BackEventCompat.EDGE_LEFT) 1f else -1f
+        predictiveBackDir = if (backEvent.swipeEdge == BackEventCompat.EDGE_LEFT) {
+            1f
+        } else {
+            -1f
+        }
         when (val view = view) {
             is BottomSheetLayout -> view.onPredictiveStart()
             is ModalView -> view.onPredictiveStart()
@@ -407,8 +419,16 @@ open class BaseFragment(
             when (view) {
                 is BottomSheetLayout -> view.hide(true)
                 is ModalView -> view.hide(true)
-                is SwipeBackLayout -> if (wasPredictive) finishWithPredictiveBack(view) else view.startHideAnimation()
-                else -> if (wasPredictive) finishWithPredictiveBack(view) else hideScreen(view)
+                is SwipeBackLayout -> if (wasPredictive) {
+                    finishWithPredictiveBack(view)
+                } else {
+                    view.startHideAnimation()
+                }
+                else -> if (wasPredictive) {
+                    finishWithPredictiveBack(view)
+                } else {
+                    hideScreen(view)
+                }
             }
         }
     }
@@ -445,7 +465,16 @@ open class BaseFragment(
         if (detectScreenCapture && atLeastApi34) {
             activity?.registerScreenCaptureCallback(mainExecutor, screenCaptureCallback)
         }
-        (view as? BottomSheetLayout)?.show()
+        val bottomSheet = view as? BottomSheetLayout
+        val modal = view as? ModalView
+        if (!isFinished.get()) {
+            bottomSheet?.show()
+        } else if (bottomSheet?.hideRequested == true ||
+            bottomSheet?.behavior?.state == BottomSheetBehavior.STATE_HIDDEN ||
+            modal?.behavior?.state == BottomSheetBehavior.STATE_HIDDEN
+        ) {
+            finishInternal()
+        }
     }
 
     override fun onPause() {

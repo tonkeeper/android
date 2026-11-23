@@ -10,6 +10,7 @@ import com.tonapps.blockchain.model.legacy.MessageBodyEntity
 import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.blockchain.ton.MnemonicType
 import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.blockchain.ton.contract.BaseWalletContract
 import com.tonapps.blockchain.ton.contract.WalletVersion
@@ -48,7 +49,6 @@ import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.contract.wallet.WalletTransfer
 import org.ton.kotlin.crypto.mnemonic.Mnemonic
-import java.math.BigInteger
 import java.security.GeneralSecurityException
 import java.util.UUID
 
@@ -313,6 +313,11 @@ class AccountRepository(
 
     suspend fun getTronAddress(id: String): String? {
         val wallet = database.getAccount(id) ?: return null
+        // A Telegram wallet has no TRON account. Its key is the one of the seed's multichain wallet, so
+        // the address cached by key would be that wallet's.
+        if (wallet.isWalletTg) {
+            return null
+        }
         storageSource.getTronAddress(wallet.publicKey)?.let { return it }
         val address = getTrxAccountsProvider(wallet)?.getAddress() ?: return null
         storageSource.setTronAddress(wallet.publicKey, address)
@@ -336,7 +341,7 @@ class AccountRepository(
         )
     }
 
-    suspend fun getTronPrivateKey(id: String): BigInteger? {
+    suspend fun getTronPrivateKey(id: String): ByteArray? {
         val trxAccountsProvider = getTrxAccountsProvider(id) ?: return null
         return trxAccountsProvider.getPrivateKey()
     }
@@ -411,8 +416,9 @@ class AccountRepository(
         versions: List<WalletVersion>,
         type: WalletType,
         initialized: List<Boolean>,
+        mnemonicType: MnemonicType = MnemonicType.Both,
     ): List<WalletEntity> {
-        val publicKey = vaultSource.addMnemonic(mnemonic)
+        val publicKey = vaultSource.addMnemonic(mnemonic, mnemonicType)
         return addWallet(ids, label, publicKey, versions, type, initialized = initialized)
     }
 
@@ -501,7 +507,8 @@ class AccountRepository(
                 address = address,
                 secretKey = secretKey,
                 payload = payload,
-                stateInit = contract.stateInitCell().base64()
+                stateInit = contract.stateInitCell().base64(),
+                timestamp = api.getServerTime(wallet.network).toLong(),
             )
             api.tonconnectProof(address.toAccountId(), proof.string(false))
         } catch (e: Throwable) {

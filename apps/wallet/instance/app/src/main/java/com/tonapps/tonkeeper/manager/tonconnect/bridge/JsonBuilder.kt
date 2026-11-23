@@ -99,7 +99,7 @@ internal object JsonBuilder {
     ): JSONObject {
         val json = JSONObject()
         json.put("items", payloadItems(wallet, proof, proofError))
-        json.put("device", device(wallet.maxMessages, appVersion, wallet.tonConnectSignMessageMaxMessages()))
+        json.put("device", device(wallet.maxMessages, appVersion, signData = !wallet.isMultichainLedger, signMessageMaxMessages = wallet.tonConnectSignMessageMaxMessages()))
         return json
     }
 
@@ -166,20 +166,22 @@ internal object JsonBuilder {
      * [signMessageMaxMessages] is null when the wallet cannot sign internal messages for a relayer
      * (not a W5 mnemonic wallet, or the feature is switched off): the feature is then not advertised.
      */
-    fun device(maxMessages: Int, appVersion: String, signMessageMaxMessages: Int? = null): JSONObject {
+    fun device(maxMessages: Int, appVersion: String, signData: Boolean = true, signMessageMaxMessages: Int? = null): JSONObject {
         val json = JSONObject()
         json.put("platform", "android")
         json.put("appName", "Tonkeeper")
         json.put("appVersion", appVersion)
         json.put("maxProtocolVersion", 2)
-        json.put("features", features(maxMessages, signMessageMaxMessages))
+        json.put("features", features(maxMessages, signData, signMessageMaxMessages))
         return json
     }
 
-    private fun features(maxMessages: Int, signMessageMaxMessages: Int?): JSONArray {
+    private fun features(maxMessages: Int, signData: Boolean, signMessageMaxMessages: Int?): JSONArray {
         val array = JSONArray()
         array.put("SendTransaction")
-        array.put(signDataFeature())
+        if (signData) {
+            array.put(signDataFeature())
+        }
         array.put(sendTransactionFeature(maxMessages))
         signMessageMaxMessages?.let {
             array.put(signMessageFeature(it))

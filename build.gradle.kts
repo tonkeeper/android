@@ -1,4 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import java.util.Properties
 
 plugins {
@@ -48,6 +50,14 @@ allprojects {
                     runCatching { it.resolve() }
                         .onFailure { e -> logger.warn("Skip ${it.name}: ${e.message}") }
                 }
+        }
+    }
+
+    // `--quiet` otherwise reports only "There were failing tests", without the test or the assertion.
+    tasks.withType<Test>().configureEach {
+        testLogging.quiet {
+            events(TestLogEvent.FAILED)
+            exceptionFormat = TestExceptionFormat.FULL
         }
     }
 }

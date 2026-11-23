@@ -1,5 +1,6 @@
 package com.tonapps.deposit.multicoin.screens.confirm
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.blockchain.model.CommonTransactionData
 import com.tonapps.blockchain.model.ConfirmOperations
@@ -53,7 +54,10 @@ class ConfirmTypeSerializationTest : BaseUnitTest() {
             amount = BigInteger.fromInt(5_000_000),
             minReceive = BigInteger.fromInt(4_900_000),
             quote = QUOTE,
-            feeShareBps = 3_700,
+            providerFees = ConfirmType.PerpetualDeposit.ProviderFees(
+                destinationGasUsd = BigDecimal.parseString("0.226962"),
+                providerUsd = BigDecimal.parseString("0.02537"),
+            ),
         )
 
         val decoded = roundTrip(deposit) as ConfirmType.PerpetualDeposit
@@ -62,7 +66,7 @@ class ConfirmTypeSerializationTest : BaseUnitTest() {
         assertEquals(deposit.amount, decoded.amount)
         assertEquals(deposit.minReceive, decoded.minReceive)
         assertEquals(deposit.quote, decoded.quote)
-        assertEquals(3_700, decoded.feeShareBps)
+        assertEquals(deposit.providerFees, decoded.providerFees)
     }
 
     @Test
@@ -71,7 +75,7 @@ class ConfirmTypeSerializationTest : BaseUnitTest() {
 
         val decoded = roundTrip(deposit) as ConfirmType.PerpetualDeposit
         assertNull(decoded.minReceive)
-        assertNull(decoded.feeShareBps)
+        assertNull(decoded.providerFees)
     }
 
     @Test

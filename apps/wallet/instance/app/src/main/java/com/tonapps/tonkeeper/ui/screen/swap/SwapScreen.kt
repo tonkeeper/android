@@ -16,12 +16,11 @@ import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.RedAttemptSource
 import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
-import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.locale
 import com.tonapps.tonkeeper.helper.BrowserHelper
@@ -29,8 +28,10 @@ import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.swap.omniston.OmnistonScreen
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeperx.R
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import org.koin.android.ext.android.inject
@@ -127,7 +128,7 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
 
     private fun getUri(): Uri {
         val builder = args.uri.buildUpon()
-        builder.appendQueryParameter("clientVersion", requireContext().appVersionName)
+        builder.appendQueryParameter("clientVersion", DevSettings.reportedVersionName)
         builder.appendQueryParameter("ft", args.fromToken)
         builder.appendQueryParameter("lang", requireContext().locale.toString())
         args.toToken?.let {
@@ -153,12 +154,12 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
             operationId = operationId,
             flow = Events.RedOperations.RedOperationsFlow.Swap,
             operation = Events.RedOperations.RedOperationsOperation.Send,
-            attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
+            attemptSource = RedAttemptSource.NATIVE_UI,
+            startedAtMs = startedAtMs,
             otherMetadata = null,
         )
         return try {
-            val boc = SendTransactionScreen.run(requireContext(), wallet, request, BatteryTransaction.SWAP, utm = args.utm)
+            val boc = SendTransactionScreen.run(requireContext(), wallet, request, PasscodeReason.CONFIRM_SWAP, BatteryTransaction.SWAP, utm = args.utm)
             if (boc.isNotBlank()) {
                 analytics?.simpleTrackEvent("swap_success", HashMap(args.utm.toEventProps()))
                 val finishedAtMs = currentTimeMillis()
@@ -167,7 +168,7 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
                     flow = Events.RedOperations.RedOperationsFlow.Swap,
                     operation = Events.RedOperations.RedOperationsOperation.Send,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     error = null,
                 )
             }
@@ -179,7 +180,7 @@ class SwapScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fragment_sw
                 flow = Events.RedOperations.RedOperationsFlow.Swap,
                 operation = Events.RedOperations.RedOperationsOperation.Send,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = e,
             )
             ""

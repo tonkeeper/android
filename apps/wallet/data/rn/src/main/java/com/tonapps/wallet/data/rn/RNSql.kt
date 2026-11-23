@@ -14,8 +14,8 @@ import com.tonapps.extensions.asJSON
 
 internal class RNSql(context: Context): SQLiteHelper(context, DATABASE_NAME, DATABASE_VERSION) {
 
-    private companion object {
-        private const val DATABASE_NAME = "RKStorage"
+    companion object {
+        const val DATABASE_NAME = "RKStorage"
         private const val DATABASE_VERSION = 1
         private const val KV_TABLE_NAME = "catalystLocalStorage"
         private const val KV_TABLE_KEY_COLUMN = "key"

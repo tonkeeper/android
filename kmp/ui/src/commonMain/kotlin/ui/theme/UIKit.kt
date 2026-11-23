@@ -13,6 +13,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.unit.dp
+import uikit.glass.GlassConfig
 
 object UIKit {
     val colorScheme: AppColorScheme
@@ -61,6 +62,7 @@ fun MoonTheme(
         CompositionLocalProvider(
             LocalAppColorScheme provides colorScheme,
             LocalTypography provides typography,
+            LocalGlass provides GlassConfig.isEnabled,
             // No ripple anywhere; press feedback is the scale animation instead.
             LocalRippleConfiguration provides null,
             LocalIndication provides ScaleIndication

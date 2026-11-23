@@ -29,6 +29,10 @@ data class PositionStateOrder(
     @SerialName(value = "status")
     val status: String,
 
+    /* The client's number for the order. Absent if there is none. In the realtime snapshot the client finds its own order by it. */
+    @SerialName(value = "client_order_index")
+    val clientOrderIndex: Long? = null,
+
     /* The venue's own word for what kind of order it was, e.g. `market`, `take-profit`, `stop-loss`, `liquidation`. */
     @SerialName(value = "kind")
     val kind: String? = null,

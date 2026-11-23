@@ -17,10 +17,6 @@ import okhttp3.HttpUrl
 import io.kandelabrapi.models.Error
 import io.kandelabrapi.models.GetCandlesBatchRequest
 import io.kandelabrapi.models.GetCandlesBatchResponse
-import io.kandelabrapi.models.GetCandlesRequest
-import io.kandelabrapi.models.GetCandlesResponse
-import io.kandelabrapi.models.GetLatestRatesRequest
-import io.kandelabrapi.models.GetLatestRatesResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -45,53 +41,6 @@ class CandlesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         val defaultBasePath: String by lazy {
             System.getProperties().getProperty(ApiClient.baseUrlKey, "http://localhost:10000")
         }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getCandles(getCandlesRequest: GetCandlesRequest): GetCandlesResponse {
-        val localVarResponse = getCandlesWithHttpInfo(getCandlesRequest = getCandlesRequest)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GetCandlesResponse
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getCandlesWithHttpInfo(getCandlesRequest: GetCandlesRequest): ApiResponse<GetCandlesResponse?> {
-        val localVariableConfig = getCandlesRequestConfig(getCandlesRequest = getCandlesRequest)
-
-        return request<GetCandlesRequest, GetCandlesResponse>(
-            localVariableConfig
-        )
-    }
-
-    fun getCandlesRequestConfig(getCandlesRequest: GetCandlesRequest): RequestConfig<GetCandlesRequest> {
-        val localVariableBody = getCandlesRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/kandelabr/public-api/v1/candles",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -136,54 +85,7 @@ class CandlesApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
             path = "/kandelabr/public-api/v1/candles/batch",
             query = localVariableQuery,
             headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getLatestRates(getLatestRatesRequest: GetLatestRatesRequest): GetLatestRatesResponse {
-        val localVarResponse = getLatestRatesWithHttpInfo(getLatestRatesRequest = getLatestRatesRequest)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as GetLatestRatesResponse
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getLatestRatesWithHttpInfo(getLatestRatesRequest: GetLatestRatesRequest): ApiResponse<GetLatestRatesResponse?> {
-        val localVariableConfig = getLatestRatesRequestConfig(getLatestRatesRequest = getLatestRatesRequest)
-
-        return request<GetLatestRatesRequest, GetLatestRatesResponse>(
-            localVariableConfig
-        )
-    }
-
-    fun getLatestRatesRequestConfig(getLatestRatesRequest: GetLatestRatesRequest): RequestConfig<GetLatestRatesRequest> {
-        val localVariableBody = getLatestRatesRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/kandelabr/public-api/v1/latest-rates",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
+            requiresAuthentication = true,
             body = localVariableBody
         )
     }

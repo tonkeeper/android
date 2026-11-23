@@ -20,14 +20,14 @@
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/title"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/offsetMedium"
         android:layout_marginStart="@dimen/offsetMedium"
-        android:singleLine="true"
-        android:maxLength="18"
+        android:layout_marginEnd="8dp"
         android:textAppearance="@style/TextAppearance.Label1"
         android:textColor="?attr/textPrimaryColor"
+        app:layout_constraintEnd_toStartOf="@+id/amount"
         app:layout_constraintStart_toEndOf="@+id/icon"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -50,7 +50,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/offsetMedium"
         android:layout_marginEnd="@dimen/offsetMedium"
-        android:maxLength="18"
         android:gravity="end"
         android:singleLine="true"
         android:textAppearance="@style/TextAppearance.Label1"
@@ -67,10 +66,31 @@
         android:singleLine="true"
         android:maxLength="18"
         android:textAppearance="@style/TextAppearance.Body2"
-        android:textColor="?attr/textSecondaryColor"
+        android:textColor="?attr/textTertiaryColor"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/amount" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/details_barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="title,subtitle,amount2" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/warning"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/offsetMedium"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="@dimen/offsetMedium"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="?attr/textSecondaryColor"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/icon"
+        app:layout_constraintTop_toBottomOf="@+id/details_barrier" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/body"
@@ -83,7 +103,7 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/subtitle">
+        app:layout_constraintTop_toBottomOf="@+id/warning">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/comment"

@@ -11,6 +11,7 @@ import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
 import com.tonapps.blockchain.model.legacy.errors.SendBlockchainException
+import com.tonapps.blockchain.model.legacy.errors.SignatureDisabledException
 import com.tonapps.blockchain.ton.contract.WalletFeature
 import com.tonapps.blockchain.ton.extensions.EmptyPrivateKeyEd25519
 import com.tonapps.blockchain.ton.extensions.base64
@@ -18,6 +19,7 @@ import com.tonapps.blockchain.tron.TronTransfer
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
+import com.tonapps.core.helper.SendRedMetadata
 import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.core.helper.nftAnalyticsAssetId
@@ -29,7 +31,6 @@ import com.tonapps.deposit.usecase.emulation.EmulationUseCase
 import com.tonapps.deposit.usecase.emulation.InsufficientBalanceError
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.getUserMessage
 import com.tonapps.extensions.isPositive
@@ -50,8 +51,8 @@ import com.tonapps.wallet.api.tron.entity.TronResourcesEntity
 import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rates.RatesRepository
-import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
 import com.tonapps.wallet.data.settings.entities.PreferredTronFeeMethod
@@ -139,6 +140,7 @@ sealed interface ConfirmEvent {
 
 // endregion
 
+@Suppress("LargeClass")
 class ConfirmFeature(
     val params: SendParams,
     private val app: Application, // TODO remove from here
@@ -247,7 +249,7 @@ class ConfirmFeature(
             flow = Events.RedOperations.RedOperationsFlow.Transfer,
             operation = Events.RedOperations.RedOperationsOperation.Emulate,
             attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
+            startedAtMs = startedAtMs,
             otherMetadata = null,
         )
         try {
@@ -262,7 +264,7 @@ class ConfirmFeature(
                 flow = Events.RedOperations.RedOperationsFlow.Transfer,
                 operation = Events.RedOperations.RedOperationsOperation.Emulate,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = null,
             )
         } catch (e: Throwable) {
@@ -273,7 +275,7 @@ class ConfirmFeature(
                 flow = Events.RedOperations.RedOperationsFlow.Transfer,
                 operation = Events.RedOperations.RedOperationsOperation.Emulate,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = e,
             )
             setState { ConfirmState.Error(e.message ?: "Unknown error") }
@@ -579,9 +581,13 @@ class ConfirmFeature(
             operationId = operationId,
             flow = Events.RedOperations.RedOperationsFlow.Transfer,
             operation = Events.RedOperations.RedOperationsOperation.Send,
-            attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = null,
+            attemptSource = SendRedMetadata.attemptSource(analyticsFrom),
+            startedAtMs = startedAtMs,
+            otherMetadata = if (isNft) {
+                SendRedMetadata.nftTransfer(analyticsFrom, nftAnalyticsAssetId(params.nftAddress), feeAsset)
+            } else {
+                SendRedMetadata.transfer(analyticsFrom, assetId, amount, feeAsset, token.symbol)
+            },
         )
 
         try {
@@ -604,7 +610,7 @@ class ConfirmFeature(
                 flow = Events.RedOperations.RedOperationsFlow.Transfer,
                 operation = Events.RedOperations.RedOperationsOperation.Send,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = null,
             )
 
@@ -661,7 +667,7 @@ class ConfirmFeature(
                 flow = Events.RedOperations.RedOperationsFlow.Transfer,
                 operation = Events.RedOperations.RedOperationsOperation.Send,
                 durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                finishedAtMs = currentTimeSecondsInt(),
+                finishedAtMs = finishedAtMs,
                 error = e,
             )
             if (e is CancellationException) {
@@ -679,6 +685,7 @@ class ConfirmFeature(
 
                 val error = when (e) {
                     is SendException.InsufficientBalance -> ConfirmationError.InsufficientBalance
+                    is SignatureDisabledException -> ConfirmationError.Message(e.getMessage(context))
                     is SendBlockchainException -> e.getUserMessage(context)
                         ?.let { ConfirmationError.Message(it) }
                         ?: ConfirmationError.Unknown
@@ -735,22 +742,23 @@ class ConfirmFeature(
 
         val internalMessage = excessesAddress != null
 
-        val jettonTransferAmount = when (fee) { // TODO fees: hardcoded values before sending
-            is SendFee.Gasless -> TransferEntity.BASE_FORWARD_AMOUNT
+        val transferCost = batteryRepository.getConfig(wallet.network).transferCost(transfer)
+        val jettonTransferAmount = when (fee) {
+            is SendFee.Gasless -> transferCost
             is SendFee.Extra -> {
                 val extra = Coins.of(fee.extra)
                 when {
                     transfer.token.isRequestMinting || transfer.token.customPayloadApiUri != null -> TransferEntity.POINT_ONE_TON
-                    extra.isPositive -> TransferEntity.BASE_FORWARD_AMOUNT
+                    extra.isPositive -> transferCost
                     extra.isZero -> TransferEntity.POINT_ONE_TON
-                    else -> Coins.of(abs(fee.extra)) + TransferEntity.BASE_FORWARD_AMOUNT
+                    else -> Coins.of(abs(fee.extra)) + transferCost
                 }
             }
 
             is SendFee.Ton -> when {
                 transfer.token.isRequestMinting || transfer.token.customPayloadApiUri != null -> TransferEntity.POINT_ONE_TON
-                fee.amount.isRefund -> TransferEntity.BASE_FORWARD_AMOUNT
-                else -> fee.amount.value + TransferEntity.BASE_FORWARD_AMOUNT
+                fee.amount.isRefund -> transferCost
+                else -> fee.amount.value + transferCost
             }
 
             else -> TransferEntity.POINT_ONE_TON
@@ -759,6 +767,10 @@ class ConfirmFeature(
         val boc = signUseCase(
             context = context,
             wallet = wallet,
+            reason = when {
+                isNft -> PasscodeReason.CONFIRM_ACTION
+                else -> PasscodeReason.CONFIRM_TRANSFER
+            },
             unsignedBody = transfer.getUnsignedBody(
                 privateKey = privateKey,
                 internalMessage = internalMessage,
@@ -791,6 +803,10 @@ class ConfirmFeature(
         } else {
             api.tron.buildSmartContractTransaction(transfer).extendExpiration()
         }
+        // The TON fee of a TRON send is signed by the TON wallet's key, which 2FA may have turned off.
+        if (fee is SendFee.TronTon) {
+            signUseCase.requireSignatureEnabled(wallet)
+        }
         val resources = tronResources ?: throw IllegalStateException("Tron resources is null")
         val privateKey = accountRepository.getPrivateKey(wallet.id)
             ?: throw IllegalStateException("Private key is null")
@@ -799,6 +815,7 @@ class ConfirmFeature(
             context = context,
             wallet = wallet,
             transaction = transaction,
+            reason = PasscodeReason.CONFIRM_TRANSFER,
         )
 
         val auth = authorizationProvider.getAuthBy(wallet.id)
@@ -1043,7 +1060,7 @@ class ConfirmFeature(
         val message = transfer.signForEstimation(
             internalMessage = true,
             excessesAddress = excessesAddress,
-            jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT,
+            jettonTransferAmount = batteryRepository.getConfig(wallet.network).transferCost(transfer),
         )
 
         try {
@@ -1121,7 +1138,7 @@ class ConfirmFeature(
                     )
                 ),
                 excessesAddress = excessesAddress,
-                jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT,
+                jettonTransferAmount = batteryRepository.getConfig(wallet.network).transferCost(tokenAddress),
             )
 
             val commission = api.estimateGaslessCost(
@@ -1368,15 +1385,7 @@ class ConfirmFeature(
     }
 
     private fun shouldAttemptWithRelayer(transfer: TransferEntity): Boolean {
-        if ((transfer.isTon && !transfer.isNft) || transfer.wallet.isExternal) {
-            return false
-        }
-        val txType = if (transfer.isNft) {
-            BatteryTransaction.NFT
-        } else {
-            BatteryTransaction.JETTON
-        }
-        return settingsRepository.batteryIsEnabledTx(transfer.wallet.accountId, txType)
+        return (!transfer.isTon || transfer.isNft) && !transfer.wallet.isExternal && transfer.wallet.supportsBattery
     }
 
     private suspend fun getJettonTransferAmount(transfer: TransferEntity): Coins {
@@ -1397,10 +1406,11 @@ class ConfirmFeature(
             )
             val fee = Fee(emulated?.event?.extra ?: 0L)
 
+            val transferCost = batteryRepository.getConfig(transfer.wallet.network).transferCost(transfer)
             return if (fee.isRefund) {
-                TransferEntity.BASE_FORWARD_AMOUNT
+                transferCost
             } else {
-                fee.value + TransferEntity.BASE_FORWARD_AMOUNT
+                fee.value + transferCost
             }
         } catch (_: Throwable) {
             return TransferEntity.POINT_ONE_TON

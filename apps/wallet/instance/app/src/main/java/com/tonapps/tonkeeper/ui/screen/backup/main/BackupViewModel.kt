@@ -12,8 +12,9 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.backup.BackupRepository
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,7 @@ class BackupViewModel(
     private val accountRepository: AccountRepository,
     private val backupRepository: BackupRepository,
     private val passcodeManager: PasscodeManager,
+    private val walletUnlocker: WalletUnlocker,
     private val settingsRepository: SettingsRepository,
     private val mcAccountRepository: McAccountRepository,
 ) : BaseWalletVM(app) {
@@ -80,7 +82,7 @@ class BackupViewModel(
             try {
                 val words = when (val kind = walletFlow.value) {
                     is Wallet.Legacy -> {
-                        if (!passcodeManager.confirmation(context, getString(Localization.app_name))) {
+                        if (!passcodeManager.confirmation(context, PasscodeReason.SHOW_RECOVERY_PHRASE)) {
                             return@launch
                         }
                         val mnemonic = accountRepository.getMnemonic(kind.id) ?: emptyArray()
@@ -95,7 +97,7 @@ class BackupViewModel(
                         mnemonic
                     }
                     is Wallet.Multichain -> {
-                        passcodeManager.unlockMultichainVault(context) { coder ->
+                        walletUnlocker.unlockVault(PasscodeReason.SHOW_RECOVERY_PHRASE) { coder ->
                             mcAccountRepository.getMnemonic(kind.id, coder)
                                 ?: throw IllegalStateException("No mnemonic for multichain wallet")
                         }

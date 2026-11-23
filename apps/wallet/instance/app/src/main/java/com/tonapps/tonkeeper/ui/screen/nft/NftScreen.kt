@@ -30,7 +30,7 @@ import com.tonapps.tonkeeper.popup.ActionSheet
 import com.tonapps.tonkeeper.ui.base.BaseWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
 import com.tonapps.tonkeeper.ui.component.LottieView
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreenFactory
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.main.SendScreen
 import com.tonapps.tonkeeperx.R
@@ -97,6 +97,7 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
     private val rootViewModel: RootViewModel by activityViewModel()
 
     private val environment: Environment by inject()
+    private val dappScreenFactory: DAppScreenFactory by inject()
 
     override val viewModel: NftViewModel by viewModel {
         parametersOf(nftAddress, prefetchedNft)
@@ -369,7 +370,7 @@ class NftScreen : BaseWalletScreen<ScreenContext.None>(
         } else {
             val uri = url.toUriOrNull() ?: return
             navigation?.add(
-                DAppScreen.newInstance(
+                dappScreenFactory.create(
                     wallet = wallet,
                     title = uri.host ?: nftEntity.name,
                     url = uri,

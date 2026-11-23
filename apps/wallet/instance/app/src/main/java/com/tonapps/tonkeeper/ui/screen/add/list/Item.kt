@@ -21,6 +21,7 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val LEDGER_WALLET_ID = 5
         const val KEYSTONE_WALLET_ID = 6
         const val NEW_WALLET_ID = 7
+        const val LEDGER_MULTICHAIN_WALLET_ID = 8
 
         val otherOptionsTitle = SectionTitle(titleResId = Localization.other_options)
 
@@ -66,6 +67,14 @@ sealed class Item(type: Int): BaseListItem(type) {
             iconResId = R.drawable.ic_ledger_28,
             titleResId = Localization.ledger_title,
             subtitleResId = Localization.ledger_subtitle
+        )
+
+        val ledgerMultichain = Wallet(
+            id = LEDGER_MULTICHAIN_WALLET_ID,
+            iconResId = R.drawable.ic_ledger_28,
+            titleResId = Localization.ledger_mc_item_title,
+            subtitleResId = Localization.ledger_mc_item_subtitle,
+            tagResId = RStr.multichain,
         )
 
         fun header(title: Int, subtitle: Int): Header {

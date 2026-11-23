@@ -2,7 +2,6 @@ package com.tonapps.perps.screens.withdraw
 
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.perps.funding.PerpsConfirmRequests
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.log.L
 import com.tonapps.mvi.contract.MviAction
 import com.tonapps.mvi.contract.MviViewState
@@ -13,8 +12,10 @@ import com.tonapps.perps.data.PerpsPortfolioStore
 import com.tonapps.perps.data.formatPlainDecimal
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.perps.data.maskIf
+import com.tonapps.perps.data.tokenInputDecimals
 import com.tonapps.perps.data.withdrawableBalance
 import com.tonapps.perps.funding.PerpsFundingAmount
+import com.tonapps.perps.funding.PerpsWithdrawDestination
 import com.tonapps.perps.funding.PerpsWithdrawService
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -23,9 +24,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -33,7 +36,7 @@ import java.math.RoundingMode
 
 data class PerpsWithdrawSummary(
     val amountUnits: BigInteger,
-    val amount: BigDecimal,
+    val receiveAmount: BigDecimal?,
     val insufficient: Boolean,
     val minAmountUnits: BigInteger?,
 ) {
@@ -49,6 +52,7 @@ interface PerpsWithdrawViewState : MviViewState {
     val destinations: StateFlow<KState<List<PerpsWithdrawDestinationUi>?>>
     val selected: StateFlow<PerpsWithdrawDestinationUi?>
     val amountInput: StateFlow<String>
+    val inputInToken: StateFlow<Boolean>
     val summary: StateFlow<PerpsWithdrawSummary?>
     val withdrawInFlight: StateFlow<Boolean>
 }
@@ -57,8 +61,11 @@ sealed interface PerpsWithdrawAction : MviAction {
     data class SetAmount(val value: String) : PerpsWithdrawAction
     data class SelectDestination(val assetId: String) : PerpsWithdrawAction
     data object Max : PerpsWithdrawAction
+    data object ToggleInput : PerpsWithdrawAction
     data object Reload : PerpsWithdrawAction
 }
+
+private data class WithdrawInput(val text: String, val inToken: Boolean)
 
 class PerpsWithdrawFeature(
     private val service: PerpsWithdrawService,
@@ -68,7 +75,7 @@ class PerpsWithdrawFeature(
 ) : GraphViewModel<PerpsWithdrawViewState, PerpsWithdrawAction>(), PerpsWithdrawViewState {
 
     private val walletId = unifiedAccountRepository.selectedTonWalletFlow
-        .map { wallet -> wallet?.takeIf { it.type == WalletType.Multichain }?.id }
+        .map { wallet -> wallet?.takeIf { it.supportsPerps }?.id }
         .filterNotNull()
         .distinctUntilChanged()
         .cacheState(initialValue = null)
@@ -116,7 +123,7 @@ class PerpsWithdrawFeature(
 
     private val selectedDestination = combine(loadedDestinations, selectedAssetId) { state, assetId ->
         val loaded = state.state.orEmpty()
-        loaded.firstOrNull { it.assetId == assetId } ?: loaded.firstOrNull()
+        loaded.firstOrNull { it.assetId == assetId } ?: loaded.firstOrNull { it.isUsdcEthereum }
     }
         .cacheState(initialValue = null)
 
@@ -135,12 +142,14 @@ class PerpsWithdrawFeature(
         .map { it.state }
         .cacheState(initialValue = null)
 
-    private val input = MutableStateFlow("")
+    private val input = MutableStateFlow(WithdrawInput(text = "", inToken = false))
 
-    override val amountInput: StateFlow<String> = input
+    override val amountInput = input.map { it.text }.cacheState(initialValue = "")
 
-    override val summary = combine(input, availableBalance, limits, selectedDestination) { text, balance, limit, destination ->
-        summarize(text, balance.state, destination?.let { limit?.minimumFor(it) })
+    override val inputInToken = input.map { it.inToken }.cacheState(initialValue = false)
+
+    override val summary = combine(input, availableBalance, limits, selectedDestination) { entered, balance, limit, destination ->
+        summarize(entered, balance.state, destination, destination?.let { limit?.minimumFor(it) })
     }
         .cacheState(initialValue = null)
 
@@ -148,12 +157,25 @@ class PerpsWithdrawFeature(
         stateScope.launch {
             actions.collect { action ->
                 when (action) {
-                    is PerpsWithdrawAction.SetAmount -> input.value = action.value
-                    PerpsWithdrawAction.Max -> availableBalance.value.state?.let { input.value = formatPlainDecimal(it.floorToUnits()) }
+                    is PerpsWithdrawAction.SetAmount -> input.update { it.copy(text = action.value) }
+                    PerpsWithdrawAction.Max -> availableBalance.value.state?.let { balance ->
+                        input.update { it.copy(text = maxText(balance, it.inToken)) }
+                    }
+                    PerpsWithdrawAction.ToggleInput -> input.update { it.toggled(selectedDestination.value) }
                     is PerpsWithdrawAction.SelectDestination,
                     PerpsWithdrawAction.Reload -> Unit
                 }
             }
+        }
+        stateScope.launch {
+            var previous: PerpsWithdrawDestination? = null
+            selectedDestination
+                .filterNotNull()
+                .distinctUntilChangedBy { it.assetId }
+                .collect { next ->
+                    input.update { it.retargeted(previous, next) }
+                    previous = next
+                }
         }
     }
 
@@ -162,17 +184,75 @@ class PerpsWithdrawFeature(
         return PerpsConfirmRequests.withdraw(wallet, amountUnits, destinationAssetId)
     }
 
-    private fun summarize(text: String, balance: BigDecimal?, minAmountUnits: BigInteger?): PerpsWithdrawSummary? {
+    private fun summarize(
+        entered: WithdrawInput,
+        balance: BigDecimal?,
+        destination: PerpsWithdrawDestination?,
+        minAmountUnits: BigInteger?,
+    ): PerpsWithdrawSummary? {
         balance ?: return null
-        val entered = text.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        val exact = entered.max(BigDecimal.ZERO).floorToUnits()
-        val units = exact.unscaledValue()
+        val amount = (entered.text.toBigDecimalOrNull() ?: BigDecimal.ZERO).max(BigDecimal.ZERO)
+        val price = destination?.usdPrice
+        val usd = when {
+            !entered.inToken -> amount
+            price == null -> BigDecimal.ZERO
+            else -> amount.multiply(price)
+        }
+        val exact = usd.floorToUnits()
+        val receiveAmount = when {
+            destination == null || price == null -> null
+            entered.inToken -> amount
+            else -> exact.divide(price, destination.receiveDecimals, RoundingMode.DOWN)
+        }
         return PerpsWithdrawSummary(
-            amountUnits = units,
-            amount = exact,
+            amountUnits = exact.unscaledValue(),
+            receiveAmount = receiveAmount,
             insufficient = exact > balance,
             minAmountUnits = minAmountUnits,
         )
+    }
+
+    private fun maxText(balance: BigDecimal, inToken: Boolean): String {
+        val destination = selectedDestination.value
+        val price = destination?.usdPrice
+        return if (inToken && destination != null && price != null) {
+            formatPlainDecimal(balance.divide(price, destination.receiveInputDecimals, RoundingMode.DOWN))
+        } else {
+            formatPlainDecimal(balance.floorToUnits())
+        }
+    }
+
+    private fun WithdrawInput.toggled(destination: PerpsWithdrawDestination?): WithdrawInput {
+        val price = destination?.usdPrice ?: return copy(inToken = false)
+        val entered = text.toBigDecimalOrNull()?.takeIf { it.signum() > 0 }
+            ?: return WithdrawInput(text = "", inToken = !inToken)
+        val converted = if (inToken) {
+            val exact = entered.multiply(price)
+            val usd = exact.setScale(USD_INPUT_SCALE, RoundingMode.HALF_UP)
+            val available = availableBalance.value.state?.floorToUnits()
+            if (available != null && exact.floorToUnits() <= available && usd > available) {
+                available
+            } else {
+                usd
+            }
+        } else {
+            entered.divide(price, destination.receiveInputDecimals, RoundingMode.DOWN)
+        }
+        return WithdrawInput(text = formatPlainDecimal(converted), inToken = !inToken)
+    }
+
+    private fun WithdrawInput.retargeted(previous: PerpsWithdrawDestination?, next: PerpsWithdrawDestination): WithdrawInput {
+        if (!inToken || previous == null) {
+            return this
+        }
+        val entered = text.toBigDecimalOrNull()?.takeIf { it.signum() > 0 } ?: return this
+        val usd = previous.usdPrice?.let(entered::multiply)
+        val nextPrice = next.usdPrice
+        return when {
+            usd == null -> WithdrawInput(text = "", inToken = nextPrice != null)
+            nextPrice == null -> WithdrawInput(text = formatPlainDecimal(usd.setScale(USD_INPUT_SCALE, RoundingMode.DOWN)), inToken = false)
+            else -> copy(text = formatPlainDecimal(usd.divide(nextPrice, next.receiveInputDecimals, RoundingMode.DOWN)))
+        }
     }
 
     private fun BigDecimal.floorToUnits(): BigDecimal = setScale(PerpsFundingAmount.USDC_DECIMALS, RoundingMode.DOWN)
@@ -188,4 +268,17 @@ class PerpsWithdrawFeature(
             null
         }
     }
+
+    private companion object {
+        const val USD_INPUT_SCALE = 2
+    }
 }
+
+internal val PerpsWithdrawDestination.usdPrice: BigDecimal?
+    get() = source?.price?.takeIf { it.signum() > 0 }
+
+internal val PerpsWithdrawDestination.receiveDecimals: Int
+    get() = source?.decimals ?: PerpsFundingAmount.USDC_DECIMALS
+
+internal val PerpsWithdrawDestination.receiveInputDecimals: Int
+    get() = tokenInputDecimals(receiveDecimals)

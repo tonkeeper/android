@@ -15,7 +15,7 @@ class BatteryAPI(
 
     val default: DefaultApi by lazy { DefaultApi(basePath, okHttpClient) }
 
-     val wallet: WalletApi by lazy { WalletApi(basePath, okHttpClient) }
-
     val gasless: GaslessApi by lazy { GaslessApi(basePath, okHttpClient) }
+
+    val wallet: WalletApi by lazy { WalletApi(basePath, okHttpClient) }
 }

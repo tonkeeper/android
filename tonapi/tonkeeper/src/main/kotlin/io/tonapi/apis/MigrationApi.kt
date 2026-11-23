@@ -15,11 +15,11 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.tonapi.models.GetBlockchainRawAccountsRequest
-import io.tonapi.models.GetOpenapiJsonDefaultResponse
 import io.tonapi.models.MigrationPrepareConflict
 import io.tonapi.models.MigrationPrepareRequest
 import io.tonapi.models.MigrationPrepareResponse
 import io.tonapi.models.MigrationWallets
+import io.tonapi.models.StatusDefaultResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

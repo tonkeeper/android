@@ -6,6 +6,7 @@ import ui.theme.color.AccentColorScheme
 import ui.theme.color.BackgroundColorScheme
 import ui.theme.color.ButtonColorScheme
 import ui.theme.color.FieldColorScheme
+import ui.theme.color.GlassColorScheme
 import ui.theme.color.IconColorScheme
 import ui.theme.color.SeparatorColorScheme
 import ui.theme.color.TabBarColorScheme
@@ -96,5 +97,11 @@ fun appColorSchemeBlue() = AppColorScheme(
     separator = SeparatorColorScheme(
         common = Color(0x14C2DAFF),
         alternate = Color(0x14FFFFFF)
+    ),
+    glass = GlassColorScheme(
+        rimTop = Color(0x2BFFFFFF),
+        rimBottom = Color(0x1AFFFFFF),
+        border = Color(0x00000000),
+        shadow = Color(0x33000000)
     )
 )

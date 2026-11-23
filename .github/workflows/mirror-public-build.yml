@@ -7,26 +7,28 @@ name: Mirror APK release build
 on:
   push:
     tags:
-      - 'v*'
+      - 'android/*'
   workflow_dispatch:
 
 jobs:
   build:
+    # The private repo has no Gradle project at the root, so a dispatch or a tag push there fails.
+    if: github.repository != 'tonkeeper/mobile_private'
     name: Build & Release APK
-    runs-on: macos-latest-xlarge
+    runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Parse tag into VERSION_NAME and VERSION_CODE
         run: |
           TAG="${{ github.ref_name }}"
-          # Tag format: v{version_name}_{version_code}
-          VERSION_NAME="${TAG#v}"
+          # Tag format: android/{version_name}_{version_code}
+          VERSION_NAME="${TAG#android/}"
           VERSION_NAME="${VERSION_NAME%_*}"
           VERSION_CODE="${TAG##*_}"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
@@ -34,13 +36,13 @@ jobs:
           echo "Parsed tag '$TAG' -> VERSION_NAME=$VERSION_NAME, VERSION_CODE=$VERSION_CODE"
 
       - name: Setup Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Cache Gradle Wrapper
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.gradle/wrapper
           key: gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
@@ -49,17 +51,21 @@ jobs:
         run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Decode Keystore
         run: echo "${{ secrets.TONKEEPER_UPLOAD_STORE_FILE }}" | base64 -d > ${{ github.workspace }}/release.keystore
 
+      # With the default 6 GB Gradle and 6 GB Kotlin heaps this build peaks at 16.6 GB,
+      # more than the runner has. These heaps fit it in 14.5 GB.
       - name: Build Site APK
         run: |
           ./gradlew :apps:wallet:instance:main:assembleSiteRelease \
             --no-daemon \
             --no-build-cache \
             --no-configuration-cache \
+            -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+UseG1GC -Dfile.encoding=UTF-8" \
+            -Pkotlin.daemon.jvmargs=-Xmx3g \
             -Pandroid.injected.signing.store.file=${{ github.workspace }}/release.keystore \
             -Pandroid.injected.signing.store.password=${{ secrets.TONKEEPER_UPLOAD_STORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.TONKEEPER_UPLOAD_KEY_ALIAS }} \
@@ -69,25 +75,32 @@ jobs:
         run: |
           mkdir -p release
           APK=$(find apps/wallet/instance/main/build/outputs/apk/site/release -name "*.apk" | head -1)
-          cp "$APK" release/Tonkeeper.apk
+          cp "$APK" release/Keeper.apk
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: Tonkeeper-apk-${{ github.ref_name }}
-          path: release/Tonkeeper.apk
+          name: Keeper-apk-${{ env.VERSION_NAME }}_${{ env.VERSION_CODE }}
+          path: release/Keeper.apk
 
       - name: Upload R8 mapping artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: Tonkeeper-mapping-${{ github.ref_name }}
+          name: Keeper-mapping-${{ env.VERSION_NAME }}_${{ env.VERSION_CODE }}
           path: apps/wallet/instance/main/build/outputs/mapping/siteRelease/**
           if-no-files-found: error
 
+      # A rerun finds the release that the first run created and replaces its APK.
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ env.VERSION_NAME }}
-          generate_release_notes: true
-          files: release/Tonkeeper.apk
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if out=$(gh release view "$GITHUB_REF_NAME" 2>&1); then
+            gh release upload "$GITHUB_REF_NAME" release/Keeper.apk --clobber
+          elif [[ "$out" == *"release not found"* ]]; then
+            gh release create "$GITHUB_REF_NAME" release/Keeper.apk --title "$VERSION_NAME" --generate-notes
+          else
+            echo "$out" >&2
+            exit 1
+          fi

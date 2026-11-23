@@ -1,6 +1,8 @@
 package com.tonapps.wallet.data.cache
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 
 class JsonCacheRepository(
@@ -17,6 +19,16 @@ class JsonCacheRepository(
             cacheKey = cacheKey,
         )?.json
     }
+
+    fun observeJson(
+        scope: JsonResponseCacheScope,
+        cacheKey: String,
+        walletId: String? = null,
+    ): Flow<String?> = dao.observeJson(
+        scope = scope.name,
+        walletId = walletId.orEmpty(),
+        cacheKey = cacheKey,
+    ).distinctUntilChanged()
 
     suspend fun save(
         scope: JsonResponseCacheScope,

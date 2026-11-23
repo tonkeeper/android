@@ -23,6 +23,16 @@
                 android:textColor="?attr/textPrimaryColor"
                 android:textAppearance="@style/TextAppearance.H3"/>
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/reason"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetExtraSmall"
+                android:gravity="center"
+                android:textColor="?attr/textSecondaryColor"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:visibility="gone"/>
+
             <uikit.widget.PinInputView
                 android:id="@+id/passcode"
                 android:layout_width="wrap_content"

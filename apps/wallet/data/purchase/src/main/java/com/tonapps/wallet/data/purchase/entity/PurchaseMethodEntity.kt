@@ -1,9 +1,8 @@
 package com.tonapps.wallet.data.purchase.entity
 
 import android.os.Parcelable
+import io.tonendpointapi.models.FiatCategoryItemsInner
 import kotlinx.parcelize.Parcelize
-import org.json.JSONArray
-import org.json.JSONObject
 
 @Parcelize
 data class PurchaseMethodEntity(
@@ -20,62 +19,26 @@ data class PurchaseMethodEntity(
     val useCustomTabs: Boolean
         get() = id == "mercuryo"
 
-    companion object {
-
-        fun parse(array: JSONArray): List<PurchaseMethodEntity> {
-            val list = mutableListOf<PurchaseMethodEntity>()
-            for (i in 0 until array.length()) {
-                list.add(PurchaseMethodEntity(array.getJSONObject(i)))
-            }
-            return list
-        }
-    }
-
-
     @Parcelize
     data class Button(
         val title: String,
         val url: String
-    ): Parcelable {
-
-        companion object {
-            fun parse(array: JSONArray): List<Button> {
-                val list = mutableListOf<Button>()
-                for (i in 0 until array.length()) {
-                    list.add(Button(array.getJSONObject(i)))
-                }
-                return list
-            }
-        }
-
-        constructor(json: JSONObject) : this(
-            title = json.getString("title"),
-            url = json.getString("url")
-        )
-    }
+    ): Parcelable
 
     @Parcelize
     data class SuccessUrlPattern(
         val pattern: String,
         val purchaseIdIndex: Int
-    ): Parcelable {
+    ): Parcelable
 
-        constructor(json: JSONObject) : this(
-            pattern = json.getString("pattern"),
-            purchaseIdIndex = json.optInt("purchaseIdIndex", -1)
-        )
-    }
-
-    constructor(json: JSONObject) : this(
-        id = json.getString("id"),
-        title = json.getString("title"),
-        subtitle = json.getString("subtitle"),
-        description = json.getString("description"),
-        iconUrl = json.getString("icon_url"),
-        successUrlPattern = json.optJSONObject("successUrlPattern")?.let { SuccessUrlPattern(it) },
-        infoButtons = json.optJSONArray("info_buttons")?.let { array ->
-            Button.parse(array)
-        } ?: emptyList(),
-        actionButton = Button(json.getJSONObject("action_button")),
+    constructor(item: FiatCategoryItemsInner) : this(
+        id = item.id,
+        title = item.title,
+        subtitle = item.subtitle,
+        description = item.description,
+        iconUrl = item.iconUrl,
+        successUrlPattern = item.successUrlPattern?.let { SuccessUrlPattern(it.pattern, it.purchaseIdIndex ?: -1) },
+        infoButtons = item.infoButtons.orEmpty().map { Button(it.title, it.url) },
+        actionButton = Button(item.actionButton.title, item.actionButton.url),
     )
 }

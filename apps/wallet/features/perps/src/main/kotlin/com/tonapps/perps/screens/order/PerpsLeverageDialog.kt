@@ -156,6 +156,7 @@ private fun PerpsLeverageDialogBody(
         markPrice = markPrice,
         leverage = leverage,
         maintenanceMarginBps = rules.maintenanceMarginBps,
+        priceDecimals = rules.priceDecimals,
     )?.let { formatUsdPrice(it.toDouble(), rules.priceDecimals) } ?: PERPS_EMPTY_VALUE
 
     MoonTopAppBarSimple(

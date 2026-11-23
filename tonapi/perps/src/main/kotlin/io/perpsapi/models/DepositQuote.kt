@@ -49,6 +49,10 @@ data class DepositQuote(
     /* The slippage the quote allowed for, in basis points. It applies to the source side: the deposit itself is exact. */
     @SerialName(value = "slippage_bps")
     val slippageBps: Int? = null,
+
+    /* The provider's fees on this deposit, in US dollars: most of why output.amount is worth less than the input. The rest is the swap's rate and the slippage allowance, and input.amount is a budget that is rarely spent to the last unit. The source chain's own network fee is not among them: it is paid on top, on the payload's `fee` where the quote states one. Absent when the provider states none -- `direct` and `funxyz` deposits take nothing. */
+    @SerialName(value = "fees")
+    val fees: List<DepositQuoteFee>? = null,
     @SerialName(value = "tracking")
     val tracking: QuoteTracking? = null,
 

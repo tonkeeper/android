@@ -1,0 +1,43 @@
+{
+  "quote_id": "2e1a6363-6082-455d-970f-72fa5b56a266",
+  "routes": [
+    {
+      "route_id": "73da9a8c-5d26-4002-9298-d8d61349c301",
+      "provider_route_id": "e7fa4947-b933-4ca0-8ea5-2a9cfb0f8508",
+      "aggregator": "swapsxyz",
+      "route_type": "cross_chain_swap",
+      "source_amount": "100000",
+      "estimated_destination_amount": "33346700000000000",
+      "minimum_destination_amount": "33013233000000000",
+      "estimated_time": {
+        "inbound_seconds": 0,
+        "swap_seconds": 0,
+        "outbound_seconds": 0,
+        "total_seconds": 25
+      },
+      "total_slippage_bps": 100,
+      "price_impact_bps": 115,
+      "source_usd_price": 77840,
+      "destination_usd_price": 2289.08,
+      "fees": [
+        {
+          "type": "protocol",
+          "asset": "btc/mainnet/coin",
+          "chain_id": "btc/mainnet",
+          "amount": "100",
+          "amount_usd": "0.08"
+        },
+        {
+          "type": "application",
+          "asset": "btc/mainnet/coin",
+          "chain_id": "btc/mainnet",
+          "amount": "700",
+          "amount_usd": "0.54"
+        }
+      ],
+      "legs": [],
+      "date_expire": "2026-11-02T15:50:32Z",
+      "risk_level": "medium"
+    }
+  ]
+}

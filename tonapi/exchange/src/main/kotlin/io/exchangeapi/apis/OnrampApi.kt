@@ -15,10 +15,9 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.exchangeapi.models.CalculateSwap400Response
+import io.exchangeapi.models.CalculateSwap500Response
 import io.exchangeapi.models.CreateOnrampOrderRequest
 import io.exchangeapi.models.ExchangePaymentMethodType
-import io.exchangeapi.models.GetCrossSwapAsset404Response
-import io.exchangeapi.models.Healthcheck500Response
 import io.exchangeapi.models.OnrampAssetDetail
 import io.exchangeapi.models.OnrampChains
 import io.exchangeapi.models.OnrampConfiguration
@@ -26,6 +25,7 @@ import io.exchangeapi.models.OnrampOrder
 import io.exchangeapi.models.OnrampQuoteRequest
 import io.exchangeapi.models.OnrampQuotes
 import io.exchangeapi.models.Platform
+import io.exchangeapi.models.PrepareCrossSwapRoute404Response
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

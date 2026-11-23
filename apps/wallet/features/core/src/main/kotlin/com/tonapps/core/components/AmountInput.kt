@@ -1,5 +1,7 @@
 package com.tonapps.core.components
 
+import com.tonapps.chainkit.core.chain.model.num.Formatter
+
 private const val ARABIC_DECIMAL_SEPARATOR = 0x066B
 private const val FULLWIDTH_DECIMAL_SEPARATOR = 0xFF0E
 private const val UNLIMITED_DECIMALS = Int.MAX_VALUE
@@ -54,4 +56,11 @@ fun String.sanitizeAmountInput(maxDecimals: Int = UNLIMITED_DECIMALS): String {
     }
 
     return builder.toString()
+}
+
+fun String.withLocaleDecimalSeparator(): String {
+    if (Formatter.defaultOptions.decimalSeparator == ",") {
+        return replace('.', ',')
+    }
+    return this
 }

@@ -54,4 +54,8 @@
     <color name="tabBarInactiveIconLight">#95A0AD</color>
     <color name="separatorCommonLight">#1F3C3C43</color>
     <color name="separatorAlternateLight">#143C3C43</color>
+    <color name="glassRimTopLight">#2BFFFFFF</color>
+    <color name="glassRimBottomLight">#1AFFFFFF</color>
+    <color name="glassShadowLight">#4D000000</color>
+    <color name="glassBorderLight">@color/separatorCommonLight</color>
 </resources>

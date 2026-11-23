@@ -1,10 +1,9 @@
 package com.tonapps.tonkeeper.core
 
-import android.annotation.SuppressLint
-import android.content.Context
 import com.tonapps.log.L
 import com.tonapps.core.flags.FeatureManager
 import com.tonapps.core.flags.WalletFeatureKey
+import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.putBoolean
 import com.tonapps.extensions.putLong
 import com.tonapps.extensions.putString
@@ -19,12 +18,6 @@ import com.tonapps.tonkeeperx.BuildConfig
 object DevSettings {
 
     private val prefs by lazy { App.instance.getSharedPreferences("dev_settings", 0) }
-
-    fun checkInstallationVersion(version: Long) {
-        if (installationVersion == 0L) {
-            installationVersion = version
-        }
-    }
 
     var installationVersion: Long = prefs.getLong("install_version", 0)
         set(value) {
@@ -49,6 +42,8 @@ object DevSettings {
                 prefs.putString("build_override", value)
             }
         }
+
+    val reportedVersionName: String by lazy { buildOverride ?: App.instance.appVersionName }
 
     var blurEnabled: Boolean = prefs.getBoolean("blur_enabled", true)
         set(value) {
@@ -103,10 +98,6 @@ object DevSettings {
     val isLogcatEnabled: Boolean
         get() = prefs.getBoolean("is_logs_enabled", false)
 
-    fun resetLogsEnabled() {
-        prefs.remove("is_logs_enabled")
-    }
-
     var webViewDataDir: String? = prefs.getString("webview_data_dir", null)
         set(value) {
             if (field != value) {
@@ -123,6 +114,32 @@ object DevSettings {
             }
         }
 
+    var moonPaySandbox: Boolean = prefs.getBoolean("moonpay_sandbox", false)
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.putBoolean("moonpay_sandbox", value)
+            }
+        }
+
+    // Migrations
+    var isWebviewFolderMigrated: Boolean = prefs.getBoolean("is_webview_folder_migrated", false)
+        set(value) {
+            if (field != value) {
+                field = value
+                prefs.putBoolean("is_webview_folder_migrated", value)
+            }
+        }
+
+    fun checkInstallationVersion(version: Long) {
+        if (installationVersion == 0L) {
+            installationVersion = version
+        }
+    }
+
+    fun resetLogsEnabled() {
+        prefs.remove("is_logs_enabled")
+    }
 
     fun tonConnectLog(message: String, error: Boolean = false) {
         if (tonConnectLogs || BuildConfig.DEBUG) {
@@ -133,13 +150,4 @@ object DevSettings {
             }
         }
     }
-
-    // Migrations
-    var isWebviewFolderMigrated: Boolean = prefs.getBoolean("is_webview_folder_migrated", false)
-        set(value) {
-            if (field != value) {
-                field = value
-                prefs.putBoolean("is_webview_folder_migrated", value)
-            }
-        }
 }

@@ -26,6 +26,11 @@
 
         <item name="bottomSheetDialogTheme">@style/Widget.BottomSheet</item>
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="glassEnabled">false</item>
+    </style>
+
+    <style name="ThemeOverlay.App.Glass" parent="">
+        <item name="glassEnabled">true</item>
     </style>
 
     <style name="Theme.Hidden" parent="@android:style/Theme.DeviceDefault">
@@ -38,6 +43,8 @@
     </style>
 
     <style name="Theme.App.Blue" parent="Theme.App.Base">
+        <item name="themeAppearance">blue</item>
+
         <item name="textPrimaryColor">@color/textPrimaryBlue</item>
         <item name="textSecondaryColor">@color/textSecondaryBlue</item>
         <item name="textTertiaryColor">@color/textTertiaryBlue</item>
@@ -99,11 +106,18 @@
         <item name="separatorCommonColor">@color/separatorCommonBlue</item>
         <item name="separatorAlternateColor">@color/separatorAlternateBlue</item>
 
+        <item name="glassRimTopColor">@color/glassRimTopBlue</item>
+        <item name="glassRimBottomColor">@color/glassRimBottomBlue</item>
+        <item name="glassBorderColor">@color/glassBorderBlue</item>
+        <item name="glassShadowColor">@color/glassShadowBlue</item>
+
         <item name="android:colorBackground">@color/backgroundPageBlue</item>
         <item name="colorAccent">@color/textAccentBlue</item>
     </style>
 
     <style name="Theme.App.Dark" parent="Theme.App.Base">
+        <item name="themeAppearance">dark</item>
+
         <item name="textPrimaryColor">@color/textPrimaryDark</item>
         <item name="textSecondaryColor">@color/textSecondaryDark</item>
         <item name="textTertiaryColor">@color/textTertiaryDark</item>
@@ -165,11 +179,18 @@
         <item name="separatorCommonColor">@color/separatorCommonDark</item>
         <item name="separatorAlternateColor">@color/separatorAlternateDark</item>
 
+        <item name="glassRimTopColor">@color/glassRimTopDark</item>
+        <item name="glassRimBottomColor">@color/glassRimBottomDark</item>
+        <item name="glassBorderColor">@color/glassBorderDark</item>
+        <item name="glassShadowColor">@color/glassShadowDark</item>
+
         <item name="android:colorBackground">@color/backgroundPageDark</item>
         <item name="colorAccent">@color/textAccentDark</item>
     </style>
 
     <style name="Theme.App.Light" parent="Theme.App.Base">
+        <item name="themeAppearance">light</item>
+
         <item name="textPrimaryColor">@color/textPrimaryLight</item>
         <item name="textSecondaryColor">@color/textSecondaryLight</item>
         <item name="textTertiaryColor">@color/textTertiaryLight</item>
@@ -230,6 +251,11 @@
 
         <item name="separatorCommonColor">@color/separatorCommonLight</item>
         <item name="separatorAlternateColor">@color/separatorAlternateLight</item>
+
+        <item name="glassRimTopColor">@color/glassRimTopLight</item>
+        <item name="glassRimBottomColor">@color/glassRimBottomLight</item>
+        <item name="glassBorderColor">@color/glassBorderLight</item>
+        <item name="glassShadowColor">@color/glassShadowLight</item>
 
         <item name="android:colorBackground">@color/backgroundPageLight</item>
         <item name="colorAccent">@color/textAccentLight</item>

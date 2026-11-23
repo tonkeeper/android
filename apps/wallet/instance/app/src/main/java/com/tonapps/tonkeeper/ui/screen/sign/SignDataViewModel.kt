@@ -16,11 +16,13 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayl
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import com.tonapps.security.hex
+import com.tonapps.time.TimeProvider
 import org.ton.kotlin.crypto.crc32
 import org.ton.kotlin.crypto.sha256
 import java.io.ByteArrayOutputStream
@@ -32,11 +34,8 @@ class SignDataViewModel(
     private val wallet: WalletEntity,
     private val appUrl: Uri,
     private val signUseCase: SignUseCase,
+    private val timeProvider: TimeProvider,
 ): BaseWalletVM(app) {
-
-    private companion object {
-        private val prefix = "ton-connect/sign-data/".toByteArray()
-    }
 
     private val domain: TCDomain
         get() = TCDomain(appUrl.host!!)
@@ -45,8 +44,9 @@ class SignDataViewModel(
         get() = TCAddress(wallet.contract.address)
 
 
+    // The dApp checks the timestamp against its own clock.
     private fun getTimestamp(): Long {
-        return System.currentTimeMillis() / 1000L
+        return timeProvider.currentTimeSeconds()
     }
 
     suspend fun signProof(content: String, type: String): TONProof.Result {
@@ -126,8 +126,16 @@ class SignDataViewModel(
         payload: String
     ): ByteArray = withContext(Dispatchers.IO) {
         val isText = type == "text"
-        val payloadPrefix = if (isText) "txt" else "bin"
-        val payloadBuffer = if (isText) payload.toByteArray() else payload.decodeBase64()
+        val payloadPrefix = if (isText) {
+            "txt"
+        } else {
+            "bin"
+        }
+        val payloadBuffer = if (isText) {
+            payload.toByteArray()
+        } else {
+            payload.decodeBase64()
+        }
 
         val builder = ByteArrayOutputStream()
         builder.write("ffff".hex())
@@ -145,7 +153,11 @@ class SignDataViewModel(
     }
 
     private suspend fun sign(bytes: ByteArray): ByteArray {
-        return signUseCase(context, wallet, bytes)
+        return signUseCase(context, wallet, bytes, PasscodeReason.SIGN_DATA)
+    }
+
+    private companion object {
+        private val prefix = "ton-connect/sign-data/".toByteArray()
     }
 
 }

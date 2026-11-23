@@ -58,7 +58,13 @@ data class RampMethod(
     val name: String,
     val image: String,
     val providers: List<RampProvider>,
-)
+    val subtitle: String? = null,
+    val badge: String? = null,
+) {
+
+    val isP2P: Boolean
+        get() = type == ExchangePaymentMethodType.p2p
+}
 
 data class RampProvider(
     val merchant: ExchangeMerchantSlug,
@@ -122,6 +128,8 @@ internal fun OnrampPaymentMethod.toRamp(): RampMethod = RampMethod(
     name = name,
     image = image,
     providers = providers.map { it.toRamp() },
+    subtitle = subtitle,
+    badge = badge,
 )
 
 internal fun OnrampProvider.toRamp(): RampProvider = RampProvider(
@@ -186,6 +194,8 @@ internal fun OfframpPayoutMethod.toRamp(): RampMethod = RampMethod(
     name = name,
     image = image,
     providers = providers.map { it.toRamp() },
+    subtitle = subtitle,
+    badge = badge,
 )
 
 internal fun OfframpProvider.toRamp(): RampProvider = RampProvider(

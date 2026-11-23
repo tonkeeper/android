@@ -38,6 +38,7 @@ import uikit.extensions.withAlpha
 import uikit.widget.ColumnLayout
 import uikit.widget.InputView
 import uikit.extensions.setMoonOnClickListener
+import com.tonapps.core.extensions.walletColor
 
 class LabelEditorView @JvmOverloads constructor(
     context: Context,
@@ -86,7 +87,7 @@ class LabelEditorView @JvmOverloads constructor(
         set(value) {
             if (value != field) {
                 colorAdapter.activeColor = value
-                colorView.backgroundTintList = value.stateList
+                colorView.backgroundTintList = context.walletColor(value).stateList
                 scrollToColor(value)
                 field = value
                 notifyChange()

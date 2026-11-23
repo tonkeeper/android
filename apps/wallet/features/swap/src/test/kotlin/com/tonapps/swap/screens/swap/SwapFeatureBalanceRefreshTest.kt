@@ -98,7 +98,7 @@ class SwapFeatureBalanceRefreshTest : BaseUnitTest() {
     @Test
     fun afterASwapTheFormShowsTheNewBalance() = swapTest(env) {
         after { sendAction(SwapAction.Amount.SetSell("1")) }
-        after { env.swapRepo.notifySwapCompleted() }
+        after { env.swapRepo.notifySwapCompleted(tracked = false) }
         env.accounts[TON_ASSET_ID] = tonAccount(balance = "4000000000")
 
         val refreshed = after { env.refreshTrigger.tryEmit(Unit) }

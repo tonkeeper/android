@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
+import uikit.extensions.matchHostNavigationBar
 
 open class BaseDialog(
     context: Context
@@ -56,6 +57,7 @@ open class BaseDialog(
 
     private fun applyWindow(window: Window) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        matchHostNavigationBar()
         applyAttributes(window)
     }
 

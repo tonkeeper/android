@@ -11,17 +11,19 @@ import com.tonapps.wallet.data.events.tx.TxFetchQuery
 import com.tonapps.wallet.data.events.tx.TxPage
 import com.tonapps.wallet.data.events.tx.model.TxEvent
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.tonapps.wallet.features.events.components.legacy.UiEvent
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class TxPagingSource(
     private val wallet: WalletEntity,
     private val accountRepository: AccountRepository,
     private val eventsRepository: EventsRepository,
     private val txEventUiMapper: TxEventUiMapper,
+    private val onInitialRequestStarted: () -> Unit = {},
+    private val onInitialRequestFinished: (error: Throwable?) -> Unit = {},
 ): PagingSource<Timestamp, UiEvent.Item>() {
 
     private val tronParamsProvider = TxTronParamsProvider(
@@ -34,10 +36,12 @@ internal class TxPagingSource(
     override suspend fun load(
         params: LoadParams<Timestamp>
     ): LoadResult<Timestamp, UiEvent.Item> = withContext(Dispatchers.IO) {
+        val beforeTimestamp = params.key
+        val isInitialLoad = params is LoadParams.Refresh && beforeTimestamp == null
         try {
-            val beforeTimestamp = params.key
-            val data = if (params is LoadParams.Refresh && beforeTimestamp == null) {
-                initialLoad(params.loadSize)
+            val data = if (isInitialLoad) {
+                onInitialRequestStarted()
+                initialLoad(params.loadSize).also { onInitialRequestFinished(null) }
             } else {
                 nextLoad(beforeTimestamp ?: Timestamp.now, params.loadSize)
             }
@@ -55,7 +59,12 @@ internal class TxPagingSource(
                     nextKey = data.nextKey
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
+            if (isInitialLoad) {
+                onInitialRequestFinished(e)
+            }
             LoadResult.Error(e)
         }
     }

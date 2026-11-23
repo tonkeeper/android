@@ -84,6 +84,7 @@ import ui.components.moon.screen.MoonEmptyScreenType
 import ui.painterResource
 import ui.preview.ThemedPreview
 import ui.theme.UIKit
+import ui.theme.modifiers.modalSheetMaxHeight
 import java.time.Duration
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -146,7 +147,7 @@ internal fun RaffleScreenInternal(
     onOpenDeeplink: (String) -> Unit,
     onOpenLink: (String) -> Unit,
 ) {
-    MoonSurface(modifier = Modifier.fillMaxSize()) {
+    MoonSurface(modifier = Modifier.modalSheetMaxHeight().fillMaxSize()) {
         when (state) {
             is RaffleScreenState.Loading -> Box(
                 modifier = Modifier.fillMaxSize(),

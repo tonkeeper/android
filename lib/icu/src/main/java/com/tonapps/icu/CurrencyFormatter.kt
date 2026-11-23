@@ -6,6 +6,7 @@ import com.tonapps.icu.format.CurrencyFormat
 import com.tonapps.icu.format.TONSymbolSpan
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.util.Currency
 import java.util.Locale
 
 object CurrencyFormatter {
@@ -13,6 +14,7 @@ object CurrencyFormatter {
     const val MINUS = "-"
     const val PREFIX_PLUS = "+ "
     const val PREFIX_MINUS = "− "
+    private const val FIAT_DECIMALS = 2
 
     private val customDigitLocales = listOf(
         Locale("ar"),
@@ -39,6 +41,9 @@ object CurrencyFormatter {
     val locale: Locale
         get() = format.locale
 
+    /** The symbol [format] ends an amount of [currency] with: its glyph (`ETH` → `Ξ`), or [currency] itself. */
+    fun symbol(currency: String): String = CurrencyFormat.symbol(currency)
+
     fun setLocale(locale: Locale) {
         val fixedLocale = getFixedLocale(locale)
         if (format.locale != fixedLocale) {
@@ -48,6 +53,10 @@ object CurrencyFormatter {
 
     fun getScale(value: BigDecimal): Int {
         return CurrencyFormat.getScale(value)
+    }
+
+    fun isDisplayedAsZero(value: Coins): Boolean {
+        return value.value.abs() <= CurrencyFormat.MAX_ZERO_DISPLAY
     }
 
     private fun getFixedLocale(locale: Locale): Locale {
@@ -139,6 +148,14 @@ object CurrencyFormatter {
         replaceSymbol: Boolean = true,
         compact: Boolean = false,
     ) = formatFiat(currency, value.value, roundingMode, replaceSymbol, compact = compact)
+
+    /** Every digit of [value], never fewer decimals than [currency] has: `$2.50`, `$2.955`, `$1,234.50`, `¥1,234`. */
+    fun formatFiatExact(currency: String, value: BigDecimal): CharSequence {
+        val decimals = runCatching { Currency.getInstance(currency).defaultFractionDigits }.getOrNull()
+            ?.takeIf { it >= 0 }
+            ?: FIAT_DECIMALS
+        return format.formatExact(currency, value, decimals)
+    }
 
     fun CharSequence.withCustomSymbol(context: Context): CharSequence {
         if (true) { // Not now... maybe in future

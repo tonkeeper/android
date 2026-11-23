@@ -21,12 +21,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.ConfirmType
+import com.tonapps.blockchain.model.DappConnectRequest.DomainStatus
 import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
 import com.tonapps.core.components.Emoji
 import com.tonapps.core.components.assetImageUrl
 import com.tonapps.core.components.tokenChainImageUrl
-import com.tonapps.core.components.tokenDisplayName
 import com.tonapps.core.helper.rememberClipboardManager
 import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.Signing
@@ -155,7 +155,13 @@ private fun TxConfirmBody(
                     content = {
                         MoonItemTitle(
                             text = appName,
-                            color = UIKit.colorScheme.accent.blue,
+                            color = when (tx.domainRisk()) {
+                                DomainStatus.Invalid,
+                                DomainStatus.Scam -> UIKit.colorScheme.accent.red
+                                DomainStatus.Valid,
+                                DomainStatus.Unknown,
+                                null -> UIKit.colorScheme.accent.blue
+                            },
                         )
                     },
                     onClick = { clipboardManager.copy(appName) },
@@ -166,7 +172,7 @@ private fun TxConfirmBody(
             MoonPropertyBigCell(
                 title = stringResource(Localization.network),
                 value = asset.value.coin.name,
-                valueDescription = asset.value.tokenDisplayName(),
+                valueDescription = asset.value.chain.networkStandardLabel,
             )
 
             val amount = tx.amount(pickedFeeId)
@@ -180,18 +186,11 @@ private fun TxConfirmBody(
                 )
             }
 
-            if (tx.fee.options.isNotEmpty()) {
-                TxFeeCell(
-                    feature = feature,
-                    tx = tx,
-                    onOpenBattery = onOpenBattery,
-                )
-            } else {
-                val fee = tx.fee()
-                if (fee != null) {
-                    FeeCell(fee)
-                }
-            }
+            TxFeeRow(
+                feature = feature,
+                tx = tx,
+                onOpenBattery = onOpenBattery,
+            )
 
             val comment = tx.comment()
             if (!comment.isNullOrBlank()) {

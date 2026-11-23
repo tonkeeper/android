@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.legacy.WalletEntity
@@ -25,6 +24,7 @@ import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.TextCell
 import ui.theme.UIKit
+import com.tonapps.core.extensions.walletColor
 
 @Composable
 internal fun MigratableWalletCell(
@@ -84,7 +84,7 @@ private fun WalletEmojiIcon(wallet: WalletEntity) {
         modifier = Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .background(Color(wallet.label.color)),
+            .background(walletColor(wallet.label.color)),
         contentAlignment = Alignment.Center,
     ) {
         Emoji(emoji = wallet.label.emoji)

@@ -34,6 +34,17 @@ interface WalletBundleDao {
         }
     }
 
+    @Transaction
+    suspend fun insertNewHardwareWallet(
+        credentials: List<CredentialEntity>,
+        wallet: McWalletEntity,
+        accounts: List<AccountEntity>,
+    ) {
+        credentials.forEach { insertCredential(it) }
+        insertWallet(wallet)
+        insertAccounts(accounts)
+    }
+
     @Query("DELETE FROM account WHERE wallet_id = :walletId")
     suspend fun deleteAccounts(walletId: String)
 

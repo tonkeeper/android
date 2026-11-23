@@ -1,0 +1,33 @@
+{
+  "route_id": "fd660925-fa3a-4787-ad74-285f14577ecd",
+  "provider_route_id": "0xed680e8961a8c201c09b35f96ed6ce98aeeefae11abc160beefad33ffc495b84",
+  "aggregator": "swapsxyz",
+  "execution_id": "647175d6-aa5c-4898-83eb-3066721fa1c4",
+  "operation": {
+    "id": "fd660925-fa3a-4787-ad74-285f14577ecd",
+    "payloads": [
+      {
+        "id": "e317aa67-5a31-4a20-91a6-cf6099a5fb12",
+        "type": "main",
+        "chain_id": "tron/mainnet",
+        "version": 1,
+        "meta": {
+          "to": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+          "value": "0",
+          "data": "a9059cbb0000000000000000000000000ecb1ebffb8ba97e2985cbda3cbd7ec88352718e0000000000000000000000000000000000000000000000000000000001312d00"
+        }
+      }
+    ]
+  },
+  "human_summary": {
+    "action": "Swap USDT for GRAM",
+    "spend_asset": "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+    "spend_amount": "20000000",
+    "receive_asset": "ton/mainnet/coin",
+    "receive_amount": "12193496400",
+    "minimum_receive_amount": "12071561436",
+    "protocol": "alt-vm-1"
+  },
+  "validation_status": "validated",
+  "date_expire": "2026-11-02T15:50:42Z"
+}

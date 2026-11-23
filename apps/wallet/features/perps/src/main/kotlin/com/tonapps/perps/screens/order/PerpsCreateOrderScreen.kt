@@ -45,6 +45,7 @@ import com.tonapps.perps.data.formatUsd
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.perps.data.formatUsdPrice
 import com.tonapps.perps.screens.review.PerpsAutoCloseFix
+import com.tonapps.perps.trade.PerpsEntryAutoCloseLimits
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.RStr
@@ -77,7 +78,7 @@ fun PerpsCreateOrderScreen(
     refusal: Int?,
     onRefusalConsumed: () -> Unit,
     onClose: () -> Unit,
-    onReview: () -> Unit,
+    onReview: (PerpsAutoCloseDraft?) -> Unit,
     onDeposit: () -> Unit,
     onSetLimitPrice: () -> Unit,
 ) {
@@ -92,6 +93,7 @@ fun PerpsCreateOrderScreen(
     val autoClose by feature.autoClose.collectAsStateWorkaround()
     val autoCloseWarning by feature.autoCloseWarning.collectAsStateWorkaround()
     val draftLiquidation by feature.draftLiquidation.collectAsStateWorkaround()
+    val draftEntryLimits by feature.draftEntryLimits.collectAsStateWorkaround()
     val autoCloseAvailable by feature.autoCloseAvailable.collectAsStateWorkaround()
     val marginQuote by feature.marginQuote.collectAsStateWorkaround()
     val sizeQuote by feature.sizeQuote.collectAsStateWorkaround()
@@ -122,6 +124,7 @@ fun PerpsCreateOrderScreen(
         autoClose = autoClose,
         autoCloseWarning = autoCloseWarning,
         draftLiquidation = draftLiquidation,
+        draftEntryLimits = draftEntryLimits,
         autoCloseAvailable = autoCloseAvailable,
         marginQuote = marginQuote,
         sizeQuote = sizeQuote,
@@ -155,6 +158,7 @@ private fun PerpsCreateOrderContent(
     autoClose: PerpsAutoCloseDraft?,
     autoCloseWarning: PerpsAutoCloseIssue? = null,
     draftLiquidation: BigDecimal? = null,
+    draftEntryLimits: PerpsEntryAutoCloseLimits? = null,
     autoCloseAvailable: Boolean,
     marginQuote: BigDecimal,
     sizeQuote: BigDecimal,
@@ -167,7 +171,7 @@ private fun PerpsCreateOrderContent(
     onAutoCloseFixConsumed: () -> Unit,
     onAction: (PerpsCreateOrderAction) -> Unit,
     onClose: () -> Unit,
-    onReview: () -> Unit,
+    onReview: (PerpsAutoCloseDraft?) -> Unit,
     onDeposit: () -> Unit,
     onSetLimitPrice: () -> Unit,
 ) {
@@ -288,7 +292,7 @@ private fun PerpsCreateOrderContent(
                     onSwap = { onAction(PerpsCreateOrderAction.ToggleInputMode) },
                     onDone = {
                         if (canReview) {
-                            onReview()
+                            onReview(autoClose)
                         }
                     },
                 )
@@ -390,7 +394,7 @@ private fun PerpsCreateOrderContent(
                 text = stringResource(Localization.perps_order_review),
                 enabled = canReview,
             ) {
-                onReview()
+                onReview(autoClose)
             }
         }
     }
@@ -430,6 +434,8 @@ private fun PerpsCreateOrderContent(
                 leverage = BigDecimal(leverage),
                 currentPrice = limitPrice ?: mark,
                 liquidationPrice = draftLiquidation,
+                closestTakeProfit = draftEntryLimits?.closestTakeProfit,
+                closestStopLoss = draftEntryLimits?.closestStopLoss,
             ),
             initial = autoClose.withFix(autoCloseFix),
             estimate = autoCloseEstimate(sizeBase, limitPrice ?: mark),

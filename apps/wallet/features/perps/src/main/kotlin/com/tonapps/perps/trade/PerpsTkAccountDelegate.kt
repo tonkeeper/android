@@ -19,12 +19,15 @@ internal class PerpsTkAccountDelegate(
     private val walletId: String,
     private val repository: PerpsRepository,
     private val expectedPublicKey: String,
+    private val expectedAccountIndex: Long,
+    private val ownerAddress: String,
 ) : PerpsAccountDelegate {
 
     private var hadL2KeyBeforeSubmit: Boolean? = null
 
     override suspend fun accountState(): PerpsAccountState {
         val account = loadAccount()
+        account.requireOwned(expectedAccountIndex)
         hadL2KeyBeforeSubmit = account.hasL2Key
 
         return account.toState(account.holdsOurKey() ?: account.hasL2Key)
@@ -85,6 +88,7 @@ internal class PerpsTkAccountDelegate(
                 delay(min(CONFIRM_DELAY_MS shl min(attempt - 1, CONFIRM_MAX_SHIFT), CONFIRM_MAX_DELAY_MS))
             }
             val account = loadAccount()
+            account.requireOwned(registration.accountIndex)
             val ourKey = account.holdsOurKey()
             val registered = ourKey == true ||
                 (ourKey == null && account.hasL2Key == true) ||
@@ -105,6 +109,15 @@ internal class PerpsTkAccountDelegate(
     }
 
     private fun PerpsAccount.holdsOurKey(): Boolean? = holdsKey(expectedPublicKey)
+
+    private fun PerpsAccount.requireOwned(registeredAccountIndex: Long) {
+        if (accountIndex != registeredAccountIndex) {
+            throw IllegalStateException("perps: account $accountIndex answered, registering $registeredAccountIndex")
+        }
+        if (!isOwnedBy(ownerAddress)) {
+            throw IllegalStateException("perps: account $accountIndex answered $l1Address, the wallet is $ownerAddress")
+        }
+    }
 
     private fun PerpsAccount.toState(hasL2Key: Boolean?): PerpsAccountState {
         return PerpsAccountState(
@@ -131,6 +144,11 @@ internal fun PerpsAccount.holdsKey(publicKey: String): Boolean? {
         it.apiKeyIndex == LIGHTER_API_KEY_INDEX &&
             it.publicKey.removePrefix(HEX_PREFIX).equals(expected, ignoreCase = true)
     }
+}
+
+internal fun PerpsAccount.isOwnedBy(ownerAddress: String): Boolean {
+    val bound = l1Address?.let(PerpsAccountProofs::normalizeL1AddressOrNull) ?: return false
+    return bound == PerpsAccountProofs.normalizeL1AddressOrNull(ownerAddress)
 }
 
 private const val HEX_PREFIX = "0x"

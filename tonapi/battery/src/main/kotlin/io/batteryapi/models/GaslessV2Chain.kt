@@ -23,6 +23,8 @@ import kotlinx.serialization.encoding.Encoder
 data class GaslessV2Chain(
     @SerialName(value = "chain_id")
     val chainId: String,
+
+    /* The payload types /gasless/estimate and /gasless/emulate take on this chain. */
     @SerialName(value = "payload_types")
     val payloadTypes: List<String>,
     @SerialName(value = "assets")

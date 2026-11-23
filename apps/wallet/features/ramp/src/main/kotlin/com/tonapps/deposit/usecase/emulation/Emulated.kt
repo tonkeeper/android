@@ -25,6 +25,32 @@ data class Emulated(
     val error: Throwable? = null,
 ) {
 
+    val nftCount: Int
+        get() = total.nftCount
+
+    val totalFormat: CharSequence
+        get() = CurrencyFormatter.format(currency.code, total.totalFiat)
+
+    val withBattery: Boolean
+        get() = type == TransferType.Battery || type == TransferType.Gasless
+
+    val totalFees: Coins
+        get() = consequences?.let {
+            Coins.of(it.trace.transaction.totalFees)
+        } ?: Coins.ZERO
+
+    data class Total(
+        val totalFiat: Coins,
+        val nftCount: Int,
+        val isDangerous: Boolean,
+    )
+
+    data class Extra(
+        val isRefund: Boolean,
+        val value: Coins,
+        val fiat: Coins,
+    )
+
     companion object {
         val defaultExtra = Extra(false, Coins.ONE, Coins.ONE)
 
@@ -37,7 +63,7 @@ data class Emulated(
         ): SendFee {
             return if (withBattery && consequences != null) {
                 val extra = consequences.event.extra
-                val chargesBalance = 0 // TODO REQ BatteryHelper.getBatteryCharges(wallet, accountRepository, batteryRepository)
+                val chargesBalance = batteryRepository.getCharges(wallet)
                 val batteryConfig = batteryRepository.getConfig(wallet.network)
                 val charges = BatteryMapper.calculateChargesAmount(
                     Coins.of(abs(extra)).value,
@@ -66,30 +92,4 @@ data class Emulated(
             }
         }
     }
-
-    val nftCount: Int
-        get() = total.nftCount
-
-    val totalFormat: CharSequence
-        get() = CurrencyFormatter.format(currency.code, total.totalFiat)
-
-    val withBattery: Boolean
-        get() = type == TransferType.Battery || type == TransferType.Gasless
-
-    val totalFees: Coins
-        get() = consequences?.let {
-            Coins.of(it.trace.transaction.totalFees)
-        } ?: Coins.ZERO
-
-    data class Total(
-        val totalFiat: Coins,
-        val nftCount: Int,
-        val isDangerous: Boolean,
-    )
-
-    data class Extra(
-        val isRefund: Boolean,
-        val value: Coins,
-        val fiat: Coins,
-    )
 }

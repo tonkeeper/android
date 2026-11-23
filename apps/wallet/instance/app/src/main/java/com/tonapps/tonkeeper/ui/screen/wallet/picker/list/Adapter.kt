@@ -15,7 +15,8 @@ import com.tonapps.wallet.localization.Localization
 import java.util.Collections
 
 class Adapter(
-    private val onClick: (WalletEntity) -> Unit
+    private val onClick: (WalletEntity) -> Unit,
+    private val onAddWallet: () -> Unit,
 ): RecyclerView.Adapter<Holder<*>>() {
 
     private class DiffCallback(
@@ -111,7 +112,7 @@ class Adapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder<*> {
         return when(viewType) {
             Item.TYPE_WALLET -> WalletHolder(parent, onClick)
-            Item.TYPE_ADD_WALLET -> AddHolder(parent)
+            Item.TYPE_ADD_WALLET -> AddHolder(parent, onAddWallet)
             Item.TYPE_SKELETON -> SkeletonHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }

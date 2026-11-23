@@ -87,10 +87,18 @@ data class Action(
     @SerialName(value = "DepositXTR")
     val depositXTR: DepositXTRAction? = null,
     @SerialName(value = "BuyXTR")
-    val buyXTR: BuyXTRAction? = null
+    val buyXTR: BuyXTRAction? = null,
+    @SerialName(value = "LoanRequest")
+    val loanRequest: LoanRequestAction? = null,
+    @SerialName(value = "LoanIssue")
+    val loanIssue: LoanIssueAction? = null,
+    @SerialName(value = "LoanRepayment")
+    val loanRepayment: LoanRepaymentAction? = null,
+    @SerialName(value = "PoolRoundTransition")
+    val poolRoundTransition: PoolRoundTransitionAction? = null
 ) {
     /**
-     * Values: TonTransfer,ExtraCurrencyTransfer,ContractDeploy,JettonTransfer,FlawedJettonTransfer,JettonBurn,JettonMint,NftItemTransfer,Subscribe,UnSubscribe,AuctionBid,NftPurchase,DepositStake,WithdrawStake,WithdrawStakeRequest,ElectionsDepositStake,ElectionsRecoverStake,JettonSwap,SmartContractExec,DomainRenew,Purchase,AddExtension,RemoveExtension,SetSignatureAllowedAction,GasRelay,DepositTokenStake,WithdrawTokenStakeRequest,LiquidityDeposit,OracleRequest,BuyXTR,DepositXTR,WithdrawXTR,Unknown
+     * Values: TonTransfer,ExtraCurrencyTransfer,ContractDeploy,JettonTransfer,FlawedJettonTransfer,JettonBurn,JettonMint,NftItemTransfer,Subscribe,UnSubscribe,AuctionBid,NftPurchase,DepositStake,WithdrawStake,WithdrawStakeRequest,ElectionsDepositStake,ElectionsRecoverStake,JettonSwap,SmartContractExec,DomainRenew,Purchase,AddExtension,RemoveExtension,SetSignatureAllowedAction,GasRelay,DepositTokenStake,WithdrawTokenStakeRequest,LiquidityDeposit,OracleRequest,BuyXTR,DepositXTR,WithdrawXTR,LoanRequest,LoanIssue,LoanRepayment,PoolRoundTransition,Unknown
      */
     @Serializable
     enum class Type(val value: String) {
@@ -126,6 +134,10 @@ data class Action(
         @SerialName(value = "BuyXTR") BuyXTR("BuyXTR"),
         @SerialName(value = "DepositXTR") DepositXTR("DepositXTR"),
         @SerialName(value = "WithdrawXTR") WithdrawXTR("WithdrawXTR"),
+        @SerialName(value = "LoanRequest") LoanRequest("LoanRequest"),
+        @SerialName(value = "LoanIssue") LoanIssue("LoanIssue"),
+        @SerialName(value = "LoanRepayment") LoanRepayment("LoanRepayment"),
+        @SerialName(value = "PoolRoundTransition") PoolRoundTransition("PoolRoundTransition"),
         @SerialName(value = "Unknown") Unknown("Unknown");
     }
     /**

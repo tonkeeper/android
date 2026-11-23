@@ -26,6 +26,7 @@ import com.tonapps.tonkeeper.core.history.list.HistoryAdapter
 import com.tonapps.tonkeeper.extensions.addFeeItem
 import com.tonapps.tonkeeper.extensions.getTitle
 import com.tonapps.tonkeeper.extensions.id
+import com.tonapps.tonkeeper.extensions.setFailedLabel
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.BridgeException
 import com.tonapps.tonkeeper.popup.ActionSheet
@@ -37,6 +38,7 @@ import com.tonapps.uikit.color.resolveColor
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
@@ -79,6 +81,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
     override val viewModel: SendTransactionViewModel by walletViewModel {
         parametersOf(
             args.request,
+            args.passcodeReason,
             args.batteryTransactionType,
             args.forceRelayer,
             args.broadcastVia,
@@ -215,6 +218,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
             if (it is CancellationException) {
                 setDefaultTask()
             } else {
+                taskView.setFailedLabel(it)
                 setErrorTask(BridgeException(cause = it))
             }
         }.onEach { bocList ->
@@ -230,6 +234,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
             if (it is CancellationException) {
                 setDefaultTask()
             } else {
+                taskView.setFailedLabel(it)
                 setErrorTask(BridgeException(cause = it))
             }
         }.onEach { internalBoc ->
@@ -430,6 +435,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
         fun newInstance(
             wallet: WalletEntity,
             request: SignRequestEntity,
+            passcodeReason: PasscodeReason,
             batteryTransactionType: BatteryTransaction = BatteryTransaction.UNKNOWN,
             forceRelayer: Boolean = false,
             broadcastVia: BroadcastVia = BroadcastVia.Default,
@@ -442,6 +448,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
             screen.setArgs(
                 SendTransactionArgs(
                     request = request,
+                    passcodeReason = passcodeReason,
                     batteryTransactionType = batteryTransactionType,
                     forceRelayer = forceRelayer,
                     broadcastVia = broadcastVia,
@@ -469,6 +476,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
                 context = context,
                 wallet = wallet,
                 request = request,
+                passcodeReason = PasscodeReason.DAPP_REQUEST,
                 mode = SendTransactionMode.SignMessage(appName),
             )
         }
@@ -477,6 +485,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
             context: Context,
             wallet: WalletEntity,
             request: SignRequestEntity,
+            passcodeReason: PasscodeReason,
             batteryTxType: BatteryTransaction = BatteryTransaction.UNKNOWN,
             forceRelayer: Boolean = false,
             broadcastVia: BroadcastVia = BroadcastVia.Default,
@@ -489,6 +498,7 @@ class SendTransactionScreen(wallet: WalletEntity) :
             val fragment = newInstance(
                 wallet,
                 request,
+                passcodeReason,
                 batteryTxType,
                 forceRelayer,
                 broadcastVia,

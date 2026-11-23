@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.compose.LifecycleStartEffect
 import com.tonapps.wallet.data.multichain.account.displayOrder
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
@@ -59,8 +60,10 @@ import com.tonapps.wallet.features.events.components.ActivityHeaderCell
 import com.tonapps.wallet.features.events.data.EncryptedCommentEntity
 import com.tonapps.wallet.features.events.data.HistoryNft
 import com.tonapps.wallet.features.events.data.nftFor
+import com.tonapps.wallet.features.events.data.originOf
 import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsAction
 import com.tonapps.wallet.features.events.screens.comments.EncryptedCommentsFeature
+import com.tonapps.perps.screens.depositstatus.PerpsDepositStatusSheet
 import com.tonapps.wallet.features.events.screens.details.EventDetailsModal
 import com.tonapps.wallet.localization.Localization
 import kotlinx.collections.immutable.toPersistentList
@@ -93,6 +96,10 @@ fun EventsScreen(
     onOpenNft: (address: String) -> Unit = {},
 ) {
     val feature = koinViewModel<EventsFeature> { parametersOf(assetId, mode, awaitsFundingActivity) }
+    LifecycleStartEffect(feature) {
+        feature.onScreenStarted()
+        onStopOrDispose { feature.onScreenStopped() }
+    }
     val isPerpsHistory = mode == EventsScreenMode.Perps
     val showsTypeMenu = !isPerpsHistory && perpsMarketIndexOrNull(assetId) == null
     val showsFilters = !isPerpsHistory && assetId == null
@@ -101,10 +108,13 @@ fun EventsScreen(
     val hasAnyActivity by feature.hasAnyActivity.collectAsState()
     val chainFilter by feature.chainFilter.collectAsState()
     val resolvedNfts by feature.resolvedNfts.collectAsState()
+    val depositOrigins by feature.depositOrigins.collectAsState()
     val resolvedPerpsMarkets by feature.resolvedPerpsMarkets.collectAsState()
     val wallet by feature.wallet.collectAsState(initial = null)
     val isOnline by feature.isOnline.collectAsState()
     val hideDust by feature.hideDust.collectAsState()
+    val openedDeposit by feature.openedDeposit.collectAsState()
+    val openedActivity by feature.openedActivity.collectAsState()
     val comments = koinViewModel<EncryptedCommentsFeature>()
     val decryptedComments by comments.decrypted.collectAsState()
     val context = LocalContext.current
@@ -120,7 +130,6 @@ fun EventsScreen(
         (pagingItems.loadState.refresh is LoadState.Error ||
             pagingItems.loadState.append is LoadState.Error)
     val isEmpty = !isLoading && !isNoConnection && !isError && pagingItems.itemCount == 0
-    var selectedActivity by remember { mutableStateOf<WalletActivityListItem.Entry?>(null) }
     val pullToRefreshState = rememberPullToRefreshState()
     var userPullRefresh by remember { mutableStateOf(false) }
     val lifecycle = LocalLifecycleOwner.current
@@ -268,8 +277,11 @@ fun EventsScreen(
                     contentPadding = contentPadding,
                     state = listState,
                     decryptedComments = decryptedComments,
-                    labelsPerpsBalanceChanges = typeSelector.selected != EventsTypeFilter.Perps,
-                    onActivityClick = { selectedActivity = it },
+                    onActivityClick = { entry ->
+                        if (!feature.openDeposit(entry.activity)) {
+                            feature.openActivity(entry, pagingItems.itemSnapshotList.items)
+                        }
+                    },
                     onNftClick = onOpenNft,
                     onDecrypt = onDecrypt,
                 )
@@ -303,7 +315,11 @@ fun EventsScreen(
         )
     }
 
-    val selected = selectedActivity
+    openedDeposit?.let { status ->
+        PerpsDepositStatusSheet(status = status, onClose = feature::closeDeposit)
+    }
+
+    val selected = openedActivity
     if (selected != null) {
         val activity = selected.activity
         EventDetailsModal(
@@ -312,9 +328,10 @@ fun EventsScreen(
             wallet = wallet,
             nft = resolvedNfts.nftFor(activity),
             perpsMarket = activity.perps?.marketIndex?.let(resolvedPerpsMarkets::get),
+            perpsDepositOrigin = remember(activity, depositOrigins) { depositOrigins.originOf(activity) },
             decryptedComment = activity.encryptedComment?.let { decryptedComments[it.cipherText] },
             onDecryptComment = activity.encryptedComment?.let { c -> { onDecrypt(c) } },
-            onDismiss = { selectedActivity = null },
+            onDismiss = feature::closeActivity,
         )
     }
 }
@@ -356,7 +373,6 @@ private fun ActivityList(
     contentPadding: PaddingValues,
     state: LazyListState,
     decryptedComments: Map<String, String>,
-    labelsPerpsBalanceChanges: Boolean,
     onActivityClick: (WalletActivityListItem.Entry) -> Unit,
     onNftClick: (address: String) -> Unit,
     onDecrypt: (EncryptedCommentEntity) -> Unit,
@@ -418,7 +434,6 @@ private fun ActivityList(
                         hiddenBalance = row.hiddenBalance,
                         nft = nft,
                         position = position,
-                        labelsPerpsBalanceChanges = labelsPerpsBalanceChanges,
                         onClick = { onActivityClick(row) },
                         onNftClick = nft?.let { resolved ->
                             { onNftClick(resolved.address) }

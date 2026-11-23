@@ -1,17 +1,11 @@
 package com.tonapps.signer.screen.create.child
 
 import android.os.Bundle
-import com.tonapps.log.L
 import android.view.View
 import android.widget.Button
-import androidx.lifecycle.lifecycleScope
 import com.tonapps.signer.R
-import com.tonapps.signer.extensions.authorizationRequiredError
 import com.tonapps.signer.screen.create.CreateViewModel
 import com.tonapps.signer.screen.create.pager.PageType
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import uikit.base.BaseFragment
 import uikit.extensions.collectFlow
@@ -22,10 +16,6 @@ import uikit.widget.LoaderView
 import uikit.extensions.setMoonOnClickListener
 
 class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
-
-    companion object {
-        fun newInstance() = CreateNameFragment()
-    }
 
     private val createViewModel: CreateViewModel by lazy {
         requireParentFragment().getViewModel()
@@ -56,7 +46,7 @@ class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
             doneButton.isEnabled = it.isNotBlank()
         }
 
-        collectFlow(createViewModel.page(PageType.Name)) {
+        keepFocusInsidePage(createViewModel, PageType.Name) {
             nameInput.focus()
         }
 
@@ -92,5 +82,9 @@ class CreateNameFragment: BaseFragment(R.layout.fragment_create_name) {
     private fun applyDefaultState() {
         loaderView.visibility = View.GONE
         doneButton.visibility = View.VISIBLE
+    }
+
+    companion object {
+        fun newInstance() = CreateNameFragment()
     }
 }

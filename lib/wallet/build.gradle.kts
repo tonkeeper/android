@@ -9,6 +9,7 @@ dependencies {
     implementation(libs.chainkit.op)
     implementation(libs.chainkit.chain.ethereum)
     implementation(libs.chainkit.chain.ton)
+    implementation(libs.chainkit.chain.bitcoin)
     implementation(libs.chainkit.net.json)
     implementation(libs.koin.core)
     implementation(libs.walletcore)

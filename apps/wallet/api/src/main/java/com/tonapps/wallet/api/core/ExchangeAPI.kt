@@ -3,6 +3,7 @@ package com.tonapps.wallet.api.core
 import io.exchangeapi.apis.AssetsApi
 import io.exchangeapi.apis.CrosschainApi
 import io.exchangeapi.apis.ExchangeApi
+import io.exchangeapi.apis.MoonpayApi
 import io.exchangeapi.apis.OfframpApi
 import io.exchangeapi.apis.OnrampApi
 import io.exchangeapi.apis.P2pApi
@@ -20,4 +21,5 @@ class ExchangeAPI(
     val onramp: OnrampApi by lazy { OnrampApi(basePath, okHttpClient) }
     val offramp: OfframpApi by lazy { OfframpApi(basePath, okHttpClient) }
     val assets: AssetsApi by lazy { AssetsApi(basePath, okHttpClient) }
+    val moonpay: MoonpayApi by lazy { MoonpayApi(basePath, okHttpClient) }
 }

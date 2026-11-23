@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.tonapps.core.components.sanitizeAmountInput
+import com.tonapps.core.components.withLocaleDecimalSeparator
 import com.tonapps.icu.Coins
 
 @Stable
@@ -38,7 +39,7 @@ class SendAmountState internal constructor() {
     }
 
     fun setAmount(amount: Coins) {
-        val formatted = amount.value.stripTrailingZeros().toPlainString()
+        val formatted = amount.value.stripTrailingZeros().toPlainString().withLocaleDecimalSeparator()
         textFieldValue = TextFieldValue(
             text = formatted,
             selection = TextRange(formatted.length),

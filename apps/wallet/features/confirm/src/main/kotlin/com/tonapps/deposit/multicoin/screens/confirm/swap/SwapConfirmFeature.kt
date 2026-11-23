@@ -1,49 +1,66 @@
 package com.tonapps.deposit.multicoin.screens.confirm
 
-import android.content.Context
+import android.os.SystemClock
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.async.Async
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
+import com.tonapps.chainkit.core.chain.model.account.Account
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.api.models.ChainError
 import com.tonapps.chainkit.core.chain.api.models.ChainRes
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.op.Operation
+import com.tonapps.chainkit.core.op.Payload
+import com.tonapps.chainkit.core.op.PayloadMeta
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
 import com.tonapps.chainkit.transaction.GasReservePolicy
 import com.tonapps.deposit.multicoin.screens.confirm.base.BaseTransactionConfirmFeature
 import com.tonapps.deposit.multicoin.screens.confirm.base.ConfirmationError
 import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.Prerequisite
+import com.tonapps.deposit.multicoin.screens.confirm.base.QuoteExpiredException
 import com.tonapps.deposit.multicoin.screens.confirm.base.SendingState
+import com.tonapps.deposit.multicoin.screens.confirm.base.SignatureGate
 import com.tonapps.deposit.multicoin.screens.confirm.base.Signing
+import com.tonapps.deposit.multicoin.screens.confirm.base.operation.FindingSeverity
+import com.tonapps.deposit.multicoin.screens.confirm.base.operation.severity
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeBuilder
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeLogic
 import com.tonapps.deposit.multicoin.screens.confirm.fee.GaslessSender
+import com.tonapps.core.flags.BootFlags
 import com.tonapps.log.L
 import com.tonapps.mvi.flow.mapLatestCatching
 import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.SigningWallet
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
+import com.tonapps.wallet.data.ledger.signing.LedgerSigningInteractor
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapAccounts
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapWallet
 import com.tonapps.wallet.data.multichain.tx.PostTransactionRefreshSchedule
+import com.tonapps.wallet.data.multichain.exchange.PreparedSwapOperation
 import com.tonapps.wallet.data.multichain.exchange.SwapQuote
-import com.tonapps.wallet.data.multichain.exchange.SwapQuoteResult
+import com.tonapps.wallet.data.multichain.exchange.SwapRouteRefusedException
+import com.tonapps.wallet.data.multichain.exchange.toSwapRoute
 import com.tonapps.wallet.data.multichain.exchange.SwapRepository
 import com.tonapps.wallet.data.multichain.exchange.SwapRoute
 import com.tonapps.wallet.data.multichain.exchange.SwapSlippage
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.multichain.exchange.SwapWalletScreenedException
+import com.tonapps.wallet.data.multichain.exchange.status.SentSwap
+import com.tonapps.wallet.data.multichain.exchange.status.SwapStatusTracker
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -53,10 +70,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val SWAP_QUOTE_INTERVAL_MS = 45_000L
+internal const val SWAP_QUOTE_INTERVAL_MS = 45_000L
 private const val SWAP_QUOTE_TICK_MS = 250L
-private const val BPS_IN_WHOLE = 10_000
 
 // What drives a swap re-preparation: the inactivity tick, a manual retry, and the chosen slippage.
 private data class SwapContext(
@@ -80,22 +98,27 @@ class SwapConfirmFeature(
     accountRepo: McAccountRepository,
     postTransactionRefreshSchedule: PostTransactionRefreshSchedule,
     private val swapRepo: SwapRepository,
-    passcodeManager: PasscodeManager,
+    walletUnlocker: WalletUnlocker,
+    signatureGate: SignatureGate,
     confirmResults: ConfirmResultListener,
     feeBuilder: TxFeeBuilder,
     gaslessSender: GaslessSender,
     settingsRepository: SettingsRepository,
+    ledgerSigner: LedgerSigningInteractor,
     private val legacyAccounts: LegacySwapAccounts,
-) : BaseTransactionConfirmFeature(
+    private val statusTracker: SwapStatusTracker,
+) : HeadlessSwapSource, BaseTransactionConfirmFeature(
     request = request,
     provider = provider,
     accountRepo = accountRepo,
     postTransactionRefreshSchedule = postTransactionRefreshSchedule,
-    passcodeManager = passcodeManager,
+    walletUnlocker = walletUnlocker,
+    signatureGate = signatureGate,
     confirmResults = confirmResults,
     feeBuilder = feeBuilder,
     gaslessSender = gaslessSender,
     settingsRepository = settingsRepository,
+    ledgerSigner = ledgerSigner,
 ) {
 
     // A legacy wallet the backend never registered: it swaps on its own TON and TRON addresses, signs
@@ -105,6 +128,7 @@ class SwapConfirmFeature(
     }
 
     private val swapQuoteTick = MutableStateFlow(0)
+    private val headless = MutableStateFlow(false)
     val swapQuoteCountdown = MutableStateFlow(0f)
 
     // Slippage options for the swap's source chain; null while loading or for chains without config.
@@ -115,8 +139,17 @@ class SwapConfirmFeature(
     // Selected slippage in bps, seeded from the swap screen and mutable here; changing it re-quotes.
     val selectedSlippageBps = MutableStateFlow((request.type as? ConfirmType.Swap)?.slippageBps)
 
-    // An unlimited allowance spares the approve on the next swaps of the token; chosen at signing.
-    val isUnlimitedApprove = MutableStateFlow(false)
+    // A `/v2` max sale is trimmed to its fee as it is priced where the route lets it be: nothing is quoted again.
+    override val maxFit: StateFlow<SwapMaxFit?> = MutableStateFlow(null)
+
+    override val hasSendData: Boolean
+        get() = sendData.value?.takeUnless { it.staleBeforeSend } != null
+
+    override val unsignedSend: PendingTransaction?
+        get() = sendData.value?.takeIf { it.signed.isEmpty() && it.hash == null }?.tx
+
+    override val prepared: Flow<PendingTransaction?>
+        get() = pendingTx
 
     override val pendingTx = combine(refreshToken, swapQuoteTick, selectedSlippageBps)
     { refresh, tick, slippageBps -> SwapContext(tick = tick, refresh = refresh, slippageBps = slippageBps) }
@@ -125,8 +158,11 @@ class SwapConfirmFeature(
             onFinally = { pendingLoader.tryEmit(false) },
         ) { ctx ->
             pendingLoader.tryEmit(true)
-            prepareTracked {
-                prepareSwap(request.type as ConfirmType.Swap, ctx)
+            val swap = request.type as ConfirmType.Swap
+            if (headless.value) {
+                prepareSwap(swap, ctx)
+            } else {
+                prepareTracked { prepareSwap(swap, ctx) }
             }
         }
         .keepLastPrepared()
@@ -134,8 +170,8 @@ class SwapConfirmFeature(
 
     init {
         mainScope.launch {
-            combine(sendingState, confirmationError, sendData) { sending, error, data ->
-                sending == SendingState.None && error == null && data == null
+            combine(sendingState, confirmationError, sendData, headless) { sending, error, data, isHeadless ->
+                sending == SendingState.None && error == null && data == null && !isHeadless
             }
                 .distinctUntilChanged()
                 .collectLatest { active ->
@@ -146,6 +182,10 @@ class SwapConfirmFeature(
         }
     }
 
+    override fun runHeadless() {
+        headless.value = true
+    }
+
     fun selectSlippage(bps: Int) {
         if (txLocked) {
             return
@@ -153,36 +193,57 @@ class SwapConfirmFeature(
         selectedSlippageBps.tryEmit(bps)
     }
 
-    fun setUnlimitedApprove(isEnabled: Boolean) {
-        if (txLocked) {
-            return
-        }
-        isUnlimitedApprove.tryEmit(isEnabled)
-    }
-
-    override fun signableApproval(tx: Transaction, main: Transaction): Transaction {
-        if (!isUnlimitedApprove.value) {
-            return tx
-        }
-        val approve = tx as? Transaction.Call ?: return tx
-        val swap = main as? Transaction.Swap ?: return tx
-        return provider.buildApproval(swap, approve.data)?.txMax ?: tx
-    }
-
     // The swap screen underneath closes itself and opens History on this signal.
     override fun onSendSucceeded() {
-        swapRepo.notifySwapCompleted()
+        if (trackedSwap() == null) {
+            swapRepo.notifySwapCompleted(tracked = false)
+        }
     }
 
-    override suspend fun unlockSigner(context: Context, pendingTx: PendingTransaction): SigningWallet {
-        val legacy = legacyWallet.await() ?: return super.unlockSigner(context, pendingTx)
+    override fun onSent() {
+        val swap = trackedSwap() ?: return
+        statusTracker.track(swap)
+        swapRepo.notifySwapCompleted(tracked = true)
+    }
 
-        val confirmed = passcodeManager.confirmation(context, context.getString(Localization.app_name))
-        if (!confirmed) {
-            throw CancellationException("Passcode dismissed")
+    private fun trackedSwap(): SentSwap? {
+        val data = sendData.value ?: return null
+        val walletId = reportedWalletId(data.tx) ?: return null
+        if (!(request.type as ConfirmType.Swap).oneClick || !request.action.withSend) {
+            return null
         }
+        return SentSwap(
+            walletId = walletId,
+            txHash = data.hash,
+            sell = data.tx.account.asset,
+            sendAmount = data.tx.quote?.sourceBaseAmount ?: (request.type as ConfirmType.Swap).sourceAmount,
+            buy = data.tx.destination?.asset ?: return null,
+            receiveAmount = data.tx.quote?.buyBaseAmount ?: return null,
+        )
+    }
 
-        return legacyAccounts.signingKeys(legacy)
+    override suspend fun unlockSigner(pendingTx: PendingTransaction): SigningWallet {
+        val legacy = legacyWallet.await()
+        val signer = if (legacy == null) {
+            super.unlockSigner(pendingTx)
+        } else {
+            val confirmed = walletUnlocker.confirm(PasscodeReason.CONFIRM_SWAP)
+            if (!confirmed) {
+                throw CancellationException("Passcode dismissed")
+            }
+            legacyAccounts.signingKeys(legacy)
+        }
+        if (headless.value && pendingTx.isRouteStale(quotedAt = SystemClock.elapsedRealtime())) {
+            throw QuoteExpiredException()
+        }
+        return signer
+    }
+
+    override fun deviceSigningWindow(pendingTx: PendingTransaction): Duration? {
+        val quote = pendingTx.quote ?: return null
+        val receivedAt = quote.receivedAt ?: return null
+        val age = SystemClock.elapsedRealtime() - receivedAt
+        return (routeUsableMillis(quote.lifetimeMillis) - age).milliseconds
     }
 
     // Prepared only after the wallet resolved, so the answer is in by the time anything is sent.
@@ -286,7 +347,8 @@ class SwapConfirmFeature(
             val feeTask = when {
                 payloadFee != null -> null
                 approvals.isEmpty() -> async { provider.estimateBatchFee(transactions.map { it.asEnergyMessage(energy) }) }
-                else -> async { provider.estimateFee(transaction) }
+                // The swap spends the allowance its approve has yet to grant: a simulation of it alone reverts.
+                else -> async { provider.defaultFee(transaction) }
             }
             val nonceTask = async { provider.getNonce(account.value) }
             feeTask?.await() to nonceTask.await()
@@ -332,9 +394,14 @@ class SwapConfirmFeature(
             ?: reservationResult.value?.error
                 ?.let { parseReservationError(it) }
 
-        // A coin source pays its messages out of the same balance, and a TON route attaches forward
-        // gas to every part on top of the amount typed: no fee method covers that.
-        val spentAmount = messagesAmount.takeIf { asset is Asset.Coin && it > trade.sourceAmount }
+        // A token source spends its typed amount; the signed amount is the attached coin. A coin source
+        // pays its messages out of the same balance, and a TON route attaches forward gas to every part
+        // on top of the amount typed: no fee method covers that.
+        val spentAmount = swapSpentAmount(
+            sellsCoin = asset is Asset.Coin,
+            messagesAmount = messagesAmount,
+            sourceAmount = trade.sourceAmount,
+        )
         val balanceError = ConfirmationError.InsufficientBalance
             .takeIf { (spentAmount ?: trade.sourceAmount) > account.unitBalance.value }
 
@@ -415,9 +482,13 @@ class SwapConfirmFeature(
     ): PreparedRoute? {
         return try {
             val quote = snapshotQuote(trade, ctx) ?: fetchQuote(trade, ctx, account, destination)
-            PreparedRoute(quote = quote, route = swapRepo.prepareRoute(quote, chain, registeredWalletId()))
+            PreparedRoute(quote = quote, route = prepareRoute(quote, account, chain))
         } catch (e: CancellationException) {
             throw e
+        } catch (e: SwapWalletScreenedException) {
+            L.e(e)
+            confirmationError.tryEmit(routeError(e))
+            null
         } catch (e: Throwable) {
             L.e(e)
             retryRoute(trade, ctx, account, destination, chain)
@@ -433,7 +504,7 @@ class SwapConfirmFeature(
     ): PreparedRoute? {
         return try {
             val quote = fetchQuote(trade, ctx, account, destination)
-            PreparedRoute(quote = quote, route = swapRepo.prepareRoute(quote, chain, registeredWalletId()))
+            PreparedRoute(quote = quote, route = prepareRoute(quote, account, chain))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -446,25 +517,14 @@ class SwapConfirmFeature(
     private fun routeError(e: Throwable): ConfirmationError {
         return when (e) {
             is IOException -> ConfirmationError.NetworkError
+            is SwapWalletScreenedException -> ConfirmationError.WalletScreened
+            is SwapRouteRefusedException -> ConfirmationError.UnsupportedTransaction
             else -> ConfirmationError.Unknown
         }
     }
 
     private fun snapshotQuote(trade: ConfirmType.Swap, ctx: SwapContext): SwapQuote? {
-        return trade.quote
-            ?.takeIf { ctx.tick == 0 && ctx.refresh == null && ctx.slippageBps == trade.slippageBps }
-            ?.let { snapshot ->
-                SwapQuote(
-                    routeId = snapshot.routeId,
-                    sourceBaseAmount = trade.sourceAmount,
-                    buyBaseAmount = snapshot.buyAmount,
-                    minimumBuyBaseAmount = snapshot.minBuyAmount,
-                    slippageBps = snapshot.slippageBps,
-                    priceImpactBps = snapshot.priceImpactBps,
-                    provider = SwapQuote.Provider.forceFrom(snapshot.provider),
-                    providerTxId = snapshot.providerTxId,
-                )
-            }
+        return trade.takeIf { ctx.tick == 0 && ctx.refresh == null && ctx.slippageBps == trade.slippageBps }?.snapshotQuote()
     }
 
     private suspend fun fetchQuote(
@@ -473,15 +533,62 @@ class SwapConfirmFeature(
         account: AccountWithDetails,
         destination: AccountWithDetails,
     ): SwapQuote {
-        val result = swapRepo.fetchQuote(
+        return swapRepo.fetchConfirmQuote(
             sell = account,
             buy = destination,
             amount = trade.sourceAmount,
             slippageBps = ctx.slippageBps,
             walletId = registeredWalletId(),
+            genericPayload = trade.quote?.genericPayload == true,
         )
-        return (result as? SwapQuoteResult.Found)?.quote
-            ?: throw IllegalStateException("No swap route available")
+    }
+
+    private suspend fun prepareRoute(quote: SwapQuote, account: AccountWithDetails, chain: Chain): SwapRoute {
+        val walletId = registeredWalletId()
+        if (!quote.genericPayload) {
+            return swapRepo.prepareRoute(quote, chain, walletId)
+        }
+
+        val prepared = swapRepo.prepareOperation(quote, requireNotNull(walletId) { "Only a registered wallet swaps on /v3" })
+        requireSafe(prepared, account, quote.sourceBaseAmount)
+        val priced = prepared.copy(operation = prepared.operation.pricedOnNetwork(account.value))
+        return priced.toSwapRoute(account.value, quote.sourceBaseAmount)
+    }
+
+    private suspend fun Operation.pricedOnNetwork(account: Account): Operation {
+        if (!account.chain.isEvm) {
+            return this
+        }
+        val priced = coroutineScope {
+            payloads.map { payload -> async { payload.pricedOnNetwork(account) } }.awaitAll()
+        }
+        return copy(payloads = priced)
+    }
+
+    private suspend fun Payload.pricedOnNetwork(account: Account): Payload {
+        val quotedLimit = when (val quoted = fee) {
+            is Fee.Gas -> quoted.limit
+            is Fee.Eip1559 -> quoted.limit
+            else -> return this
+        }
+        val call = meta as? PayloadMeta.Evm.Main ?: return this
+        val unpriced = copy(fee = null, meta = call.copy(gas = call.gas ?: quotedLimit))
+        val networkFee = withContext(Async.Io) { provider.estimateFee(unpriced, account) }.getOrNull() ?: return this
+        return copy(fee = networkFee)
+    }
+
+    private suspend fun requireSafe(prepared: PreparedSwapOperation, account: AccountWithDetails, sourceAmount: BigInteger) {
+        if (!BootFlags.isTxValidationEnabled) {
+            return
+        }
+
+        val intent = swapIntent(account.value, sourceAmount)
+        val refused = provider.validateOperation(prepared.operation, account.value, intent)
+            .findings
+            .firstOrNull { it.severity == FindingSeverity.Danger }
+        if (refused != null) {
+            throw SwapRouteRefusedException("The route does not hold to the swap: ${refused.message}")
+        }
     }
 }
 
@@ -501,21 +608,6 @@ private fun Transaction.Swap.asEnergyMessage(energy: Asset): Transaction.Swap {
         return this
     }
     return copy(account = account.copy(asset = energy), isMax = false)
-}
-
-private fun SwapQuote.minimumBuyBaseAmountAt(receiveBaseAmount: BigInteger): BigInteger {
-    if (!buyBaseAmount.isPositive) {
-        return minimumBuyBaseAmount
-    }
-    return minimumBuyBaseAmount * receiveBaseAmount / buyBaseAmount
-}
-
-private fun SwapQuote.priceImpactBpsAt(receiveBaseAmount: BigInteger): Int? {
-    val bps = priceImpactBps ?: return null
-    if (!buyBaseAmount.isPositive) {
-        return bps
-    }
-    return (BigInteger.fromInt(BPS_IN_WHOLE + bps) * receiveBaseAmount / buyBaseAmount).intValue(exactRequired = false) - BPS_IN_WHOLE
 }
 
 private fun Fee.withAttachedEnergy(attachedEnergy: BigInteger): Fee {

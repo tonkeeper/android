@@ -3,9 +3,9 @@ package com.tonapps.tonkeeper.core.signer
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.ResultReceiver
+import androidx.core.net.toUri
 import uikit.base.BaseHiddenActivity
 
 class SignerHiddenActivity: BaseHiddenActivity() {
@@ -20,16 +20,13 @@ class SignerHiddenActivity: BaseHiddenActivity() {
             return
         }
 
-        val publicKey = intent.getStringExtra(ARG_PUBLIC_KEY)
-        val body = intent.getStringExtra(ARG_BODY)
-
-        if (publicKey == null || body == null) {
+        val requestUri = intent.getStringExtra(ARG_REQUEST_URI)?.toUri()
+        if (requestUri == null) {
             finish()
             return
         }
 
-        val requestUri = "tonsign://v1/?network=ton&pk=$publicKey&body=$body"
-        val requestIntent = Intent(Intent.ACTION_SEND, Uri.parse(requestUri))
+        val requestIntent = Intent(Intent.ACTION_SEND, requestUri)
         try {
             startActivityForResult(requestIntent, REQUEST_CODE)
         } catch (e: ActivityNotFoundException) {
@@ -62,8 +59,7 @@ class SignerHiddenActivity: BaseHiddenActivity() {
         const val RESULT_SIGNER_NOT_INSTALLED = Activity.RESULT_FIRST_USER
 
         const val ARG_RESULT_RECEIVER = "result_receiver"
-        const val ARG_PUBLIC_KEY = "public_key"
-        const val ARG_BODY = "body"
+        const val ARG_REQUEST_URI = "request_uri"
         const val ARG_SIGN = "sign"
 
         private fun parseSign(intent: Intent): String? {

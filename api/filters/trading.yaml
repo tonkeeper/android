@@ -1,0 +1,18 @@
+# Usage by platform; both generators consume the entire list.
+filter:
+  operations:
+    # Both platforms
+    - getShelvesConfig
+    - getShelvesConfigV2
+    - getAssetsCatalog
+    - getAssetsCatalogV2
+    - getAssetDetailsV2
+    - getAssetChartsV2
+    # Android only
+    - getAssetDetails
+    - getAssetCharts
+  schemas:
+    # Android only
+    - MarketListResponse
+    - MarketMetrics
+    - ErrorResponse

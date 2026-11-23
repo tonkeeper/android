@@ -1,9 +1,10 @@
 package com.tonapps.signer.core.entities
 
+import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.security.hex
 import com.tonapps.signer.Key
 import org.json.JSONObject
-import com.tonapps.blockchain.ton.extensions.PublicKeyEd25519
+import org.ton.kotlin.crypto.PublicKeyEd25519
 
 data class KeyEntity(
     val id: Long,
@@ -17,7 +18,7 @@ data class KeyEntity(
     constructor(json: JSONObject) : this(
         json.getLong(Key.ID),
         json.getString(Key.NAME),
-        PublicKeyEd25519(json.getString(Key.PK).hex())
+        json.getString(Key.PK).publicKeyFromHex()
     )
 
     fun toJSON(): JSONObject {

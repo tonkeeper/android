@@ -404,7 +404,7 @@ fun WithdrawRouter(
 
                 is WithdrawRoutes.Scanner -> NavEntry(key) {
                     ScannerScreen(
-                        onResult = { value ->
+                        onResult = { value, _ ->
                             resultStore.setResult(KEY_SCANNER_RESULT, value)
                             backStack.safeRemoveLastOrNull(key)
                         },

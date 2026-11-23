@@ -21,9 +21,25 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class GaslessV2FeeData(
-    /* In the asset's smallest units; charges for \"battery/mainnet\". */
+    /* \"value\": in the asset's smallest units; charges for \"battery/mainnet\". Always set in what the battery answers. */
     @SerialName(value = "amount")
-    val amount: String
+    val amount: String? = null,
+
+    /* \"gas\", \"eip1559\": the gas limit. */
+    @SerialName(value = "limit")
+    val limit: String? = null,
+
+    /* \"gas\": the gas price, in wei. */
+    @SerialName(value = "price")
+    val price: String? = null,
+
+    /* \"eip1559\": the max fee per gas, in wei. */
+    @SerialName(value = "max_fee_per_gas")
+    val maxFeePerGas: String? = null,
+
+    /* \"eip1559\": the max priority fee per gas, in wei. */
+    @SerialName(value = "max_priority_fee_per_gas")
+    val maxPriorityFeePerGas: String? = null
 ) {
 }
 

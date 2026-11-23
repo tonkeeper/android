@@ -6,7 +6,6 @@ import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.wallet.data.dapps.entities.AppEntity
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -62,9 +61,9 @@ class TonConnectViewModel(
 
     suspend fun requestProof(
         wallet: WalletEntity,
-        app: AppEntity,
+        domain: String?,
         proofPayload: String
-    ) = signUseCase(context, wallet, app.url.host!!, proofPayload)
+    ) = signUseCase(context, wallet, checkNotNull(domain), proofPayload)
 
     fun setWallet(wallet: WalletEntity) {
         val state = _stateFlow.value as? TonConnectScreenState.Data ?: return

@@ -23,12 +23,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -36,6 +45,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -51,9 +61,18 @@ import com.tonapps.perps.data.PerpsPositionSide
 import com.tonapps.perps.data.PerpsSort
 import com.tonapps.perps.data.perpsTicker
 import com.tonapps.perps.data.withLivePrice
+import com.tonapps.perps.region.PerpsRegionRestrictedBanner
+import com.tonapps.perps.screens.common.PERPS_SKELETON_ROW_COUNT
+import com.tonapps.perps.screens.common.PerpsMarketSkeletonRow
+import com.tonapps.perps.screens.common.PerpsSkeletonBar
 import com.tonapps.perps.screens.common.openPerpsBasics
+import com.tonapps.perps.screens.depositstatus.PerpsDepositPlaqueBlock
+import com.tonapps.perps.screens.depositstatus.PerpsDepositRowUi
+import com.tonapps.perps.screens.depositstatus.PerpsDepositStatusSheet
+import com.tonapps.perps.screens.depositstatus.PerpsDepositStatusesSheet
+import com.tonapps.perps.screens.depositstatus.PerpsDepositToast
+import com.tonapps.perps.screens.depositstatus.PerpsDepositToastHost
 import com.tonapps.perps.screens.markets.PerpMarketRow
-import com.tonapps.perps.screens.markets.PerpsSortSelector
 import com.tonapps.perps.screens.markets.perpsChangeColor
 import com.tonapps.perps.screens.markets.perpsErrorDescription
 import com.tonapps.uikit.icon.UIKitIcon
@@ -77,13 +96,16 @@ import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.MoonBundleTitleCell
 import ui.components.moon.cell.defaultBundleType
+import ui.components.moon.cell.DefaultCardHeight
 import ui.components.moon.cell.MoonCardCell
 import ui.components.moon.cell.MoonLoaderCell
 import ui.components.moon.cell.MoonRetryCell
+import ui.components.moon.cell.TextCell
 import ui.components.moon.container.MoonScaffold
 import ui.components.moon.moonBottomBarHeight
 import ui.preview.ThemedPreview
 import ui.theme.UIKit
+import ui.theme.modifiers.rememberShimmerPhase
 import java.math.BigDecimal
 
 @Composable
@@ -93,7 +115,9 @@ fun PerpsPortfolioScreen(
     onOpenExplore: () -> Unit,
     onDeposit: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenFundingHistory: () -> Unit,
     onWithdraw: () -> Unit,
+    onRegionInfo: () -> Unit,
     onBack: () -> Unit,
 ) {
     val portfolio by feature.portfolio.collectAsStateWorkaround()
@@ -103,6 +127,11 @@ fun PerpsPortfolioScreen(
     val exploreMarkets = feature.exploreMarkets.collectAsLazyPagingItems()
     val livePrices by feature.livePrices.collectAsStateWorkaround()
     val fundingStatus by feature.fundingStatus.collectAsStateWorkaround()
+    val depositRow by feature.depositRow.collectAsStateWorkaround()
+    val depositToast by feature.depositToast.collectAsStateWorkaround()
+    val depositStatuses by feature.depositStatuses.collectAsStateWorkaround()
+    val depositDetails by feature.depositDetails.collectAsStateWorkaround()
+    val regionRestricted by feature.regionRestricted.collectAsStateWorkaround()
 
     val context = LocalContext.current
 
@@ -136,23 +165,45 @@ fun PerpsPortfolioScreen(
         onFundingPillClick = {
             when (fundingStatus) {
                 PerpsFundingStatus.NEEDS_AUTHORIZATION ->
-                    feature.sendAction(PerpsPortfolioAction.AuthorizeDeposit(context))
+                    feature.sendAction(PerpsPortfolioAction.AuthorizeDeposit)
 
-                PerpsFundingStatus.FAILED,
-                PerpsFundingStatus.REFUNDED,
                 PerpsFundingStatus.WITHDRAW_FAILED -> feature.sendAction(PerpsPortfolioAction.DismissFundingOutcome)
 
                 PerpsFundingStatus.SENDING,
-                PerpsFundingStatus.CONFIRMED,
+                PerpsFundingStatus.WITHDRAW_SENT,
+                PerpsFundingStatus.CONFIRMED -> onOpenFundingHistory()
+
                 null -> Unit
             }
         },
+        depositRow = depositRow,
+        depositToast = depositToast,
+        onDepositRowClick = { feature.sendAction(PerpsPortfolioAction.OpenDepositRow) },
+        onInteraction = { feature.sendAction(PerpsPortfolioAction.DepositInteraction) },
         onOpenHistory = onOpenHistory,
         onLearnBasics = { context.openPerpsBasics() },
+        regionRestricted = regionRestricted,
+        onRegionInfo = onRegionInfo,
         onBack = onBack,
     )
+
+    depositStatuses?.let { items ->
+        PerpsDepositStatusesSheet(
+            items = items,
+            onOpen = { feature.sendAction(PerpsPortfolioAction.OpenDepositDetails(it)) },
+            onClose = { feature.sendAction(PerpsPortfolioAction.CloseDepositStatuses) },
+        )
+    }
+
+    depositDetails?.let { status ->
+        PerpsDepositStatusSheet(
+            status = status,
+            onClose = { feature.sendAction(PerpsPortfolioAction.CloseDepositDetails) },
+        )
+    }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun PerpsPortfolioContent(
     portfolio: PerpsPortfolioUi,
@@ -170,21 +221,46 @@ private fun PerpsPortfolioContent(
     onWithdraw: () -> Unit,
     fundingStatus: PerpsFundingStatus?,
     onFundingPillClick: () -> Unit,
+    depositRow: PerpsDepositRowUi?,
+    depositToast: PerpsDepositToast?,
+    onDepositRowClick: () -> Unit,
+    onInteraction: () -> Unit,
     onOpenHistory: () -> Unit,
     onLearnBasics: () -> Unit,
+    regionRestricted: Boolean,
+    onRegionInfo: () -> Unit,
     onBack: () -> Unit,
 ) {
     val positions = portfolio.positions
+    val titleVisible = fundingStatus == null && depositToast == null
     val isZeroState = !portfolioLoading && portfolioError == null && portfolio.isEmpty
+    val showDepositBar = isZeroState && !regionRestricted
+    val exploreRefresh = exploreMarkets.loadState.refresh
+    val exploreAppend = exploreMarkets.loadState.append
+    val exploreLoading = (exploreRefresh is LoadState.Loading || exploreAppend is LoadState.Loading) &&
+        exploreMarkets.itemCount == 0
+    val skeletonPhase = rememberShimmerPhase(enabled = portfolioLoading || exploreLoading)
 
     MoonScaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics { testTagsAsResourceId = true }
+            .pointerInput(onInteraction) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Final)
+                    var change = down
+                    while (change.pressed && (change.position - down.position).getDistance() <= viewConfiguration.touchSlop) {
+                        change = awaitPointerEvent(PointerEventPass.Final).changes.firstOrNull { it.id == down.id } ?: break
+                    }
+                    onInteraction()
+                }
+            },
         topBar = {
             Box(modifier = Modifier.statusBarsPadding()) {
                 MoonTopAppBar(
                     title = { MoonTopAppBarTitle(text = stringResource(Localization.perps_title)) },
-                    onTitleClick = onLearnBasics.takeIf { fundingStatus == null },
-                    textVisible = fundingStatus == null,
+                    onTitleClick = onLearnBasics.takeIf { titleVisible },
+                    textVisible = titleVisible,
                     subtitle = {
                         MoonTopAppBarSubtitle(
                             text = stringResource(Localization.perps_learn_basics),
@@ -203,20 +279,26 @@ private fun PerpsPortfolioContent(
                             MoonTopAppBarIcon(
                                 painter = painterResource(UIKitIcon.ic_clock_outline_28),
                                 onClick = onOpenHistory,
+                                modifier = Modifier.testTag("perps_history"),
                             )
                         }
                         MoonTopAppBarIcon(
                             painter = painterResource(UIKitIcon.ic_magnifying_glass_16),
                             onClick = onOpenExplore,
+                            modifier = Modifier.testTag("perps_search"),
                         )
                     },
                     backgroundColor = Color.Transparent,
                 )
-                if (fundingStatus != null) {
+                PerpsDepositToastHost(
+                    toast = depositToast,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                if (fundingStatus != null && depositToast == null) {
                     FundingStatusPill(
                         status = fundingStatus,
                         modifier = Modifier.align(Alignment.Center),
-                        onClick = onFundingPillClick.takeIf { fundingStatus.actionable },
+                        onClick = onFundingPillClick,
                     )
                 }
             }
@@ -224,7 +306,7 @@ private fun PerpsPortfolioContent(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
-                contentPadding = if (isZeroState) {
+                contentPadding = if (showDepositBar) {
                     PaddingValues(top = 8.dp, bottom = moonBottomBarHeight())
                 } else {
                     PaddingValues(
@@ -234,22 +316,39 @@ private fun PerpsPortfolioContent(
                     )
                 },
             ) {
-                item(key = "balance") {
-                    when {
-                        portfolioLoading -> MoonLoaderCell(height = 96.dp)
-
-                        portfolioError != null -> MoonRetryCell(
-                            message = stringResource(Localization.something_went_wrong),
-                            buttonText = stringResource(Localization.perps_retry),
-                            onRetry = onRetry,
+                if (regionRestricted) {
+                    item(key = "region_restricted") {
+                        PerpsRegionRestrictedBanner(
+                            onLearnMore = onRegionInfo,
+                            modifier = Modifier.padding(horizontal = 16.dp),
                         )
+                    }
+                }
 
-                        else -> PerpsBalanceCard(
-                            balanceFormat = portfolio.balanceFormat,
-                            funded = portfolio.funded,
-                            onDeposit = onDeposit,
-                            onWithdraw = onWithdraw,
-                        )
+                if (!regionRestricted || (!portfolioLoading && portfolioError != null)) {
+                    item(key = "balance") {
+                        when {
+                            portfolioLoading -> PerpsBalanceCardSkeleton(phase = skeletonPhase)
+
+                            portfolioError != null -> MoonRetryCell(
+                                message = stringResource(Localization.something_went_wrong),
+                                buttonText = stringResource(Localization.perps_retry),
+                                onRetry = onRetry,
+                            )
+
+                            else -> PerpsDepositPlaqueBlock(
+                                row = depositRow,
+                                revealOnStart = depositToast == PerpsDepositToast.IN_PROGRESS,
+                                onClick = { onDepositRowClick() },
+                            ) {
+                                PerpsBalanceCard(
+                                    balanceFormat = portfolio.balanceFormat,
+                                    funded = portfolio.funded,
+                                    onDeposit = onDeposit,
+                                    onWithdraw = onWithdraw,
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -306,26 +405,24 @@ private fun PerpsPortfolioContent(
                 }
 
                 item(key = "explore_title") {
-                    MoonBundleTitleCell(
-                        title = stringResource(Localization.perps_explore),
-                        onClick = onOpenExplore,
-                        content = {
-                            PerpsSortSelector(
-                                sort = sort,
-                                onSortChange = onSortChange,
-                            )
-                        },
+                    PerpsExploreTitle(
+                        sort = sort,
+                        onSortChange = onSortChange,
+                        onOpenExplore = onOpenExplore,
                     )
                 }
 
-                val exploreRefresh = exploreMarkets.loadState.refresh
-                val exploreAppend = exploreMarkets.loadState.append
                 val exploreFailure = exploreRefresh as? LoadState.Error ?: exploreAppend as? LoadState.Error
                 when {
-                    (exploreRefresh is LoadState.Loading || exploreAppend is LoadState.Loading) &&
-                        exploreMarkets.itemCount == 0 ->
-                        item(key = "explore_loading") {
-                            MoonLoaderCell(height = 240.dp)
+                    exploreLoading ->
+                        items(
+                            count = PERPS_SKELETON_ROW_COUNT,
+                            key = { index -> "explore_skeleton_$index" },
+                            contentType = { "explore_skeleton" },
+                        ) { index ->
+                            MoonBundleCell(position = defaultBundleType(PERPS_SKELETON_ROW_COUNT, index)) {
+                                PerpsMarketSkeletonRow(phase = skeletonPhase)
+                            }
                         }
 
                     exploreFailure != null && exploreMarkets.itemCount == 0 ->
@@ -372,7 +469,7 @@ private fun PerpsPortfolioContent(
                 }
             }
 
-            if (isZeroState) {
+            if (showDepositBar) {
                 MoonBottomBar(modifier = Modifier.align(Alignment.BottomCenter)) {
                     MoonAccentButton(
                         modifier = Modifier.weight(1f),
@@ -390,27 +487,39 @@ private fun PerpsPortfolioContent(
 @Composable
 private fun FundingStatusPill(
     status: PerpsFundingStatus,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
 ) {
+    val withdrawSent = status == PerpsFundingStatus.WITHDRAW_SENT
+    val spacing = if (withdrawSent) {
+        12.dp
+    } else {
+        8.dp
+    }
     Row(
         modifier = modifier
             .clip(CircleShape)
             .background(UIKit.colorScheme.background.contentTint)
+            .clickable(onClick = onClick)
             .then(
-                if (onClick != null) {
-                    Modifier.clickable(onClick = onClick)
+                if (withdrawSent) {
+                    Modifier.padding(start = 16.dp, top = 8.dp, end = 12.dp, bottom = 8.dp)
                 } else {
-                    Modifier
+                    Modifier.padding(start = 16.dp, top = 14.dp, end = 24.dp, bottom = 14.dp)
                 },
-            )
-            .padding(start = 16.dp, top = 14.dp, end = 24.dp, bottom = 14.dp),
+            ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(spacing),
     ) {
         when (status) {
             PerpsFundingStatus.SENDING -> MoonLoader(
                 modifier = Modifier.size(16.dp),
+                color = UIKit.colorScheme.icon.secondary,
+            )
+
+            PerpsFundingStatus.WITHDRAW_SENT -> MoonItemIcon(
+                painter = painterResource(UIKitIcon.ic_clock_16),
+                size = 16.dp,
                 color = UIKit.colorScheme.icon.secondary,
             )
 
@@ -426,31 +535,46 @@ private fun FundingStatusPill(
                 color = UIKit.colorScheme.accent.orange,
             )
 
-            PerpsFundingStatus.FAILED,
             PerpsFundingStatus.WITHDRAW_FAILED -> MoonItemIcon(
                 painter = painterResource(UIKitIcon.ic_xmark_circle_16),
                 size = 16.dp,
                 color = UIKit.colorScheme.accent.red,
             )
-
-            PerpsFundingStatus.REFUNDED -> MoonItemIcon(
-                painter = painterResource(UIKitIcon.ic_exclamationmark_circle_16),
-                size = 16.dp,
-                color = UIKit.colorScheme.accent.orange,
+        }
+        if (withdrawSent) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Column(
+                    modifier = Modifier.height(40.dp),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    MoonSmallItemTitle(text = stringResource(Localization.perps_withdraw_sent))
+                    MoonItemSubtitle(
+                        text = stringResource(Localization.perps_withdraw_check_history),
+                        maxLines = 1,
+                    )
+                }
+                MoonItemIcon(
+                    painter = painterResource(UIKitIcon.ic_chevron_right_16),
+                    size = 16.dp,
+                    color = UIKit.colorScheme.icon.secondary,
+                )
+            }
+        } else {
+            MoonSmallItemTitle(
+                text = stringResource(
+                    when (status) {
+                        PerpsFundingStatus.SENDING -> Localization.sending_transaction
+                        PerpsFundingStatus.CONFIRMED -> Localization.transaction_confirmed
+                        PerpsFundingStatus.NEEDS_AUTHORIZATION -> Localization.perps_deposit_confirm_pending
+                        PerpsFundingStatus.WITHDRAW_FAILED -> Localization.perps_withdraw_failed
+                        PerpsFundingStatus.WITHDRAW_SENT -> Localization.perps_withdraw_sent
+                    },
+                ),
             )
         }
-        MoonSmallItemTitle(
-            text = stringResource(
-                when (status) {
-                    PerpsFundingStatus.SENDING -> Localization.sending_transaction
-                    PerpsFundingStatus.CONFIRMED -> Localization.transaction_confirmed
-                    PerpsFundingStatus.NEEDS_AUTHORIZATION -> Localization.perps_deposit_confirm_pending
-                    PerpsFundingStatus.FAILED -> Localization.perps_deposit_failed
-                    PerpsFundingStatus.REFUNDED -> Localization.perps_deposit_refunded
-                    PerpsFundingStatus.WITHDRAW_FAILED -> Localization.perps_withdraw_failed
-                },
-            ),
-        )
     }
 }
 
@@ -485,13 +609,7 @@ private fun PerpsBalanceCard(
     onWithdraw: () -> Unit,
 ) {
     MoonCardCell(
-        image = {
-            MoonCircleIcon(
-                painter = painterResource(UIKitIcon.ic_perps_28),
-                color = UIKit.colorScheme.accent.blue.copy(alpha = 0.12f),
-                size = 44.dp,
-            )
-        },
+        image = { PerpsBalanceIcon() },
         title = balanceFormat,
         subtitle = stringResource(Localization.perps_balance),
         content = {
@@ -518,6 +636,34 @@ private fun PerpsBalanceCard(
                 )
             }
         },
+    )
+}
+
+@Composable
+private fun PerpsBalanceCardSkeleton(phase: State<Float>) {
+    MoonBundleCell {
+        TextCell(
+            image = { PerpsBalanceIcon() },
+            title = {
+                PerpsSkeletonBar(
+                    modifier = Modifier.padding(vertical = 6.dp),
+                    width = 72.dp,
+                    phase = phase,
+                )
+            },
+            subtitle = { MoonItemSubtitle(text = stringResource(Localization.perps_balance)) },
+            content = { PerpsSkeletonBar(width = 80.dp, height = 32.dp, phase = phase) },
+            minHeight = DefaultCardHeight,
+        )
+    }
+}
+
+@Composable
+private fun PerpsBalanceIcon() {
+    MoonCircleIcon(
+        painter = painterResource(UIKitIcon.ic_perps_28),
+        color = UIKit.colorScheme.accent.blue.copy(alpha = 0.12f),
+        size = 44.dp,
     )
 }
 
@@ -595,6 +741,7 @@ private val previewPositions = listOf(
             unrealizedPnl = BigDecimal("20.50"),
             equity = BigDecimal("40.50"),
             leverage = 27,
+            liquidationDistancePct = null,
         ),
         equityFormat = "$40.50",
         pnl = BigDecimal("20.50"),
@@ -610,6 +757,7 @@ private val previewPositions = listOf(
             unrealizedPnl = BigDecimal("-4.20"),
             equity = BigDecimal("7.80"),
             leverage = 10,
+            liquidationDistancePct = null,
         ),
         equityFormat = "$7.80",
         pnl = BigDecimal("-4.20"),
@@ -633,6 +781,8 @@ private val previewOrders = listOf(
         ),
         amountFormat = "$9.63",
         limitPriceFormat = "$64,200.00",
+        takeProfitFormat = "$66,000.00",
+        stopLossFormat = "$63,100.00",
     ),
     PerpsOrderUi(
         order = PerpsPortfolioOrder(
@@ -695,8 +845,55 @@ private fun PerpsPortfolioZeroPreview() {
             onWithdraw = {},
             fundingStatus = null,
             onFundingPillClick = {},
+            depositRow = null,
+            depositToast = null,
+            onDepositRowClick = {},
+            onInteraction = {},
             onOpenHistory = {},
             onLearnBasics = {},
+            regionRestricted = false,
+            onRegionInfo = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PerpsPortfolioLoadingPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        PerpsPortfolioContent(
+            portfolio = previewZeroPortfolio,
+            portfolioLoading = true,
+            portfolioError = null,
+            sort = PerpsSort.VOLUME,
+            exploreMarkets = flowOf(
+                PagingData.empty<PerpMarket>(
+                    sourceLoadStates = LoadStates(
+                        refresh = LoadState.Loading,
+                        prepend = LoadState.NotLoading(endOfPaginationReached = false),
+                        append = LoadState.NotLoading(endOfPaginationReached = false),
+                    ),
+                ),
+            ).collectAsLazyPagingItems(),
+            livePrices = emptyMap(),
+            onSortChange = {},
+            onRetry = {},
+            onOpenMarket = { _, _ -> },
+            onRowVisible = { _, _ -> },
+            onOpenExplore = {},
+            onDeposit = {},
+            onWithdraw = {},
+            fundingStatus = null,
+            onFundingPillClick = {},
+            depositRow = null,
+            depositToast = null,
+            onDepositRowClick = {},
+            onInteraction = {},
+            onOpenHistory = {},
+            onLearnBasics = {},
+            regionRestricted = false,
+            onRegionInfo = {},
             onBack = {},
         )
     }
@@ -722,8 +919,14 @@ private fun PerpsPortfolioFundedPreview() {
             onWithdraw = {},
             fundingStatus = null,
             onFundingPillClick = {},
+            depositRow = null,
+            depositToast = null,
+            onDepositRowClick = {},
+            onInteraction = {},
             onOpenHistory = {},
             onLearnBasics = {},
+            regionRestricted = false,
+            onRegionInfo = {},
             onBack = {},
         )
     }
@@ -759,8 +962,80 @@ private fun PerpsPortfolioPositionsPreview() {
             onWithdraw = {},
             fundingStatus = null,
             onFundingPillClick = {},
+            depositRow = null,
+            depositToast = null,
+            onDepositRowClick = {},
+            onInteraction = {},
             onOpenHistory = {},
             onLearnBasics = {},
+            regionRestricted = false,
+            onRegionInfo = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PerpsPortfolioRestrictedPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        PerpsPortfolioContent(
+            portfolio = previewZeroPortfolio,
+            portfolioLoading = false,
+            portfolioError = null,
+            sort = PerpsSort.VOLUME,
+            exploreMarkets = flowOf(PagingData.from(previewMarkets)).collectAsLazyPagingItems(),
+            livePrices = emptyMap(),
+            onSortChange = {},
+            onRetry = {},
+            onOpenMarket = { _, _ -> },
+            onRowVisible = { _, _ -> },
+            onOpenExplore = {},
+            onDeposit = {},
+            onWithdraw = {},
+            fundingStatus = null,
+            onFundingPillClick = {},
+            depositRow = null,
+            depositToast = null,
+            onDepositRowClick = {},
+            onInteraction = {},
+            onOpenHistory = {},
+            onLearnBasics = {},
+            regionRestricted = true,
+            onRegionInfo = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PerpsPortfolioRestrictedErrorPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        PerpsPortfolioContent(
+            portfolio = previewZeroPortfolio,
+            portfolioLoading = false,
+            portfolioError = PerpsError.Network,
+            sort = PerpsSort.VOLUME,
+            exploreMarkets = flowOf(PagingData.from(previewMarkets)).collectAsLazyPagingItems(),
+            livePrices = emptyMap(),
+            onSortChange = {},
+            onRetry = {},
+            onOpenMarket = { _, _ -> },
+            onRowVisible = { _, _ -> },
+            onOpenExplore = {},
+            onDeposit = {},
+            onWithdraw = {},
+            fundingStatus = null,
+            onFundingPillClick = {},
+            depositRow = null,
+            depositToast = null,
+            onDepositRowClick = {},
+            onInteraction = {},
+            onOpenHistory = {},
+            onLearnBasics = {},
+            regionRestricted = true,
+            onRegionInfo = {},
             onBack = {},
         )
     }

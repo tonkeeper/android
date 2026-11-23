@@ -12,8 +12,10 @@ android {
 dependencies {
     testFixturesApi(testFixtures(projects.lib.test))
     testFixturesApi(projects.apps.wallet.data.multichain.wallet)
+    testFixturesApi(projects.lib.time)
     testFixturesApi(libs.mockk)
 
+    testFixturesImplementation(projects.apps.wallet.data.features)
     testFixturesImplementation(projects.lib.extensions)
     testFixturesImplementation(projects.lib.features)
     testFixturesImplementation(libs.chainkit.models)

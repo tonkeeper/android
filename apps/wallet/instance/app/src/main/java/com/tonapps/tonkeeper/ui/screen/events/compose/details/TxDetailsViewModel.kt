@@ -422,7 +422,7 @@ class TxDetailsViewModel(
                 ) ?: throw IllegalStateException("NFT not found")
                 openScreen(NftScreen.newInstance(nft))
             } catch (e: Throwable) {
-                toast(Localization.unknown_error)
+                failureToast(Localization.unknown_error)
             }
         }
     }
@@ -473,7 +473,7 @@ class TxDetailsViewModel(
     private fun markAsSpam() {
         viewModelScope.launch {
             if (!eventsRepository.markAsSpam(wallet.accountId, wallet.network, txId)) {
-                toast(Localization.unknown_error)
+                failureToast(Localization.unknown_error)
                 return@launch
             }
             settingsRepository.setSpamStateTransaction(wallet.id, txId, SpamTransactionState.SPAM)

@@ -21,7 +21,7 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class GaslessV2SignedPayload(
-    /* signed | eip7702/authorization/signed | eip7821/hermes/delegate/signed (eip7821/hermes/1/signed is accepted too) | solana/message/signed */
+    /* the payload type + /signed: prebuild/signed (TRON, Solana; signed is accepted too) | eip7702/authorization/signed | eip7821/hermes/delegate/signed (eip7821/hermes/1/signed is accepted too); main/signed and batch/signed (TON; signed is accepted too) */
     @SerialName(value = "type")
     val type: String,
     @SerialName(value = "chain_id")

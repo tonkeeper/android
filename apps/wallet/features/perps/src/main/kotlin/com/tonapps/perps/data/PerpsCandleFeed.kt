@@ -11,6 +11,7 @@ import io.kandelabrapi.models.GetCandlesBatchResponse
 import io.kandelabrapi.models.GetCandlesRequest
 import io.kandelabrapi.models.GetCandlesResponse
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
@@ -19,12 +20,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
+import java.util.TreeMap
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PerpsCandleFeed(private val api: API) {
 
     fun stream(
@@ -73,6 +77,8 @@ class PerpsCandleFeed(private val api: API) {
 
         /** history == null: the snapshot can never load for this feed. */
         data class Snapshot(val history: PerpsCandleHistory?) : LoopInput
+        data object Renew : LoopInput
+        data object Timeout : LoopInput
     }
 
     // Merge state is confined to the event-loop coroutine; the snapshot fetch is a child job.
@@ -87,8 +93,8 @@ class PerpsCandleFeed(private val api: API) {
         private val volumeFeedId = "${ticker.volumeTicker()}/${timeframe.wireResolution}"
 
         // The renderer full-resets (losing scroll and zoom) when a non-tail bar's price changes.
-        private val bars = sortedMapOf<Long, PerpsCandle>()
-        private val volumes = HashMap<Long, Double>()
+        private val bars = TreeMap<Long, PerpsCandle>()
+        private val volumes = TreeMap<Long, Double>()
         private var emitted: List<PerpsCandle>? = null
         private var snapshotLoaded = false
 
@@ -145,28 +151,46 @@ class PerpsCandleFeed(private val api: API) {
         }
 
         private suspend fun runSession(): SessionEnd {
+            val token = try {
+                api.hermes.loginToken()
+            } catch (e: Throwable) {
+                L.e(e)
+                null
+            } ?: return SessionEnd.SILENT
+            val loginDeadlineMs = System.currentTimeMillis() + LOGIN_TIMEOUT_MS
             val socket = HermesCandleSocket(api.hermes)
+            val renewals = Channel<Unit>(Channel.CONFLATED)
             var pingJob: Job? = null
+            var renewJob: Job? = null
             var volumeRetryJob: Job? = null
             var volumeBackoffMs = MIN_BACKOFF_MS
+            var loggedIn = false
             var delivered = false
-            var loginToken: String? = null
             try {
                 socket.connect()
                 while (true) {
                     val input = select<LoopInput> {
                         socket.events.onReceiveCatching { LoopInput.Socket(it.getOrNull()) }
                         snapshots.onReceive { LoopInput.Snapshot(it) }
+                        renewals.onReceive { LoopInput.Renew }
+                        if (!loggedIn) {
+                            onTimeout((loginDeadlineMs - System.currentTimeMillis()).coerceAtLeast(0L)) {
+                                LoopInput.Timeout
+                            }
+                        }
                     }
                     when (input) {
                         is LoopInput.Snapshot -> if (!applySnapshot(input.history)) {
                             return SessionEnd.FAILED
                         }
 
+                        LoopInput.Renew -> return SessionEnd.RELOGIN
+
+                        LoopInput.Timeout -> break
+
                         is LoopInput.Socket -> when (val event = input.event) {
                             HermesCandleEvent.Opened -> {
-                                loginToken = openFeed(socket)
-                                pingJob = scope.launch { socket.keepAlive() }
+                                socket.login(token.value)
                                 ensureSnapshotFetch()
                             }
 
@@ -185,19 +209,49 @@ class PerpsCandleFeed(private val api: API) {
                                 }
                             }
 
-                            HermesCandleEvent.LoggedIn -> loginRefreshUsed = false
-
-                            HermesCandleEvent.LoginRejected -> if (!loginRefreshUsed) {
-                                loginRefreshUsed = true
-                                loginToken?.let { expired ->
-                                    try {
-                                        api.hermes.refreshAccessToken(expired)
-                                    } catch (e: Throwable) {
-                                        L.e(e)
+                            HermesCandleEvent.LoggedIn -> {
+                                loggedIn = true
+                                loginRefreshUsed = false
+                                socket.subscribe(priceFeedId)
+                                socket.subscribe(volumeFeedId)
+                                pingJob = scope.launch { socket.keepAlive() }
+                                renewJob = token.renewDelayMs(System.currentTimeMillis()).let { delayMs ->
+                                    scope.launch {
+                                        delay(delayMs)
+                                        while (true) {
+                                            val renewed = try {
+                                                api.hermes.refreshAccessToken(token.value)
+                                            } catch (e: Throwable) {
+                                                L.e(e)
+                                                null
+                                            }
+                                            if (renewed != null) {
+                                                renewals.send(Unit)
+                                                break
+                                            }
+                                            delay(RENEW_RETRY_MS)
+                                        }
                                     }
                                 }
-                                return SessionEnd.RELOGIN
                             }
+
+                            HermesCandleEvent.LoginRejected -> {
+                                if (!loginRefreshUsed) {
+                                    val renewed = try {
+                                        api.hermes.refreshAccessToken(token.value)
+                                    } catch (e: Throwable) {
+                                        L.e(e)
+                                        null
+                                    }
+                                    if (renewed != null) {
+                                        loginRefreshUsed = true
+                                        return SessionEnd.RELOGIN
+                                    }
+                                }
+                                break
+                            }
+
+                            HermesCandleEvent.LoginFailed -> break
 
                             is HermesCandleEvent.FeedError -> when {
                                 event.feedId.equals(priceFeedId, ignoreCase = true) -> {
@@ -226,6 +280,7 @@ class PerpsCandleFeed(private val api: API) {
                 }
             } finally {
                 pingJob?.cancel()
+                renewJob?.cancel()
                 volumeRetryJob?.cancel()
                 socket.close()
             }
@@ -234,21 +289,6 @@ class PerpsCandleFeed(private val api: API) {
             } else {
                 SessionEnd.SILENT
             }
-        }
-
-        private fun openFeed(socket: HermesCandleSocket): String? {
-            val token = try {
-                api.hermes.accessToken()
-            } catch (e: Throwable) {
-                L.e(e)
-                null
-            }
-            if (token != null) {
-                socket.login(token)
-            }
-            socket.subscribe(priceFeedId)
-            socket.subscribe(volumeFeedId)
-            return token
         }
 
         private fun ensureSnapshotFetch() {
@@ -272,12 +312,14 @@ class PerpsCandleFeed(private val api: API) {
             for ((time, volume) in incoming) {
                 volumes.merge(time, volume) { old, new -> max(old, new) }
             }
+            volumes.keepNewest(MAX_FEED_BARS)
         }
 
         private suspend fun mergeAndEmit(candles: List<PerpsCandle>) {
             for (bar in candles) {
                 bars[bar.time] = bar
             }
+            bars.keepNewest(MAX_FEED_BARS)
             if (!snapshotLoaded) {
                 return
             }
@@ -373,6 +415,7 @@ class PerpsCandleFeed(private val api: API) {
     private companion object {
         const val SNAPSHOT_BARS = 500
         const val AGGREGATED_SNAPSHOT_BARS = 1500
+        const val MAX_FEED_BARS = 5_000
 
         const val MIN_BACKOFF_MS = 1_000L
 
@@ -383,6 +426,8 @@ class PerpsCandleFeed(private val api: API) {
         const val HTTP_BAD_REQUEST = 400
         const val HTTP_NOT_FOUND = 404
         const val MILLIS_IN_SECOND = 1_000L
+        const val LOGIN_TIMEOUT_MS = 30_000L
+        const val RENEW_RETRY_MS = 30_000L
     }
 }
 
@@ -433,6 +478,12 @@ private fun List<PerpsCandle>.aggregateHalfDay(): List<PerpsCandle> {
             close = bars.last().close,
             volumeUsd = bars.mapNotNull { it.volumeUsd }.takeIf { it.isNotEmpty() }?.sum(),
         )
+    }
+}
+
+internal fun <V> TreeMap<Long, V>.keepNewest(limit: Int) {
+    while (size > limit) {
+        pollFirstEntry()
     }
 }
 

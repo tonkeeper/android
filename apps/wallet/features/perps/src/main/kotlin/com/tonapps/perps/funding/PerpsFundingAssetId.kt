@@ -13,6 +13,8 @@ data class PerpsFundingAssetId(
     companion object {
 
         const val USDC_ETHEREUM = "eth/mainnet/erc20/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        const val USDT_TON_MASTER = "0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"
+        const val USDT_TON = "ton/mainnet/jetton/$USDT_TON_MASTER"
 
         private const val ETH_ADDRESS_LENGTH = 42
         private const val TRON_ADDRESS_LENGTH = 34
@@ -25,16 +27,17 @@ data class PerpsFundingAssetId(
         private const val BSC_TOKEN_STANDARD = "bep20"
         private const val TRON_TOKEN_STANDARD = "trc20"
         private const val EVM_TOKEN_STANDARD = "erc20"
+        private const val TON_TOKEN_STANDARD = "jetton"
 
         private val evmChains = setOf("eth", BSC_CHAIN, "base", "arb", "polygon", "avax", "robinhood")
         private val depositChains = evmChains + TON_CHAIN + TRON_CHAIN + BTC_CHAIN
         private val withdrawChains = setOf("eth", BSC_CHAIN, "base", "arb", TON_CHAIN, TRON_CHAIN, BTC_CHAIN)
 
-        fun parse(raw: String): PerpsFundingAssetId? = parse(raw, depositChains)
+        fun parse(raw: String): PerpsFundingAssetId? = parse(raw, depositChains, withUsdtTon = true)
 
-        fun parseDestination(raw: String): PerpsFundingAssetId? = parse(raw, withdrawChains)
+        fun parseDestination(raw: String): PerpsFundingAssetId? = parse(raw, withdrawChains, withUsdtTon = false)
 
-        private fun parse(raw: String, chains: Set<String>): PerpsFundingAssetId? {
+        private fun parse(raw: String, chains: Set<String>, withUsdtTon: Boolean): PerpsFundingAssetId? {
             val parts = raw.split('/')
             if (parts.size < 3 || parts[0].lowercase() !in chains || parts[1].lowercase() != "mainnet") {
                 return null
@@ -45,6 +48,10 @@ data class PerpsFundingAssetId(
             return when {
                 kind == "coin" && parts.size == 3 ->
                     PerpsFundingAssetId(raw, chainId, isCoin = true, tokenAddress = null)
+
+                withUsdtTon && chain == TON_CHAIN && kind == TON_TOKEN_STANDARD && parts.size == 4 &&
+                    parts[3].equals(USDT_TON_MASTER, ignoreCase = true) ->
+                    PerpsFundingAssetId(raw, chainId, isCoin = false, tokenAddress = USDT_TON_MASTER)
 
                 kind == tokenStandard(chain) && parts.size == 4 && isTokenAddress(chain, parts[3]) ->
                     PerpsFundingAssetId(raw, chainId, isCoin = false, tokenAddress = tokenAddress(chain, parts[3]))

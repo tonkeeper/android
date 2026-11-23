@@ -1,5 +1,6 @@
 package com.tonapps.perps.data
 
+import com.tonapps.core.components.withLocaleDecimalSeparator
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.data.multichain.asset.AssetMarketCapEntity
 import com.tonapps.wallet.data.multichain.asset.AssetRateEntity
@@ -11,15 +12,32 @@ import io.tradingapi.models.MarketItem
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+internal fun MarketItem.isListedIn(signedSymbols: Map<Int, String>?): Boolean {
+    if (asset.assetType != AssetType.perpetuals || signedSymbols == null) {
+        return true
+    }
+    val index = perpsMarketIndexOrNull(asset.id) ?: return false
+    return signedSymbols[index] == asset.symbol
+}
+
+internal fun AssetRef.isListedIn(signedSymbols: Map<Int, String>?, marketIndex: Int): Boolean {
+    val perp = perps ?: return false
+    if (perp.marketIndex != marketIndex) {
+        return false
+    }
+    val catalogSymbol = perp.symbol.takeIf { it.isNotBlank() } ?: symbol
+    return signedSymbols == null || signedSymbols[marketIndex] == catalogSymbol
+}
+
 fun MarketItem.toPerpMarket(): PerpMarket? = perpMarket(
     assetId = asset.id,
     symbol = asset.symbol,
     name = asset.name,
     image = asset.imageUrl,
     leverage = asset.leverage ?: 0,
-    price = metrics.price.toBigDecimalOrNull(),
+    price = metrics.price.toWireDecimalOrNull(),
     change = metrics.change24hPercent,
-    volume = metrics.volume.toBigDecimalOrNull(),
+    volume = metrics.volume.toWireDecimalOrNull(),
 )
 
 fun MarketItem.toCatalogSearchRow(currency: String): CatalogSearchRow? {
@@ -36,12 +54,13 @@ fun MarketItem.toCatalogSearchRow(currency: String): CatalogSearchRow? {
             ?: AssetEntity.Verification.none,
     )
     entity.valueOrNull ?: return null
-    val change = metrics.change24hPercent.toBigDecimalOrNull()?.setScale(2, RoundingMode.HALF_UP)
-    val percent = when (change?.signum()) {
+    val change = metrics.change24hPercent.toWireDecimalOrNull()?.setScale(2, RoundingMode.HALF_UP)
+    val plainPercent = when (change?.signum()) {
         null -> "0.00%"
         1 -> "+${change.toPlainString()}%"
         else -> "${change.toPlainString()}%"
     }
+    val percent = plainPercent.withLocaleDecimalSeparator()
     return CatalogSearchRow.Spot(
         AssetWithDetails(
             asset = entity,
@@ -52,7 +71,7 @@ fun MarketItem.toCatalogSearchRow(currency: String): CatalogSearchRow? {
             ),
             marketCap = metrics.marketCap?.let { AssetMarketCapEntity(marketCap = it, currencyCode = currency) },
             volume = metrics.volume
-                .takeIf { it.toBigDecimalOrNull()?.signum() == 1 }
+                .takeIf { it.toWireDecimalOrNull()?.signum() == 1 }
                 ?.let { AssetMarketCapEntity(marketCap = it, currencyCode = currency) },
         ),
     )
@@ -71,13 +90,13 @@ fun AssetRef.toPerpMarket(): PerpMarket? {
         name = name.takeIf { it.isNotBlank() },
         iconUrl = imageUrl.takeIf { it.isNotBlank() },
         maxLeverage = perp.maxLeverage,
-        price = perp.markPrice.toBigDecimalOrNull()
-            ?: perp.lastPrice.toBigDecimalOrNull()
-            ?: perp.indexPrice.toBigDecimalOrNull(),
-        priceChange24hPercent = perp.priceChange24h.toBigDecimalOrNull(),
-        volume24h = perp.volume24hUsd.toBigDecimalOrNull(),
-        openInterestUsd = perp.openInterestUsd.toBigDecimalOrNull(),
-        fundingRateHourly = perp.fundingRateHourly?.toBigDecimalOrNull(),
+        price = perp.markPrice.toWireDecimalOrNull()
+            ?: perp.lastPrice.toWireDecimalOrNull()
+            ?: perp.indexPrice.toWireDecimalOrNull(),
+        priceChange24hPercent = perp.priceChange24h.toWireDecimalOrNull(),
+        volume24h = perp.volume24hUsd.toWireDecimalOrNull(),
+        openInterestUsd = perp.openInterestUsd.toWireDecimalOrNull(),
+        fundingRateHourly = perp.fundingRateHourly?.toWireDecimalOrNull(),
         priceDecimals = perp.priceDecimals,
         sizeDecimals = perp.sizeDecimals,
     )
@@ -103,7 +122,7 @@ private fun perpMarket(
         iconUrl = image.takeIf { it.isNotBlank() },
         maxLeverage = leverage,
         price = price,
-        priceChange24hPercent = change?.removeSuffix("%")?.toBigDecimalOrNull(),
+        priceChange24hPercent = change?.removeSuffix("%")?.toWireDecimalOrNull(),
         volume24h = volume,
         openInterestUsd = null,
         fundingRateHourly = null,

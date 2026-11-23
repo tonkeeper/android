@@ -1,24 +1,29 @@
 package com.tonapps.deposit.multicoin.screens.confirm.base
 
-import android.content.Context
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.async.Async
+import com.tonapps.blockchain.evm.EvmTypedData
 import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmOperations
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.bus.generated.Events.RedOperations.RedOperationsOperation
+import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentLedgerModel
+import com.tonapps.chainkit.core.chain.api.models.NodeError
 import com.tonapps.chainkit.core.chain.api.models.NodeRes
 import com.tonapps.chainkit.core.chain.api.models.SignError
 import com.tonapps.chainkit.core.chain.api.models.SignRes
 import com.tonapps.chainkit.core.chain.model.MessageType
 import com.tonapps.chainkit.core.chain.model.account.Account
+import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Asset
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.chainkit.core.chain.model.account.PubKey
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
 import com.tonapps.chainkit.core.op.Operation
+import com.tonapps.chainkit.core.op.PayloadMeta
 import com.tonapps.chainkit.core.common.getOrElse
 import com.tonapps.chainkit.transaction.GasReservePolicy
 import com.tonapps.chainkit.transaction.GasReserveResult
@@ -33,24 +38,33 @@ import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeBuilder
 import com.tonapps.deposit.multicoin.screens.confirm.fee.GaslessSender
 import com.tonapps.deposit.multicoin.screens.confirm.fee.RelayerOutcomeUnknownException
 import com.tonapps.deposit.multicoin.screens.confirm.fee.RelayerQuoteExpiredException
+import com.tonapps.deposit.multicoin.screens.confirm.fee.RelayerSigner
+import com.tonapps.wallet.data.ledger.analytics.ledgerModel
+import com.tonapps.wallet.data.ledger.analytics.toTransactionSentModel
+import com.tonapps.wallet.data.ledger.signing.LedgerDismissedException
+import com.tonapps.wallet.data.ledger.signing.ledgerCall
 import com.tonapps.deposit.multicoin.screens.confirm.fee.RelayerRejectedException
-import com.tonapps.extensions.toHex
 import com.tonapps.ledger.ble.extension.hexAsUtf8
+import com.tonapps.ledgerkit.LedgerFailure
+import com.tonapps.ledgerkit.LedgerFailureException
 import com.tonapps.log.L
 import com.tonapps.mvi.contract.MviAction
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.SigningWallet
 import com.tonapps.wallet.data.dapps.wc.WcSolanaAnswers
+import com.tonapps.wallet.data.ledger.signing.LedgerSigningInteractor
+import com.tonapps.wallet.data.ledger.signing.ledgerSignsMessage
+import com.tonapps.wallet.data.ledger.signing.LedgerTransactionRequest
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.exchange.SwapQuote
 import com.tonapps.wallet.data.multichain.tx.PostTransactionRefreshSchedule
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.data.settings.SettingsRepository
-import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -61,7 +75,11 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
+import kotlin.time.TimeSource
+
+private const val NONCE_WAIT_ATTEMPTS = 60
+private const val NONCE_WAIT_INTERVAL_MS = 2_000L
 
 data class Message(
     val data: String,
@@ -93,8 +111,8 @@ class PendingTransaction(
 
     val nonce: BigInteger?,
 
-    // What leaves [account] besides the fee, when it is more than [signing] says: every message of
-    // a split swap route, forward gas included.
+    // What leaves [account] besides the fee, when [signing] doesn't say it: a sold token's amount, or
+    // every message of a split swap route, forward gas included.
     val spentAmount: BigInteger? = null,
 
     val destination: AccountWithDetails? = null,
@@ -105,6 +123,9 @@ class PendingTransaction(
     val prerequisites: List<Prerequisite> = emptyList(),
     val signingFee: Fee? = null,
 ) {
+
+    val isFeeUnavailable: Boolean
+        get() = signing is Signing.Tx && signingFee == null && fee.estimated == null && fee.options.isEmpty()
 
     fun withFee(fee: TxFeeState) = PendingTransaction(
         request = request,
@@ -134,13 +155,18 @@ class SignedTx(
     val routeId: String? = null,
     val serviceTxId: String? = null,
     val sellBaseAmount: BigInteger? = null,
+    val waitForNonce: BigInteger? = null,
 )
 
 class SendData(
     val tx: PendingTransaction,
     val signed: List<SignedTx>,
     val hash: String? = null,
+    val headMaybeSent: Boolean = false,
+    val staleBeforeSend: Boolean = false,
 )
+
+class QuoteExpiredException : Exception()
 
 /**
  * Shared state, transaction preparation helpers and signing/sending logic for the confirm screens
@@ -152,25 +178,20 @@ abstract class BaseTransactionConfirmFeature(
     protected val provider: ChainKitProvider,
     accountRepo: McAccountRepository,
     private val postTransactionRefreshSchedule: PostTransactionRefreshSchedule,
-    passcodeManager: PasscodeManager,
-    protected val confirmResults: ConfirmResultListener,
+    walletUnlocker: WalletUnlocker,
+    signatureGate: SignatureGate,
+    confirmResults: ConfirmResultListener,
     protected val feeBuilder: TxFeeBuilder,
     protected val gaslessSender: GaslessSender,
     protected val settingsRepository: SettingsRepository,
-) : BaseConfirmFeature<MviViewState, MviAction>(request, accountRepo, passcodeManager) {
+    private val ledgerSigner: LedgerSigningInteractor,
+) : BaseConfirmFeature<MviViewState, MviAction>(request, accountRepo, walletUnlocker, signatureGate, confirmResults) {
 
     final override val confirmationError = MutableStateFlow<ConfirmationError?>(null)
 
     final override val sendingState = MutableStateFlow(SendingState.None) // TODO rewrite
 
     private val analytics = ConfirmAnalytics(request)
-
-    private val answered = AtomicBoolean(false)
-
-    // Set once the passcode is passed: from then on a request closed without an approval failed,
-    // the user did not reject it. Not answered at the failure itself, so a retry can still approve.
-    @Volatile
-    private var userConfirmed = false
 
     protected val refreshToken = MutableStateFlow<String?>(null)
 
@@ -179,6 +200,9 @@ abstract class BaseTransactionConfirmFeature(
     val pickedFeeId = MutableStateFlow<String?>(null)
 
     protected val sendData = MutableStateFlow<SendData?>(null)
+
+    @Volatile
+    private var messageSignedToSend = false
 
     val pendingLoader = MutableStateFlow(false)
 
@@ -193,29 +217,39 @@ abstract class BaseTransactionConfirmFeature(
 
     abstract val pendingTx: Flow<PendingTransaction?>
 
+    final override val isCommitted: Boolean
+        get() = sendData.value?.takeUnless { it.staleBeforeSend } != null || messageSignedToSend
+
+    init {
+        watchRequestGone()
+    }
+
     // Runs after the success hold, right before the screen is told to close, so anything it opens
     // lands once the "sent" state has been seen.
     protected open fun onSendSucceeded() = Unit
 
+    protected open fun onSent() = Unit
+
+    override fun onStoppedAsGone() {
+        analytics.markRequestGone()
+    }
+
     // The keys a transaction is signed with: the wallet's HD wallet, behind the passcode.
-    protected open suspend fun unlockSigner(context: Context, pendingTx: PendingTransaction): SigningWallet {
-        return SigningWallet.Hd(unlockCryptoWallet(context, pendingTx.wallet.id))
+    protected open suspend fun unlockSigner(pendingTx: PendingTransaction): SigningWallet {
+        return SigningWallet.Hd(unlockCryptoWallet(pendingTx.wallet.id))
     }
 
     // The registered wallet a broadcast is reported to the backend for; null sends without a report.
     protected open fun reportedWalletId(pendingTx: PendingTransaction): String? = pendingTx.wallet.id
+
+    protected open fun deviceSigningWindow(pendingTx: PendingTransaction): Duration? = null
 
     fun selectFee(fee: TxFee) {
         if (txLocked) {
             return
         }
         pickedFeeId.value = fee.id
-        val method = when (fee.fee.asset) {
-            is Asset.Battery -> PreferredFeeMethod.BATTERY
-            is Asset.Coin -> PreferredFeeMethod.TON
-            is Asset.Token -> PreferredFeeMethod.GASLESS
-        }
-        settingsRepository.setPreferredFeeMethod(request.data.walletId, method)
+        settingsRepository.setPreferredFeeMethod(request.data.walletId, fee.preferredMethod)
     }
 
     fun selectedFee(tx: PendingTransaction): TxFee? {
@@ -232,13 +266,23 @@ abstract class BaseTransactionConfirmFeature(
     // Reports preparation as a RED operation; the failure path belongs to [onPrepareFailed], which the
     // features hand to `mapLatestCatching`.
     protected suspend fun prepareTracked(block: suspend () -> PendingTransaction?): PendingTransaction? {
-        return analytics.redOperation(RedOperationsOperation.Emulate) {
-            val pending = block()
+        return analytics.redOperation(RedOperationsOperation.Emulate, otherMetadata = analytics.emulateMetadata()) {
+            val pending = try {
+                block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                // What [onPrepareFailed] shows for a throw.
+                failure(ConfirmationError.Unknown, analytics.emulateMetadata(), cause = e)
+                throw e
+            }
             val error = confirmationError.value
+            // The terminal names the provider the route was quoted with, not the one the screen opened with.
+            val metadata = analytics.emulateMetadata(quote = pending?.quote)
             if (error == null) {
-                success()
+                success(metadata)
             } else {
-                failure(error)
+                failure(error, metadata)
             }
             pending
         }
@@ -281,7 +325,24 @@ abstract class BaseTransactionConfirmFeature(
         val nonceError = nonceResult.error?.let(::parseNodeError)
         nonceResult.error?.let { L.e(it) }
 
-        val error = feeError ?: nonceError
+        // As for a transfer: a coin that can't pay the fee (and the call's value) is a shortage to
+        // show before the passcode, not a broadcast the node rejects after it.
+        val reservationError = energyAsset?.let { energyAccount ->
+            val reservation = reserveNativeGas(
+                account = transaction.account,
+                energy = energyAccount.value,
+                amount = transaction.amount,
+                isMax = false,
+                fee = feeResult.value,
+                policy = GasReservePolicy.DrainOrError,
+            )
+            reservation.error
+                ?.also { L.e(it) }
+                ?.let(::parseNodeError)
+                ?: reservation.value?.error?.let(::parseReservationError)
+        }
+
+        val error = feeError ?: nonceError ?: reservationError
         confirmationError.tryEmit(error)
         L.d("Fee: ${feeResult.value}")
         L.d("Nonce: ${nonceResult.value}")
@@ -327,9 +388,14 @@ abstract class BaseTransactionConfirmFeature(
                 ConfirmType.Message.Type.Transaction,
                 ConfirmType.Message.Type.Transactions -> MessageType.Transaction
             },
-            data = msg.data.hexAsUtf8() ?: msg.data
+            data = when (msg.type) {
+                ConfirmType.Message.Type.Typed -> typedDataToSign(msg.data, account.value)
+                else -> msg.data.hexAsUtf8() ?: msg.data
+            }
         )
 
+        val ledgerRefuses = wallet.isHardware && !account.value.chain.ledgerSignsMessage(message.type)
+        confirmationError.tryEmit(ConfirmationError.LedgerUnsupported.takeIf { ledgerRefuses })
         return PendingTransaction(
             request = request,
             wallet = wallet,
@@ -337,6 +403,13 @@ abstract class BaseTransactionConfirmFeature(
             nonce = null,
             signing = Signing.Msg(message),
         )
+    }
+
+    private fun typedDataToSign(data: String, account: Account): String {
+        val typedData = EvmTypedData.decode(data)
+            ?: throw IllegalArgumentException("Typed data cannot be read")
+        check(typedData.isAddressedTo(account.chain)) { "Typed data is addressed to another chain" }
+        return typedData.json
     }
 
     protected suspend fun prepareTransaction(transfer: ConfirmType.Transfer): PendingTransaction {
@@ -351,7 +424,21 @@ abstract class BaseTransactionConfirmFeature(
 
         val energyAccount = accountRepo.findAccount(walletId, energy.id) ?: throw IllegalStateException("Can't find energy account by id")
 
-        val bound = bind(transfer.operation, account.value) as? Transaction.Transfer
+        // A dapp's token transfer is the token contract's call: the transfer is what that call carries,
+        // signed as the token the call goes to.
+        val bound = transfer.tokenTransfer?.let { asked ->
+            val called = (transfer.operation.payloads.singleOrNull()?.meta as? PayloadMeta.Evm.Main)?.to?.display
+            val contract = (account.asset.value as? Asset.Token)?.contract?.display
+            check(contract != null && contract.equals(called, ignoreCase = true)) { "The token transfer calls another contract" }
+
+            Transaction.Transfer(
+                account = account.value,
+                amount = asked.amount,
+                isMax = false,
+                to = Address.force(asked.to, account.value.chain),
+            )
+        }
+            ?: bind(transfer.operation, account.value) as? Transaction.Transfer
             ?: throw IllegalStateException("Transfer operation does not bind to a transfer")
 
         val recipientKey = transfer.commentEncryptionKey?.let { PubKey(defaultHex = it, segWit = "") }
@@ -476,30 +563,32 @@ abstract class BaseTransactionConfirmFeature(
         return provider.calculateGasReserve(account, energy, amount, isMax, fee, policy)
     }
 
-    open fun retry(context: Context) {
-        if (confirmationError.value == ConfirmationError.OutcomeUnknown) {
-            return
+    open fun retry(): Job? {
+        if (confirmationError.value?.isRetryable == false) {
+            return null
         }
 
         confirmationError.tryEmit(null)
 
         val data = sendData.value
-        if (data == null) {
+        return if (data == null || data.staleBeforeSend) {
+            sendData.value = null
             refreshToken.tryEmit(System.nanoTime().toString())
+            null
         } else {
-            sendTransaction(context, data.tx)
+            sendTransaction(data.tx)
         }
     }
 
-    fun sendTransaction(context: Context, pendingTx: PendingTransaction) {
+    fun sendTransaction(pendingTx: PendingTransaction): Job? {
         if (sendingState.value != SendingState.None) {
-            return
+            return null
         }
 
-        val committed = sendData.value?.tx ?: pendingTx
-        when (val signing = committed.signing) {
-            is Signing.Msg -> confirmMessage(context, msg = signing, committed)
-            is Signing.Tx -> confirmTransaction(context, signing = signing, committed)
+        val committed = sendData.value?.takeUnless { it.staleBeforeSend }?.tx ?: pendingTx
+        return when (val signing = committed.signing) {
+            is Signing.Msg -> confirmMessage(msg = signing, committed)
+            is Signing.Tx -> confirmTransaction(signing = signing, committed)
         }
     }
 
@@ -532,70 +621,32 @@ abstract class BaseTransactionConfirmFeature(
             }
     }
 
-    override fun onCleared() {
-        rejectDappRequest()
-        super.onCleared()
-    }
-
-    fun reject() {
-        if (request.context !is ConfirmContext.Dapp) {
-            return
-        }
-        rejectDappRequest()
-        finish()
-    }
-
-    private fun rejectDappRequest() {
-        val dapp = request.context as? ConfirmContext.Dapp ?: return
-        if (!answered.compareAndSet(false, true)) {
-            return
-        }
-        val failed = userConfirmed
-        // Undispatched: the provider is answered before the sheet's destruction reaches its handler,
-        // which would otherwise answer the request as rejected first.
-        Async.ioScope().launch(start = CoroutineStart.UNDISPATCHED) {
-            if (failed) {
-                confirmResults.failed(dapp)
-            } else {
-                confirmResults.rejected(dapp)
-            }
-        }
-    }
-
-    private suspend fun unlockConfirmed(context: Context, walletId: String): CryptoWallet {
-        return unlockCryptoWallet(context, walletId).also { userConfirmed = true }
-    }
-
     // [unlockSigner] behind the same mark: whichever keys a subclass signs with, getting them took the
     // passcode.
-    private suspend fun unlockConfirmedSigner(context: Context, pendingTx: PendingTransaction): SigningWallet {
-        return unlockSigner(context, pendingTx).also { userConfirmed = true }
+    private suspend fun unlockConfirmedSigner(pendingTx: PendingTransaction): SigningWallet {
+        return unlockSigner(pendingTx).also { markUserConfirmed() }
     }
 
-    private suspend fun approveDappRequest(pendingTx: PendingTransaction, signedResult: String) {
-        val dapp = pendingTx.request.context as? ConfirmContext.Dapp ?: return
-        if (!answered.compareAndSet(false, true)) {
-            return
-        }
-        Async.ioScope().async {
-            confirmResults.approved(dapp, signedResult)
-        }.await()
-    }
-
-    private fun confirmMessage(context: Context, msg: Signing.Msg, pendingTx: PendingTransaction) {
+    private fun confirmMessage(msg: Signing.Msg, pendingTx: PendingTransaction): Job {
         sendingState.tryEmit(SendingState.Loading)
 
-        mainScope.launch {
+        return mainScope.launch {
             try {
                 analytics.redOperation(analytics.sendOperation) {
-                    val cryptoWallet = unlockConfirmed(context, pendingTx.wallet.id)
                     val batch = (pendingTx.request.type as? ConfirmType.Message)
                         ?.takeIf { it.type == ConfirmType.Message.Type.Transactions }
-                    val signing = withContext(Async.Io) {
-                        if (batch != null) {
-                            signTransactions(batch.data, msg.value.account, cryptoWallet)
-                        } else {
-                            provider.signMessage(msg.value.data, msg.value.type, msg.value.account, cryptoWallet)
+                    val signing = if (pendingTx.wallet.isHardware) {
+                        ledgerCall {
+                            SignRes.ok(signMessageWithLedger(pendingTx, msg.value, batch).also { markUserConfirmed() })
+                        }
+                    } else {
+                        val cryptoWallet = unlockCryptoWallet(pendingTx.wallet.id)
+                        withContext(Async.Io) {
+                            if (batch != null) {
+                                signTransactions(batch.data, msg.value.account, cryptoWallet)
+                            } else {
+                                provider.signMessage(msg.value.data, msg.value.type, msg.value.account, cryptoWallet)
+                            }
                         }
                     }
                     val signedMessage = signing?.getOrNull()
@@ -608,20 +659,22 @@ abstract class BaseTransactionConfirmFeature(
                         return@launch
                     }
 
+                    stopIfGone()
                     val result = if (pendingTx.request.action.withSend) {
+                        messageSignedToSend = true
                         sendSignedTransaction(pendingTx, msg.value.account, signedMessage) ?: return@launch
                     } else {
                         signedMessage
                     }
 
-                    approveDappRequest(pendingTx, result)
+                    approveDappRequest(result)
                     success()
                 }
             } catch (e: Throwable) {
                 sendingState.tryEmit(SendingState.None)
                 verifyError(e)
                 L.e(e)
-                confirmationError.tryEmit(ConfirmationError.Unknown)
+                confirmationError.tryEmit(e.toConfirmationError())
                 return@launch
             }
 
@@ -632,11 +685,20 @@ abstract class BaseTransactionConfirmFeature(
         }
     }
 
+    private suspend fun signMessageWithLedger(pendingTx: PendingTransaction, message: Message, batch: ConfirmType.Message?): String {
+        if (batch == null) {
+            return ledgerSigner.signMessage(pendingTx.wallet.id, message.account, message.type, message.data)
+        }
+        val transactions = WcSolanaAnswers.unpackTransactions(batch.data)
+        val signed = ledgerSigner.signSolanaTransactions(pendingTx.wallet.id, message.account, transactions)
+        return WcSolanaAnswers.signedAll(signed)
+    }
+
     // solana_signAllTransactions: each transaction is signed on its own; one failure fails the batch.
     private suspend fun signTransactions(
         data: String,
         account: Account,
-        cryptoWallet: CryptoWallet,
+        cryptoWallet: MnemonicWallet,
     ): SignRes<String>? {
         val signed = WcSolanaAnswers.unpackTransactions(data).map { transaction ->
             val signing = provider.signMessage(transaction, MessageType.Transaction, account, cryptoWallet)
@@ -658,6 +720,9 @@ abstract class BaseTransactionConfirmFeature(
         val nodeError = result.error
         if (nodeError != null) {
             L.e(nodeError)
+            if (nodeError is NodeError.Rejected) {
+                messageSignedToSend = false
+            }
             sendingState.tryEmit(SendingState.None)
             val error = parseNodeError(nodeError)
             confirmationError.tryEmit(error)
@@ -670,13 +735,16 @@ abstract class BaseTransactionConfirmFeature(
     }
 
     private suspend fun RedOperation.signCommitted(
-        context: Context,
         tx: Signing.Tx,
         pendingTx: PendingTransaction,
         fee: Fee,
         nonce: BigInteger,
     ): List<SignedTx>? {
-        val signer = unlockConfirmedSigner(context, pendingTx)
+        requireSignatureEnabled(tx.value.account)
+        if (pendingTx.wallet.isHardware) {
+            return signCommittedWithLedger(tx, pendingTx, fee, nonce)?.also { markUserConfirmed() }
+        }
+        val signer = unlockConfirmedSigner(pendingTx)
 
         val transfer = pendingTx.request.type as? ConfirmType.Transfer
         val encryptionKey = transfer?.commentEncryptionKey
@@ -700,9 +768,8 @@ abstract class BaseTransactionConfirmFeature(
 
         var mainNonce = nonce
         val prerequisites = pendingTx.prerequisites.map { prerequisite ->
-            val prerequisiteTx = signableApproval(prerequisite.tx, mainTx)
             val signed = withContext(Async.Io) {
-                provider.signTransaction(prerequisiteTx, prerequisite.fee, mainNonce, signer)
+                provider.signTransaction(prerequisite.tx, prerequisite.fee, mainNonce, signer)
             }
             val signError = signed.error
             if (signError != null) {
@@ -710,7 +777,7 @@ abstract class BaseTransactionConfirmFeature(
                 return null
             }
             mainNonce += BigInteger.ONE
-            SignedTx(tx = prerequisiteTx, data = signed.unwrap().firstOutput())
+            SignedTx(tx = prerequisite.tx, data = signed.unwrap().firstOutput())
         }
 
         val messages = tx.batchToSign ?: listOf(mainTx)
@@ -739,6 +806,66 @@ abstract class BaseTransactionConfirmFeature(
         return prerequisites + main
     }
 
+    private suspend fun RedOperation.signCommittedWithLedger(
+        tx: Signing.Tx,
+        pendingTx: PendingTransaction,
+        fee: Fee,
+        nonce: BigInteger,
+    ): List<SignedTx>? {
+        val transfer = pendingTx.request.type as? ConfirmType.Transfer
+        if (transfer?.commentEncryptionKey != null && transfer.operation?.let(ConfirmOperations::comment) != null) {
+            reportSignFailure(SignError.UnsupportedTransaction("Encrypted comments cannot be signed on Ledger"), pendingTx)
+            return null
+        }
+        val signingWindow = deviceSigningWindow(pendingTx)
+        if (signingWindow != null && !signingWindow.isPositive()) {
+            throw QuoteExpiredException()
+        }
+        val signableUntil = signingWindow?.let { TimeSource.Monotonic.markNow() + it }
+        val batch = tx.batchToSign.orEmpty()
+        val sequential = batch.size > 1
+        if (sequential && tx.value.account.chain !is Chain.Ton) {
+            reportSignFailure(SignError.UnsupportedTransaction("Batched messages cannot be signed on Ledger"), pendingTx)
+            return null
+        }
+
+        val mainTx = tx.value
+        val mainTxs = if (sequential) {
+            batch
+        } else {
+            listOf(mainTx)
+        }
+        val prerequisiteTxs = pendingTx.prerequisites.map { signableApproval(it.tx, mainTx) to it.fee }
+        val requests = prerequisiteTxs.mapIndexed { index, (prerequisiteTx, prerequisiteFee) ->
+            LedgerTransactionRequest(prerequisiteTx, prerequisiteFee, nonce + BigInteger.fromInt(index), signableUntil)
+        } + mainTxs.mapIndexed { index, main ->
+            LedgerTransactionRequest(main, fee, nonce + BigInteger.fromInt(prerequisiteTxs.size + index), signableUntil)
+        }
+        val signed = ledgerCall { ledgerSigner.signTransactions(pendingTx.wallet.id, requests) }
+        check(signed.size == requests.size) { "Ledger returned ${signed.size} signatures for ${requests.size} transactions" }
+        if (signableUntil?.hasPassedNow() == true) {
+            throw QuoteExpiredException()
+        }
+
+        val prerequisites = prerequisiteTxs.mapIndexed { index, (prerequisiteTx, _) ->
+            SignedTx(tx = prerequisiteTx, data = signed[index])
+        }
+        val mains = mainTxs.mapIndexed { index, main ->
+            val position = prerequisiteTxs.size + index
+            val quote = pendingTx.quote.takeIf { index == 0 }
+            SignedTx(
+                tx = main,
+                data = signed[position],
+                service = quote?.provider?.id,
+                routeId = quote?.routeId,
+                serviceTxId = quote?.providerTxId,
+                sellBaseAmount = quote?.sourceBaseAmount,
+                waitForNonce = (nonce + BigInteger.fromInt(position)).takeIf { index > 0 },
+            )
+        }
+        return prerequisites + mains
+    }
+
     /** What [tx], sent ahead of [main], is signed as. */
     protected open fun signableApproval(tx: Transaction, main: Transaction): Transaction = tx
 
@@ -756,6 +883,7 @@ abstract class BaseTransactionConfirmFeature(
 
         while (state.signed.isNotEmpty()) {
             val item = state.signed.first()
+            item.waitForNonce?.let { awaitNonce(item.tx.account, it) }
             val result = withContext(Async.Io) {
                 provider.sendTransaction(
                     walletId = reportedWalletId(pendingTx),
@@ -770,8 +898,37 @@ abstract class BaseTransactionConfirmFeature(
             val nodeError = result.error
             if (nodeError != null) {
                 L.e(nodeError)
+                val error = when {
+                    item.waitForNonce != null -> {
+                        sendData.value = SendData(pendingTx, emptyList(), state.hash)
+                        ConfirmationError.PartiallySent
+                    }
+                    nodeError.isRejection && state.headMaybeSent -> {
+                        sendData.value = SendData(pendingTx, emptyList(), state.hash)
+                        notifyTransactionSent(pendingTx)
+                        ConfirmationError.OutcomeUnknown
+                    }
+                    // The nonce may be this transaction's own, sent by a resend the node answered late:
+                    // it is neither prepared nor signed again, the user checks the history. A dapp is
+                    // answered that it failed, as for an outcome unknown: it gets no hash it could be
+                    // sure of, and the history, not the dapp, tells the user whether it went out.
+                    nodeError is NodeError.NonceTaken -> {
+                        sendData.value = SendData(pendingTx, emptyList(), state.hash)
+                        // The history the user is told to check picks it up if it is out.
+                        notifyTransactionSent(pendingTx)
+                        ConfirmationError.NonceTaken
+                    }
+                    nodeError.isRejection && state.hash == null -> {
+                        sendData.value = SendData(pendingTx, emptyList(), staleBeforeSend = true)
+                        parseNodeError(nodeError)
+                    }
+                    nodeError is NodeError.NetworkWrap || nodeError is NodeError.Unknown -> {
+                        sendData.value = SendData(pendingTx, state.signed, state.hash, headMaybeSent = true)
+                        parseNodeError(nodeError)
+                    }
+                    else -> parseNodeError(nodeError)
+                }
                 sendingState.tryEmit(SendingState.None)
-                val error = parseNodeError(nodeError)
                 confirmationError.tryEmit(error)
                 failure(error)
                 analytics.swapFailed(pendingTx, error)
@@ -787,61 +944,86 @@ abstract class BaseTransactionConfirmFeature(
         return state.hash
     }
 
-    private fun confirmTransaction(context: Context, signing: Signing.Tx, pendingTx: PendingTransaction) {
+    private suspend fun awaitNonce(account: Account, nonce: BigInteger) {
+        repeat(NONCE_WAIT_ATTEMPTS) {
+            val current = withContext(Async.Io) { provider.getNonce(account) }.value
+            if (current != null && current >= nonce) {
+                return
+            }
+            delay(NONCE_WAIT_INTERVAL_MS)
+        }
+    }
+
+    private fun confirmTransaction(signing: Signing.Tx, pendingTx: PendingTransaction): Job? {
         val selected = selectedFee(pendingTx)
         if (selected != null && !TxFeeLogic.isSufficient(selected)) {
             confirmationError.tryEmit(ConfirmationError.InsufficientBalance)
-            return
+            return null
         }
         if (selected?.viaRelayer == true) {
-            confirmWithRelayer(context, signing, pendingTx, selected)
-            return
+            return confirmWithRelayer(signing, pendingTx, selected)
         }
         val tx = Signing.Tx(value = signing.sentWith(selected), batchToSign = signing.batchToSign)
 
         val fee = pendingTx.signingFee ?: pendingTx.fee.estimated ?: run {
             confirmationError.tryEmit(pendingTx.fee.error ?: ConfirmationError.Unknown)
-            return
+            return null
         }
         val nonce = pendingTx.nonce ?: run {
             confirmationError.tryEmit(pendingTx.fee.error ?: ConfirmationError.Unknown)
-            return
+            return null
         }
 
         analytics.swapConfirm(pendingTx)
 
         sendingState.tryEmit(SendingState.Loading)
 
-        mainScope.launch {
+        return mainScope.launch {
             try {
-                analytics.redOperation(analytics.sendOperation) {
-                    val committed = sendData.value ?: run {
-                        val signed = signCommitted(context, tx, pendingTx, fee, nonce) ?: return@launch
+                analytics.redOperation(
+                    operation = analytics.sendOperation,
+                    attemptSource = analytics.sendAttemptSource,
+                    otherMetadata = analytics.sendMetadata(tx.value, selected, pendingTx.quote),
+                ) {
+                    val committed = sendData.value?.takeUnless { it.staleBeforeSend } ?: run {
+                        val signed = signCommitted(tx, pendingTx, fee, nonce) ?: return@launch
+                        stopIfGone()
                         SendData(pendingTx, signed).also { sendData.value = it }
                     }
 
                     val signedResult = if (pendingTx.request.action.withSend) {
                         val hash = broadcast(pendingTx, committed) ?: return@launch
-                        analytics.transactionSent(tx.value, selected, pendingTx.quote)
+                        analytics.transactionSent(tx.value, selected, pendingTx.quote, pendingTx.wallet.isHardware, ledgerModelOf(pendingTx))
                         analytics.swapSuccess(pendingTx)
                         trackSuccessfulSend(pendingTx)
                         hash
                     } else {
-                        committed.signed.last().data.toHex()
+                        val signed = committed.signed.last()
+                        provider.signedTransactionHex(signed.tx.account.chain, signed.data)
                     }
 
-                    approveDappRequest(pendingTx, signedResult)
+                    approveDappRequest(signedResult)
                     success()
                 }
             } catch (e: Throwable) {
                 sendingState.tryEmit(SendingState.None)
                 verifyError(e)
                 L.e(e)
-                confirmationError.tryEmit(ConfirmationError.Unknown)
-                analytics.swapFailed(pendingTx, ConfirmationError.Unknown, e)
+                val error = when (e) {
+                    is QuoteExpiredException -> {
+                        if (sendData.value == null) {
+                            sendData.value = SendData(pendingTx, emptyList(), staleBeforeSend = true)
+                        }
+                        ConfirmationError.Expired
+                    }
+                    else -> e.toConfirmationError()
+                }
+                confirmationError.tryEmit(error)
+                analytics.swapFailed(pendingTx, error, e)
                 return@launch
             }
 
+            onSent()
             sendingState.tryEmit(SendingState.Done)
             delay(SUCCESS_HOLD_MS)
             onSendSucceeded()
@@ -852,36 +1034,62 @@ abstract class BaseTransactionConfirmFeature(
     // A relayer send that fails surfaces the error as-is: never fall back to a chainkit broadcast,
     // the relayer may already have accepted the transaction.
     private fun confirmWithRelayer(
-        context: Context,
         tx: Signing.Tx,
         pendingTx: PendingTransaction,
         option: TxFee,
-    ) {
+    ): Job? {
         val relayer = pendingTx.fee.relayer ?: run {
             confirmationError.tryEmit(ConfirmationError.Unknown)
-            return
+            return null
         }
 
         sendingState.tryEmit(SendingState.Loading)
 
-        mainScope.launch {
+        return mainScope.launch {
             try {
                 analytics.swapConfirm(pendingTx)
-                val signer = unlockConfirmedSigner(context, pendingTx)
-                sendData.value = SendData(pendingTx, emptyList())
-                withContext(Async.Io) {
-                    relayer.send(signer, option)
-                }
+                analytics.redOperation(
+                    operation = analytics.sendOperation,
+                    attemptSource = analytics.sendAttemptSource,
+                    otherMetadata = analytics.sendMetadata(tx.value, option, pendingTx.quote),
+                ) {
+                    requireSignatureEnabled(tx.value.account)
+                    val signer = if (pendingTx.wallet.isHardware) {
+                        RelayerSigner.Ledger(pendingTx.wallet.id)
+                    } else {
+                        RelayerSigner.Software(unlockConfirmedSigner(pendingTx))
+                    }
+                    sendData.value = SendData(pendingTx, emptyList())
+                    ledgerCall {
+                        withContext(Async.Io) {
+                            relayer.send(signer, option)
+                        }
+                    }
 
-                analytics.transactionSent(tx.value, option, pendingTx.quote)
-                analytics.swapSuccess(pendingTx)
-                notifyTransactionSent(pendingTx)
-                trackSuccessfulSend(pendingTx)
+                    analytics.transactionSent(tx.value, option, pendingTx.quote, pendingTx.wallet.isHardware, ledgerModelOf(pendingTx))
+                    analytics.swapSuccess(pendingTx)
+                    notifyTransactionSent(pendingTx)
+                    trackSuccessfulSend(pendingTx)
+                    success()
+                }
+                onSent()
                 sendingState.tryEmit(SendingState.Done)
                 delay(SUCCESS_HOLD_MS)
                 onSendSucceeded()
                 finish()
             } catch (e: Throwable) {
+                val nothingSent = when (e) {
+                    is LedgerDismissedException,
+                    is LedgerFailureException,
+                    is RelayerQuoteExpiredException,
+                    is QuoteExpiredException -> true
+
+                    is RelayerRejectedException -> e.nothingSent
+                    else -> false
+                }
+                if (nothingSent) {
+                    sendData.value = null
+                }
                 sendingState.tryEmit(SendingState.None)
                 verifyError(e)
                 L.e(e)
@@ -892,22 +1100,37 @@ abstract class BaseTransactionConfirmFeature(
                     }
 
                     // Nothing was sent and what was quoted is gone: unlock, so a retry prepares again.
-                    is RelayerQuoteExpiredException -> {
-                        sendData.value = null
+                    is RelayerQuoteExpiredException, is QuoteExpiredException -> {
                         confirmationError.tryEmit(ConfirmationError.Expired)
                     }
 
                     is RelayerRejectedException -> {
-                        if (e.nothingSent) {
-                            sendData.value = null
-                        }
                         confirmationError.tryEmit(ConfirmationError.RelayerRejected(e.reason.orEmpty()))
                     }
 
-                    else -> confirmationError.tryEmit(ConfirmationError.Unknown)
+                    else -> confirmationError.tryEmit(e.toConfirmationError())
                 }
             }
         }
+    }
+
+    private fun Throwable.toConfirmationError(): ConfirmationError {
+        if (this is ConfirmationErrorCause) {
+            return confirmationError
+        }
+        val failure = (this as? LedgerFailureException)?.failure
+        return if (failure is LedgerFailure.Unsupported) {
+            ConfirmationError.LedgerUnsupported
+        } else {
+            ConfirmationError.Unknown
+        }
+    }
+
+    private suspend fun ledgerModelOf(pendingTx: PendingTransaction): TransactionSentLedgerModel? {
+        if (!pendingTx.wallet.isHardware) {
+            return null
+        }
+        return accountRepo.ledgerModel(pendingTx.wallet.id)?.toTransactionSentModel()
     }
 
     private fun trackSuccessfulSend(pendingTx: PendingTransaction) {
@@ -937,3 +1160,7 @@ abstract class BaseTransactionConfirmFeature(
         }
     }
 }
+
+// The node refused the transaction itself, a taken nonce included.
+private val NodeError.isRejection: Boolean
+    get() = this is NodeError.Rejected || this is NodeError.NonceTaken

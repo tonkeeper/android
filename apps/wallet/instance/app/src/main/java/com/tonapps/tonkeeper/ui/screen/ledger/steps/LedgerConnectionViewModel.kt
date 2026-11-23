@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import com.tonapps.log.L
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.tonapps.ledger.ble.BleManager
 import com.tonapps.ledger.ble.BleManagerFactory
@@ -23,6 +24,7 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.ledger.LedgerException
 import com.tonapps.ledger.ble.BleTransport
+import com.tonapps.ledger.ble.model.BleDeviceModel
 import com.tonapps.ledger.ble.ConnectedDevice
 import com.tonapps.ledger.devices.DeviceModelId
 import com.tonapps.ledger.devices.Devices
@@ -37,6 +39,12 @@ import com.tonapps.ledger.ton.TonTransport
 import com.tonapps.ledger.ton.Transaction
 import com.tonapps.ledger.transport.TransportStatusException
 import com.tonapps.ledger.usb.LedgerUsb
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowLedgerTransport
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowPairingAction
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowPairingLastStep
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
+import com.tonapps.bus.walletimport.WalletImportPairingSession
+import com.tonapps.bus.walletimport.WalletImportPairingSessions
 import com.tonapps.tonkeeper.extensions.isVersionLowerThan
 import com.tonapps.tonkeeper.ui.screen.init.WalletImportAnalytics
 import com.tonapps.tonkeeper.ui.screen.init.list.AccountItem
@@ -71,6 +79,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,6 +99,8 @@ class LedgerConnectionViewModel(
     private val settingsRepository: SettingsRepository,
     private val api: API,
     private val importAnalytics: WalletImportAnalytics,
+    private val pairingSessions: WalletImportPairingSessions,
+    savedStateHandle: SavedStateHandle,
 ) : AndroidViewModel(app) {
     private val bleManager: BleManager = BleManagerFactory.newInstance(context)
     private val usbLedger = LedgerUsb(context)
@@ -152,7 +163,7 @@ class LedgerConnectionViewModel(
         override fun onReceive(context: Context, intent: Intent) {
             if (BluetoothAdapter.ACTION_STATE_CHANGED == intent.action) {
                 val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
-                _bluetoothState.tryEmit(state)
+                emitBluetoothState(state)
             }
         }
     }
@@ -168,9 +179,16 @@ class LedgerConnectionViewModel(
     val connectedLedgerModel: DeviceModelId?
         get() = _connectedDevice?.model?.id
 
+    private val isImportPairing = savedStateHandle.get<Boolean>(ARG_IMPORT_PAIRING) == true
+
+    private val pairingSession: WalletImportPairingSession?
+        get() = pairingSessions.active(WalletFlowWalletSource.Ledger)?.takeIf { isImportPairing && isPairing }
+
     init {
         collectFlow(connectionType) { type ->
             if (type == LedgerConnectionType.USB) {
+                pairingSession?.setBlocked(WalletImportPairingSession.Blocker.BluetoothOff, isBlocked = false)
+                pairingSession?.setBlocked(WalletImportPairingSession.Blocker.BluetoothPermissionDenied, isBlocked = false)
                 stopBle()
                 startWaitUsbDevice()
                 settingsRepository.ledgerConnectUsb = true
@@ -184,12 +202,22 @@ class LedgerConnectionViewModel(
 
     private fun startWaitUsbDevice() {
         _connectionState.tryEmit(ConnectionState.Scanning)
+        pairingSession?.setBlocked(WalletImportPairingSession.Blocker.ConnectionError, isBlocked = false)
+        pairingSession?.action(WalletFlowPairingAction.DeviceSearchStarted)
         ledgerUsbJob = usbLedger
             .deviceFlow()
             .distinctUntilChanged()
+            .onEach { device ->
+                pairingSession?.deviceFound(
+                    deviceId = "${device.vendorId}:${device.productId}",
+                    transport = WalletFlowLedgerTransport.Usb,
+                    ledgerModel = Devices.fromUSBProductId(device.productId).id.toWalletFlowLedgerModel(),
+                )
+            }
             .map(usbLedger::connectDevice)
             .map { transport ->
                 _connectionState.tryEmit(ConnectionState.Connected)
+                pairingSession?.connected()
                 setConnectedDevice(
                     ConnectedDevice(
                         transport.serialNumber,
@@ -212,6 +240,7 @@ class LedgerConnectionViewModel(
                 disconnectUsb()
 
                 if (it is SecurityException) {
+                    pairingSession?.setBlocked(WalletImportPairingSession.Blocker.ConnectionError)
                     _eventFlow.tryEmit(LedgerEvent.Error(context.getString(Localization.ledger_usb_permission_error)))
                 }
             }
@@ -241,8 +270,20 @@ class LedgerConnectionViewModel(
 
         // Emit initial state
         val initialState = bluetoothAdapter?.state ?: BluetoothAdapter.ERROR
-        _bluetoothState.tryEmit(initialState)
+        emitBluetoothState(initialState)
         _connectionState.tryEmit(ConnectionState.Idle)
+    }
+
+    private fun emitBluetoothState(state: Int) {
+        when (state) {
+            BluetoothAdapter.STATE_OFF -> pairingSession?.setBlocked(WalletImportPairingSession.Blocker.BluetoothOff)
+            BluetoothAdapter.STATE_ON -> pairingSession?.setBlocked(WalletImportPairingSession.Blocker.BluetoothOff, isBlocked = false)
+        }
+        _bluetoothState.tryEmit(state)
+    }
+
+    fun onBluetoothPermissionDenied() {
+        pairingSession?.setBlocked(WalletImportPairingSession.Blocker.BluetoothPermissionDenied)
     }
 
     private fun unregisterReceiverBle() {
@@ -294,6 +335,7 @@ class LedgerConnectionViewModel(
             _connectionState.tryEmit(ConnectionState.Scanning)
 
             val started = bleManager.startScanning { devices ->
+                devices.forEach(::reportFoundBleDevice)
                 val device = devices.firstOrNull() ?: return@startScanning
 
                 try {
@@ -309,8 +351,20 @@ class LedgerConnectionViewModel(
                 _eventFlow.tryEmit(
                     LedgerEvent.Error(context.getString(Localization.something_went_wrong))
                 )
+            } else {
+                pairingSession?.setBlocked(WalletImportPairingSession.Blocker.BluetoothPermissionDenied, isBlocked = false)
+                pairingSession?.setBlocked(WalletImportPairingSession.Blocker.ConnectionError, isBlocked = false)
+                pairingSession?.action(WalletFlowPairingAction.DeviceSearchStarted)
             }
         }
+    }
+
+    private fun reportFoundBleDevice(device: BleDeviceModel) {
+        pairingSession?.deviceFound(
+            deviceId = device.id,
+            transport = WalletFlowLedgerTransport.Bluetooth,
+            ledgerModel = device.serviceId?.let { Devices.fromServiceUuid(it).id.toWalletFlowLedgerModel() },
+        )
     }
 
     private fun connectBle(deviceId: String) {
@@ -341,6 +395,7 @@ class LedgerConnectionViewModel(
             val device = ConnectedDevice(deviceId, Devices.fromServiceUuid(it.serviceId!!))
             setConnectedDevice(device)
             _connectionState.tryEmit(ConnectionState.Connected)
+            pairingSession?.connected()
             if (isPairing) {
                 val ledgerModel = device.model.id.toWalletFlowLedgerModel()
                 viewModelScope.launch { importAnalytics.trackLedgerBluetoothConnected(ledgerModel) }
@@ -395,6 +450,7 @@ class LedgerConnectionViewModel(
 
         if (transport != null) {
             _connectionState.tryEmit(ConnectionState.TonAppOpened)
+            pairingSession?.advance(WalletFlowPairingLastStep.AppOpened)
             if (isPairing) {
                 val ledgerModel = connectedLedgerModel?.toWalletFlowLedgerModel()
                 viewModelScope.launch { importAnalytics.trackLedgerAppOpened(ledgerModel) }
@@ -494,15 +550,16 @@ class LedgerConnectionViewModel(
                 val wallet = getWallet()
                 val ledgerConfig = getLedgerConfig()
                 val path = AccountPath(ledgerConfig.accountIndex)
-                val transaction = withKnownJetton(_transaction!!, wallet, version)
+                val supported = _transaction!!.withWhalesHintSupportedBy { !version.isVersionLowerThan(it) }
+                val transaction = withKnownJetton(supported, wallet, version)
 
                 val signedBody = try {
                     _tonTransport!!.signTransaction(path, transaction)
                 } catch (e: TransportStatusException.TxParsingFailed) {
-                    if (transaction === _transaction) {
+                    if (transaction === supported) {
                         throw e
                     }
-                    _tonTransport!!.signTransaction(path, _transaction!!)
+                    _tonTransport!!.signTransaction(path, supported)
                 }
 
                 TransactionSentAnalytics.rememberLedgerModel(
@@ -799,5 +856,9 @@ class LedgerConnectionViewModel(
         }
 
         return uiItems
+    }
+
+    companion object {
+        const val ARG_IMPORT_PAIRING = "import_pairing"
     }
 }

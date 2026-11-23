@@ -11,7 +11,8 @@ data class EarnPositionUi(
     val networkName: String,
     val protocolName: String,
     val balanceFormat: String,
-    val earnedFormat: String,
+    val earnedFormat: String?,
+    val isProfit: Boolean,
 ) {
     val id: String
         get() = "$network/$vaultId"

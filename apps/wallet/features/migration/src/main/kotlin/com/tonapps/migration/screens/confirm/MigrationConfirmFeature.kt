@@ -25,7 +25,9 @@ import com.tonapps.migration.data.MigrationTonFee
 import com.tonapps.migration.data.MigrationTronFee
 import com.tonapps.migration.data.resolveFeeShortage
 import com.tonapps.mvi.AsyncViewModel
+import com.tonapps.wallet.data.battery.BatteryMigrationProof
 import com.tonapps.wallet.data.battery.BatteryRepository
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.tx.TransactionManager
@@ -441,10 +443,6 @@ class MigrationConfirmFeature(
         }
         val result = current.prepareResult
 
-        Async.globalScope().launch {
-            migrationRepository.completeRaffleMigration(result.destinationWallet.id)
-        }
-
         signingState.tryEmit(MigrationSigningState.Sending)
         sentTransactions.tryEmit(0)
         errorMessage.tryEmit(null)
@@ -483,7 +481,18 @@ class MigrationConfirmFeature(
         try {
             totalTransactions.tryEmit(totalSteps)
 
-            signUseCase.unlockAndSign(context = context, wallet = wallet) {
+            // TRON and the battery proof are not signed by the TON wallet's key: only TON transfers wait for 2FA.
+            if (transactions.isNotEmpty()) {
+                signUseCase.requireSignatureEnabled(wallet)
+            }
+            Async.globalScope().launch {
+                migrationRepository.completeRaffleMigration(result.destinationWallet.id)
+            }
+            val batteryProof = signUseCase.unlockAndSign(
+                context = context,
+                wallet = wallet,
+                reason = PasscodeReason.MIGRATE_WALLET,
+            ) {
                 if (transactions.isNotEmpty()) {
                     failedPart = MigrationFailedPart.Ton
                 }
@@ -547,11 +556,24 @@ class MigrationConfirmFeature(
                         },
                     )
                 }
+
+                BatteryMigrationProof.create(
+                    walletId = result.destinationWallet.id,
+                    publicKey = wallet.publicKey.key.toByteArray(),
+                    sign = this::signMessage,
+                )
             }
 
             migrationRepository.invalidateWalletsCount()
             signingState.tryEmit(MigrationSigningState.Success)
             MigrationAnalytics.transactionSuccess(feeAsset)
+            if (batteryProof == null) {
+                L.w("MigrationConfirmFeature", "Battery migration proof is unavailable")
+            } else {
+                Async.globalScope().launch {
+                    migrationRepository.migrateBattery(wallet, result.destinationWallet.id, batteryProof)
+                }
+            }
         } catch (error: CancellationException) {
             signingState.tryEmit(MigrationSigningState.Idle)
         } catch (error: Throwable) {

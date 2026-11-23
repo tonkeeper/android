@@ -30,4 +30,7 @@ interface PerpsFundingDao {
 
     @Query("DELETE FROM perps_funding WHERE operation_id IN (:operationIds)")
     suspend fun delete(operationIds: List<String>)
+
+    @Query("UPDATE perps_funding SET status_acknowledged = 1 WHERE operation_id IN (:operationIds)")
+    suspend fun acknowledge(operationIds: List<String>)
 }

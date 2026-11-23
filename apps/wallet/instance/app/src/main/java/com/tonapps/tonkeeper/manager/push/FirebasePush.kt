@@ -21,6 +21,7 @@ import com.tonapps.wallet.data.dapps.entities.AppPushEntity
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.settings.SettingsRepository
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.koin.android.ext.android.inject
 import kotlin.coroutines.resume
@@ -34,12 +35,37 @@ class FirebasePush: FirebaseMessagingService() {
     private val perpsScreenTracker: PerpsScreenTracker by inject()
     private val passcodeManager: PasscodeManager by inject()
 
+    override fun handleIntent(intent: Intent) {
+        applyWalletNameToBody(intent)
+        super.handleIntent(intent)
+    }
+
+    private fun applyWalletNameToBody(intent: Intent) {
+        val bodyKeys = NOTIFICATION_BODY_KEYS.filter(intent::hasExtra)
+        if (bodyKeys.isEmpty()) {
+            return
+        }
+        try {
+            val body = runBlocking {
+                PushBodyTemplate.resolve(
+                    data = intent::getStringExtra,
+                    getWalletsCount = { unifiedAccountRepository.getWalletsCount() },
+                    findWalletNameById = { unifiedAccountRepository.getTonWalletById(it)?.label?.name },
+                    findWalletNameByAddress = { unifiedAccountRepository.getTonWalletByAccountId(it)?.label?.name },
+                )
+            } ?: return
+            bodyKeys.forEach { intent.putExtra(it, body) }
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
+    }
+
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
         if (message.data["type"] == "console_dapp_notification") {
             onDAppPushReceived(message.data)
         } else {
-            onPerpsPushReceived(message)
+            onPerpsOrLoyaltyPushReceived(message)
         }
     }
 
@@ -53,11 +79,11 @@ class FirebasePush: FirebaseMessagingService() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun onPerpsPushReceived(message: RemoteMessage) {
+    private fun onPerpsOrLoyaltyPushReceived(message: RemoteMessage) {
         try {
             val data = message.data
             val route = DeepLinkRoute.pushLink(data::get)?.let(DeepLinkRoute::resolve)
-            if (route !is DeepLinkRoute.Perps && data["type"]?.startsWith("perps_") != true) {
+            if (!PushDisplayFilter.isPerpsOrLoyalty(route, data::get)) {
                 return
             }
             val onScreen = when (route) {
@@ -110,6 +136,8 @@ class FirebasePush: FirebaseMessagingService() {
     }
 
     companion object {
+
+        private val NOTIFICATION_BODY_KEYS = listOf("gcm.notification.body", "gcm.n.body")
 
         suspend fun requestToken(): String? = suspendCancellableCoroutine { continuation ->
             FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->

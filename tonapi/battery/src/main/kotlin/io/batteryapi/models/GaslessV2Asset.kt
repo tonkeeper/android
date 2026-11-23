@@ -30,11 +30,7 @@ data class GaslessV2Asset(
     @SerialName(value = "decimals")
     val decimals: Int,
     @SerialName(value = "image")
-    val image: String? = null,
-
-    /* null for battery, which is not chain-scoped */
-    @SerialName(value = "chain")
-    val chain: String? = null
+    val image: String? = null
 ) {
 }
 

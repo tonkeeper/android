@@ -156,8 +156,8 @@ class PurchaseRepository(
     }
 
     private fun load(network: TonNetwork, locale: Locale, walletId: String?): PurchaseDataEntity? {
-        val json = api.getFiatMethods(network, locale, walletId) ?: return null
-        return PurchaseDataEntity(json)
+        val data = api.getFiatMethods(network, locale, walletId) ?: return null
+        return PurchaseDataEntity(data)
     }
 
     private fun cacheKey(network: TonNetwork, locale: Locale, walletId: String?): String {

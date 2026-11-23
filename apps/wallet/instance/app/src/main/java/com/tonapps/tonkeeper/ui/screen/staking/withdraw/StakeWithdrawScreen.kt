@@ -6,8 +6,10 @@ import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.extensions.getTitle
+import com.tonapps.tonkeeper.extensions.setFailedLabel
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
+import com.tonapps.tonkeeper.ui.screen.staking.StakingInsufficientFundsDialog
 import com.tonapps.tonkeeper.view.TransactionDetailView
 import com.tonapps.tonkeeperx.R
 import com.tonapps.blockchain.model.legacy.WalletEntity
@@ -97,15 +99,35 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
     private fun send() {
         setTaskState(ProcessTaskView.State.LOADING)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val insufficientFunds = viewModel.checkInsufficientFunds()
+            if (insufficientFunds != null) {
+                setTaskState(ProcessTaskView.State.DEFAULT)
+                StakingInsufficientFundsDialog(
+                    context = requireContext(),
+                    wallet = wallet,
+                ).show(insufficientFunds)
+            } else {
+                sendWithdraw()
+            }
+        }
+    }
+
+    private fun sendWithdraw() {
         viewModel.send(requireContext()).catch { e ->
-            val state = if (e is CancellationException) ProcessTaskView.State.DEFAULT else ProcessTaskView.State.FAILED
+            val state = if (e is CancellationException) {
+                ProcessTaskView.State.DEFAULT
+            } else {
+                ProcessTaskView.State.FAILED
+            }
+            taskView.setFailedLabel(e)
             setTaskState(state)
         }.onEach {
             setTaskState(ProcessTaskView.State.SUCCESS)
             navigation?.openURL("tonkeeper://activity?from=stake")
             delay(2000)
             finish()
-        }.launchIn(lifecycleScope)
+        }.launchIn(viewLifecycleOwner.lifecycleScope)
     }
 
     private fun setTaskState(state: ProcessTaskView.State) {
@@ -130,7 +152,7 @@ class StakeWithdrawScreen(wallet: WalletEntity): WalletContextScreen(R.layout.fr
 
     private fun setFailedState() {
         taskView.state = ProcessTaskView.State.FAILED
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             delay(3000)
             setDefaultState()
         }

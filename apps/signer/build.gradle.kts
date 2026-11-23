@@ -1,7 +1,6 @@
 
 plugins {
     id("target.android.app")
-    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -9,8 +8,8 @@ android {
     defaultConfig {
         applicationId = "com.tonapps.signer"
         minSdk = 26
-        versionCode = 23
-        versionName = "0.2.3"
+        versionCode = 24
+        versionName = "26.11.0"
     }
 
     lint {
@@ -19,6 +18,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = false
     }
 
     buildTypes {
@@ -78,5 +78,11 @@ dependencies {
     implementation(projects.lib.qr)
     implementation(projects.lib.security)
     implementation(projects.lib.icu)
+
+    testImplementation(libs.junit)
+}
+
+tasks.withType<Test>().configureEach {
+    enabled = true
 }
 

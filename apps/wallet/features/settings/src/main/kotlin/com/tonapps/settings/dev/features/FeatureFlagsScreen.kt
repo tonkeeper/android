@@ -1,12 +1,15 @@
 package com.tonapps.settings.dev.features
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.tonapps.core.flags.FeatureManager
 import com.tonapps.core.flags.WalletFeatureKey
 import com.tonapps.core.helper.T
@@ -22,15 +25,20 @@ fun FeatureFlagsScreen(
         title = "Features",
         onBack = onBack,
         content = {
-            Column {
-                val keys = remember { WalletFeatureKey.entries }
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                val keys = remember { WalletFeatureKey.switchable }
                 for (i in keys) {
                     var isEnabled by remember { mutableStateOf(FeatureManager.isEnabled(i)) }
                     val isOverridden = remember(isEnabled) { FeatureManager.isOverridden(i) }
+                    val applyHint = if (i == WalletFeatureKey.IS_LIQUID_GLASS_ENABLED) {
+                        "Force-stop the app to apply!"
+                    } else {
+                        "Please reload app for correct behaviour!"
+                    }
                     val setFeature = { newValue: Boolean ->
                         isEnabled = newValue
                         FeatureManager.setFeatureEnabled(i, isEnabled)
-                        T.show("Feature is ${if (isEnabled) "enabled" else "disabled"}! Please reload app for correct behaviour!")
+                        T.show("Feature is ${if (isEnabled) { "enabled" } else { "disabled" }}! $applyHint")
                     }
 
                     TextCell(
@@ -61,7 +69,7 @@ fun FeatureFlagsScreen(
                         onLongClick = {
                             FeatureManager.reset(i)
                             isEnabled = FeatureManager.isEnabled(i)
-                            T.show("Feature $i is sync with remote!")
+                            T.show("Feature $i is sync with remote! $applyHint")
                         }
                     )
                 }

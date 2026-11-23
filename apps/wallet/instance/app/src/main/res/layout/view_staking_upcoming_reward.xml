@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="76dp"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/offsetMedium">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label1"
+            android:textColor="?attr/textPrimaryColor" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/offsetMedium"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.Label1" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:singleLine="true"
+        android:textAppearance="@style/TextAppearance.Body2"
+        android:textColor="?attr/textSecondaryColor" />
+
+</androidx.appcompat.widget.LinearLayoutCompat>

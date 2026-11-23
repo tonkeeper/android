@@ -3,12 +3,9 @@ package com.tonapps.bus.core
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
-import com.aptabase.Aptabase
-import com.aptabase.InitOptions
 import com.tonapps.async.Async
 import com.tonapps.async.AsyncPlatform
 import com.tonapps.bus.core.aptabase.AnalyticsEventSequence
-import com.tonapps.bus.core.aptabase.AnalyticsTransport
 import com.tonapps.bus.core.aptabase.AnalyticsTransportProps
 import com.tonapps.bus.core.aptabase.AptabaseDispatcher
 import com.tonapps.bus.core.aptabase.AptabaseEndpoint
@@ -20,9 +17,6 @@ import com.tonapps.bus.core.aptabase.HttpUrlConnectionClient
 import com.tonapps.bus.core.aptabase.PrefsSequenceStorage
 import com.tonapps.bus.core.contract.EventExecutor
 import com.tonapps.bus.generated.Events
-import com.tonapps.core.flags.FeatureKey
-import com.tonapps.core.flags.FeatureManager
-import com.tonapps.core.flags.FeatureSource
 import com.tonapps.extensions.currentTimeMillis
 import com.tonapps.log.L
 import kotlinx.coroutines.CancellationException
@@ -53,23 +47,14 @@ class AptabaseEventExecutor(
 
     private val pendingEvents = ArrayDeque<PendingEvent>()
     private var isStarted = false
-    private var cohortSource = FeatureSource.Default
     private lateinit var sequence: AnalyticsEventSequence
     private var queueClient: AptabaseQueueClient? = null
     private var config: AnalyticsHelper.Config? = null
-    private var isSdkReady = false
 
-    private val isReady: Boolean
-        get() = queueClient != null || isSdkReady
-
-    fun start(context: Context, persistentCacheFeature: FeatureKey) {
+    fun start(context: Context) {
         scope.launch {
             guarded("start") {
-                startNow(
-                    context = context,
-                    persistentCacheEnabled = FeatureManager.isEnabled(persistentCacheFeature),
-                    cohortSource = FeatureManager.source(persistentCacheFeature),
-                )
+                startNow(context)
             }
         }
     }
@@ -82,16 +67,13 @@ class AptabaseEventExecutor(
             this@AptabaseEventExecutor.config = config
             guarded("setConfig") {
                 if (!isStarted) {
-                    startNow(context, persistentCacheEnabled = false, cohortSource = FeatureSource.Default)
+                    startNow(context)
                 }
                 val client = queueClient
                 if (client != null) {
                     connect(client, config)
                 } else {
-                    Aptabase.instance.initialize(context, config.aptabaseAppKey, InitOptions(host = config.aptabaseEndpoint))
-                    isSdkReady = true
-                    L.d("Aptabase: sdk transport ready, ${pendingEvents.size} early events")
-                    drainPendingEvents()
+                    L.w("Aptabase: queue is unavailable, events stay pending")
                 }
             }
         }
@@ -104,7 +86,7 @@ class AptabaseEventExecutor(
                 if (isStarted) {
                     pending.sequence = sequence.next()
                 }
-                if (isReady) {
+                if (queueClient != null) {
                     dispatch(pending)
                 } else {
                     if (pendingEvents.size >= MAX_PENDING_EVENTS) {
@@ -128,19 +110,13 @@ class AptabaseEventExecutor(
         }
     }
 
-    private fun startNow(context: Context, persistentCacheEnabled: Boolean, cohortSource: FeatureSource) {
+    private fun startNow(context: Context) {
         if (isStarted) {
             return
         }
         sequence = AnalyticsEventSequence(PrefsSequenceStorage(context))
-        this.cohortSource = cohortSource
         isStarted = true
         val storeDirectory = File(context.noBackupFilesDir, STORE_DIRECTORY)
-        if (!persistentCacheEnabled) {
-            AptabaseEventStore.purge(storeDirectory)
-            L.d("Aptabase: persistent cache disabled, cohort $cohortSource")
-            return
-        }
         val environment = AptabaseEnvironment.current(context)
         val client = AptabaseQueueClient(
             store = AptabaseEventStore(directory = storeDirectory, clock = clock),
@@ -157,7 +133,7 @@ class AptabaseEventExecutor(
         client.start()
         queueClient = client
         observeNetwork(context, client)
-        L.d("Aptabase: persistent cache enabled, cohort $cohortSource, ${pendingEvents.size} early events")
+        L.d("Aptabase: queue started, ${pendingEvents.size} early events")
         drainPendingEvents()
     }
 
@@ -197,31 +173,21 @@ class AptabaseEventExecutor(
     }
 
     private fun dispatch(pending: PendingEvent) {
-        val client = queueClient
-        if (client != null) {
-            client.track(
-                AptabaseQueueClient.PendingEvent(
-                    name = pending.eventName,
-                    props = AptabaseProps.toJson(baseProps(pending, AnalyticsTransport.Cache)),
-                    timestampMillis = pending.timestampMillis,
-                )
+        val client = queueClient ?: return
+        client.track(
+            AptabaseQueueClient.PendingEvent(
+                name = pending.eventName,
+                props = AptabaseProps.toJson(baseProps(pending)),
+                timestampMillis = pending.timestampMillis,
             )
-            return
-        }
-        val config = config ?: return
-        Aptabase.instance.trackEvent(pending.eventName, baseProps(pending, AnalyticsTransport.Sdk) + configProps(config))
+        )
     }
 
-    private fun baseProps(pending: PendingEvent, transport: AnalyticsTransport): Map<String, Any> {
+    private fun baseProps(pending: PendingEvent): Map<String, Any> {
         val props = HashMap<String, Any>(AptabaseProps.normalize(pending.props))
         props["schema_version"] = Events.VERSION
         props["platform"] = PLATFORM
-        AnalyticsTransportProps.decorate(
-            props = props,
-            transport = transport,
-            cohortSource = cohortSource,
-            sequence = pending.sequence ?: sequence.next(),
-        )
+        AnalyticsTransportProps.decorate(props = props, sequence = pending.sequence ?: sequence.next())
         return props
     }
 

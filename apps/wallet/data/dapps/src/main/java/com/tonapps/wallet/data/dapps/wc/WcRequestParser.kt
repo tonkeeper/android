@@ -13,7 +13,6 @@ import com.tonapps.chainkit.chain.ethereum.utils.EvmCall
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.Network
 import com.tonapps.chainkit.core.chain.model.account.TokenType
-import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.wc.WcRouteAdapter
 import com.tonapps.wc.chains.WcRequestData
 import com.tonapps.wc.chains.ethereum.WcEthSignMessage
@@ -27,7 +26,6 @@ import com.tonapps.wc.models.WcConnection
 import com.tonapps.wc.models.WcDappConnection
 import com.tonapps.wc.models.WcSessionProposal
 import com.tonapps.wc.models.WcValidation
-import java.math.BigInteger
 
 class WcRequestParser : WcRouteAdapter {
 
@@ -143,16 +141,20 @@ class WcRequestParser : WcRouteAdapter {
                 topic = proposal.topic,
                 iconUrl = peer.icon
             ),
-            domainStatus = when (validation) {
-                WcValidation.Scam -> DappConnectRequest.DomainStatus.Scam
-                WcValidation.Valid -> DappConnectRequest.DomainStatus.Valid
-                WcValidation.Invalid -> DappConnectRequest.DomainStatus.Invalid
-                WcValidation.Unknown -> DappConnectRequest.DomainStatus.Unknown
-            },
+            domainStatus = validation.toDomainStatus(),
             source = wcConnection.toDappSource(),
             chains = proposal.chains.map { it.value },
             requiredChains = proposal.chains.filter { it.isRequired }.map { it.value }.toSet(),
         )
+    }
+
+    private fun WcValidation.toDomainStatus(): DappConnectRequest.DomainStatus {
+        return when (this) {
+            WcValidation.Scam -> DappConnectRequest.DomainStatus.Scam
+            WcValidation.Valid -> DappConnectRequest.DomainStatus.Valid
+            WcValidation.Invalid -> DappConnectRequest.DomainStatus.Invalid
+            WcValidation.Unknown -> DappConnectRequest.DomainStatus.Unknown
+        }
     }
 
     private fun WcConnection.toDappSource(): DappConnectRequest.Source {
@@ -213,10 +215,14 @@ class WcRequestParser : WcRouteAdapter {
                 topic = meta.topic,
                 url = meta.app.url.toUri().host.orEmpty(),
                 name = meta.app.name,
+                domainStatus = meta.validation?.toDomainStatus(),
             ),
         )
     }
 
+    // The operation is the transaction as the dapp sent it, calldata included: chainkit signs a payload
+    // as it reads, so a token transfer stays the token contract's call. The wallet prices it itself, as
+    // it does every send: the gas the dapp names is left out, so the estimate still catches a revert.
     private fun handleEthTransactionRequest(
         id: String,
         chain: Chain,
@@ -225,15 +231,16 @@ class WcRequestParser : WcRouteAdapter {
         walletId: String,
     ): ConfirmRequest {
         val nonce = payload.nonce.hexToBigInteger().longValue()
-        val transfer = EvmCall.decodeTransfer(payload.data)
-        val fee = getEthFee(chain, payload)
+        val to = payload.to ?: throw IllegalArgumentException("Contract calls require a 'to' address")
+        val amount = payload.value.hexToBigInteger()
+        val calldata = payload.data.takeUnless { it.removePrefix("0x").isEmpty() }
+        // A transfer that also moves the coin is a call: the screen shows the coin it moves, not only the token.
+        val transfer = calldata?.takeIf { amount.isZero() }?.let(EvmCall::decodeTransfer)
 
         return ConfirmRequest(
             data = CommonTransactionData(
                 assetId = when {
-                    transfer != null -> chain.buildTokenAssetId(
-                        contract = payload.to ?: throw IllegalArgumentException("Contract calls require a 'to' address")
-                    )
+                    transfer != null -> chain.buildTokenAssetId(contract = to)
                     else -> chain.coinAssetId
                 },
                 walletId = walletId,
@@ -244,30 +251,15 @@ class WcRequestParser : WcRouteAdapter {
                 false -> ConfirmAction.Sign
             },
             type = when {
-                transfer != null -> ConfirmType.Transfer(
-                    operation = ConfirmOperations.transfer(
-                        chain = chain,
-                        to = transfer.to,
-                        amount = transfer.amount,
-                        fee = fee,
-                    ),
+                calldata == null -> ConfirmType.Transfer(
+                    operation = ConfirmOperations.transfer(chain = chain, to = to, amount = amount),
                 )
-                payload.data == "0x" -> ConfirmType.Transfer(
-                    operation = ConfirmOperations.transfer(
-                        chain = chain,
-                        to = payload.to ?: throw IllegalArgumentException("Contract calls require a 'to' address"),
-                        amount = payload.value.hexToBigInteger(),
-                        fee = fee,
-                    ),
+                transfer != null -> ConfirmType.Transfer(
+                    operation = ConfirmOperations.call(chain = chain, contract = to, data = calldata, amount = amount),
+                    tokenTransfer = ConfirmType.Transfer.TokenTransfer(to = transfer.to, amount = transfer.amount),
                 )
                 else -> ConfirmType.Call(
-                    operation = ConfirmOperations.call(
-                        chain = chain,
-                        contract = payload.to.orEmpty(),
-                        data = payload.data,
-                        amount = payload.value.hexToBigInteger(),
-                        fee = fee,
-                    ),
+                    operation = ConfirmOperations.call(chain = chain, contract = to, data = calldata, amount = amount),
                 )
             },
             context = ConfirmContext.Dapp(
@@ -275,46 +267,14 @@ class WcRequestParser : WcRouteAdapter {
                 topic = meta.topic,
                 url = meta.app.url.toUri().host.orEmpty(),
                 name = meta.app.name,
+                domainStatus = meta.validation?.toDomainStatus(),
             ),
         )
     }
 
-    private fun getEthFee(chian: Chain, payload: WcEthTransaction): Fee? {
-        val gasLimit = payload.gasLimit.hexToBigInteger()
-        val gasPrice = payload.gasPrice.hexToBigInteger()
-
-        return if (chian.supportsEip1559()) {
-            Fee.Eip1559(
-                asset = chian.toAsset(),
-                limit = gasLimit,
-                networkPrice = gasPrice,
-                minerPrice = gasPrice,
-                maxPrice = gasPrice,
-                amount = gasPrice.multiply(gasLimit),
-            )
-        } else if (gasLimit != BigInteger.ZERO || gasPrice != BigInteger.ZERO) {
-            Fee.Gas(
-                asset = chian.toAsset(),
-                limit = gasLimit,
-                price = gasPrice,
-                amount = gasPrice.multiply(gasLimit),
-            )
-        } else {
-            null
-        }
-    }
-
+    // As Chain.tokenAssetId in features/core, which the backend keys the wallet's assets by.
     private fun Chain.buildTokenAssetId(contract: String): String {
-        return "${network.type.id}/${network.group.id}/${mainTokenType.id}/${contract}"
+        return "${network.type.id}/${network.mode.id}/${mainTokenType.id}/${contract.lowercase()}"
     }
-
-    fun Chain.supportsEip1559(): Boolean =
-        when (this) {
-            is Chain.Arbitrum,
-            is Chain.Base,
-            is Chain.Ethereum -> true
-
-            else -> false
-        }
 }
 

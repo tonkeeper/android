@@ -10,7 +10,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
 import androidx.core.view.marginBottom
-import androidx.core.view.updateMargins
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import uikit.R
@@ -19,7 +18,6 @@ import uikit.extensions.getDimensionPixelSize
 import uikit.extensions.range
 import uikit.extensions.roundTop
 import uikit.extensions.scale
-import uikit.extensions.setPaddingBottom
 import uikit.extensions.setView
 import kotlin.math.abs
 
@@ -29,20 +27,16 @@ class ModalView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : FrameLayout(context, attrs, defStyle) {
 
-    companion object {
-        private const val parentScale = .92f
-        private const val parentAlpha = .8f
-        private const val PREDICTIVE_PEEK = 0.2f
-        private const val PREDICTIVE_CANCEL_DURATION = 180L
-        private val predictiveInterpolator = PathInterpolator(.2f, 0f, 0f, 1f)
-    }
-
     var doOnHide: (() -> Unit)? = null
 
     private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
         override fun onStateChanged(bottomSheet: View, newState: Int) {
             if (newState == BottomSheetBehavior.STATE_HIDDEN) {
                 doOnHide?.invoke()
+            }
+            // Pulled back while it was hiding: it follows its content again.
+            if (newState == BottomSheetBehavior.STATE_EXPANDED || newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                hiding = false
             }
         }
 
@@ -58,6 +52,9 @@ class ModalView @JvmOverloads constructor(
     }
 
     private val bgView: View
+
+    // Content that changes size while the sheet hides must not bring it back.
+    private var hiding = false
 
     val coordinatorView: CoordinatorLayout
     val bottomSheetView: FrameLayout
@@ -78,7 +75,7 @@ class ModalView @JvmOverloads constructor(
         bottomSheetView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
             setPeekHeight(v.measuredHeight)
         }
-        bottomSheetView.setOnClickListener {  }
+        bottomSheetView.setOnClickListener {  } // no-press-scale
 
         coordinatorView = findViewById(R.id.modal_coordinator)
 
@@ -87,7 +84,7 @@ class ModalView @JvmOverloads constructor(
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
         behavior.isFitToContents = true
 
-        findViewById<View>(R.id.modal_touch_outside).setOnClickListener {
+        findViewById<View>(R.id.modal_touch_outside).setOnClickListener { // no-press-scale
             hide(false)
         }
         doOnLayout { onAnimationUpdateParent(0f) }
@@ -123,9 +120,25 @@ class ModalView @JvmOverloads constructor(
         bottomSheetView.setView(view)
     }
 
+    // [hide] with force still closes a sheet that is not closable.
+    fun setClosable(closable: Boolean) {
+        behavior.isDraggable = closable
+        behavior.isHideable = closable
+    }
+
     fun hide(force: Boolean) {
         if (force) {
             behavior.isHideable = true
+        }
+        if (behavior.isHideable) {
+            hiding = true
+        }
+        // Not shown yet, the sheet is already hidden and would get no callback.
+        if (behavior.state == BottomSheetBehavior.STATE_HIDDEN) {
+            if (behavior.isHideable) {
+                doOnHide?.invoke()
+            }
+            return
         }
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
@@ -166,14 +179,25 @@ class ModalView @JvmOverloads constructor(
     }
 
     private fun setPeekHeight(newPeekHeight: Int) {
-        if (behavior.peekHeight == newPeekHeight && behavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+        if (hiding || behavior.peekHeight == newPeekHeight && behavior.state == BottomSheetBehavior.STATE_EXPANDED) {
             return
         }
         post {
+            if (hiding) {
+                return@post
+            }
             behavior.peekHeight = newPeekHeight
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
     }
 
     override fun hasOverlappingRendering() = false
+
+    companion object {
+        private const val parentScale = .92f
+        private const val parentAlpha = .8f
+        private const val PREDICTIVE_PEEK = 0.2f
+        private const val PREDICTIVE_CANCEL_DURATION = 180L
+        private val predictiveInterpolator = PathInterpolator(.2f, 0f, 0f, 1f)
+    }
 }

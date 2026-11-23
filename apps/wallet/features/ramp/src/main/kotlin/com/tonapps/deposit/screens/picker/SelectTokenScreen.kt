@@ -78,6 +78,7 @@ private fun TokenPickerContent(
         onBack = onBack,
     ) {
         MoonSearchCell(
+            placeholder = stringResource(Localization.search),
             searchText = searchText,
             onChanged = { searchText.value = it },
             error = false,

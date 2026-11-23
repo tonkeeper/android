@@ -42,12 +42,15 @@ class Holder(
         itemView.background = item.position.drawable(context)
         itemView.setMoonOnClickListener { selectedView.toggle() }
 
+        itemView.isSelected = item.selected
         itemView.isEnabled = !item.ledgerAdded
         addressView.text = item.address.shortAddress
         selectedView.checked = item.selected
         selectedView.isEnabled = !item.ledgerAdded
         selectedView.doOnCheckedChanged = { isChecked ->
-            if (!onClick(item, isChecked)) {
+            if (onClick(item, isChecked)) {
+                itemView.isSelected = isChecked
+            } else {
                 selectedView.checked = !isChecked
                 itemView.reject()
             }

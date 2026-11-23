@@ -111,11 +111,14 @@ def value_to_enum_entries(values):
     return entries
 
 
-def yaml_type_to_kotlin(prop):
+def yaml_type_to_kotlin(prop, prop_name=""):
     t = prop.get("type", "string")
     if t == "string":
         return "String"
     elif t == "integer":
+        # Epoch milliseconds overflow Int; durations and counts fit.
+        if prop.get("format") == "int64" or prop_name.endswith("_at_ms"):
+            return "Long"
         return "Int"
     elif t == "number":
         return "Double"
@@ -170,7 +173,7 @@ def parse_schema(schema, schemas=None, global_schemas=None):
         if prop_name == "eventName":
             continue
         resolved = resolve_local_ref(prop, schemas, global_schemas)
-        kotlin_type = yaml_type_to_kotlin(resolved)
+        kotlin_type = yaml_type_to_kotlin(resolved, prop_name)
         nullable = is_nullable(prop_name, prop, required_list)
 
         enum_values = None

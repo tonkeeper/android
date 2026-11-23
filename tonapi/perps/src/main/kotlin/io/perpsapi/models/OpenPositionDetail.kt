@@ -30,7 +30,11 @@ data class OpenPositionDetail(
 
     /* The legs, or null when there are none -- or when auto_close_known is false. */
     @SerialName(value = "auto_close")
-    val autoClose: PositionAutoClose? = null
+    val autoClose: PositionAutoClose? = null,
+
+    /* What a market close of the whole position gives now. Null if the book is unavailable or too thin. */
+    @SerialName(value = "close_estimate")
+    val closeEstimate: PositionCloseEstimate? = null
 ) {
 }
 

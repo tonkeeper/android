@@ -1,6 +1,12 @@
 package com.tonapps.portfolio.screens.wallet
 
 import androidx.annotation.DrawableRes
+import com.tonapps.chainkit.core.chain.model.num.Formatter
+import com.tonapps.chainkit.core.chain.model.num.SignMode
+import com.tonapps.core.extensions.fiatRate
+import com.tonapps.core.extensions.formatFiat
+import com.tonapps.core.extensions.toDisplayUnit
+import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
@@ -10,7 +16,7 @@ import java.math.BigDecimal
 
 internal object EarnUiMapper {
 
-    private const val USD = "USD"
+    private const val UNKNOWN_AMOUNT = "-"
 
     fun mapVault(vault: EarnVaultEntity): EarnVaultUi = EarnVaultUi(
         network = vault.network,
@@ -22,7 +28,7 @@ internal object EarnUiMapper {
         protocolName = vault.protocolName,
     )
 
-    fun mapPosition(position: EarnPositionEntity, hiddenBalance: Boolean): EarnPositionUi {
+    fun mapPosition(position: EarnPositionEntity, currency: String, hiddenBalance: Boolean): EarnPositionUi {
         val earnNetwork = network(position.network)
         return EarnPositionUi(
             network = position.network,
@@ -32,18 +38,15 @@ internal object EarnUiMapper {
             networkIcon = earnNetwork?.icon,
             networkName = earnNetwork?.name ?: position.network,
             protocolName = position.protocolName,
-            balanceFormat = maskIf(hiddenBalance) { formatUsd(position.balanceUsd) },
-            earnedFormat = maskIf(hiddenBalance) { formatEarned(position.earnedUsd) },
+            balanceFormat = formatFiat(currency, position.balanceFiat, hiddenBalance),
+            earnedFormat = position.earnedFiat?.takeUnless { hiddenBalance }?.let { formatEarned(currency, it) },
+            isProfit = (position.earnedFiat?.signum() ?: 0) >= 0,
         )
     }
 
-    fun formatTotal(totalUsd: BigDecimal, hiddenBalance: Boolean): String =
-        maskIf(hiddenBalance) { formatUsd(totalUsd) }
-
-    // The wallet's own formatter, so the block reads like the balance and assets above it.
-    // TODO format in the user's currency with TK-4257: the API returns every amount per requested
-    //  currency, and the Earn flow then has to follow currency changes too
-    private fun formatUsd(value: BigDecimal): String = CurrencyFormatter.formatFiat(USD, value).toString()
+    fun formatFiat(currency: String, value: BigDecimal?, hiddenBalance: Boolean): String = maskIf(hiddenBalance) {
+        value?.let { Coins.of(it).formatFiat(currency) } ?: UNKNOWN_AMOUNT
+    }
 
     private inline fun maskIf(hidden: Boolean, format: () -> String): String = if (hidden) {
         HIDDEN_BALANCE
@@ -51,15 +54,15 @@ internal object EarnUiMapper {
         format()
     }
 
-    // The design only draws a gain, and the formatter writes the minus itself, so a loss is left as it
-    // comes until TK-3787 says whether the API can even report one.
-    private fun formatEarned(earned: BigDecimal): String {
-        val formatted = formatUsd(earned)
-        return if (earned.signum() > 0) {
-            "+ $formatted"
-        } else {
-            formatted
+    private fun formatEarned(currency: String, earned: BigDecimal): String? {
+        if (earned.signum() == 0) {
+            return null
         }
+        return Formatter.formatFiat(
+            value = Coins.of(earned).toDisplayUnit(),
+            rate = fiatRate(currency, Coins.ONE),
+            sign = SignMode.All,
+        )
     }
 
     // One table, so an icon and a label can never drift apart. These are the names vaults.fyi uses,

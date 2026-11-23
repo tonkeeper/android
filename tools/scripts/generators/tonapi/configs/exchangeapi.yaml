@@ -1,0 +1,2 @@
+schemaMappings:
+  GenericOperation: kotlinx.serialization.json.JsonObject

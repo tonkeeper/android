@@ -41,7 +41,7 @@ kotlin {
 
 
 dependencies {
-    "androidRuntimeClasspath"("org.jetbrains.compose.ui:ui-tooling:1.10.0")
+    "androidRuntimeClasspath"("org.jetbrains.compose.ui:ui-tooling:1.12.2")
 }
 
 val sharedUIKitResources = rootProject.layout.projectDirectory

@@ -2,6 +2,7 @@ package com.tonapps.core
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rn.RNException
 import com.tonapps.wallet.data.rn.RNLegacy
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +16,9 @@ suspend fun AccountRepository.sign(
     rnLegacy: RNLegacy,
     walletId: String,
     bytes: ByteArray,
+    reason: PasscodeReason,
 ): ByteArray {
-    var privateKey: PrivateKeyEd25519? = requestPrivateKey(activity, rnLegacy, walletId)
+    var privateKey: PrivateKeyEd25519? = requestPrivateKey(activity, rnLegacy, walletId, reason)
     val signature = privateKey?.signToByteArray(bytes)
     ?: throw IllegalStateException("Signature is null") // throw SendException.UnableSendTransaction()
     privateKey = null
@@ -28,13 +30,14 @@ suspend fun AccountRepository.requestPrivateKey(
     activity: NavigationActivity,
     rnLegacy: RNLegacy,
     walletId: String,
+    reason: PasscodeReason,
 ): PrivateKeyEd25519? = withContext(Dispatchers.IO) {
     try {
         val privateKeyEd25519 = getPrivateKey(walletId)
         if (privateKeyEd25519 != null) {
             privateKeyEd25519
         } else {
-            val vaultState = rnLegacy.requestVault(activity)
+            val vaultState = rnLegacy.requestVault(activity, reason)
             val mnemonic = vaultState.getDecryptedData(walletId)?.mnemonic ?: throw RNException.NotFoundMnemonic(walletId)
             val seed = Mnemonic(splitMnemonic(mnemonic)).toSeed()
             PrivateKeyEd25519(seed)

@@ -1,6 +1,7 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.earn
 
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Effect
+import com.tonapps.webview.bridge.InAppBridgeContract.Effect
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppPageEvent
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeEvent
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeMethodResult
@@ -46,6 +47,7 @@ internal class EarnNativeMethods(
     override fun invoke(method: String, params: JSONObject): NativeMethodResult? {
         return when (method) {
             NAVIGATE_BACK, CLOSE -> close()
+            TOAST -> toast(params)
             ANALYTICS_TRACK -> track(params)
             else -> null
         }
@@ -65,21 +67,24 @@ internal class EarnNativeMethods(
         return NativeMethodResult.Success(effect = Effect.Close)
     }
 
+    private fun toast(params: JSONObject): NativeMethodResult {
+        val title = (params.opt("title") as? String)?.takeIf { it.isNotBlank() }
+            ?: return NativeMethodResult.Failure(ERROR_INVALID_PARAMS, "Missing title")
+        return NativeMethodResult.Success(effect = Effect.Toast(title))
+    }
+
     private fun track(params: JSONObject): NativeMethodResult {
         val event = params.optString("event").takeIf { it.isNotBlank() }
             ?: return NativeMethodResult.Failure(ERROR_INVALID_PARAMS, "Missing event")
-        onTrack(event, EarnPageEvent.params(params.optJSONObject("params").toMap()))
+        onTrack(event, DAppPageEvent.params(DAppPageEvent.rawParams(params.optJSONObject("params")), EVENT_PROVIDER))
         return NativeMethodResult.Success()
-    }
-
-    private fun JSONObject?.toMap(): Map<String, Any?> {
-        val json = this ?: return emptyMap()
-        return json.keys().asSequence().associateWith { json.opt(it) }
     }
 
     private companion object {
         private const val NAVIGATE_BACK = "ui.navigateBack"
         private const val CLOSE = "ui.close"
+        private const val TOAST = "ui.toast"
         private const val ANALYTICS_TRACK = "analytics.track"
+        private const val EVENT_PROVIDER = "vaults.fyi"
     }
 }

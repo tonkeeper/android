@@ -13,15 +13,15 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.setPadding
 import com.tonapps.blockchain.ton.contract.WalletVersion
-import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
+import com.tonapps.core.helper.navigationDelegate
 import com.tonapps.icu.CurrencyFormatter.withCustomSymbol
 import com.tonapps.tonkeeper.api.shortAddress
+import com.tonapps.tonkeeper.extensions.badgeBlue
 import com.tonapps.tonkeeper.extensions.badgeGreen
 import com.tonapps.tonkeeper.extensions.badgeOrange
 import com.tonapps.tonkeeper.extensions.badgePurple
 import com.tonapps.tonkeeper.extensions.copyWithToast
 import com.tonapps.tonkeeper.koin.settingsRepository
-import com.tonapps.tonkeeper.ui.screen.battery.BatteryScreen
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.wallet.data.battery.BatteryMapper
 import uikit.widget.BatteryView
@@ -43,7 +43,6 @@ import uikit.extensions.expandTouchArea
 import uikit.extensions.setMoonOnClickListener
 import uikit.extensions.setPaddingHorizontal
 import uikit.extensions.withAlpha
-import uikit.navigation.Navigation
 import uikit.widget.LoaderView
 import uikit.widget.ShimmerTextView
 
@@ -69,13 +68,12 @@ class BalanceHolder(
         walletLoaderView.setColor(context.iconSecondaryColor)
         walletLoaderView.setTrackColor(context.iconSecondaryColor.withAlpha(.32f))
         batteryView.expandTouchArea(left = 0, top = 10.dp, right = 24.dp, bottom = 10.dp)
+        batteryView.setMoonOnClickListener {
+            context.navigationDelegate?.onOpenBatteryFromWallet()
+        }
     }
 
     override fun onBind(item: Item.Balance) {
-        batteryView.setMoonOnClickListener {
-            Navigation.from(context)?.add(BatteryScreen.newInstance(item.wallet, from = BatteryNativeFrom.Wallet))
-        }
-
         if (item.hiddenBalance) {
             balanceView.shimmerActive = false
             balanceView.cancelTextSwap()
@@ -186,6 +184,10 @@ class BalanceHolder(
                 Localization.w5
             }
             builder = builder.badgeGreen(context, resId)
+        }
+
+        if (version == WalletVersion.WALLET_TG) {
+            builder = builder.badgeBlue(context, Localization.telegram)
         }
 
         builder = when (type) {

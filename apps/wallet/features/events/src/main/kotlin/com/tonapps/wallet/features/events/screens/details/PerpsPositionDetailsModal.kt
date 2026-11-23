@@ -16,18 +16,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.tonapps.core.helper.navigationDelegate
+import com.tonapps.core.loyalty.LOYALTY_DEEPLINK
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.perps.data.PerpMarket
 import com.tonapps.perps.data.PerpsPositionSide
-import com.tonapps.perps.data.formatPlainDecimal
+import com.tonapps.perps.data.formatLocalizedDecimal
 import com.tonapps.perps.data.formatSignedPercent
 import com.tonapps.perps.data.formatSignedUsdAmount
 import com.tonapps.perps.data.formatUsd
 import com.tonapps.perps.data.formatUsdAmount
+import com.tonapps.perps.screens.common.PerpsLoyaltyRewardCell
 import com.tonapps.perps.screens.details.PerpsShareCard
 import com.tonapps.perps.screens.details.PerpsSharePositionDialog
 import com.tonapps.perps.screens.markets.PerpsAssetIcon
@@ -90,7 +94,9 @@ internal fun PerpsPositionDetailsModal(
     onDismiss: () -> Unit,
 ) {
     val navigator = rememberDialogNavigator(onClose = onDismiss)
+    val context = LocalContext.current
     val rows = remember(event, hiddenBalance) { event.perpsDetailsRows(hiddenBalance) }
+    val loyaltyReward = event.perps?.loyaltyReward
     val shareCard = remember(event, market) { event.shareCardOrNull(market) }
     var sharing by remember { mutableStateOf(false) }
 
@@ -111,8 +117,30 @@ internal fun PerpsPositionDetailsModal(
             hiddenBalance = hiddenBalance,
         )
 
-        if (rows.isNotEmpty()) {
+        if (loyaltyReward != null) {
             Spacer(Modifier.height(32.dp))
+            MoonBundleCell {
+                PerpsLoyaltyRewardCell(
+                    amount = loyaltyReward,
+                    hiddenBalance = hiddenBalance,
+                    onClick = {
+                        navigator.close()
+                        context.navigationDelegate?.onOpenLink(LOYALTY_DEEPLINK)
+                    },
+                )
+            }
+        }
+
+        if (rows.isNotEmpty()) {
+            Spacer(
+                Modifier.height(
+                    if (loyaltyReward != null) {
+                        16.dp
+                    } else {
+                        32.dp
+                    }
+                )
+            )
             PerpsPositionRows(rows = rows)
         }
 
@@ -225,18 +253,18 @@ private fun PerpsPositionRows(rows: List<PerpsDetailsRow>) {
     }
 }
 
-private data class PerpsDetailsRow(
+internal data class PerpsDetailsRow(
     val titleRes: Int,
     val value: String,
     val hint: PerpsAmountHint? = null,
 )
 
-private data class PerpsAmountHint(
+internal data class PerpsAmountHint(
     val amount: String,
     val symbol: String,
 )
 
-private fun HistoryEventEntity.perpsDetailsRows(hiddenBalance: Boolean): List<PerpsDetailsRow> {
+internal fun HistoryEventEntity.perpsDetailsRows(hiddenBalance: Boolean): List<PerpsDetailsRow> {
     val meta = perps
     val symbol = meta?.symbol
     val closing = isPerpsClosingEvent
@@ -256,14 +284,14 @@ private fun HistoryEventEntity.perpsDetailsRows(hiddenBalance: Boolean): List<Pe
                     add(PerpsDetailsRow(Localization.perps_size, HIDDEN_BALANCE))
                 } else {
                     val sizeHint = meta.size?.let { size ->
-                        symbol?.let { PerpsAmountHint(amount = formatPlainDecimal(size), symbol = it) }
+                        symbol?.let { PerpsAmountHint(amount = formatLocalizedDecimal(size), symbol = it) }
                     }
                     add(PerpsDetailsRow(Localization.perps_size, formatUsdAmount(sizeUsd), sizeHint))
                 }
             }
         }
         if (closing) {
-            meta?.resultPct?.takeUnless { hiddenBalance }?.let {
+            meta?.resultPct?.let {
                 val title = if (it.signum() < 0) {
                     Localization.perps_loss
                 } else {
@@ -294,7 +322,7 @@ private fun HistoryEventEntity.perpsDetailsRows(hiddenBalance: Boolean): List<Pe
 }
 
 @Composable
-private fun HistoryEventEntity.perpsHeadline(hiddenBalance: Boolean): String? {
+internal fun HistoryEventEntity.perpsHeadline(hiddenBalance: Boolean): String? {
     if (isPerpsOpenOrIncrease) {
         val margin = perps?.marginUsd ?: return null
         return if (hiddenBalance) {
@@ -419,6 +447,7 @@ private fun PerpsPositionOpenedPreview() {
                     size = BigDecimal("0.00781"),
                     sizeUsd = BigDecimal("540.00"),
                     marginUsd = BigDecimal("20.50"),
+                    loyaltyReward = "50",
                 ),
             ),
             market = null,

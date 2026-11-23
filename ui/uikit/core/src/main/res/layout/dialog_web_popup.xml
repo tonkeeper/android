@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<uikit.widget.ColumnLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/web_popup"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/backgroundPageColor">
+
+    <uikit.widget.RowLayout
+        android:id="@+id/web_popup_header"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/barHeight"
+        android:paddingHorizontal="@dimen/offsetMedium">
+
+        <uikit.widget.ColumnLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/actionSize"
+            android:paddingHorizontal="@dimen/offsetMedium">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/web_popup_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.H3"
+                android:textColor="?attr/textPrimaryColor"
+                android:visibility="gone"/>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/web_popup_host"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:ellipsize="start"
+                android:singleLine="true"
+                android:textAppearance="@style/TextAppearance.Body2"
+                android:textColor="?attr/textSecondaryColor"/>
+
+        </uikit.widget.ColumnLayout>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/web_popup_close"
+            android:layout_width="@dimen/actionSize"
+            android:layout_height="@dimen/actionSize"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/bg_oval_button_secondary"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_16"
+            android:tint="?attr/buttonSecondaryForegroundColor"/>
+
+    </uikit.widget.RowLayout>
+
+    <FrameLayout
+        android:id="@+id/web_popup_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+</uikit.widget.ColumnLayout>

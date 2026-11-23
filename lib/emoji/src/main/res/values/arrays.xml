@@ -23,8 +23,4 @@
         <item>@raw/emoji_category_symbols</item>
         <item>@raw/emoji_category_flags</item>
     </array>
-
-    <array name="preloaded_fonts" translatable="false">
-        <item>@font/noto_color_emoji</item>
-    </array>
 </resources>

@@ -30,6 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
@@ -88,7 +89,10 @@ class TransactionManager(
             .launchIn(scope)
 
         combine(
-            api.configFlow.filter { !it.empty },
+            api.configFlow.filter { !it.empty }.distinctUntilChanged { old, new ->
+                old.toncenterSSEEndpoint == new.toncenterSSEEndpoint &&
+                    old.toncenterSSETestnetEndpoint == new.toncenterSSETestnetEndpoint
+            },
             accountRepository.selectedWalletFlow,
             appLifecycleProvider.observe
         ) { config, wallet, foreground ->
@@ -319,11 +323,12 @@ class TransactionManager(
      */
     suspend fun waitUntilBatteryIdle(
         wallet: WalletEntity,
+        authorization: Authorization? = null,
         initialDelayMs: Long = 1_000L,
         pollIntervalMs: Long = 1_500L,
         timeoutMs: Long = 60_000L,
     ) = withContext(Dispatchers.IO) {
-        val auth = authorizationProvider.getAuthBy(wallet.id)
+        val auth = authorization ?: authorizationProvider.getAuthBy(wallet.id)
         if (auth.isEmpty) {
             throw IllegalStateException("Authorization is empty")
         }

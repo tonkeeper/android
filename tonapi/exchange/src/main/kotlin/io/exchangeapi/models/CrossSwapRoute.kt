@@ -57,7 +57,7 @@ data class CrossSwapRoute(
     @SerialName(value = "estimated_time")
     val estimatedTime: CrossSwapTimeEstimate? = null,
 
-    /* Aggregate slippage across all legs (bps) */
+    /* Meaning depends on the aggregator. `swapkit`: SwapKit's own `totalSlippageBps` as is, the route's signed difference from the market price in basis points, negative when the user gets less (-150 = 1.5% worse than market); not a tolerance. Every other aggregator: the slippage tolerance the route was quoted with, in basis points. Omitted when 0.  */
     @SerialName(value = "total_slippage_bps")
     val totalSlippageBps: Int? = null,
 
@@ -80,16 +80,18 @@ data class CrossSwapRoute(
     /* Aggregator-assigned highlights (e.g. fastest, cheapest) */
     @SerialName(value = "tags")
     val tags: List<@Contextual CrossSwapRouteTag>? = null,
+
+    /* Free-form codes, mostly passed through from the aggregator. Ours: - `insufficient_native_balance`: `sender_address` holds less of the   source chain's coin than the route is known to need from it (its   gas fee rows, plus the amount when the coin is the source asset).   Only for EVM sources with a configured node; absent when the   balance could not be read in time or the route states no gas.   Ignore it when the gas is sponsored (battery).  */
     @SerialName(value = "warnings")
     val warnings: List<String>? = null,
     @SerialName(value = "fees")
     val fees: List<CrossSwapFee>? = null,
 
-    /* Signing payloads for this route, prepared inline. Present only when the quote request had `include_payload: true` and the provider's prepare step succeeded. When present the client can sign and call `/v2/swap/payload/{payload_id}/submit` directly, skipping the separate `/v2/swap/route/{route_id}/prepare`.  */
+    /* Signing payloads for this route, prepared inline. Present only when the quote request had `include_payload: true` and the provider's prepare step succeeded. When present the client can sign and broadcast them directly, skipping the separate `/v2/crosschain/routes/{route_id}/prepare`.  */
     @SerialName(value = "payloads")
     val payloads: List<CrossSwapPayload>? = null,
 
-    /* The execution opened for this route by the inline prepare, when the provider can follow the route before a payload is submitted (a `relay` deposit, tracked by the id it was quoted under). Absent otherwise: submit the signed payload to get one.  */
+    /* The execution opened for this route by the inline prepare, when the provider can follow the route before anything is signed (a `relay` deposit, tracked by the id it was quoted under). Absent otherwise.  */
     @SerialName(value = "execution_id")
     val executionId: String? = null,
     @SerialName(value = "change_pub_key_signing")

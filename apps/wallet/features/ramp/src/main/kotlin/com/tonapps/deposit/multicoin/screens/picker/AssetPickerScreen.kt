@@ -1,5 +1,6 @@
 package com.tonapps.deposit.multicoin.screens.picker
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -13,11 +14,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -45,6 +50,24 @@ private const val DEFAULT_SEARCH_KEY = -1
 private const val EMPTY_KEY = 3
 private const val LOADING_KEY = 4
 
+// Matches the iOS token picker row ids, so one Maestro step picks an asset in both apps.
+private val AccountWithDetails.testTag: String
+    get() {
+        val symbol = asset.symbol.ifEmpty { asset.name }.lowercase().replace(Regex("[^a-z0-9]+"), "_")
+        val chain = asset.valueOrNull?.chain?.network?.type ?: return "token_picker_asset_$symbol"
+        val code = when (chain) {
+            Network.Type.Ethereum -> "eth"
+            Network.Type.Arbitrum -> "arb"
+            Network.Type.Avalanche -> "avax"
+            Network.Type.Bitcoin -> "btc"
+            Network.Type.Smartchain -> "bsc"
+            Network.Type.Solana -> "sol"
+            else -> chain.name.lowercase()
+        }
+        return "token_picker_asset_${code}_$symbol"
+    }
+
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AssetPickerScreen(
     feature: AssetPickerFeature,
@@ -66,6 +89,7 @@ fun AssetPickerScreen(
         onClose = onClose,
     ) {
         MoonSearchCell(
+            placeholder = stringResource(Localization.search),
             searchText = searchText,
             onChanged = {
                 searchText.value = it
@@ -110,7 +134,8 @@ fun AssetPickerScreen(
         )
 
         LazyColumn(
-            modifier = Modifier.nestedScroll(hideKeyboardOnScrollConnection())
+            modifier = Modifier.semantics { testTagsAsResourceId = true }
+                .nestedScroll(hideKeyboardOnScrollConnection())
                 .nestedScroll(rememberNestedScrollInteropConnection()),
             contentPadding = PaddingValues(
                 bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp,
@@ -137,13 +162,15 @@ fun AssetPickerScreen(
                     contentType = pagingItems.itemContentType { "account" },
                 ) { index ->
                     val item = pagingItems[index] ?: return@items
-                    AccountCell(
-                        account = item.account,
-                        position = MoonBundlePosition.default(pagingItems.itemCount, index),
-                        hiddenBalance = item.hiddenBalance,
-                        onClick = { onAssetSelected(item.account) },
-                        content = {}
-                    )
+                    Box(modifier = Modifier.testTag(item.account.testTag)) {
+                        AccountCell(
+                            account = item.account,
+                            position = MoonBundlePosition.default(pagingItems.itemCount, index),
+                            hiddenBalance = item.hiddenBalance,
+                            onClick = { onAssetSelected(item.account) },
+                            content = {}
+                        )
+                    }
                 }
             }
         }

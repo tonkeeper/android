@@ -3,6 +3,7 @@ package com.tonapps.portfolio.screens.wallet
 import androidx.compose.runtime.Immutable
 import com.tonapps.perps.data.PerpMarket
 import com.tonapps.perps.screens.portfolio.PerpsPositionUi
+import com.tonapps.portfolio.wallet.WalletSectionLimit
 
 @Immutable
 sealed interface WalletSection {
@@ -29,8 +30,13 @@ sealed interface WalletSection {
         @Immutable
         data class Positions(
             val positions: List<EarnPositionUi>,
+            val hiddenPositions: List<EarnPositionUi>,
+            val limit: WalletSectionLimit,
             val totalFormat: String,
+            val isStale: Boolean,
         ) : Earn
+
+        data object Unavailable : Earn
 
         @Immutable
         data class Vaults(

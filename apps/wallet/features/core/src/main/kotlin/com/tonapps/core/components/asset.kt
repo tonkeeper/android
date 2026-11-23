@@ -222,9 +222,10 @@ fun CoinValue.amountText(maxDecimals: Int): String {
     val rounded = toDisplayValue()
         .roundToDigitPositionAfterDecimalPoint(maxDecimals.toLong(), RoundingMode.ROUND_HALF_CEILING)
     val plain = rounded.toStringExpanded()
-    return if (plain.contains('.')) {
+    val trimmed = if (plain.contains('.')) {
         plain.trimEnd('0').trimEnd('.')
     } else {
         plain
     }
+    return trimmed.withLocaleDecimalSeparator()
 }

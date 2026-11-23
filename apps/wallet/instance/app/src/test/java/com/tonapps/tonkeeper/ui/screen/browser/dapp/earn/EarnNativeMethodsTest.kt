@@ -1,6 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.earn
 
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.inapp.InAppBridgeContract.Effect
+import com.tonapps.webview.bridge.InAppBridgeContract.Effect
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeBridgeProtocol
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeMethodResult
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.nativebridge.NativeMethods
@@ -37,6 +37,23 @@ class EarnNativeMethodsTest {
     }
 
     @Test
+    fun `toast shows its title`() {
+        val result = methods.handle("ui.toast", JSONObject().put("title", "Copied")) as NativeMethodResult.Success
+        assertEquals(Effect.Toast("Copied"), result.effect)
+    }
+
+    @Test
+    fun `toast without a title is refused`() {
+        val missing = methods.handle("ui.toast", JSONObject()) as NativeMethodResult.Failure
+        val blank = methods.handle("ui.toast", JSONObject().put("title", " ")) as NativeMethodResult.Failure
+        val notText = methods.handle("ui.toast", JSONObject().put("title", 1)) as NativeMethodResult.Failure
+
+        assertEquals(NativeMethods.ERROR_INVALID_PARAMS, missing.code)
+        assertEquals(NativeMethods.ERROR_INVALID_PARAMS, blank.code)
+        assertEquals(NativeMethods.ERROR_INVALID_PARAMS, notText.code)
+    }
+
+    @Test
     fun `tracking without an event name is refused`() {
         val result = methods.handle("analytics.track", JSONObject()) as NativeMethodResult.Failure
         assertEquals(NativeMethods.ERROR_INVALID_PARAMS, result.code)
@@ -62,7 +79,7 @@ class EarnNativeMethodsTest {
                 "source" to "carousel",
                 "count" to 2,
                 "isExternalWebView" to 1,
-                "eventProvider" to EarnPageEvent.PROVIDER,
+                "eventProvider" to "vaults.fyi",
             ),
             tracked?.second,
         )

@@ -8,15 +8,14 @@ import com.tonapps.wallet.data.multichain.account.AccountEntity
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.sortedByChainDisplayOrder
 
-// Resolves the accounts a user can receive to on the selected wallet. Shared between the
+// Resolves the accounts a user can receive to on a wallet. Shared between the
 // "Receiving address" list (all accounts) and the standalone per-asset QR sheet (one account).
 class ReceiveAccountsInteractor(
     private val oldAccount: AccountRepository,
     private val accountRepo: McAccountRepository,
 ) {
 
-    suspend fun getAccounts(): List<AccountEntity> {
-        val walletId = oldAccount.getSelectedWalletId() ?: return emptyList()
+    suspend fun getAccounts(walletId: String): List<AccountEntity> {
         // Legacy TON wallets aren't in the multichain infra yet, so getCoinAccounts is empty
         // for them — fall back to their single TON address so receive isn't blank.
         return accountRepo.getCoinAccounts(walletId)
@@ -24,9 +23,9 @@ class ReceiveAccountsInteractor(
             .sortedByChainDisplayOrder { it.chain }
     }
 
-    suspend fun findAccountForAsset(assetId: String): AccountEntity? {
+    suspend fun findAccountForAsset(walletId: String, assetId: String): AccountEntity? {
         val chain = Asset.coinFromString(assetId)?.chain ?: return null
-        return getAccounts().firstOrNull { it.chain == chain }
+        return getAccounts(walletId).firstOrNull { it.chain == chain }
     }
 
     private suspend fun legacyTonAccounts(walletId: String): List<AccountEntity> {

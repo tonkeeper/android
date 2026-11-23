@@ -25,7 +25,7 @@ data class SignRequestEntity(
         TonNetwork.TESTNET
     }
 
-    val v: String = uri.getQueryParameter(Key.V) ?: "v4r2"
+    val v: String = uri.getQueryParameter(Key.V).orEmpty()
     val seqno: Int = uri.getQueryParameter(Key.SEQNO)?.toIntOrNull() ?: 1
 
     companion object {

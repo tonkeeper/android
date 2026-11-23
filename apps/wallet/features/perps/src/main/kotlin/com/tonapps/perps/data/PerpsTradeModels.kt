@@ -4,6 +4,7 @@ import io.perpsapi.models.Integrator
 import io.perpsapi.models.TradingScreen
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 const val LIGHTER_API_KEY_INDEX = 3
 const val LIGHTER_NIL_ACCOUNT_INDEX = 281_474_976_710_655L
@@ -35,6 +36,16 @@ data class PerpsMarketRules(
     val markPrice: BigDecimal?,
     val tradable: Boolean,
 )
+
+internal fun floorToSizeStep(size: BigDecimal, rules: PerpsMarketRules): BigDecimal {
+    val step = rules.stepSize?.takeIf { it.signum() > 0 }
+    val stepped = if (step != null) {
+        size.divide(step, 0, RoundingMode.DOWN).multiply(step)
+    } else {
+        size
+    }
+    return stepped.setScale(rules.sizeDecimals, RoundingMode.DOWN)
+}
 
 data class PerpsAutoCloseDraft(
     val takeProfit: BigDecimal?,
@@ -91,10 +102,13 @@ data class PerpsStateOrder(
     val filledBase: BigDecimal?,
 )
 
+data class PerpsOrderDetail(
+    val status: String,
+)
+
 data class PerpsOrderBook(
     val truncated: Boolean,
     val levels: List<Pair<BigDecimal, BigDecimal>>,
-    val updatedAtMs: Long?,
 )
 
 data class PerpsTradingSnapshot(
@@ -111,6 +125,8 @@ enum class PerpsSendReason {
     BATCH_NOT_ACCEPTED,
     INVALID_TRANSACTION,
     LIGHTER_REJECTED,
+    WITHDRAWAL_RATE_LIMITED,
+    RATE_LIMITED,
     INTEGRATOR_FEE_MISMATCH,
     INTEGRATOR_NOT_APPROVED,
     OTHER,
@@ -121,3 +137,5 @@ fun String.isDeadOrderStatus(): Boolean = this == "rejected" || startsWith("canc
 fun String.isFilledOrderStatus(): Boolean = this == "filled"
 
 fun String.isWorkingOrderStatus(): Boolean = !isDeadOrderStatus() && !isFilledOrderStatus()
+
+fun String.isUnknownOrderStatus(): Boolean = this == "unknown"

@@ -13,13 +13,13 @@ import com.tonapps.extensions.locale
 import com.tonapps.extensions.toUriOrNull
 import com.tonapps.legacy.enteties.WalletPurchaseMethodEntity
 import com.tonapps.bus.generated.Events.DappBrowser.DappBrowserAssetChain
-import com.tonapps.tonkeeper.extensions.showToast
 import com.tonapps.tonkeeper.koin.environment
 import com.tonapps.tonkeeper.ui.screen.browser.analytics.DappBrowserAnalytics
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.koin.dappScreenFactory
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.uikit.color.textPrimaryColor
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.tonkeeper.extensions.showFailureToast
 import com.tonapps.wallet.data.browser.entities.BrowserAppEntity
 import com.tonapps.wallet.localization.Localization
 import uikit.navigation.Navigation
@@ -53,7 +53,7 @@ object BrowserHelper {
             dappAnalytics.click()
         } else {
             Navigation.from(context)?.add(
-                DAppScreen.newInstance(
+                context.dappScreenFactory.create(
                     wallet = wallet,
                     title = name,
                     url = url,
@@ -167,7 +167,7 @@ object BrowserHelper {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             activity.startActivity(intent)
         } catch (e: Throwable) {
-            activity.showToast(Localization.unknown_error)
+            activity.showFailureToast(Localization.unknown_error)
         }
     }
 

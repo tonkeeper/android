@@ -39,14 +39,13 @@ data class GetCandlesRequest(
     /**
      * Candle resolution
      *
-     * Values: _1m,_5m,_15m,_30m,_1h,_4h,_1d,_1w,_1mo
+     * Values: _1m,_5m,_15m,_1h,_4h,_1d,_1w,_1mo
      */
     @Serializable
     enum class Resolution(val value: String) {
         @SerialName(value = "1m") _1m("1m"),
         @SerialName(value = "5m") _5m("5m"),
         @SerialName(value = "15m") _15m("15m"),
-        @SerialName(value = "30m") _30m("30m"),
         @SerialName(value = "1h") _1h("1h"),
         @SerialName(value = "4h") _4h("4h"),
         @SerialName(value = "1d") _1d("1d"),

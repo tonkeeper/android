@@ -3,13 +3,12 @@ package ui.theme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
 import ui.theme.color.AccentColorScheme
 import ui.theme.color.BackgroundColorScheme
 import ui.theme.color.ButtonColorScheme
 import ui.theme.color.FieldColorScheme
+import ui.theme.color.GlassColorScheme
 import ui.theme.color.IconColorScheme
 import ui.theme.color.SeparatorColorScheme
 import ui.theme.color.TabBarColorScheme
@@ -31,7 +30,8 @@ data class AppColorScheme(
     val field: FieldColorScheme,
     val accent: AccentColorScheme,
     val tabBar: TabBarColorScheme,
-    val separator: SeparatorColorScheme
+    val separator: SeparatorColorScheme,
+    val glass: GlassColorScheme
 ) {
 
     val isLightTheme: Boolean

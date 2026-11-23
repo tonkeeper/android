@@ -7,6 +7,7 @@ import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.tonkeeper.core.FirebaseHelper
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rn.RNLegacy
 import com.tonapps.wallet.data.settings.SafeModeState
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -67,7 +68,7 @@ class SecurityViewModel(
 
     fun enableBiometric(context: Context, value: Boolean) = flow {
         if (value) {
-            val code = passcodeManager.requestValidPasscode(context)
+            val code = passcodeManager.requestValidPasscode(context, PasscodeReason.ENABLE_BIOMETRY)
             rnLegacy.setupBiometry(code)
         } else {
             rnLegacy.removeBiometry()

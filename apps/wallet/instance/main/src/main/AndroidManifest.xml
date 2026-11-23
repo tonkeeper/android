@@ -9,6 +9,18 @@
         <intent>
             <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
+
+        <!-- Google Pay through the Payment Request API in MoonPay's WebView. -->
+        <package android:name="com.google.android.gms" />
+        <intent>
+            <action android:name="org.chromium.intent.action.PAY" />
+        </intent>
+        <intent>
+            <action android:name="org.chromium.intent.action.IS_READY_TO_PAY" />
+        </intent>
+        <intent>
+            <action android:name="org.chromium.intent.action.UPDATE_PAYMENT_DETAILS" />
+        </intent>
     </queries>
 
     <supports-screens
@@ -110,6 +122,7 @@
 
     <application
         android:name="com.tonapps.tonkeeper.AppDelegate"
+        android:appComponentFactory="com.tonapps.tonkeeper.WalletComponentFactory"
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:enableOnBackInvokedCallback="true"
@@ -124,7 +137,7 @@
         android:largeHeap="true"
         android:manageSpaceActivity="com.tonapps.tonkeeper.ui.screen.root.RootActivity"
         tools:targetApi="31"
-        tools:replace="android:allowBackup,android:dataExtractionRules,android:fullBackupContent"
+        tools:replace="android:allowBackup,android:appComponentFactory,android:dataExtractionRules,android:fullBackupContent"
         android:localeConfig="@xml/locales_config">
 
         <activity-alias
@@ -240,10 +253,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="https" />
-                <data android:host="link.tonkeeper.com" />
+                <data android:host="keeper.onelink.me" />
                 <data android:host="go.tonkeeper.com" />
-                <data android:host="x1zxr.app.link" />
-                <data android:host="x1zxr-alternate.app.link" />
             </intent-filter>
         </activity>
         <activity

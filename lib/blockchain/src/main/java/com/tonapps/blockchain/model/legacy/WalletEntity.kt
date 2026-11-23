@@ -37,28 +37,6 @@ data class WalletEntity(
     val stateInitOverride: String? = null,
 ) : Parcelable {
 
-    companion object {
-
-        val EMPTY = WalletEntity(
-            id = "",
-            publicKey = EmptyPrivateKeyEd25519.publicKey(),
-            type = WalletType.Default,
-            version = WalletVersion.V5BETA,
-            label = Wallet.Label("", "", 0),
-            ledger = null,
-            keystone = null,
-            initialized = false,
-        )
-
-        @JvmField
-        val CREATOR = object : Parcelable.Creator<WalletEntity> {
-            override fun createFromParcel(parcel: Parcel) = WalletEntity(parcel)
-
-            override fun newArray(size: Int): Array<WalletEntity?> = arrayOfNulls(size)
-        }
-
-    }
-
     @Parcelize
     data class Ledger(
         val deviceId: String,
@@ -85,7 +63,11 @@ data class WalletEntity(
         }
 
     val maxMessages: Int
-        get() = if (type == WalletType.Ledger) 1 else contract.maxMessages
+        get() = if (signsWithLedger) {
+            1
+        } else {
+            contract.maxMessages
+        }
 
     val testnet: Boolean
         get() = type == WalletType.Testnet
@@ -125,14 +107,38 @@ data class WalletEntity(
     val isMultichain: Boolean
         get() = type == WalletType.Multichain
 
+    val isMultichainLedger: Boolean
+        get() = type == WalletType.Multichain && ledger != null
+
+    val signsWithLedger: Boolean
+        get() = isLedger || isMultichainLedger
+
+    val supportsPerps: Boolean
+        get() = isMultichain && !isMultichainLedger
+
     val isW5: Boolean
         get() = version == WalletVersion.V5BETA || version == WalletVersion.V5R1
 
+    val isWalletTg: Boolean
+        get() = version == WalletVersion.WALLET_TG
+
+    // Battery's relayer does not take WalletTg requests.
+    val supportsBattery: Boolean
+        get() = !isWalletTg
+
+    // What the migration to a multichain wallet takes: a mainnet wallet with its key. A Telegram wallet
+    // stays out, migrating it is turned off for now.
+    val canMigrateToMultichain: Boolean
+        get() = hasPrivateKey && !testnet && type != WalletType.Multichain && !isWalletTg
+
     val isExternal: Boolean
-        get() = signer || isLedger || isKeystone
+        get() = signer || isLedger || isKeystone || isMultichainLedger
 
     val isTonConnectSupported: Boolean
         get() = type != WalletType.Watch // !testnet &&
+
+    val isStakingAllowed: Boolean
+        get() = type != WalletType.Watch && type != WalletType.Lockup
 
     constructor(parcel: Parcel) : this(
         id = parcel.readString()!!,
@@ -197,5 +203,27 @@ data class WalletEntity(
 
     override fun describeContents(): Int {
         return 0
+    }
+
+    companion object {
+
+        val EMPTY = WalletEntity(
+            id = "",
+            publicKey = EmptyPrivateKeyEd25519.publicKey(),
+            type = WalletType.Default,
+            version = WalletVersion.V5BETA,
+            label = Wallet.Label("", "", 0),
+            ledger = null,
+            keystone = null,
+            initialized = false,
+        )
+
+        @JvmField
+        val CREATOR = object : Parcelable.Creator<WalletEntity> {
+            override fun createFromParcel(parcel: Parcel) = WalletEntity(parcel)
+
+            override fun newArray(size: Int): Array<WalletEntity?> = arrayOfNulls(size)
+        }
+
     }
 }

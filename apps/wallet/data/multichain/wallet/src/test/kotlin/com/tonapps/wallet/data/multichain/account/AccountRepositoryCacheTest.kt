@@ -25,6 +25,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
@@ -42,12 +43,23 @@ class AccountRepositoryCacheTest {
         id = "ton-v5r1",
     )
 
+    private val solAccount = AccountEntity(
+        walletId = WALLET_ID,
+        network = Chain.Solana.Mainnet.network.type.id,
+        mode = Chain.Solana.Mainnet.network.mode.id,
+        displayAddress = SOL_PRIMARY_ADDRESS,
+        publicKey = "",
+        segwitPublicKey = "",
+        addressType = Address.Type.Default,
+        id = "sol",
+    )
+
     private val api = mockk<API>()
     private val jsonCacheRepository = mockk<JsonCacheRepository>()
     private val settings = mockk<SettingsRepository>()
 
     private val repository = AccountRepositoryImpl(
-        accountDao = mockk { coEvery { getAccountsByWalletId(WALLET_ID) } returns listOf(tonAccount) },
+        accountDao = mockk { coEvery { getAccountsByWalletId(WALLET_ID) } returns listOf(tonAccount, solAccount) },
         walletDao = mockk {
             coEvery { getWallet(WALLET_ID) } returns McWalletEntity(
                 credentialId = "credential",
@@ -66,6 +78,7 @@ class AccountRepositoryCacheTest {
         settings = settings,
         api = api,
         perpetualRepository = mockk(),
+        earnRepository = mockk(),
     )
 
     init {
@@ -178,6 +191,36 @@ class AccountRepositoryCacheTest {
     }
 
     @Test
+    fun `list response skips an asset on a chain unknown to this build`() = runTest {
+        givenNetworkAnswer {
+            GetWalletAssets200Response(
+                assets = listOf(unknownChainAsset(), tonAsset(FRESH_BALANCE)),
+                fiatPrice = mapOf(CURRENCY to "0"),
+                nextCursor = "",
+            )
+        }
+
+        val page = repository.fetchAccounts(WALLET_ID)
+
+        assertEquals(listOf(TON_ASSET_ID), page.accounts.map { it.asset.id })
+    }
+
+    @Test
+    fun `single-asset fetch of an asset on a chain unknown to this build returns null`() = runTest {
+        every {
+            api.multichain.wallets.getWalletAsset(
+                walletId = WALLET_ID,
+                assetId = UNKNOWN_CHAIN_ASSET_ID,
+                currencies = any(),
+                network = any(),
+                xWalletId = any(),
+            )
+        } returns unknownChainAsset()
+
+        assertNull(repository.fetchAccount(WALLET_ID, UNKNOWN_CHAIN_ASSET_ID))
+    }
+
+    @Test
     fun `single-asset read answered for the other TON contract takes the primary contract's balance`() = runTest {
         every {
             api.multichain.wallets.getWalletAsset(
@@ -222,6 +265,53 @@ class AccountRepositoryCacheTest {
         }
 
         assertEquals("0", repository.fetchAccount(WALLET_ID, TON_ASSET_ID)?.balance?.available)
+    }
+
+    @Test
+    fun `single-asset read answered for another Solana address takes the primary address's balance`() = runTest {
+        givenSingleAsset(SOL_USDT_ID, solUsdt(STALE_BALANCE, SOL_OTHER_ADDRESS))
+        givenNetworkAnswer {
+            GetWalletAssets200Response(
+                assets = listOf(solUsdt(STALE_BALANCE, SOL_OTHER_ADDRESS), solUsdt(FRESH_BALANCE, SOL_PRIMARY_ADDRESS)),
+                fiatPrice = mapOf(CURRENCY to "0"),
+                nextCursor = "",
+            )
+        }
+
+        val account = repository.fetchAccount(WALLET_ID, SOL_USDT_ID)
+
+        assertEquals(solAccount.id, account?.data?.id)
+        assertEquals(FRESH_BALANCE, account?.balance?.available)
+    }
+
+    @Test
+    fun `Solana address missing from the list holds none of the asset`() = runTest {
+        givenSingleAsset(SOL_USDT_ID, solUsdt(STALE_BALANCE, SOL_OTHER_ADDRESS))
+        givenNetworkAnswer {
+            GetWalletAssets200Response(
+                assets = listOf(solUsdt(STALE_BALANCE, SOL_OTHER_ADDRESS)),
+                fiatPrice = mapOf(CURRENCY to "0"),
+                nextCursor = "",
+            )
+        }
+
+        assertEquals("0", repository.fetchAccount(WALLET_ID, SOL_USDT_ID)?.balance?.available)
+    }
+
+    @Test
+    fun `asset list keeps the primary Solana address's row of an asset, whichever comes last`() = runTest {
+        givenNetworkAnswer {
+            GetWalletAssets200Response(
+                assets = listOf(solUsdt(FRESH_BALANCE, SOL_PRIMARY_ADDRESS), solUsdt(STALE_BALANCE, SOL_OTHER_ADDRESS)),
+                fiatPrice = mapOf(CURRENCY to "0"),
+                nextCursor = "",
+            )
+        }
+
+        val page = repository.fetchAccounts(WALLET_ID)
+
+        assertEquals(listOf(FRESH_BALANCE), page.accounts.filter { it.asset.id == SOL_USDT_ID }.map { it.balance.available })
+        assertEquals(FRESH_BALANCE, repository.findAccount(WALLET_ID, SOL_USDT_ID)?.balance?.available)
     }
 
     @Test
@@ -272,6 +362,18 @@ class AccountRepositoryCacheTest {
                 xWalletId = any(),
             )
         } throws IllegalStateException("offline")
+    }
+
+    private fun givenSingleAsset(assetId: String, asset: Asset) {
+        every {
+            api.multichain.wallets.getWalletAsset(
+                walletId = WALLET_ID,
+                assetId = assetId,
+                currencies = any(),
+                network = any(),
+                xWalletId = any(),
+            )
+        } returns asset
     }
 
     private fun givenNetworkBalance(balance: String) {
@@ -327,11 +429,46 @@ class AccountRepositoryCacheTest {
         type = type.id,
     )
 
+    private fun solUsdt(balance: String, address: String) = Asset(
+        asset = AssetInfo(
+            assetId = SOL_USDT_ID,
+            name = "Tether USD",
+            symbol = "USDT",
+            decimals = 6,
+            image = "",
+            verification = AssetInfo.Verification.whitelist,
+        ),
+        address = address,
+        price = AssetPrice(),
+        isHidden = false,
+        balance = balance,
+    )
+
+    private fun unknownChainAsset() = Asset(
+        asset = AssetInfo(
+            assetId = UNKNOWN_CHAIN_ASSET_ID,
+            name = "New Chain",
+            symbol = "NEW",
+            decimals = 9,
+            image = "",
+            verification = AssetInfo.Verification.whitelist,
+        ),
+        address = "new-chain-address",
+        price = AssetPrice(),
+        isHidden = false,
+        balance = FRESH_BALANCE,
+        type = "newchain",
+    )
+
     private companion object {
         const val WALLET_ID = "wallet"
         const val CURRENCY = "USD"
         const val TON_ASSET_ID = "ton/mainnet/coin"
+        const val UNKNOWN_CHAIN_ASSET_ID = "newchain/mainnet/coin"
         const val FRESH_BALANCE = "9646914362"
         const val STALE_BALANCE = "2255441000"
+        const val SOL_USDT_ID = "sol/mainnet/spl/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+        const val SOL_PRIMARY_ADDRESS = "hfwtABKJqoX8bd6ZVVz1jyCWBhuvJwEgAR1B2Ja16q2"
+        const val SOL_OTHER_ADDRESS = "DnDTdBWznEGtmtvjTbsD5eBJgseqfbA74K4fPaWQxTuv"
     }
 }

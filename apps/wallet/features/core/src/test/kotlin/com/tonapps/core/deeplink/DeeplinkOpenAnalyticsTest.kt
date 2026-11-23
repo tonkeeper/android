@@ -39,6 +39,8 @@ class DeeplinkOpenAnalyticsTest {
         assertEquals(DeeplinkOpenLinkType.Backup, DeeplinkOpenAnalytics.linkType(DeepLinkRoute.Backups))
         assertEquals(DeeplinkOpenLinkType.Main, DeeplinkOpenAnalytics.linkType(DeepLinkRoute.Tabs.Main(from = "deep-link")))
         assertEquals(DeeplinkOpenLinkType.Raffle, DeeplinkOpenAnalytics.linkType(DeepLinkRoute.Raffle(id = null)))
+        assertEquals(DeeplinkOpenLinkType.Dapp, DeeplinkOpenAnalytics.linkType(DeepLinkRoute.Loyalty(referralCode = "UQJS7K21w")))
+        assertEquals(DeeplinkOpenLinkType.Dapp, DeeplinkOpenAnalytics.linkType(DeepLinkRoute.Earn.Home))
     }
 
     @Test

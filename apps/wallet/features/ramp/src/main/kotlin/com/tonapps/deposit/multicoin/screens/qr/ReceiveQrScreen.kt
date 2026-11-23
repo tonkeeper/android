@@ -30,6 +30,7 @@ fun ReceiveQrScreen(
             is ReceiveQrFeature.State.Qr -> QrSheetContent(
                 account = currentState.account,
                 onClose = onClose,
+                onVerifyOnLedger = feature::verifyOnLedger.takeIf { currentState.canVerifyOnLedger },
             )
 
             ReceiveQrFeature.State.AccountNotFound -> LaunchedEffect(Unit) {

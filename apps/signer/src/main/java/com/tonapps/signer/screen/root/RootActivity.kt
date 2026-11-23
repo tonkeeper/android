@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import com.tonapps.log.L
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.widget.AppCompatImageView
@@ -21,7 +20,6 @@ import com.tonapps.signer.drawable.IconBackgroundDrawable
 import com.tonapps.signer.extensions.toast
 import com.tonapps.signer.password.Password
 import com.tonapps.signer.password.ui.PasswordView
-import com.tonapps.signer.screen.crash.CrashActivity
 import com.tonapps.signer.screen.intro.IntroFragment
 import com.tonapps.signer.screen.main.MainFragment
 import com.tonapps.signer.screen.notfound.NoFoundFragment
@@ -45,6 +43,8 @@ import uikit.extensions.setMoonOnClickListener
 import uikit.extensions.swallowClicks
 
 class RootActivity: NavigationActivity() {
+
+    override val isLightNavigationBars: Boolean = false
 
     private val rootViewModel: RootViewModel by viewModel()
 
@@ -234,11 +234,6 @@ class RootActivity: NavigationActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        if (intent.action == Intent.ACTION_MANAGE_PACKAGE_STORAGE) {
-            signOut()
-            return
-        }
-
         val uri = intent.data ?: return
         handleUri(uri, intent.action == Intent.ACTION_SEND)
     }

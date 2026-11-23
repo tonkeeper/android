@@ -19,13 +19,14 @@ import io.walletapi.models.DeviceTokens
 import io.walletapi.models.GetDeviceBindings200Response
 import io.walletapi.models.GetDeviceBindingsRequest
 import io.walletapi.models.Healthcheck500Response
-import io.walletapi.models.Jwks
 import io.walletapi.models.Ok
 import io.walletapi.models.RefreshDeviceRequest
 import io.walletapi.models.RegisterDeviceRequest
+import io.walletapi.models.RegisterLiveActivityRequest
 import io.walletapi.models.RegisterWallets200Response
 import io.walletapi.models.RegisterWalletsRequest
 import io.walletapi.models.SubscribeDevicePushRequest
+import io.walletapi.models.UnregisterLiveActivityRequest
 import io.walletapi.models.UnregisterWallets200Response
 import io.walletapi.models.UnregisterWalletsRequest
 
@@ -150,98 +151,6 @@ class AuthApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getJwks(): Jwks {
-        val localVarResponse = getJwksWithHttpInfo()
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as Jwks
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun getJwksWithHttpInfo(): ApiResponse<Jwks?> {
-        val localVariableConfig = getJwksRequestConfig()
-
-        return request<Unit, Jwks>(
-            localVariableConfig
-        )
-    }
-
-    fun getJwksRequestConfig(): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/auth/.well-known/jwks.json",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = false,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun logoutDevice(): Ok {
-        val localVarResponse = logoutDeviceWithHttpInfo()
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as Ok
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    fun logoutDeviceWithHttpInfo(): ApiResponse<Ok?> {
-        val localVariableConfig = logoutDeviceRequestConfig()
-
-        return request<Unit, Ok>(
-            localVariableConfig
-        )
-    }
-
-    fun logoutDeviceRequestConfig(): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/api/v2/devices/logout",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = true,
-            body = localVariableBody
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
     fun refreshDevice(refreshDeviceRequest: RefreshDeviceRequest): DeviceTokens {
         val localVarResponse = refreshDeviceWithHttpInfo(refreshDeviceRequest = refreshDeviceRequest)
 
@@ -337,6 +246,53 @@ class AuthApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun registerLiveActivity(registerLiveActivityRequest: RegisterLiveActivityRequest): Ok {
+        val localVarResponse = registerLiveActivityWithHttpInfo(registerLiveActivityRequest = registerLiveActivityRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Ok
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun registerLiveActivityWithHttpInfo(registerLiveActivityRequest: RegisterLiveActivityRequest): ApiResponse<Ok?> {
+        val localVariableConfig = registerLiveActivityRequestConfig(registerLiveActivityRequest = registerLiveActivityRequest)
+
+        return request<RegisterLiveActivityRequest, Ok>(
+            localVariableConfig
+        )
+    }
+
+    fun registerLiveActivityRequestConfig(registerLiveActivityRequest: RegisterLiveActivityRequest): RequestConfig<RegisterLiveActivityRequest> {
+        val localVariableBody = registerLiveActivityRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/api/v2/wallets/push/live-activity",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
     fun registerWallets(registerWalletsRequest: RegisterWalletsRequest, F: String? = null): RegisterWallets200Response {
         val localVarResponse = registerWalletsWithHttpInfo(registerWalletsRequest = registerWalletsRequest, F = F)
 
@@ -424,6 +380,53 @@ class AuthApi(basePath: String = defaultBasePath, client: Call.Factory = ApiClie
         return RequestConfig(
             method = RequestMethod.POST,
             path = "/api/v2/wallets/push/subscribe",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun unregisterLiveActivity(unregisterLiveActivityRequest: UnregisterLiveActivityRequest): Ok {
+        val localVarResponse = unregisterLiveActivityWithHttpInfo(unregisterLiveActivityRequest = unregisterLiveActivityRequest)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as Ok
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun unregisterLiveActivityWithHttpInfo(unregisterLiveActivityRequest: UnregisterLiveActivityRequest): ApiResponse<Ok?> {
+        val localVariableConfig = unregisterLiveActivityRequestConfig(unregisterLiveActivityRequest = unregisterLiveActivityRequest)
+
+        return request<UnregisterLiveActivityRequest, Ok>(
+            localVariableConfig
+        )
+    }
+
+    fun unregisterLiveActivityRequestConfig(unregisterLiveActivityRequest: UnregisterLiveActivityRequest): RequestConfig<UnregisterLiveActivityRequest> {
+        val localVariableBody = unregisterLiveActivityRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/api/v2/wallets/push/live-activity/unregister",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

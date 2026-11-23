@@ -10,11 +10,14 @@ import com.tonapps.chainkit.core.chain.model.account.Derivation
 import com.tonapps.chainkit.core.chain.model.account.PubKey
 import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.ledger.signing.LedgerSigningInteractor
+import com.tonapps.wallet.data.ledger.signing.ledgerCall
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.data.rn.RNLegacy
-import com.tonapps.wallet.localization.Localization
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -28,6 +31,7 @@ import com.tonapps.blockchain.ton.connect.TCDomain
 import com.tonapps.blockchain.ton.connect.TCAddress
 import com.tonapps.core.requestPrivateKey
 import com.tonapps.deposit.screens.send.SendException
+import com.tonapps.time.TimeProvider
 import com.tonapps.extensions.toHex
 import io.ktor.util.encodeBase64
 import uikit.base.BaseFragment
@@ -38,7 +42,10 @@ class SignProof(
     private val mcAccountRepository: McAccountRepository,
     private val chainKitProvider: ChainKitProvider,
     private val passcodeManager: PasscodeManager,
+    private val walletUnlocker: WalletUnlocker,
     private val rnLegacy: RNLegacy,
+    private val timeProvider: TimeProvider,
+    private val ledgerSigner: LedgerSigningInteractor,
 ) {
 
     interface Delegate {
@@ -56,11 +63,21 @@ class SignProof(
         payload: String,
         domain: String,
     ): TONProof.Result {
+        if (wallet.isMultichainLedger) {
+            val timestamp = System.currentTimeMillis() / 1000L
+            val signature = ledgerCall { ledgerSigner.signTonProof(wallet.id, domain, timestamp, payload) }
+            return TONProof.Result(
+                timestamp = timestamp,
+                domain = TCDomain(domain),
+                payload = payload,
+                signature = signature.encodeBase64(),
+            )
+        }
         if (activity !is Delegate) {
             throw IllegalArgumentException("Activity must implement SignTransaction.Delegate")
         }
 
-        val timestamp = System.currentTimeMillis() / 1000L
+        val timestamp = timeProvider.currentTimeSeconds()
         val (fragment, key) = activity.openLedgerScreen(
             domain = domain,
             timestamp = timestamp.toBigInteger(),
@@ -92,6 +109,7 @@ class SignProof(
         }
 
         val request = Request(
+            timestamp = timeProvider.currentTimeSeconds(),
             payload = payload,
             domain = TCDomain(domain),
             address = TCAddress(wallet.contract.address)
@@ -128,23 +146,23 @@ class SignProof(
             throw SignException.UnsupportedWalletType(wallet.type)
         }
 
-        val isValidPasscode = passcodeManager.confirmation(activity, activity.getString(Localization.app_name))
+        val isValidPasscode = passcodeManager.confirmation(activity, PasscodeReason.CONNECT_DAPP)
         if (!isValidPasscode) {
             throw CancellationException("Passcode cancelled")
         }
 
-        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id) ?: throw SendException.UnableSendTransaction()
+        val privateKey = accountRepository.requestPrivateKey(activity, rnLegacy, wallet.id, PasscodeReason.CONNECT_DAPP) ?: throw SendException.UnableSendTransaction()
 
         return TONProof.sign(
             address = wallet.contract.address,
             secretKey = privateKey,
             payload = payload,
-            domain = domain
+            domain = domain,
+            timestamp = timeProvider.currentTimeSeconds(),
         )
     }
 
     suspend fun multichain(
-        activity: NavigationActivity,
         wallet: WalletEntity,
         payload: String,
         domain: String,
@@ -164,7 +182,7 @@ class SignProof(
             publicKey = PubKey(tonAccount.publicKey, tonAccount.segwitPublicKey),
         )
 
-        val timestamp = System.currentTimeMillis() / 1000L
+        val timestamp = timeProvider.currentTimeSeconds()
         val messageJson = buildJsonObject {
             put("address", JsonPrimitive(tonAccount.displayAddress))
             put("domain", JsonPrimitive(domain))
@@ -172,7 +190,7 @@ class SignProof(
             put("timestamp", JsonPrimitive(timestamp))
         }.toString()
 
-        val signResult = passcodeManager.unlockMultichainVault(activity) { coder ->
+        val signResult = walletUnlocker.unlockVault(PasscodeReason.CONNECT_DAPP) { coder ->
             val cryptoWallet = mcAccountRepository.getCryptoWallet(wallet.id, coder)
                 ?: throw SendException.UnableSendTransaction()
             chainKitProvider.signMessage(messageJson, MessageType.TonConnect, account, cryptoWallet)

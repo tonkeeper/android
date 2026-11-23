@@ -4,18 +4,33 @@ import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.settings.SettingsRepository
 import android.content.Context
+import android.os.SystemClock
 import androidx.annotation.StringRes
+import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.blockchain.model.CommonTransactionData
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
+import com.tonapps.blockchain.ton.TonNetwork
+import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.bus.generated.Events.SwapsNative.SwapsNativeType
+import com.tonapps.bus.generated.Events.SwapsNative.SwapsNativeWalletMode
+import com.tonapps.wallet.api.API
 import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.num.BaseUnit
 import com.tonapps.core.components.AmountInputConverter
+import com.tonapps.core.components.AmountToggle
 import com.tonapps.core.components.amountText
 import com.tonapps.core.components.sanitizeAmountInput
 import com.tonapps.core.components.toAssetEntity
+import com.tonapps.core.flags.BootFlags
 import com.tonapps.core.flags.WalletFeature
+import com.tonapps.deposit.multicoin.screens.confirm.PriceImpact
+import com.tonapps.deposit.multicoin.screens.confirm.SwapFeePlan
+import com.tonapps.deposit.multicoin.screens.confirm.SwapFeeSummary
+import com.tonapps.deposit.multicoin.screens.confirm.PriceImpactSeverity
+import com.tonapps.deposit.multicoin.screens.confirm.formatMinReceived
+import com.tonapps.deposit.multicoin.screens.confirm.priceImpactOf
 import com.tonapps.extensions.AppLifecycleProvider
 import com.tonapps.log.L
 import com.tonapps.mvi.MviRelay
@@ -34,8 +49,10 @@ import com.tonapps.mvi.graph.KState
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.swap.SwapRoutes
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.data.multichain.exchange.SwapConfig
 import com.tonapps.wallet.data.multichain.exchange.SwapDefaultPair
@@ -64,6 +81,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.OffsetDateTime
@@ -76,13 +94,20 @@ sealed interface SwapEvent {
     data class ShowError(val message: String) : SwapEvent
 
     /**
-     * MAX found nothing above the GRAM fee reserve: the amount stays as it was and the user is told
-     * to enter more than [reserve] GRAM (e.g. "1"), as iOS does.
+     * MAX found nothing above the TON coin's 1 TON, its minimum too: the amount stays as it was and the user is
+     * told to enter more than [reserve] [symbol] (e.g. "1" GRAM), as iOS does.
      */
-    data class MaxBelowReserve(val reserve: String) : SwapEvent
+    data class MaxBelowReserve(val reserve: String, val symbol: String) : SwapEvent
+
+    /**
+     * MAX found nothing above the `/network-fees` safe fee of a coin other than TON: the amount stays as it was and
+     * the user is told the balance does not cover the gas. That fee is no minimum, so no amount is asked for.
+     */
+    data class MaxBelowFee(val symbol: String) : SwapEvent
 
     data class Continue(val request: ConfirmRequest) : SwapEvent
-    data object Completed : SwapEvent
+    data class Completed(val tracked: Boolean) : SwapEvent
+    data object Offline : SwapEvent
 }
 
 sealed interface SwapInitState {
@@ -96,6 +121,8 @@ data class DisplayQuote(
     val sellAmount: String,
     val buyAmount: String,
     val rateLabel: String,
+    val receivedAt: Long,
+    val minReceived: Pair<String, String?>,
 )
 
 sealed interface SwapQuoteError {
@@ -107,7 +134,7 @@ sealed interface SwapQuoteError {
 }
 
 @get:StringRes
-private val SwapQuoteError.messageRes: Int
+internal val SwapQuoteError.messageRes: Int
     get() = when (this) {
         is SwapQuoteError.Failed -> when (isOffline) {
             true -> Localization.no_internet_connection
@@ -119,6 +146,7 @@ private val SwapQuoteError.messageRes: Int
             SwapNoRouteReason.PairUnavailable -> Localization.swap_error_pair_unavailable
             SwapNoRouteReason.AssetUnavailable -> Localization.swap_error_asset_unavailable
             SwapNoRouteReason.ProviderUnavailable -> Localization.swap_error_provider_unavailable
+            SwapNoRouteReason.WalletScreened -> Localization.swap_error_wallet_screened
             SwapNoRouteReason.Unknown -> Localization.swap_error_quote_failed
         }
     }
@@ -144,6 +172,7 @@ data class SwapTimings(
     val quoteTtl: Duration = 30.seconds,
     val failedQuoteRetryDelay: Duration = 5.seconds,
     val quoteTick: Duration = 250.milliseconds,
+    val noticeDuration: Duration = 4.seconds,
 )
 
 data class AmountInput(
@@ -151,10 +180,30 @@ data class AmountInput(
     val inFiat: Boolean = false,
     val isMax: Boolean = false,
     val side: AmountInputSide = AmountInputSide.Sell,
+    val maxUnits: BigInteger? = null,
+    val toggle: AmountToggle? = null,
 )
+
+sealed interface SwapButton {
+    data object Sending : SwapButton
+    data object Done : SwapButton
+    data class Swap(val enabled: Boolean) : SwapButton
+    data object FeeUnpaid : SwapButton
+    data object EnterAmount : SwapButton
+    data class Minimum(val amount: String) : SwapButton
+    data object InsufficientBalance : SwapButton
+    data object StatusUnknown : SwapButton
+
+    val isEnabled: Boolean
+        get() = this is Swap && enabled
+
+    val isTappable: Boolean
+        get() = isEnabled || this == FeeUnpaid
+}
 
 interface SwapState : MviViewState {
     val isReceiveAmountEditable: Boolean
+    val sendsInPlace: Boolean
 
     // A legacy wallet swaps one fixed pair: the assets can trade places but not be changed.
     val isPairLocked: StateFlow<Boolean>
@@ -184,6 +233,15 @@ interface SwapState : MviViewState {
 
     val continueEnabled: StateFlow<Boolean>
     val continueLoading: StateFlow<Boolean>
+    val send: StateFlow<SwapSend?>
+    val sendHoldsQuote: StateFlow<Boolean>
+
+    val feeLine: StateFlow<SwapFeeLine>
+    val receiveImpact: StateFlow<PriceImpact?>
+    val swapButton: StateFlow<SwapButton>
+    val notice: StateFlow<String?>
+    val lastQuote: StateFlow<DisplayQuote?>
+    val shownQuote: StateFlow<DisplayQuote?>
 }
 
 sealed interface SwapAction : MviAction {
@@ -192,8 +250,15 @@ sealed interface SwapAction : MviAction {
         data class SetSell(val value: String) : Amount
         data class SetBuy(val value: String) : Amount
         data object Max : Amount
+        data class Percent(val percent: Int) : Amount
         data object ToggleCurrency : Amount
     }
+
+    /**
+     * What a max sale sells instead of the max asked for: what its fee, paid in the asset sold, leaves.
+     * From the send attempt [id], and dropped once another has taken its place.
+     */
+    data class FitMax(val id: Int, val units: BigInteger) : SwapAction
 
     sealed interface Asset : SwapAction {
         data class SelectSell(val value: AssetEntity) : Asset
@@ -205,6 +270,15 @@ sealed interface SwapAction : MviAction {
     data object Requote : SwapAction
     data object Retry : SwapAction
     data object Continue : SwapAction
+    data object CloseDetails : SwapAction
+    data class SendProgress(val id: Int, val phase: SwapSendPhase, val message: String?) : SwapAction
+    data class Prepared(val id: Int, val ready: Boolean) : SwapAction
+    data class SendDisposed(val id: Int) : SwapAction
+    data class FeePlanned(val id: Int, val plan: SwapFeePlan) : SwapAction
+    data class FeePicked(val id: Int, val feeId: String?) : SwapAction
+    data object CloseShortage : SwapAction
+    data object FeeRowTapped : SwapAction
+    data object PromoShown : SwapAction
 }
 
 private val AmountInputSide.quoteDirection: SwapQuoteDirection
@@ -224,6 +298,9 @@ class SwapFeature(
     private val settingsRepository: SettingsRepository,
     private val networkMonitor: NetworkMonitor,
     private val legacyAccounts: LegacySwapAccounts,
+    private val api: API,
+    private val batteryRepository: BatteryRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
     private val timings: SwapTimings = SwapTimings(),
     // The quote TTL is the one thing here that measures real elapsed time; injecting the clock is
     // what lets a test run those seconds without spending them.
@@ -238,11 +315,23 @@ class SwapFeature(
 
     init {
         bgScope.launch {
-            swapRepo.swapCompleted.collect { relay.emit(SwapEvent.Completed) }
+            swapRepo.swapCompleted.collect { relay.emit(SwapEvent.Completed(it)) }
+        }
+
+        // MAX reads the network fees already loaded and never waits for them: they load as the screen
+        // opens, and each MAX refreshes them (a request only once they are older than their TTL) for the next.
+        bgScope.launch {
+            swapRepo.loadNetworkFees()
+            actions
+                .filter { it is SwapAction.Amount.Max || it is SwapAction.Amount.Percent }
+                .collect { swapRepo.loadNetworkFees() }
         }
     }
 
     override val isReceiveAmountEditable: Boolean = WalletFeature.SwapExactOutput.isEnabled
+
+    // One-click swap needs both: the remote rollout flag and the boot config, which can turn it off on its own.
+    override val sendsInPlace: Boolean = WalletFeature.SwapRedesign.isEnabled && BootFlags.isOneClickSwapEnabled
 
     // The wallet the screen swaps for, and which swap it makes: a multichain wallet the backend
     // knows, or a legacy one it never registered, which swaps GRAM ↔ USDT TRC20 on its own addresses.
@@ -467,6 +556,7 @@ class SwapFeature(
         data object ClearMax : AmountCmd
         data object FlipSide : AmountCmd
         data object SyncRate : AmountCmd
+        data class Fit(val units: BigInteger) : AmountCmd
     }
 
     override val amountInput = merge(
@@ -483,6 +573,12 @@ class SwapFeature(
             .map { AmountCmd.FlipSide },
         accounts
             .map { AmountCmd.SyncRate },
+        // Only the attempt on screen fits the max, or the one that just gave way to be quoted again:
+        // one already replaced was priced for another amount.
+        actions
+            .on<SwapAction.FitMax>()
+            .filter { it.id == send.value?.id || it.id == sendNode.value.requoted?.id }
+            .map { AmountCmd.Fit(it.units) },
     )
         .withLatestFrom(accounts) { cmd, accounts -> cmd to accounts }
         .runningFold(AmountInput()) { input, (cmd, accounts) -> reduceAmount(input, cmd, accounts) }
@@ -492,13 +588,26 @@ class SwapFeature(
     // it looks like a dead button on a wallet holding less than the reserve, so the user is told
     // what to enter instead. A side-effect node, like the requote timer: the reducer stays pure.
     private val maxBelowReserve = actions
-        .on<SwapAction.Amount.Max>()
+        .on<SwapAction.Amount>()
+        .filter { it is SwapAction.Amount.Max || it is SwapAction.Amount.Percent }
         .withLatestFrom(accounts) { _, accounts -> accounts.of(AmountInputSide.Sell) }
         .filterNotNull()
         .onEach { account ->
-            val reserve = swapRepo.getMaxReserve(account.asset.value)
-            if (reserve.isPositive && maxSellAmount(account, reserve) == null) {
-                relay.emit(SwapEvent.MaxBelowReserve(reserve = reserve.toDisplayUnit().fmt()))
+            val asset = account.asset.value
+            val reserve = swapRepo.getMaxReserve(asset)
+            if (!reserve.isPositive || maxSellAmount(account, reserve) != null) {
+                return@onEach
+            }
+
+            // Only the TON coin's reserve is a minimum to ask for; another coin's is the gas it lacks.
+            if (swapRepo.getMinimumAmount(asset).isPositive) {
+                val reserveText = Formatter.formatNumber(
+                    value = reserve.toDisplayUnit().value,
+                    options = Formatter.defaultOptions,
+                )
+                relay.emit(SwapEvent.MaxBelowReserve(reserve = reserveText, symbol = account.asset.symbol))
+            } else {
+                relay.emit(SwapEvent.MaxBelowFee(symbol = account.asset.symbol))
             }
         }
         .cacheState()
@@ -542,7 +651,7 @@ class SwapFeature(
         // BaseUnit and the account rate have no value equality, so the node dedupes on this key:
         // everything the request is built from and nothing else — a balance or rate refresh that
         // leaves the request identical must not spend a quote.
-        val key: String = listOf(
+        val inputKey: String = listOf(
             sell.asset.id,
             sell.data.displayAddress,
             buy.asset.id,
@@ -551,9 +660,17 @@ class SwapFeature(
             direction,
             slippageBps,
             walletId,
-            attempt,
         ).joinToString("|")
+
+        val key: String = "$inputKey|$attempt"
     }
+
+    private data class QuoteOutcome(
+        val inputKey: String,
+        val result: KResult<DisplayQuote, SwapQuoteError>,
+    )
+
+    private enum class QuoteFetch { Idle, Loading, Refreshing }
 
     private val requoteAttempt = actions
         .on<SwapAction.Requote>()
@@ -562,7 +679,7 @@ class SwapFeature(
 
     // Read accounts only: while a side reads its new asset the context drops to null, so a swap can
     // never be quoted against the pair it just left. [isLoading] keeps covering the screen meanwhile.
-    private val quoteState = combine(
+    private val quoteContext = combine(
         accounts,
         amountInput,
         selectedSlippageBps,
@@ -585,6 +702,9 @@ class SwapFeature(
             )
         }
     )
+        .cacheState(initialValue = null)
+
+    private val quoteState = quoteContext
         .distinctUntilChangedBy { it?.key }
         .transformStateLatest { ctx ->
             if (ctx == null) {
@@ -592,7 +712,7 @@ class SwapFeature(
             }
 
             delay(timings.quoteDebounce)
-            fetchQuote(ctx)
+            QuoteOutcome(inputKey = ctx.inputKey, result = fetchQuote(ctx))
         }
         .cacheStateWithLoading()
 
@@ -600,13 +720,57 @@ class SwapFeature(
 
     override val quote = quoteState
         .mapStateDataValueOrNull()
-        .map { it?.getOrNull() }
+        .map { it?.result?.getOrNull() }
         .cacheState(initialValue = null)
 
-    override val quoteErrorMessageRes = quoteState
-        .mapStateDataValueOrNull()
-        .mapResultErrorOrNull()
-        .map { it?.value?.messageRes }
+    private data class KeptQuote(val inputKey: String? = null, val quote: DisplayQuote? = null)
+
+    override val lastQuote = quoteState
+        .runningFold(KeptQuote()) { kept, state ->
+            val outcome = state.state ?: return@runningFold KeptQuote()
+            val error = (outcome.result as? KResult.Err)?.value
+            when {
+                sendsInPlace && error is SwapQuoteError.Failed && error.isOffline && outcome.inputKey == kept.inputKey -> kept
+                else -> KeptQuote(outcome.inputKey, outcome.result.getOrNull())
+            }
+        }
+        .map { it.quote }
+        .cacheState(initialValue = null)
+
+    private val quoteFetch = combine(quoteState, quoteContext) { state, ctx ->
+        when {
+            state !is KState.Loading || ctx == null -> QuoteFetch.Idle
+            state.state?.inputKey == ctx.inputKey -> QuoteFetch.Refreshing
+            else -> QuoteFetch.Loading
+        }
+    }
+        .cacheState(initialValue = QuoteFetch.Idle)
+
+    private val quoteError = combine(quoteState, quoteFetch) { state, fetch ->
+        (state.state?.result as? KResult.Err)?.value
+            ?.takeIf { state is KState.Data || fetch == QuoteFetch.Refreshing }
+    }
+        .cacheState(initialValue = null)
+
+    override val quoteErrorMessageRes = quoteError
+        .map { it?.messageRes }
+        .cacheState(initialValue = null)
+
+    private val offlineToast = quoteError
+        .map { sendsInPlace && it is SwapQuoteError.Failed && it.isOffline }
+        .distinctUntilChanged()
+        .filter { it }
+        .onEach { relay.emit(SwapEvent.Offline) }
+        .cacheState()
+
+    override val shownQuote = combine(quote, lastQuote, quoteFetch, quoteError) { quote, last, fetch, error ->
+        val offline = error is SwapQuoteError.Failed && error.isOffline
+        quote ?: last.takeIf { sendsInPlace && (fetch == QuoteFetch.Idle || offline) }
+    }
+        .cacheState(initialValue = null)
+
+    override val receiveImpact = shownQuote
+        .map { quote -> priceImpactOf(quote?.quote?.priceImpactBps)?.takeIf { it.severity != PriceImpactSeverity.Normal } }
         .cacheState(initialValue = null)
 
     override val isLoading = anyOfFlows(quoteLoading, sellAccountLoading, buyAccountLoading)
@@ -640,6 +804,7 @@ class SwapFeature(
     private data class ContinueContext(
         val walletId: String,
         val quote: SwapQuote,
+        val quoteReceivedAt: Long,
         val sell: AccountWithDetails,
         val buy: AccountWithDetails,
         val isMax: Boolean,
@@ -652,14 +817,15 @@ class SwapFeature(
         amountInput,
         selectedSlippageBps,
         transform = { quote, accounts, input, slippageBps ->
-            val route = quote?.quote ?: return@combine null
+            val display = quote ?: return@combine null
             val wallet = accounts.wallet ?: return@combine null
             val sell = accounts.of(AmountInputSide.Sell) ?: return@combine null
             val buy = accounts.of(AmountInputSide.Buy) ?: return@combine null
 
             ContinueContext(
                 walletId = wallet.id,
-                quote = route,
+                quote = display.quote,
+                quoteReceivedAt = display.receivedAt,
                 sell = sell,
                 buy = buy,
                 isMax = input.isMax,
@@ -671,6 +837,7 @@ class SwapFeature(
 
     private val continueState = actions
         .on<SwapAction.Continue>()
+        .filter { !sendsInPlace }
         .withLatestFrom(continueContext) { _, ctx -> ctx }
         .transformStateFirst { ctx ->
             if (ctx == null) {
@@ -680,18 +847,182 @@ class SwapFeature(
             runCatching { buildConfirmRequest(ctx) }
                 .fold(
                     onSuccess = { relay.emit(SwapEvent.Continue(it)) },
-                    onFailure = {
-                        verifyError(it)
-                        L.e(it)
-                        relay.emit(
-                            SwapEvent.ShowError(
-                                it.message ?: context.getString(Localization.swap_error_prepare_failed)
-                            )
-                        )
-                    }
+                    onFailure = { reportPrepareFailure(it) },
                 )
         }
         .cacheStateWithEmpty()
+
+    private val amountBlocker = combine(accounts, amountInput, sellValidatedAmount, insufficientFunds)
+    { accounts, input, sellAmount, insufficient ->
+        val minimum = accounts.of(AmountInputSide.Sell)?.let { sell ->
+            swapRepo.getMinimumAmount(sell.asset.value)
+                .takeIf { it.isPositive && sellAmount != null && sellAmount < it }
+                ?.let { Formatter.formatShort(value = it.toDisplayUnit(), asset = sell.asset.value) }
+        }
+        when {
+            parsePositiveAmount(accounts.of(input.side), input.text, input.inFiat) == null -> SwapButton.EnterAmount
+            minimum != null -> SwapButton.Minimum(minimum)
+            insufficient -> SwapButton.InsufficientBalance
+            else -> null
+        }
+    }
+        .cacheState(initialValue = SwapButton.EnterAmount)
+
+    val amountBlocked = amountBlocker
+        .map { it is SwapButton.Minimum || it is SwapButton.InsufficientBalance }
+        .cacheState(initialValue = false)
+
+    private val sendInputs = combine(sellAsset, buyAsset, amountInput, selectedSlippageBps) { sell, buy, input, bps ->
+        SwapInputs(sell?.id, buy?.id, input, bps)
+    }.cacheState()
+
+    private val sendNode: StateFlow<SendNode> = merge(
+        actions.on<SwapAction.Continue>()
+            .filter { sendsInPlace }
+            .withLatestFrom(continueContext, amountBlocker, quoteError) { _, ctx, blocker, error ->
+                SendCmd.Continue(blocked = blocker != null || error != null, quoteReceivedAt = ctx?.quoteReceivedAt)
+            },
+        actions.on<SwapAction.CloseDetails>()
+            .map { SendCmd.CloseDetails },
+        continueContext
+            .filterNotNull()
+            .filter { sendsInPlace }
+            .distinctUntilChangedBy { it.quoteReceivedAt }
+            .withLatestFrom(sendInputs) { ctx, inputs -> SendCmd.Quoted(buildConfirmRequest(ctx), inputs) },
+        actions.on<SwapAction.SendProgress>()
+            .withLatestFrom(quote) { progress, quote -> SendCmd.Progress(progress, quote?.receivedAt) },
+        quoteContext
+            .map { it?.inputKey }
+            .distinctUntilChanged()
+            .map { SendCmd.InputKeyChanged },
+        actions.on<SwapAction.Prepared>()
+            .map { SendCmd.Prepared(it) },
+        actions.on<SwapAction.SendDisposed>()
+            .map { SendCmd.Disposed(it.id) },
+        actions.on<SwapAction.FeePlanned>()
+            .map { SendCmd.FeePlanned(it) },
+        actions.on<SwapAction.FeePicked>()
+            .map { SendCmd.FeePicked(it) },
+        actions.on<SwapAction.CloseShortage>()
+            .map { SendCmd.CloseShortage },
+        actions.on<SwapAction.FeeRowTapped>()
+            .map { SendCmd.FeeRowTapped },
+        sendInputs
+            .filterNotNull()
+            .map { SendCmd.InputsChanged(it) },
+    )
+        .runningFold(SendNode(), ::reduceSend)
+        .cacheState(initialValue = SendNode())
+
+    override val send: StateFlow<SwapSend?> = sendNode
+        .map { it.attempt }
+        .cacheState(initialValue = null)
+
+    override val sendHoldsQuote = send
+        .map { it != null && (it.phase != SwapSendPhase.Review || it.shortagePopup) }
+        .cacheState(initialValue = false)
+
+    override val swapButton = combine(send, amountBlocker, quoteFetch, quoteError, quote) { send, blocker, fetch, error, quote ->
+        when {
+            send?.phase == SwapSendPhase.Working -> SwapButton.Sending
+            send?.phase == SwapSendPhase.Done -> SwapButton.Done
+            send?.phase == SwapSendPhase.Blocked -> SwapButton.StatusUnknown
+            blocker != null -> blocker
+            error != null || fetch != QuoteFetch.Idle || quote == null -> SwapButton.Swap(enabled = false)
+            send?.phase == SwapSendPhase.Retryable -> SwapButton.Swap(enabled = true)
+            send == null || send.quoteReceivedAt != quote.receivedAt -> SwapButton.Swap(enabled = false)
+            else -> when (val plan = send.plan) {
+                SwapFeePlan.Preparing -> SwapButton.Swap(enabled = false)
+                SwapFeePlan.Failed -> SwapButton.Swap(enabled = true)
+                is SwapFeePlan.Ready -> when {
+                    plan.summary.isUnpaid -> SwapButton.FeeUnpaid
+                    else -> SwapButton.Swap(enabled = send.prepared || plan.summary == SwapFeeSummary.Unknown)
+                }
+            }
+        }
+    }
+        .cacheState(initialValue = SwapButton.EnterAmount)
+
+    override val notice = sendNode
+        .map { it.noticeSeq to it.notice }
+        .distinctUntilChanged()
+        .transformLatest { (_, notice) ->
+            emit(notice)
+            if (notice != null) {
+                delay(timings.noticeDuration)
+                emit(null)
+            }
+        }
+        .cacheState(initialValue = null)
+
+    private val promoShownBefore = settingsRepository.swapBatteryPromoShown
+
+    private val battery = combine(lookedUpWallet, refreshTick) { wallet, _ -> wallet.takeIf { sendsInPlace && !promoShownBefore } }
+        .mapLatestCatching(onError = { L.e(it) }) { wallet ->
+            (wallet as? SwapWallet.Multichain)?.let { loadBattery(it.id) }
+        }
+        .cacheState(initialValue = null)
+
+    private val showsPromo = combine(battery, sellAsset, amountBlocker, quoteFetch) { battery, sell, blocker, fetch ->
+        showsBatteryPromo(
+            shownBefore = promoShownBefore,
+            battery = battery,
+            sellAsset = sell?.valueOrNull,
+            amountEmpty = blocker == SwapButton.EnterAmount,
+            quoteIdle = fetch == QuoteFetch.Idle,
+        )
+    }
+        .cacheState(initialValue = false)
+
+    private val promoShown = actions
+        .on<SwapAction.PromoShown>()
+        .onEach { settingsRepository.swapBatteryPromoShown = true }
+        .cacheState()
+
+    private val swapClicked = send
+        .map { it?.takeIf { attempt -> attempt.clicked && attempt.phase == SwapSendPhase.Working }?.id }
+        .distinctUntilChanged()
+        .filterNotNull()
+        .withLatestFrom(assetPair, amountInput) { _, pair, input -> pair to input.isMax }
+        .onEach { (pair, isMax) ->
+            val sell = pair.sell ?: return@onEach
+            val buy = pair.buy ?: return@onEach
+            AnalyticsHelper.Default.eventsTaggedWith(utm).swapsNative.swapClick(
+                type = SwapsNativeType.Native,
+                walletMode = SwapsNativeWalletMode.Multi,
+                assetFrom = sell.id,
+                assetTo = buy.id,
+                isMax = isMax,
+            )
+        }
+        .cacheState()
+
+    private val shownPlan = combine(send, shownQuote) { send, quote ->
+        send?.plan?.takeIf { quote != null && send.quoteReceivedAt == quote.receivedAt }
+    }
+        .cacheState(initialValue = null)
+
+    private val feeLineTappable = combine(swapButton, notice) { button, notice -> notice == null && button.isTappable }
+        .cacheState(initialValue = false)
+
+    override val feeLine = combine(
+        combine(quoteFetch, quoteError, shownQuote, ::Triple),
+        shownPlan,
+        showsPromo,
+        amountBlocker,
+        feeLineTappable,
+    ) { (fetch, error, quote), plan, promo, blocker, tappable ->
+        feeLine(
+            fetching = fetch != QuoteFetch.Idle,
+            quoteError = error,
+            quote = quote,
+            plan = plan,
+            promo = promo,
+            amountEmpty = blocker == SwapButton.EnterAmount,
+            tappable = tappable,
+        )
+    }
+        .cacheState(initialValue = SwapFeeLine.Hidden)
 
     override val continueLoading = continueState
         .isLoading()
@@ -700,7 +1031,10 @@ class SwapFeature(
     override val continueEnabled = combine(
         noneOfFlows(isLoading, continueLoading, insufficientFunds),
         quote,
-        transform = { idle, quote -> idle && quote != null }
+        send,
+        transform = { idle, quote, attempt ->
+            idle && quote != null && (attempt == null || attempt.phase == SwapSendPhase.Retryable)
+        }
     )
         .cacheState(initialValue = false)
 
@@ -714,12 +1048,15 @@ class SwapFeature(
         .filterStateData()
         .countdown(
             tick = timings.quoteTick,
-            running = noneOfFlows(continueLoading, appInBackground),
+            running = noneOfFlows(continueLoading, sendHoldsQuote, appInBackground),
             timeSource = timeSource,
         ) { data ->
-            when (val result = data.state) {
+            when (val result = data.state?.result) {
                 null -> null
-                is KResult.Ok -> timings.quoteTtl
+                is KResult.Ok -> when (sendsInPlace) {
+                    true -> quoteLifetime(arrivalLifetimeMillis = result.value.quote.lifetimeMillis)
+                    false -> timings.quoteTtl
+                }
                 is KResult.Err -> when (result.value) {
                     is SwapQuoteError.NotFound -> timings.quoteTtl
                     is SwapQuoteError.Failed -> timings.failedQuoteRetryDelay
@@ -753,6 +1090,20 @@ class SwapFeature(
             L.e(t)
             null
         }
+    }
+
+    private suspend fun loadBattery(walletId: String): SwapBattery? {
+        val wallet = unifiedAccountRepository.getTonWalletById(walletId) ?: return null
+        val config = api.getConfig(wallet.network)
+        val allowed = !api.getConfig(TonNetwork.MAINNET).flags.disableBattery &&
+            !config.batterySendDisabled
+        if (!allowed) {
+            return null
+        }
+        return SwapBattery(
+            charges = batteryRepository.fetchCharges(wallet) ?: return null,
+            relayedEvmChains = batteryRepository.getGaslessChains(wallet.network),
+        )
     }
 
     private suspend fun loadConfig(wallet: SwapWallet): ReadyConfig? {
@@ -810,7 +1161,7 @@ class SwapFeature(
     }
 
     private suspend fun fetchQuote(ctx: QuoteContext): KResult<DisplayQuote, SwapQuoteError> {
-        val quote = try {
+        val found = try {
             val result = swapRepo.fetchQuote(
                 sell = ctx.sell,
                 buy = ctx.buy,
@@ -828,6 +1179,11 @@ class SwapFeature(
             L.e(t)
             return KResult.Err(SwapQuoteError.Failed(isOffline = !networkMonitor.isOnlineFlow.first()))
         }
+        val receivedAt = SystemClock.elapsedRealtime()
+        val quote = found.copy(
+            receivedAt = receivedAt,
+            lifetimeMillis = found.expiresAtMillis?.let { it - System.currentTimeMillis() },
+        )
 
         val sellDisplay = ctx.sell.asset.value.decimals.baseUnit(quote.sourceBaseAmount).toDisplayUnit()
         val buyDisplay = ctx.buy.asset.value.decimals.baseUnit(quote.buyBaseAmount).toDisplayUnit()
@@ -838,6 +1194,8 @@ class SwapFeature(
                 sellAmount = sellDisplay.amountText(MAX_DISPLAY_SCALE),
                 buyAmount = buyDisplay.amountText(MAX_DISPLAY_SCALE),
                 rateLabel = swapRepo.formatRateLabel(quote, ctx.sell.asset.value, ctx.buy.asset.value).orEmpty(),
+                receivedAt = receivedAt,
+                minReceived = formatMinReceived(ctx.buy.asset.value, ctx.buy.rate?.value, quote.minimumBuyBaseAmount),
             )
         )
     }
@@ -865,11 +1223,21 @@ class SwapFeature(
                     slippageBps = ctx.quote.slippageBps,
                     priceImpactBps = ctx.quote.priceImpactBps,
                     provider = ctx.quote.provider.id,
+                    receivedAt = ctx.quoteReceivedAt,
+                    lifetimeMillis = ctx.quote.lifetimeMillis,
+                    genericPayload = ctx.quote.genericPayload,
                 ),
+                oneClick = sendsInPlace,
             ),
             initiator = initialRoute.initiator,
             utm = initialRoute.utm,
         )
+    }
+
+    private suspend fun reportPrepareFailure(e: Throwable) {
+        verifyError(e)
+        L.e(e)
+        relay.emit(SwapEvent.ShowError(e.message ?: context.getString(Localization.swap_error_prepare_failed)))
     }
 
     private suspend fun selectedWalletId(): String? = withContext(bgDispatcher) {
@@ -936,16 +1304,19 @@ class SwapFeature(
             }
 
             is SwapAction.Amount.ToggleCurrency -> toggleCurrency(input, accounts.of(input.side))
-            is SwapAction.Amount.Max -> maxAmount(input, accounts.of(AmountInputSide.Sell))
+            is SwapAction.Amount.Max -> maxAmount(input, accounts.of(AmountInputSide.Sell), percent = 100)
+            is SwapAction.Amount.Percent -> maxAmount(input, accounts.of(AmountInputSide.Sell), action.percent)
         }
 
-        is AmountCmd.Reset -> input.copy(text = "", isMax = false, side = AmountInputSide.Sell)
+        is AmountCmd.Fit -> fitAmount(input, accounts.of(AmountInputSide.Sell), cmd.units)
 
-        is AmountCmd.ClearMax -> input.copy(isMax = false)
+        is AmountCmd.Reset -> input.copy(text = "", isMax = false, side = AmountInputSide.Sell, toggle = null)
+
+        is AmountCmd.ClearMax -> input.copy(isMax = false, toggle = null)
 
         // The pair traded places: the amount stays with its token, so the side it is fixed on
         // flips with it.
-        is AmountCmd.FlipSide -> input.copy(isMax = false, side = flipSide(input.side))
+        is AmountCmd.FlipSide -> input.copy(isMax = false, side = flipSide(input.side), toggle = null)
 
         // Fiat input needs a rate: fall back to token input when the account loses it. A side still
         // reading a newly picked asset has no account yet, which is not a missing rate.
@@ -971,20 +1342,40 @@ class SwapFeature(
             return input
         }
 
-        val toFiat = !input.inFiat
+        val toggle = converter.toggle(input.text, input.isMax, !input.inFiat, input.toggle)
         return AmountInput(
-            text = converter.swapText(input.text, toFiat),
-            inFiat = toFiat,
+            text = toggle.toggledText,
+            inFiat = toggle.toFiat,
+            isMax = toggle.toggledIsMax,
             side = input.side,
+            maxUnits = input.maxUnits,
+            toggle = toggle,
         )
     }
 
-    private fun maxAmount(input: AmountInput, account: AccountWithDetails?): AmountInput {
+    private fun maxAmount(input: AmountInput, account: AccountWithDetails?, percent: Int): AmountInput {
         account ?: return input
 
         // Nothing above the reserve: the input stays as it was, and [maxBelowReserve] says why.
-        val max = maxSellAmount(account, swapRepo.getMaxReserve(account.asset.value)) ?: return input
+        val max = maxSellAmount(account, swapRepo.getMaxReserve(account.asset.value))
+            ?.let { account.asset.value.decimals.baseUnit(it.value * BigInteger.fromInt(percent) / BigInteger.fromInt(100)) }
+            ?: return input
 
+        return maxInput(input, account, max, isMax = percent == 100)
+    }
+
+    // A max its fee, paid in the asset sold, leaves no room for: what the send says is left to sell is
+    // the max from here on. Only a max still on screen is fitted, and only down.
+    private fun fitAmount(input: AmountInput, account: AccountWithDetails?, units: BigInteger): AmountInput {
+        val max = input.maxUnits
+        if (account == null || !input.isMax || max == null || units >= max) {
+            return input
+        }
+
+        return maxInput(input, account, account.asset.value.decimals.baseUnit(units), isMax = true)
+    }
+
+    private fun maxInput(input: AmountInput, account: AccountWithDetails, max: BaseUnit, isMax: Boolean): AmountInput {
         val converter = AmountInputConverter(account, FORMAT_DECIMALS)
         var inFiat = input.inFiat
         var text = converter.maxText(max, inFiat) ?: return input
@@ -994,11 +1385,11 @@ class SwapFeature(
             text = converter.maxText(max, false) ?: return input
         }
 
-        return AmountInput(text = text, inFiat = inFiat, isMax = true)
+        return AmountInput(text = text, inFiat = inFiat, isMax = isMax, maxUnits = max.value.takeIf { isMax })
     }
 
-    // What MAX sells: the balance less a chain-specific reserve (1 TON for the coin, nothing for a
-    // token) so the swap still leaves enough to cover the network fee. Null when nothing is left.
+    // What MAX sells: the balance less the reserve [SwapRepository.getMaxReserve] keeps for the swap's
+    // network fee. Null when nothing is left.
     private fun maxSellAmount(account: AccountWithDetails, reserve: BaseUnit): BaseUnit? {
         return (account.unitBalance - reserve).takeIf { it.isPositive }
     }
@@ -1071,15 +1462,16 @@ class SwapFeature(
  *   sellAccountState ──┼──► accounts
  *    buyAccountState ──┘
  *
- *   Amount.SetSell / SetBuy / Max / ToggleCurrency ──┐
- *                          swapRepo.swapCompleted ───┤
- *                  sellAsset? [distinct by id] ──────┼──► [fold] amountInput
- *                     assetPair [flipped only] ──────┤
- *                                        accounts ───┤
- *                                        accounts ⋯──┘
+ *   Amount.SetSell / SetBuy / Max / Percent / ToggleCurrency ──┐
+ *                                    swapRepo.swapCompleted ───┤
+ *                            sellAsset? [distinct by id] ──────┼──► [fold] amountInput
+ *                               assetPair [flipped only] ──────┤
+ *                                                  accounts ───┤
+ *                             FitMax [the attempt on screen] ──┤
+ *                                                  accounts ⋯──┘
  *
- *   Amount.Max ──┐
- *   accounts ⋯───┴──► maxBelowReserve ╌╌► MaxBelowReserve event
+ *   Amount.Max / Percent ──┐
+ *             accounts ⋯───┴──► maxBelowReserve ╌╌► MaxBelowReserve / MaxBelowFee event
  *
  *   configState [in effect] ──┐
  *                 sellAsset? ──┴──► slippage? ──┐
@@ -1088,11 +1480,20 @@ class SwapFeature(
  *
  *                     accounts ──┐
  *                  amountInput ──┤
- *         selectedSlippageBps? ──┼──► [distinct by key, debounce, latest] quoteState
+ *         selectedSlippageBps? ──┼──► quoteContext? ──► [distinct by key, debounce, latest] quoteState
  *   Requote ──► [fold] requoteAttempt ─┘
  *                                    quoteState [loading] ──► quoteLoading
  *                           quoteState [dataOrNull, okOrNull] ──► quote?
- *                          quoteState [dataOrNull, errOrNull] ──► quoteErrorMessageRes
+ *                  quoteState [fold, okOrNull, kept offline] ──► lastQuote?
+ *
+ *      quoteState ──┐
+ *   quoteContext? ──┴──► quoteFetch ──► [data or refreshing, err] quoteError? ──┬──► quoteErrorMessageRes?
+ *                                                                               └──► offlineToast ╌╌► Offline event
+ *
+ *       quote? ──┐
+ *   lastQuote? ──┼──► shownQuote? ──► receiveImpact?
+ *   quoteFetch ──┤
+ *  quoteError? ──┘
  *
  *         quoteLoading ──┐
  *   sellAccountLoading ──┼── [any] ──► isLoading
@@ -1109,17 +1510,55 @@ class SwapFeature(
  *
  *   quote? / accounts / amountInput / selectedSlippageBps? ──► continueContext?
  *
- *                       Continue ──┐
+ *            Continue [flag off] ──┐
  *               continueContext? ⋯─┴──► [first] continueState?
  *                                       continueState? [loading] ──► continueLoading
  *                                                  continueState? ──► events
  *                                          swapRepo.swapCompleted ──► events
  *
+ *   sellAsset? / buyAsset? / amountInput / selectedSlippageBps? ──► sendInputs?
+ *
+ *   accounts / amountInput / sellValidatedAmount? / insufficientFunds ──► amountBlocker? ──► amountBlocked
+ *
+ *                       Continue [flag on] ──┐
+ *   continueContext? / amountBlocker? /      │
+ *               quoteError? ⋯────────────────┴──► [blocked] ──┐
+ *   continueContext? [flag on, new quote] ──┐                 │
+ *                         sendInputs? ⋯─────┴──► [request] ───┤
+ *                   SendProgress ──┐                          │
+ *                         quote? ⋯─┴──► [quoted at] ──────────┤
+ *   quoteContext? [inputKey, distinct] ──► [input key] ───────┤
+ *   CloseDetails / FeeRowTapped / Prepared / FeePlanned /     │
+ *   FeePicked / CloseShortage / SendDisposed ─────────────────┤
+ *                                         sendInputs? ────────┴──► [fold] sendNode ──┬──► send?
+ *                                                                                    └──► [latest, delay] notice?
+ *
+ *   [request] failure ╌╌► ShowError event
+ *
+ *   send? [non-null, not Review or popup shown] ──► sendHoldsQuote
+ *
+ *   send? [clicked, Working, distinct id] ──┐
+ *                assetPair / amountInput ⋯──┴──► swapClicked ╌╌► swap_click analytics
+ *
+ *   send? / amountBlocker? / quoteFetch / quoteError? / quote? ──► swapButton
+ *
+ *   lookedUpWallet? ──┐
+ *       refreshTick ──┴──► [latest, flag on] battery?
+ *   battery? / sellAsset? / amountBlocker? / quoteFetch ──► showsPromo
+ *   PromoShown ──► promoShown ╌╌► settingsRepository.swapBatteryPromoShown
+ *
+ *              send? / shownQuote? ──► shownPlan?
+ *                swapButton / notice? ──► feeLineTappable
+ *   quoteFetch / quoteError? / shownQuote? ──┐
+ *      shownPlan? / showsPromo / amountBlocker? ┼──► feeLine
+ *                          feeLineTappable ──┘
+ *
  *   isLoading / continueLoading / insufficientFunds ── [none] ──┐
- *                                                               ├──► continueEnabled
- *                                                      quote? ──┘
+ *                                                      quote? ──┼──► continueEnabled
+ *                                                       send? ──┘
  *
  *   continueLoading ──┐
+ *    sendHoldsQuote ──┤
  *   appInBackground ──┴─ [none] ──┐
  *                                 ├──► [countdown] quoteCountdown? ──► quoteTimer?
  *     quoteState [dataOnly] ──────┘                      ╎

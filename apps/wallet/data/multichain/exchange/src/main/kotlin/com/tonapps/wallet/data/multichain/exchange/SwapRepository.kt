@@ -18,6 +18,8 @@ import com.tonapps.extensions.TimedCacheMemory
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
+import com.tonapps.wallet.data.multichain.fees.NetworkFees
+import com.tonapps.wallet.data.multichain.fees.NetworkFeesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import io.exchangeapi.models.CreateCrossSwapQuoteRequest
 import io.exchangeapi.models.CrossSwapAggregator
@@ -28,12 +30,23 @@ import io.exchangeapi.models.CrossSwapPayload
 import io.exchangeapi.models.CrossSwapPayloadKind
 import io.exchangeapi.models.CrossSwapProviderError
 import io.exchangeapi.models.CrossSwapProviderErrorCode
+import io.exchangeapi.models.CrossSwapQuote
+import io.exchangeapi.models.CrossSwapQuoteRequest
+import io.exchangeapi.models.CrossSwapQuoteV3
+import io.exchangeapi.models.CrossSwapTimeEstimate
+import io.infrastructure.ClientError
+import io.infrastructure.ClientException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.minutes
 
 data class SwapRoute(
@@ -42,6 +55,64 @@ data class SwapRoute(
     val providerRouteId: String?,
     val buyBaseAmount: BigInteger?,
     val minimumBuyBaseAmount: BigInteger?,
+)
+
+// A quoted route as both quote versions answer it; only v2 carries payloads inline.
+private class QuotedRoute(
+    val routeId: String,
+    val aggregator: CrossSwapAggregator,
+    val sourceAmount: String?,
+    val estimatedDestinationAmount: String,
+    val minimumDestinationAmount: String,
+    val totalSlippageBps: Int?,
+    val valueDifferenceBps: Int?,
+    val providerRouteId: String?,
+    val estimatedTime: CrossSwapTimeEstimate?,
+    val dateExpire: OffsetDateTime,
+    val payloads: List<CrossSwapPayload>?,
+)
+
+private class QuotedRoutes(
+    val routes: List<QuotedRoute>,
+    val providerErrors: List<CrossSwapProviderError>,
+)
+
+private fun CrossSwapQuote.toQuotedRoutes() = QuotedRoutes(
+    routes = routes.map { route ->
+        QuotedRoute(
+            routeId = route.routeId,
+            aggregator = route.aggregator,
+            sourceAmount = route.sourceAmount,
+            estimatedDestinationAmount = route.estimatedDestinationAmount,
+            minimumDestinationAmount = route.minimumDestinationAmount,
+            totalSlippageBps = route.totalSlippageBps,
+            valueDifferenceBps = route.valueDifferenceBps,
+            providerRouteId = route.providerRouteId,
+            estimatedTime = route.estimatedTime,
+            dateExpire = route.dateExpire,
+            payloads = route.payloads,
+        )
+    },
+    providerErrors = providerErrors.orEmpty(),
+)
+
+private fun CrossSwapQuoteV3.toQuotedRoutes() = QuotedRoutes(
+    routes = routes.map { route ->
+        QuotedRoute(
+            routeId = route.routeId,
+            aggregator = route.aggregator,
+            sourceAmount = route.sourceAmount,
+            estimatedDestinationAmount = route.estimatedDestinationAmount,
+            minimumDestinationAmount = route.minimumDestinationAmount,
+            totalSlippageBps = route.totalSlippageBps,
+            valueDifferenceBps = route.valueDifferenceBps,
+            providerRouteId = route.providerRouteId,
+            estimatedTime = route.estimatedTime,
+            dateExpire = route.dateExpire,
+            payloads = null,
+        )
+    },
+    providerErrors = providerErrors.orEmpty(),
 )
 
 fun CrossSwapAsset.toAssetEntity(): AssetEntity = AssetEntity(
@@ -55,6 +126,7 @@ fun CrossSwapAsset.toAssetEntity(): AssetEntity = AssetEntity(
 class SwapRepository(
     private val api: API,
     private val settings: SettingsRepository,
+    private val networkFeesRepository: NetworkFeesRepository,
 ) {
 
     private interface CacheKeys : CacheKey {
@@ -68,23 +140,46 @@ class SwapRepository(
 
     private val configCache = TimedCacheMemory<CacheKeys>()
 
-    val swapCompleted: SharedFlow<Unit> field = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val swapCompleted: SharedFlow<Boolean> field = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
 
-    fun notifySwapCompleted() {
-        swapCompleted.tryEmit(Unit)
+    /** The last `/network-fees` response, for what [getMaxReserve] answers to recompute when it lands. */
+    val networkFees: StateFlow<NetworkFees?>
+        get() = networkFeesRepository.fees
+
+    fun notifySwapCompleted(tracked: Boolean) {
+        swapCompleted.tryEmit(tracked)
     }
 
+    /** Loads `/network-fees` ahead of MAX, which reads only what is already loaded and never waits for it. */
+    suspend fun loadNetworkFees() {
+        networkFeesRepository.load()
+    }
+
+    // What MAX leaves of the balance for the swap's gas: a fixed 1 TON for the TON coin whatever `/network-fees`
+    // says, else its safe fee where the response has one paid in this asset, else nothing. MAX, its percents
+    // and the below-reserve toast all read it, so they agree.
     fun getMaxReserve(asset: Asset): BaseUnit {
-        if (asset !is Asset.Coin) {
-            return asset.decimals.toBaseUnit(BigDecimal.ZERO)
+        if (asset is Asset.Coin && asset.chain is Chain.Ton) {
+            return asset.decimals.toBaseUnit(TON_MAX_RESERVE)
         }
 
-        val reserve = when (asset.chain) {
-            is Chain.Ton -> TON_MAX_RESERVE
-            else -> BigDecimal.ZERO
+        val safe = networkFeesRepository.fees.value?.swapReserve(asset.id)
+        if (safe != null) {
+            return asset.decimals.baseUnit(safe.toString())
         }
 
-        return asset.decimals.toBaseUnit(reserve)
+        return asset.decimals.toBaseUnit(BigDecimal.ZERO)
+    }
+
+    // The smallest amount a swap may sell: 1 TON for the TON coin, nothing for any other asset. A `/network-fees`
+    // safe fee is what MAX leaves for gas, not a minimum: a typed amount below it still leaves the rest of the
+    // balance for the gas.
+    fun getMinimumAmount(asset: Asset): BaseUnit {
+        if (asset is Asset.Coin && asset.chain is Chain.Ton) {
+            return asset.decimals.toBaseUnit(TON_MAX_RESERVE)
+        }
+
+        return asset.decimals.toBaseUnit(BigDecimal.ZERO)
     }
 
     suspend fun getConfig(
@@ -151,42 +246,69 @@ class SwapRepository(
         slippageBps: Int? = null,
         direction: SwapQuoteDirection = SwapQuoteDirection.ExactInput,
         walletId: String?,
+        // A confirm screen quotes again on the API its route came from; null asks the one the wallet swaps on.
+        genericPayload: Boolean? = null,
     ): SwapQuoteResult {
         if (!amount.isPositive) {
             return SwapQuoteResult.NoRoute(SwapNoRouteReason.Unknown)
         }
 
         val exactOutput = direction == SwapQuoteDirection.ExactOutput
-        val request = CreateCrossSwapQuoteRequest(
-            sourceAsset = sell.asset.value.id,
-            sourceAmount = amount.toString().takeUnless { exactOutput },
-            destinationAsset = buy.asset.value.id,
-            destinationAmount = amount.toString().takeIf { exactOutput },
-            senderAddress = sell.address.display,
-            recipientAddress = buy.address.display,
-            slippageBps = slippageBps,
-            returnDepositAddress = true,
-            includePayload = true,
-            exactType = when (direction) {
-                SwapQuoteDirection.ExactInput -> CrossSwapExactType.exact_input
-                SwapQuoteDirection.ExactOutput -> CrossSwapExactType.exact_output
-            },
-            aggregators = when {
-                exactOutput -> null
-                WalletFeature.SwapKit.isEnabled -> listOf(CrossSwapAggregator.swapkit)
-                else -> null
-            }
-        )
-
-        val response = withContext(Async.Io) {
-            api.exchange.swapV2.createCrossSwapQuote(
-                createCrossSwapQuoteRequest = request,
-                xWalletID = walletId,
-                F = settings.installId,
-            )
+        val exactType = when (direction) {
+            SwapQuoteDirection.ExactInput -> CrossSwapExactType.exact_input
+            SwapQuoteDirection.ExactOutput -> CrossSwapExactType.exact_output
         }
-        val route = response.routes.firstOrNull()
-            ?: return SwapQuoteResult.NoRoute(noRouteReason(response.providerErrors.orEmpty()))
+        val aggregators = when {
+            exactOutput -> null
+            WalletFeature.SwapKit.isEnabled -> listOf(CrossSwapAggregator.swapkit)
+            else -> null
+        }
+        val onV3 = walletId != null && (genericPayload ?: usesGenericPayload(walletId))
+
+        val quoted = withContext(Async.Io) {
+            if (onV3) {
+                val request = CrossSwapQuoteRequest(
+                    sourceAsset = sell.asset.value.id,
+                    sourceAmount = amount.toString().takeUnless { exactOutput },
+                    destinationAsset = buy.asset.value.id,
+                    destinationAmount = amount.toString().takeIf { exactOutput },
+                    senderAddress = sell.address.display,
+                    recipientAddress = buy.address.display,
+                    slippageBps = slippageBps,
+                    returnDepositAddress = true,
+                    exactType = exactType,
+                    aggregators = aggregators,
+                )
+                api.exchange.swapV2.createCrossSwapQuoteV3(
+                    crossSwapQuoteRequest = request,
+                    xWalletID = walletId,
+                    F = settings.installId,
+                ).toQuotedRoutes()
+            } else {
+                val request = CreateCrossSwapQuoteRequest(
+                    sourceAsset = sell.asset.value.id,
+                    sourceAmount = amount.toString().takeUnless { exactOutput },
+                    destinationAsset = buy.asset.value.id,
+                    destinationAmount = amount.toString().takeIf { exactOutput },
+                    senderAddress = sell.address.display,
+                    recipientAddress = buy.address.display,
+                    slippageBps = slippageBps,
+                    returnDepositAddress = true,
+                    includePayload = true,
+                    exactType = exactType,
+                    aggregators = aggregators,
+                )
+                api.exchange.swapV2.createCrossSwapQuote(
+                    createCrossSwapQuoteRequest = request,
+                    xWalletID = walletId,
+                    F = settings.installId,
+                ).toQuotedRoutes()
+            }
+        }
+
+        val providerErrors = quoted.providerErrors
+        val route = quoted.routes.firstOrNull { !it.isScreened(providerErrors) }
+            ?: return SwapQuoteResult.NoRoute(noRouteReason(providerErrors))
 
         val sourceBaseAmount = when (direction) {
             SwapQuoteDirection.ExactInput -> amount
@@ -210,8 +332,22 @@ class SwapRepository(
                 CrossSwapAggregator.relay -> throw IllegalStateException("Relay routes are not swaps")
             },
             providerTxId = route.providerRouteId,
+            estimatedSeconds = route.estimatedTime?.totalSeconds,
+            expiresAtMillis = route.dateExpire.toInstant().toEpochMilli(),
+            genericPayload = onV3,
         )
         return SwapQuoteResult.Found(quote)
+    }
+
+    // A legacy wallet the backend never registered stays on v2.
+    private fun usesGenericPayload(walletId: String?): Boolean {
+        return walletId != null && WalletFeature.SwapV3.isEnabled
+    }
+
+    private fun QuotedRoute.isScreened(errors: List<CrossSwapProviderError>): Boolean {
+        return payloads.isNullOrEmpty() && errors.any { error ->
+            error.aggregator == aggregator && error.code == CrossSwapProviderErrorCode.wallet_screened
+        }
     }
 
     private fun noRouteReason(errors: List<CrossSwapProviderError>): SwapNoRouteReason {
@@ -227,7 +363,7 @@ class SwapRepository(
         CrossSwapProviderErrorCode.no_route -> SwapNoRouteReason.PairUnavailable
         CrossSwapProviderErrorCode.asset_not_supported -> SwapNoRouteReason.AssetUnavailable
         CrossSwapProviderErrorCode.provider_unavailable -> SwapNoRouteReason.ProviderUnavailable
-        CrossSwapProviderErrorCode.wallet_screened,
+        CrossSwapProviderErrorCode.wallet_screened -> SwapNoRouteReason.WalletScreened
         CrossSwapProviderErrorCode.insufficient_balance,
         CrossSwapProviderErrorCode.provider_error -> SwapNoRouteReason.Unknown
     }
@@ -250,10 +386,30 @@ class SwapRepository(
             scale = RATE_SCALE,
             approximate = true,
         )
-        return "1 ${sellAsset.symbol} $rateFormatted"
+        val label = "1 ${sellAsset.symbol} $rateFormatted"
+        return if (Formatter.defaultOptions.isolateLtr) {
+            "$LEFT_TO_RIGHT_ISOLATE$label$POP_DIRECTIONAL_ISOLATE"
+        } else {
+            label
+        }
     }
 
+    /** A `/v3` [quote] prepared into the operation the wallet signs. Only a registered wallet swaps on `/v3`. */
+    suspend fun prepareOperation(quote: SwapQuote, walletId: String): PreparedSwapOperation {
+        val prepared = screened {
+            api.exchange.swapV2.prepareCrossSwapRouteV3(
+                routeId = quote.routeId,
+                xWalletID = walletId,
+                F = settings.installId,
+            )
+        }
+        return PreparedSwapOperation.from(prepared)
+    }
+
+    /** A `/v2` [quote] prepared into the route the transaction confirm signs, on [sellChain]. */
     suspend fun prepareRoute(quote: SwapQuote, sellChain: Chain, walletId: String?): SwapRoute {
+        check(!quote.genericPayload) { "A /v3 route is prepared into an operation" }
+
         // "1-step" providers already returned the signing payloads inline on the quote route, so
         // we can build the route without the extra /prepare round-trip. Everyone else needs it.
         val inlinePayloads = quote.payloads?.takeIf { it.isNotEmpty() }
@@ -261,7 +417,7 @@ class SwapRepository(
             return inlinePayloads.toSwapRoute(sellChain, quote.provider, quote.providerTxId)
         }
 
-        val prepared = withContext(Async.Io) {
+        val prepared = screened {
             api.exchange.swapV2.prepareCrossSwapRoute(
                 routeId = quote.routeId,
                 xWalletID = walletId,
@@ -274,6 +430,28 @@ class SwapRepository(
             provider = quote.provider,
             providerRouteId = prepared.providerRouteId ?: quote.providerTxId,
         )
+    }
+
+    // Prepare is where the aggregator screens the wallets: its refusal is final for the wallet.
+    private suspend fun <T> screened(prepare: () -> T): T = withContext(Async.Io) {
+        try {
+            prepare()
+        } catch (e: ClientException) {
+            if (e.errorCode() == CrossSwapProviderErrorCode.wallet_screened.value) {
+                throw SwapWalletScreenedException(e)
+            }
+            throw e
+        }
+    }
+
+    private fun ClientException.errorCode(): String? {
+        val body = (response as? ClientError<*>)?.body as? String ?: return null
+        val json = try {
+            Json.parseToJsonElement(body)
+        } catch (_: SerializationException) {
+            return null
+        }
+        return ((json as? JsonObject)?.get("code") as? JsonPrimitive)?.contentOrNull
     }
 
     private fun List<CrossSwapPayload>.toSwapRoute(
@@ -400,7 +578,11 @@ class SwapRepository(
             scale = RATE_SCALE.toLong(),
         )
 
+        private const val LEFT_TO_RIGHT_ISOLATE = "\u2066"
+        private const val POP_DIRECTIONAL_ISOLATE = "\u2069"
+
         private val NO_ROUTE_REASON_PRIORITY = listOf(
+            CrossSwapProviderErrorCode.wallet_screened,
             CrossSwapProviderErrorCode.country_blocked,
             CrossSwapProviderErrorCode.min_amount_not_met,
             CrossSwapProviderErrorCode.no_route,

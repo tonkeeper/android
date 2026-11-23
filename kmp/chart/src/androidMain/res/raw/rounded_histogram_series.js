@@ -62,7 +62,8 @@
         let previous;
 
         for (let index = from; index < to; index += 1) {
-            const position = calculateColumnPosition(bars[index].x, common, previous);
+            const adjacent = index > from && bars[index - 1].time + 1 === bars[index].time;
+            const position = calculateColumnPosition(bars[index].x, common, adjacent ? previous : undefined);
             positions.set(index, position);
             previous = position;
         }

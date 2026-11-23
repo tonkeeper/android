@@ -79,10 +79,15 @@ sealed interface PerpsTradeRequest {
         override val walletId: String,
         override val marketIndex: Int,
         val orderIndex: Long,
+        val limitAutoCloseLeg: Boolean = false,
     ) : PerpsTradeRequest {
 
         override val kind: PerpsOperationKind
-            get() = PerpsOperationKind.ORDER_CANCEL
+            get() = if (limitAutoCloseLeg) {
+                PerpsOperationKind.ORDER_MODIFY
+            } else {
+                PerpsOperationKind.ORDER_CANCEL
+            }
     }
 
     data class OrderModify(
@@ -90,6 +95,8 @@ sealed interface PerpsTradeRequest {
         override val marketIndex: Int,
         val orderIndex: Long,
         val price: BigDecimal,
+        val maxBaseAmount: BigDecimal,
+        val expectedLimitPrice: BigDecimal? = null,
     ) : PerpsTradeRequest {
 
         override val kind: PerpsOperationKind
@@ -105,9 +112,36 @@ sealed interface PerpsTradeRequest {
         override val kind: PerpsOperationKind
             get() = PerpsOperationKind.AUTO_CLOSE
     }
+
+    data class AutoCloseRenewal(
+        override val walletId: String,
+        override val marketIndex: Int,
+        val confirmed: Map<Long, Long>,
+    ) : PerpsTradeRequest {
+
+        override val kind: PerpsOperationKind
+            get() = PerpsOperationKind.AUTO_CLOSE
+    }
+
+    data class AutoCloseFromEntry(
+        override val walletId: String,
+        override val marketIndex: Int,
+        val leverage: Int,
+        val placed: PerpsAutoCloseDraft,
+    ) : PerpsTradeRequest {
+
+        override val kind: PerpsOperationKind
+            get() = PerpsOperationKind.AUTO_CLOSE
+    }
 }
 
 sealed interface PerpsAutoCloseEdit {
     data object Keep : PerpsAutoCloseEdit
     data class Set(val target: PerpsAutoCloseDraft?) : PerpsAutoCloseEdit
 }
+
+internal fun closesWholePosition(marginDelta: BigDecimal, positionMargin: BigDecimal): Boolean {
+    return marginDelta.signum() > 0 && marginDelta.subtract(positionMargin).abs() < WHOLE_POSITION_TOLERANCE
+}
+
+private val WHOLE_POSITION_TOLERANCE = BigDecimal("0.01")

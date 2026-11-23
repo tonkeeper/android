@@ -2,7 +2,6 @@ package com.tonapps.perps.screens.order
 
 import androidx.annotation.StringRes
 import com.tonapps.async.Async
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.chainkit.perpetual.PerpetualReview
 import com.tonapps.log.L
 import com.tonapps.mvi.contract.MviAction
@@ -20,13 +19,17 @@ import com.tonapps.perps.data.PerpsMarketRules
 import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.PerpsTradingFlags
 import com.tonapps.perps.data.PerpsTradingState
+import com.tonapps.perps.data.floorToSizeStep
 import com.tonapps.perps.data.formatPlainDecimal
 import com.tonapps.perps.data.limitFractionDigits
 import com.tonapps.perps.data.perpsTicker
 import com.tonapps.perps.data.sanitizeAmount
+import com.tonapps.perps.trade.PerpsEntryAutoCloseLimits
+import com.tonapps.perps.trade.PerpsOpenLeverageStore
 import com.tonapps.perps.trade.PerpsPlannerAdapter
 import com.tonapps.perps.trade.PerpsProductRules
 import com.tonapps.perps.trade.PerpsTradeRequest
+import com.tonapps.perps.trade.entryAutoCloseLimits
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.perps.data.maskIf
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
@@ -40,6 +43,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.runningFold
@@ -61,6 +65,7 @@ interface PerpsCreateOrderViewState : MviViewState {
     val autoClose: StateFlow<PerpsAutoCloseDraft?>
     val autoCloseWarning: StateFlow<PerpsAutoCloseIssue?>
     val draftLiquidation: StateFlow<BigDecimal?>
+    val draftEntryLimits: StateFlow<PerpsEntryAutoCloseLimits?>
     val autoCloseAvailable: StateFlow<Boolean>
     val refusal: StateFlow<Int?>
     val marginQuote: StateFlow<BigDecimal>
@@ -90,6 +95,7 @@ class PerpsCreateOrderFeature(
     val side: PerpsOrderSide,
     private val adapter: PerpsPlannerAdapter,
     private val perpetualRepository: PerpetualRepository,
+    private val leverageStore: PerpsOpenLeverageStore,
     livePrices: PerpsLivePrices,
     unifiedAccountRepository: UnifiedAccountRepository,
     private val settingsRepository: SettingsRepository,
@@ -145,6 +151,14 @@ class PerpsCreateOrderFeature(
         val input: AmountInput,
         val leverage: Int,
         val limitPrice: BigDecimal?,
+        val sheetOpenings: Int,
+    ) {
+        fun samePlanAs(other: DraftContext): Boolean = this == other.copy(sheetOpenings = sheetOpenings)
+    }
+
+    private data class ReviewedDraft(
+        val draft: DraftContext,
+        val liquidation: PerpsDraftLiquidation,
     )
 
     private data class MinMarginKey(
@@ -153,16 +167,6 @@ class PerpsCreateOrderFeature(
         val limitPrice: BigDecimal?,
         val reload: Int,
     )
-
-    private data class AutoCloseEntry(
-        val draft: PerpsAutoCloseDraft?,
-        val warning: PerpsAutoCloseIssue?,
-    )
-
-    private sealed interface AutoCloseCmd {
-        data class Set(val draft: PerpsAutoCloseDraft?) : AutoCloseCmd
-        data class Check(val bounds: PerpsAutoCloseBounds?, val priceDecimals: Int?) : AutoCloseCmd
-    }
 
     private sealed interface AmountCmd {
         data class Set(val value: String) : AmountCmd
@@ -187,7 +191,7 @@ class PerpsCreateOrderFeature(
             val walletId = wallet?.id ?: return@combine null
             TradingContext(
                 walletId = walletId,
-                isMultichain = wallet.type == WalletType.Multichain,
+                isMultichain = wallet.supportsPerps,
                 attempt = attempt,
             )
         }
@@ -297,15 +301,21 @@ class PerpsCreateOrderFeature(
         .map { it.value }
         .cacheState(initialValue = null)
 
+    private val rememberedLeverage = context
+        .map { leverageStore.leverage(it.walletId, marketIndex) }
+        .flowOn(Async.Io)
+
     override val leverage = combine(
         leverageSelection,
+        rememberedLeverage,
         rules,
-        transform = { value, rules ->
+        transform = { value, remembered, rules ->
+            val chosen = value ?: remembered
             if (rules != null) {
-                val leverage = value ?: PerpsProductRules.defaultLeverage(rules.maxLeverage)
+                val leverage = chosen ?: PerpsProductRules.defaultLeverage(rules.maxLeverage)
                 leverage.coerceIn(MIN_LEVERAGE, rules.maxLeverage)
             } else {
-                value ?: PerpsProductRules.DEFAULT_LEVERAGE
+                chosen ?: PerpsProductRules.DEFAULT_LEVERAGE
             }
         }
     )
@@ -429,22 +439,29 @@ class PerpsCreateOrderFeature(
         .map { it.draft != null }
         .cacheState(initialValue = false)
 
-    private val autoCloseInterest = combine(
+    private val autoCloseSheetOpenings = actions
+        .on<PerpsCreateOrderAction.SetAutoCloseSheetVisible>()
+        .filter { it.visible }
+        .runningFold(0) { openings, _ -> openings + 1 }
+        .cacheState(initialValue = 0)
+
+    private val draftReviewRound = combine(
         autoCloseSheetVisible,
         autoCloseRequested,
-        transform = { visible, requested -> visible || requested }
+        autoCloseSheetOpenings,
+        transform = { visible, requested, openings -> openings.takeIf { visible || requested } }
     )
-        .cacheState(initialValue = false)
+        .cacheState(initialValue = null)
 
-    private val draftLiquidationState = combine(
+    private val draftContext = combine(
         context,
         amountInput,
         leverage,
         limitPrice,
-        autoCloseInterest,
-        transform = { context, input, leverage, limitPrice, interest ->
+        draftReviewRound,
+        transform = { context, input, leverage, limitPrice, round ->
             val entered = input.text.toBigDecimalOrNull()
-            if (context.isMultichain && entered != null && entered.signum() > 0 && interest) {
+            if (context.isMultichain && entered != null && entered.signum() > 0 && round != null) {
                 DraftContext(
                     walletId = context.walletId,
                     input = if (input.maxMargin == null) {
@@ -454,6 +471,7 @@ class PerpsCreateOrderFeature(
                     },
                     leverage = leverage,
                     limitPrice = limitPrice,
+                    sheetOpenings = round,
                 )
             } else {
                 null
@@ -461,47 +479,75 @@ class PerpsCreateOrderFeature(
         }
     )
         .distinctUntilChanged()
+        .cacheState(initialValue = null)
+
+    private val draftLiquidationState = draftContext
         .withLatestFrom(mark, rules) { draft, mark, rules ->
             draft?.let { it to marginOf(it.input, it.leverage, it.limitPrice ?: mark, rules) }
         }
         .transformStateLatest { pending ->
             val (draft, margin) = pending ?: return@transformStateLatest null
             delay(DRAFT_REVIEW_DEBOUNCE)
-            reviewLiquidation(draft, margin)
+            ReviewedDraft(draft = draft, liquidation = reviewDraft(draft, margin))
         }
         .cacheStateWithLoading()
 
-    override val draftLiquidation = draftLiquidationState
-        .mapStateDataValueOrNull()
+    private val reviewedDraft = combine(
+        draftLiquidationState,
+        draftContext,
+        transform = { state, draft -> state.state?.takeIf { draft != null && it.draft.samePlanAs(draft) } }
+    )
+        .cacheState(initialValue = null)
+
+    private val reviewedDraftLiquidation = reviewedDraft
+        .map { it?.liquidation }
+        .cacheState(initialValue = null)
+
+    override val draftLiquidation = combine(
+        combine(
+            limitPrice,
+            leverage,
+            transform = { limit, leverage -> PerpsAutoCloseTerms(limit, leverage) }
+        ),
+        reviewedDraftLiquidation,
+        mark,
+        rules,
+        transform = { terms, reviewed, mark, rules ->
+            resolveAutoCloseLiquidation(terms, reviewed, autoCloseLiquidationEstimate(side, terms, mark, rules)).price
+        }
+    )
+        .cacheState(initialValue = null)
+
+    override val draftEntryLimits = combine(
+        reviewedDraftLiquidation,
+        limitPrice,
+        leverage,
+        transform = { liquidation, limit, leverage -> liquidation.entryLimitsFor(PerpsAutoCloseTerms(limit, leverage)) }
+    )
         .cacheState(initialValue = null)
 
     private val autoCloseState = merge(
         actions
             .on<PerpsCreateOrderAction.SetAutoClose>()
-            .map { AutoCloseCmd.Set(it.draft) },
+            .map { PerpsAutoCloseCmd.Set(it.draft) },
         combine(
-            orderType,
             limitPrice,
             leverage,
-            draftLiquidation,
-            transform = { _, _, leverage, liquidation -> leverage to liquidation }
+            reviewedDraftLiquidation,
+            transform = { limit, leverage, reviewed -> PerpsAutoCloseTerms(limit, leverage) to reviewed }
         )
-            .withLatestFrom(effectivePrice, rules) { (leverage, liquidation), price, rules ->
-                AutoCloseCmd.Check(
-                    bounds = price?.let {
-                        PerpsAutoCloseBounds(
-                            entryPrice = it,
-                            leverage = BigDecimal(leverage),
-                            currentPrice = it,
-                            liquidationPrice = liquidation,
-                        )
-                    },
+            .withLatestFrom(mark, rules) { (terms, reviewed), mark, rules ->
+                val estimate = autoCloseLiquidationEstimate(side, terms, mark, rules)
+                PerpsAutoCloseCmd.Check(
+                    terms = terms,
+                    mark = mark,
+                    liquidation = resolveAutoCloseLiquidation(terms, reviewed, estimate),
                     priceDecimals = rules?.priceDecimals,
                 )
             },
     )
-        .runningFold(AutoCloseEntry(draft = null, warning = null), ::reduceAutoClose)
-        .cacheState(initialValue = AutoCloseEntry(draft = null, warning = null))
+        .runningFold(PerpsAutoCloseEntry(draft = null, warning = null)) { entry, cmd -> entry.reduce(side, cmd) }
+        .cacheState(initialValue = PerpsAutoCloseEntry(draft = null, warning = null))
 
     override val autoClose = combine(
         autoCloseState,
@@ -635,29 +681,25 @@ class PerpsCreateOrderFeature(
     override val canReview = combine(
         issue,
         marginQuote,
-        draftLiquidationState,
-        autoClose,
         combine(
             autoCloseUnplaceable,
             plannedMinMargin,
             transform = { autoCloseUnplaceable, minMargin -> autoCloseUnplaceable || minMargin is KState.Loading },
         ),
-        transform = { issue, margin, liquidation, autoClose, held ->
-            val liquidationPending = liquidation is KState.Loading && autoClose?.stopLoss != null
-            issue == null && margin.signum() > 0 && !liquidationPending && !held
-        }
+        transform = { issue, margin, held -> issue == null && margin.signum() > 0 && !held }
     )
         .cacheState(initialValue = false)
 
-    private suspend fun reviewLiquidation(draft: DraftContext, margin: BigDecimal): BigDecimal? {
+    private suspend fun reviewDraft(draft: DraftContext, margin: BigDecimal): PerpsDraftLiquidation {
+        val terms = PerpsAutoCloseTerms(limitPrice = draft.limitPrice, leverage = draft.leverage)
         if (margin.signum() <= 0) {
-            return null
+            return PerpsDraftLiquidation(terms = terms, price = null)
         }
         return try {
             withContext(Async.Io) {
                 val credentials = perpetualRepository.signingCredentials(draft.walletId)
-                    ?: return@withContext null
-                val review = adapter.plan(
+                    ?: return@withContext PerpsDraftLiquidation(terms = terms, price = null)
+                val planned = adapter.plan(
                     request = PerpsTradeRequest.Open(
                         walletId = draft.walletId,
                         marketIndex = marketIndex,
@@ -670,53 +712,19 @@ class PerpsCreateOrderFeature(
                     credentials = credentials,
                     mark = null,
                     operationId = UUID.randomUUID().toString(),
-                ).getOrNull()?.plan?.review as? PerpetualReview.Open
-                review?.liquidationPrice?.let { BigDecimal.valueOf(it, review.scale.priceDecimals) }
+                ).getOrNull()
+                val review = planned?.plan?.review as? PerpetualReview.Open
+                PerpsDraftLiquidation(
+                    terms = terms,
+                    price = review?.liquidationPrice?.let { BigDecimal.valueOf(it, review.scale.priceDecimals) },
+                    entryLimits = planned?.entryAutoCloseLimits(),
+                )
             }
         } catch (t: Throwable) {
             verifyError(t)
             L.e(t)
-            null
+            PerpsDraftLiquidation(terms = terms, price = null)
         }
-    }
-
-    private fun reduceAutoClose(entry: AutoCloseEntry, cmd: AutoCloseCmd): AutoCloseEntry {
-        val checkCmd = when (cmd) {
-            is AutoCloseCmd.Set -> return AutoCloseEntry(draft = cmd.draft, warning = null)
-            is AutoCloseCmd.Check -> cmd
-        }
-        val stored = entry.draft ?: return entry
-        val bounds = checkCmd.bounds ?: return entry
-        val priceDecimals = checkCmd.priceDecimals
-        val typedByPercent = stored.takeProfitRoi != null || stored.stopLossRoi != null
-        if (priceDecimals == null && typedByPercent) {
-            return entry
-        }
-        if (priceDecimals != null && stored.hasUnplaceableRoi(bounds.entryPrice, bounds.leverage, priceDecimals, side)) {
-            return entry.copy(warning = null)
-        }
-        val draft = if (priceDecimals == null) {
-            stored
-        } else {
-            stored.repriced(bounds.entryPrice, bounds.leverage, priceDecimals, side)
-        }
-        val check = checkAutoClose(side, draft.takeProfit, draft.stopLoss, bounds)
-        if (check.isValid) {
-            return entry.copy(draft = draft)
-        }
-        val takeProfitValid = check.takeProfit == null
-        val stopLossValid = check.stopLoss == null
-        val kept = PerpsAutoCloseDraft(
-            takeProfit = draft.takeProfit.takeIf { takeProfitValid },
-            stopLoss = draft.stopLoss.takeIf { stopLossValid },
-            takeProfitRoi = draft.takeProfitRoi.takeIf { takeProfitValid },
-            stopLossRoi = draft.stopLossRoi.takeIf { stopLossValid },
-        )
-
-        return AutoCloseEntry(
-            draft = kept.takeIf { it.takeProfit != null || it.stopLoss != null },
-            warning = check.takeProfit ?: check.stopLoss,
-        )
     }
 
     private fun reduceAmount(input: AmountInput, cmd: AmountCmd): AmountInput = when (cmd) {
@@ -840,16 +848,6 @@ class PerpsCreateOrderFeature(
         return floorToSizeStep(size, rules)
     }
 
-    private fun floorToSizeStep(size: BigDecimal, rules: PerpsMarketRules): BigDecimal {
-        val step = rules.stepSize?.takeIf { it.signum() > 0 }
-        val stepped = if (step != null) {
-            size.divide(step, 0, RoundingMode.DOWN).multiply(step)
-        } else {
-            size
-        }
-        return stepped.setScale(rules.sizeDecimals, RoundingMode.DOWN)
-    }
-
     private suspend fun loadMinMargin(walletId: String, leverage: Int, limitPrice: BigDecimal?): BigDecimal? {
         return try {
             withContext(Async.Io) {
@@ -904,8 +902,9 @@ class PerpsCreateOrderFeature(
  *                                  └──► limitPrice? ──┬─┴──► limitMissing
  *                                             mark? ──┴──► effectivePrice?
  *
- *   SetLeverage ──► leverageSelection ──┐
- *                              rules? ──┴──► leverage
+ *        SetLeverage ──► leverageSelection? ──┐
+ *   context ──► [io] rememberedLeverage? ─────┤
+ *                                    rules? ──┴──► leverage
  *
  *   ShowRefusal (invalid amount) ──► [fold] minMarginReload
  *   context, leverage, limitPrice?, minMarginReload ──► [distinct, latest] plannedMinMargin
@@ -929,19 +928,25 @@ class PerpsCreateOrderFeature(
  *                          marginQuote ──┘
  *
  *   SetAutoCloseSheetVisible ──► autoCloseSheetVisible ──┐
- *               SetAutoClose ──► autoCloseRequested ─────┴──► autoCloseInterest
+ *               SetAutoClose ──► autoCloseRequested ─────┼──► draftReviewRound?
+ *   SetAutoCloseSheetVisible ──► autoCloseSheetOpenings ─┘
  *
  *              context ──┐
  *          amountInput ──┤
- *             leverage ──┼──► [distinct] ──┬──► [debounce, latest] draftLiquidationState
- *          limitPrice? ──┤  mark?, rules? ⋯┘
- *    autoCloseInterest ──┘
- *   draftLiquidationState [dataOrNull] ──► draftLiquidation?
+ *             leverage ──┼──► [distinct] draftContext? ──┬──► [debounce, latest] draftLiquidationState
+ *          limitPrice? ──┤               mark?, rules? ⋯┘
+ *    draftReviewRound? ──┘
+ *   draftLiquidationState [kept while loading] ──┐
+ *                               draftContext? ──┴──► [same plan] reviewedDraft? ──► reviewedDraftLiquidation?
  *
- *                                 SetAutoClose ──────────────────┐
- *   orderType, limitPrice?, leverage, draftLiquidation? ──┐      ├──► [fold] autoCloseState ──┬──► autoClose?
- *                           effectivePrice? ⋯, rules? ⋯───┴──────┘                            └──► autoCloseUnplaceable
- *                                            effectivePrice?, leverage, rules? ───────────────────┘
+ *       limitPrice?, leverage ──┐
+ *   reviewedDraftLiquidation? ──┼──► [plan or estimate] draftLiquidation?
+ *               mark?, rules? ──┘
+ *
+ *                                        SetAutoClose ──────────┐
+ *   limitPrice?, leverage, reviewedDraftLiquidation? ──┐        ├──► [fold] autoCloseState ──┬──► autoClose?
+ *          mark? ⋯, rules? ⋯ [plan or estimate] ───────┴────────┘                            └──► autoCloseUnplaceable
+ *                                           effectivePrice?, leverage, rules? ───────────────────┘
  *   autoCloseState / autoCloseUnplaceable ──► autoCloseWarning?
  *
  *   isMultichain / loadError? / rules? / mark? / effectivePrice? / limitMissing /
@@ -951,9 +956,7 @@ class PerpsCreateOrderFeature(
  *                                                                                   minMargin ──┘
  *
  *                       issue? ──┐
- *                  marginQuote ──┤
- *        draftLiquidationState ──┼──► canReview
- *                   autoClose? ──┤
- *        autoCloseUnplaceable ──┤
+ *                  marginQuote ──┼──► canReview
+ *         autoCloseUnplaceable ──┤
  *   plannedMinMargin [loading] ──┘
  */

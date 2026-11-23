@@ -27,6 +27,7 @@ dependencies {
     implementation(projects.apps.wallet.data.account)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.events)
+    implementation(projects.apps.wallet.data.loyalty)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.multichain.wallet)
@@ -44,8 +45,21 @@ dependencies {
     implementation(projects.lib.extensions)
     implementation(projects.lib.blockchain)
     implementation(projects.lib.icu)
+    implementation(projects.lib.log)
     implementation(projects.lib.network)
     implementation(projects.lib.bus)
 
     implementation(projects.ui.uikit.core)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.wallet.core.jvm)
 }
+
+tasks.withType<Test>().configureEach {
+    enabled = true
+}
+
+configurations.matching { it.name.startsWith("testDebug") || it.name.startsWith("testRelease") }
+    .configureEach {
+        exclude(group = "com.trustwallet", module = "wallet-core-kotlin-android")
+    }

@@ -33,6 +33,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import io.tonapi.models.MessageConsequences
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -57,6 +58,7 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
     private val settings = mockk<SettingsRepository>()
     private val tokenRepository = mockk<TokenRepository>()
     private val wallet = mockk<WalletEntity>()
+    private val sender = mockk<GaslessSender>(relaxed = true)
 
     private val builder = TxFeeBuilder(
         api = api,
@@ -65,8 +67,8 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
         accountRepo = accountRepo,
         settingsRepository = settings,
         tokenRepository = tokenRepository,
-        sender = mockk(relaxed = true),
-        evmGasless = mockk(),
+        sender = sender,
+        gaslessRelayer = mockk(),
     )
 
     private val ton by lazy { testAccount(TestAssets.ton, balance = "1000") }
@@ -90,6 +92,7 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
         every { wallet.network } returns TonNetwork.MAINNET
         every { wallet.accountId } returns TestWallet.TON_ADDRESS
         every { wallet.isSupportedFeature(WalletFeature.GASLESS) } returns false
+        every { wallet.isMultichainLedger } returns false
         every { api.getConfig(any()) } returns mockk<ConfigEntity>(relaxed = true)
         every { api.tron } returns tronApi
         coEvery { unifiedAccountRepository.getTonWalletById(TestWallet.ID) } returns wallet
@@ -117,7 +120,6 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
             every { customPayloadApiUri } returns null
         }
         every { settings.getPreferredFeeMethod(any()) } returns PreferredFeeMethod.UNSPECIFIED
-        every { settings.batteryIsEnabledTx(any(), any()) } returns true
         every { settings.isSafeModeEnabled(any(), any()) } returns false
     }
 
@@ -233,6 +235,19 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
         assertFalse(state.batteryRechargeable)
     }
 
+    /** A swap that sells the TON coin sends what it sells: the battery would be charged the amount, not the gas. */
+    @Test
+    fun aSwapSellingTheTonCoinKeepsTheChainFee() = runTest {
+        charges = 1000
+        allowed = true
+
+        val state = buildTonSwap(ton)
+
+        assertTrue(state.options.isEmpty())
+        assertEquals(tonFee, state.estimated)
+        assertFalse(state.batteryRechargeable)
+    }
+
     @Test
     fun aTonSwapTheBatteryDoesNotSupportKeepsTheChainFee() = runTest {
         supported = false
@@ -280,6 +295,18 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
         assertTrue("no charges to pay the 7 with", state.batteryRechargeable)
     }
 
+    /** The battery relays a transfer of its own making, with no memo: a deposit told by its memo is not relayed. */
+    @Test
+    fun aTronSwapWithAMemoKeepsTheChainFee() = runTest {
+        stubTronEstimate(charges = 7)
+
+        val state = buildTronSwap(memo = "71756f74652d3031")
+
+        assertTrue(state.options.isEmpty())
+        assertEquals(trxFee, state.estimated)
+        verify(exactly = 0) { tronApi.estimateTransferResources(any()) }
+    }
+
     // endregion
 
     private fun stubTronEstimate(charges: Int) {
@@ -304,11 +331,12 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
         shrinkToFit = false,
     )
 
-    private suspend fun buildTonSwap(): TxFeeState = builder.buildSwap(
-        account = ton,
+    // A jetton sold through a router call: the message carries only the TON its forwarding takes.
+    private suspend fun buildTonSwap(account: AccountWithDetails = usdt): TxFeeState = builder.buildSwap(
+        account = account,
         energy = ton,
         walletId = TestWallet.ID,
-        transactions = listOf(swap(ton, Chain.Ton.Mainnet, TestWallet.TON_ADDRESS, data = SWAP_BODY)),
+        transactions = listOf(swap(account, Chain.Ton.Mainnet, TestWallet.TON_ADDRESS, data = SWAP_BODY)),
         approvals = emptyList(),
         estimated = tonFee,
         attachedEnergy = BigInteger.ZERO,
@@ -316,24 +344,31 @@ class TxFeeBuilderTonTest : BaseUnitTest() {
     )
 
     // A USD₮ TRC20 swap: the TRX one reads TokenEntity, which a JVM test cannot initialise.
-    private suspend fun buildTronSwap(): TxFeeState = builder.buildSwap(
+    private suspend fun buildTronSwap(memo: String? = null): TxFeeState = builder.buildSwap(
         account = usdtTron,
         energy = trx,
         walletId = TestWallet.ID,
-        transactions = listOf(swap(usdtTron, Chain.Tron.Mainnet, TestWallet.TRON_ADDRESS, data = null)),
+        transactions = listOf(swap(usdtTron, Chain.Tron.Mainnet, TestWallet.TRON_ADDRESS, data = null, memo = memo)),
         approvals = emptyList(),
         estimated = trxFee,
         attachedEnergy = BigInteger.ZERO,
         shrinkToFit = false,
     )
 
-    private fun swap(account: AccountWithDetails, chain: Chain, to: String, data: String?) = Transaction.Swap(
+    private fun swap(
+        account: AccountWithDetails,
+        chain: Chain,
+        to: String,
+        data: String?,
+        memo: String? = null,
+    ) = Transaction.Swap(
         account = account.value,
         amount = BigInteger.fromInt(100),
         destination = account.value,
         to = Address.force(to, chain),
         isMax = false,
         data = data,
+        memo = memo,
     )
 
     private companion object {

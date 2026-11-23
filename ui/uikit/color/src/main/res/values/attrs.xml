@@ -60,4 +60,16 @@
 
     <attr name="separatorCommonColor" format="reference"/>
     <attr name="separatorAlternateColor" format="reference"/>
+
+    <attr name="glassRimTopColor" format="reference|color"/>
+    <attr name="glassRimBottomColor" format="reference|color"/>
+    <attr name="glassBorderColor" format="reference|color"/>
+    <attr name="glassShadowColor" format="reference|color"/>
+    <attr name="glassEnabled" format="boolean"/>
+
+    <attr name="themeAppearance" format="enum">
+        <enum name="light" value="0"/>
+        <enum name="dark" value="1"/>
+        <enum name="blue" value="2"/>
+    </attr>
 </resources>

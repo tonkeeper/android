@@ -22,7 +22,10 @@ import io.batteryapi.models.GaslessV2EstimateRequest
 import io.batteryapi.models.GaslessV2EstimateResponse
 import io.batteryapi.models.GaslessV2SendRequest
 import io.batteryapi.models.GaslessV2SendResponse
-import io.batteryapi.models.GetTonConnectPayloadDefaultResponse
+import io.batteryapi.models.GetStatusDefaultResponse
+import io.batteryapi.models.PurchaseBatteryEmulateRequest
+import io.batteryapi.models.PurchaseBatteryEmulateResponse
+import io.batteryapi.models.PurchaseBatteryEstimateResponse
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -97,8 +100,8 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun gaslessEmulate(gaslessV2EmulateRequest: GaslessV2EmulateRequest, acceptLanguage: String? = "en", xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null): GaslessV2EmulateResponse {
-        val localVarResponse = gaslessEmulateWithHttpInfo(gaslessV2EmulateRequest = gaslessV2EmulateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+    fun gaslessEmulate(gaslessV2EmulateRequest: GaslessV2EmulateRequest, acceptLanguage: String? = "en", xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String? = null): GaslessV2EmulateResponse {
+        val localVarResponse = gaslessEmulateWithHttpInfo(gaslessV2EmulateRequest = gaslessV2EmulateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, xProAuth = xProAuth)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GaslessV2EmulateResponse
@@ -117,15 +120,15 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun gaslessEmulateWithHttpInfo(gaslessV2EmulateRequest: GaslessV2EmulateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): ApiResponse<GaslessV2EmulateResponse?> {
-        val localVariableConfig = gaslessEmulateRequestConfig(gaslessV2EmulateRequest = gaslessV2EmulateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+    fun gaslessEmulateWithHttpInfo(gaslessV2EmulateRequest: GaslessV2EmulateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String?): ApiResponse<GaslessV2EmulateResponse?> {
+        val localVariableConfig = gaslessEmulateRequestConfig(gaslessV2EmulateRequest = gaslessV2EmulateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, xProAuth = xProAuth)
 
         return request<GaslessV2EmulateRequest, GaslessV2EmulateResponse>(
             localVariableConfig
         )
     }
 
-    fun gaslessEmulateRequestConfig(gaslessV2EmulateRequest: GaslessV2EmulateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): RequestConfig<GaslessV2EmulateRequest> {
+    fun gaslessEmulateRequestConfig(gaslessV2EmulateRequest: GaslessV2EmulateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String?): RequestConfig<GaslessV2EmulateRequest> {
         val localVariableBody = gaslessV2EmulateRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
@@ -133,6 +136,7 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
         authorization?.apply { localVariableHeaders["Authorization"] = this.toString() }
         xWalletAuthorization?.apply { localVariableHeaders["X-Wallet-Authorization"] = this.toString() }
+        xProAuth?.apply { localVariableHeaders["X-Pro-Auth"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -150,8 +154,8 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun gaslessEstimate(gaslessV2EstimateRequest: GaslessV2EstimateRequest, acceptLanguage: String? = "en", xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null): GaslessV2EstimateResponse {
-        val localVarResponse = gaslessEstimateWithHttpInfo(gaslessV2EstimateRequest = gaslessV2EstimateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+    fun gaslessEstimate(gaslessV2EstimateRequest: GaslessV2EstimateRequest, acceptLanguage: String? = "en", xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String? = null): GaslessV2EstimateResponse {
+        val localVarResponse = gaslessEstimateWithHttpInfo(gaslessV2EstimateRequest = gaslessV2EstimateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, xProAuth = xProAuth)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GaslessV2EstimateResponse
@@ -170,15 +174,15 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun gaslessEstimateWithHttpInfo(gaslessV2EstimateRequest: GaslessV2EstimateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): ApiResponse<GaslessV2EstimateResponse?> {
-        val localVariableConfig = gaslessEstimateRequestConfig(gaslessV2EstimateRequest = gaslessV2EstimateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+    fun gaslessEstimateWithHttpInfo(gaslessV2EstimateRequest: GaslessV2EstimateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String?): ApiResponse<GaslessV2EstimateResponse?> {
+        val localVariableConfig = gaslessEstimateRequestConfig(gaslessV2EstimateRequest = gaslessV2EstimateRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, xProAuth = xProAuth)
 
         return request<GaslessV2EstimateRequest, GaslessV2EstimateResponse>(
             localVariableConfig
         )
     }
 
-    fun gaslessEstimateRequestConfig(gaslessV2EstimateRequest: GaslessV2EstimateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): RequestConfig<GaslessV2EstimateRequest> {
+    fun gaslessEstimateRequestConfig(gaslessV2EstimateRequest: GaslessV2EstimateRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String?): RequestConfig<GaslessV2EstimateRequest> {
         val localVariableBody = gaslessV2EstimateRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
@@ -186,6 +190,7 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
         authorization?.apply { localVariableHeaders["Authorization"] = this.toString() }
         xWalletAuthorization?.apply { localVariableHeaders["X-Wallet-Authorization"] = this.toString() }
+        xProAuth?.apply { localVariableHeaders["X-Pro-Auth"] = this.toString() }
         localVariableHeaders["Content-Type"] = "application/json"
         localVariableHeaders["Accept"] = "application/json"
 
@@ -203,8 +208,8 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun gaslessSend(gaslessV2SendRequest: GaslessV2SendRequest, acceptLanguage: String? = "en", xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null): GaslessV2SendResponse {
-        val localVarResponse = gaslessSendWithHttpInfo(gaslessV2SendRequest = gaslessV2SendRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+    fun gaslessSend(gaslessV2SendRequest: GaslessV2SendRequest, acceptLanguage: String? = "en", xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String? = null): GaslessV2SendResponse {
+        val localVarResponse = gaslessSendWithHttpInfo(gaslessV2SendRequest = gaslessV2SendRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, xProAuth = xProAuth)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as GaslessV2SendResponse
@@ -223,19 +228,74 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun gaslessSendWithHttpInfo(gaslessV2SendRequest: GaslessV2SendRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): ApiResponse<GaslessV2SendResponse?> {
-        val localVariableConfig = gaslessSendRequestConfig(gaslessV2SendRequest = gaslessV2SendRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+    fun gaslessSendWithHttpInfo(gaslessV2SendRequest: GaslessV2SendRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String?): ApiResponse<GaslessV2SendResponse?> {
+        val localVariableConfig = gaslessSendRequestConfig(gaslessV2SendRequest = gaslessV2SendRequest, acceptLanguage = acceptLanguage, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization, xProAuth = xProAuth)
 
         return request<GaslessV2SendRequest, GaslessV2SendResponse>(
             localVariableConfig
         )
     }
 
-    fun gaslessSendRequestConfig(gaslessV2SendRequest: GaslessV2SendRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): RequestConfig<GaslessV2SendRequest> {
+    fun gaslessSendRequestConfig(gaslessV2SendRequest: GaslessV2SendRequest, acceptLanguage: String?, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null, xProAuth: String?): RequestConfig<GaslessV2SendRequest> {
         val localVariableBody = gaslessV2SendRequest
         val localVariableQuery: MultiValueMap = mutableMapOf()
         val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
         acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        authorization?.apply { localVariableHeaders["Authorization"] = this.toString() }
+        xWalletAuthorization?.apply { localVariableHeaders["X-Wallet-Authorization"] = this.toString() }
+        xProAuth?.apply { localVariableHeaders["X-Pro-Auth"] = this.toString() }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/gasless/send",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun purchaseBatteryEmulate(purchaseBatteryEmulateRequest: PurchaseBatteryEmulateRequest, acceptLanguage: String? = "en", tonConnectAuth: String? = null, xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null): PurchaseBatteryEmulateResponse {
+        val localVarResponse = purchaseBatteryEmulateWithHttpInfo(purchaseBatteryEmulateRequest = purchaseBatteryEmulateRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PurchaseBatteryEmulateResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun purchaseBatteryEmulateWithHttpInfo(purchaseBatteryEmulateRequest: PurchaseBatteryEmulateRequest, acceptLanguage: String?, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): ApiResponse<PurchaseBatteryEmulateResponse?> {
+        val localVariableConfig = purchaseBatteryEmulateRequestConfig(purchaseBatteryEmulateRequest = purchaseBatteryEmulateRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+
+        return request<PurchaseBatteryEmulateRequest, PurchaseBatteryEmulateResponse>(
+            localVariableConfig
+        )
+    }
+
+    fun purchaseBatteryEmulateRequestConfig(purchaseBatteryEmulateRequest: PurchaseBatteryEmulateRequest, acceptLanguage: String?, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): RequestConfig<PurchaseBatteryEmulateRequest> {
+        val localVariableBody = purchaseBatteryEmulateRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
         xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
         authorization?.apply { localVariableHeaders["Authorization"] = this.toString() }
         xWalletAuthorization?.apply { localVariableHeaders["X-Wallet-Authorization"] = this.toString() }
@@ -244,7 +304,61 @@ class GaslessApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
 
         return RequestConfig(
             method = RequestMethod.POST,
-            path = "/gasless/send",
+            path = "/purchase-battery/emulate",
+            query = localVariableQuery,
+            headers = localVariableHeaders,
+            requiresAuthentication = true,
+            requiresWalletAuthentication = true,
+            walletId = xWalletId,
+            body = localVariableBody
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
+    fun purchaseBatteryEstimate(purchaseBatteryEmulateRequest: PurchaseBatteryEmulateRequest, acceptLanguage: String? = "en", tonConnectAuth: String? = null, xWalletId: String? = null, authorization: String? = null, xWalletAuthorization: String? = null): PurchaseBatteryEstimateResponse {
+        val localVarResponse = purchaseBatteryEstimateWithHttpInfo(purchaseBatteryEmulateRequest = purchaseBatteryEmulateRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+
+        return when (localVarResponse.responseType) {
+            ResponseType.Success -> (localVarResponse as Success<*>).data as PurchaseBatteryEstimateResponse
+            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
+            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
+            ResponseType.ClientError -> {
+                val localVarError = localVarResponse as ClientError<*>
+                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
+            }
+            ResponseType.ServerError -> {
+                val localVarError = localVarResponse as ServerError<*>
+                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Throws(IllegalStateException::class, IOException::class)
+    fun purchaseBatteryEstimateWithHttpInfo(purchaseBatteryEmulateRequest: PurchaseBatteryEmulateRequest, acceptLanguage: String?, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): ApiResponse<PurchaseBatteryEstimateResponse?> {
+        val localVariableConfig = purchaseBatteryEstimateRequestConfig(purchaseBatteryEmulateRequest = purchaseBatteryEmulateRequest, acceptLanguage = acceptLanguage, tonConnectAuth = tonConnectAuth, xWalletId = xWalletId, authorization = authorization, xWalletAuthorization = xWalletAuthorization)
+
+        return request<PurchaseBatteryEmulateRequest, PurchaseBatteryEstimateResponse>(
+            localVariableConfig
+        )
+    }
+
+    fun purchaseBatteryEstimateRequestConfig(purchaseBatteryEmulateRequest: PurchaseBatteryEmulateRequest, acceptLanguage: String?, tonConnectAuth: String? = null, xWalletId: String?, authorization: String? = null, xWalletAuthorization: String? = null): RequestConfig<PurchaseBatteryEmulateRequest> {
+        val localVariableBody = purchaseBatteryEmulateRequest
+        val localVariableQuery: MultiValueMap = mutableMapOf()
+        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
+        acceptLanguage?.apply { localVariableHeaders["Accept-Language"] = this.toString() }
+        tonConnectAuth?.apply { localVariableHeaders["X-TonConnect-Auth"] = this.toString() }
+        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this.toString() }
+        authorization?.apply { localVariableHeaders["Authorization"] = this.toString() }
+        xWalletAuthorization?.apply { localVariableHeaders["X-Wallet-Authorization"] = this.toString() }
+        localVariableHeaders["Content-Type"] = "application/json"
+        localVariableHeaders["Accept"] = "application/json"
+
+        return RequestConfig(
+            method = RequestMethod.POST,
+            path = "/purchase-battery/estimate",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

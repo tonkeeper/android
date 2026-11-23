@@ -49,12 +49,14 @@ dependencies {
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.multichain.exchange)
     implementation(projects.apps.wallet.data.account)
+    implementation(projects.apps.wallet.data.battery)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.backup)
     implementation(projects.apps.wallet.data.rn)
     implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.features.core)
+    implementation(projects.apps.wallet.features.confirm)
 
     implementation(projects.apps.wallet.localization)
 
@@ -77,4 +79,5 @@ dependencies {
     // junit, mockk and coroutines-test come with the testing module; wallet-core is jvm-only there.
     testImplementation(testFixtures(projects.apps.wallet.testing))
     testImplementation(libs.wallet.core.jvm)
+    testImplementation(projects.tonapi.battery)
 }

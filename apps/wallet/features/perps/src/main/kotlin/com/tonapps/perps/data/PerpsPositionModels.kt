@@ -50,6 +50,13 @@ data class PerpsLimitOrder(
     val remainingBase: BigDecimal?,
     val limitPrice: BigDecimal?,
     val expiryUnixMs: Long? = null,
+    val takeProfit: PerpsLimitOrderLeg? = null,
+    val stopLoss: PerpsLimitOrderLeg? = null,
+)
+
+data class PerpsLimitOrderLeg(
+    val orderIndex: Long,
+    val triggerPrice: BigDecimal,
 )
 
 enum class PerpsAutoCloseLegKind {
@@ -130,6 +137,29 @@ fun PerpsPositionSide.toOrderSide(): PerpsOrderSide {
         PerpsPositionSide.LONG -> PerpsOrderSide.LONG
         PerpsPositionSide.SHORT -> PerpsOrderSide.SHORT
     }
+}
+
+fun limitPassesTakeProfit(side: PerpsOrderSide, limitPrice: BigDecimal, takeProfit: BigDecimal): Boolean {
+    return when (side) {
+        PerpsOrderSide.LONG -> limitPrice >= takeProfit
+        PerpsOrderSide.SHORT -> limitPrice <= takeProfit
+    }
+}
+
+fun limitPassesStopLoss(side: PerpsOrderSide, limitPrice: BigDecimal, stopLoss: BigDecimal): Boolean {
+    return when (side) {
+        PerpsOrderSide.LONG -> limitPrice <= stopLoss
+        PerpsOrderSide.SHORT -> limitPrice >= stopLoss
+    }
+}
+
+fun PerpsLimitOrder.legsPassedBy(limitPrice: BigDecimal): List<PerpsLimitOrderLeg> {
+    val orderSide = side.toOrderSide()
+
+    return listOfNotNull(
+        takeProfit?.takeIf { limitPassesTakeProfit(orderSide, limitPrice, it.triggerPrice) },
+        stopLoss?.takeIf { limitPassesStopLoss(orderSide, limitPrice, it.triggerPrice) },
+    )
 }
 
 fun PerpsOpenPosition.withLiveMark(live: BigDecimal?): PerpsOpenPosition {

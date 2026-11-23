@@ -1,0 +1,6 @@
+# Usage by platform; both generators consume the entire list.
+filter:
+  operations:
+    # Both platforms
+    - getVaults
+    - getWalletBalance

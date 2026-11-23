@@ -2,7 +2,7 @@ package com.tonapps.deposit.multicoin.screens.confirm.perpetual
 
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 
 /**
@@ -17,13 +17,14 @@ interface PerpetualConfirmDelegate {
     suspend fun review(request: ConfirmRequest, withdraw: ConfirmType.PerpetualWithdraw): PerpetualReview
 
     /** Signs and sends [review]; a send whose outcome is unknown returns normally, recovery settles it. */
-    suspend fun submit(review: PerpetualReview, wallet: CryptoWallet)
+    suspend fun submit(review: PerpetualReview, wallet: MnemonicWallet)
 }
 
 class PerpetualConfirmException(
     val error: PerpetualConfirmError,
-    /** The quote behind the review can no longer be sent: the screen quotes again. */
+    /** The quote behind the review can no longer be sent: the screen shows [requoted], or quotes again without it. */
     val requote: Boolean = false,
+    val requoted: PerpetualReview? = null,
     cause: Throwable? = null,
 ) : Exception(error.toString(), cause)
 
@@ -38,6 +39,8 @@ sealed interface PerpetualConfirmError {
     data object InFlight : PerpetualConfirmError
     data object AccountUnavailable : PerpetualConfirmError
     data object ServiceUnavailable : PerpetualConfirmError
+    data object WithdrawalRateLimited : PerpetualConfirmError
+    data object TooManyRequests : PerpetualConfirmError
     data object Refused : PerpetualConfirmError
     data object PrepareFailed : PerpetualConfirmError
     data object AmountTooLow : PerpetualConfirmError
@@ -49,6 +52,8 @@ val PerpetualConfirmError.isRetryable: Boolean
     get() = this == PerpetualConfirmError.Failed ||
         this == PerpetualConfirmError.ServiceUnavailable ||
         this == PerpetualConfirmError.Refused ||
+        this == PerpetualConfirmError.WithdrawalRateLimited ||
+        this == PerpetualConfirmError.TooManyRequests ||
         // Re-quoted by then: the next swipe sends the fresh quote.
         this == PerpetualConfirmError.QuoteExpired
 
@@ -82,6 +87,8 @@ class PerpetualReview(
         val fee: String?,
         val feeIsEstimate: Boolean,
         val arrivalSeconds: Long?,
+        val recipient: String,
+        val provider: String,
         val feeShareBps: Int? = null,
     ) : Display
 }

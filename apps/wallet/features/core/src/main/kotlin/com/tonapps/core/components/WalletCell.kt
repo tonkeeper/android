@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.wallet.McWalletEntity
@@ -18,6 +17,7 @@ import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.TextCell
 import ui.painterResource
 import ui.theme.UIKit
+import com.tonapps.core.extensions.walletColor
 
 @Composable
 fun WalletRowCell(
@@ -62,7 +62,7 @@ fun WalletRowCell(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(Color(wallet.color)),
+                        .background(walletColor(wallet.color)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Emoji(emoji = wallet.emoji)

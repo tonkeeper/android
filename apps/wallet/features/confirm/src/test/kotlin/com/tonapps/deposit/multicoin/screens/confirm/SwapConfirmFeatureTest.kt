@@ -2,6 +2,7 @@ package com.tonapps.deposit.multicoin.screens.confirm
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.blockchain.model.ConfirmRequest
+import com.tonapps.chainkit.core.chain.api.models.ChainError
 import com.tonapps.chainkit.core.chain.api.models.ChainRes
 import com.tonapps.chainkit.core.chain.api.models.NodeRes
 import com.tonapps.chainkit.core.chain.model.account.Address
@@ -23,6 +24,7 @@ import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
 import com.tonapps.deposit.multicoin.screens.confirm.base.Signing
 import com.tonapps.deposit.multicoin.screens.confirm.fee.FeeAccount
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFee
+import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeState
 import com.tonapps.wallet.data.multichain.account.AccountBalanceEntity
 import com.tonapps.wallet.data.multichain.legacy.LegacySwapWallet
 import com.tonapps.wallet.testing.BaseUnitTest
@@ -30,7 +32,11 @@ import com.tonapps.wallet.testing.TestAssets
 import com.tonapps.wallet.testing.testAccount
 import io.exchangeapi.models.CrossSwapPayload
 import io.exchangeapi.models.CrossSwapPrepare
+import io.exchangeapi.models.CrossSwapProviderError
+import io.exchangeapi.models.CrossSwapProviderErrorCode
 import io.exchangeapi.models.CrossSwapQuote
+import io.infrastructure.ClientError
+import io.infrastructure.ClientException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -378,6 +384,76 @@ class SwapConfirmFeatureTest : BaseUnitTest() {
         assertTrue(pending.all { it == null })
     }
 
+    @Test
+    fun screenedWalletOnPrepareIsFinal() {
+        env.prepareAnswer = { throw walletScreenedRefusal() }
+
+        feature = env.feature(SwapConfirmFixtures.swapRequest(quote = SwapConfirmFixtures.snapshot(EXACT_TON)))
+        val pending = env.collectPending(feature)
+        scheduler.runCurrent()
+
+        assertEquals(ConfirmationError.WalletScreened, feature.confirmationError.value)
+        assertEquals(1, env.prepareRequests.size)
+        assertTrue(env.quoteRequests.isEmpty())
+        assertTrue(pending.all { it == null })
+    }
+
+    @Test
+    fun screenedWalletIsNotRetried() {
+        env.prepareAnswer = { throw walletScreenedRefusal(statusCode = HTTP_FORBIDDEN) }
+
+        feature = env.feature(SwapConfirmFixtures.swapRequest(quote = SwapConfirmFixtures.snapshot(EXACT_TON)))
+        val pending = env.collectPending(feature)
+        scheduler.runCurrent()
+
+        feature.retry()
+        scheduler.advanceTimeBy(IDLE_MS)
+        scheduler.runCurrent()
+
+        assertEquals(ConfirmationError.WalletScreened, feature.confirmationError.value)
+        assertEquals(1, env.prepareRequests.size)
+        assertTrue(env.quoteRequests.isEmpty())
+        assertTrue(pending.all { it == null })
+    }
+
+    @Test
+    fun otherPrepareRefusalIsRetriedWithAFreshQuote() {
+        env.prepareAnswer = { throw prepareRefusal(code = "route_expired", message = "route expired") }
+
+        val pending = prepare(SwapConfirmFixtures.swapRequest(quote = SwapConfirmFixtures.snapshot(EXACT_TON)))
+
+        assertNull(feature.confirmationError.value)
+        assertEquals(1, env.prepareRequests.size)
+        assertEquals(1, env.quoteRequests.size)
+        assertNotNull(pending.quote)
+    }
+
+    @Test
+    fun screenedRouteOnRequoteIsFinal() {
+        env.quoteAnswer = {
+            val quote = SwapConfirmFixtures.quote(EXACT_TON)
+            quote.copy(
+                routes = quote.routes.map { it.copy(payloads = null) },
+                providerErrors = quote.routes.map { route ->
+                    CrossSwapProviderError(
+                        aggregator = route.aggregator,
+                        code = CrossSwapProviderErrorCode.wallet_screened,
+                        message = WALLET_SCREENED_MESSAGE,
+                    )
+                },
+            )
+        }
+
+        feature = env.feature(SwapConfirmFixtures.swapRequest())
+        val pending = env.collectPending(feature)
+        scheduler.runCurrent()
+
+        assertEquals(ConfirmationError.WalletScreened, feature.confirmationError.value)
+        assertEquals(1, env.quoteRequests.size)
+        assertTrue(env.prepareRequests.isEmpty())
+        assertTrue(pending.all { it == null })
+    }
+
     /**
      * The shipped app asks as `Tonkeeper/26.09.x`, and for a TON source the backend answers with a
      * BOC payload keyed `address`/`amount` and no deposit address. The pinned chainkit used to read
@@ -496,6 +572,72 @@ class SwapConfirmFeatureTest : BaseUnitTest() {
         assertFalse(pending.isShortOnFeeOnly())
     }
 
+    @Test
+    fun aFailedFeeEstimateLeavesTheSwapWithoutAFeeAndKeepsTheReason() {
+        env.feeAnswer = { ChainRes.err(ChainError.InternalError("emulate failed")) }
+
+        val pending = prepare(SwapConfirmFixtures.swapRequest(quote = SwapConfirmFixtures.snapshot(EXACT_TON)))
+
+        assertTrue(pending.isFeeUnavailable)
+        assertEquals(ConfirmationError.InternalError, feature.confirmationError.value)
+    }
+
+    @Test
+    fun aFailedApproveAndSwapEstimateLeavesTheSwapWithoutAFee() {
+        env.prepareAnswer = { SwapConfirmFixtures.prepare(BERRY_APPROVAL) }
+        env.feeAnswer = { ChainRes.err(ChainError.InternalError("rpc failed")) }
+
+        val pending = prepare(
+            SwapConfirmFixtures.swapRequest(
+                assetId = SwapConfirmFixtures.BERRY_ASSET_ID,
+                destinationAssetId = SwapConfirmFixtures.ETH_ASSET_ID,
+                sourceAmount = SwapConfirmFixtures.BERRY_SOURCE_AMOUNT,
+                quote = SwapConfirmFixtures.berrySnapshot,
+            ),
+        )
+
+        assertTrue(pending.isFeeUnavailable)
+        assertEquals(ConfirmationError.InternalError, feature.confirmationError.value)
+    }
+
+    @Test
+    fun aRetryAfterTheNodeRecoversBringsTheSwapFeeBack() {
+        env.feeAnswer = { ChainRes.err(ChainError.InternalError("emulate failed")) }
+        feature = env.feature(SwapConfirmFixtures.swapRequest(quote = SwapConfirmFixtures.snapshot(EXACT_TON)))
+        val pending = env.collectPending(feature)
+        scheduler.runCurrent()
+        assertTrue(pending.last()!!.isFeeUnavailable)
+
+        scheduler.advanceTimeBy(IDLE_MS)
+        scheduler.runCurrent()
+        assertTrue(env.quoteRequests.isEmpty())
+
+        env.feeAnswer = { ChainRes.ok(Fee.Value(it.account.chain.toAsset(), GAS)) }
+        feature.retry()
+        scheduler.runCurrent()
+
+        assertFalse(pending.last()!!.isFeeUnavailable)
+        assertNull(feature.confirmationError.value)
+        assertEquals(1, env.quoteRequests.size)
+    }
+
+    @Test
+    fun aBatteryOptionKeepsTheSwapPayableWhenTheChainFeeFails() {
+        env.feeAnswer = { ChainRes.err(ChainError.InternalError("emulate failed")) }
+        env.feeStateAnswer = { energy, estimated ->
+            val battery = TxFee(
+                account = FeeAccount.Keeper(balance = BigInteger.fromInt(100), rate = null),
+                fee = Fee.Value(Asset.Battery(Chain.Ton.Mainnet), BigInteger.fromInt(5)),
+            )
+            TxFeeState(energy = energy, estimated = estimated, options = listOf(battery))
+        }
+
+        val pending = prepare(SwapConfirmFixtures.swapRequest(quote = SwapConfirmFixtures.snapshot(EXACT_TON)))
+
+        assertFalse(pending.isFeeUnavailable)
+        assertNull(feature.confirmationError.value)
+    }
+
     // ---- harness -----------------------------------------------------------------------------
 
     /**
@@ -532,7 +674,7 @@ class SwapConfirmFeatureTest : BaseUnitTest() {
         env.passcodeConfirmed = false
         val pending = prepareLegacy()
 
-        feature.sendTransaction(context, pending)
+        feature.sendTransaction(pending)
         scheduler.runCurrent()
 
         assertTrue(env.legacyKeyReads.isEmpty())
@@ -547,7 +689,7 @@ class SwapConfirmFeatureTest : BaseUnitTest() {
     fun legacyWalletSendsWithoutAWalletIdAndRefreshesItsOwnBalances() {
         val pending = prepareLegacy()
 
-        feature.sendTransaction(context, pending)
+        feature.sendTransaction(pending)
         scheduler.runCurrent()
 
         assertEquals(listOf(SwapConfirmFixtures.WALLET_ID), env.legacyKeyReads.toList())
@@ -650,6 +792,21 @@ class SwapConfirmFeatureTest : BaseUnitTest() {
         payload.copy(humanSummary = summary)
     }
 
+    private fun walletScreenedRefusal(statusCode: Int = HTTP_BAD_REQUEST): ClientException = prepareRefusal(
+        code = CrossSwapProviderErrorCode.wallet_screened.value,
+        message = WALLET_SCREENED_MESSAGE,
+        statusCode = statusCode,
+    )
+
+    private fun prepareRefusal(code: String, message: String, statusCode: Int = HTTP_BAD_REQUEST): ClientException {
+        val body = """{"error":"$message","code":"$code","request_id":"0ed173ef-9f96-4ff3-a08e-4d8c42248cfa"}"""
+        return ClientException(
+            message = "Client error : $statusCode",
+            statusCode = statusCode,
+            response = ClientError<Any>(body = body, statusCode = statusCode),
+        )
+    }
+
     private fun PendingTransaction.swapTransaction(): Transaction.Swap {
         val signing = signing
         assertTrue("expected a transaction to sign", signing is Signing.Tx)
@@ -660,6 +817,12 @@ class SwapConfirmFeatureTest : BaseUnitTest() {
 
     private companion object {
         val GAS: BigInteger = BigInteger.parseString("2000000")
+
+        const val IDLE_MS = 600_000L
+
+        const val HTTP_BAD_REQUEST = 400
+        const val HTTP_FORBIDDEN = 403
+        const val WALLET_SCREENED_MESSAGE = "wallet blocked by the provider's compliance screening"
 
         // `confirm_prepare_exact_ton.json`: the deposit payload spends exactly the quoted amount.
         val TON_PAYLOAD_AMOUNT: BigInteger = BigInteger.parseString("1000000000")

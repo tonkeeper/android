@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
+import androidx.core.view.isInvisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
@@ -31,19 +32,14 @@ class BottomSheetLayout @JvmOverloads constructor(
     defStyle: Int = 0
 ) : FrameLayout(context, attrs, defStyle) {
 
-    private companion object {
-        private const val parentScale = .92f
-        private const val parentAlpha = .8f
-        private const val PREDICTIVE_PEEK = 0.2f
-        private const val PREDICTIVE_CANCEL_DURATION = 180L
-        private val defaultTopMargin = 22.dp
-        private val interpolator = PathInterpolator(.2f, 0f, 0f, 1f)
-    }
-
     var doOnHide: (() -> Unit)? = null
     var doOnAnimationEnd: (() -> Unit)? = null
     var doOnDragging: (() -> Unit)? = null
     var fragment: Fragment? = null
+    var hideRequested = false
+        private set
+
+    private var showPending = false
 
     private val parentRadius = context.getDimensionPixelSize(R.dimen.cornerMedium)
 
@@ -69,6 +65,9 @@ class BottomSheetLayout @JvmOverloads constructor(
 
     private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
         override fun onStateChanged(bottomSheet: View, newState: Int) {
+            if (newState == BottomSheetBehavior.STATE_SETTLING || newState == BottomSheetBehavior.STATE_EXPANDED) {
+                showPending = false
+            }
             if (newState == BottomSheetBehavior.STATE_HIDDEN) {
                 releaseScreen()
             } else if (newState == BottomSheetBehavior.STATE_DRAGGING) {
@@ -77,7 +76,7 @@ class BottomSheetLayout @JvmOverloads constructor(
         }
 
         override fun onSlide(bottomSheet: View, slideOffset: Float) {
-            if (slideOffset > 0f) {
+            if (slideOffset > 0f || hideRequested) {
                 return
             }
             val progress = 1f - abs(slideOffset)
@@ -123,7 +122,11 @@ class BottomSheetLayout @JvmOverloads constructor(
     }
 
     fun startShowAnimation() {
+        showPending = true
         doOnLayout {
+            if (hideRequested) {
+                return@doOnLayout
+            }
             behavior.peekHeight = contentView.measuredHeight
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
@@ -151,6 +154,16 @@ class BottomSheetLayout @JvmOverloads constructor(
     fun hide(force: Boolean) {
         if (force) {
             behavior.isHideable = true
+        }
+        if (showPending || !contentView.isLaidOut || behavior.state == BottomSheetBehavior.STATE_HIDDEN) {
+            hideRequested = true
+            showPending = false
+            contentView.animate().cancel()
+            parentAnimator.cancel()
+            onAnimationUpdateParent(0f)
+            isInvisible = true
+            post { doOnHide?.invoke() }
+            return
         }
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
@@ -184,9 +197,19 @@ class BottomSheetLayout @JvmOverloads constructor(
     }
 
     private fun releaseScreen() {
+        parentAnimator.cancel()
         doOnHide?.invoke()
         onAnimationUpdateParent(0f)
     }
 
     override fun hasOverlappingRendering() = false
+
+    private companion object {
+        private const val parentScale = .92f
+        private const val parentAlpha = .8f
+        private const val PREDICTIVE_PEEK = 0.2f
+        private const val PREDICTIVE_CANCEL_DURATION = 180L
+        private val defaultTopMargin = 22.dp
+        private val interpolator = PathInterpolator(.2f, 0f, 0f, 1f)
+    }
 }

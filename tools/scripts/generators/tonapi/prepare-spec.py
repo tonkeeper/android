@@ -36,6 +36,20 @@ def load(text):
 
 METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
 CREDENTIALS = {"Authorization", "X-Wallet-Authorization", "X-TonConnect-Auth"}
+HEADER_WALLET_AUTH = {"batteryapi", "earnapi"}
+# Clients whose callers use enum values as identifiers (provider, category ids): a value an older app
+# does not know stays itself instead of collapsing into `unknown`.
+STRING_ENUMS = {"tonendpointapi"}
+# Required properties the client ignores or reads leniently: a response that lacks one still decodes.
+OPTIONAL = {"kandelabrapi": {
+    # Hermes shares these candle models and sends partial OHLCV updates.
+    "Candle": {"o", "h", "l", "c", "v"},
+}, "tonendpointapi": {
+    "Currency": {"code", "name", "image", "type", "symbol"},
+    "StoryInfo": {"preview", "main_screen", "is_auto_show"},
+    "StoryPage": {"include_wallets"},
+    "StoryPageLink": {"text", "url"},
+}}
 # Synthetic schemas, never generated: --schema-mappings replaces each reference with the type.
 # A closed object reads as a model, so a property referencing it carries no @Contextual.
 SYNTHETIC = {
@@ -44,11 +58,56 @@ SYNTHETIC = {
 }
 
 
-def prepare(document, package, open_enums=False):
+def filter_operations(document, selection, resolve):
+    allowed = set(selection["operations"])
+    paths = document.get("paths", {})
+    for path, item in list(paths.items()):
+        if "$ref" in item:
+            item = paths[path] = deepcopy(resolve(item))
+        for method in list(item):
+            if method in METHODS and item[method].get("operationId") not in allowed:
+                del item[method]
+        if not METHODS.intersection(item):
+            del paths[path]
+
+    components = document.get("components", {})
+    retained = {"securitySchemes": components["securitySchemes"]} if "securitySchemes" in components else {}
+    pending = [value for key, value in document.items() if key != "components"]
+    pending += list(retained.values())
+    pending += [{"$ref": f"#/components/schemas/{name.replace('~', '~0').replace('/', '~1')}"} for name in selection.get("schemas", [])]
+    seen = set()
+    while pending:
+        value = pending.pop()
+        references = []
+        if isinstance(value, dict):
+            pending.extend(value.values())
+            references.append(value.get("$ref"))
+            discriminator = value.get("discriminator")
+            mapping = discriminator.get("mapping", {}) if isinstance(discriminator, dict) else {}
+            if isinstance(mapping, dict):
+                for name in mapping.values():
+                    if isinstance(name, str) and name in components.get("schemas", {}):
+                        name = f"#/components/schemas/{name.replace('~', '~0').replace('/', '~1')}"
+                    references.append(name)
+        elif isinstance(value, list):
+            pending.extend(value)
+        for reference in references:
+            if not isinstance(reference, str) or not reference.startswith("#/components/"):
+                continue
+            _, _, group, name, *_ = reference.split("/")
+            name = name.replace("~1", "/").replace("~0", "~")
+            if (group, name) not in seen:
+                seen.add((group, name))
+                component = components[group][name]
+                retained.setdefault(group, {})[name] = component
+                pending.append(component)
+    # Retain source order: it affects Kotlin inline model naming and discriminator parents.
+    document["components"] = {group: {name: value for name, value in values.items() if name in retained.get(group, {})}
+                              for group, values in components.items() if group in retained}
+
+
+def prepare(document, package, open_enums=False, operation_filter=None):
     document = deepcopy(document)
-    schemas = document.setdefault("components", {}).setdefault("schemas", {})
-    if taken := SYNTHETIC.keys() & schemas.keys():
-        raise ValueError(f"The spec defines reserved schemas: {', '.join(sorted(taken))}")
 
     def resolve(value):
         seen = set()
@@ -61,6 +120,18 @@ def prepare(document, package, open_enums=False):
             for part in reference[2:].split("/"):
                 value = value[part.replace("~1", "/").replace("~0", "~")]
         return value
+
+    if operation_filter is not None:
+        filter_operations(document, operation_filter, resolve)
+    schemas = document.setdefault("components", {}).setdefault("schemas", {})
+    if taken := SYNTHETIC.keys() & schemas.keys():
+        raise ValueError(f"The spec defines reserved schemas: {', '.join(sorted(taken))}")
+    for name, optional in OPTIONAL.get(package, {}).items():
+        if (schema := schemas.get(name)) is None:
+            continue
+        if missing := optional - schema.get("properties", {}).keys():
+            raise ValueError(f"{name} has no properties {', '.join(sorted(missing))}")
+        schema["required"] = [key for key in schema.get("required", []) if key not in optional]
 
     for path, item in document.get("paths", {}).items():
         for method, operation in item.items():
@@ -88,13 +159,13 @@ def prepare(document, package, open_enums=False):
                 location, name = parameter.get("in"), parameter.get("name")
                 if location == "path" and name == "wallet_id":
                     parameter["x-wallet-path"] = True
-                # Battery authenticates its own wallet through headers; enterprise path IDs address another wallet.
+                # Battery and Earn authenticate their own wallet through headers; enterprise path IDs address another wallet.
                 wallet_parameter = (location, name) == ("header", "X-Wallet-ID") or (
                     (location, name) == ("path", "wallet_id") and not wallet_in_headers and package != "batteryapi"
                 )
                 if not wallet_in_security and wallet_parameter:
                     parameter["x-wallet-id"] = True
-                if package == "batteryapi" and location == "header":
+                if package in HEADER_WALLET_AUTH and location == "header":
                     if name == "X-Wallet-ID" and not wallet_in_security:
                         operation["x-wallet-authentication"] = True
                     if name in CREDENTIALS:
@@ -159,9 +230,14 @@ def prepare(document, package, open_enums=False):
                 value["additionalProperties"] = {"$ref": "#/components/schemas/JsonAny"}
                 used.add("JsonAny")
             enum = value.get("enum")
-            if open_enums and isinstance(enum, list) and "unknown" not in enum and (
+            strings = isinstance(enum, list) and (
                 value.get("type") == "string" or "type" not in value and all(isinstance(v, str) for v in enum)
-            ):
+            )
+            if strings and package in STRING_ENUMS:
+                del value["enum"]
+                value.pop("x-enum-varnames", None)
+                value["type"] = "string"
+            elif strings and open_enums and "unknown" not in enum:
                 enum.append("unknown")
                 if "x-enum-varnames" in value:
                     value["x-enum-varnames"].append("unknown")
@@ -182,7 +258,8 @@ def prepare(document, package, open_enums=False):
 
 
 if __name__ == "__main__":
-    source, destination, package, open_enums = sys.argv[1:]
-    document, mappings = prepare(load(Path(source).read_text()), package, open_enums == "true")
+    source, destination, package, open_enums, *selection = sys.argv[1:]
+    operation_filter = load(Path(selection[0]).read_text())["filter"] if selection and selection[0] else None
+    document, mappings = prepare(load(Path(source).read_text()), package, open_enums == "true", operation_filter)
     Path(destination).write_text(json.dumps(document, ensure_ascii=False, allow_nan=False))
     print(mappings)

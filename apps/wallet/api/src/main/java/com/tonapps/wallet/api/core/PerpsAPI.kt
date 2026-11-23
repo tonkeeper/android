@@ -2,6 +2,7 @@ package com.tonapps.wallet.api.core
 
 import io.perpsapi.apis.AccountApi
 import io.perpsapi.apis.ActivityApi
+import io.perpsapi.apis.ClientMetricsApi
 import io.perpsapi.apis.FundingApi
 import io.perpsapi.apis.IntegratorApi
 import io.perpsapi.apis.OrderbookApi
@@ -26,4 +27,5 @@ class PerpsAPI(
     val integrator: IntegratorApi by lazy { IntegratorApi(basePath, okHttpClient) }
     val funding: FundingApi by lazy { FundingApi(basePath, okHttpClient) }
     val activity: ActivityApi by lazy { ActivityApi(basePath, okHttpClient) }
+    val clientMetrics: ClientMetricsApi by lazy { ClientMetricsApi(basePath, okHttpClient) }
 }

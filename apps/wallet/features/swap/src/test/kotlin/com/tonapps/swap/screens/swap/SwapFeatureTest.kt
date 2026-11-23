@@ -1,9 +1,17 @@
 package com.tonapps.swap.screens.swap
 
+import android.os.SystemClock
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.blockchain.model.ConfirmType
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.chainkit.core.chain.model.num.Formatter
+import com.tonapps.core.flags.BootFlags
+import com.tonapps.core.flags.WalletFeatureKey
+import com.tonapps.deposit.multicoin.screens.confirm.SwapFeePlan
+import com.tonapps.deposit.multicoin.screens.confirm.SwapFeeSummary
 import com.tonapps.swap.SwapRoutes
 import com.tonapps.swap.screens.swap.SwapFixtures.BTC_ASSET_ID
 import com.tonapps.swap.screens.swap.SwapFixtures.ETH_ASSET_ID
@@ -15,6 +23,9 @@ import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.testing.BaseUnitTest
 import com.tonapps.wallet.testing.testAccount
 import io.exchangeapi.models.CrossSwapExactType
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,6 +33,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * What each action the screen can send does to the nodes it reads.
@@ -78,6 +91,41 @@ class SwapFeatureTest : BaseUnitTest() {
         // is "GRAM" (CoinType.Gram.symbol; its shortName is "TON").
         assertEquals("1 GRAM ≈ 1.417408 USDT", quote.rateLabel)
         assertTrue(quoted.continueEnabled)
+    }
+
+    @Test
+    fun rateLabelKeepsItsLeftToRightOrderInRtl() {
+        val defaults = Formatter.defaultOptions
+        Formatter.configureDefaults(defaults.copy(isolateLtr = true))
+        try {
+            swapTest(env) {
+                val quoted = after { sendAction(SwapAction.Amount.SetSell("1")) }
+
+                assertEquals("\u20661 GRAM \u2066≈ 1.417408 USDT\u2069\u2069", quoted.quote?.rateLabel)
+            }
+        } finally {
+            Formatter.configureDefaults(defaults)
+        }
+    }
+
+    @Test
+    fun amountsWrittenIntoTheFieldsFollowTheLocaleSeparator() {
+        val defaults = Formatter.defaultOptions
+        Formatter.configureDefaults(defaults.copy(decimalSeparator = ","))
+        try {
+            swapTest(env) {
+                val quoted = after { sendAction(SwapAction.Amount.SetSell("1")) }
+                assertEquals("1,417408", quoted.quote?.buyAmount)
+
+                val inFiat = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+                assertEquals("1,43", inFiat.amountInput.text)
+
+                after { sendAction(SwapAction.Amount.SetSell("2,86")) }
+                assertEquals("2000000000", quoteRequests.last().sourceAmount)
+            }
+        } finally {
+            Formatter.configureDefaults(defaults)
+        }
     }
 
     /** The spinner has to cover the debounce, or the receive field reads as empty and final. */
@@ -226,6 +274,47 @@ class SwapFeatureTest : BaseUnitTest() {
         assertEquals("1.43", inFiat.amountInput.text)
     }
 
+    @Test
+    fun togglingBackRestoresTheTypedAmount() = swapTest(env) {
+        after { sendAction(SwapAction.Amount.SetSell("0.123456789")) }
+
+        val inFiat = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+        assertEquals("0.17", inFiat.amountInput.text)
+
+        val back = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+        assertFalse(back.amountInput.inFiat)
+        assertEquals("0.123456789", back.amountInput.text)
+        assertEquals("123456789", quoteRequests.last().sourceAmount)
+
+        val inFiatAgain = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+        assertEquals("0.17", inFiatAgain.amountInput.text)
+    }
+
+    @Test
+    fun maxUnitsSurviveAToggleThereAndBack() = swapTest(env) {
+        val maxed = after { sendAction(SwapAction.Amount.Max) }
+
+        after { sendAction(SwapAction.Amount.ToggleCurrency) }
+        val back = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+
+        assertTrue(back.amountInput.isMax)
+        assertEquals(maxed.amountInput.maxUnits, back.amountInput.maxUnits)
+    }
+
+    @Test
+    fun anAmountEditedAfterTheToggleIsConvertedAgain() = swapTest(env) {
+        after {
+            sendAction(SwapAction.Amount.SetSell("1"))
+            sendAction(SwapAction.Amount.ToggleCurrency)
+            sendAction(SwapAction.Amount.SetSell("2.86"))
+        }
+
+        val back = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+
+        assertFalse(back.amountInput.inFiat)
+        assertEquals("2", back.amountInput.text)
+    }
+
     /**
      * The field can be entered in dollars, the chain cannot: what the user sees as a price has to
      * reach the aggregator as tokens, or the swap is for the wrong amount.
@@ -265,7 +354,23 @@ class SwapFeatureTest : BaseUnitTest() {
         assertEquals(false, swap.isMax)
         assertEquals(quoted.quote?.quote?.routeId, swap.quote?.routeId)
         assertEquals(quoted.quote?.quote?.buyBaseAmount, swap.quote?.buyAmount)
+        assertFalse("the classic flow hands the swap to the confirm screen", swap.oneClick)
     }
+
+    /** Behind its flag a multichain wallet quotes on v3, and confirm is told to prepare the route there too. */
+    @Test
+    fun continueCarriesAV3QuoteToTheConfirmRequest() =
+        swapTest(SwapTestEnv(context, timeSource, features, swapV3Enabled = true)) {
+            after { sendAction(SwapAction.Amount.SetSell("1")) }
+            after { sendAction(SwapAction.Continue) }
+
+            assertTrue(quoteRequests.isEmpty())
+            assertEquals("1000000000", env.quoteRequestsV3.single().sourceAmount)
+            val swap = (events.single() as SwapEvent.Continue).request.type as ConfirmType.Swap
+            val quote = checkNotNull(swap.quote)
+            assertEquals(SwapFixtures.v3Quote.routes.single().routeId, quote.routeId)
+            assertTrue(quote.genericPayload)
+        }
 
     @Test
     fun slippageChoiceGoesIntoTheNextQuote() = swapTest(env) {
@@ -301,7 +406,7 @@ class SwapFeatureTest : BaseUnitTest() {
         val quoted = after { sendAction(SwapAction.Amount.SetSell("1")) }
         assertTrue(quoted.hasQuote)
 
-        val reset = after { env.swapRepo.notifySwapCompleted() }
+        val reset = after { env.swapRepo.notifySwapCompleted(tracked = false) }
 
         assertEquals("", reset.amountInput.text)
         assertEquals(AmountInputSide.Sell, reset.amountInput.side)
@@ -403,9 +508,9 @@ class SwapFeatureTest : BaseUnitTest() {
     /** The screen closes on a completed swap; it hears about it through the event, not the amount. */
     @Test
     fun aCompletedSwapIsAnEvent() = swapTest(env) {
-        after { env.swapRepo.notifySwapCompleted() }
+        after { env.swapRepo.notifySwapCompleted(tracked = false) }
 
-        assertEquals(listOf<SwapEvent>(SwapEvent.Completed), events)
+        assertEquals(listOf<SwapEvent>(SwapEvent.Completed(tracked = false)), events)
     }
 
     /** The confirm screen renders the quote it is handed: every field of it has to arrive. */
@@ -461,6 +566,389 @@ class SwapFeatureTest : BaseUnitTest() {
     fun balancesAreShownShort() = swapTest(env) {
         assertEquals("5", feature.sellBalance.value)
         assertEquals("0", feature.buyBalance.value)
+    }
+
+    @Test
+    fun aQuoteStartsABackgroundAttempt() = redesignTest {
+        val quoted = after { sendAction(SwapAction.Amount.SetSell("1")) }
+
+        val attempt = checkNotNull(feature.send.value)
+        assertEquals(SwapSendPhase.Review, attempt.phase)
+        assertFalse(attempt.inSheet)
+        assertEquals(SwapFeePlan.Preparing, attempt.plan)
+        assertEquals(quoted.quote?.receivedAt, attempt.quoteReceivedAt)
+        assertEquals(SwapButton.Swap(enabled = false), feature.swapButton.value)
+    }
+
+    @Test
+    fun theFeeRowOpensTheSheetOnTheSameAttempt() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = planned(SwapFeeSummary.Charges(7))
+
+        after { sendAction(SwapAction.FeeRowTapped) }
+
+        val opened = checkNotNull(feature.send.value)
+        assertEquals(attempt.id, opened.id)
+        assertTrue(opened.inSheet)
+    }
+
+    @Test
+    fun anEditDropsTheBackgroundAttempt() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val first = checkNotNull(feature.send.value)
+
+        send { sendAction(SwapAction.Amount.SetSell("2")) }
+        assertNull(feature.send.value)
+
+        after()
+        assertTrue(checkNotNull(feature.send.value).id > first.id)
+    }
+
+    @Test
+    fun swapWithAnUnpaidFeeOpensTheShortagePopup() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        planned(SwapFeeSummary.BatteryEmpty, prepared = false)
+        assertEquals(SwapButton.FeeUnpaid, feature.swapButton.value)
+
+        after { sendAction(SwapAction.Continue) }
+
+        val attempt = checkNotNull(feature.send.value)
+        assertTrue(attempt.shortagePopup)
+        assertEquals(SwapSendPhase.Review, attempt.phase)
+
+        after { sendAction(SwapAction.CloseShortage) }
+        after { sendAction(SwapAction.Continue) }
+        assertTrue(checkNotNull(feature.send.value).shortagePopup)
+    }
+
+    @Test
+    fun swapWithAFailedPlanOpensTheSheet() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        planned(summary = null, prepared = false)
+        assertEquals(SwapButton.Swap(enabled = true), feature.swapButton.value)
+
+        after { sendAction(SwapAction.Continue) }
+
+        val attempt = checkNotNull(feature.send.value)
+        assertTrue(attempt.inSheet)
+        assertEquals(SwapSendPhase.Review, attempt.phase)
+    }
+
+    @Test
+    fun swapWaitsForThePlan() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        assertEquals(SwapButton.Swap(enabled = false), feature.swapButton.value)
+
+        after { sendAction(SwapAction.Continue) }
+
+        val attempt = checkNotNull(feature.send.value)
+        assertEquals(SwapSendPhase.Review, attempt.phase)
+        assertFalse(attempt.inSheet)
+        assertFalse(attempt.shortagePopup)
+    }
+
+    @Test
+    fun swapWithAPayablePlanSends() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        planned(SwapFeeSummary.Charges(7))
+        assertEquals(SwapButton.Swap(enabled = true), feature.swapButton.value)
+
+        after { sendAction(SwapAction.Continue) }
+
+        assertEquals(SwapSendPhase.Working, checkNotNull(feature.send.value).phase)
+    }
+
+    @Test
+    fun withTheFlagOffAQuoteStartsNoAttempt() = swapTest(env) {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        assertNull(feature.send.value)
+
+        after { sendAction(SwapAction.Continue) }
+
+        assertTrue(events.single() is SwapEvent.Continue)
+        assertNull(feature.send.value)
+    }
+
+    @Test
+    fun aReviewReportOnAFreshAttemptKeepsTheNotice() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val first = checkNotNull(feature.send.value)
+        after { sendAction(SwapAction.SendProgress(first.id, SwapSendPhase.Ended, "failed")) }
+        val fresh = checkNotNull(feature.send.value)
+        assertTrue(fresh.id > first.id)
+
+        after { sendAction(SwapAction.SendProgress(fresh.id, SwapSendPhase.Review, null)) }
+
+        assertEquals("failed", feature.notice.value)
+        assertFalse(checkNotNull(feature.send.value).inSheet)
+    }
+
+    @Test
+    fun aRequoteAfterAShortageTapDoesNotReopenThePopup() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        planned(SwapFeeSummary.NoFunds("TON"), prepared = false)
+        after { sendAction(SwapAction.Continue) }
+        val shown = checkNotNull(feature.send.value)
+        assertTrue(shown.shortagePopup)
+
+        pass(2.minutes)
+        assertEquals(1, quoteRequests.size)
+        assertEquals(shown, feature.send.value)
+
+        after { sendAction(SwapAction.CloseShortage) }
+        after { sendAction(SwapAction.Requote) }
+
+        val fresh = checkNotNull(feature.send.value)
+        assertTrue(fresh.id > shown.id)
+        assertFalse(fresh.shortagePopup)
+    }
+
+    @Test
+    fun aRequoteKeepsTheFeeMethod() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val first = checkNotNull(feature.send.value)
+        after { sendAction(SwapAction.FeePicked(first.id, "ton")) }
+
+        after { sendAction(SwapAction.Requote) }
+
+        val fresh = checkNotNull(feature.send.value)
+        assertTrue(fresh.id > first.id)
+        assertEquals("ton", fresh.feeId)
+    }
+
+    @Test
+    fun anEditKeepsTheFeeMethod() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val first = checkNotNull(feature.send.value)
+        after { sendAction(SwapAction.FeePicked(first.id, "ton")) }
+
+        after { sendAction(SwapAction.Amount.SetSell("2")) }
+
+        // As on iOS, only another asset sold drops the method picked: another amount keeps it.
+        val fresh = checkNotNull(feature.send.value)
+        assertTrue(fresh.id > first.id)
+        assertEquals("ton", fresh.feeId)
+    }
+
+    @Test
+    fun anEndedSendStartsAFreshAttemptForTheSameQuote() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = planned(SwapFeeSummary.Charges(7))
+        after { sendAction(SwapAction.Continue) }
+
+        after { sendAction(SwapAction.SendProgress(attempt.id, SwapSendPhase.Ended, null)) }
+
+        val fresh = checkNotNull(feature.send.value)
+        assertTrue(fresh.id > attempt.id)
+        assertEquals(SwapSendPhase.Review, fresh.phase)
+        planned(SwapFeeSummary.Charges(7))
+        assertEquals(SwapButton.Swap(enabled = true), feature.swapButton.value)
+        assertEquals(1, quoteRequests.size)
+    }
+
+    @Test
+    fun aDisposedSendStartsNoAttempt() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = planned(SwapFeeSummary.Charges(7))
+        after { sendAction(SwapAction.Continue) }
+
+        after { sendAction(SwapAction.SendDisposed(attempt.id)) }
+
+        assertNull(feature.send.value)
+    }
+
+    @Test
+    fun aBlockedSendThatEndsStartsNoAttempt() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = planned(SwapFeeSummary.Charges(7))
+        after { sendAction(SwapAction.Continue) }
+        after { sendAction(SwapAction.SendProgress(attempt.id, SwapSendPhase.Blocked, null)) }
+
+        after { sendAction(SwapAction.SendProgress(attempt.id, SwapSendPhase.Ended, null)) }
+
+        assertNull(feature.send.value)
+    }
+
+    @Test
+    fun aRequotedSendWaitsForTheNextQuote() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = planned(SwapFeeSummary.Charges(7))
+        after { sendAction(SwapAction.Continue) }
+
+        send { sendAction(SwapAction.SendProgress(attempt.id, SwapSendPhase.Requoted, "changed")) }
+
+        assertNull(feature.send.value)
+    }
+
+    @Test
+    fun aRequotedSendKeepsTheFeeMethod() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = planned(SwapFeeSummary.Charges(7))
+        after { sendAction(SwapAction.FeePicked(attempt.id, "ton")) }
+        after { sendAction(SwapAction.Continue) }
+
+        send { sendAction(SwapAction.SendProgress(attempt.id, SwapSendPhase.Requoted, "changed")) }
+        after { sendAction(SwapAction.Requote) }
+
+        val fresh = checkNotNull(feature.send.value)
+        assertTrue(fresh.id > attempt.id)
+        assertEquals(SwapSendPhase.Review, fresh.phase)
+        assertEquals("ton", fresh.feeId)
+    }
+
+    @Test
+    fun anExactOutputQuoteKeepsItsAttempt() {
+        env.accounts[TON_ASSET_ID] = testAccount(SwapFixtures.tonAsset, balance = "20000000000", price = "1.43")
+        redesignTest {
+            after { sendAction(SwapAction.Amount.SetBuy("20")) }
+
+            assertEquals(SwapSendPhase.Review, checkNotNull(feature.send.value).phase)
+            planned(SwapFeeSummary.Charges(7))
+            assertEquals(SwapButton.Swap(enabled = true), feature.swapButton.value)
+        }
+    }
+
+    @Test
+    fun anEditToTheSameAmountKeepsTheAttempt() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = checkNotNull(feature.send.value)
+
+        after { sendAction(SwapAction.Amount.SetSell("1.0")) }
+
+        assertEquals(attempt.id, feature.send.value?.id)
+        assertEquals(1, quoteRequests.size)
+    }
+
+    @Test
+    fun withTheFlagOffAQuoteLivesThirtySeconds() = swapTest(env) {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+
+        pass(30.seconds)
+        after()
+
+        assertEquals(2, quoteRequests.size)
+    }
+
+    @Test
+    fun withTheFlagOnAQuoteLivesAMinute() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+
+        pass(30.seconds)
+        assertEquals(1, quoteRequests.size)
+        pass(30.seconds)
+        after()
+
+        assertEquals(2, quoteRequests.size)
+    }
+
+    @Test
+    fun aShortageFoundAtSendOpensThePopupAndKeepsTheSheet() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        val attempt = planned(SwapFeeSummary.Charges(7))
+        after { sendAction(SwapAction.Continue) }
+
+        after { sendAction(SwapAction.SendProgress(attempt.id, SwapSendPhase.Review, null)) }
+
+        val reviewed = checkNotNull(feature.send.value)
+        assertEquals(attempt.id, reviewed.id)
+        assertTrue(reviewed.shortagePopup)
+        assertFalse(reviewed.inSheet)
+    }
+
+    @Test
+    fun aSlippageChosenInTheSheetKeepsTheSheet() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("1")) }
+        after { sendAction(SwapAction.FeeRowTapped) }
+
+        after { sendAction(SwapAction.SelectSlippage(10)) }
+
+        assertTrue(checkNotNull(feature.send.value).inSheet)
+    }
+
+    @Test
+    fun anAmountBelowTheMinimumShowsItWhateverThePlan() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("0.5")) }
+        planned(SwapFeeSummary.Charges(7))
+
+        assertTrue(feature.swapButton.value is SwapButton.Minimum)
+        after { sendAction(SwapAction.Continue) }
+        assertEquals(SwapSendPhase.Review, checkNotNull(feature.send.value).phase)
+    }
+
+    @Test
+    fun anAmountAboveTheBalanceSaysSo() = redesignTest {
+        after { sendAction(SwapAction.Amount.SetSell("10")) }
+
+        assertEquals(SwapButton.InsufficientBalance, feature.swapButton.value)
+        assertTrue(feature.amountBlocked.value)
+        assertTrue(feature.send.value != null)
+    }
+
+    @Test
+    fun noRouteLeavesSwapDisabled() {
+        env.quoteAnswer = { SwapFixtures.noRouteQuote }
+
+        redesignTest {
+            after { sendAction(SwapAction.Amount.SetSell("1")) }
+
+            assertEquals(SwapButton.Swap(enabled = false), feature.swapButton.value)
+        }
+    }
+
+    @Test
+    fun offlineKeepsTheLastQuoteAndDisablesSwap() = redesignTest {
+        val quoted = after { sendAction(SwapAction.Amount.SetSell("1")) }
+        planned(SwapFeeSummary.Charges(7))
+        env.isOnline.value = false
+        env.quoteAnswer = { throw java.io.IOException("offline") }
+
+        after { sendAction(SwapAction.Requote) }
+
+        assertEquals(quoted.quote?.receivedAt, feature.lastQuote.value?.receivedAt)
+        assertEquals(SwapButton.Swap(enabled = false), feature.swapButton.value)
+        assertEquals(SwapFeeLine.Fee(SwapFeeSummary.Charges(7), tappable = false), feature.feeLine.value)
+        assertEquals(listOf<SwapEvent>(SwapEvent.Offline), events)
+
+        send { sendAction(SwapAction.Requote) }
+
+        assertEquals(quoted.quote?.receivedAt, feature.shownQuote.value?.receivedAt)
+        assertEquals(SwapFeeLine.Fee(SwapFeeSummary.Charges(7), tappable = false), feature.feeLine.value)
+    }
+
+    @Test
+    fun aMultichainWalletWithAnEmptyBatterySeesThePromo() {
+        env.tonWallet = WalletEntity.EMPTY.copy(id = WALLET_ID, type = WalletType.Multichain)
+        env.batteryCharges = 0
+
+        redesignTest {
+            val swapped = after { sendAction(SwapAction.Asset.Swap) }
+
+            assertEquals(USDT_TON_ASSET_ID, swapped.sellAsset?.id)
+            assertEquals(SwapFeeLine.Promo, feature.feeLine.value)
+        }
+    }
+
+    private fun redesignTest(body: suspend SwapScreen.() -> Unit) {
+        features.set(WalletFeatureKey.IS_SWAP_REDESIGN_ENABLED, true)
+        BootFlags.update(BootFlags.values.copy(oneClickSwap = true))
+        var clock = 0L
+        mockkStatic(SystemClock::class)
+        every { SystemClock.elapsedRealtime() } answers { ++clock }
+        try {
+            swapTest(env, body = body)
+        } finally {
+            unmockkStatic(SystemClock::class)
+        }
+    }
+
+    private fun SwapScreen.planned(summary: SwapFeeSummary?, prepared: Boolean = true): SwapSend {
+        val attempt = checkNotNull(feature.send.value)
+        val plan = summary?.let { SwapFeePlan.Ready(it, attempt.quoteReceivedAt) } ?: SwapFeePlan.Failed
+        after {
+            sendAction(SwapAction.FeePlanned(attempt.id, plan))
+            sendAction(SwapAction.Prepared(attempt.id, prepared))
+        }
+        return checkNotNull(feature.send.value)
     }
 
     private companion object {

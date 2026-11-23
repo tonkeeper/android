@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -16,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.bus.generated.Events.Perps.PerpsSourceScreen
 import com.tonapps.perps.screens.details.PerpsAssetDetailsAction
 import com.tonapps.perps.screens.details.PerpsAssetDetailsFeature
 import com.tonapps.perps.screens.details.PerpsAssetDetailsScreen
@@ -24,21 +26,27 @@ import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.core.LocalIsTopFragment
 import com.tonapps.core.helper.navigationDelegate
+import com.tonapps.core.loyalty.LOYALTY_DEEPLINK
 import com.tonapps.deposit.multicoin.screens.confirm.ConfirmScreen
+import com.tonapps.perps.data.PerpsAutoCloseDraft
 import com.tonapps.perps.data.PerpsMarketFilter
-import com.tonapps.perps.funding.PerpsFundingAssetId
 import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.PerpsSizeDirection
 import com.tonapps.perps.data.toOrderSide
+import com.tonapps.perps.region.PerpsRegionAccess
+import com.tonapps.perps.region.PerpsRegionRestrictedSheet
+import com.tonapps.perps.region.isBlockedInRestrictedRegion
 import com.tonapps.perps.screens.deposit.PerpsDepositFeature
 import com.tonapps.perps.screens.deposit.PerpsDepositScreen
 import com.tonapps.perps.screens.markets.PerpsMarketsFeature
 import com.tonapps.perps.screens.order.PerpsCreateOrderAction
 import com.tonapps.perps.screens.order.PerpsCreateOrderFeature
 import com.tonapps.perps.screens.order.PerpsCreateOrderScreen
+import com.tonapps.perps.screens.order.PerpsLimitAutoClose
 import com.tonapps.perps.screens.order.PerpsLimitPriceFeature
 import com.tonapps.perps.screens.order.PerpsLimitPriceScreen
 import com.tonapps.perps.screens.markets.PerpsMarketsScreen
+import com.tonapps.perps.screens.portfolio.PerpsPortfolioAction
 import com.tonapps.perps.screens.portfolio.PerpsPortfolioFeature
 import com.tonapps.perps.screens.portfolio.PerpsPortfolioScreen
 import com.tonapps.perps.screens.margin.PerpsMarginChangeFeature
@@ -54,7 +62,6 @@ import com.tonapps.perps.screens.review.PerpsReviewFeature
 import com.tonapps.perps.screens.review.PerpsReviewScreen
 import com.tonapps.perps.screens.withdraw.PerpsWithdrawFeature
 import com.tonapps.perps.screens.withdraw.PerpsWithdrawScreen
-import com.tonapps.perps.trade.PerpsAutoCloseEdit
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -119,13 +126,16 @@ sealed interface PerpsRoutes : NavKey {
         val side: PerpsOrderSide,
         val initialPrice: String? = null,
         val orderIndex: Long? = null,
+        val takeProfit: String? = null,
+        val stopLoss: String? = null,
+        val remainingBase: String? = null,
     ) : PerpsRoutes
 
     @Serializable
     data class Review(val args: PerpsReviewArgs) : PerpsRoutes
 
     @Serializable
-    data object Deposit : PerpsRoutes
+    data class Deposit(val sourceScreen: PerpsSourceScreen) : PerpsRoutes
 
 
     @Serializable
@@ -136,7 +146,21 @@ sealed interface PerpsRoutes : NavKey {
     data class Confirm(val request: ConfirmRequest) : PerpsRoutes
 }
 
-private data class LimitPriceResult(val orderIndex: Long?, val price: BigDecimal)
+private data class LimitPriceResult(val orderIndex: Long?, val price: BigDecimal, val seenBase: BigDecimal?)
+
+private fun PerpsRoutes.LimitPrice.limitAutoClose(): PerpsLimitAutoClose? {
+    if (takeProfit == null && stopLoss == null) {
+        return null
+    }
+
+    return PerpsLimitAutoClose(
+        takeProfit = takeProfit?.toBigDecimal(),
+        stopLoss = stopLoss?.toBigDecimal(),
+        removesPassedLeg = orderIndex != null,
+    )
+}
+
+private data class ReviewAutoCloseResult(val target: PerpsAutoCloseDraft?, val replace: Boolean)
 
 @Composable
 fun PerpsRouter(
@@ -144,19 +168,23 @@ fun PerpsRouter(
     onTrade: (symbol: String) -> Unit,
     onOpenHistory: () -> Unit,
     onOpenMarketHistory: (marketIndex: Int) -> Unit,
-    onCloseToHistory: (awaitsFundingActivity: Boolean) -> Unit,
+    onOpenFundingHistory: () -> Unit,
     onClose: () -> Unit,
 ) {
     val backStack = rememberNestedNavBackStack(initial, onClose)
+    val regionAccess = koinInject<PerpsRegionAccess>()
+    var regionSheet by rememberSaveable { mutableStateOf(false) }
     var autoCloseFix by remember { mutableStateOf<PerpsAutoCloseFix?>(null) }
     var orderRefusal by remember { mutableStateOf<Int?>(null) }
     var limitPriceResult by remember { mutableStateOf<LimitPriceResult?>(null) }
-    var reviewAutoClose by remember { mutableStateOf<PerpsAutoCloseEdit.Set?>(null) }
+    var reviewAutoClose by remember { mutableStateOf<ReviewAutoCloseResult?>(null) }
+    var depositSent by remember { mutableStateOf(false) }
     val toastHost = rememberMoonToastHostState()
     val scope = rememberCoroutineScope()
     val comingSoonText = stringResource(Localization.perps_coming_soon)
     val inProgressText = stringResource(Localization.perps_operation_in_progress)
     val doneText = stringResource(Localization.done)
+    val depositInProgressText = stringResource(Localization.perps_deposit_in_progress)
     val showToast: (String) -> Unit = { text ->
         if (toastHost.currentData == null) {
             scope.launch { toastHost.showToast(text) }
@@ -170,6 +198,13 @@ fun PerpsRouter(
                 it is PerpsRoutes.LimitPrice ||
                 it is PerpsRoutes.SizeChange ||
                 it is PerpsRoutes.MarginChange
+        }
+    }
+    val openDeposit: (PerpsSourceScreen) -> Unit = { source ->
+        if (regionAccess.isRestricted) {
+            regionSheet = true
+        } else {
+            backStack.add(PerpsRoutes.Deposit(source))
         }
     }
 
@@ -189,15 +224,23 @@ fun PerpsRouter(
             when (key) {
                 is PerpsRoutes.Portfolio -> NavEntry(key) {
                     val feature = koinViewModel<PerpsPortfolioFeature>()
+                    LaunchedEffect(depositSent) {
+                        if (depositSent) {
+                            depositSent = false
+                            feature.sendAction(PerpsPortfolioAction.DepositSent)
+                        }
+                    }
                     PerpsPortfolioScreen(
                         feature = feature,
                         onOpenMarket = { marketIndex, symbol ->
                             backStack.add(PerpsRoutes.Details(marketIndex, symbol))
                         },
                         onOpenExplore = { backStack.add(PerpsRoutes.Markets()) },
-                        onDeposit = { backStack.add(PerpsRoutes.Deposit) },
+                        onDeposit = { openDeposit(PerpsSourceScreen.PerpsHome) },
                         onOpenHistory = onOpenHistory,
+                        onOpenFundingHistory = onOpenFundingHistory,
                         onWithdraw = { backStack.add(PerpsRoutes.Withdraw) },
+                        onRegionInfo = { regionSheet = true },
                         onBack = { backStack.safeRemoveLastOrNull(key) },
                     )
                 }
@@ -212,17 +255,26 @@ fun PerpsRouter(
                 }
 
                 is PerpsRoutes.Deposit -> NavEntry(key) {
-                    val feature = koinViewModel<PerpsDepositFeature>()
+                    val feature = koinViewModel<PerpsDepositFeature>(
+                        parameters = { parametersOf(key.sourceScreen) },
+                    )
                     val context = LocalContext.current
                     PerpsDepositScreen(
                         feature = feature,
+                        isOnTop = backStack.lastOrNull() == key,
                         onClose = { backStack.safeRemoveLastOrNull(key) },
                         onReview = { request -> backStack.add(PerpsRoutes.Confirm(request)) },
-                        onAddFunds = { context.navigationDelegate?.onOpenDeposit(DepositFlowFrom.Perps) },
+                        onRegionRestricted = {
+                            backStack.removeAll { it is PerpsRoutes.Deposit }
+                            regionSheet = true
+                        },
+                        onAddFunds = { context.navigationDelegate?.onOpenDeposit(DepositFlowFrom.Perps, feature.walletId.value) },
+                        onChooseAnotherWallet = { context.navigationDelegate?.onOpenWalletsList(perpsWalletsOnly = true) },
                     )
                 }
 
                 is PerpsRoutes.Confirm -> NavEntry(key) {
+                    val context = LocalContext.current
                     // The confirm screen and the amount screen before it leave together.
                     val leave = {
                         backStack.removeAll {
@@ -234,14 +286,19 @@ fun PerpsRouter(
                         onClose = { leave() },
                         onBack = { backStack.safeRemoveLastOrNull(key) },
                         onSendSuccess = {
-                            if (key.request.type is ConfirmType.PerpetualWithdraw) {
-                                onCloseToHistory(key.request.data.assetId.equals(PerpsFundingAssetId.USDC_ETHEREUM, ignoreCase = true))
-                            } else {
-                                leave()
+                            leave()
+                            if (key.request.type !is ConfirmType.PerpetualWithdraw) {
+                                if (backStack.lastOrNull() is PerpsRoutes.Portfolio) {
+                                    depositSent = true
+                                } else {
+                                    showToast(depositInProgressText)
+                                }
                             }
                         },
                         onTopUp = {},
-                        onOpenBattery = { _, _ -> },
+                        onOpenBattery = { walletId, from ->
+                            context.navigationDelegate?.onOpenBattery(walletId = walletId, from = from)
+                        },
                     )
                 }
 
@@ -262,13 +319,12 @@ fun PerpsRouter(
                     val feature = koinViewModel<PerpsAssetDetailsFeature>(
                         parameters = { parametersOf(key.marketIndex, key.symbol) },
                     )
-                    val context = LocalContext.current
 
                     LaunchedEffect(limitPriceResult) {
                         val result = limitPriceResult ?: return@LaunchedEffect
                         val orderIndex = result.orderIndex ?: return@LaunchedEffect
                         limitPriceResult = null
-                        feature.sendAction(PerpsAssetDetailsAction.ModifyLimitOrder(context, orderIndex, result.price))
+                        feature.sendAction(PerpsAssetDetailsAction.ModifyLimitOrder(orderIndex, result.price, result.seenBase))
                     }
 
                     LaunchedEffect(feature) {
@@ -317,35 +373,42 @@ fun PerpsRouter(
                         }
                     }
 
+                    val proceed: (PerpsAssetDetailsTarget) -> Unit = { target ->
+                        if (target.isBlockedInRestrictedRegion && regionAccess.isRestricted) {
+                            regionSheet = true
+                        } else {
+                            feature.sendAction(PerpsAssetDetailsAction.Proceed(target))
+                        }
+                    }
+
                     PerpsAssetDetailsScreen(
                         feature = feature,
                         presentAutoClose = key.presentAutoClose,
-                        onOpenOrder = { side ->
-                            feature.sendAction(PerpsAssetDetailsAction.Proceed(context, PerpsAssetDetailsTarget.Order(side)))
-                        },
-                        onCashOut = { side ->
-                            feature.sendAction(PerpsAssetDetailsAction.Proceed(context, PerpsAssetDetailsTarget.CashOut(side)))
-                        },
+                        onOpenOrder = { side -> proceed(PerpsAssetDetailsTarget.Order(side)) },
+                        onCashOut = { side -> proceed(PerpsAssetDetailsTarget.CashOut(side)) },
                         onOpenSizeChange = { side, direction ->
-                            feature.sendAction(
-                                PerpsAssetDetailsAction.Proceed(context, PerpsAssetDetailsTarget.SizeChange(side, direction))
-                            )
+                            proceed(PerpsAssetDetailsTarget.SizeChange(side, direction))
                         },
                         onOpenMarginChange = { side, add ->
-                            feature.sendAction(
-                                PerpsAssetDetailsAction.Proceed(context, PerpsAssetDetailsTarget.MarginChange(side, add))
-                            )
+                            proceed(PerpsAssetDetailsTarget.MarginChange(side, add))
                         },
                         onLimitOrderEdit = { order ->
-                            backStack.add(
-                                PerpsRoutes.LimitPrice(
-                                    marketIndex = key.marketIndex,
-                                    symbol = feature.symbol,
-                                    side = order.side.toOrderSide(),
-                                    initialPrice = order.limitPrice?.toPlainString(),
-                                    orderIndex = order.orderIndex,
+                            if (regionAccess.isRestricted) {
+                                regionSheet = true
+                            } else {
+                                backStack.add(
+                                    PerpsRoutes.LimitPrice(
+                                        marketIndex = key.marketIndex,
+                                        symbol = feature.symbol,
+                                        side = order.side.toOrderSide(),
+                                        initialPrice = order.limitPrice?.toPlainString(),
+                                        orderIndex = order.orderIndex,
+                                        takeProfit = order.takeProfit?.triggerPrice?.toPlainString(),
+                                        stopLoss = order.stopLoss?.triggerPrice?.toPlainString(),
+                                        remainingBase = order.remainingBase?.toPlainString(),
+                                    )
                                 )
-                            )
+                            }
                         },
                         onOpenHistory = { onOpenMarketHistory(key.marketIndex) },
                         onBack = { backStack.safeRemoveLastOrNull(key) },
@@ -376,7 +439,7 @@ fun PerpsRouter(
                         refusal = orderRefusal,
                         onRefusalConsumed = { orderRefusal = null },
                         onClose = { backStack.safeRemoveLastOrNull(key) },
-                        onReview = {
+                        onReview = { autoClose ->
                             backStack.add(
                                 PerpsRoutes.Review(
                                     PerpsReviewArgs.Open(
@@ -385,10 +448,10 @@ fun PerpsRouter(
                                         side = key.side,
                                         marginQuote = feature.marginQuote.value.toPlainString(),
                                         leverage = feature.leverage.value,
-                                        takeProfit = feature.autoClose.value?.takeProfit?.toPlainString(),
-                                        stopLoss = feature.autoClose.value?.stopLoss?.toPlainString(),
-                                        takeProfitRoi = feature.autoClose.value?.takeProfitRoi?.toPlainString(),
-                                        stopLossRoi = feature.autoClose.value?.stopLossRoi?.toPlainString(),
+                                        takeProfit = autoClose?.takeProfit?.toPlainString(),
+                                        stopLoss = autoClose?.stopLoss?.toPlainString(),
+                                        takeProfitRoi = autoClose?.takeProfitRoi?.toPlainString(),
+                                        stopLossRoi = autoClose?.stopLossRoi?.toPlainString(),
                                         limitPrice = feature.limitPrice.value?.toPlainString(),
                                         autoCloseEditable = feature.autoCloseAvailable.value,
                                         iconUrl = key.iconUrl,
@@ -396,14 +459,21 @@ fun PerpsRouter(
                                 )
                             )
                         },
-                        onDeposit = { backStack.add(PerpsRoutes.Deposit) },
+                        onDeposit = { openDeposit(PerpsSourceScreen.OpenPosition) },
                         onSetLimitPrice = {
+                            val autoClose = feature.autoClose.value
                             backStack.add(
                                 PerpsRoutes.LimitPrice(
                                     marketIndex = key.marketIndex,
                                     symbol = key.symbol,
                                     side = key.side,
                                     initialPrice = feature.limitPrice.value?.toPlainString(),
+                                    takeProfit = autoClose?.takeProfit
+                                        ?.takeIf { autoClose.takeProfitRoi == null }
+                                        ?.toPlainString(),
+                                    stopLoss = autoClose?.stopLoss
+                                        ?.takeIf { autoClose.stopLossRoi == null }
+                                        ?.toPlainString(),
                                 )
                             )
                         },
@@ -418,6 +488,7 @@ fun PerpsRouter(
                                 key.symbol,
                                 key.side,
                                 key.initialPrice?.toBigDecimal(),
+                                key.limitAutoClose(),
                             )
                         },
                     )
@@ -429,7 +500,7 @@ fun PerpsRouter(
                             if (key.orderIndex != null && key.initialPrice?.toBigDecimal()?.compareTo(price) == 0) {
                                 showToast(doneText)
                             } else {
-                                limitPriceResult = LimitPriceResult(key.orderIndex, price)
+                                limitPriceResult = LimitPriceResult(key.orderIndex, price, key.remainingBase?.toBigDecimal())
                             }
                             backStack.safeRemoveLastOrNull(key)
                         },
@@ -446,7 +517,13 @@ fun PerpsRouter(
                     LaunchedEffect(reviewAutoClose) {
                         val result = reviewAutoClose ?: return@LaunchedEffect
                         reviewAutoClose = null
-                        feature.sendAction(PerpsSizeChangeAction.SetAutoClose(result.target))
+                        feature.sendAction(
+                            if (result.replace) {
+                                PerpsSizeChangeAction.ReplaceAutoClose(result.target)
+                            } else {
+                                PerpsSizeChangeAction.SetAutoClose(result.target)
+                            }
+                        )
                     }
 
                     PerpsSizeChangeScreen(
@@ -458,7 +535,7 @@ fun PerpsRouter(
                         onReview = { args ->
                             backStack.add(PerpsRoutes.Review(args.copy(iconUrl = key.iconUrl)))
                         },
-                        onDeposit = { backStack.add(PerpsRoutes.Deposit) },
+                        onDeposit = { openDeposit(PerpsSourceScreen.AddToPosition) },
                         onClose = { backStack.safeRemoveLastOrNull(key) },
                     )
                 }
@@ -476,7 +553,7 @@ fun PerpsRouter(
                         onReview = { args ->
                             backStack.add(PerpsRoutes.Review(args.copy(iconUrl = key.iconUrl)))
                         },
-                        onDeposit = { backStack.add(PerpsRoutes.Deposit) },
+                        onDeposit = { openDeposit(PerpsSourceScreen.AddMargin) },
                         onClose = { backStack.safeRemoveLastOrNull(key) },
                     )
                 }
@@ -488,7 +565,7 @@ fun PerpsRouter(
                     val context = LocalContext.current
 
                     LaunchedEffect(feature) {
-                        feature.sendAction(PerpsReviewAction.Attach(context))
+                        feature.sendAction(PerpsReviewAction.Attach)
                     }
                     LaunchedEffect(feature) {
                         feature.events.collect { event ->
@@ -533,7 +610,9 @@ fun PerpsRouter(
                         feature = feature,
                         onBack = { backStack.safeRemoveLastOrNull(key) },
                         onClose = closeOrderFlow,
-                        onAutoCloseChanged = { reviewAutoClose = PerpsAutoCloseEdit.Set(it) },
+                        onAutoCloseChanged = { reviewAutoClose = ReviewAutoCloseResult(it, replace = false) },
+                        onAutoCloseDropped = { reviewAutoClose = ReviewAutoCloseResult(it, replace = true) },
+                        onOpenLoyalty = { context.navigationDelegate?.onOpenLink(LOYALTY_DEEPLINK) },
                     )
                 }
 
@@ -541,5 +620,8 @@ fun PerpsRouter(
             }
         }
         MoonToastHost(toastHost)
+        if (regionSheet) {
+            PerpsRegionRestrictedSheet(onDismiss = { regionSheet = false })
+        }
     }
 }

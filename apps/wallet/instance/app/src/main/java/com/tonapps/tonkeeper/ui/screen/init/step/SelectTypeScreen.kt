@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.RecyclerView
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletMode
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
 import com.tonapps.tonkeeper.ui.screen.add.AddWalletViewModel
 import com.tonapps.tonkeeper.ui.screen.add.list.Adapter
@@ -15,6 +16,7 @@ import com.tonapps.tonkeeper.ui.screen.init.InitArgs
 import com.tonapps.tonkeeper.ui.screen.init.InitViewModel
 import com.tonapps.tonkeeper.ui.screen.ledger.pair.PairLedgerScreen
 import com.tonapps.tonkeeperx.R
+import com.tonapps.wallet.features.ledger.pairing.LedgerPairingFragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import uikit.base.BaseFragment
@@ -50,6 +52,10 @@ class SelectTypeScreen : BaseFragment(R.layout.fragment_init_select_type) {
             Item.LEDGER_WALLET_ID -> {
                 initViewModel.trackPairingStarted(WalletFlowWalletSource.Ledger)
                 navigation?.add(PairLedgerScreen.newInstance())
+            }
+            Item.LEDGER_MULTICHAIN_WALLET_ID -> {
+                initViewModel.trackPairingStarted(WalletFlowWalletSource.Ledger, WalletFlowWalletMode.Multi)
+                navigation?.add(LedgerPairingFragment.newInstance(initViewModel.analyticsFrom))
             }
             Item.KEYSTONE_WALLET_ID -> {
                 initViewModel.trackPairingStarted(WalletFlowWalletSource.Keystone)

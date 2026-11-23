@@ -4,10 +4,9 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Parcelable
 import com.tonapps.extensions.toUriOrNull
+import io.tonendpointapi.models.PopularApp
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
-import org.json.JSONArray
-import org.json.JSONObject
 
 @Parcelize
 data class BrowserAppEntity(
@@ -40,42 +39,22 @@ data class BrowserAppEntity(
         val type: String,
         val payload: String,
         val title: String
-    ): Parcelable {
+    ): Parcelable
 
-        constructor(json: JSONObject) : this(
-            type = json.getString("type"),
-            payload = json.getString("payload"),
-            title = json.getString("title")
-        )
-    }
-
-    constructor(json: JSONObject) : this(
-        name = json.getString("name"),
-        description = json.getString("description"),
-        icon = Uri.parse(json.getString("icon")),
-        poster = json.optString("poster")?.let { Uri.parse(it) },
-        url = parseUrl(json.optString("url")),
-        textColor = Color.parseColor(json.optString("textColor", "#ffffff")),
-        chains = parseChains(json),
-        button = json.optJSONObject("button")?.let { Button(it) },
-        id = json.optString("id"),
-        bannerId = json.optString("banner_id").takeIf { it.isNotEmpty() }
+    constructor(app: PopularApp) : this(
+        name = app.name,
+        description = app.description,
+        icon = Uri.parse(app.icon.orEmpty()),
+        poster = Uri.parse(app.poster.orEmpty()),
+        url = parseUrl(app.url),
+        textColor = Color.parseColor(app.textColor ?: "#ffffff"),
+        chains = app.chains.filter { it.isNotEmpty() },
+        button = app.button?.let { Button(it.type, it.payload, it.title) },
+        id = app.id,
+        bannerId = app.bannerId?.takeIf { it.isNotEmpty() }
     )
 
     companion object {
-
-        fun parse(array: JSONArray): List<BrowserAppEntity> {
-            return (0 until array.length()).map { BrowserAppEntity(array.getJSONObject(it)) }
-        }
-
-        private fun parseChains(json: JSONObject): List<String> {
-            json.optJSONArray("chains")?.let { array ->
-                return (0 until array.length()).mapNotNull {
-                    array.optString(it).takeIf { value -> value.isNotEmpty() }
-                }
-            }
-            return json.optString("chain").takeIf { it.isNotEmpty() }?.let { listOf(it) } ?: emptyList()
-        }
 
         private fun parseUrl(value: String?): Uri {
             if (value.isNullOrBlank()) {
@@ -94,7 +73,9 @@ data class BrowserAppEntity(
 }
 
 fun List<BrowserAppEntity>.filterByChain(chainId: String?): List<BrowserAppEntity> {
-    if (chainId == null) return this
+    if (chainId == null) {
+        return this
+    }
     return filter { app ->
         app.chains.any { it.equals(chainId, ignoreCase = true) }
     }

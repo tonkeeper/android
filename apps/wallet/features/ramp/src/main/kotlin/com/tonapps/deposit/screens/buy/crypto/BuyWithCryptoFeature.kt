@@ -22,9 +22,9 @@ import com.tonapps.mvi.contract.MviState
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.props.MviProperty
 import com.tonapps.wallet.data.account.AccountRepository
-import io.exchangeapi.infrastructure.ApiResult
 import io.exchangeapi.models.CreateExchangeRequest
 import io.exchangeapi.models.ExchangeFlow
+import io.infrastructure.ApiResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 

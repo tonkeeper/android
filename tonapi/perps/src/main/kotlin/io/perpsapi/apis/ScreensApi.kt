@@ -15,7 +15,6 @@ import okhttp3.Call
 import okhttp3.HttpUrl
 
 import io.perpsapi.models.ErrorResponse
-import io.perpsapi.models.PortfolioScreen
 import io.perpsapi.models.TradingScreen
 
 import kotlinx.serialization.SerialName
@@ -41,60 +40,6 @@ class ScreensApi(basePath: String = defaultBasePath, client: Call.Factory = ApiC
         val defaultBasePath: String by lazy {
             System.getProperties().getProperty(ApiClient.baseUrlKey, "https://api.example.com/tk-perps/public-api/v1")
         }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getPortfolioScreen(xWalletId: String? = null): PortfolioScreen {
-        @Suppress("DEPRECATION")
-        val localVarResponse = getPortfolioScreenWithHttpInfo(xWalletId = xWalletId)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> (localVarResponse as Success<*>).data as PortfolioScreen
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(IllegalStateException::class, IOException::class)
-    @Deprecated(message = "This operation is deprecated.")
-    fun getPortfolioScreenWithHttpInfo(xWalletId: String?): ApiResponse<PortfolioScreen?> {
-        @Suppress("DEPRECATION")
-        val localVariableConfig = getPortfolioScreenRequestConfig(xWalletId = xWalletId)
-
-        return request<Unit, PortfolioScreen>(
-            localVariableConfig
-        )
-    }
-
-    @Deprecated(message = "This operation is deprecated.")
-    fun getPortfolioScreenRequestConfig(xWalletId: String?): RequestConfig<Unit> {
-        val localVariableBody = null
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.GET,
-            path = "/screens/portfolio",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = true,
-            requiresWalletAuthentication = true,
-            walletId = xWalletId,
-            body = localVariableBody
-        )
     }
 
     @Suppress("UNCHECKED_CAST")

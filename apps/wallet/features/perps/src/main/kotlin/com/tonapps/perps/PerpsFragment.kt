@@ -6,13 +6,19 @@ import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.core.ComposableFragment
 import com.tonapps.core.deeplink.DeepLinkRoute
 import com.tonapps.core.helper.navigationDelegate
+import com.tonapps.perps.data.PerpsRealtime
 import com.tonapps.wallet.data.multichain.asset.perpsAssetId
+import org.koin.android.ext.android.inject
 import uikit.base.BaseFragment
 import uikit.extensions.activity
 
 class PerpsFragment : ComposableFragment(), BaseFragment.SwipeBack {
 
     override val fragmentName: String = "PerpsFragment"
+
+    private val realtime: PerpsRealtime by inject()
+
+    private val realtimeDemand by lazy { realtime.demand() }
 
     interface Delegate {
         fun onOpenPerpTrade(symbol: String)
@@ -25,6 +31,21 @@ class PerpsFragment : ComposableFragment(), BaseFragment.SwipeBack {
                 ?.let { name -> PerpsEntryPoint.entries.firstOrNull { it.name == name } }
                 ?.let(PerpsAnalytics::sectionOpened)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        realtimeDemand.set(true)
+    }
+
+    override fun onStop() {
+        realtimeDemand.set(false)
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        realtimeDemand.close()
+        super.onDestroy()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,10 +71,7 @@ class PerpsFragment : ComposableFragment(), BaseFragment.SwipeBack {
                 onOpenMarketHistory = { marketIndex ->
                     navDelegate?.onOpenAssetHistory(perpsAssetId(marketIndex))
                 },
-                onCloseToHistory = { awaitsFundingActivity ->
-                    navDelegate?.onOpenPerpsHistory(awaitsFundingActivity)
-                    finish()
-                },
+                onOpenFundingHistory = { navDelegate?.onOpenPerpsHistory(awaitsFundingActivity = true) },
                 onClose = { finish() },
             )
         }
@@ -66,10 +84,10 @@ class PerpsFragment : ComposableFragment(), BaseFragment.SwipeBack {
         private const val ARG_ENTRY_POINT = "entry_point"
         private const val NO_MARKET = -1
 
-        fun newInstance(entryPoint: PerpsEntryPoint?): PerpsFragment =
+        fun newInstance(entryPoint: PerpsEntryPoint): PerpsFragment =
             PerpsFragment().apply {
                 arguments = Bundle().apply {
-                    entryPoint?.let { putString(ARG_ENTRY_POINT, it.name) }
+                    putString(ARG_ENTRY_POINT, entryPoint.name)
                 }
             }
 
@@ -82,18 +100,21 @@ class PerpsFragment : ComposableFragment(), BaseFragment.SwipeBack {
                 }
             }
 
-        fun newInstance(route: DeepLinkRoute.Perps, entryPoint: PerpsEntryPoint?): PerpsFragment = when (route) {
-            is DeepLinkRoute.Perps.Home -> newInstance(entryPoint)
+        fun newInstance(arguments: Bundle): PerpsFragment =
+            PerpsFragment().apply { this.arguments = Bundle(arguments) }
+
+        fun newInstance(route: DeepLinkRoute.Perps, entryPoint: PerpsEntryPoint): PerpsFragment = when (route) {
+            is DeepLinkRoute.Perps.Home, is DeepLinkRoute.Perps.MarketSymbol -> newInstance(entryPoint)
             is DeepLinkRoute.Perps.Market -> newMarketLink(route.marketIndex, autoClose = false, entryPoint)
             is DeepLinkRoute.Perps.AutoClose -> newMarketLink(route.marketIndex, autoClose = true, entryPoint)
         }
 
-        private fun newMarketLink(marketIndex: Int, autoClose: Boolean, entryPoint: PerpsEntryPoint?): PerpsFragment =
+        private fun newMarketLink(marketIndex: Int, autoClose: Boolean, entryPoint: PerpsEntryPoint): PerpsFragment =
             PerpsFragment().apply {
                 arguments = Bundle().apply {
                     putInt(ARG_MARKET_INDEX, marketIndex)
                     putBoolean(ARG_AUTO_CLOSE, autoClose)
-                    entryPoint?.let { putString(ARG_ENTRY_POINT, it.name) }
+                    putString(ARG_ENTRY_POINT, entryPoint.name)
                 }
             }
     }

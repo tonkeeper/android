@@ -24,7 +24,11 @@ data class PerpsPosition(
     val unrealizedPnl: BigDecimal?,
     val equity: BigDecimal?,
     val leverage: Int?,
+    val liquidationDistancePct: BigDecimal?,
 )
+
+fun List<PerpsPosition>.sortedByLiquidationProximity(): List<PerpsPosition> =
+    sortedWith(compareBy(nullsLast()) { it.liquidationDistancePct?.abs() })
 
 fun List<PerpsPosition>.unrealizedPnlPercent(): BigDecimal? {
     if (isEmpty() || any { (it.margin?.signum() ?: 0) <= 0 }) {
@@ -46,6 +50,8 @@ data class PerpsPortfolioOrder(
     val limitPrice: BigDecimal?,
     val leverage: Int?,
     val margin: BigDecimal?,
+    val takeProfit: PerpsLimitOrderLeg? = null,
+    val stopLoss: PerpsLimitOrderLeg? = null,
 )
 
 data class PerpsPortfolio(

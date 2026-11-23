@@ -12,11 +12,8 @@ import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events
 import com.tonapps.core.deeplink.DeepLink
 import com.tonapps.core.deeplink.DeepLinkRoute
-import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.bestMessage
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
-import com.tonapps.extensions.filterList
 import com.tonapps.extensions.generateUuid
 import com.tonapps.tonkeeper.extensions.normalizeTONSites
 import com.tonapps.tonkeeper.extensions.toast
@@ -34,14 +31,19 @@ import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.BridgeMethod
 import com.tonapps.tonkeeper.manager.tonconnect.bridge.model.SignDataRequestPayload
 import com.tonapps.tonkeeper.manager.tonconnect.signMessageRejection
 import com.tonapps.tonkeeper.ui.component.TonConnectWebView
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.keeper.isLoyaltyPage
 import com.tonapps.tonkeeper.ui.screen.root.RootViewModel
 import com.tonapps.tonkeeper.ui.screen.send.transaction.SendTransactionScreen
 import com.tonapps.tonkeeper.ui.screen.sign.SignDataScreen
 import com.tonapps.tonkeeper.ui.screen.watchonly.WatchInfoScreen
+import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.core.entity.SignRequestEntity
 import com.tonapps.wallet.data.dapps.entities.AppConnectEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -65,13 +67,14 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
     protected open val isDAppBrowser: Boolean
         get() = false
 
-    private val uri: Uri
+    protected val uri: Uri
         get() = webView.url?.toUri() ?: startUri
 
     val deviceInfo: JSONObject by lazy {
         JsonBuilder.device(
             maxMessages = wallet.maxMessages,
-            appVersion = requireContext().appVersionName,
+            appVersion = DevSettings.reportedVersionName,
+            signData = !wallet.isMultichainLedger,
             signMessageMaxMessages = wallet.tonConnectSignMessageMaxMessages(),
         )
     }
@@ -124,7 +127,15 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
         when (deeplink.route) {
             is DeepLinkRoute.TonConnect -> rootViewModel.processTonConnectDeepLink(deeplink, null)
             is DeepLinkRoute.Unknown -> navigation?.openURL(url)
-            else -> rootViewModel.processDeepLink(uri = url.toUri(), fromQR = false, refSource = deeplink.referrer, internal = false, fromPackageName = null, fromBrowser = isDAppBrowser)
+            else -> rootViewModel.processDeepLink(
+                uri = url.toUri(),
+                fromQR = false,
+                refSource = deeplink.referrer,
+                internal = false,
+                fromPackageName = null,
+                fromBrowser = isDAppBrowser,
+                fromLoyalty = uri.isLoyaltyPage(),
+            )
         }
     }
 
@@ -239,12 +250,12 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                 flow = Events.RedOperations.RedOperationsFlow.TonConnect,
                 operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
                 attemptSource = null,
-                startedAtMs = currentTimeSecondsInt(),
+                startedAtMs = startedAtMs,
                 otherMetadata = null,
             )
             return try {
                 val boc = SendTransactionScreen.run(
-                    requireContext(), wallet, signRequest,
+                    requireContext(), wallet, signRequest, PasscodeReason.DAPP_REQUEST,
                     sendNativeFrom = Events.SendNative.SendNativeFrom.TonconnectLocal
                 )
                 val finishedAtMs = currentTimeMillis()
@@ -254,7 +265,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
                     outcome = Events.RedOperations.RedOperationsOutcome.Success,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     errorCode = null,
                     errorMessage = null,
                     errorType = null,
@@ -270,7 +281,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
                     outcome = Events.RedOperations.RedOperationsOutcome.Cancel,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     errorCode = null,
                     errorMessage = null,
                     errorType = null,
@@ -289,7 +300,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
                     outcome = Events.RedOperations.RedOperationsOutcome.Fail,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     errorCode = null,
                     errorMessage = e.bestMessage,
                     errorType = e.javaClass.simpleName,
@@ -305,7 +316,7 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
                     operation = Events.RedOperations.RedOperationsOperation.ConfirmTransaction,
                     outcome = Events.RedOperations.RedOperationsOutcome.Fail,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     errorCode = null,
                     errorMessage = e.bestMessage,
                     errorType = e.javaClass.simpleName,
@@ -330,53 +341,66 @@ abstract class InjectedTonConnectScreen(@LayoutRes layoutId: Int, wallet: Wallet
 
         abstract val url: Uri
 
-        val connectionFlow = tonConnectManager.walletConnectionsFlow(wallet).filterList { connection ->
-            connection.type == AppConnectEntity.Type.Internal && connection.appUrl.host == url.host
-        }.map {
-            it.firstOrNull()
+        private val pageUriFlow = MutableStateFlow<Uri?>(null)
+
+        val pageHost: String?
+            get() = (pageUriFlow.value ?: url).host
+
+        val connectionFlow = combine(
+            tonConnectManager.walletConnectionsFlow(wallet),
+            pageUriFlow,
+        ) { connections, pageUri ->
+            connections.findPageConnection(pageUri ?: url)
         }
 
-        fun disconnect() {
+        fun setPageUri(pageUri: Uri) {
+            pageUriFlow.value = pageUri
+        }
+
+        fun disconnect(pageUri: Uri) {
             viewModelScope.launch {
                 // The repository matches by host + path segments, so the resolved appUrl only
                 // short-circuits that lookup.
                 val connection = withTimeoutOrNull(CONNECTION_LOOKUP_TIMEOUT_MS) {
-                    connectionFlow.firstOrNull()
+                    pageConnectionFlow(pageUri).firstOrNull()
                 }
                 tonConnectManager.disconnect(
                     wallet,
-                    connection?.appUrl ?: url,
+                    connection?.appUrl ?: pageUri,
                     AppConnectEntity.Type.Internal
                 )
             }
         }
 
-        suspend fun restoreConnection(currentUri: Uri?): JSONObject {
-            val connection = loadConnection(currentUri = currentUri)
+        suspend fun restoreConnection(pageUri: Uri): JSONObject {
+            val connection = loadConnection(pageUri)
             return if (connection == null) {
                 JsonBuilder.connectEventError(BridgeError.unknownApp())
             } else {
-                JsonBuilder.connectEventSuccess(wallet, null, null, context.appVersionName)
+                JsonBuilder.connectEventSuccess(wallet, null, null, DevSettings.reportedVersionName)
             }
         }
 
-        private suspend fun loadConnection(attempt: Int = 0, currentUri: Uri?): AppConnectEntity? {
+        private suspend fun loadConnection(pageUri: Uri, attempt: Int = 0): AppConnectEntity? {
             if (attempt > 3) {
-                val firstApp = tonConnectManager.getConnection(wallet.accountId, wallet.network, url, AppConnectEntity.Type.Internal)
-                if (firstApp != null) {
-                    return firstApp
-                }
-                if (currentUri != null) {
-                    return tonConnectManager.getConnection(wallet.accountId, wallet.network, currentUri, AppConnectEntity.Type.Internal)
-                }
-                return null
+                return tonConnectManager.getConnection(wallet.accountId, wallet.network, pageUri, AppConnectEntity.Type.Internal)
             }
-            val connection = connectionFlow.firstOrNull()
+            val connection = pageConnectionFlow(pageUri).firstOrNull()
             if (connection != null) {
                 return connection
             }
             delay(140)
-            return loadConnection(attempt + 1, currentUri)
+            return loadConnection(pageUri, attempt + 1)
+        }
+
+        private fun pageConnectionFlow(pageUri: Uri) = tonConnectManager.walletConnectionsFlow(wallet).map { connections ->
+            connections.findPageConnection(pageUri)
+        }
+
+        private fun List<AppConnectEntity>.findPageConnection(pageUri: Uri): AppConnectEntity? {
+            return firstOrNull { connection ->
+                connection.type == AppConnectEntity.Type.Internal && connection.appUrl.host == pageUri.host
+            }
         }
 
         private companion object {

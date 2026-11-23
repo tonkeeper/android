@@ -13,11 +13,11 @@ import com.tonapps.chainkit.core.chain.api.models.SignError
 import com.tonapps.chainkit.core.chain.api.models.SignRes
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
 import com.tonapps.chainkit.transaction.GasReserveResult
 import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
+import com.tonapps.deposit.multicoin.screens.confirm.base.SignatureGate
 import com.tonapps.deposit.multicoin.screens.confirm.base.Signing
 import com.tonapps.deposit.multicoin.screens.confirm.fee.FeeAccount
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFee
@@ -25,7 +25,7 @@ import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeBuilder
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFeeState
 import com.tonapps.wallet.ChainKitProvider
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.testing.BaseUnitTest
 import com.tonapps.wallet.testing.TestAssets
 import com.tonapps.wallet.testing.TestWallet
@@ -51,7 +51,7 @@ class TxConfirmMaxCoinTest : BaseUnitTest() {
     private val accountRepo = mockk<McAccountRepository>()
     private val provider = mockk<ChainKitProvider>()
     private val feeBuilder = mockk<TxFeeBuilder>()
-    private val passcodeManager = mockk<PasscodeManager>()
+    private val walletUnlocker = mockk<WalletUnlocker>()
     private val store = ViewModelStore()
     private val collection by lazy { CoroutineScope(dispatchers.main) }
 
@@ -88,7 +88,7 @@ class TxConfirmMaxCoinTest : BaseUnitTest() {
             builtShrinkToFit += arg<Boolean>(7)
             TxFeeState(energy = secondArg(), estimated = arg(6), options = options)
         }
-        coEvery { passcodeManager.unlockMultichainVault<CryptoWallet>(any(), any()) } returns mockk()
+        coEvery { walletUnlocker.unlockWallet(any(), any()) } returns mockk()
     }
 
     @After
@@ -127,7 +127,7 @@ class TxConfirmMaxCoinTest : BaseUnitTest() {
 
         feature.selectFee(native)
         scheduler.runCurrent()
-        feature.sendTransaction(context, shown.last()!!)
+        feature.sendTransaction(shown.last()!!)
         scheduler.runCurrent()
 
         assertEquals(listOf(SHRUNK), signed.map { it.amount })
@@ -187,11 +187,13 @@ class TxConfirmMaxCoinTest : BaseUnitTest() {
             provider = provider,
             accountRepo = accountRepo,
             postTransactionRefreshSchedule = mockk(relaxed = true),
-            passcodeManager = passcodeManager,
+            walletUnlocker = walletUnlocker,
+            signatureGate = SignatureGate { false },
             confirmResults = mockk(relaxed = true),
             feeBuilder = feeBuilder,
             gaslessSender = mockk(relaxed = true),
             settingsRepository = mockk(relaxed = true),
+            ledgerSigner = mockk(relaxed = true),
         )
         store.put("tx-confirm", feature)
 

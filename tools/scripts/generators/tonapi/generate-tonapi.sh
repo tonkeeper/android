@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: generate-tonapi.sh <openapi-url> <package-name> <target-module> [open-enums] [schema-mappings]
+# Usage: generate-tonapi.sh <openapi-url> <package-name> <target-module> [open-enums] [schema-mappings] [operation-filter]
 # Example: generate-tonapi.sh "https://..." "tonapi" "tonapi:tonkeeper"
 # open-enums: "true" decodes an unknown string enum value as `unknown` instead of failing.
 # schema-mappings: "Schema=fully.qualified.Type,..." to use instead of the generated model.
@@ -12,6 +12,7 @@ PACKAGE_NAME="${2:-}"
 TARGET_MODULE="${3:-}"
 OPEN_ENUMS="${4:-false}"
 EXTRA_SCHEMA_MAPPINGS="${5:-}"
+OPERATION_FILTER="${6:-}"
 
 download_openapi_spec() {
     local source="$1"
@@ -55,7 +56,7 @@ echo "  OpenAPI spec: $OPENAPI_URL"
 echo "  Target directory: $TARGET_SRC_DIR"
 
 download_openapi_spec "$OPENAPI_URL" "$TEMP_DIR/source.yaml"
-SCHEMA_MAPPINGS=$(python3 "$SCRIPT_DIR/prepare-spec.py" "$TEMP_DIR/source.yaml" "$LOCAL_OPENAPI_SPEC" "$PACKAGE_NAME" "$OPEN_ENUMS")
+SCHEMA_MAPPINGS=$(python3 "$SCRIPT_DIR/prepare-spec.py" "$TEMP_DIR/source.yaml" "$LOCAL_OPENAPI_SPEC" "$PACKAGE_NAME" "$OPEN_ENUMS" "$OPERATION_FILTER")
 if [ -n "$EXTRA_SCHEMA_MAPPINGS" ]; then
     SCHEMA_MAPPINGS="${SCHEMA_MAPPINGS:+$SCHEMA_MAPPINGS,}$EXTRA_SCHEMA_MAPPINGS"
 fi

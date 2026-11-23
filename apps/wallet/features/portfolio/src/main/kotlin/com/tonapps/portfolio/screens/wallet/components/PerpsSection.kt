@@ -39,7 +39,7 @@ internal fun PerpsPositionsSection(
                 null
             },
         )
-        PerpsPositionsCard(positions = state.positions, onOpenMarket = onOpenPerpMarket)
+        PerpsPositionsCard(positions = state.positions, onOpenMarket = onOpenPerpMarket, onOpenMore = onOpenPerps)
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
@@ -49,11 +49,13 @@ internal fun PerpsShelfSection(
     state: WalletSection.Perps.Shelf,
     onOpenPerps: () -> Unit,
     onOpenPerpMarket: (marketIndex: Int, symbol: String) -> Unit,
+    titleModifier: Modifier = Modifier,
 ) {
     val balanceFormat = state.balanceFormat
     Column {
         MoonBundleTitleCell(
             title = stringResource(Localization.perps_title),
+            titleModifier = titleModifier,
             onClick = onOpenPerps,
             content = if (balanceFormat != null) {
                 { SectionBalance(format = balanceFormat, onClick = onOpenPerps) }
@@ -94,6 +96,27 @@ private fun PerpsPositionsSectionHiddenPreview() {
                     previewPosition(marketIndex = 2, symbol = "ETH", side = PerpsPositionSide.SHORT, pnl = "-4.20", equity = "7.80", hiddenBalance = true),
                 ),
                 balanceFormat = HIDDEN_BALANCE,
+            ),
+            onOpenPerps = {},
+            onOpenPerpMarket = { _, _ -> },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PerpsPositionsSectionOverLimitPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        PerpsPositionsSection(
+            state = WalletSection.Perps.Positions(
+                positions = listOf(
+                    previewPosition(marketIndex = 1, symbol = "SOL", side = PerpsPositionSide.LONG, pnl = "-2.14", equity = "54.30", hiddenBalance = false),
+                    previewPosition(marketIndex = 2, symbol = "TSLAx", side = PerpsPositionSide.SHORT, pnl = "-1.05", equity = "88.12", hiddenBalance = false),
+                    previewPosition(marketIndex = 3, symbol = "Silver", side = PerpsPositionSide.SHORT, pnl = "-0.72", equity = "35.60", hiddenBalance = false),
+                    previewPosition(marketIndex = 4, symbol = "BTC", side = PerpsPositionSide.LONG, pnl = "1.20", equity = "20.00", hiddenBalance = false),
+                    previewPosition(marketIndex = 5, symbol = "XAG", side = PerpsPositionSide.SHORT, pnl = "-0.40", equity = "12.00", hiddenBalance = false),
+                ),
+                balanceFormat = "$ 2 712.12",
             ),
             onOpenPerps = {},
             onOpenPerpMarket = { _, _ -> },
@@ -154,4 +177,5 @@ private fun previewPosition(
     unrealizedPnl = BigDecimal(pnl),
     equity = BigDecimal(equity),
     leverage = 10,
+    liquidationDistancePct = null,
 ).toUi(hiddenBalance)

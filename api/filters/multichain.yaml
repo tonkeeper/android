@@ -1,0 +1,34 @@
+# Usage by platform; both generators consume the entire list.
+filter:
+  operations:
+    # Both platforms
+    - getWalletSyncStatus
+    - getRealtimeConnectionToken
+    - getWalletRealtimeToken
+    - getWalletPerpsRealtimeToken
+    - getWalletAssets
+    - saveWalletAssetsFilters
+    - getWalletActivities
+    - addPendingTransactions
+    - getWalletChallenge
+    - getWalletRaffles
+    - completeWalletRaffleMigration
+    - markWalletRaffleImport
+    - getDeviceChallenge
+    - registerDevice
+    - refreshDevice
+    - getDeviceBindings
+    - registerWallets
+    - unregisterWallets
+    - subscribeDevicePush
+    - unsubscribeDevicePush
+    # iOS only
+    - healthcheck
+    - searchAssets
+    - broadcastTx
+    - getFees
+    - getWallet
+    - registerLiveActivity
+    - unregisterLiveActivity
+    # Android only
+    - getWalletAsset

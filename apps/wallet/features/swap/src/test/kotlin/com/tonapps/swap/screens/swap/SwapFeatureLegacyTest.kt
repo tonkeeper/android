@@ -77,7 +77,7 @@ class SwapFeatureLegacyTest : BaseUnitTest() {
 
             assertEquals("", maxed.amountInput.text)
             assertFalse(maxed.amountInput.isMax)
-            assertEquals(listOf(SwapEvent.MaxBelowReserve(reserve = "1")), events)
+            assertEquals(listOf(SwapEvent.MaxBelowReserve(reserve = "1", symbol = "TON")), events)
         }
     }
 

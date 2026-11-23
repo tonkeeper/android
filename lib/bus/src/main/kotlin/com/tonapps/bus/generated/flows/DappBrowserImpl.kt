@@ -137,7 +137,7 @@ Same platform scope as dapp_pin: emitted only by `pro-mobile`, never by the nati
         appId: String,
         bannerId: String?,
         location: String,
-        loadDurationMs: Int
+        loadDurationMs: Long
     ) {
         val props = hashMapOf<String, Any>(
             "from" to from.key,
@@ -167,7 +167,7 @@ Same platform scope as dapp_pin: emitted only by `pro-mobile`, never by the nati
         location: String,
         errorCode: String,
         httpStatus: Int?,
-        loadDurationMs: Int
+        loadDurationMs: Long
     ) {
         val props = hashMapOf<String, Any>(
             "from" to from.key,

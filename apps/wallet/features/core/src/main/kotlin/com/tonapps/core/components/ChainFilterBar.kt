@@ -20,12 +20,13 @@ import ui.components.moon.MoonItem
 const val ALL_CHAINS_FILTER_ID = -1
 
 @Composable
-fun rememberChainFilters(): ImmutableList<MoonItem> {
+fun rememberChainFilters(availableNetworks: ImmutableList<Network.Type>? = null): ImmutableList<MoonItem> {
     val context = LocalContext.current
     val allStr = stringResource(Localization.all)
-    return remember(allStr) {
+    return remember(allStr, availableNetworks) {
+        val chains = Chain.displayOrder.filter { availableNetworks == null || it.network.type in availableNetworks }
         (listOf(MoonItem(id = ALL_CHAINS_FILTER_ID, title = allStr)) +
-            Chain.displayOrder.map {
+            chains.map {
                 MoonItem(
                     id = it.network.type.ordinal,
                     title = it.coin.name,
@@ -40,10 +41,11 @@ fun ChainFilterBar(
     selectedNetwork: Network.Type?,
     onNetworkSelected: (Network.Type?) -> Unit,
     modifier: Modifier = Modifier,
+    availableNetworks: ImmutableList<Network.Type>? = null,
     scrollToSelected: Boolean = false,
     contentPadding: PaddingValues = MoonChipBarCellDefaultPadding,
 ) {
-    val chainFilters = rememberChainFilters()
+    val chainFilters = rememberChainFilters(availableNetworks)
 
     MoonChipBarCell(
         modifier = modifier.fillMaxWidth(),

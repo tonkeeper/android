@@ -37,10 +37,6 @@ internal class Provider(
 
     val staking = SourceAPI(main.staking, test.staking)
 
-    val storage = SourceAPI(main.storage, test.storage)
-
-    val traces = SourceAPI(main.traces, test.traces)
-
     val wallet = SourceAPI(main.wallet, test.wallet)
 
     val gasless = SourceAPI(main.gasless, test.gasless)

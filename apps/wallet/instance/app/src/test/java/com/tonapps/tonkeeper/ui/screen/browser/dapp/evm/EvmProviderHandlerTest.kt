@@ -5,9 +5,9 @@ import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.chainkit.core.chain.model.account.Chain
+import com.tonapps.test.silenceLog
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderProtocol.Message
 import com.tonapps.tonkeeper.ui.screen.browser.dapp.evm.EvmProviderProtocol.Response
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.silenceLog
 import com.tonapps.wallet.data.dapps.confirm.ConfirmSheetQueue
 import com.tonapps.wallet.data.dapps.evm.EvmProviderRepository
 import com.tonapps.wallet.data.multichain.account.AccountEntity
@@ -365,20 +365,20 @@ class EvmProviderHandlerTest {
 
         val events = mutableListOf<String>()
 
-        override fun onRequested(method: String, chain: Chain.Evm) {
-            events += "requested $method"
+        override fun onRequested(request: Message.Request, chain: Chain.Evm) {
+            events += "requested ${request.method}"
         }
 
-        override fun onSigned(method: String, chain: Chain.Evm) {
-            events += "signed $method"
+        override fun onSigned(request: Message.Request, chain: Chain.Evm) {
+            events += "signed ${request.method}"
         }
 
-        override fun onRejected(method: String, chain: Chain.Evm) {
-            events += "rejected $method"
+        override fun onRejected(request: Message.Request, chain: Chain.Evm) {
+            events += "rejected ${request.method}"
         }
 
-        override fun onFailed(method: String, chain: Chain.Evm, code: Int, message: String) {
-            events += "failed $method $code"
+        override fun onFailed(request: Message.Request, chain: Chain.Evm, code: Int, message: String) {
+            events += "failed ${request.method} $code"
         }
     }
 

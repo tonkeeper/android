@@ -2,14 +2,17 @@ package com.tonapps.ledger.ton
 
 import android.os.Parcelable
 import com.tonapps.blockchain.ton.extensions.loadRemainingBits
+import com.tonapps.blockchain.ton.toBigInt
 import com.tonapps.blockchain.ton.toBigInteger
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.cell.Cell
+import org.ton.cell.CellBuilder
 import org.ton.cell.CellSlice
 import org.ton.tlb.loadTlb
+import org.ton.tlb.storeTlb
 import java.math.BigInteger
 
 sealed class JettonBurnCustomPayload : Parcelable {
@@ -67,6 +70,36 @@ sealed class TonPayloadFormat : Parcelable {
         val forwardPayload: Cell?,
         val knownJetton: KnownJetton? = null
     ) : TonPayloadFormat()
+
+    @Parcelize
+    @TypeParceler<Coins, CoinsParceler>
+    data class WhalesDeposit(
+        val queryId: BigInteger,
+        val gasLimit: Coins,
+    ) : TonPayloadFormat() {
+
+        fun toCell(): Cell = CellBuilder.beginCell()
+            .storeUInt(WHALES_DEPOSIT_OP, 32)
+            .storeUInt(queryId.toBigInt(), 64)
+            .storeTlb(Coins, gasLimit)
+            .endCell()
+    }
+
+    @Parcelize
+    @TypeParceler<Coins, CoinsParceler>
+    data class WhalesWithdraw(
+        val queryId: BigInteger,
+        val gasLimit: Coins,
+        val amount: Coins,
+    ) : TonPayloadFormat() {
+
+        fun toCell(): Cell = CellBuilder.beginCell()
+            .storeUInt(WHALES_WITHDRAW_OP.toUInt().toLong(), 32)
+            .storeUInt(queryId.toBigInt(), 64)
+            .storeTlb(Coins, gasLimit)
+            .storeTlb(Coins, amount)
+            .endCell()
+    }
 
     @Parcelize
     @TypeParceler<Coins, CoinsParceler>
@@ -182,6 +215,18 @@ sealed class TonPayloadFormat : Parcelable {
             0x1b.toByte()
         )
 
+        const val WHALES_MIN_APP_VERSION = "2.7.0"
+
+        private const val WHALES_DEPOSIT_OP = 0x7bcd1fef
+        private const val WHALES_WITHDRAW_OP = 0xda803efd.toInt()
+
+        private fun CellSlice.endParseStrict() {
+            endParse()
+            if (remainingRefs != 0) {
+                throw Error("Unexpected references left in the payload")
+            }
+        }
+
         private fun normalizeQueryId(queryId: ULong): BigInteger? {
             return if (queryId != 0UL) {
                 BigInteger(queryId.toString())
@@ -222,7 +267,7 @@ sealed class TonPayloadFormat : Parcelable {
                 when (op.toInt()) {
                     0 -> {
                         val str = String(loadBuffer(s))
-                        s.endParse()
+                        s.endParseStrict()
                         if (str.length > 120) {
                             throw Error("Comment must be at most 120 ASCII characters long")
                         }
@@ -250,7 +295,7 @@ sealed class TonPayloadFormat : Parcelable {
                         } else {
                             null
                         }
-                        s.endParse()
+                        s.endParseStrict()
 
                         return JettonTransfer(
                             queryId,
@@ -278,7 +323,7 @@ sealed class TonPayloadFormat : Parcelable {
                         } else {
                             null
                         }
-                        s.endParse()
+                        s.endParseStrict()
 
                         return NftTransfer(
                             queryId,
@@ -299,7 +344,7 @@ sealed class TonPayloadFormat : Parcelable {
                         } else {
                             null
                         }
-                        s.endParse()
+                        s.endParseStrict()
 
                         if (params.encodeJettonBurnEthAddressAsHex
                             && customPayload != null && customPayload is JettonBurnCustomPayload.CellPayload
@@ -309,7 +354,7 @@ sealed class TonPayloadFormat : Parcelable {
                             customPayload = JettonBurnCustomPayload.ByteArrayPayload(
                                 cs.loadBits(20 * 8).toByteArray()
                             )
-                            cs.endParse()
+                            cs.endParseStrict()
                         }
 
                         return JettonBurn(
@@ -323,7 +368,7 @@ sealed class TonPayloadFormat : Parcelable {
                     0x7258a69b -> {
                         val queryId = normalizeQueryId(s.loadUInt64())
                         val address = s.loadTlb(AddrStd.tlbCodec())
-                        s.endParse()
+                        s.endParseStrict()
 
                         return AddWhitelist(queryId, address)
                     }
@@ -331,7 +376,7 @@ sealed class TonPayloadFormat : Parcelable {
                     0x1000 -> {
                         val queryId = normalizeQueryId(s.loadUInt64())
                         val coins = s.loadTlb(Coins)
-                        s.endParse()
+                        s.endParseStrict()
 
                         return SingleNominatorWithdraw(queryId, coins)
                     }
@@ -339,7 +384,7 @@ sealed class TonPayloadFormat : Parcelable {
                     0x1001 -> {
                         val queryId = normalizeQueryId(s.loadUInt64())
                         val address = s.loadTlb(AddrStd.tlbCodec())
-                        s.endParse()
+                        s.endParseStrict()
 
                         return SingleNominatorChangeValidator(queryId, address)
                     }
@@ -351,7 +396,7 @@ sealed class TonPayloadFormat : Parcelable {
                         } else {
                             null
                         }
-                        s.endParse()
+                        s.endParseStrict()
 
                         return TonstakersDeposit(queryId, appId?.toBigInteger())
                     }
@@ -362,7 +407,7 @@ sealed class TonPayloadFormat : Parcelable {
                         val expirationDate = s.loadUInt(48)
                         val vote = s.loadBit()
                         val needConfirmation = s.loadBit()
-                        s.endParse()
+                        s.endParseStrict()
 
                         return VoteForProposal(
                             queryId,
@@ -383,7 +428,7 @@ sealed class TonPayloadFormat : Parcelable {
                                 if (s.remainingBits > 0 && !params.disallowModification && !s.loadBit()) {
                                     throw Error("Incorrect change DNS record message")
                                 }
-                                s.endParse()
+                                s.endParseStrict()
 
                                 val type = vs.loadUInt(16).toInt()
                                 if (type != 0x9fd3) {
@@ -428,7 +473,7 @@ sealed class TonPayloadFormat : Parcelable {
                                 if (s.remainingBits > 0 && !params.disallowModification && s.loadBit()) {
                                     throw Error("Incorrect change DNS record message")
                                 }
-                                s.endParse()
+                                s.endParseStrict()
 
                                 return ChangeDNSRecord(
                                     queryId = queryId,
@@ -442,7 +487,7 @@ sealed class TonPayloadFormat : Parcelable {
                                 if (s.remainingBits > 0 && !params.disallowModification && !s.loadBit()) {
                                     throw Error("Incorrect change DNS record message")
                                 }
-                                s.endParse()
+                                s.endParseStrict()
 
                                 return ChangeDNSRecord(
                                     queryId = queryId,
@@ -453,7 +498,7 @@ sealed class TonPayloadFormat : Parcelable {
                                 if (s.remainingBits > 0 && !params.disallowModification && s.loadBit()) {
                                     throw Error("Incorrect change DNS record message")
                                 }
-                                s.endParse()
+                                s.endParseStrict()
 
                                 return ChangeDNSRecord(
                                     queryId = queryId,
@@ -466,12 +511,31 @@ sealed class TonPayloadFormat : Parcelable {
                     0x8 -> {
                         val queryId = normalizeQueryId(s.loadUInt64())
                         val swapId = s.loadBits(32 * 8).toByteArray()
-                        s.endParse()
+                        s.endParseStrict()
 
                         return TokenBridgePaySwap(queryId, swapId)
                     }
+
+                    WHALES_DEPOSIT_OP -> {
+                        val queryId = BigInteger(s.loadUInt64().toString())
+                        val gasLimit = s.loadTlb(Coins)
+                        s.endParseStrict()
+
+                        return WhalesDeposit(queryId, gasLimit)
+                    }
+
+                    WHALES_WITHDRAW_OP -> {
+                        val queryId = BigInteger(s.loadUInt64().toString())
+                        val gasLimit = s.loadTlb(Coins)
+                        val amount = s.loadTlb(Coins)
+                        s.endParseStrict()
+
+                        return WhalesWithdraw(queryId, gasLimit, amount)
+                    }
                 }
-            } catch (e: Exception) {
+            } catch (e: VirtualMachineError) {
+                throw e
+            } catch (e: Throwable) {
                 if (params.disallowUnsafe) {
                     throw e
                 }

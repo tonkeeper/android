@@ -1,6 +1,7 @@
 package com.tonapps.deposit.screens.provider
 
 import androidx.compose.runtime.Stable
+import com.tonapps.deposit.utils.AmountError
 import com.tonapps.icu.Coins
 
 @Stable
@@ -14,6 +15,16 @@ data class ProviderItem(
 ) {
     companion object {
         val EMPTY = ProviderItem(id = "", title = "", imageUrl = "", isBest = false)
+    }
+}
+
+fun ProviderItem.unavailableLimit(amount: Coins?): AmountError? {
+    val max = maxAmount
+    return when {
+        max != null && amount != null && amount > max -> AmountError.AboveMax(max)
+        minAmount.isPositive -> AmountError.BelowMin(minAmount)
+        max != null -> AmountError.AboveMax(max)
+        else -> null
     }
 }
 

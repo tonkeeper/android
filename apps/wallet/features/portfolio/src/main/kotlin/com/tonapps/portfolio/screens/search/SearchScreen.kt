@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -37,13 +39,15 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.tonapps.core.components.AccountCellShimmer
-import com.tonapps.core.components.ChainFilterBar
+import com.tonapps.chainkit.core.chain.model.account.Network
+import com.tonapps.core.components.ChainFilterSelector
 import com.tonapps.core.components.SearchAssetCell
 import com.tonapps.perps.data.CatalogSearchRow
 import com.tonapps.perps.data.CatalogSearchSort
@@ -53,7 +57,11 @@ import com.tonapps.perps.screens.markets.PerpMarketRow
 import com.tonapps.perps.screens.markets.perpsErrorDescription
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.localization.Localization
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toPersistentList
 import ui.components.moon.MoonActionSelector
+import ui.components.moon.MoonChipBarCell
+import ui.components.moon.MoonItem
 import ui.components.moon.cell.MoonBundlePosition
 import ui.components.moon.cell.MoonBundleTitleCell
 import ui.components.moon.cell.MoonRetryCell
@@ -62,6 +70,7 @@ import ui.components.moon.cell.defaultBundleType
 import ui.components.moon.container.MoonScaffold
 import ui.components.moon.screen.MoonEmptyScreen
 import ui.components.moon.screen.MoonEmptyScreenType
+import ui.preview.ThemedPreview
 import ui.theme.Dimens
 import ui.theme.UIKit
 import ui.workaround.hideKeyboardOnScrollConnection
@@ -70,6 +79,7 @@ private const val SHIMMER_KEY = 2
 private const val LOADING_MORE_KEY = 3
 private const val ERROR_KEY = 4
 private const val APPEND_ERROR_KEY = 5
+private const val PERPS_TITLE_KEY = 6
 private const val SEARCH_ASSET_TYPE = "search_asset"
 private const val PERP_ROW_TYPE = "perp_row"
 private const val SECTION_HEADER_TYPE = "section_header"
@@ -85,6 +95,7 @@ fun SearchScreen(
     val perpsSort = feature.perpsSort.collectAsState()
     val searchText = rememberSaveable { mutableStateOf("") }
     val selectedChain = feature.networkFilter.collectAsState()
+    val availableNetworks = feature.availableNetworks.collectAsState()
     val assetType = feature.assetType.collectAsState()
     val isPerpsVisible = feature.isPerpsVisible.collectAsState()
 
@@ -108,17 +119,52 @@ fun SearchScreen(
             },
         )
 
-        if (showPerpsResults) {
-            Spacer(modifier = Modifier.height(Dimens.offsetMedium))
-        } else {
-            ChainFilterBar(
-                selectedNetwork = selectedChain.value,
-                onNetworkSelected = { network ->
-                    feature.onNetworkSelected(network)
-                },
-                scrollToSelected = true,
+        val chips = buildList {
+            add(
+                MoonItem(
+                    id = SearchAssetType.ALL.ordinal,
+                    title = stringResource(Localization.perps_filter_all),
+                ),
             )
-        }
+            add(
+                MoonItem(
+                    id = SearchAssetType.TOKENS.ordinal,
+                    title = stringResource(Localization.perps_filter_tokens),
+                ),
+            )
+            add(
+                MoonItem(
+                    id = SearchAssetType.COMMODITIES.ordinal,
+                    title = stringResource(Localization.perps_filter_commodities),
+                ),
+            )
+            add(
+                MoonItem(
+                    id = SearchAssetType.STOCKS.ordinal,
+                    title = stringResource(Localization.perps_filter_stocks),
+                ),
+            )
+            add(
+                MoonItem(
+                    id = SearchAssetType.ETFS.ordinal,
+                    title = stringResource(Localization.perps_filter_etfs),
+                ),
+            )
+            if (isPerpsVisible.value) {
+                add(
+                    MoonItem(
+                        id = SearchAssetType.PERPETUALS.ordinal,
+                        title = stringResource(Localization.perps_title),
+                    ),
+                )
+            }
+        }.toPersistentList()
+        MoonChipBarCell(
+            filters = chips,
+            selectedId = assetType.value.ordinal,
+            scrollToSelected = true,
+            onSelect = { feature.onAssetTypeSelected(SearchAssetType.entries[it.id]) },
+        )
 
         Box(modifier = Modifier.fillMaxSize()) {
             if (showPerpsResults) {
@@ -145,7 +191,9 @@ fun SearchScreen(
                 onPerpsSortSelect = { feature.onPerpsSortSelected(it) },
                 isPerpsVisible = isPerpsVisible.value,
                 selectedAssetType = assetType.value,
-                onAssetTypeSelect = { feature.onAssetTypeSelected(it) },
+                selectedNetwork = selectedChain.value,
+                availableNetworks = availableNetworks.value,
+                onNetworkSelected = feature::onNetworkSelected,
             )
         }
     }
@@ -190,7 +238,7 @@ private fun SpotResults(
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+    val navBarPadding = WindowInsets.navigationBars.exclude(WindowInsets.ime).asPaddingValues()
 
     LazyColumn(
         modifier = Modifier
@@ -245,7 +293,11 @@ private fun SpotResults(
                             }
                             MoonBundleTitleCell(
                                 title = when (listItem.section) {
+                                    SearchSection.ALL_ASSETS -> stringResource(Localization.search_all_assets)
                                     SearchSection.TOKENS -> stringResource(Localization.tokens)
+                                    SearchSection.COMMODITIES -> stringResource(Localization.perps_filter_commodities)
+                                    SearchSection.STOCKS -> stringResource(Localization.perps_filter_stocks)
+                                    SearchSection.ETFS -> stringResource(Localization.perps_filter_etfs)
                                     SearchSection.PERPETUALS -> stringResource(Localization.perps_title)
                                 },
                             )
@@ -343,7 +395,7 @@ private fun PerpsResults(
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+    val navBarPadding = WindowInsets.navigationBars.exclude(WindowInsets.ime).asPaddingValues()
 
     LazyColumn(
         modifier = Modifier
@@ -383,6 +435,9 @@ private fun PerpsResults(
             }
 
             else -> {
+                item(key = PERPS_TITLE_KEY, contentType = { SECTION_HEADER_TYPE }) {
+                    MoonBundleTitleCell(title = stringResource(Localization.perps_title))
+                }
                 items(
                     count = pagingItems.itemCount,
                     key = pagingItems.itemKey { "perp_${it.marketIndex}" },
@@ -423,11 +478,11 @@ private fun PerpsResults(
 @Composable
 private fun SearchEmpty(searchText: String) {
     MoonEmptyScreen(
-        text = stringResource(Localization.cant_find_anything),
-        description = if (searchText.isEmpty()) {
-            stringResource(Localization.no_results)
-        } else {
+        text = stringResource(Localization.not_found),
+        description = if (searchText.isNotEmpty()) {
             stringResource(Localization.search_no_result, searchText)
+        } else {
+            null
         },
         type = MoonEmptyScreenType.Empty,
     )
@@ -458,11 +513,12 @@ private fun SearchBottomSelectors(
     onPerpsSortSelect: (PerpsSort) -> Unit,
     isPerpsVisible: Boolean,
     selectedAssetType: SearchAssetType,
-    onAssetTypeSelect: (SearchAssetType) -> Unit,
+    selectedNetwork: Network.Type?,
+    availableNetworks: ImmutableList<Network.Type>?,
+    onNetworkSelected: (Network.Type?) -> Unit,
 ) {
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues()
+    val navBarPadding = WindowInsets.navigationBars.exclude(WindowInsets.ime).asPaddingValues()
     val entries = CatalogSearchSort.entries
-    val assetTypes = SearchAssetType.entries
 
     Box(
         modifier = modifier
@@ -479,12 +535,12 @@ private fun SearchBottomSelectors(
             .padding(bottom = navBarPadding.calculateBottomPadding()),
         contentAlignment = Alignment.Center,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             if (isPerpsVisible && selectedAssetType == SearchAssetType.PERPETUALS) {
                 val perpsSorts = PerpsSort.entries
                 MoonActionSelector(
                     items = listOf(
-                        stringResource(Localization.perps_volume),
+                        stringResource(Localization.perps_volume_24h),
                         stringResource(Localization.perps_price_change),
                         stringResource(Localization.perps_open_interest),
                     ),
@@ -497,20 +553,66 @@ private fun SearchBottomSelectors(
                     selectedIndex = entries.indexOf(selectedSort),
                     onSelect = { onSortSelect(entries[it]) },
                 )
-            }
-            if (isPerpsVisible) {
-                MoonActionSelector(
-                    items = listOf(
-                        stringResource(Localization.all_assets),
-                        stringResource(Localization.tokens),
-                        stringResource(Localization.perps_filter_stocks),
-                        stringResource(Localization.perps_filter_etfs),
-                        stringResource(Localization.perps_title),
-                    ),
-                    selectedIndex = selectedAssetType.ordinal,
-                    onSelect = { onAssetTypeSelect(assetTypes[it]) },
-                )
+                if (availableNetworks?.isEmpty() != true) {
+                    ChainFilterSelector(
+                        selectedNetwork = selectedNetwork,
+                        onNetworkSelected = onNetworkSelected,
+                        availableNetworks = availableNetworks,
+                    )
+                }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun SearchBottomSelectorsSpotPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        SearchBottomSelectors(
+            selectedSort = CatalogSearchSort.MARKET_CAP,
+            onSortSelect = {},
+            selectedPerpsSort = PerpsSort.VOLUME,
+            onPerpsSortSelect = {},
+            isPerpsVisible = true,
+            selectedAssetType = SearchAssetType.ALL,
+            selectedNetwork = null,
+            availableNetworks = null,
+            onNetworkSelected = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SearchBottomSelectorsPerpsPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        SearchBottomSelectors(
+            selectedSort = CatalogSearchSort.MARKET_CAP,
+            onSortSelect = {},
+            selectedPerpsSort = PerpsSort.VOLUME,
+            onPerpsSortSelect = {},
+            isPerpsVisible = true,
+            selectedAssetType = SearchAssetType.PERPETUALS,
+            selectedNetwork = null,
+            availableNetworks = null,
+            onNetworkSelected = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SearchEmptyQueryPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        SearchEmpty(searchText = "BTC")
+    }
+}
+
+@Preview
+@Composable
+private fun SearchEmptyBlankPreview() {
+    ThemedPreview(isDarkOnly = true) {
+        SearchEmpty(searchText = "")
     }
 }

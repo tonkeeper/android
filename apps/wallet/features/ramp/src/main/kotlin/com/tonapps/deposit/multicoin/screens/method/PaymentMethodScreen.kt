@@ -1,18 +1,15 @@
 package com.tonapps.deposit.multicoin.screens.method
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -20,20 +17,16 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.deposit.multicoin.FiatSubtitle
 import com.tonapps.deposit.multicoin.data.RampAssetDetail
 import com.tonapps.deposit.multicoin.data.RampMethod
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
 import io.exchangeapi.models.ExchangePaymentMethodType
-import ui.components.moon.MoonItemIcon
 import ui.components.moon.MoonItemImage
 import ui.components.moon.MoonTopAppBar
-import ui.components.moon.MoonTopAppBarSubtitle
 import ui.components.moon.MoonTopAppBarTitle
 import ui.components.moon.cell.MoonBundleCell
 import ui.components.moon.cell.MoonBundlePosition
@@ -41,7 +34,6 @@ import ui.components.moon.cell.TextCell
 import ui.components.moon.container.MoonScaffold
 import ui.components.moon.screen.MoonEmptyScreen
 import ui.components.moon.screen.MoonLoadingScreen
-import ui.painterResource
 import ui.theme.UIKit
 import ui.workaround.hideKeyboardOnScrollConnection
 import uikit.navigation.Navigation.Companion.navigation
@@ -87,11 +79,15 @@ fun PaymentMethodScreen(
         topBar = {
             MoonTopAppBar(
                 title = { MoonTopAppBarTitle(text = stringResource(Localization.payment_method)) },
-                onTitleClick = dataState?.let { data ->
-                    { onSelectCurrency(data.fiatCode, data.supportedFiatCodes) }
+                onTitleClick = if (dataState != null) {
+                    { onSelectCurrency(dataState.fiatCode, dataState.supportedFiatCodes) }
+                } else {
+                    null
                 },
-                subtitle = fiatCode?.let { code ->
-                    { PaymentMethodSubtitle(fiatCode = code) }
+                subtitle = if (fiatCode != null) {
+                    { FiatSubtitle(text = "${stringResource(Localization.methods_of_purchase_for)} $fiatCode", fiat = fiatCode, flagUri = null) }
+                } else {
+                    null
                 },
                 actionIconRes = UIKitIcon.ic_close_16,
                 onActionClick = onClose,
@@ -133,31 +129,6 @@ fun PaymentMethodScreen(
             }
         }
     }
-}
-
-@Composable
-private fun PaymentMethodSubtitle(fiatCode: String) {
-    val accentColor = UIKit.colorScheme.accent.blue
-    val prefix = stringResource(Localization.methods_of_purchase_for)
-
-    MoonTopAppBarSubtitle(
-        text = remember(fiatCode, prefix, accentColor) {
-            buildAnnotatedString {
-                append(prefix)
-                append(" ")
-                withStyle(SpanStyle(color = accentColor)) {
-                    append(fiatCode)
-                }
-            }
-        },
-    )
-    Spacer(modifier = Modifier.width(4.dp))
-
-    MoonItemIcon(
-        painter = painterResource(UIKitIcon.ic_switch_16),
-        size = 12.dp,
-        color = accentColor,
-    )
 }
 
 @Composable

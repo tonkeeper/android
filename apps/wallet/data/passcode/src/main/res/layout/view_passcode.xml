@@ -22,13 +22,37 @@
                 android:textAppearance="@style/TextAppearance.H3"
                 android:text="@string/passcode_enter"/>
 
-            <uikit.widget.PinInputView
-                android:id="@+id/pin_input"
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/pin_reason"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/offsetExtraSmall"
+                android:gravity="center"
+                android:textColor="?attr/textSecondaryColor"
+                android:textAppearance="@style/TextAppearance.Label2"
+                android:visibility="gone"/>
+
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/offsetLarge"
-                android:layout_gravity="center"
-                android:filterTouchesWhenObscured="true"/>
+                android:layout_gravity="center">
+
+                <uikit.widget.PinInputView
+                    android:id="@+id/pin_input"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:filterTouchesWhenObscured="true"/>
+
+                <uikit.widget.LoaderView
+                    android:id="@+id/pin_loader"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+
+            </FrameLayout>
 
         </uikit.widget.ColumnLayout>
 

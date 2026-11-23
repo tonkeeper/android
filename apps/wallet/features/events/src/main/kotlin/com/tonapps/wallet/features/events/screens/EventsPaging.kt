@@ -21,6 +21,8 @@ internal class EventsPagingSource(
     private val showPerps: Boolean,
     private val onInitialLoad: (hasAnyActivity: Boolean) -> Unit,
     private val onPageLoaded: (activities: List<HistoryEventEntity>, isInitialLoad: Boolean) -> Unit = { _, _ -> },
+    private val onInitialRequestStarted: () -> Unit = {},
+    private val onInitialRequestFinished: (error: Throwable?) -> Unit = {},
 ) : PagingSource<String, HistoryEventEntity>() {
 
     private val heldPendingActivities = mutableListOf<HistoryEventEntity>()
@@ -28,8 +30,11 @@ internal class EventsPagingSource(
     override suspend fun load(
         params: LoadParams<String>,
     ): LoadResult<String, HistoryEventEntity> = withContext(Dispatchers.IO) {
+        val isInitialLoad = params.key == null
+        if (isInitialLoad) {
+            onInitialRequestStarted()
+        }
         try {
-            val isInitialLoad = params.key == null
             var initialLoadReported = false
             val items = mutableListOf<HistoryEventEntity>()
             var cursor = params.key
@@ -83,10 +88,17 @@ internal class EventsPagingSource(
                 data = placePendingAtTopOfTheirDay(items, isLastPage = cursor == null),
                 prevKey = null,
                 nextKey = cursor,
-            )
+            ).also {
+                if (isInitialLoad) {
+                    onInitialRequestFinished(null)
+                }
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
+            if (isInitialLoad) {
+                onInitialRequestFinished(e)
+            }
             LoadResult.Error(e)
         }
     }

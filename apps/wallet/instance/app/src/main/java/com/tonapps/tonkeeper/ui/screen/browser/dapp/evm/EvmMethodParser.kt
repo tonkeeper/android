@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.ui.screen.browser.dapp.evm
 
+import com.tonapps.blockchain.evm.EvmTypedData
 import com.tonapps.blockchain.model.ConfirmContext
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.chainkit.core.chain.model.account.Chain
@@ -102,12 +103,13 @@ internal class EvmMethodParser(
                     return Result.Error(ERROR_UNAUTHORIZED, "Unknown signer: $signer")
                 }
             }
-        if (!matchesChain(payload.chainId, chain)) {
+        val typedData = EvmTypedData.of(payload)
+            ?: return Result.Error(ERROR_INVALID_PARAMS, "Typed data cannot be read")
+        if (!typedData.isAddressedTo(chain)) {
             return Result.Error(ERROR_UNRECOGNIZED_CHAIN, "Typed data is addressed to another chain")
         }
-        // The raw JSON travels on: chainkit hashes typed data itself.
         val message = WcEthSignMessage(
-            raw = listOf(address, payload.raw),
+            raw = listOf(address, typedData.json),
             type = WcEthSignMessage.WcSignType.TypedMessage,
         )
         return confirm(request, walletId, chain, message)
@@ -137,18 +139,13 @@ internal class EvmMethodParser(
         )
     }
 
-    private fun typedDataOrNull(value: Any?): TypedData? {
+    private fun typedDataOrNull(value: Any?): JsonObject? {
         val json = when (value) {
             is String -> runCatching { Json.parseToJsonElement(value).jsonObject }.getOrNull()
             is Map<*, *> -> toJson(value) as? JsonObject
             else -> null
-        } ?: return null
-        if (!json.containsKey("domain")) {
-            return null
         }
-        val chainId = (json["domain"]?.jsonObject?.get("chainId") as? JsonPrimitive)?.content
-        // A payload that arrived as a string travels on untouched; only an object needs encoding.
-        return TypedData(raw = value as? String ?: json.toString(), chainId = chainId)
+        return json?.takeIf { it.containsKey("domain") }
     }
 
     private fun toJson(value: Any?): JsonElement {
@@ -185,8 +182,6 @@ internal class EvmMethodParser(
     private fun Map<*, *>.string(key: String): String? {
         return (this[key] as? String)?.takeIf { it.isNotBlank() }
     }
-
-    private class TypedData(val raw: String, val chainId: String?)
 
     private companion object {
 

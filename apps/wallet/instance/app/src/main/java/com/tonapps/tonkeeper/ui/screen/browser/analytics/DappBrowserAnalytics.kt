@@ -153,8 +153,10 @@ object DappBrowserAnalytics {
             "eth", "ethereum" -> DappBrowserAssetChain.Eth
             "base" -> DappBrowserAssetChain.Base
             "arb", "arbitrum" -> DappBrowserAssetChain.Arb
-            "bsc", "bnb" -> DappBrowserAssetChain.Bnb
-            "pol", "polygon", "matic" -> DappBrowserAssetChain.Pol
+            "bsc", "bnb" -> DappBrowserAssetChain.Bsc
+            "pol", "polygon", "matic" -> DappBrowserAssetChain.Polygon
+            "avax", "avalanche" -> DappBrowserAssetChain.Avax
+            "robinhood" -> DappBrowserAssetChain.Robinhood
             "sol", "solana" -> DappBrowserAssetChain.Sol
             "tron" -> DappBrowserAssetChain.Tron
             "btc", "bitcoin" -> DappBrowserAssetChain.Btc

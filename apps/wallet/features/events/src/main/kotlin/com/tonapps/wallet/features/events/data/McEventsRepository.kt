@@ -6,21 +6,27 @@ import com.tonapps.blockchain.ton.extensions.toUserFriendly
 import com.tonapps.chainkit.core.chain.model.account.Asset
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.events.EventsRepository
+import com.tonapps.wallet.data.loyalty.LoyaltyEntry
+import com.tonapps.wallet.data.loyalty.LoyaltyRepository
+import com.tonapps.wallet.data.loyalty.toPositiveOhmsOrNull
 import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.account.toApiChain
 import com.tonapps.wallet.data.multichain.account.toAssetEntity
+import com.tonapps.wallet.data.multichain.activity.batteryChargesOrNull
+import com.tonapps.wallet.data.multichain.activity.isBatteryFee
+import com.tonapps.wallet.data.multichain.activity.tronResourceOrNull
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.data.multichain.asset.perpsMarketIndexOrNull
 import io.JsonAny
 import io.walletapi.models.Activity
 import io.walletapi.models.ActivityDirection
-import io.walletapi.models.ActivityFeeType
 import io.walletapi.models.ActivityStatus
 import io.walletapi.models.ActivityType
 import io.walletapi.models.ActivityTypeFilter
 import io.walletapi.models.AssetInfo
 import io.walletapi.models.Chain
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -30,6 +36,7 @@ class McEventsRepository(
     private val api: API,
     private val accountRepository: McAccountRepository,
     private val eventsRepository: EventsRepository,
+    private val loyaltyRepository: LoyaltyRepository,
 ) {
 
     private data class FirstPageKey(
@@ -64,6 +71,7 @@ class McEventsRepository(
             firstPageCache[key]?.let { return@withContext it }
         }
         val market = perpsMarketIndexOrNull(assetId)
+        val loyaltyRewardCheck = async { loyaltyRepository.showsSection(walletId) }
         val response = api.multichain.wallets.getWalletActivities(
             walletId = walletId,
             limit = limit,
@@ -78,9 +86,12 @@ class McEventsRepository(
             market = market,
             xWalletId = walletId,
         )
+        val showsLoyaltyReward = loyaltyRewardCheck.await()
         val activities = filterPrimaryTonActivities(
             walletId = walletId,
-            activities = response.activities.mapNotNull { mapActivityToEntity(it, eventsRepository::getDecryptedComment) },
+            activities = response.activities.mapNotNull {
+                mapActivityToEntity(it, showsLoyaltyReward, eventsRepository::getDecryptedComment)
+            },
         )
         val page = WalletActivitiesPage(
             activities = activities,
@@ -116,7 +127,9 @@ class McEventsRepository(
             )
             val activities = filterPrimaryTonActivities(
                 walletId = walletId,
-                activities = response.activities.mapNotNull { mapActivityToEntity(it, eventsRepository::getDecryptedComment) },
+                activities = response.activities.mapNotNull {
+                    mapActivityToEntity(it, showsLoyaltyReward = false, eventsRepository::getDecryptedComment)
+                },
             )
             if (activities.isNotEmpty()) {
                 return@withContext true
@@ -159,6 +172,7 @@ class McEventsRepository(
         marketIndex: Int,
         limit: Int = RECENT_MARKET_ACTIVITIES_LIMIT,
     ): List<HistoryEventEntity> = withContext(Dispatchers.IO) {
+        val loyaltyRewardCheck = async { loyaltyRepository.showsSection(walletId) }
         val response = api.multichain.wallets.getWalletActivities(
             walletId = walletId,
             limit = limit,
@@ -172,8 +186,9 @@ class McEventsRepository(
             market = marketIndex,
             xWalletId = walletId,
         )
+        val showsLoyaltyReward = loyaltyRewardCheck.await()
         response.activities
-            .mapNotNull { mapActivityToEntity(it, eventsRepository::getDecryptedComment) }
+            .mapNotNull { mapActivityToEntity(it, showsLoyaltyReward, eventsRepository::getDecryptedComment) }
             .filter { it.perps?.marketIndex == marketIndex }
     }
 
@@ -207,7 +222,11 @@ class McEventsRepository(
     }
 }
 
-private fun mapActivityToEntity(activity: Activity, decryptedComment: (String) -> String?): HistoryEventEntity? {
+internal fun mapActivityToEntity(
+    activity: Activity,
+    showsLoyaltyReward: Boolean,
+    decryptedComment: (String) -> String?,
+): HistoryEventEntity? {
     val activityType = ActivityType.decode(activity.activityType) ?: return null
     if (activity.status == ActivityStatus.unknown || activity.direction == ActivityDirection.unknown) {
         return null
@@ -225,8 +244,8 @@ private fun mapActivityToEntity(activity: Activity, decryptedComment: (String) -
         status = activity.status,
         blockTime = activity.blockTime,
         walletAddress = activity.walletAddress.tonRawToUserFriendly(),
-        fromAddress = activity.fromAddress.tonRawToUserFriendly(),
-        toAddress = activity.toAddress.tonRawToUserFriendly(),
+        fromAddress = activity.senderAddress.tonRawToUserFriendly(),
+        toAddress = (activity.to?.address ?: activity.toAddress).tonRawToUserFriendly(),
         fromChain = knownChain(activity.fromChain),
         toChain = knownChain(activity.toChain),
         inAmount = activity.inAmount,
@@ -247,10 +266,15 @@ private fun mapActivityToEntity(activity: Activity, decryptedComment: (String) -
         isSpam = activity.isSpam == true,
         tronResource = activity.tronResourceOrNull(),
         batteryCharges = activity.batteryChargesOrNull(),
-        perps = activity.perpsOrNull(),
+        perps = activity.perpsOrNull(showsLoyaltyReward),
         encryptedComment = encrypted?.takeIf { decrypted == null },
+        fromName = activity.from?.name,
+        toName = activity.to?.name,
     )
 }
+
+private val Activity.senderAddress: String?
+    get() = from?.address ?: fromAddress
 
 private fun String?.tonRawToUserFriendly(): String? =
     if (this != null && contains(':')) {
@@ -268,7 +292,7 @@ private fun Activity.commentOrNull(): String? {
     }
 }
 
-private fun Activity.perpsOrNull(): PerpsMetaEntity? {
+private fun Activity.perpsOrNull(showsLoyaltyReward: Boolean): PerpsMetaEntity? {
     val perps = meta?.get("perps")?.asObject() ?: return null
     return PerpsMetaEntity(
         symbol = perps["symbol"]?.asString()?.takeIf { it.isNotBlank() },
@@ -296,6 +320,11 @@ private fun Activity.perpsOrNull(): PerpsMetaEntity? {
         resultPct = perps.decimalOrNull("result_pct"),
         marginUsd = perps.decimalOrNull("margin_usd"),
         fundingUsd = perps.decimalOrNull("funding_usd"),
+        loyaltyReward = perps["reward"]?.asObject()
+            ?.takeIf { showsLoyaltyReward && it["asset"]?.asString() == LoyaltyEntry.OHM_ASSET }
+            ?.get("amount")
+            ?.asString()
+            ?.toPositiveOhmsOrNull(),
     )
 }
 
@@ -305,36 +334,11 @@ private fun Map<String, JsonAny>.decimalOrNull(key: String): BigDecimal? =
 private fun Activity.encryptedCommentOrNull(): EncryptedCommentEntity? {
     val encrypted = meta?.get("encrypted_comment")?.asObject() ?: return null
     val cipherText = encrypted["cipher_text"]?.asString()?.takeIf { it.isNotBlank() } ?: return null
-    val sender = fromAddress?.takeIf { it.isNotBlank() } ?: return null
+    val sender = senderAddress?.takeIf { it.isNotBlank() } ?: return null
     return EncryptedCommentEntity(cipherText = cipherText, senderAddress = sender)
-}
-
-private fun Activity.tronResourceOrNull(): TronResourceEntity? {
-    val resource = meta?.get("tron_resource")?.asObject() ?: return null
-    val energy = resource["energy"]?.asLong() ?: 0L
-    val bandwidth = resource["bandwidth"]?.asLong() ?: 0L
-    if (energy <= 0L && bandwidth <= 0L) {
-        return null
-    }
-    return TronResourceEntity(energy = energy, bandwidth = bandwidth)
-}
-
-private fun Activity.isBatteryFee(): Boolean = (fee?.type ?: feeType) == ActivityFeeType.battery
-
-private fun Activity.batteryChargesOrNull(): Int? {
-    if (!isBatteryFee()) {
-        return null
-    }
-    val charges = (fee?.amount ?: feeAmount)?.toBigDecimalOrNull()?.stripTrailingZeros() ?: return null
-    if (charges.signum() < 0 || charges.scale() > 0 || charges > MAX_BATTERY_CHARGES) {
-        return null
-    }
-    return charges.toInt()
 }
 
 private fun AssetInfo?.toActivityAssetOrNull(): AssetEntity? =
     this?.takeIf { it.assetId.isNotBlank() }?.toAssetEntity()
 
 private fun knownChain(value: String): Chain? = Chain.decode(value)?.takeIf { it != Chain.unknown }
-
-private val MAX_BATTERY_CHARGES = BigDecimal(Int.MAX_VALUE)

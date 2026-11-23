@@ -11,6 +11,7 @@ import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.tonapps.blockchain.ton.TonNetwork
 import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.extensions.appVersionName
 import com.tonapps.extensions.file
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import java.io.File
@@ -127,10 +129,18 @@ class APKManager(
             return
         }
         val file = getFile(apk)
-        if (file != null && file.exists() && file.length() > 0) {
-            _statusFlow.value = Status.Downloaded(apk, file)
+        val newStatus = if (file != null && file.exists() && file.length() > 0) {
+            Status.Downloaded(apk, file)
         } else {
-            _statusFlow.value = Status.UpdateAvailable(apk)
+            Status.UpdateAvailable(apk)
+        }
+        _statusFlow.update { current ->
+            val keep = current is Status.Downloading || (current as? Status.Failed)?.apk == apk
+            if (!keep) {
+                newStatus
+            } else {
+                current
+            }
         }
     }
 
@@ -149,6 +159,12 @@ class APKManager(
                 _statusFlow.value = Status.Failed(apk)
             } else {
                 _statusFlow.value = Status.Downloading(it, apk)
+            }
+            if (it >= 100 || it < 0) {
+                val latest = api.getConfig(TonNetwork.MAINNET).apk
+                if (latest != null && latest != apk) {
+                    checkUpdates(latest)
+                }
             }
         }.launchIn(scope)
 

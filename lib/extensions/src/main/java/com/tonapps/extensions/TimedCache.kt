@@ -34,18 +34,19 @@ fun interface DateTimeProvider {
 }
 
 interface CacheKey {
+    val ttl: Long get() = Long.MAX_VALUE
+    fun key(): Any = this::class
+
     companion object {
         val DEFAULT_TTL = 10.toDuration(DurationUnit.MINUTES).inWholeMilliseconds
     }
-
-    val ttl: Long get() = Long.MAX_VALUE
-    fun key(): Any = this::class
 }
 
-class TimedCacheMemory<K : CacheKey> : TimedCache<K> {
+class TimedCacheMemory<K : CacheKey>(
+    private val dateTimeProvider: DateTimeProvider = DateTimeProvider { Clock.System.now().toEpochMilliseconds() },
+) : TimedCache<K> {
 
     private val mutexes = ConcurrentHashMap<Any, Mutex>()
-    private val dateTimeProvider: DateTimeProvider = DateTimeProvider { Clock.System.now().toEpochMilliseconds() }
 
     private val cache = HashMap<Any, Pair<Long, Any>>()
     private val payloads = HashMap<Any, String?>()

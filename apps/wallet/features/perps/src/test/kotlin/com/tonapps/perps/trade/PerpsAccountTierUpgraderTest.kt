@@ -8,6 +8,7 @@ import com.tonapps.wallet.api.core.PerpsAPI
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
 import com.tonapps.wallet.data.multichain.lighter.StoredLighterAccount
 import com.tonapps.wallet.testing.BaseUnitTest
+import com.tonapps.wallet.testing.FakeTimeProvider
 import io.infrastructure.ClientError
 import io.infrastructure.ClientException
 import io.infrastructure.ServerException
@@ -31,6 +32,7 @@ import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
@@ -39,10 +41,12 @@ class PerpsAccountTierUpgraderTest : BaseUnitTest() {
 
     private val accountApi = mockk<AccountApi>()
     private val perpetualRepository = mockk<PerpetualRepository>()
+    private val serverTime = FakeTimeProvider()
     private val repository = PerpsRepository(
         api = mockk<API> { every { perps } returns mockk<PerpsAPI> { every { account } returns accountApi } },
         candleFeed = mockk<PerpsCandleFeed>(),
         environment = mockk<EnvironmentHelper>(),
+        listing = mockk(relaxed = true),
     )
 
     @Before
@@ -50,6 +54,22 @@ class PerpsAccountTierUpgraderTest : BaseUnitTest() {
         coEvery { perpetualRepository.getAccount(WALLET_ID) } returns StoredLighterAccount(ACCOUNT_INDEX, API_KEY_INDEX)
         coEvery { perpetualRepository.authorization(WALLET_ID, any()) } returns AUTHORIZATION
         every { accountApi.changeAccountTier(TO_PLUS, WALLET_ID) } just runs
+    }
+
+    @Test
+    fun theTierChangeIsAuthorizedOnTheServersClock() = runTest {
+        every { accountApi.getAccountTier(WALLET_ID) } returns STANDARD
+        val deadlines = mutableListOf<Long>()
+        coEvery { perpetualRepository.authorization(WALLET_ID, any()) } answers {
+            deadlines += secondArg<Long>()
+            AUTHORIZATION
+        }
+        serverTime.offsetMs = -DEVICE_CLOCK_SKEW_MS
+        val before = serverTime.currentTimeSeconds()
+
+        upgrader().ensurePlusAfterActivation(WALLET_ID)
+
+        assertTrue(deadlines.single() - AUTH_SECONDS in before..serverTime.currentTimeSeconds())
     }
 
     @Test
@@ -215,6 +235,7 @@ class PerpsAccountTierUpgraderTest : BaseUnitTest() {
     private fun TestScope.upgrader(scope: CoroutineScope = this) = PerpsAccountTierUpgrader(
         repository = repository,
         perpetualRepository = perpetualRepository,
+        timeProvider = serverTime,
         scope = scope,
         nowMs = { RECHECK_INTERVAL_MS + currentTime },
     )
@@ -238,6 +259,8 @@ class PerpsAccountTierUpgraderTest : BaseUnitTest() {
         const val RECHECK_INTERVAL_MS = 60_000L
         const val ACTIVATION_WAIT_MS = 3_000L
         const val SIGNING_LATENCY_MS = 500L
+        const val AUTH_SECONDS = 600L
+        const val DEVICE_CLOCK_SKEW_MS = 60L * 60L * 1_000L
 
         val STANDARD = AccountTier(id = "std", name = "standard")
         val TO_PLUS = ChangeAccountTierRequest(lighterAuth = AUTHORIZATION, newTier = "plus")

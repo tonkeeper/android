@@ -5,14 +5,17 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.math.MathUtils.clamp
+import androidx.core.view.children
 import androidx.core.view.doOnLayout
 import androidx.customview.widget.ViewDragHelper
 import uikit.R
+import uikit.extensions.hasSwipeBackExclusionAt
 import uikit.extensions.dp
 import uikit.extensions.setView
 import kotlin.math.abs
@@ -26,6 +29,8 @@ class SwipeBackLayout @JvmOverloads constructor(
 
     private var edgeTouch = false
     private var isHiding = false
+    private val layoutLocation = IntArray(2)
+    private val childLocation = IntArray(2)
 
     private val animation = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = 225
@@ -75,17 +80,17 @@ class SwipeBackLayout @JvmOverloads constructor(
                 super.onViewDragStateChanged(state)
                 when(state) {
                     ViewDragHelper.STATE_IDLE -> {
-                        if (bgView.alpha == 0.0f || contentContainer.left >= measuredWidth) {
+                        val content: View? = contentContainer.getChildAt(0)
+                        if (bgView.alpha == 0.0f || (content != null && content.left >= measuredWidth)) {
                             doOnCloseScreen?.invoke()
-                        } else if (contentContainer.left != 0) {
+                        } else if (content != null && content.left != 0) {
                             // Self-heal: an interrupted settle (touch race, swallowed drag
                             // exception) can leave the content parked mid-way; snap it home.
-                            if (dragHelper?.smoothSlideViewTo(contentContainer, 0, contentContainer.top) == true) {
-                                postInvalidateOnAnimation()
-                            } else {
-                                contentContainer.offsetLeftAndRight(-contentContainer.left)
-                                bgView.alpha = 1f
-                                shadowView.x = -shadowView.width.toFloat()
+                            post {
+                                if (dragHelper?.viewDragState == ViewDragHelper.STATE_IDLE && content.left != 0) {
+                                    dragHelper?.smoothSlideViewTo(content, 0, content.top)
+                                    postInvalidateOnAnimation()
+                                }
                             }
                         }
                     }
@@ -94,33 +99,15 @@ class SwipeBackLayout @JvmOverloads constructor(
 
             override fun onViewReleased(releasedChild: View, xvel: Float, yvel: Float) {
                 super.onViewReleased(releasedChild, xvel, yvel)
-                val left = releasedChild.left
-                var settleLeft = 0
-                val leftThreshold = (measuredWidth * 0.25f).toInt()
-                val isVerticalSwiping = abs(yvel) > 5f
-                if (xvel > 0) {
-                    if (abs(xvel) > 5f && !isVerticalSwiping) {
-                        settleLeft = measuredWidth
-                    } else if (left > leftThreshold) {
-                        settleLeft = measuredWidth
-                    }
-                } else if (xvel < 0) {
-                    if (abs(xvel) > 5f && !isVerticalSwiping) {
-                        settleLeft = -measuredWidth
-                    } else if (left < -leftThreshold) {
-                        settleLeft = -measuredWidth
-                    }
+                val isHorizontalFling = xvel > 5f && abs(yvel) <= 5f
+                val isPastThreshold = xvel >= 0f && releasedChild.left > measuredWidth * 0.25f
+                val settleLeft = if (isHorizontalFling || isPastThreshold) {
+                    measuredWidth
                 } else {
-                    if (left > leftThreshold) {
-                        settleLeft = measuredWidth
-                    } else if (left < -leftThreshold) {
-                        settleLeft = -measuredWidth
-                    }
+                    0
                 }
-                if (settleLeft >= 0) {
-                    dragHelper?.settleCapturedViewAt(settleLeft, releasedChild.top)
-                    postInvalidateOnAnimation()
-                }
+                dragHelper?.settleCapturedViewAt(settleLeft, releasedChild.top)
+                postInvalidateOnAnimation()
             }
         }
 
@@ -159,7 +146,7 @@ class SwipeBackLayout @JvmOverloads constructor(
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
-            edgeTouch = ev.x <= edgeSwipeWidth
+            edgeTouch = ev.x <= edgeSwipeWidth && !isExcludedFromSwipeBack(ev.x.toInt(), ev.y.toInt())
         }
         return try {
             dragHelper!!.shouldInterceptTouchEvent(ev)
@@ -170,12 +157,29 @@ class SwipeBackLayout @JvmOverloads constructor(
 
     // Children that grab horizontal gestures (chart scrubbing, web views) disallow parent
     // interception and silently kill the swipe-back. A drag that starts at the left edge is a
-    // navigation gesture, so the edge keeps interception rights no matter what the child wants.
+    // navigation gesture, so the edge keeps interception rights no matter what the child wants,
+    // unless the child excluded that spot from swipe-back.
     override fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
         if (disallowIntercept && edgeTouch) {
             return
         }
         super.requestDisallowInterceptTouchEvent(disallowIntercept)
+    }
+
+    private fun isExcludedFromSwipeBack(x: Int, y: Int): Boolean {
+        getLocationInWindow(layoutLocation)
+        return isExcludedFromSwipeBack(contentContainer, x + layoutLocation[0], y + layoutLocation[1])
+    }
+
+    private fun isExcludedFromSwipeBack(view: View, windowX: Int, windowY: Int): Boolean {
+        if (view.visibility != View.VISIBLE) {
+            return false
+        }
+        view.getLocationInWindow(childLocation)
+        if (view.hasSwipeBackExclusionAt(windowX - childLocation[0], windowY - childLocation[1])) {
+            return true
+        }
+        return view is ViewGroup && view.children.any { isExcludedFromSwipeBack(it, windowX, windowY) }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

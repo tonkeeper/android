@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.tonapps.bus.generated.Events.EarnFlow.EarnEntryViewFrom
+import com.tonapps.bus.generated.Events.LedgerFlow.LedgerDeviceViewFrom
 import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
 import com.tonapps.portfolio.screens.wallet.WalletAction
 import com.tonapps.portfolio.screens.wallet.WalletFeature
@@ -55,6 +56,7 @@ fun PortfolioRouter(
     onOpenPerpMarket: (marketIndex: Int, symbol: String, entryPoint: PerpsEntryPoint) -> Unit = { _, _, _ -> },
     onOpenEarn: (from: EarnEntryViewFrom) -> Unit = {},
     onOpenEarnVault: (network: String, vaultId: String, from: EarnEntryViewFrom) -> Unit = { _, _, _ -> },
+    onOpenLedgerDevice: (walletId: String, from: LedgerDeviceViewFrom) -> Unit = { _, _ -> },
 ) {
     val backStack = rememberNavBackStack(PortfolioRoutes.Wallet)
 
@@ -73,7 +75,7 @@ fun PortfolioRouter(
                     feature = feature,
                     onAction = { action ->
                         when (action) {
-                            WalletAction.Deposit -> onOpenDeposit()
+                            WalletAction.Deposit, WalletAction.Buy -> onOpenDeposit()
                             WalletAction.Send -> onOpenWithdraw()
                             WalletAction.Swap -> onOpenSwaps()
                             WalletAction.Stake -> onOpenStake()
@@ -103,6 +105,7 @@ fun PortfolioRouter(
                     onOpenPerpMarket = onOpenPerpMarket,
                     onOpenEarn = onOpenEarn,
                     onOpenEarnVault = onOpenEarnVault,
+                    onOpenLedgerDevice = onOpenLedgerDevice,
                 )
             }
 

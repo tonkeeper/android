@@ -2,6 +2,12 @@ plugins {
     id("target.android.library")
 }
 
+android {
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
 dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.config)

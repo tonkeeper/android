@@ -1,13 +1,17 @@
 package com.tonapps.deposit.multicoin.screens.confirm
 
 import com.tonapps.blockchain.model.ConfirmContext
+import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.RedAttemptSource
+import com.tonapps.bus.core.contract.RedMetadata
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.RedOperations.RedOperationsFlow
 import com.tonapps.bus.generated.Events.RedOperations.RedOperationsOperation
 import com.tonapps.bus.generated.Events.RedOperations.RedOperationsOutcome
+import com.tonapps.bus.generated.Events.SendNative.SendNativeFrom
 import com.tonapps.bus.generated.Events.SwapsNative.SwapsNativeFeeAsset
 import com.tonapps.bus.generated.Events.SwapsNative.SwapsNativeType
 import com.tonapps.bus.generated.Events.SwapsNative.SwapsNativeWalletMode
@@ -15,6 +19,7 @@ import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentCategory
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentCategoryDetail
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentFeeAsset
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentInitiatedBy
+import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentLedgerModel
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletInterface
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletMode
 import com.tonapps.bus.generated.Events.TransactionSent.TransactionSentWalletSource
@@ -25,22 +30,39 @@ import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.chainkit.core.chain.model.account.TokenType
 import com.tonapps.chainkit.core.chain.model.num.toDisplayUnit
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
+import com.tonapps.core.helper.SendRedMetadata
 import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.deposit.multicoin.screens.confirm.base.ConfirmationError
 import com.tonapps.deposit.multicoin.screens.confirm.base.PendingTransaction
+import com.tonapps.deposit.multicoin.screens.confirm.base.analyticsKey
+import com.tonapps.deposit.multicoin.screens.confirm.base.isValidation
 import com.tonapps.deposit.multicoin.screens.confirm.fee.TxFee
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.generateUuid
+import com.tonapps.ledgerkit.LedgerFailure
+import com.tonapps.wallet.data.ledger.analytics.ledgerFailure
+import com.tonapps.wallet.data.ledger.analytics.statusWord
+import com.tonapps.wallet.data.ledger.analytics.toFailureType
 import com.tonapps.wallet.data.multichain.exchange.SwapQuote
+import kotlin.coroutines.cancellation.CancellationException
+
+private const val STAGE_VALIDATION = "validation"
+private const val STAGE_EMULATE = "emulate"
+private const val STAGE_SEND = "send"
+private const val STAGE_QUOTE = "quote"
+
+@PublishedApi
+internal const val ERROR_TYPE_REQUEST_GONE = "request_gone"
 
 /**
  * A single RED operation: owns its id and start time, emits `op_attempt` on creation and exactly one
- * `op_terminal` afterwards. Created through [ConfirmAnalytics.redOperation].
+ * `op_terminal` afterwards, both with [otherMetadata] unless the terminal brings its own. Created
+ * through [ConfirmAnalytics.redOperation].
  */
 class RedOperation internal constructor(
     private val flow: RedOperationsFlow,
     private val operation: RedOperationsOperation,
+    private val otherMetadata: String?,
 ) {
 
     private val operationId = generateUuid()
@@ -50,18 +72,55 @@ class RedOperation internal constructor(
     private val events: Events.RedOperations
         get() = AnalyticsHelper.Default.events.redOperations
 
-    internal fun attempt() {
+    private val RedOperationsOperation.stage: String
+        get() = when (this) {
+            RedOperationsOperation.Emulate -> STAGE_EMULATE
+            RedOperationsOperation.Quote -> STAGE_QUOTE
+            else -> STAGE_SEND
+        }
+
+    private val ConfirmationError.message: String?
+        get() = when (this) {
+            is ConfirmationError.NodeRejected -> message
+            is ConfirmationError.RelayerRejected -> message
+            else -> null
+        }
+
+    /**
+     * An operation given up before it could fail or succeed, told apart from a user cancel by
+     * [errorType]: a quote that changed under a send, say, which the screen offers anew.
+     */
+    fun cancel(errorType: String? = null, errorMessage: String? = null) {
+        if (!terminate()) {
+            return
+        }
+        events.opTerminal(
+            operationId = operationId,
+            flow = flow,
+            operation = operation,
+            outcome = RedOperationsOutcome.Cancel,
+            durationMs = durationMs(),
+            finishedAtMs = currentTimeMillis(),
+            errorCode = null,
+            errorMessage = errorMessage,
+            errorType = errorType,
+            stage = operation.stage,
+            otherMetadata = otherMetadata,
+        )
+    }
+
+    internal fun attempt(attemptSource: String?) {
         events.opAttempt(
             operationId = operationId,
             flow = flow,
             operation = operation,
-            attemptSource = null,
-            startedAtMs = currentTimeSecondsInt(),
-            otherMetadata = null,
+            attemptSource = attemptSource,
+            startedAtMs = startedAtMs,
+            otherMetadata = otherMetadata,
         )
     }
 
-    fun success() {
+    fun success(otherMetadata: String? = this.otherMetadata) {
         if (!terminate()) {
             return
         }
@@ -70,8 +129,9 @@ class RedOperation internal constructor(
             flow = flow,
             operation = operation,
             durationMs = durationMs(),
-            finishedAtMs = currentTimeSecondsInt(),
+            finishedAtMs = currentTimeMillis(),
             error = null,
+            otherMetadata = otherMetadata,
         )
     }
 
@@ -79,17 +139,44 @@ class RedOperation internal constructor(
         if (!terminate()) {
             return
         }
+        val ledgerFailure = error.ledgerFailure
+        if (ledgerFailure != null) {
+            events.opTerminal(
+                operationId = operationId,
+                flow = flow,
+                operation = operation,
+                outcome = if (ledgerFailure == LedgerFailure.Cancelled || ledgerFailure is LedgerFailure.UserRefused) {
+                    RedOperationsOutcome.Cancel
+                } else {
+                    RedOperationsOutcome.Fail
+                },
+                durationMs = durationMs(),
+                finishedAtMs = currentTimeMillis(),
+                errorCode = ledgerFailure.statusWord,
+                errorMessage = null,
+                errorType = ledgerFailure.toFailureType()?.let { LEDGER_ERROR_PREFIX + it.key },
+                stage = null,
+                otherMetadata = null,
+            )
+            return
+        }
         events.opTerminal(
             operationId = operationId,
             flow = flow,
             operation = operation,
             durationMs = durationMs(),
-            finishedAtMs = currentTimeSecondsInt(),
+            finishedAtMs = currentTimeMillis(),
             error = error,
+            otherMetadata = otherMetadata,
         )
     }
 
-    fun failure(error: ConfirmationError) {
+    /**
+     * A failure the screen shows: a user-state error is a `validation` stage failure, any other one
+     * failed at the operation's own stage. [cause] is what threw it, for the message of an error
+     * that carries none of its own.
+     */
+    fun failure(error: ConfirmationError, otherMetadata: String? = this.otherMetadata, cause: Throwable? = null) {
         if (!terminate()) {
             return
         }
@@ -99,12 +186,16 @@ class RedOperation internal constructor(
             operation = operation,
             outcome = RedOperationsOutcome.Fail,
             durationMs = durationMs(),
-            finishedAtMs = currentTimeSecondsInt(),
+            finishedAtMs = currentTimeMillis(),
             errorCode = null,
-            errorMessage = (error as? ConfirmationError.NodeRejected)?.message,
-            errorType = error::class.simpleName,
-            stage = null,
-            otherMetadata = null,
+            errorMessage = error.message?.takeIf { it.isNotBlank() } ?: cause?.message,
+            errorType = error.analyticsKey,
+            stage = if (error.isValidation) {
+                STAGE_VALIDATION
+            } else {
+                operation.stage
+            },
+            otherMetadata = otherMetadata,
         )
     }
 
@@ -116,6 +207,10 @@ class RedOperation internal constructor(
         }
         terminated = true
         return true
+    }
+
+    private companion object {
+        const val LEDGER_ERROR_PREFIX = "ledger_"
     }
 }
 
@@ -129,13 +224,16 @@ class ConfirmAnalytics(private val request: ConfirmRequest) {
 
     private val flow: RedOperationsFlow
         get() = when {
-            request.type is ConfirmType.Swap -> RedOperationsFlow.Swap
+            request.type is ConfirmType.Swap || request.type is ConfirmType.SwapOperation -> RedOperationsFlow.Swap
             request.context is ConfirmContext.Dapp -> RedOperationsFlow.TonConnect
             else -> RedOperationsFlow.Transfer
         }
 
     private val swapRequest: ConfirmType.Swap?
-        get() = request.type as? ConfirmType.Swap
+        get() = request.swapType
+
+    private val ConfirmRequest.swapType: ConfirmType.Swap?
+        get() = type as? ConfirmType.Swap ?: (type as? ConfirmType.SwapOperation)?.swap
 
     val sendOperation: RedOperationsOperation
         get() = when (request.context) {
@@ -143,12 +241,32 @@ class ConfirmAnalytics(private val request: ConfirmRequest) {
             else -> RedOperationsOperation.Send
         }
 
+    /** `attempt_source` of a send: the user starts it in the app unless a dapp asked for it. */
+    val sendAttemptSource: String?
+        get() = when (request.context) {
+            is ConfirmContext.Dapp -> null
+            else -> RedAttemptSource.NATIVE_UI
+        }
+
     private val PendingTransaction.providerName: String
         get() = quote?.provider?.id.orEmpty()
 
     @PublishedApi
-    internal fun startRedOperation(operation: RedOperationsOperation): RedOperation {
-        return RedOperation(flow, operation).also { it.attempt() }
+    @Volatile
+    internal var requestGone = false
+        private set
+
+    fun markRequestGone() {
+        requestGone = true
+    }
+
+    @PublishedApi
+    internal fun startRedOperation(
+        operation: RedOperationsOperation,
+        attemptSource: String?,
+        otherMetadata: String?,
+    ): RedOperation {
+        return RedOperation(flow, operation, otherMetadata).also { it.attempt(attemptSource) }
     }
 
     /**
@@ -158,31 +276,81 @@ class ConfirmAnalytics(private val request: ConfirmRequest) {
      */
     inline fun <T> redOperation(
         operation: RedOperationsOperation,
+        attemptSource: String? = null,
+        otherMetadata: String? = null,
         block: RedOperation.() -> T,
     ): T {
-        val red = startRedOperation(operation)
+        val red = startRedOperation(operation, attemptSource, otherMetadata)
         try {
             return red.block()
         } catch (e: Throwable) {
-            red.failure(e)
+            if (requestGone && e is CancellationException) {
+                red.cancel(errorType = ERROR_TYPE_REQUEST_GONE)
+            } else {
+                red.failure(e)
+            }
             throw e
         }
     }
 
+    /**
+     * `other_metadata` of a send, with the keys of the legacy send screen. A dapp request is a
+     * ton_connect confirm_transaction rather than a send, so it carries none.
+     */
+    fun sendMetadata(asset: Asset, amount: Double?, paidIn: Asset?): String? {
+        if (request.context is ConfirmContext.Dapp) {
+            return null
+        }
+        return SendRedMetadata.transfer(
+            source = redSource(request.initiator),
+            asset = asset.id,
+            amount = amount,
+            feePaidIn = feeAsset(paidIn).key,
+            tokenSymbol = asset.symbol,
+        )
+    }
+
+    fun sendMetadata(transaction: Transaction, fee: TxFee?, quote: SwapQuote?): String? {
+        val asset = transaction.account.asset
+        return sendMetadata(asset, displayAmount(transaction, quote), fee?.fee?.asset)
+    }
+
+    /**
+     * `other_metadata` of a swap's emulate: the provider of [quote], else the one [quoted] was
+     * opened with, and the assets swapped. Nothing for a request that is no swap.
+     */
+    fun emulateMetadata(quoted: ConfirmRequest = request, quote: SwapQuote? = null): String? {
+        val swap = quoted.swapType ?: return null
+        return RedMetadata.json(
+            RedMetadata.PROVIDER_NAME to (quote?.provider?.id ?: swap.quote?.provider),
+            RedMetadata.ASSET_FROM to quoted.data.assetId,
+            RedMetadata.ASSET_TO to swap.destinationAssetId,
+        )
+    }
+
     // Cross-cutting "transaction submitted" signal, emitted in addition to the flow-specific events.
     // Only broadcast transactions qualify, so sign-only requests and message signing never reach here.
-    fun transactionSent(transaction: Transaction, fee: TxFee?, quote: SwapQuote?) {
+    fun transactionSent(
+        transaction: Transaction,
+        fee: TxFee?,
+        quote: SwapQuote?,
+        isHardware: Boolean,
+        ledgerModel: TransactionSentLedgerModel?,
+    ) {
         val asset = transaction.account.asset
-        val sentAmount = (transaction as? Transaction.Swap)?.let { quote?.sourceBaseAmount } ?: transaction.amount
         val dapp = request.context as? ConfirmContext.Dapp
         events.transactionSent.transactionSent(
             category = transactionCategory(transaction),
             categoryDetail = transactionCategoryDetail(transaction),
             asset = asset.id,
-            amount = asset.toDisplayUnit(sentAmount).value.doubleValue(exactRequired = false),
-            feeAsset = feeAsset(fee),
+            amount = displayAmount(transaction, quote),
+            feeAsset = feeAsset(fee?.fee?.asset),
             walletInterface = walletInterface(transaction.account.address.type, asset.chain),
-            walletSource = TransactionSentWalletSource.Mnemonic,
+            walletSource = if (isHardware) {
+                TransactionSentWalletSource.Ledger
+            } else {
+                TransactionSentWalletSource.Mnemonic
+            },
             walletMode = TransactionSentWalletMode.Multi,
             initiatedBy = when {
                 dapp?.source == ConfirmContext.Dapp.Source.Injected -> TransactionSentInitiatedBy.EvmInjected
@@ -199,7 +367,7 @@ class ConfirmAnalytics(private val request: ConfirmRequest) {
             } else {
                 null
             },
-            ledgerModel = null,
+            ledgerModel = ledgerModel,
         )
     }
 
@@ -246,13 +414,28 @@ class ConfirmAnalytics(private val request: ConfirmRequest) {
             providerName = pendingTx.providerName,
             errorMessage = cause?.message
                 ?: (error as? ConfirmationError.NodeRejected)?.message
-                ?: error::class.simpleName.orEmpty(),
+                ?: error.analyticsKey,
             isMax = swap.isMax,
         )
     }
 
-    private fun feeAsset(fee: TxFee?): TransactionSentFeeAsset {
-        return when (fee?.fee?.asset) {
+    private fun displayAmount(transaction: Transaction, quote: SwapQuote?): Double {
+        val sentAmount = (transaction as? Transaction.Swap)?.let { quote?.sourceBaseAmount } ?: transaction.amount
+        return transaction.account.asset.toDisplayUnit(sentAmount).value.doubleValue(exactRequired = false)
+    }
+
+    // The legacy send screen tells the wallet and the jetton screen apart; a confirm request only
+    // knows that the user started it.
+    private fun redSource(initiator: ConfirmInitiator): String? {
+        return when (initiator) {
+            ConfirmInitiator.User -> null
+            ConfirmInitiator.DeepLink -> SendNativeFrom.DeepLink.key
+            ConfirmInitiator.QrCode -> SendNativeFrom.QrCode.key
+        }
+    }
+
+    private fun feeAsset(feeAsset: Asset?): TransactionSentFeeAsset {
+        return when (feeAsset) {
             null, is Asset.Coin -> TransactionSentFeeAsset.Coin
             is Asset.Battery -> TransactionSentFeeAsset.BatteryCharges
             is Asset.Token -> TransactionSentFeeAsset.Gasless

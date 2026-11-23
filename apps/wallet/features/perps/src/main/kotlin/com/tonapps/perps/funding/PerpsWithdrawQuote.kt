@@ -12,10 +12,14 @@ data class PerpsWithdrawTransfer(
     val amountUnits: BigInteger,
     val usdcFeeUnits: BigInteger,
     val memoHex: String,
-)
+) {
+    val spentUnits: BigInteger
+        get() = amountUnits + usdcFeeUnits
+}
 
 data class PerpsWithdrawQuote(
     val quoteId: String,
+    /** On the server's clock: the quote's lifetime from when it was asked for. */
     val expiresAtMs: Long,
     val executionId: String,
     val outputUnits: BigInteger,
@@ -32,6 +36,7 @@ sealed class PerpsWithdrawQuoteException(message: String) : IllegalStateExceptio
     class MissingTracking : PerpsWithdrawQuoteException("withdraw quote without tracking")
     class UnexpectedPayloads : PerpsWithdrawQuoteException("withdraw quote is not a single Lighter transfer")
     class UnsafeTransfer(payloadId: String) : PerpsWithdrawQuoteException("payload $payloadId is not the transfer quoted")
+    class NotToRelay(toAccountIndex: Long) : PerpsWithdrawQuoteException("transfer goes to $toAccountIndex, not to Relay")
     class Overspend : PerpsWithdrawQuoteException("withdraw transfer spends more than the budget")
 }
 
@@ -44,9 +49,15 @@ object PerpsWithdrawQuoteReader {
     private const val PERPS_ROUTE = 0
     private const val MEMO_HEX_LENGTH = 64
 
-    fun read(quote: WithdrawQuote, request: WithdrawQuoteRequest, accountIndex: Long, nowMs: Long): PerpsWithdrawQuote {
-        val expiresAtMs = quote.expiresAt.toInstant().toEpochMilli()
-        if (expiresAtMs <= nowMs) {
+    fun read(
+        quote: WithdrawQuote,
+        request: WithdrawQuoteRequest,
+        accountIndex: Long,
+        relayAccounts: Set<Long>,
+        requestedAtMs: Long,
+    ): PerpsWithdrawQuote {
+        val lifetimeMs = quote.expiresAt.toInstant().toEpochMilli() - quote.createdAt.toInstant().toEpochMilli()
+        if (lifetimeMs <= 0) {
             throw PerpsWithdrawQuoteException.Expired()
         }
         if (!quote.input.assetId.equals(PerpsFundingAssetId.USDC_ETHEREUM, ignoreCase = true)) {
@@ -73,13 +84,13 @@ object PerpsWithdrawQuoteReader {
         }
         val executionId = quote.tracking?.executionId?.takeIf { it.isNotEmpty() }
             ?: throw PerpsWithdrawQuoteException.MissingTracking()
-        val transfer = transfer(quote, accountIndex)
-        if (transfer.amountUnits + transfer.usdcFeeUnits > budget) {
+        val transfer = transfer(quote, accountIndex, relayAccounts)
+        if (transfer.spentUnits > budget) {
             throw PerpsWithdrawQuoteException.Overspend()
         }
         return PerpsWithdrawQuote(
             quoteId = quote.quoteId,
-            expiresAtMs = expiresAtMs,
+            expiresAtMs = requestedAtMs + lifetimeMs,
             executionId = executionId,
             outputUnits = output,
             transfer = transfer,
@@ -87,7 +98,7 @@ object PerpsWithdrawQuoteReader {
         )
     }
 
-    private fun transfer(quote: WithdrawQuote, accountIndex: Long): PerpsWithdrawTransfer {
+    private fun transfer(quote: WithdrawQuote, accountIndex: Long, relayAccounts: Set<Long>): PerpsWithdrawTransfer {
         val payload = payloads(quote).singleOrNull()
             ?.takeIf { it.type == PAYLOAD_TYPE_MAIN && it.version == SUPPORTED_PAYLOAD_VERSION }
             ?.takeIf { it.chainId.equals(LIGHTER_CHAIN_ID, ignoreCase = true) }
@@ -98,6 +109,9 @@ object PerpsWithdrawQuoteReader {
         }
         val toAccountIndex = meta.toAccountIndex?.takeIf { it > 0 && it != accountIndex }
             ?: throw PerpsWithdrawQuoteException.UnsafeTransfer(payload.id)
+        if (toAccountIndex !in relayAccounts) {
+            throw PerpsWithdrawQuoteException.NotToRelay(toAccountIndex)
+        }
         val amount = meta.amount?.let { units(it, "transfer amount") }?.takeIf { it.signum() > 0 }
             ?: throw PerpsWithdrawQuoteException.UnsafeTransfer(payload.id)
         val fee = meta.usdcFee?.let { units(it, "transfer fee") }

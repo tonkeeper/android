@@ -26,9 +26,9 @@ data class Portfolio(
     @SerialName(value = "positions")
     val positions: List<OpenPosition>? = null,
 
-    /* Orders resting on the book, across every market. Take-profit and stop-loss legs are not among them. */
+    /* Orders resting on the book, across every market. Take-profit and stop-loss legs are not among them. A position's legs come with the position. An unfilled order's legs come in its auto_close. */
     @SerialName(value = "open_orders")
-    val openOrders: List<Order>? = null
+    val openOrders: List<PortfolioOrder>? = null
 ) {
 }
 

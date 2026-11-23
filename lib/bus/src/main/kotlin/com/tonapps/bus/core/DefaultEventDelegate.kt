@@ -22,7 +22,7 @@ class DefaultEventDelegate(
         }
 
         val tags = TonAddressTags.of(address)
-        return if (tags.isBounceable) "bounce" else "non-bounce"
+        return if (tags.isBounceable) { "bounce" } else { "non-bounce" }
     }
 
     @UiThread
@@ -57,7 +57,7 @@ class DefaultEventDelegate(
         val props = hashMapOf(
             "jetton_symbol_from" to jettonSymbolFrom,
             "jetton_symbol_to" to jettonSymbolTo,
-            "type" to if (native) "native" else "old",
+            "type" to if (native) { "native" } else { "old" },
             "provider_name" to providerName
         )
         trackEvent("swap_click", props)
@@ -74,7 +74,7 @@ class DefaultEventDelegate(
         val props = hashMapOf(
             "jetton_symbol_from" to jettonSymbolFrom,
             "jetton_symbol_to" to jettonSymbolTo,
-            "type" to if (native) "native" else "old",
+            "type" to if (native) { "native" } else { "old" },
             "provider_name" to providerName,
             "provider_domain" to (providerUrl.toUriOrNull()?.hostOrNull ?: providerUrl)
         )
@@ -92,7 +92,7 @@ class DefaultEventDelegate(
         val props = hashMapOf(
             "jetton_symbol_from" to jettonSymbolFrom,
             "jetton_symbol_to" to jettonSymbolTo,
-            "type" to if (native) "native" else "old",
+            "type" to if (native) { "native" } else { "old" },
             "provider_name" to providerName,
             "provider_domain" to (providerUrl.toUriOrNull()?.hostOrNull ?: providerUrl)
         )
@@ -133,63 +133,6 @@ class DefaultEventDelegate(
             "deeplink" to deeplink
         )
         trackEvent("ads_deeplink", props)
-    }
-
-    @UiThread
-    override fun onRampOpen(source: String) {
-        trackEvent(
-            "onramp_open", hashMapOf(
-                "from" to source,
-            )
-        )
-    }
-
-    @UiThread
-    override fun onRampEnterAmount(
-        type: String,
-        sellAsset: String,
-        buyAsset: String,
-        countryCode: String
-    ) {
-        val props = hashMapOf(
-            "type" to type,
-            "sell_asset" to sellAsset,
-            "buy_asset" to buyAsset,
-            "country_code" to countryCode
-        )
-        trackEvent("onramp_enter_amount", props)
-    }
-
-    @UiThread
-    override fun onRampOpenWebview(
-        type: String,
-        sellAsset: String,
-        buyAsset: String,
-        countryCode: String,
-        paymentMethod: String?,
-        providerName: String,
-        providerDomain: String
-    ) {
-        fun fixPaymentMethodName(value: String): String {
-            return when (value) {
-                "card" -> "Credit Card"
-                "google_pay" -> "Google Pay"
-                "paypal" -> "PayPal"
-                "revolut" -> "Revolut"
-                else -> value
-            }
-        }
-
-        val props = hashMapOf(
-            "type" to type,
-            "sell_asset" to sellAsset,
-            "buy_asset" to buyAsset,
-            "country_code" to countryCode,
-            "payment_method" to (paymentMethod?.let(::fixPaymentMethodName) ?: "unknown"),
-            "provider_name" to providerName,
-            "provider_domain" to providerDomain
-        )
-        trackEvent("onramp_continue_to_provider", props)
     }
 
     @UiThread
@@ -246,6 +189,17 @@ class DefaultEventDelegate(
             "story_open", hashMapOf(
                 "story_id" to storiesId,
                 "from" to from
+            )
+        )
+    }
+
+    @UiThread
+    override fun trackStoryCloseAlert(storiesId: String, pageNumber: Int, outcome: String) {
+        trackEvent(
+            "story_close_alert", hashMapOf(
+                "story_id" to storiesId,
+                "page_number" to pageNumber,
+                "outcome" to outcome
             )
         )
     }

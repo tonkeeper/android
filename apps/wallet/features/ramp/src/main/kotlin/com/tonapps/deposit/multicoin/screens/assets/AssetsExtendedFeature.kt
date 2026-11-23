@@ -5,6 +5,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.chainkit.core.chain.model.account.Chain
@@ -30,6 +31,8 @@ import kotlinx.coroutines.flow.flow
 import java.util.concurrent.atomic.AtomicBoolean
 
 data class AssetsExtendedFeatureData(
+    val walletId: String,
+    val depositScreen: DepositFlowDepositScreen,
     val rampType: RampType,
     val analyticsFrom: DepositFlowFrom,
     val preferredCurrency: String? = null,
@@ -46,7 +49,7 @@ class AssetsExtendedFeature(
 
     val chainFilters: StateFlow<List<Chain>> = when (data.rampType) {
         RampType.RampOn -> flow {
-            val chains = rampRepository.getOnrampChains(fiat = data.preferredCurrency)
+            val chains = rampRepository.getOnrampChains(data.walletId, fiat = data.preferredCurrency)
             emit(chains.sortedByChainDisplayOrder { it })
         }
             .catch { e ->
@@ -58,7 +61,9 @@ class AssetsExtendedFeature(
         RampType.RampOff -> MutableStateFlow(Chain.displayOrder)
     }
 
-    private val analytics = RampAnalytics.of(data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm)
+    private val analytics = RampAnalytics.of(
+        data.rampType, data.analyticsFrom, DepositFlowWalletMode.Multi, data.utm, data.depositScreen,
+    )
 
     // The pager is rebuilt on every search/chain filter change; the screen is only "viewed" once.
     private val viewTracked = AtomicBoolean(false)
@@ -80,6 +85,7 @@ class AssetsExtendedFeature(
                 ),
                 pagingSourceFactory = {
                     AssetsExtendedPagingSource(
+                        walletId = data.walletId,
                         rampRepository = rampRepository,
                         rampType = data.rampType,
                         query = query,
@@ -98,6 +104,14 @@ class AssetsExtendedFeature(
 
     fun onSearch(query: String) {
         queryFilter.tryEmit(query.takeIf { it.isNotBlank() })
+    }
+
+    // Buying only: selling reports through its own flow. Every pick counts, since the old list stays under the screen
+    // it opens and the user may come back and pick again.
+    fun onSelected(asset: RampAsset) {
+        if (data.rampType == RampType.RampOn) {
+            analytics.clickFiatAsset(asset.asset.id)
+        }
     }
 
     private fun trackView(assets: List<RampAsset>) {

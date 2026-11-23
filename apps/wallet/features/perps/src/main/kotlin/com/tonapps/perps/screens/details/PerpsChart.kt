@@ -16,7 +16,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +29,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tonapps.chart.compose.LightweightChart
@@ -49,6 +55,7 @@ import com.tonapps.perps.data.PerpsChartTimeframe
 import com.tonapps.perps.data.PerpsPositionLevels
 import com.tonapps.wallet.localization.Localization
 import ui.components.moon.MoonLoader
+import ui.theme.modifiers.rememberShimmerPhase
 import ui.preview.ThemedPreview
 import ui.theme.UIKit
 import kotlin.math.max
@@ -86,6 +93,8 @@ internal fun PerpsChart(
     // Not keyed on the palette: attach() runs once per view (AndroidView factory), so a swapped
     // controller would never re-attach; render() re-applies the palette in place instead.
     val controller = remember { PerpsChartController(palette, entryLabel, liquidationLabel) }
+    // A reload or a timeframe switch empties the candles first, so the next bars wait for their own paint.
+    var surfaceReady by remember(mode, timeframe, candles.isEmpty()) { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
     val hiddenCrosshairLine = CrosshairLineOptions(visible = false, labelVisible = false)
     val hiddenGridLine = GridLineOptions(visible = false)
@@ -94,7 +103,15 @@ internal fun PerpsChart(
         onDispose { controller.detach() }
     }
 
-    Box(modifier = modifier) {
+    Box(modifier = modifier.semantics {
+        testTagsAsResourceId = true
+        val state = if (sectionState == PerpsChartSectionState.READY && !surfaceReady) {
+            PerpsChartSectionState.LOADING
+        } else {
+            sectionState
+        }
+        testTag = "perps_chart_${state.name.lowercase()}"
+    }) {
         LightweightChart(
             modifier = Modifier.fillMaxSize(),
             preview = {
@@ -141,6 +158,8 @@ internal fun PerpsChart(
                 positionLevels = positionLevels,
                 priceDecimals = priceDecimals,
                 palette = palette,
+                awaitingPaint = !surfaceReady,
+                onFirstPaint = { surfaceReady = true },
             )
         }
 
@@ -162,7 +181,10 @@ internal fun PerpsChart(
                 contentAlignment = Alignment.Center,
             ) {
                 when (sectionState) {
-                    PerpsChartSectionState.LOADING -> MoonLoader(modifier = Modifier.size(24.dp))
+                    PerpsChartSectionState.LOADING -> PerpsChartSkeleton(
+                        modifier = Modifier.fillMaxSize(),
+                        phase = rememberShimmerPhase(),
+                    )
 
                     PerpsChartSectionState.EMPTY -> Text(
                         text = stringResource(Localization.perps_chart_empty),

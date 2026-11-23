@@ -1,0 +1,33 @@
+{
+  "route_id": "73da9a8c-5d26-4002-9298-d8d61349c301",
+  "provider_route_id": "0x86cebfba8f0bc1e2ee3df376187b6aad9d88b4ab7648d606049f1048ef7af768",
+  "aggregator": "swapsxyz",
+  "execution_id": "5146a1ff-3ef7-43b5-b30e-30922c045b19",
+  "operation": {
+    "id": "73da9a8c-5d26-4002-9298-d8d61349c301",
+    "payloads": [
+      {
+        "id": "828936e0-0daa-414e-b057-76acd0f7be28",
+        "type": "main",
+        "chain_id": "btc/mainnet",
+        "version": 1,
+        "meta": {
+          "to": "3FHycwXWPjdpMubBrsugoFdwLGiSNBR4WJ",
+          "value": "100000"
+        },
+        "amount_editable": true
+      }
+    ]
+  },
+  "human_summary": {
+    "action": "Swap BTC for ETH",
+    "spend_asset": "btc/mainnet/coin",
+    "spend_amount": "100000",
+    "receive_asset": "eth/mainnet/coin",
+    "receive_amount": "33346700000000000",
+    "minimum_receive_amount": "33013233000000000",
+    "protocol": "alt-vm-1"
+  },
+  "validation_status": "validated",
+  "date_expire": "2026-11-02T15:50:46Z"
+}

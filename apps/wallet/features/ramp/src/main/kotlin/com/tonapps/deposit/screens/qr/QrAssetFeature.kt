@@ -83,6 +83,7 @@ class QrAssetFeature(
             from = data.analyticsFrom,
             walletMode = Events.DepositFlow.DepositFlowWalletMode.Single,
             addFundsOption = Events.DepositFlow.DepositFlowAddFundsOption.ReceiveTokens,
+            depositScreen = Events.DepositFlow.DepositFlowDepositScreen.AddFunds,
             network = Events.DepositFlow.DepositFlowNetwork.TON,
         )
     }
@@ -144,14 +145,18 @@ class QrAssetFeature(
             return
         }
 
-        val tokens = getTokens(wallet)
-        val hasTronBalance = tokens.any { it.isTrc20Usdt && it.balance.value.isPositive }
-        val hasToken = data.token != null
-        val isTronEnabled = !api.getConfig(wallet.network).flags.disableTron
-        val isTabsVisible =
-            !hasToken && wallet.hasPrivateKey && !wallet.testnet && (isTronEnabled || hasTronBalance)
-
+        val isTabsVisible = isTronTabVisible(wallet, getTokens(wallet))
         setState { copy(isTabsVisible = isTabsVisible) }
+    }
+
+    // A wallet without a Tron account (a Telegram wallet) has nothing to show under the tab.
+    private suspend fun isTronTabVisible(wallet: WalletEntity, tokens: List<AssetsExtendedEntity>): Boolean {
+        if (data.token != null || !wallet.hasPrivateKey || wallet.testnet) {
+            return false
+        }
+        val hasTronBalance = tokens.any { it.isTrc20Usdt && it.balance.value.isPositive }
+        val isTronEnabled = !api.getConfig(wallet.network).flags.disableTron
+        return (isTronEnabled || hasTronBalance) && accountRepository.getTronAddress(wallet.id) != null
     }
 
     private suspend fun selectToken(token: TokenEntity) {
@@ -194,15 +199,8 @@ class QrAssetFeature(
         token: TokenEntity,
         wallet: WalletEntity
     ) {
-        val hasTronBalance = tokens.any {
-            it.isTrc20Usdt && it.balance.value.isPositive
-        }
-
-        val hasToken = data.token != null
-        val isTronEnabled = !api.getConfig(wallet.network).flags.disableTron
         val isBatteryEnabled = !api.getConfig(wallet.network).flags.disableBattery
-        val isTabsVisible =
-            !hasToken && wallet.hasPrivateKey && !wallet.testnet && (isTronEnabled || hasTronBalance)
+        val isTabsVisible = isTronTabVisible(wallet, tokens)
 
         val activeAddress = when (token.blockchain) {
             Blockchain.TON -> wallet.address

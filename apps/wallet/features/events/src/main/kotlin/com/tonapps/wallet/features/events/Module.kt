@@ -8,7 +8,7 @@ import com.tonapps.wallet.features.events.screens.market.PerpsMarketHistorySecti
 import org.koin.dsl.module
 
 val eventsFeatureModule = module {
-    single { McEventsRepository(get(), get(), get()) }
+    single { McEventsRepository(get(), get(), get(), get()) }
     single { HistoryNftResolver(get()) }
     single { HistoryPerpsMarketResolver(get()) }
     single { TxEventUiMapper(get(), get(), get()) }

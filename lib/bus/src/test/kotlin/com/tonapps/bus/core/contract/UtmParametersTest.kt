@@ -29,6 +29,15 @@ class UtmParametersTest {
     }
 
     @Test
+    fun scannedLinksAreReadAndBareAddressesAreNot() {
+        val address = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c"
+
+        assertEquals("poster", UtmParameters.fromLink("tonkeeper://transfer/$address?amount=1&utm_source=poster").source)
+        assertEquals("poster", UtmParameters.fromLink("tc://?v=2&id=abc&r=%7B%7D&utm_source=poster").source)
+        assertTrue(UtmParameters.fromLink(address).isEmpty)
+    }
+
+    @Test
     fun universalLinksAndPartialTaggingAreRead() {
         val utm = UtmParameters.fromLink("https://app.tonkeeper.com/transfer/EQD?amount=1&utm_source=promo")
 

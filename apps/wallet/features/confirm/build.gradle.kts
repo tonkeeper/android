@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.chainkit.api)
     implementation(libs.chainkit.sdk)
     implementation(libs.chainkit.op)
+    implementation(libs.chainkit.chain.ethereum)
 
     implementation(libs.kotlin.bignum)
     implementation(libs.kotlinx.coroutines.android)
@@ -48,13 +49,16 @@ dependencies {
     implementation(projects.apps.wallet.localization)
 
     implementation(projects.apps.wallet.data.multichain.wallet)
+    implementation(projects.apps.wallet.data.ledger)
     implementation(projects.apps.wallet.data.multichain.exchange)
 
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.core)
     implementation(projects.apps.wallet.data.tokens)
     implementation(projects.apps.wallet.data.battery)
+    implementation(projects.apps.wallet.data.features)
     implementation(projects.apps.wallet.data.passcode)
+    implementation(projects.apps.wallet.data.plugins)
     implementation(projects.apps.wallet.data.dapps)
     implementation(projects.apps.wallet.data.tx)
 
@@ -71,6 +75,7 @@ dependencies {
     implementation(projects.lib.bus)
     implementation(projects.lib.icu)
     implementation(projects.lib.log)
+    implementation(projects.lib.time)
     implementation(projects.lib.security)
     implementation(projects.lib.wallet)
     implementation(projects.lib.ledger)

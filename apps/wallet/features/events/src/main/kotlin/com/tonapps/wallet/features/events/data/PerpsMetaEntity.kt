@@ -20,6 +20,7 @@ data class PerpsMetaEntity(
     val resultPct: BigDecimal? = null,
     val marginUsd: BigDecimal? = null,
     val fundingUsd: BigDecimal? = null,
+    val loyaltyReward: String? = null,
 )
 
 sealed interface PerpsEventKind {
@@ -34,6 +35,8 @@ sealed interface PerpsEventKind {
     data object Withdrawal : PerpsEventKind
 }
 
+enum class PerpsBalanceChangeStatus { Done, Failed, Dropped }
+
 data class PerpsResultEntity(
     val value: Coins,
     val symbol: String,
@@ -41,6 +44,5 @@ data class PerpsResultEntity(
 ) {
     val isDollar: Boolean
         get() = symbol.equals("USD", ignoreCase = true) ||
-            symbol.equals("USDC", ignoreCase = true) ||
-            symbol.equals("USDT", ignoreCase = true)
+            symbol.equals("USDC", ignoreCase = true)
 }

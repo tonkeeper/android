@@ -2,6 +2,10 @@ package com.tonapps.tonkeeper.ui.screen.browser.main
 
 import android.app.Application
 import androidx.lifecycle.viewModelScope
+import com.tonapps.bus.screenrender.ScreenRenderErrorKind
+import com.tonapps.bus.screenrender.ScreenRenderId
+import com.tonapps.bus.screenrender.ScreenRenderStage
+import com.tonapps.bus.screenrender.ScreenRenderTracker
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.manager.tonconnect.TonConnectManager
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
@@ -81,14 +85,31 @@ class BrowserMainViewModel(
     private val _selectedChain = MutableStateFlow<Network.Type?>(null)
     val selectedChain: StateFlow<Network.Type?> = _selectedChain.asStateFlow()
 
+    private val screenRender = ScreenRenderTracker.shared
+
+    @Volatile
+    private var isExploreLoaded = false
+
+    @Volatile
+    private var isExploreFailed = false
+
     private val browserDataFlow = flow {
-        if (!isDappsDisabled) {
+        if (isDappsDisabled) {
+            // Nothing to load: the screen shows its final content at once.
+            screenRender.contentApplied(ScreenRenderStage.Fresh, ScreenRenderId.Browser)
+        } else {
             emitAll(
                 browserRepository.dataFlow(
                     country = environment.deviceCountry,
                     network = wallet.network,
                     locale = settings.getLocale(),
                     walletId = wallet.multichainWalletId,
+                    onCached = {
+                        isExploreLoaded = true
+                        screenRender.contentApplied(ScreenRenderStage.Cached, ScreenRenderId.Browser)
+                    },
+                    onRemoteStarted = { screenRender.requestStarted(ScreenRenderId.Browser) },
+                    onRemoteFinished = { isLoaded -> reportRemoteLoad(isLoaded) },
                 )
             )
         }
@@ -101,6 +122,30 @@ class BrowserMainViewModel(
         val isMultichain = mcAccountRepository.getWallet(wallet.id) != null
         buildExploreItems(data, isMultichain, chain?.id)
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private fun reportRemoteLoad(isLoaded: Boolean) {
+        screenRender.requestFinished(ScreenRenderId.Browser)
+        isExploreFailed = !isLoaded
+        if (isLoaded) {
+            isExploreLoaded = true
+            screenRender.contentApplied(ScreenRenderStage.Fresh, ScreenRenderId.Browser)
+        } else {
+            // The data source swallows the error; the reporter tells an offline device apart.
+            screenRender.failed(ScreenRenderId.Browser, ScreenRenderErrorKind.Unknown)
+        }
+    }
+
+    /** The tab is shown again. Popular apps load once, so the visit ends with what is on screen. */
+    fun onScreenShown() {
+        when {
+            isDappsDisabled -> screenRender.contentApplied(ScreenRenderStage.Fresh, ScreenRenderId.Browser)
+            isExploreLoaded -> {
+                screenRender.contentApplied(ScreenRenderStage.Cached, ScreenRenderId.Browser)
+                screenRender.finish(ScreenRenderId.Browser)
+            }
+            isExploreFailed -> screenRender.failed(ScreenRenderId.Browser, ScreenRenderErrorKind.Unknown)
+        }
+    }
 
     fun applyChainFromDeepLink(network: Network.Type, onResult: (applied: Boolean) -> Unit) {
         if (isDappsDisabled) {

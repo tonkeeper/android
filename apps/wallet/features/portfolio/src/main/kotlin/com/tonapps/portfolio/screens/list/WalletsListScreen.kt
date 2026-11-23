@@ -5,18 +5,13 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -47,6 +43,8 @@ import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -85,9 +83,12 @@ import ui.components.popup.MoonAnchorTooltip
 import ui.painterResource
 import ui.preview.ThemedPreview
 import ui.theme.UIKit
+import ui.theme.modifiers.modalSheetMaxHeight
 import ui.theme.modifiers.rememberShimmerPhase
+import com.tonapps.core.extensions.walletColor
 
 private const val BALANCE_SHIMMER_PLACEHOLDER = "$0.00"
+private const val UNSELECTABLE_ALPHA = 0.48f
 
 @Composable
 fun WalletsListScreen(
@@ -169,141 +170,138 @@ fun WalletsListScreen(
         }
     }
 
-    // TODO TK-2492: move the status-bar height cap to a shared uikit solution for Compose modals
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        MoonScaffold(
+    MoonScaffold(
+        modifier = Modifier
+            .fillMaxWidth()
+            .modalSheetMaxHeight()
+            .navigationBarsPadding(),
+        topBar = {
+            MoonTopAppBar(
+                title = stringResource(Localization.wallets_list),
+                titleAutoShrink = true,
+                actionIconRes = UIKitIcon.ic_close_16,
+                onActionClick = onClose,
+                navigation = {
+                    MoonAccentButton(
+                        text = stringResource(if (editMode) { Localization.done } else { Localization.edit }),
+                        size = ButtonSizeSmall,
+                        buttonColors = ButtonColorsSecondary,
+                        onClick = { feature.toggleEditMode() },
+                    )
+                },
+                ignoreSystemOffset = true,
+                showDivider = false,
+                backgroundColor = Color.Transparent,
+            )
+        },
+    ) {
+        LazyColumn(
+            state = listState,
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = this.maxHeight - topInset)
-                .navigationBarsPadding(),
-            topBar = {
-                MoonTopAppBar(
-                    title = stringResource(Localization.wallets_list),
-                    titleAutoShrink = true,
-                    actionIconRes = UIKitIcon.ic_close_16,
-                    onActionClick = onClose,
-                    navigation = {
-                        MoonAccentButton(
-                            text = stringResource(if (editMode) { Localization.done } else { Localization.edit }),
-                            size = ButtonSizeSmall,
-                            buttonColors = ButtonColorsSecondary,
-                            onClick = { feature.toggleEditMode() },
-                        )
-                    },
-                    ignoreSystemOffset = true,
-                    showDivider = false,
-                    backgroundColor = Color.Transparent,
-                )
-            },
-        ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .nestedScroll(rememberNestedScrollInteropConnection())
-                    .onGloballyPositioned(dragDropState::registerContainer)
-                    .pointerInput(editMode) {
-                        if (!editMode) {
-                            return@pointerInput
-                        }
-                        awaitEachGesture {
-                            val down = awaitFirstDown(
-                                requireUnconsumed = false,
-                                pass = PointerEventPass.Initial,
-                            )
-                            val walletId = dragDropState.findWalletIdByHandleAt(down.position)
-                                ?: return@awaitEachGesture
-                            hostView.parent?.requestDisallowInterceptTouchEvent(true)
-                            dragDropState.onDragStart(walletId)
-                            haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-                            var lastY = down.position.y
-                            while (true) {
-                                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                                val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                                if (!change.pressed) {
-                                    break
-                                }
-                                change.consume()
-                                dragDropState.onDrag(change.position.y - lastY)
-                                lastY = change.position.y
-                            }
-                            dragDropState.onDragInterrupted()
-                        }
-                    },
-            ) {
-                if (banners.isNotEmpty()) {
-                    item(key = "banners") {
-                        BannersViewer(
-                            banners = banners,
-                            analytics = null,
-                            onClick = { button ->
-                                raffleEvents.raffleBannerClick(MysteryRaffleSource.WalletsList)
-                                onOpenLink(button.payload.withRaffleSource(MysteryRaffleSource.WalletsList.key))
-                            },
-                            onHide = { banner ->
-                                raffleEvents.raffleBannerDismiss(MysteryRaffleSource.WalletsList)
-                                feature.hideBanner(banner)
-                            },
-                        )
+                .nestedScroll(rememberNestedScrollInteropConnection())
+                .onGloballyPositioned(dragDropState::registerContainer)
+                .pointerInput(editMode) {
+                    if (!editMode) {
+                        return@pointerInput
                     }
-                }
-                itemsIndexed(
-                    items = orderedWallets,
-                    key = { _, w -> w.id },
-                    contentType = { _, _ -> WALLET_ROW_CONTENT_TYPE },
-                ) { index, wallet ->
-                    val isDragging = wallet.id == dragDropState.draggingWalletId
-                    WalletRowCell(
-                        modifier = if (isDragging) {
-                            Modifier
-                                .zIndex(1f)
-                                .graphicsLayer { translationY = dragDropState.draggingItemOffset }
-                        } else {
-                            Modifier.animateItem()
+                    awaitEachGesture {
+                        val down = awaitFirstDown(
+                            requireUnconsumed = false,
+                            pass = PointerEventPass.Initial,
+                        )
+                        val walletId = dragDropState.findWalletIdByHandleAt(down.position)
+                            ?: return@awaitEachGesture
+                        hostView.parent?.requestDisallowInterceptTouchEvent(true)
+                        dragDropState.onDragStart(walletId)
+                        haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                        var lastY = down.position.y
+                        while (true) {
+                            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) {
+                                break
+                            }
+                            change.consume()
+                            dragDropState.onDrag(change.position.y - lastY)
+                            lastY = change.position.y
+                        }
+                        dragDropState.onDragInterrupted()
+                    }
+                },
+        ) {
+            if (banners.isNotEmpty()) {
+                item(key = "banners") {
+                    BannersViewer(
+                        banners = banners,
+                        analytics = null,
+                        onClick = { button ->
+                            raffleEvents.raffleBannerClick(MysteryRaffleSource.WalletsList)
+                            onOpenLink(button.payload.withRaffleSource(MysteryRaffleSource.WalletsList.key))
                         },
-                        wallet = wallet,
-                        selected = wallet.id == selectedId,
-                        balance = feature.balances[wallet.id],
-                        hiddenBalance = hiddenBalances,
-                        editMode = editMode,
-                        shimmerPhase = shimmerPhase,
-                        position = defaultBundleType(orderedWallets.size, index),
-                        onClick = { onSelectWallet(wallet.id) },
-                        onEditClick = { onEditWallet(wallet.id) },
-                        dragHandle = { WalletDragHandle(walletId = wallet.id, dragDropState = dragDropState) },
+                        onHide = { banner ->
+                            raffleEvents.raffleBannerDismiss(MysteryRaffleSource.WalletsList)
+                            feature.hideBanner(banner)
+                        },
                     )
                 }
-                if (orderedWallets.isNotEmpty()) {
-                    item(key = "add_wallet") {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Box {
-                                MoonAccentButton(
-                                    text = stringResource(Localization.add_wallet),
-                                    size = ButtonSizeSmall,
-                                    buttonColors = ButtonColorsSecondary,
-                                    onClick = onAddWalletClick
-                                )
-                                MoonAnchorTooltip(
-                                    expanded = addTooltipVisible && !editMode,
-                                    onDismissRequest = { addTooltipVisible = false },
-                                    text = stringResource(Localization.tooltip_add_multichain_wallet),
-                                    badge = stringResource(Localization.badge_new),
-                                    backgroundColor = UIKit.colorScheme.accent.blue,
-                                    textColor = Color.White,
-                                    maxWidth = 288.dp,
-                                    preferAbove = true,
-                                    centerTail = true,
-                                    onClick = {
-                                        addTooltipVisible = false
-                                        onAddWalletClick()
-                                    },
-                                )
-                            }
+            }
+            itemsIndexed(
+                items = orderedWallets,
+                key = { _, w -> w.id },
+                contentType = { _, _ -> WALLET_ROW_CONTENT_TYPE },
+            ) { index, wallet ->
+                val isDragging = wallet.id == dragDropState.draggingWalletId
+                WalletRowCell(
+                    modifier = if (isDragging) {
+                        Modifier
+                            .zIndex(1f)
+                            .graphicsLayer { translationY = dragDropState.draggingItemOffset }
+                    } else {
+                        Modifier.animateItem()
+                    },
+                    wallet = wallet,
+                    selected = wallet.id == selectedId,
+                    selectable = feature.isSelectable(wallet),
+                    balance = feature.balances[wallet.id],
+                    hiddenBalance = hiddenBalances,
+                    editMode = editMode,
+                    shimmerPhase = shimmerPhase,
+                    position = defaultBundleType(orderedWallets.size, index),
+                    onClick = { onSelectWallet(wallet.id) },
+                    onEditClick = { onEditWallet(wallet.id) },
+                    dragHandle = { WalletDragHandle(walletId = wallet.id, dragDropState = dragDropState) },
+                )
+            }
+            if (orderedWallets.isNotEmpty()) {
+                item(key = "add_wallet") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box {
+                            MoonAccentButton(
+                                text = stringResource(Localization.add_wallet),
+                                size = ButtonSizeSmall,
+                                buttonColors = ButtonColorsSecondary,
+                                onClick = onAddWalletClick
+                            )
+                            MoonAnchorTooltip(
+                                expanded = addTooltipVisible && !editMode,
+                                onDismissRequest = { addTooltipVisible = false },
+                                text = stringResource(Localization.tooltip_add_multichain_wallet),
+                                badge = stringResource(Localization.badge_new),
+                                backgroundColor = UIKit.colorScheme.accent.blue,
+                                textColor = Color.White,
+                                maxWidth = 288.dp,
+                                preferAbove = true,
+                                centerTail = true,
+                                onClick = {
+                                    addTooltipVisible = false
+                                    onAddWalletClick()
+                                },
+                            )
                         }
                     }
                 }
@@ -324,11 +322,20 @@ fun WalletRowCell(
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
+    selectable: Boolean = true,
     dragHandle: (@Composable () -> Unit)? = null,
 ) {
+    val dimmed = !selectable && !editMode
     Box(modifier = modifier) {
         MoonBundleCell(position = position) {
             TextCell(
+                modifier = if (dimmed) {
+                    Modifier
+                        .alpha(UNSELECTABLE_ALPHA)
+                        .semantics { disabled() }
+                } else {
+                    Modifier
+                },
                 title = {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -354,7 +361,7 @@ fun WalletRowCell(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
-                            .background(Color(wallet.color)),
+                            .background(walletColor(wallet.color)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Emoji(emoji = wallet.emoji)
@@ -387,7 +394,7 @@ fun WalletRowCell(
                     else -> null
                 },
                 onClick = when {
-                    editMode -> null
+                    editMode || dimmed -> null
                     else -> onClick
                 },
                 minHeight = 76.dp,
@@ -422,6 +429,12 @@ private fun RowScope.WalletTags(wallet: CommonWallet) {
             colors = MoonLabelDefault.success(),
         )
     }
+    if (version == WalletVersion.WALLET_TG) {
+        MoonLabel(
+            text = stringResource(Localization.telegram),
+            colors = MoonLabelDefault.blue(),
+        )
+    }
     val typeText = when (wallet.type) {
         WalletType.Multichain -> stringResource(Localization.multichain)
         WalletType.Watch -> stringResource(Localization.watch_only)
@@ -440,6 +453,9 @@ private fun RowScope.WalletTags(wallet: CommonWallet) {
             },
         )
     }
+    if (wallet is CommonWallet.Mc && wallet.wallet.isHardware) {
+        MoonLabel(text = stringResource(Localization.ledger))
+    }
 }
 
 @Preview
@@ -457,6 +473,18 @@ private fun WalletRowCellPreview() {
                 position = MoonBundlePosition.Header,
                 onClick = {},
                 onEditClick = {},
+            )
+            WalletRowCell(
+                wallet = previewLegacyWallet(),
+                selected = false,
+                balance = "$12.00",
+                hiddenBalance = false,
+                editMode = false,
+                shimmerPhase = 0f,
+                position = MoonBundlePosition.Middle,
+                onClick = {},
+                onEditClick = {},
+                selectable = false,
             )
             WalletRowCell(
                 wallet = previewLegacyWallet(),

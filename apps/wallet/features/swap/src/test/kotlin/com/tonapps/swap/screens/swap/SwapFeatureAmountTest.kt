@@ -53,7 +53,7 @@ class SwapFeatureAmountTest : BaseUnitTest() {
             assertEquals("", maxed.amountInput.text)
             assertFalse(maxed.amountInput.isMax)
             assertTrue(quoteRequests.isEmpty())
-            assertEquals(listOf(SwapEvent.MaxBelowReserve(reserve = "1")), events)
+            assertEquals(listOf(SwapEvent.MaxBelowReserve(reserve = "1", symbol = "TON")), events)
         }
     }
 
@@ -66,7 +66,7 @@ class SwapFeatureAmountTest : BaseUnitTest() {
             val maxed = after { sendAction(SwapAction.Amount.Max) }
 
             assertEquals("", maxed.amountInput.text)
-            assertEquals(listOf(SwapEvent.MaxBelowReserve(reserve = "1")), events)
+            assertEquals(listOf(SwapEvent.MaxBelowReserve(reserve = "1", symbol = "TON")), events)
         }
     }
 
@@ -177,10 +177,64 @@ class SwapFeatureAmountTest : BaseUnitTest() {
     }
 
     @Test
+    fun togglingBackToTheUntouchedMaxRestoresMax() = swapTest(env) {
+        val maxed = after { sendAction(SwapAction.Amount.Max) }
+        after { sendAction(SwapAction.Amount.ToggleCurrency) }
+
+        val back = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+
+        assertFalse(back.amountInput.inFiat)
+        assertTrue(back.amountInput.isMax)
+        assertEquals(maxed.amountInput.text, back.amountInput.text)
+    }
+
+    @Test
+    fun togglingBackAfterAnEditKeepsMaxOff() = swapTest(env) {
+        after {
+            sendAction(SwapAction.Amount.Max)
+            sendAction(SwapAction.Amount.ToggleCurrency)
+            sendAction(SwapAction.Amount.SetSell("2.86"))
+        }
+
+        val back = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+
+        assertFalse(back.amountInput.isMax)
+        assertEquals("2", back.amountInput.text)
+    }
+
+    @Test
+    fun togglingBackAfterAFlipKeepsMaxOff() = swapTest(env) {
+        after {
+            sendAction(SwapAction.Amount.Max)
+            sendAction(SwapAction.Amount.ToggleCurrency)
+            sendAction(SwapAction.Asset.Swap)
+        }
+
+        val back = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+
+        assertFalse(back.amountInput.isMax)
+    }
+
+    @Test
+    fun anAmountAfterACompletedSwapIsConvertedAgain() = swapTest(env) {
+        after {
+            sendAction(SwapAction.Amount.SetSell("0.123456789"))
+            sendAction(SwapAction.Amount.ToggleCurrency)
+        }
+        after { env.swapRepo.notifySwapCompleted(tracked = false) }
+        after { sendAction(SwapAction.Amount.SetSell("0.17")) }
+
+        val back = after { sendAction(SwapAction.Amount.ToggleCurrency) }
+
+        assertFalse(back.amountInput.inFiat)
+        assertEquals("0.11888112", back.amountInput.text)
+    }
+
+    @Test
     fun completedSwapClearsMax() = swapTest(env) {
         after { sendAction(SwapAction.Amount.Max) }
 
-        val reset = after { env.swapRepo.notifySwapCompleted() }
+        val reset = after { env.swapRepo.notifySwapCompleted(tracked = false) }
 
         assertFalse(reset.amountInput.isMax)
     }
@@ -305,7 +359,7 @@ class SwapFeatureAmountTest : BaseUnitTest() {
             sendAction(SwapAction.Amount.SetBuy("1"))
         }
 
-        val reset = after { env.swapRepo.notifySwapCompleted() }
+        val reset = after { env.swapRepo.notifySwapCompleted(tracked = false) }
 
         assertEquals("", reset.amountInput.text)
         assertEquals(AmountInputSide.Sell, reset.amountInput.side)

@@ -11,6 +11,8 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.bus.screenrender.ScreenRenderId
+import com.tonapps.core.screenrender.ScreenRenderFragmentLifecycle
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.WalletContextScreen
 import com.tonapps.tonkeeper.ui.screen.browser.main.BrowserMainScreen
@@ -33,6 +35,8 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
     override val viewModel: BrowserBaseViewModel by walletViewModel()
 
     private lateinit var footerDrawable: FooterDrawable
+
+    private val screenRender = ScreenRenderFragmentLifecycle(this, ScreenRenderId.Browser)
     private lateinit var searchContainerView: View
     private lateinit var searchView: View
 
@@ -44,6 +48,7 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        screenRender.onViewCreated()
         footerDrawable = FooterDrawable(requireContext())
 
         searchContainerView = view.findViewById(R.id.search_container)
@@ -86,6 +91,15 @@ class BrowserBaseScreen(wallet: WalletEntity): WalletContextScreen(R.layout.frag
                 val fragment = BrowserMoreScreen.newInstance(screenContext.wallet, category)
                 addFragment(fragment)
             }
+        }
+    }
+
+    // The tab is shown and hidden as a whole; its main child does not get onHiddenChanged.
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        screenRender.onHiddenChanged(hidden)
+        if (!hidden) {
+            childFragmentManager.fragments.filterIsInstance<BrowserMainScreen>().firstOrNull()?.onScreenShown()
         }
     }
 

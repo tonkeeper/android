@@ -18,9 +18,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,13 +43,26 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.tonapps.core.helper.navigationDelegate
 import com.tonapps.paging.collectAsStateWorkaround
 import com.tonapps.perps.data.PERPS_EMPTY_VALUE
 import com.tonapps.perps.data.PerpMarket
@@ -60,6 +76,7 @@ import com.tonapps.perps.data.PerpsChartSectionState
 import com.tonapps.perps.data.PerpsChartTimeframe
 import com.tonapps.perps.data.PerpsError
 import com.tonapps.perps.data.PerpsLimitOrder
+import com.tonapps.perps.data.PerpsLimitOrderLeg
 import com.tonapps.perps.data.PerpsMarketRules
 import com.tonapps.perps.data.PerpsOpenPosition
 import com.tonapps.perps.data.PerpsOperationPill
@@ -77,6 +94,7 @@ import com.tonapps.perps.data.formatFundingPercent
 import com.tonapps.perps.data.formatSignedPercent
 import com.tonapps.perps.data.formatSignedUsd
 import com.tonapps.perps.data.formatUsd
+import com.tonapps.perps.data.formatTokenAmount
 import com.tonapps.perps.data.formatUsdPrice
 import com.tonapps.perps.data.withLegs
 import com.tonapps.perps.data.legsDraft
@@ -121,7 +139,6 @@ import ui.components.moon.dialog.MoonDialogDisposableScope
 import ui.components.moon.moonBottomBarHeight
 import ui.components.moon.screen.MoonEmptyScreen
 import ui.components.moon.screen.MoonEmptyScreenType
-import ui.components.moon.screen.MoonLoadingScreen
 import ui.moon.MoonToastHost
 import ui.moon.rememberMoonToastHostState
 import ui.preview.ThemedPreview
@@ -131,6 +148,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.SimpleTimeZone
+
+private const val RISK_DISCLOSURE_ICON_ID = "risk_disclosure_icon"
 
 @Composable
 fun PerpsAssetDetailsScreen(
@@ -146,6 +165,7 @@ fun PerpsAssetDetailsScreen(
 ) {
     val market by feature.market.collectAsStateWorkaround()
     val about by feature.about.collectAsStateWorkaround()
+    val keeperTermsUrl by feature.keeperTermsUrl.collectAsStateWorkaround()
     val isLoading by feature.isLoading.collectAsStateWorkaround()
     val error by feature.error.collectAsStateWorkaround()
     val tradingError by feature.tradingError.collectAsStateWorkaround()
@@ -157,12 +177,14 @@ fun PerpsAssetDetailsScreen(
     val chartStale by feature.chartStale.collectAsStateWorkaround()
     val positionLevels by feature.positionLevels.collectAsStateWorkaround()
     val positionView by feature.positionView.collectAsStateWorkaround()
+    val expectsOpenPosition by feature.expectsOpenPosition.collectAsStateWorkaround()
     val flags by feature.flags.collectAsStateWorkaround()
     val canTrade by feature.canTrade.collectAsStateWorkaround()
     val canOpen by feature.canOpen.collectAsStateWorkaround()
     val limitOrders by feature.limitOrders.collectAsStateWorkaround()
     val rules by feature.rules.collectAsStateWorkaround()
     val limitOrderBusy by feature.limitOrderBusy.collectAsStateWorkaround()
+    val limitEditReview by feature.limitEditReview.collectAsStateWorkaround()
     val proceeding by feature.proceeding.collectAsStateWorkaround()
     val priceDecimals by feature.priceDecimals.collectAsStateWorkaround()
     val selectedCandle by feature.selectedCandle.collectAsStateWorkaround()
@@ -170,6 +192,7 @@ fun PerpsAssetDetailsScreen(
     val pill by feature.pill.collectAsStateWorkaround()
     val failure by feature.failure.collectAsStateWorkaround()
     val historyRequest by feature.historyRequest.collectAsStateWorkaround()
+    val showsLoyaltyBanner by feature.showsLoyaltyBanner.collectAsStateWorkaround()
 
     val toastHost = rememberMoonToastHostState()
     val scope = rememberCoroutineScope()
@@ -201,11 +224,12 @@ fun PerpsAssetDetailsScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
         PerpsAssetDetailsContent(
             symbol = feature.symbol,
             market = market,
             about = about,
+            keeperTermsUrl = keeperTermsUrl,
             isLoading = isLoading,
             error = error,
             tradingError = tradingError,
@@ -217,6 +241,7 @@ fun PerpsAssetDetailsScreen(
             chartStale = chartStale,
             positionLevels = positionLevels,
             positionView = positionView,
+            expectsOpenPosition = expectsOpenPosition,
             flags = flags,
             canTrade = canTrade,
             canOpen = canOpen,
@@ -229,6 +254,7 @@ fun PerpsAssetDetailsScreen(
             selectedChange = selectedChange,
             pill = pill,
             historyRequest = historyRequest,
+            showsLoyaltyBanner = showsLoyaltyBanner,
             presentAutoClose = presentAutoClose,
             onAction = feature::sendAction,
             onOpenOrder = onOpenOrder,
@@ -243,9 +269,24 @@ fun PerpsAssetDetailsScreen(
             },
             onLearnBasics = { context.openPerpsBasics() },
             onOpenHistory = onOpenHistory,
+            onOpenLink = { url -> context.navigationDelegate?.onOpenLink(url) },
             onBack = onBack,
         )
         MoonToastHost(toastHost)
+    }
+
+    limitEditReview?.let { review ->
+        PerpsLimitEditReviewDialog(
+            symbol = feature.symbol,
+            side = review.side,
+            sizeText = formatTokenAmount(review.base, feature.symbol, review.baseDecimals),
+            oldPriceText = formatUsdPrice(review.oldPrice.toDouble(), review.priceDecimals),
+            newPriceText = formatUsdPrice(review.newPrice.toDouble(), review.priceDecimals),
+            removesTakeProfit = review.removesTakeProfit,
+            removesStopLoss = review.removesStopLoss,
+            onConfirm = { feature.sendAction(PerpsAssetDetailsAction.ConfirmLimitEdit(review)) },
+            onDismiss = { feature.sendAction(PerpsAssetDetailsAction.DismissLimitEdit) },
+        )
     }
 }
 
@@ -254,6 +295,7 @@ private fun PerpsAssetDetailsContent(
     symbol: String,
     market: PerpMarket?,
     about: String?,
+    keeperTermsUrl: String,
     isLoading: Boolean,
     error: PerpsError?,
     tradingError: Boolean = false,
@@ -265,6 +307,7 @@ private fun PerpsAssetDetailsContent(
     chartStale: Boolean,
     positionLevels: PerpsPositionLevels?,
     positionView: PerpsPositionView,
+    expectsOpenPosition: Boolean = false,
     flags: PerpsTradingFlags,
     canTrade: Boolean,
     canOpen: Boolean,
@@ -277,6 +320,7 @@ private fun PerpsAssetDetailsContent(
     pill: PerpsOperationPill?,
     proceeding: PerpsAssetDetailsTarget? = null,
     historyRequest: PerpsMarketHistoryRequest? = null,
+    showsLoyaltyBanner: Boolean = false,
     presentAutoClose: Boolean = false,
     onAction: (PerpsAssetDetailsAction) -> Unit,
     onOpenOrder: (PerpsOrderSide) -> Unit,
@@ -287,14 +331,15 @@ private fun PerpsAssetDetailsContent(
     onShareFailed: () -> Unit,
     onLearnBasics: () -> Unit,
     onOpenHistory: () -> Unit = {},
+    onOpenLink: (String) -> Unit = {},
     onBack: () -> Unit,
 ) {
     val positionSection = positionView.section
     var editChoice by remember { mutableStateOf<PerpsEditChoice?>(null) }
     var marginChooser by remember { mutableStateOf(false) }
+    var riskDisclosure by remember { mutableStateOf(false) }
     var autoCloseSheet by remember { mutableStateOf(false) }
     var autoCloseRequested by rememberSaveable { mutableStateOf(presentAutoClose) }
-    val context = LocalContext.current
     LaunchedEffect(autoCloseRequested, isLoading, error, positionSection, canTrade, flags, tradingError) {
         val waiting = tradingError ||
             positionSection is PerpsPositionSection.Loading ||
@@ -330,7 +375,7 @@ private fun PerpsAssetDetailsContent(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             PerpsAssetDetailsTopBar(
-                title = symbol,
+                title = market?.displayName ?: symbol,
                 pill = pill,
                 showDivider = showDivider,
                 onLearnBasics = onLearnBasics,
@@ -388,9 +433,16 @@ private fun PerpsAssetDetailsContent(
                         onToggleMode = { onAction(PerpsAssetDetailsAction.ToggleChartMode) },
                     )
                     MoonDivider()
+                    if (showsLoyaltyBanner && positionSection is PerpsPositionSection.Hidden) {
+                        PerpsLoyaltyBanner(
+                            onClick = onOpenLink,
+                            onHide = { onAction(PerpsAssetDetailsAction.HideLoyaltyBanner) },
+                        )
+                    }
                     PerpsPositionSection(
                         section = positionSection,
                         card = positionView.card,
+                        expectsOpenPosition = expectsOpenPosition,
                         flags = flags,
                         canTrade = canTrade,
                         onAction = onAction,
@@ -430,9 +482,18 @@ private fun PerpsAssetDetailsContent(
                     }
                     PerpsInfoSection(market = market)
                     PerpsAboutSection(symbol = symbol, about = about)
+                    PerpsRiskDisclosureFootnote(onClick = { riskDisclosure = true })
                 }
 
-                else -> MoonLoadingScreen()
+                else -> PerpsAssetDetailsSkeleton(
+                    expectsOpenPosition = expectsOpenPosition,
+                    timeframe = timeframe,
+                    chartMode = chartMode,
+                    onSelectTimeframe = { selected ->
+                        onAction(PerpsAssetDetailsAction.SelectTimeframe(selected))
+                    },
+                    onToggleMode = { onAction(PerpsAssetDetailsAction.ToggleChartMode) },
+                )
             }
 
             if (market != null && !isLoading && error == null) {
@@ -448,7 +509,7 @@ private fun PerpsAssetDetailsContent(
                         limitOrderEditable = firstLimitOrder?.isEditable(rules) == true,
                         limitOrderBusy = limitOrderBusy,
                         onLimitOrderEdit = onLimitOrderEdit,
-                        onLimitOrderCancel = { onAction(PerpsAssetDetailsAction.CancelLimitOrder(context, it.orderIndex)) },
+                        onLimitOrderCancel = { onAction(PerpsAssetDetailsAction.CancelLimitOrder(it.orderIndex)) },
                         proceeding = proceeding,
                         onOpenOrder = onOpenOrder,
                         onCashOut = onCashOut,
@@ -490,6 +551,14 @@ private fun PerpsAssetDetailsContent(
         )
     }
 
+    if (riskDisclosure) {
+        PerpsRiskDisclosureDialog(
+            keeperTermsUrl = keeperTermsUrl,
+            onOpenLink = onOpenLink,
+            onClose = { riskDisclosure = false },
+        )
+    }
+
     if (sheetShown) {
         MoonDialogDisposableScope {
             val sheetFeature = koinViewModel<PerpsPositionAutoCloseFeature>(
@@ -517,7 +586,7 @@ private fun PerpsAssetDetailsContent(
                 estimate = autoCloseEstimate(position.size, entryPrice),
                 onSet = { draft ->
                     submitted = draft
-                    sheetFeature.sendAction(PerpsPositionAutoCloseAction.Submit(context, draft))
+                    sheetFeature.sendAction(PerpsPositionAutoCloseAction.Submit(draft))
                 },
                 onClose = { autoCloseSheet = false },
                 submit = submit,
@@ -531,7 +600,7 @@ private fun PerpsAssetDetailsContent(
             priceDecimals = priceDecimals,
             editable = order.isEditable(rules),
             onEdit = { onLimitOrderEdit(order) },
-            onCancel = { onAction(PerpsAssetDetailsAction.CancelLimitOrder(context, order.orderIndex)) },
+            onCancel = { onAction(PerpsAssetDetailsAction.CancelLimitOrder(order.orderIndex)) },
             onClose = { limitOrderSheet = null },
         )
     }
@@ -540,7 +609,7 @@ private fun PerpsAssetDetailsContent(
     if (shareDate != null && detail != null && market != null) {
         PerpsSharePositionDialog(
             card = PerpsShareCard(
-                name = market.name ?: market.symbol,
+                name = market.displayName,
                 symbol = market.symbol,
                 iconUrl = market.iconUrl,
                 side = detail.position.side,
@@ -580,7 +649,7 @@ private fun PerpsAssetDetailsTopBar(
             if (pill != null) {
                 PerpsOperationPillView(pill = pill)
             } else {
-                MoonTopAppBarTitle(text = title)
+                MoonTopAppBarTitle(text = title, autoShrink = true)
             }
         },
         onTitleClick = onLearnBasics.takeIf { pill == null },
@@ -632,9 +701,9 @@ private fun PerpsOperationPillView(pill: PerpsOperationPill) {
 private fun perpsOperationPillText(pill: PerpsOperationPill, done: Boolean): String {
     val sideText = stringResource(
         if (pill.side == PerpsOrderSide.LONG) {
-            Localization.perps_long
+            Localization.perps_operation_side_long
         } else {
-            Localization.perps_short
+            Localization.perps_operation_side_short
         }
     )
     val leverageText = stringResource(Localization.perps_leverage_value_pattern, pill.leverage)
@@ -676,7 +745,7 @@ private fun perpsOperationPillText(pill: PerpsOperationPill, done: Boolean): Str
                 Localization.perps_operation_closing_pattern
             },
             pill.symbol,
-            sideText.lowercase(),
+            sideText,
             leverageSuffix,
         )
 
@@ -687,7 +756,7 @@ private fun perpsOperationPillText(pill: PerpsOperationPill, done: Boolean): Str
                 Localization.perps_operation_increasing_pattern
             },
             pill.symbol,
-            sideText.lowercase(),
+            sideText,
             leverageSuffix,
         )
 
@@ -698,7 +767,7 @@ private fun perpsOperationPillText(pill: PerpsOperationPill, done: Boolean): Str
                 Localization.perps_operation_reducing_pattern
             },
             pill.symbol,
-            sideText.lowercase(),
+            sideText,
             leverageSuffix,
         )
 
@@ -844,11 +913,10 @@ private fun PerpsLineReadout(
     change: PerpsChartChange?,
     priceDecimals: Int,
 ) {
-    val isPositive = change?.isPositive ?: true
-    val changeColor = if (isPositive) {
-        UIKit.colorScheme.accent.green
-    } else {
-        UIKit.colorScheme.accent.red
+    val changeColor = when (change?.isPositive) {
+        true -> UIKit.colorScheme.accent.green
+        false -> UIKit.colorScheme.accent.red
+        null -> UIKit.colorScheme.text.secondary
     }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -870,11 +938,13 @@ private fun PerpsLineReadout(
                 softWrap = false,
             )
             Text(
-                text = stringResource(
-                    Localization.perps_chart_change_pattern,
-                    formatSignedUsd(BigDecimal.valueOf(change?.amount ?: 0.0)),
-                    formatSignedPercent(BigDecimal.valueOf(change?.percent ?: 0.0)),
-                ),
+                text = change?.let {
+                    stringResource(
+                        Localization.perps_chart_change_pattern,
+                        formatSignedUsd(BigDecimal.valueOf(it.amount)),
+                        formatSignedPercent(BigDecimal.valueOf(it.percent)),
+                    )
+                } ?: PERPS_EMPTY_VALUE,
                 style = UIKit.typography.body2,
                 color = changeColor,
                 maxLines = 1,
@@ -890,11 +960,10 @@ private fun PerpsCandleReadout(
     change: PerpsChartChange?,
     priceDecimals: Int,
 ) {
-    val isPositive = change?.isPositive ?: true
-    val closeColor = if (isPositive) {
-        UIKit.colorScheme.accent.green
-    } else {
-        UIKit.colorScheme.accent.red
+    val closeColor = when (change?.isPositive) {
+        true -> UIKit.colorScheme.accent.green
+        false -> UIKit.colorScheme.accent.red
+        null -> UIKit.colorScheme.text.secondary
     }
     val openLabel = stringResource(Localization.perps_chart_open)
     val closeLabel = stringResource(Localization.perps_chart_close)
@@ -944,7 +1013,7 @@ private fun PerpsCandleReadout(
                     softWrap = false,
                 )
                 Text(
-                    text = formatSignedPercent(BigDecimal.valueOf(change?.percent ?: 0.0)),
+                    text = change?.let { formatSignedPercent(BigDecimal.valueOf(it.percent)) } ?: PERPS_EMPTY_VALUE,
                     style = UIKit.typography.body2,
                     color = closeColor,
                     maxLines = 1,
@@ -1046,8 +1115,14 @@ private fun perpsCandleDateTime(timeSeconds: Long): String {
     return formatter.format(Date(timeSeconds * 1000L))
 }
 
+private val CHART_TOGGLE_END_PADDING = 20.dp
+private val CHART_TOGGLE_WIDTH = 72.dp
+private val CHART_FADE_WIDTH = 38.dp
+private val CHART_FADE_UNDER_TOGGLE = 18.dp
+private val CHART_TOGGLE_FADE_END_PADDING = CHART_TOGGLE_END_PADDING + CHART_TOGGLE_WIDTH - CHART_FADE_UNDER_TOGGLE
+
 @Composable
-private fun PerpsChartControls(
+internal fun PerpsChartControls(
     timeframe: PerpsChartTimeframe,
     chartMode: PerpsChartMode,
     onSelectTimeframe: (PerpsChartTimeframe) -> Unit,
@@ -1056,13 +1131,19 @@ private fun PerpsChartControls(
 ) {
     val secondary = UIKit.colorScheme.buttonSecondary
     val pageColor = UIKit.colorScheme.background.page
+    val fadeColors = if (LocalLayoutDirection.current == LayoutDirection.Ltr) {
+        listOf(Color.Transparent, pageColor)
+    } else {
+        listOf(pageColor, Color.Transparent)
+    }
+    val fadeBrush = Brush.horizontalGradient(fadeColors)
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    Box(modifier = modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 92.dp),
+                .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = CHART_TOGGLE_FADE_END_PADDING + CHART_FADE_WIDTH),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PerpsChartTimeframe.entries.forEach { entry ->
@@ -1078,7 +1159,11 @@ private fun PerpsChartControls(
                         .height(36.dp)
                         .clip(CircleShape)
                         .background(backgroundColor)
-                        .clickable { onSelectTimeframe(entry) },
+                        .clickable { onSelectTimeframe(entry) }
+                        .semantics {
+                            testTag = "perps_chart_timeframe_${entry.name.drop(1)}${entry.name.first()}"
+                            selected = isSelected
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -1093,15 +1178,23 @@ private fun PerpsChartControls(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .width(38.dp)
+                .width(CHART_FADE_WIDTH)
                 .height(36.dp)
-                .background(Brush.horizontalGradient(listOf(Color.Transparent, pageColor))),
+                .background(fadeBrush),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = CHART_TOGGLE_FADE_END_PADDING)
+                .width(CHART_FADE_WIDTH)
+                .height(36.dp)
+                .background(fadeBrush),
         )
         Row(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = 20.dp)
-                .size(width = 72.dp, height = 40.dp)
+                .padding(end = CHART_TOGGLE_END_PADDING)
+                .size(width = CHART_TOGGLE_WIDTH, height = 40.dp)
                 .shadow(
                     elevation = 16.dp,
                     shape = RoundedCornerShape(20.dp),
@@ -1125,7 +1218,11 @@ private fun PerpsChartControls(
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(tabColor)
-                        .clickable(enabled = !isSelected, onClick = onToggleMode),
+                        .clickable(enabled = !isSelected, onClick = onToggleMode)
+                        .semantics {
+                            testTag = "perps_chart_mode_${mode.name.lowercase()}"
+                            selected = isSelected
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     MoonItemIcon(
@@ -1223,6 +1320,55 @@ private fun PerpsAboutSection(symbol: String, about: String?) {
         }
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+@Composable
+private fun PerpsRiskDisclosureFootnote(onClick: () -> Unit) {
+    val iconSize = 16.dp
+    val iconSpacing = 4.dp
+    val density = LocalDensity.current
+    val footnote = stringResource(Localization.perps_risk_disclosure_footnote)
+    val footnoteText = remember(footnote) {
+        buildAnnotatedString {
+            appendInlineContent(RISK_DISCLOSURE_ICON_ID)
+            append(footnote.replace(" · ", "\u00A0· "))
+        }
+    }
+    val inlineContent = remember(density) {
+        mapOf(
+            RISK_DISCLOSURE_ICON_ID to InlineTextContent(
+                Placeholder(
+                    width = with(density) { (iconSize + iconSpacing).toSp() },
+                    height = with(density) { iconSize.toSp() },
+                    placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
+                ),
+            ) {
+                MoonItemIcon(
+                    modifier = Modifier.padding(end = iconSpacing),
+                    painter = painterResource(UIKitIcon.ic_information_circle_16),
+                    size = iconSize,
+                    color = UIKit.colorScheme.icon.secondary,
+                )
+            },
+        )
+    }
+    Text(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .wrapContentWidth()
+            .clickable(onClick = onClick)
+            .padding(bottom = 4.dp)
+            .semantics {
+                contentDescription = footnote
+                testTag = "perps_risk_disclosure"
+            },
+        text = footnoteText,
+        inlineContent = inlineContent,
+        style = UIKit.typography.body2.copy(lineBreak = LineBreak.Heading),
+        color = UIKit.colorScheme.text.secondary,
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable
@@ -1336,9 +1482,12 @@ private fun PerpsAssetDetailsBottomBar(
     }
 }
 
+private const val PREVIEW_KEEPER_TERMS_URL = "https://tonkeeper.com/terms"
+
 private val previewMarket = PerpMarket(
     marketIndex = 1,
     symbol = "BTC",
+    name = "Bitcoin",
     maxLeverage = 40,
     price = BigDecimal("66141.70"),
     priceChange24hPercent = BigDecimal("4.37"),
@@ -1357,6 +1506,7 @@ private fun PerpsAssetDetailsScreenPreview() {
             symbol = previewMarket.symbol,
             market = previewMarket,
             about = null,
+            keeperTermsUrl = PREVIEW_KEEPER_TERMS_URL,
             isLoading = false,
             error = null,
             candles = previewCandles,
@@ -1400,6 +1550,7 @@ private fun PerpsAssetDetailsCrosshairPreview() {
             symbol = previewMarket.symbol,
             market = previewMarket,
             about = null,
+            keeperTermsUrl = PREVIEW_KEEPER_TERMS_URL,
             isLoading = false,
             error = null,
             candles = previewCandles,
@@ -1443,6 +1594,7 @@ private fun PerpsAssetDetailsScreenErrorPreview() {
             symbol = "BTC",
             market = null,
             about = null,
+            keeperTermsUrl = PREVIEW_KEEPER_TERMS_URL,
             isLoading = false,
             error = PerpsError.ServiceUnavailable,
             candles = emptyList(),
@@ -1516,7 +1668,7 @@ private val previewStopLoss = PerpsAutoCloseLeg(
 )
 
 private fun PerpsLimitOrder.isEditable(rules: PerpsMarketRules?): Boolean {
-    val remaining = remainingBase ?: return true
+    val remaining = remainingBase ?: return false
     val minBase = rules?.minSizeBase
     val minQuote = rules?.minSizeQuote
     val notional = limitPrice?.multiply(remaining)
@@ -1530,6 +1682,8 @@ private val previewLimitOrder = PerpsLimitOrder(
     side = PerpsPositionSide.LONG,
     remainingBase = BigDecimal("0.002"),
     limitPrice = BigDecimal("65000.00"),
+    takeProfit = PerpsLimitOrderLeg(orderIndex = 2L, triggerPrice = BigDecimal("68000")),
+    stopLoss = PerpsLimitOrderLeg(orderIndex = 3L, triggerPrice = BigDecimal("63500")),
 )
 
 @Preview
@@ -1540,6 +1694,7 @@ private fun PerpsAssetDetailsPositionPreview() {
             symbol = previewMarket.symbol,
             market = previewMarket,
             about = null,
+            keeperTermsUrl = PREVIEW_KEEPER_TERMS_URL,
             isLoading = false,
             error = null,
             candles = previewCandles,
@@ -1587,6 +1742,32 @@ private fun PerpsAssetDetailsPositionPreview() {
     }
 }
 
+@Preview(widthDp = 390)
+@Composable
+private fun PerpsChartControlsPreview() {
+    ThemedPreview {
+        PerpsChartControls(
+            timeframe = PerpsChartTimeframe.H4,
+            chartMode = PerpsChartMode.CANDLE,
+            onSelectTimeframe = {},
+            onToggleMode = {},
+        )
+    }
+}
+
+@Preview(widthDp = 390)
+@Composable
+private fun PerpsChartControlsRtlPreview() {
+    ThemedPreview(isDarkOnly = true, layoutDirection = LayoutDirection.Rtl) {
+        PerpsChartControls(
+            timeframe = PerpsChartTimeframe.H4,
+            chartMode = PerpsChartMode.CANDLE,
+            onSelectTimeframe = {},
+            onToggleMode = {},
+        )
+    }
+}
+
 @Preview
 @Composable
 private fun PerpsAssetDetailsPositionLegsPreview() {
@@ -1595,6 +1776,7 @@ private fun PerpsAssetDetailsPositionLegsPreview() {
             symbol = previewMarket.symbol,
             market = previewMarket,
             about = null,
+            keeperTermsUrl = PREVIEW_KEEPER_TERMS_URL,
             isLoading = false,
             error = null,
             candles = previewCandles,
@@ -1650,6 +1832,7 @@ private fun PerpsAssetDetailsPositionFailedPreview() {
             symbol = previewMarket.symbol,
             market = previewMarket,
             about = null,
+            keeperTermsUrl = PREVIEW_KEEPER_TERMS_URL,
             isLoading = false,
             error = null,
             candles = previewCandles,

@@ -1,13 +1,14 @@
 package com.tonapps.perps.screens.order
 
 import com.tonapps.blockchain.model.legacy.WalletEntity
-import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.perps.data.PerpsAutoCloseDraft
 import com.tonapps.perps.data.PerpsLivePrices
 import com.tonapps.perps.data.PerpsOrderSide
 import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.perpsTicker
+import com.tonapps.perps.trade.PerpsOpenLeverageStore
 import com.tonapps.perps.trade.PerpsPlannerAdapter
+import com.tonapps.perps.trade.PerpsSignedMarkets
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
@@ -42,13 +43,18 @@ import java.time.OffsetDateTime
 class PerpsCreateOrderFeatureTest : BaseUnitTest() {
 
     private val api = mockk<API>()
+    private var served = litMarket
     private val adapter = PerpsPlannerAdapter(
-        repository = PerpsRepository(api, mockk(), mockk()),
+        repository = PerpsRepository(api, mockk(), mockk(), mockk(relaxed = true)),
         accountService = mockk(),
         clientOrderIndex = mockk { every { next(any()) } answers { firstArg() } },
         mediator = mockk(),
+        securityConfig = PerpsSignedMarkets.following { served },
     )
     private val perpetualRepository = mockk<PerpetualRepository>()
+    private val leverageStore = mockk<PerpsOpenLeverageStore> {
+        every { leverage(any(), any()) } returns null
+    }
     private val livePrices = mockk<PerpsLivePrices>()
     private val unifiedAccountRepository = mockk<UnifiedAccountRepository>()
     private val settingsRepository = mockk<SettingsRepository> {
@@ -62,7 +68,7 @@ class PerpsCreateOrderFeatureTest : BaseUnitTest() {
     @Before
     fun setUp() {
         val wallet = mockk<WalletEntity>()
-        every { wallet.type } returns WalletType.Multichain
+        every { wallet.supportsPerps } returns true
         every { wallet.id } returns TestWallet.ID
         every { unifiedAccountRepository.selectedTonWalletFlow } returns flowOf(wallet)
         every { livePrices.observe(any()) } returns prices
@@ -264,6 +270,19 @@ class PerpsCreateOrderFeatureTest : BaseUnitTest() {
     }
 
     @Test
+    fun aBookThatHasNotChangedForMinutesStillGivesThePlannersMinimum() {
+        market(litMarket.copy(priceDecimals = 6, sizeDecimals = 0, stepSize = "1", markPrice = "36.2"))
+        book("36.2", updatedAt = OffsetDateTime.now().minusMinutes(QUIET_BOOK_MINUTES))
+        tick("36.2")
+        val feature = open()
+
+        enter(feature, "5")
+
+        assertEquals(PerpsOrderIssue.BelowMinMargin(BigDecimal("7.26"), canDeposit = false), feature.issue.value)
+        assertFalse(feature.canReview.value)
+    }
+
+    @Test
     fun aRefusedAmountReloadsTheMinimumAndTheIssueRowNamesIt() {
         market(litMarket.copy(minSizeBase = "2", minSizeQuote = "10"))
         val feature = open()
@@ -407,6 +426,58 @@ class PerpsCreateOrderFeatureTest : BaseUnitTest() {
     }
 
     @Test
+    fun everyAutoCloseSheetOpeningReplansTheDraft() {
+        val feature = open()
+        toggle(feature)
+        enter(feature, "5")
+        sheet(feature, visible = true)
+        feature.sendAction(PerpsCreateOrderAction.SetAutoClose(PerpsAutoCloseDraft(takeProfit = null, stopLoss = BigDecimal("4"))))
+        sheet(feature, visible = false)
+
+        coVerify(exactly = 1) { perpetualRepository.signingCredentials(TestWallet.ID) }
+
+        sheet(feature, visible = true)
+
+        coVerify(exactly = 2) { perpetualRepository.signingCredentials(TestWallet.ID) }
+    }
+
+    @Test
+    fun reopeningTheSheetKeepsTheReviewedDraftWhileItReplans() {
+        val feature = open()
+        toggle(feature)
+        enter(feature, "5")
+        feature.sendAction(PerpsCreateOrderAction.SetAutoClose(PerpsAutoCloseDraft(takeProfit = null, stopLoss = BigDecimal("4"))))
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
+        scheduler.runCurrent()
+        assertTrue(feature.canReview.value)
+
+        feature.sendAction(PerpsCreateOrderAction.SetAutoCloseSheetVisible(true))
+        scheduler.runCurrent()
+
+        assertTrue(feature.canReview.value)
+    }
+
+    @Test
+    fun reviewStaysAvailableWhileTheDraftIsReplanned() {
+        val feature = open()
+        toggle(feature)
+        enter(feature, "5")
+        feature.sendAction(PerpsCreateOrderAction.SetAutoClose(PerpsAutoCloseDraft(takeProfit = null, stopLoss = BigDecimal("4"))))
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
+        scheduler.runCurrent()
+        assertTrue(feature.canReview.value)
+
+        enter(feature, "6")
+
+        assertTrue(feature.canReview.value)
+
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
+        scheduler.runCurrent()
+
+        assertTrue(feature.canReview.value)
+    }
+
+    @Test
     fun takeProfitSetByPercentKeepsThePercentAsThePriceMoves() {
         val feature = open()
         val takeProfit = PerpsAutoCloseDraft(
@@ -482,7 +553,179 @@ class PerpsCreateOrderFeatureTest : BaseUnitTest() {
         assertTrue(feature.canReview.value)
     }
 
+    @Test
+    fun legStrippedByALimitPriceWarnsOnlyUntilTheNextOrderChange() {
+        val feature = open()
+        feature.sendAction(
+            PerpsCreateOrderAction.SetAutoClose(PerpsAutoCloseDraft(takeProfit = null, stopLoss = BigDecimal("3.70")))
+        )
+        scheduler.runCurrent()
+
+        feature.sendAction(PerpsCreateOrderAction.SetLimitPrice(BigDecimal("3.80")))
+        scheduler.runCurrent()
+
+        assertNull(feature.autoClose.value)
+        assertEquals(PerpsAutoCloseIssue(Localization.perps_auto_close_sl_above_current), feature.autoCloseWarning.value)
+
+        feature.sendAction(PerpsCreateOrderAction.SetLimitPrice(BigDecimal("3.60")))
+        scheduler.runCurrent()
+
+        assertNull(feature.autoClose.value)
+        assertNull(feature.autoCloseWarning.value)
+    }
+
+    @Test
+    fun leverageChangeAfterAStrippedLegClearsTheWarningAndKeepsTheOtherLeg() {
+        val feature = open()
+        val takeProfit = BigDecimal("3.50")
+        feature.sendAction(
+            PerpsCreateOrderAction.SetAutoClose(PerpsAutoCloseDraft(takeProfit = takeProfit, stopLoss = BigDecimal("3.70")))
+        )
+        scheduler.runCurrent()
+
+        feature.sendAction(PerpsCreateOrderAction.SetLimitPrice(BigDecimal("3.80")))
+        scheduler.runCurrent()
+
+        assertEquals(PerpsAutoCloseDraft(takeProfit = takeProfit, stopLoss = null), feature.autoClose.value)
+        assertEquals(PerpsAutoCloseIssue(Localization.perps_auto_close_sl_above_current), feature.autoCloseWarning.value)
+
+        feature.sendAction(PerpsCreateOrderAction.SetLeverage(10))
+        scheduler.runCurrent()
+
+        assertEquals(PerpsAutoCloseDraft(takeProfit = takeProfit, stopLoss = null), feature.autoClose.value)
+        assertNull(feature.autoCloseWarning.value)
+    }
+
+    @Test
+    fun orderChangeThatStripsAnotherLegShowsItsWarning() {
+        val feature = open()
+        val takeProfit = BigDecimal("3.50")
+        feature.sendAction(
+            PerpsCreateOrderAction.SetAutoClose(PerpsAutoCloseDraft(takeProfit = takeProfit, stopLoss = BigDecimal("3.70")))
+        )
+        scheduler.runCurrent()
+
+        feature.sendAction(PerpsCreateOrderAction.SetLimitPrice(BigDecimal("3.80")))
+        scheduler.runCurrent()
+
+        assertEquals(PerpsAutoCloseDraft(takeProfit = takeProfit, stopLoss = null), feature.autoClose.value)
+        assertEquals(PerpsAutoCloseIssue(Localization.perps_auto_close_sl_above_current), feature.autoCloseWarning.value)
+
+        feature.sendAction(PerpsCreateOrderAction.SetLimitPrice(BigDecimal("3.45")))
+        scheduler.runCurrent()
+
+        assertNull(feature.autoClose.value)
+        assertEquals(PerpsAutoCloseIssue(Localization.perps_review_tp_update_text_short), feature.autoCloseWarning.value)
+    }
+
+    @Test
+    fun raisingLeveragePastAStopLossStripsItAtOnce() {
+        val feature = open(side = PerpsOrderSide.LONG)
+        enter(feature, "5")
+        val stopLoss = PerpsAutoCloseDraft(takeProfit = null, stopLoss = BigDecimal("3.20"))
+        feature.sendAction(PerpsCreateOrderAction.SetAutoClose(stopLoss))
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
+        scheduler.runCurrent()
+        assertEquals(stopLoss, feature.autoClose.value)
+        val warning = PerpsAutoCloseIssue(Localization.perps_auto_close_sl_liquidation_first_above, MAX_LEVERAGE_LONG_ESTIMATE)
+
+        feature.sendAction(PerpsCreateOrderAction.SetLeverage(MAX_LEVERAGE))
+        scheduler.runCurrent()
+
+        assertNull(feature.autoClose.value)
+        assertEquals(warning, feature.autoCloseWarning.value)
+
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
+        scheduler.runCurrent()
+
+        assertNull(feature.autoClose.value)
+        assertEquals(warning, feature.autoCloseWarning.value)
+    }
+
+    @Test
+    fun limitPriceThatPutsAStopLossPastLiquidationStripsItAtOnceAndKeepsTheTakeProfit() {
+        val feature = open(side = PerpsOrderSide.LONG)
+        feature.sendAction(PerpsCreateOrderAction.SetLeverage(MAX_LEVERAGE))
+        enter(feature, "5")
+        feature.sendAction(PerpsCreateOrderAction.SetLimitPrice(BigDecimal("3.40")))
+        scheduler.runCurrent()
+        val takeProfit = BigDecimal("3.80")
+        val autoClose = PerpsAutoCloseDraft(takeProfit = takeProfit, stopLoss = BigDecimal("3.25"))
+        feature.sendAction(PerpsCreateOrderAction.SetAutoClose(autoClose))
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
+        scheduler.runCurrent()
+        assertEquals(autoClose, feature.autoClose.value)
+
+        feature.sendAction(PerpsCreateOrderAction.SetLimitPrice(BigDecimal("3.50")))
+        scheduler.runCurrent()
+
+        assertEquals(PerpsAutoCloseDraft(takeProfit = takeProfit, stopLoss = null), feature.autoClose.value)
+        assertEquals(
+            PerpsAutoCloseIssue(Localization.perps_auto_close_sl_liquidation_first_above, RAISED_LIMIT_LONG_ESTIMATE),
+            feature.autoCloseWarning.value,
+        )
+        assertTrue(feature.canReview.value)
+    }
+
+    @Test
+    fun aDraftSettledWithoutALiquidationShowsTheEstimate() {
+        val feature = open(side = PerpsOrderSide.LONG)
+        enter(feature, "5")
+        feature.sendAction(PerpsCreateOrderAction.SetLeverage(MAX_LEVERAGE))
+        feature.sendAction(PerpsCreateOrderAction.SetAutoClose(PerpsAutoCloseDraft(takeProfit = null, stopLoss = BigDecimal("3.50"))))
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
+        scheduler.runCurrent()
+
+        assertEquals(MAX_LEVERAGE_LONG_ESTIMATE, feature.draftLiquidation.value)
+    }
+
+    @Test
+    fun theSheetShowsTheEstimateWhileItsDraftIsPlanned() {
+        val feature = open(side = PerpsOrderSide.LONG)
+        enter(feature, "5")
+        feature.sendAction(PerpsCreateOrderAction.SetLeverage(MAX_LEVERAGE))
+        feature.sendAction(PerpsCreateOrderAction.SetAutoCloseSheetVisible(true))
+        scheduler.runCurrent()
+
+        assertEquals(MAX_LEVERAGE_LONG_ESTIMATE, feature.draftLiquidation.value)
+    }
+
+    @Test
+    fun aMarketWithNothingRememberedStartsFromTheDefaultCappedAtItsMax() {
+        val feature = open(leverage = null)
+
+        assertEquals(litMarket.maxLeverage, feature.leverage.value)
+    }
+
+    @Test
+    fun theFormStartsFromTheLeverageOfTheLastAttemptedOpen() {
+        every { leverageStore.leverage(TestWallet.ID, MARKET_INDEX) } returns 3
+
+        val feature = open(leverage = null)
+
+        assertEquals(3, feature.leverage.value)
+    }
+
+    @Test
+    fun aRememberedLeverageAboveTheMarketMaxIsCapped() {
+        every { leverageStore.leverage(TestWallet.ID, MARKET_INDEX) } returns 25
+
+        val feature = open(leverage = null)
+
+        assertEquals(litMarket.maxLeverage, feature.leverage.value)
+    }
+
+    @Test
+    fun aLeveragePickedOnTheFormWinsOverTheRememberedOne() {
+        every { leverageStore.leverage(TestWallet.ID, MARKET_INDEX) } returns 3
+
+        val feature = open(leverage = 7)
+
+        assertEquals(7, feature.leverage.value)
+    }
+
     private fun market(market: Market, collateral: String = "23.26") {
+        served = market
         val screen = TradingScreen(
             market = market,
             balance = Balance(collateral = collateral),
@@ -492,35 +735,44 @@ class PerpsCreateOrderFeatureTest : BaseUnitTest() {
         every { api.perps.screens.getTradingScreenWithHttpInfo(MARKET_INDEX, TestWallet.ID) } returns Success(screen)
     }
 
-    private fun book(price: String) {
+    private fun book(price: String, updatedAt: OffsetDateTime = OffsetDateTime.now()) {
         val level = OrderBookLevel(price = price, propertySize = "1000")
         every { api.perps.orderbook.getTruncatedOrderBook(any(), any(), any(), any(), any()) } returns TruncatedOrderBook(
-            updatedAt = OffsetDateTime.now(),
+            updatedAt = updatedAt,
             truncated = false,
             bids = listOf(level),
             asks = listOf(level),
         )
     }
 
-    private fun open(): PerpsCreateOrderFeature {
+    private fun open(leverage: Int? = LEVERAGE, side: PerpsOrderSide = PerpsOrderSide.SHORT): PerpsCreateOrderFeature {
         val feature = PerpsCreateOrderFeature(
             marketIndex = MARKET_INDEX,
             symbol = SYMBOL,
-            side = PerpsOrderSide.SHORT,
+            side = side,
             adapter = adapter,
             perpetualRepository = perpetualRepository,
+            leverageStore = leverageStore,
             livePrices = livePrices,
             unifiedAccountRepository = unifiedAccountRepository,
             settingsRepository = settingsRepository,
         )
         scheduler.runCurrent()
-        feature.sendAction(PerpsCreateOrderAction.SetLeverage(LEVERAGE))
-        scheduler.runCurrent()
+        if (leverage != null) {
+            feature.sendAction(PerpsCreateOrderAction.SetLeverage(leverage))
+            scheduler.runCurrent()
+        }
         return feature
     }
 
     private fun enter(feature: PerpsCreateOrderFeature, amount: String) {
         feature.sendAction(PerpsCreateOrderAction.SetAmount(amount))
+        scheduler.runCurrent()
+    }
+
+    private fun sheet(feature: PerpsCreateOrderFeature, visible: Boolean) {
+        feature.sendAction(PerpsCreateOrderAction.SetAutoCloseSheetVisible(visible))
+        scheduler.advanceTimeBy(DRAFT_DEBOUNCE_MS + 1)
         scheduler.runCurrent()
     }
 
@@ -548,8 +800,12 @@ class PerpsCreateOrderFeatureTest : BaseUnitTest() {
         const val MARKET_INDEX = 120
         const val SYMBOL = "LIT"
         const val LEVERAGE = 5
+        const val MAX_LEVERAGE = 10
+        val MAX_LEVERAGE_LONG_ESTIMATE = BigDecimal("3.42948")
+        val RAISED_LIMIT_LONG_ESTIMATE = BigDecimal("3.31579")
         const val DRAFT_DEBOUNCE_MS = 500L
         const val TICK_MS = 400L
+        const val QUIET_BOOK_MINUTES = 20L
 
         val litMarket = Market(
             marketIndex = MARKET_INDEX,
@@ -562,6 +818,7 @@ class PerpsCreateOrderFeatureTest : BaseUnitTest() {
             minSizeBase = "0.1",
             minSizeQuote = "1",
             maxLeverage = 10,
+            makerFeePct = "0",
             takerFeePct = "0.05",
             initialMarginFraction = 1000,
             maintenanceMarginFraction = 500,

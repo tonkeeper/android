@@ -6,6 +6,7 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.tonapps.core.helper.EnvironmentHelper
 import com.tonapps.extensions.areNotificationsEnabled
+import com.tonapps.network.isVpnActive
 import com.tonapps.portfolio.screens.wallet.PushStatusProvider
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeper.extensions.isDarkMode
@@ -35,7 +36,6 @@ class Environment(
         val byIPAddress: String? = null,
         val byLocale: String? = null,
         val timeZone: String? = null,
-        val isUsingVpn: Boolean = false,
         val debug: String? = null,
     ) {
 
@@ -69,10 +69,6 @@ class Environment(
     val timezone: String?
         get() = _countryDataFlow.value.timeZone
 
-    val vpnActive: Boolean
-        get() = _countryDataFlow.value.isUsingVpn
-
-
     init {
         setDebugCountry(DevSettings.country)
 
@@ -81,7 +77,6 @@ class Environment(
             byNetwork = DeviceCountry.fromNetwork(context)?.uppercase(),
             byLocale = DeviceCountry.fromLocale()?.uppercase(),
             timeZone = DeviceCountry.timeZone(),
-            isUsingVpn = DeviceCountry.isUsingVpn(context)
         )
     }
 
@@ -93,7 +88,7 @@ class Environment(
                 "dark" -> appColorSchemeDark()
                 "light" -> appColorSchemeLight()
                 else -> if (context.isDarkMode) {
-                    appColorSchemeBlue()
+                    appColorSchemeDark()
                 } else {
                     appColorSchemeLight()
                 }
@@ -150,7 +145,7 @@ class Environment(
     }
 
     override fun isVpnActive(): Boolean {
-        return vpnActive
+        return context.isVpnActive()
     }
 
     override fun locale(): String {

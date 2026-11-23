@@ -3,6 +3,7 @@ package com.tonapps.tonkeeper.manager.tonconnect
 import android.net.Uri
 import android.os.Parcelable
 import androidx.core.net.toUri
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.security.Security
 import com.tonapps.security.hex
 import kotlinx.parcelize.Parcelize
@@ -15,7 +16,8 @@ data class TonConnect(
     val fromQR: Boolean,
     val jsInject: Boolean,
     val origin: Uri?,
-    val fromPackageName: String?
+    val fromPackageName: String?,
+    val utm: UtmParameters = UtmParameters.Empty,
 ): Parcelable {
 
     val proofPayload: String?
@@ -23,6 +25,10 @@ data class TonConnect(
 
     val manifestUrl: String
         get() = request.manifestUrl
+
+    fun tonProofDomain(manifestHost: String?): String? {
+        return tonProofDomain(jsInject, origin?.host, manifestHost)
+    }
 
     companion object {
 
@@ -88,8 +94,17 @@ data class TonConnect(
                 fromQR = fromQR,
                 jsInject = false,
                 origin = refSource,
-                fromPackageName = fromPackageName
+                fromPackageName = fromPackageName,
+                utm = UtmParameters.fromLink(uri.toString()),
             )
         }
+    }
+}
+
+internal fun tonProofDomain(jsInject: Boolean, pageHost: String?, manifestHost: String?): String? {
+    return if (jsInject) {
+        pageHost?.takeIf { it.isNotEmpty() }
+    } else {
+        manifestHost
     }
 }

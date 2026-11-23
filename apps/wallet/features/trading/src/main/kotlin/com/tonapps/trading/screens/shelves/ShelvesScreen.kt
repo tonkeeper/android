@@ -49,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -116,7 +117,10 @@ import ui.painterResource
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.generated.Events.MysteryRaffle.MysteryRaffleSource
 import com.tonapps.core.components.BannersViewer
+import com.tonapps.core.deeplink.DeepLinkBuilder
 import com.tonapps.core.deeplink.withRaffleSource
+import com.tonapps.core.loyalty.LOYALTY_DEEPLINK
+import com.tonapps.wallet.data.loyalty.LoyaltyEntry
 import com.tonapps.wallet.api.entity.BannerEntity
 import ui.preview.ThemedPreview
 import ui.theme.Dimens
@@ -144,8 +148,11 @@ fun ShelvesScreen(
     val isRefreshing by feature.isRefreshing.collectAsStateWorkaround()
     val selections = feature.selections
     val banners by feature.raffleBanners.collectAsStateWorkaround()
+    val raffleCells by feature.raffleCells.collectAsStateWorkaround()
     val isPerpsVisible by feature.isPerpsVisible.collectAsStateWorkaround()
     val perpsShelfMarkets by feature.perpsShelfMarkets.collectAsStateWorkaround()
+    val loyalty by feature.loyalty.collectAsStateWorkaround()
+    val hiddenBalances by feature.hiddenBalances.collectAsStateWorkaround()
 
     val raffleEvents = AnalyticsHelper.Default.events.mysteryRaffle
     LaunchedEffect(banners.isNotEmpty()) {
@@ -164,6 +171,11 @@ fun ShelvesScreen(
         onNetworkSelected = feature::onNetworkSelected,
         onTabSelected = feature::onTabSelected,
         onSelectShelf = feature::selectShelf,
+        raffleCells = raffleCells,
+        onRaffleCellClick = { cell -> onOpenLink(DeepLinkBuilder.raffle(cell.raffleId)) },
+        loyalty = loyalty,
+        hiddenBalances = hiddenBalances,
+        onOpenLoyalty = { onOpenLink(LOYALTY_DEEPLINK) },
         banners = banners,
         onBannerClick = { payload ->
             raffleEvents.raffleBannerClick(MysteryRaffleSource.Trade)
@@ -193,7 +205,9 @@ fun ShelvesScreen(
 }
 
 private enum class ShelvesHeader(val key: String) {
+    RaffleCells("raffle_cells"),
     Banners("raffle_banner"),
+    Loyalty("loyalty"),
     PerpsTiles("perps_tiles"),
     PerpsTrending("perps_trending"),
     Favorites("favorite_tokens"),
@@ -212,6 +226,11 @@ private fun ShelvesContent(
     onTabSelected: (String, MarketListKey) -> Unit,
     onSelectShelf: (String, String?, MarketListKey) -> Unit,
     onRefresh: () -> Unit,
+    raffleCells: List<ShelvesRaffleCellItem> = emptyList(),
+    onRaffleCellClick: (ShelvesRaffleCellItem) -> Unit = {},
+    loyalty: LoyaltyEntry = LoyaltyEntry.Hidden,
+    hiddenBalances: Boolean = false,
+    onOpenLoyalty: () -> Unit = {},
     banners: List<BannerEntity> = emptyList(),
     onBannerClick: (String) -> Unit = {},
     onHideBanner: (BannerEntity) -> Unit = {},
@@ -287,6 +306,23 @@ private fun ShelvesContent(
                 hadFavorites = hasFavorites
             }
 
+            var wasAtTopWithoutRaffleCells by remember { mutableStateOf(true) }
+            var hadRaffleCells by remember { mutableStateOf(raffleCells.isNotEmpty()) }
+
+            LaunchedEffect(isAtTop, raffleCells.isEmpty()) {
+                if (raffleCells.isEmpty()) {
+                    wasAtTopWithoutRaffleCells = isAtTop
+                }
+            }
+
+            LaunchedEffect(raffleCells.isNotEmpty()) {
+                val hasRaffleCells = raffleCells.isNotEmpty()
+                if (hasRaffleCells && !hadRaffleCells && wasAtTopWithoutRaffleCells) {
+                    listState.scrollToItem(0)
+                }
+                hadRaffleCells = hasRaffleCells
+            }
+
             var wasAtTopWithoutBanners by remember { mutableStateOf(true) }
             var hadBanners by remember { mutableStateOf(banners.isNotEmpty()) }
 
@@ -302,6 +338,22 @@ private fun ShelvesContent(
                     listState.scrollToItem(0)
                 }
                 hadBanners = hasBanners
+            }
+
+            var wasAtTopWithoutLoyalty by remember { mutableStateOf(true) }
+            var hadLoyalty by remember { mutableStateOf(loyalty.showsSection) }
+
+            LaunchedEffect(isAtTop, loyalty.showsSection) {
+                if (!loyalty.showsSection) {
+                    wasAtTopWithoutLoyalty = isAtTop
+                }
+            }
+
+            LaunchedEffect(loyalty.showsSection) {
+                if (loyalty.showsSection && !hadLoyalty && wasAtTopWithoutLoyalty) {
+                    listState.scrollToItem(0)
+                }
+                hadLoyalty = loyalty.showsSection
             }
 
             var wasAtTopWithoutPerps by remember { mutableStateOf(true) }
@@ -327,14 +379,22 @@ private fun ShelvesContent(
             }
 
             val headers = remember(
+                raffleCells.isNotEmpty(),
                 banners.isNotEmpty(),
+                loyalty.showsSection,
                 isPerpsVisible,
                 perpsShelfMarkets.isNotEmpty(),
                 favoriteAssets.isNotEmpty(),
             ) {
                 buildList {
+                    if (raffleCells.isNotEmpty()) {
+                        add(ShelvesHeader.RaffleCells)
+                    }
                     if (banners.isNotEmpty()) {
                         add(ShelvesHeader.Banners)
+                    }
+                    if (loyalty.showsSection) {
+                        add(ShelvesHeader.Loyalty)
                     }
                     if (isPerpsVisible) {
                         add(ShelvesHeader.PerpsTiles)
@@ -381,12 +441,29 @@ private fun ShelvesContent(
                     contentType = { header -> header.key },
                 ) { header ->
                     when (header) {
+                        ShelvesHeader.RaffleCells -> Column {
+                            raffleCells.forEach { cell ->
+                                key(cell.raffleId) {
+                                    ShelvesRaffleCell(
+                                        item = cell,
+                                        onClick = { onRaffleCellClick(cell) },
+                                    )
+                                }
+                            }
+                        }
+
                         ShelvesHeader.Banners -> BannersViewer(
                             banners = banners,
                             analytics = null,
                             onClick = { button -> onBannerClick(button.payload) },
                             onHide = onHideBanner,
                             modifier = Modifier.padding(top = 8.dp),
+                        )
+
+                        ShelvesHeader.Loyalty -> ShelvesLoyaltyCell(
+                            ohms = loyalty.ohms,
+                            hiddenBalance = hiddenBalances,
+                            onClick = onOpenLoyalty,
                         )
 
                         ShelvesHeader.PerpsTiles -> PerpsCategoryTiles(

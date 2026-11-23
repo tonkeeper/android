@@ -19,7 +19,7 @@ data class OnrampPaymentMethod(
     @Contextual @SerialName(value = "type")
     val type: ExchangePaymentMethodType,
 
-    /* Display name (e.g. \"Card\", \"Apple Pay\") */
+    /* Display name (e.g. \"Card\", \"Apple Pay\"), localized for generic types such as `card` */
     @SerialName(value = "name")
     val name: String,
 
@@ -27,7 +27,19 @@ data class OnrampPaymentMethod(
     @SerialName(value = "image")
     val image: String,
     @SerialName(value = "providers")
-    val providers: List<OnrampProvider>
+    val providers: List<OnrampProvider>,
+
+    /* Localized subtitle, e.g. the settlement speed \"Instant\", \"1–3 days\", or \"Buy from other users in Walt\" for `p2p`. Absent when there is none. */
+    @SerialName(value = "subtitle")
+    val subtitle: String? = null,
+
+    /* Localized badge text, e.g. \"Recommended\", \"For beginners\"; the badge is set by our config. Absent when there is none. */
+    @SerialName(value = "badge")
+    val badge: String? = null,
+
+    /* Amount to prefill, keyed by fiat (ISO 4217, as in `providers[].fiat`). Sent only to an install (`F`; `X-Wallet-ID` is not used) with a completed purchase: the next step of the ladder 20, 50, 100, 200, 300, 500, 1000, 2000, 3000 USD above its largest purchase (past 3000 the next multiple of 5000 USD), converted into the fiat, rounded up to a round number, and kept within this method's limits for it. A fiat that is absent keeps the client's own default.  */
+    @SerialName(value = "default_amounts")
+    val defaultAmounts: Map<String, String>? = null
 ) {
 }
 

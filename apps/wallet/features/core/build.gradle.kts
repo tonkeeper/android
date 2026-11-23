@@ -23,6 +23,7 @@ dependencies {
     implementation(projects.apps.wallet.data.collectibles)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.rn)
+    implementation(projects.apps.wallet.data.passcode)
     implementation(projects.apps.wallet.data.multichain.wallet) // TODO extract models and remove this
     implementation(projects.apps.wallet.data.multichain.exchange)
 

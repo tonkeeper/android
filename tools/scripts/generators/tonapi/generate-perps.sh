@@ -8,4 +8,6 @@ bash "$SCRIPT_DIR/generate-tonapi.sh" \
   "$SPEC" \
   "perpsapi" \
   "tonapi:perps" \
-  "true"
+  "true" \
+  "" \
+  "$(dirname "$SPEC")/filters/perps.yaml"

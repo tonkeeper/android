@@ -47,7 +47,6 @@ dependencies {
     implementation(libs.chainkit.models)
     implementation(libs.chainkit.chain.ethereum)
     implementation(libs.chainkit.net.json)
-    implementation(libs.walletcore)
     implementation(libs.bcprovjdk)
 
     implementation(projects.apps.wallet.api)
@@ -59,6 +58,7 @@ dependencies {
     implementation(projects.apps.wallet.features.confirm)
     implementation(projects.apps.wallet.localization)
     implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.loyalty)
     implementation(projects.apps.wallet.data.multichain.wallet)
     implementation(projects.apps.wallet.data.passcode)
     implementation(projects.apps.wallet.data.settings)
@@ -74,10 +74,12 @@ dependencies {
     implementation(projects.ui.uikit.core)
 
     implementation(projects.lib.blockchain)
+    implementation(projects.lib.time)
     implementation(projects.lib.bus)
     implementation(projects.lib.security)
     implementation(projects.lib.extensions)
     implementation(projects.lib.log)
+    implementation(projects.lib.network)
 
     // Host tests (src/test) — junit, mockk and coroutines-test come with the testing module.
     testImplementation(testFixtures(projects.apps.wallet.testing))

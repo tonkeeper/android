@@ -64,6 +64,8 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
     private var isChartReady = false
     private var seriesCounter = 0
     private var pluginCounter = 0
+    private var paintRequest = 0
+    private var pendingPaint: (() -> Unit)? = null
     private var downX = 0f
     private var downY = 0f
     private var isCrosshairActive = false
@@ -140,11 +142,19 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
         submit("window.AndroidChart.setVisibleLogicalRange($from, $to);")
     }
 
+    /** Reports the latest requested frame after the queued chart updates have painted. */
+    fun afterNextPaint(onPaint: () -> Unit) {
+        paintRequest += 1
+        pendingPaint = onPaint
+        submit("window.AndroidChart.afterNextPaint($paintRequest);")
+    }
+
     /** Releases the WebView; the view is unusable afterwards. */
     fun destroy() {
         onCrosshairMove = null
         onVisibleLogicalRangeChange = null
         onChartError = null
+        pendingPaint = null
         pendingScripts.clear()
         removeView(webView)
         webView.destroy()
@@ -229,6 +239,14 @@ class LightweightChartView(context: Context) : FrameLayout(context) {
             }
 
             "crosshairMove" -> dispatchCrosshairMove(message)
+
+            "paint" -> {
+                if (message["request"]?.jsonPrimitive?.intOrNull == paintRequest) {
+                    val callback = pendingPaint
+                    pendingPaint = null
+                    callback?.invoke()
+                }
+            }
 
             "visibleLogicalRange" -> {
                 val from = message["from"]?.jsonPrimitive?.doubleOrNull ?: return

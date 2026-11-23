@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
@@ -38,6 +37,7 @@ fun SlippageSelector(
     selectedBps: Int?,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val currentBps = selectedBps ?: slippage.defaultBps
@@ -45,17 +45,19 @@ fun SlippageSelector(
 
     Box {
         Row(
-            modifier = modifier.clickable { expanded = true },
+            modifier = modifier.clickable(enabled = enabled) { expanded = true },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             MoonItemTitle(text = currentLabel)
 
-            Spacer(Modifier.width(4.dp))
+            if (enabled) {
+                Spacer(Modifier.width(4.dp))
 
-            MoonItemIcon(
-                painter = painterResource(UIKitIcon.ic_switch_16),
-                color = UIKit.colorScheme.icon.secondary,
-            )
+                MoonItemIcon(
+                    painter = painterResource(UIKitIcon.ic_switch_16),
+                    color = UIKit.colorScheme.icon.secondary,
+                )
+            }
         }
 
         DropdownMenu(
@@ -99,7 +101,7 @@ private fun SlippageItemCell(
         )
 
         MoonItemIcon(
-            modifier = Modifier.alpha(if (isChecked) 1f else 0f),
+            modifier = Modifier.alpha(1f.takeIf { isChecked } ?: 0f),
             painter = painterResource(UIKitIcon.ic_done_16),
             color = UIKit.colorScheme.accent.blue,
         )

@@ -7,6 +7,7 @@ import com.tonapps.bus.generated.Events.Banner.BannerFrom
 import com.tonapps.bus.generated.Events.Banner.BannerWalletMode
 import com.tonapps.core.components.BannerAnalytics
 import com.tonapps.core.components.BannersViewer
+import com.tonapps.core.deeplink.withPerpsBannerEntry
 import com.tonapps.tonkeeper.Environment
 import com.tonapps.tonkeeper.ui.screen.wallet.main.list.Item
 import com.tonapps.tonkeeperx.R
@@ -33,7 +34,7 @@ class BannersHolder(parent: ViewGroup): Holder<Item.Banners>(parent, R.layout.vi
                     banners = item.banners,
                     analytics = LegacyWalletBannerAnalytics,
                     onClick = { button ->
-                        navigation?.openURL(button.payload)
+                        navigation?.openURL(button.payload.withPerpsBannerEntry())
                     },
                     onHide = { banner ->
                         bannerRepository.hideBanner(item.walletId, banner.id)

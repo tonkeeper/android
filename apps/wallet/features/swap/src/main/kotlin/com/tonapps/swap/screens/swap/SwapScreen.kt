@@ -3,12 +3,12 @@ package com.tonapps.swap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -44,9 +46,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -62,6 +68,7 @@ import androidx.lifecycle.flowWithLifecycle
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events.BatteryNative.BatteryNativeFrom
 import com.tonapps.bus.generated.Events.MysteryRaffle.MysteryRaffleSource
 import com.tonapps.bus.generated.Events.SwapsNative.SwapsNativeType
 import com.tonapps.bus.generated.Events.SwapsNative.SwapsNativeWalletMode
@@ -73,17 +80,26 @@ import com.tonapps.core.LocalIsTopFragment
 import com.tonapps.core.components.assetImageUrl
 import com.tonapps.core.components.imageResourceUrl
 import com.tonapps.core.components.tokenChainImageUrl
+import com.tonapps.core.components.withLocaleDecimalSeparator
+import com.tonapps.deposit.multicoin.screens.confirm.PriceImpact
+import com.tonapps.deposit.multicoin.screens.confirm.PriceImpactSeverity
+import com.tonapps.deposit.multicoin.screens.confirm.ValueDifferenceInfoSheet
 import com.tonapps.swap.screens.swap.AmountInputSide
 import com.tonapps.swap.screens.swap.SwapAction
+import com.tonapps.swap.screens.swap.SwapBottomBar
 import com.tonapps.swap.screens.swap.SwapEvent
 import com.tonapps.swap.screens.swap.SwapFeature
 import com.tonapps.swap.screens.swap.SwapInitState
+import com.tonapps.swap.screens.swap.SwapFeeLineRow
+import com.tonapps.swap.screens.swap.SwapSendPhase
+import com.tonapps.swap.screens.swap.onSwapClick
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
 import com.tonapps.wallet.localization.Localization
 import com.tonapps.wallet.localization.RStr
 import com.wallet.crypto.trustapp.common.ui.components.MoonEditText
+import com.wallet.crypto.trustapp.common.ui.components.amountFieldScroll
 import kotlinx.coroutines.launch
 import ui.components.moon.MoonBadgeButton
 import ui.components.moon.MoonCircleIcon
@@ -111,7 +127,9 @@ import ui.theme.modifiers.shimmer
 
 import ui.theme.modifiers.simmerOn
 import ui.utils.uppercased
+import uikit.widget.ToastFeedback
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SwapScreen(
     feature: SwapFeature,
@@ -119,8 +137,9 @@ fun SwapScreen(
     onSelectSendAsset: () -> Unit = {},
     onSelectReceiveAsset: () -> Unit = {},
     onContinue: (ConfirmRequest) -> Unit = {},
-    onSwapCompleted: () -> Unit = {},
+    onSwapCompleted: (tracked: Boolean) -> Unit = {},
     onOpenRaffle: (String) -> Unit = {},
+    onOpenBattery: (walletId: String, from: BatteryNativeFrom) -> Unit = { _, _ -> },
 ) {
     val initState by feature.initState.collectAsState()
     val sellAsset by feature.sellAsset.collectAsState()
@@ -131,6 +150,8 @@ fun SwapScreen(
     val buyBalance by feature.buyBalance.collectAsState()
     val amountInput by feature.amountInput.collectAsState()
     val quote by feature.quote.collectAsState()
+    val shownQuote by feature.shownQuote.collectAsState()
+    val receiveImpact by feature.receiveImpact.collectAsState()
     val isLoading by feature.isLoading.collectAsState()
     val quoteTimer by feature.quoteTimer.collectAsState()
     val continueEnabled by feature.continueEnabled.collectAsState()
@@ -143,6 +164,12 @@ fun SwapScreen(
     // val selectedSlippageBps by feature.selectedSlippageBps.collectAsState()
     val zeroFeeRaffleId by feature.zeroFeeRaffleId.collectAsState()
     val isPairLocked by feature.isPairLocked.collectAsState()
+    val send by feature.send.collectAsState()
+    val feeLine by feature.feeLine.collectAsState()
+    val swapButton by feature.swapButton.collectAsState()
+    val notice by feature.notice.collectAsState()
+    val sendPhase = send?.phase
+    val frozen = sendPhase == SwapSendPhase.Working || sendPhase == SwapSendPhase.Done
     val inputInFiat = amountInput.inFiat
     val raffleEvents = AnalyticsHelper.Default.events.mysteryRaffle
     LaunchedEffect(zeroFeeRaffleId != null) {
@@ -180,7 +207,7 @@ fun SwapScreen(
     val toastScope = rememberCoroutineScope()
     val toastIconColor = UIKit.colorScheme.accent.orange
     val context = LocalContext.current
-    fun showToast(text: String) {
+    fun showToast(text: String, feedback: ToastFeedback = ToastFeedback.Neutral) {
         if (toastHost.currentData?.text == text) {
             return
         }
@@ -190,6 +217,7 @@ fun SwapScreen(
                 text = text,
                 icon = UIKitIcon.ic_exclamationmark_triangle_16,
                 iconColor = toastIconColor,
+                feedback = feedback,
             )
         }
     }
@@ -203,33 +231,42 @@ fun SwapScreen(
                     onContinue(event.request)
                 }
 
-                SwapEvent.Completed -> onSwapCompleted()
+                is SwapEvent.Completed -> onSwapCompleted(event.tracked)
 
-                is SwapEvent.ShowError -> showToast(event.message)
+                is SwapEvent.ShowError -> showToast(event.message, ToastFeedback.Failure)
 
                 is SwapEvent.MaxBelowReserve -> showToast(
-                    context.getString(Localization.swap_error_max_below_reserve, event.reserve)
+                    context.getString(Localization.swap_error_max_below_reserve, event.reserve, event.symbol)
                 )
+
+                is SwapEvent.MaxBelowFee -> showToast(
+                    context.getString(Localization.swap_fee_not_enough, event.symbol)
+                )
+
+                SwapEvent.Offline -> showToast(context.getString(Localization.no_internet_connection))
             }
         }
     }
 
     val buyInFiat = inputInFiat && buyAccount?.rate != null
     val inputSide = amountInput.side
+    var impactInfoShown by remember { mutableStateOf(false) }
+    var keyboardWasShown by remember { mutableStateOf(false) }
+    val imeVisible = WindowInsets.isImeVisible
 
     val sellConverted = formatConvertedAmount(account = sellAccount, value = sellValidatedAmount, inFiat = inputInFiat)
     val buyConverted = formatConvertedAmount(account = buyAccount, value = buyValidatedAmount, inFiat = buyInFiat)
     val sellFieldAmount = when {
         inputSide == AmountInputSide.Sell -> amountInput.text
         inputInFiat -> formatFiatFieldText(account = sellAccount, value = sellValidatedAmount)
-        else -> quote?.sellAmount.orEmpty()
+        else -> shownQuote?.sellAmount.orEmpty()
     }
     val buyFieldAmount = when {
         inputSide == AmountInputSide.Buy -> amountInput.text
         buyInFiat -> formatFiatFieldText(account = buyAccount, value = buyValidatedAmount)
-        else -> quote?.buyAmount.orEmpty()
+        else -> shownQuote?.buyAmount.orEmpty()
     }
-    val shownQuoteErrorRes = quoteErrorMessageRes.takeIf { !isLoading }
+    val shownQuoteErrorRes = quoteErrorMessageRes.takeIf { !isLoading && shownQuote == null }
     val noQuoteText = stringResource(Localization.swap_no_quote).takeIf { shownQuoteErrorRes != null }
     val sellQuoteMissing = shownQuoteErrorRes != null && inputSide == AmountInputSide.Buy
     val buyQuoteMissing = shownQuoteErrorRes != null && inputSide == AmountInputSide.Sell
@@ -272,90 +309,168 @@ fun SwapScreen(
                 )
 
                 initState is SwapInitState.Ready && sell != null && buy != null -> {
+                    val onSwap: () -> Unit = {
+                        keyboardController?.hide()
+                        feature.onSwapClick()
+                    }
+
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .verticalScroll(rememberScrollState()),
+                            .modifyIf {
+                                pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onTap = {
+                                            focusManager.clearFocus()
+                                            keyboardController?.hide()
+                                        },
+                                    )
+                                }.takeIf { feature.sendsInPlace }
+                            },
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Box {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                SwapContainer(
-                                    title = stringResource(RStr.send),
-                                    asset = sell,
-                                    balance = sellBalance,
-                                    amount = sellFieldAmount,
-                                    placeholder = noQuoteText.takeIf { sellQuoteMissing },
-                                    currencyPrefix = sellAccount.currencySymbol().takeIf { inputInFiat && !sellQuoteMissing },
-                                    convertedLabel = sellConverted,
-                                    isShimmering = isLoading && inputSide == AmountInputSide.Buy,
-                                    isActive = inputSide == AmountInputSide.Sell,
-                                    autoFocus = true,
-                                    insufficientFunds = insufficientFunds,
-                                    onAmountChanged = { feature.sendAction(SwapAction.Amount.SetSell(it)) },
-                                    onMaxClicked = { feature.sendAction(SwapAction.Amount.Max) },
-                                    onAssetClicked = onSelectSendAsset.takeUnless { isPairLocked },
-                                    onToggleCurrency = { feature.sendAction(SwapAction.Amount.ToggleCurrency) },
-                                )
+                        Column(
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    SwapContainer(
+                                        title = when (feature.sendsInPlace) {
+                                            true -> stringResource(Localization.swap_details_you_send)
+                                            false -> stringResource(RStr.send)
+                                        },
+                                        asset = sell,
+                                        balance = sellBalance,
+                                        amount = sellFieldAmount,
+                                        placeholder = noQuoteText.takeIf { sellQuoteMissing },
+                                        currencyPrefix = sellAccount.currencySymbol().takeIf { inputInFiat && !sellQuoteMissing },
+                                        convertedLabel = sellConverted,
+                                        isShimmering = isLoading && inputSide == AmountInputSide.Buy,
+                                        isActive = inputSide == AmountInputSide.Sell,
+                                        autoFocus = true,
+                                        isReadOnly = frozen,
+                                        insufficientFunds = insufficientFunds,
+                                        onAmountChanged = { feature.sendAction(SwapAction.Amount.SetSell(it)) },
+                                        onMaxClicked = {
+                                            if (!frozen) {
+                                                feature.sendAction(SwapAction.Amount.Max)
+                                            }
+                                        },
+                                        onAssetClicked = {
+                                            if (!frozen) {
+                                                onSelectSendAsset()
+                                            }
+                                        }.takeUnless { isPairLocked },
+                                        onToggleCurrency = {
+                                            if (!frozen) {
+                                                feature.sendAction(SwapAction.Amount.ToggleCurrency)
+                                            }
+                                        },
+                                    )
 
-                                SwapContainer(
-                                    title = stringResource(RStr.receive),
-                                    asset = buy,
-                                    balance = buyBalance,
-                                    amount = buyFieldAmount,
-                                    placeholder = noQuoteText.takeIf { buyQuoteMissing },
-                                    currencyPrefix = buyAccount.currencySymbol().takeIf { buyInFiat && !buyQuoteMissing },
-                                    convertedLabel = buyConverted,
-                                    isShimmering = isLoading && inputSide == AmountInputSide.Sell,
-                                    isActive = inputSide == AmountInputSide.Buy,
-                                    isReadOnly = !feature.isReceiveAmountEditable,
-                                    onAmountChanged = { feature.sendAction(SwapAction.Amount.SetBuy(it)) },
-                                    onAssetClicked = onSelectReceiveAsset.takeUnless { isPairLocked },
+                                    SwapContainer(
+                                        title = when (feature.sendsInPlace) {
+                                            true -> stringResource(Localization.swap_details_you_receive)
+                                            false -> stringResource(RStr.receive)
+                                        },
+                                        asset = buy,
+                                        balance = buyBalance,
+                                        amount = buyFieldAmount,
+                                        placeholder = noQuoteText.takeIf { buyQuoteMissing },
+                                        currencyPrefix = buyAccount.currencySymbol().takeIf { buyInFiat && !buyQuoteMissing },
+                                        convertedLabel = buyConverted,
+                                        impact = receiveImpact.takeIf { feature.sendsInPlace },
+                                        onImpactClick = {
+                                            keyboardWasShown = imeVisible
+                                            keyboardController?.hide()
+                                            impactInfoShown = true
+                                        },
+                                        isShimmering = isLoading && inputSide == AmountInputSide.Sell,
+                                        isActive = inputSide == AmountInputSide.Buy,
+                                        isReadOnly = !feature.isReceiveAmountEditable || frozen,
+                                        onAmountChanged = { feature.sendAction(SwapAction.Amount.SetBuy(it)) },
+                                        onAssetClicked = {
+                                            if (!frozen) {
+                                                onSelectReceiveAsset()
+                                            }
+                                        }.takeUnless { isPairLocked },
+                                    )
+                                }
+
+                                MoonCircleIcon(
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .clickable(enabled = !frozen, onClick = { feature.sendAction(SwapAction.Asset.Swap) }),
+                                    painter = painterResource(UIKitIcon.ic_swap_vertical_16),
+                                    size = 40.dp,
+                                    color = UIKit.colorScheme.buttonTertiary.primaryBackground,
+                                    tint = UIKit.colorScheme.buttonTertiary.primaryForeground
                                 )
                             }
 
-                            MoonCircleIcon(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .clickable(onClick = { feature.sendAction(SwapAction.Asset.Swap) }),
-                                painter = painterResource(UIKitIcon.ic_swap_vertical_16),
-                                size = 40.dp,
-                                color = UIKit.colorScheme.buttonTertiary.primaryBackground,
-                                tint = UIKit.colorScheme.buttonTertiary.primaryForeground
-                            )
+                            if (!feature.sendsInPlace && shownQuoteErrorRes == null) {
+                                Spacer(Modifier.height(14.dp))
+
+                                Row(
+                                    Modifier.heightIn(min = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    if (!isLoading && quote != null) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            progress = { quoteTimer ?: 1f },
+                                            trackColor = UIKit.colorScheme.icon.secondary,
+                                            color = UIKit.colorScheme.icon.primary,
+                                            gapSize = 0.dp,
+                                        )
+
+                                        MoonItemSubtitle(
+                                            text = quote?.rateLabel ?: ""
+                                        )
+                                    }
+                                }
+                            }
                         }
 
-                        Spacer(Modifier.height(14.dp))
+                        // The error stays above the keyboard, so it is outside the scroll; it takes room
+                        // only while shown, or the cards would be cut off above an empty row.
+                        if (feature.sendsInPlace) {
+                            Spacer(Modifier.height(14.dp))
 
-                        Row(
-                            Modifier.heightIn(min = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (!isLoading && quote != null) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    progress = { quoteTimer ?: 1f },
-                                    trackColor = UIKit.colorScheme.icon.secondary,
-                                    color = UIKit.colorScheme.icon.primary,
-                                    gapSize = 0.dp,
-                                )
-
-                                MoonItemSubtitle(
-                                    text = quote?.rateLabel ?: ""
-                                )
-                            } else if (shownQuoteErrorRes != null) {
-                                MoonItemSubtitle(
-                                    modifier = Modifier.padding(horizontal = 32.dp),
-                                    text = stringResource(shownQuoteErrorRes),
-                                    textAlign = TextAlign.Center,
-                                    maxLines = Int.MAX_VALUE,
-                                    color = UIKit.colorScheme.accent.red,
+                            Row(
+                                Modifier.heightIn(min = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                SwapFeeLineRow(
+                                    line = feeLine,
+                                    onDetails = {
+                                        keyboardController?.hide()
+                                        feature.sendAction(SwapAction.FeeRowTapped)
+                                    },
+                                    onPromo = {
+                                        sellAccount?.data?.walletId?.let { onOpenBattery(it, BatteryNativeFrom.BatteryBanner) }
+                                    },
+                                    onPromoShown = { feature.sendAction(SwapAction.PromoShown) },
                                 )
                             }
+                        } else if (shownQuoteErrorRes != null) {
+                            Spacer(Modifier.height(14.dp))
+
+                            MoonItemSubtitle(
+                                modifier = Modifier.padding(horizontal = 32.dp),
+                                text = stringResource(shownQuoteErrorRes),
+                                textAlign = TextAlign.Center,
+                                maxLines = Int.MAX_VALUE,
+                                color = UIKit.colorScheme.accent.red,
+                            )
                         }
 
                         // TODO bring the slippage selector back to this screen. The quote still uses
@@ -383,20 +498,21 @@ fun SwapScreen(
                         }*/
                     }
 
-                    MoonBottomButtonCell(
-                        text = stringResource(Localization.continue_action),
-                        enabled = continueEnabled,
-                        onClick = {
-                            swapEvents.swapClick(
-                                type = SwapsNativeType.Native,
-                                walletMode = SwapsNativeWalletMode.Multi,
-                                assetFrom = sell.id,
-                                assetTo = buy.id,
-                                isMax = amountInput.isMax,
-                            )
-                            feature.sendAction(SwapAction.Continue)
-                        },
-                    )
+                    if (feature.sendsInPlace) {
+                        SwapBottomBar(
+                            notice = notice,
+                            button = swapButton,
+                            presetsEnabled = !frozen && sellBalance != null,
+                            onPreset = { feature.sendAction(SwapAction.Amount.Percent(it)) },
+                            onSwap = onSwap,
+                        )
+                    } else {
+                        MoonBottomButtonCell(
+                            text = stringResource(Localization.continue_action),
+                            enabled = continueEnabled,
+                            onClick = feature::onSwapClick,
+                        )
+                    }
                 }
 
                 else -> SwapScreenShimmer()
@@ -404,6 +520,17 @@ fun SwapScreen(
         }
 
         MoonToastHost(toastHost)
+    }
+
+    if (impactInfoShown) {
+        ValueDifferenceInfoSheet(
+            onClose = {
+                impactInfoShown = false
+                if (keyboardWasShown) {
+                    keyboardController?.show()
+                }
+            },
+        )
     }
 }
 
@@ -417,6 +544,8 @@ private fun SwapContainer(
     convertedLabel: String?,
     isShimmering: Boolean,
     isActive: Boolean,
+    impact: PriceImpact? = null,
+    onImpactClick: () -> Unit = {},
     autoFocus: Boolean = false,
     isReadOnly: Boolean = false,
     insufficientFunds: Boolean = false,
@@ -436,6 +565,8 @@ private fun SwapContainer(
         currencyPrefix = currencyPrefix,
         placeholder = placeholder,
         convertedLabel = convertedLabel,
+        impact = impact,
+        onImpactClick = onImpactClick,
         isShimmering = isShimmering,
         isActive = isActive,
         autoFocus = autoFocus,
@@ -474,7 +605,7 @@ private fun formatFiatFieldText(
     val rate = account?.rate ?: return ""
     val amount = value ?: return ""
     return remember(amount, rate) {
-        amount.toDisplayUnit().toFiatAmount(rate.value)
+        amount.toDisplayUnit().toFiatAmount(rate.value).withLocaleDecimalSeparator()
     }
 }
 
@@ -492,6 +623,8 @@ private fun SwapContainer(
     amount: String,
     currencyPrefix: String? = null,
     convertedLabel: String? = null,
+    impact: PriceImpact? = null,
+    onImpactClick: () -> Unit = {},
     isShimmering: Boolean = false,
     isActive: Boolean = true,
     autoFocus: Boolean = false,
@@ -558,9 +691,7 @@ private fun SwapContainer(
                     modifier = Modifier
                         .focusRequester(focusRequester)
                         .weight(1f, fill = true)
-                        .horizontalScroll(scrollState)
-                        .width(IntrinsicSize.Min)
-                        .defaultMinSize(minWidth = 24.dp)
+                        .amountFieldScroll(scrollState)
                         .simmerOn(isShimmering),
                     value = amount,
                     onValueChange = onAmountChanged,
@@ -647,6 +778,10 @@ private fun SwapContainer(
                                 text = convertedLabel,
                             )
 
+                            if (impact != null) {
+                                ImpactPercent(impact = impact, onClick = onImpactClick)
+                            }
+
                             if (onToggleCurrency != null) {
                                 MoonItemIcon(
                                     painter = painterResource(UIKitIcon.ic_swap_vertical_16),
@@ -679,6 +814,32 @@ private fun SwapContainer(
             }
         }
     }
+}
+
+@Composable
+private fun ImpactPercent(impact: PriceImpact, onClick: () -> Unit) {
+    val color = when (impact.severity) {
+        PriceImpactSeverity.Danger -> UIKit.colorScheme.accent.red
+        else -> UIKit.colorScheme.accent.orange
+    }
+    Text(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .drawBehind {
+                val y = size.height - 1.dp.toPx()
+                drawLine(
+                    color = color,
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y),
+                    strokeWidth = 1.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 2.dp.toPx())),
+                )
+            },
+        text = stringResource(Localization.swap_receive_impact, impact.text),
+        style = UIKit.typography.body2,
+        color = color,
+        maxLines = 1,
+    )
 }
 
 @Composable
@@ -886,6 +1047,41 @@ private fun SwapContainerPreview() {
                     text = "1 TON ≈ 1.84 USDT"
                 )
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SwapReceiveImpactPreview() {
+    val context = LocalContext.current
+    val url = CoinType.Gram.imageResourceUrl(context)
+    ThemedPreview {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SwapContainer(
+                title = "You receive",
+                assetImageUrl = url,
+                chainImageUrl = null,
+                symbol = "GRAM",
+                balance = "5 678 GRAM",
+                amount = "8.13",
+                convertedLabel = "$ 11.62",
+                impact = PriceImpact(text = "-4.18%", severity = PriceImpactSeverity.Warning),
+                isActive = false,
+                onAmountChanged = {},
+            )
+            SwapContainer(
+                title = "You receive",
+                assetImageUrl = url,
+                chainImageUrl = null,
+                symbol = "GRAM",
+                balance = "5 678 GRAM",
+                amount = "7.94",
+                convertedLabel = "$ 11.35",
+                impact = PriceImpact(text = "-6.20%", severity = PriceImpactSeverity.Danger),
+                isActive = false,
+                onAmountChanged = {},
+            )
         }
     }
 }

@@ -45,6 +45,7 @@ data class PriceLevelMarker(
 data class PriceLevelMarkersOptions(
     val markers: List<PriceLevelMarker> = emptyList(),
     val priceDecimals: Int? = null,
+    val priceDecimalSeparator: String? = null,
     val currentPriceUpLabelColor: ChartColor? = null,
     val currentPriceUpLabelBackgroundColor: ChartColor? = null,
     val currentPriceDownLabelColor: ChartColor? = null,

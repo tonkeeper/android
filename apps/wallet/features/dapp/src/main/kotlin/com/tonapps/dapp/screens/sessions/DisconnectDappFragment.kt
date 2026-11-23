@@ -6,10 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.tonapps.core.ComposableFragment
 import ui.theme.UIKit
+import ui.theme.modifiers.modalSheetMaxHeight
 import uikit.base.BaseFragment
 
 class DisconnectDappFragment : ComposableFragment(), BaseFragment.Modal {
@@ -29,8 +32,10 @@ class DisconnectDappFragment : ComposableFragment(), BaseFragment.Modal {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .modalSheetMaxHeight()
                     .background(UIKit.colorScheme.background.page)
-                    .navigationBarsPadding(),
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 DisconnectDappContent(

@@ -289,6 +289,7 @@ class DAppsRepository internal constructor(
             connectionsFlow.drop(1).map { },
             _connectionsInvalidationFlow.map { },
             wcRepository.sessions.map { },
+            wcRepository.becameAvailableFlow,
         ).collect { emit(getConnectionsWithDetails(walletId, accountId, mode)) }
     }.flowOn(Dispatchers.IO)
 

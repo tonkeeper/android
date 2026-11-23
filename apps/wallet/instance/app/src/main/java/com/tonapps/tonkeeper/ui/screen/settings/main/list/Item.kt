@@ -127,6 +127,28 @@ sealed class Item(type: Int, val name: String): BaseListItem(type) {
         name = "backup"
     )
 
+    data class LedgerDevice(
+        override val position: ListCell.Position,
+        val walletId: String,
+    ): Icon(
+        titleRes = Localization.ledger_mc_wallet_title,
+        iconRes = R.drawable.ic_ledger_28,
+        position = position,
+        secondaryIcon = false,
+        name = "ledger_device"
+    )
+
+    data class LedgerMigration(
+        override val position: ListCell.Position,
+        val walletId: String,
+    ): Icon(
+        titleRes = Localization.ledger_mc_add_networks,
+        iconRes = R.drawable.ic_ledger_28,
+        position = position,
+        secondaryIcon = false,
+        name = "ledger_migration"
+    )
+
     data class Support(
         override val position: ListCell.Position,
     ): Icon(

@@ -1,10 +1,8 @@
 package com.tonapps.blockchain.tron
 
-import org.web3j.abi.FunctionEncoder
-import org.web3j.abi.datatypes.Address
-import org.web3j.abi.datatypes.Function
-import org.web3j.abi.datatypes.generated.Uint256
+import com.tonapps.chainkit.chain.tron.utils.TronUtils
 import java.math.BigInteger
+import com.ionspin.kotlin.bignum.integer.BigInteger as KmpBigInteger
 
 data class TronTransfer(
     val from: String,
@@ -17,13 +15,9 @@ data class TronTransfer(
 
     val callData: String
         get() {
-            val function = Function(
-                NAME,
-                listOf(Address(to.toEvmHex()), Uint256(amount)),
-                emptyList()
-            )
-
-            return FunctionEncoder.encode(function).removePrefix("0x")
+            require(amount.signum() >= 0) { "TRC20 amount must not be negative" }
+            return TronUtils.trc20TransferCallData(to, KmpBigInteger.parseString(amount.toString()))
+                ?: throw IllegalArgumentException("Invalid TRC20 transfer")
         }
 
     val data: String

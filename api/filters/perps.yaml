@@ -1,0 +1,33 @@
+# Usage by platform; both generators consume the entire list.
+filter:
+  operations:
+    # Both platforms
+    - getAccount
+    - bindAccount
+    - sendTransactions
+    - getNextNonce
+    - getIntegrator
+    - issueRoToken
+    - getAccountTier
+    - changeAccountTier
+    - listOpenPositions
+    - getOpenPosition
+    - getPositionState
+    - getPortfolio
+    - getTradingScreen
+    - getTruncatedOrderBook
+    - getActivity
+    - openDeposit
+    - getDeposit
+    - quoteDeposit
+    - quoteWithdraw
+    - getFundingStatus
+    - recordClientMetrics
+    # iOS only
+    - getOrder
+    # Android only
+    - listOpenOrders
+    - recordClientMetrics
+  schemas:
+    # Android only
+    - WalletID

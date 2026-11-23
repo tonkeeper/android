@@ -1,0 +1,54 @@
+{
+  "quote_id": "f8bb8b3c-ff09-4251-81ae-def86b6d343a",
+  "routes": [
+    {
+      "route_id": "fd660925-fa3a-4787-ad74-285f14577ecd",
+      "provider_route_id": "4d21e2ad-68cd-44b0-a3f5-3927b96c5fd8",
+      "aggregator": "swapsxyz",
+      "protocol": "alt-vm-1",
+      "route_type": "cross_chain_swap",
+      "source_amount": "20000000",
+      "estimated_destination_amount": "12193496400",
+      "minimum_destination_amount": "12071561436",
+      "estimated_time": {
+        "inbound_seconds": 0,
+        "swap_seconds": 0,
+        "outbound_seconds": 0,
+        "total_seconds": 151
+      },
+      "total_slippage_bps": 100,
+      "value_difference_bps": -2676,
+      "source_usd_price": 0.9989190000000001,
+      "destination_usd_price": 1.2,
+      "fees": [
+        {
+          "type": "bridge",
+          "asset": "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+          "chain_id": "tron/mainnet",
+          "amount": "5212131",
+          "amount_usd": "5.21"
+        },
+        {
+          "type": "application",
+          "asset": "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+          "chain_id": "tron/mainnet",
+          "amount": "140000",
+          "amount_usd": "0.14"
+        }
+      ],
+      "legs": [
+        {
+          "leg_index": 0,
+          "type": "bridge",
+          "chain_id": "tron/mainnet",
+          "chain_family": "TRON",
+          "from_asset": "tron/mainnet/trc20/TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+          "to_asset": "ton/mainnet/coin",
+          "protocol": "alt-vm-1"
+        }
+      ],
+      "date_expire": "2026-11-02T15:50:31Z",
+      "risk_level": "medium"
+    }
+  ]
+}

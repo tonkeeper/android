@@ -437,8 +437,8 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun getAssetsCatalogV2(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, tab: AssetsTab? = null, q: String? = null, showPerps: Boolean? = false, chain: String? = null, sort: AssetsSort? = AssetsSort.market_cap, order: AssetsOrder? = AssetsOrder.desc, filter: AssetsFilter? = AssetsFilter.all, sourceShelf: String? = null, ids: List<String>? = null, cursor: String? = null, pageSize: Int? = 50): AssetsCatalogResponse {
-        val localVarResponse = getAssetsCatalogV2WithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, ids = ids, cursor = cursor, pageSize = pageSize)
+    fun getAssetsCatalogV2(userAgent: String? = null, xLang: String? = null, currency: String? = null, storeCountryCode: String? = null, simCountry: String? = null, deviceCountryCode: String? = null, timezone: String? = null, isVpnActive: Boolean? = null, walletId: String? = null, tab: AssetsTab? = null, q: String? = null, showPerps: Boolean? = false, chain: String? = null, sort: AssetsSort? = AssetsSort.market_cap, order: AssetsOrder? = AssetsOrder.desc, filter: AssetsFilter? = AssetsFilter.all, sourceShelf: String? = null, ids: List<String>? = null, cursor: String? = null, pageSize: Int? = 50): AssetsCatalogResponse {
+        val localVarResponse = getAssetsCatalogV2WithHttpInfo(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, walletId = walletId, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, ids = ids, cursor = cursor, pageSize = pageSize)
 
         return when (localVarResponse.responseType) {
             ResponseType.Success -> (localVarResponse as Success<*>).data as AssetsCatalogResponse
@@ -457,15 +457,15 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
 
     @Suppress("UNCHECKED_CAST")
     @Throws(IllegalStateException::class, IOException::class)
-    fun getAssetsCatalogV2WithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, ids: List<String>?, cursor: String?, pageSize: Int?): ApiResponse<AssetsCatalogResponse?> {
-        val localVariableConfig = getAssetsCatalogV2RequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, ids = ids, cursor = cursor, pageSize = pageSize)
+    fun getAssetsCatalogV2WithHttpInfo(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, walletId: String?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, ids: List<String>?, cursor: String?, pageSize: Int?): ApiResponse<AssetsCatalogResponse?> {
+        val localVariableConfig = getAssetsCatalogV2RequestConfig(userAgent = userAgent, xLang = xLang, currency = currency, storeCountryCode = storeCountryCode, simCountry = simCountry, deviceCountryCode = deviceCountryCode, timezone = timezone, isVpnActive = isVpnActive, walletId = walletId, tab = tab, q = q, showPerps = showPerps, chain = chain, sort = sort, order = order, filter = filter, sourceShelf = sourceShelf, ids = ids, cursor = cursor, pageSize = pageSize)
 
         return request<Unit, AssetsCatalogResponse>(
             localVariableConfig
         )
     }
 
-    fun getAssetsCatalogV2RequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, ids: List<String>?, cursor: String?, pageSize: Int?): RequestConfig<Unit> {
+    fun getAssetsCatalogV2RequestConfig(userAgent: String?, xLang: String?, currency: String?, storeCountryCode: String?, simCountry: String?, deviceCountryCode: String?, timezone: String?, isVpnActive: Boolean?, walletId: String?, tab: AssetsTab?, q: String?, showPerps: Boolean?, chain: String?, sort: AssetsSort?, order: AssetsOrder?, filter: AssetsFilter?, sourceShelf: String?, ids: List<String>?, cursor: String?, pageSize: Int?): RequestConfig<Unit> {
         val localVariableBody = null
         val localVariableQuery: MultiValueMap = mutableMapOf<String, List<String>>()
             .apply {
@@ -486,6 +486,9 @@ class AssetsApi(basePath: String = defaultBasePath, client: Call.Factory = ApiCl
                 }
                 if (isVpnActive != null) {
                     put("is_vpn_active", listOf(isVpnActive.toString()))
+                }
+                if (walletId != null) {
+                    put("wallet_id", listOf(walletId.toString()))
                 }
                 if (tab != null) {
                     put("tab", listOf(tab.toString()))

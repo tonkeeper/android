@@ -1,6 +1,7 @@
 package com.tonapps.portfolio.screens.list
 
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.lifecycle.SavedStateHandle
 import com.tonapps.core.flags.AddMcWalletTooltipInteractor
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.mvi.flow.flatMapLatestCatching
@@ -43,7 +44,11 @@ class WalletsListFeature(
     private val settingsRepository: SettingsRepository,
     private val balanceInteractor: WalletFiatBalanceInteractor,
     private val addMcWalletTooltip: AddMcWalletTooltipInteractor,
+    savedStateHandle: SavedStateHandle,
 ) : AsyncViewModel() {
+
+    private val perpsWalletsOnly: Boolean =
+        savedStateHandle.get<Boolean>(WalletsListFragment.ARG_PERPS_WALLETS_ONLY) == true
 
     private val walletsOrderChanged = MutableSharedFlow<Unit>(
         extraBufferCapacity = 1,
@@ -129,6 +134,8 @@ class WalletsListFeature(
             }
         }
     }
+
+    fun isSelectable(wallet: CommonWallet): Boolean = !perpsWalletsOnly || wallet.supportsPerps
 
     fun toggleEditMode() {
         editMode.value = !editMode.value

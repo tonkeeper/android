@@ -13,6 +13,7 @@ import com.tonapps.wallet.data.rn.data.RNTC
 import com.tonapps.wallet.data.rn.data.RNVaultState
 import com.tonapps.wallet.data.rn.data.RNWallet
 import com.tonapps.wallet.data.rn.data.RNWallets
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,12 +30,16 @@ class RNLegacy(
         const val DEFAULT_KEYSTORE_ALIAS = "key_v1"
     }
 
-    private val sql: RNSql by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        RNSql(context)
+    private val hasLegacyStorage: Boolean by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        context.getDatabasePath(RNSql.DATABASE_NAME).exists()
     }
 
-    private val seedStorage: RNSeedStorage by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        RNSeedStorage(context)
+    private val sql: RNSql? by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        if (hasLegacyStorage) RNSql(context) else null
+    }
+
+    private val seedStorage: RNSeedStorage? by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        if (hasLegacyStorage) RNSeedStorage(context) else null
     }
 
     @Volatile
@@ -48,17 +53,23 @@ class RNLegacy(
 
     init {
         scope.launch(Dispatchers.IO) {
-            requestMigration = sql.getValue("x") == null
-            if (requestMigration == true) {
+            val sql = sql ?: run {
+                walletMigrated = true
+                requestMigration = false
+                return@launch
+            }
+            if (sql.getValue("x") == null) {
                 sql.setValue("x", "true")
+                requestMigration = true
             } else {
                 walletMigrated = true
+                requestMigration = false
             }
         }
     }
 
     fun getAllKeyValuesForDebug(): JSONObject {
-        return seedStorage.getAllKeyValuesForDebug()
+        return seedStorage?.getAllKeyValuesForDebug() ?: JSONObject()
     }
 
     fun isRequestMainMigration(): Boolean {
@@ -88,32 +99,32 @@ class RNLegacy(
 
     suspend fun setTonProof(id: String, token: String) {
         if (getTonProof(id) == null) {
-            seedStorage.setTonProof(id, token)
+            seedStorage?.setTonProof(id, token)
         }
     }
 
     suspend fun getTonProof(id: String): String? {
-        return seedStorage.getTonProof(id)
+        return seedStorage?.getTonProof(id)
     }
 
     suspend fun exportPasscodeWithBiometry(): String {
-        return seedStorage.exportPasscodeWithBiometry()
+        return seedStorage?.exportPasscodeWithBiometry() ?: throw Exception("Biometry passcode is null")
     }
 
     suspend fun setupBiometry(passcode: String) = withContext(Dispatchers.IO) {
-        seedStorage.setupBiometry(passcode)
+        seedStorage?.setupBiometry(passcode)
     }
 
     suspend fun removeBiometry() = withContext(Dispatchers.IO) {
-        seedStorage.removeBiometry()
+        seedStorage?.removeBiometry()
     }
 
     suspend fun clearMnemonic() {
-        seedStorage.removeAll()
+        seedStorage?.removeAll()
     }
 
     suspend fun hasPinCode(): Boolean {
-        return seedStorage.hasPinCode()
+        return seedStorage?.hasPinCode() ?: false
     }
 
     suspend fun addMnemonics(passcode: String, walletIds: List<String>, mnemonic: List<String>) {
@@ -127,7 +138,7 @@ class RNLegacy(
 
     suspend fun changePasscode(oldPasscode: String, newPasscode: String) {
         val vaultState = getVaultState(oldPasscode)
-        seedStorage.save(newPasscode, vaultState)
+        seedStorage?.save(newPasscode, vaultState)
     }
 
     suspend fun getVaultState(passcode: String): RNVaultState = withContext(Dispatchers.IO) {
@@ -137,7 +148,9 @@ class RNLegacy(
 
     private suspend fun getVaultStateDefault(passcode: String): RNVaultState? {
         return try {
-            seedStorage.get(passcode)
+            seedStorage?.get(passcode)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Throwable) {
             FirebaseCrashlytics.getInstance().recordException(e)
             null
@@ -146,7 +159,7 @@ class RNLegacy(
 
     fun getSpamTransactions(walletId: String): RNSpamTransactions {
         val key = keySpamTransactions(walletId)
-        val json = sql.getJSONObject(key) ?: return RNSpamTransactions(walletId)
+        val json = sql?.getJSONObject(key) ?: return RNSpamTransactions(walletId)
         val spam = mutableListOf<String>()
         val nonSpam = mutableListOf<String>()
         for (transactionId in json.keys()) {
@@ -168,7 +181,7 @@ class RNLegacy(
             json.put(transactionId, false)
         }
         val key = keySpamTransactions(walletId)
-        sql.setJSONObject(key, json)
+        sql?.setJSONObject(key, json)
     }
 
     private fun keySpamTransactions(walletId: String): String {
@@ -176,22 +189,22 @@ class RNLegacy(
     }
 
     fun getValue(key: String): String? {
-        return sql.getValue(key)
+        return sql?.getValue(key)
     }
 
     fun getJSONValue(key: String): JSONObject? {
-        return sql.getJSONObject(key)
+        return sql?.getJSONObject(key)
     }
 
     fun getJSONArray(key: String): JSONArray? {
-        return sql.getJSONArray(key)
+        return sql?.getJSONArray(key)
     }
 
     fun setJSONValue(key: String, value: JSONObject, v: Int = -1) {
         if (v >= 0) {
             value.put("__version", v)
         }
-        sql.setJSONObject(key, value)
+        sql?.setJSONObject(key, value)
     }
 
     fun getJSONState(key: String): JSONObject? {
@@ -205,7 +218,7 @@ class RNLegacy(
     }
 
     fun setActivity(activity: FragmentActivity) {
-        seedStorage.setActivity(activity)
+        seedStorage?.setActivity(activity)
     }
 
     fun getTCApps(): RNTC {
@@ -321,6 +334,9 @@ class RNLegacy(
     }
 
     suspend fun setWallets(wallets: RNWallets) {
+        if (!hasLegacyStorage) {
+            return
+        }
         cacheWallets = wallets.copy()
         saveWallets(wallets)
     }

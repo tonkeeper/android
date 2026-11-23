@@ -13,11 +13,11 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.ton.connect.TONProof
 import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.opTerminal
 import com.tonapps.emoji.ui.EmojiView
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.getParcelableCompat
 import com.tonapps.extensions.short4
@@ -52,6 +52,8 @@ import uikit.widget.LoaderView
 import uikit.widget.ProcessTaskView
 import java.util.concurrent.CancellationException
 import uikit.extensions.setMoonOnClickListener
+import com.tonapps.core.extensions.walletColor
+import com.tonapps.tonkeeper.extensions.failureToast
 
 class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_tonconnect, ScreenContext.None), BaseFragment.Modal, BaseFragment.SingleTask {
 
@@ -142,7 +144,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
 
         setDefaultState()
 
-        analytics?.tcRequest(args.app.url.toString())
+        analytics?.eventDelegateTaggedWith(args.utm)?.tcRequest(args.app.url.toString())
     }
 
     private fun onConnectClick(wallet: WalletEntity) {
@@ -173,19 +175,19 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                 flow = Events.RedOperations.RedOperationsFlow.TonConnect,
                 operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
                 attemptSource = null,
-                startedAtMs = currentTimeSecondsInt(),
+                startedAtMs = startedAtMs,
                 otherMetadata = null,
             )
             lifecycleScope.launch {
                 try {
-                    val proof = viewModel.requestProof(wallet, args.app, proofPayload)
+                    val proof = viewModel.requestProof(wallet, args.proofDomain, proofPayload)
                     val finishedAtMs = currentTimeMillis()
                     AnalyticsHelper.Default.events.redOperations.opTerminal(
                         operationId = operationId,
                         flow = Events.RedOperations.RedOperationsFlow.TonConnect,
                         operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
                         durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                        finishedAtMs = currentTimeSecondsInt(),
+                        finishedAtMs = finishedAtMs,
                         error = null,
                     )
                     setResponse(wallet, proof)
@@ -196,7 +198,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                         flow = Events.RedOperations.RedOperationsFlow.TonConnect,
                         operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
                         durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                        finishedAtMs = currentTimeSecondsInt(),
+                        finishedAtMs = finishedAtMs,
                         error = e,
                     )
                     context?.debugToast(e)
@@ -208,7 +210,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
                         flow = Events.RedOperations.RedOperationsFlow.TonConnect,
                         operation = Events.RedOperations.RedOperationsOperation.ConnectWallet,
                         durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                        finishedAtMs = currentTimeSecondsInt(),
+                        finishedAtMs = finishedAtMs,
                         error = e,
                     )
                     context?.debugToast(e)
@@ -223,7 +225,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
         proof: TONProof.Result? = null,
         proofError: BridgeError? = null,
     ) {
-        analytics?.tcConnect(args.app.url.toString(), pushCheckBoxView.checked)
+        analytics?.eventDelegateTaggedWith(args.utm)?.tcConnect(args.app.url.toString(), pushCheckBoxView.checked)
         setResponse(TonConnectResponse(
             notifications = pushCheckBoxView.checked,
             proof = proof,
@@ -300,7 +302,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         } catch (e: Exception) {
-            navigation?.toast(Localization.unknown_error)
+            navigation?.failureToast(Localization.unknown_error)
         }
     }
 
@@ -358,7 +360,7 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
     }
 
     private fun applyWallet(wallet: WalletEntity) {
-        walletColorView.backgroundTintList = wallet.label.color.stateList
+        walletColorView.backgroundTintList = requireContext().walletColor(wallet.label.color).stateList
         walletEmojiView.setEmoji(wallet.label.emoji, Color.TRANSPARENT)
         walletNameView.text = wallet.label.name
         walletTypesView.text = requireContext().getWalletBadges(wallet.type, wallet.version)
@@ -383,10 +385,12 @@ class TonConnectScreen: BaseWalletScreen<ScreenContext.None>(R.layout.fragment_t
             proofPayload: String?,
             returnUri: Uri?,
             wallet: WalletEntity?,
-            fromPackageName: String?
+            fromPackageName: String?,
+            proofDomain: String?,
+            utm: UtmParameters = UtmParameters.Empty,
         ): TonConnectScreen {
             val fragment = TonConnectScreen()
-            fragment.setArgs(TonConnectArgs(app, manifestUrl, proofPayload, returnUri, wallet, fromPackageName))
+            fragment.setArgs(TonConnectArgs(app, manifestUrl, proofPayload, returnUri, wallet, fromPackageName, proofDomain, utm))
             return fragment
         }
     }

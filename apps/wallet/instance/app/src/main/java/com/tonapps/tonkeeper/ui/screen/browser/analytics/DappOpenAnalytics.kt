@@ -85,13 +85,12 @@ data class DappOpenAnalytics(
     }
 
     /** Null for a screen restored from its saved state: its click was reported by another one. */
-    fun sinceClickMs(): Int? {
+    fun sinceClickMs(): Long? {
         if (clickedAt == 0L) {
             return null
         }
-        val elapsed = SystemClock.elapsedRealtime() - clickedAt
-        return elapsed.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+        return (SystemClock.elapsedRealtime() - clickedAt).coerceAtLeast(0L)
     }
 
-    private fun loadDurationMs(): Int = sinceClickMs() ?: 0
+    private fun loadDurationMs(): Long = sinceClickMs() ?: 0L
 }

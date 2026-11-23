@@ -40,6 +40,10 @@ data class DeepLink(
         }
     }
 
+    val referralCodeFromOutsideLink: String? get() {
+        return (route as? DeepLinkRoute.Loyalty)?.referralCode?.takeIf { fromExternal || fromQR }
+    }
+
     constructor(
         uri: Uri,
         fromQR: Boolean,
@@ -55,10 +59,7 @@ data class DeepLink(
             else -> null
         },
         fromExternal = fromExternal,
-        utm = when {
-            fromQR -> UtmParameters.Empty
-            else -> UtmParameters.fromLink(uri.toString())
-        },
+        utm = UtmParameters.fromLink(uri.toString()),
     )
 
     companion object {

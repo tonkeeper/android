@@ -13,6 +13,7 @@ sealed class CommonWallet {
     abstract val color: Int
     abstract val type: WalletType
     abstract val version: WalletVersion?
+    abstract val supportsPerps: Boolean
 
     class Mc(val wallet: McWalletEntity) : CommonWallet() {
         override val id: String = wallet.id
@@ -21,6 +22,7 @@ sealed class CommonWallet {
         override val color: Int = wallet.color
         override val type: WalletType = wallet.type.legacy
         override val version: WalletVersion? = null
+        override val supportsPerps: Boolean = !wallet.isHardware
     }
 
     class Legacy(val wallet: WalletEntity) : CommonWallet() {
@@ -30,5 +32,6 @@ sealed class CommonWallet {
         override val color: Int = wallet.label.color
         override val type: WalletType = wallet.type
         override val version: WalletVersion = wallet.version
+        override val supportsPerps: Boolean = wallet.supportsPerps
     }
 }

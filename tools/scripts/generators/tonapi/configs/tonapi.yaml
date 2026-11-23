@@ -1,0 +1,2 @@
+inlineSchemaNameMappings:
+  getMigrationWallets_request: GetBlockchainRawAccountsRequest

@@ -1,6 +1,6 @@
 package com.tonapps.perps.screens.portfolio
 
-import android.content.Context
+import android.text.format.DateFormat
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
@@ -22,6 +22,7 @@ import com.tonapps.perps.data.PerpsRepository
 import com.tonapps.perps.data.PerpsSort
 import com.tonapps.perps.data.formatSignedPercent
 import com.tonapps.perps.data.formatSignedUsdAmount
+import com.tonapps.perps.data.formatTrimmedUsdPrice
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.perps.data.formatUsdPrice
 import com.tonapps.perps.data.maskIf
@@ -31,19 +32,34 @@ import com.tonapps.perps.data.spendableBalance
 import com.tonapps.perps.data.unrealizedPnlPercent
 import com.tonapps.perps.funding.PerpsDepositService
 import com.tonapps.perps.funding.PerpsFundingRecovery
+import com.tonapps.perps.funding.toDepositStatus
+import com.tonapps.perps.region.PerpsRegionAccess
+import com.tonapps.perps.screens.depositstatus.PerpsDepositBanner
+import com.tonapps.perps.screens.depositstatus.PerpsDepositBannerState
+import com.tonapps.perps.screens.depositstatus.PerpsDepositListItemUi
+import com.tonapps.perps.screens.depositstatus.PerpsDepositRowUi
+import com.tonapps.perps.screens.depositstatus.PerpsDepositStatusUi
+import com.tonapps.perps.screens.depositstatus.PerpsDepositToast
+import com.tonapps.perps.screens.depositstatus.nextRowChange
+import com.tonapps.perps.screens.depositstatus.rowUi
+import com.tonapps.perps.screens.depositstatus.toListItemUi
+import com.tonapps.perps.screens.depositstatus.ticking
+import com.tonapps.perps.screens.depositstatus.toStatusUi
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
-import com.tonapps.wallet.data.multichain.account.McAccountRepository
 import com.tonapps.wallet.data.multichain.perps.PerpsDepositStage
 import com.tonapps.wallet.data.multichain.perps.PerpsFundingKind
 import com.tonapps.wallet.data.multichain.perps.PerpsFundingRecord
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import com.tonapps.wallet.data.settings.SettingsRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -53,12 +69,17 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 interface PerpsPortfolioViewState : MviViewState {
     val portfolio: StateFlow<PerpsPortfolioUi>
@@ -69,15 +90,19 @@ interface PerpsPortfolioViewState : MviViewState {
     val exploreMarkets: Flow<PagingData<PerpMarket>>
     val livePrices: StateFlow<Map<String, BigDecimal>>
     val fundingStatus: StateFlow<PerpsFundingStatus?>
+    val depositRow: StateFlow<PerpsDepositRowUi?>
+    val depositToast: StateFlow<PerpsDepositToast?>
+    val depositStatuses: StateFlow<List<PerpsDepositListItemUi>?>
+    val depositDetails: StateFlow<PerpsDepositStatusUi?>
+    val regionRestricted: StateFlow<Boolean>
 }
 
-enum class PerpsFundingStatus(val actionable: Boolean) {
-    SENDING(actionable = false),
-    CONFIRMED(actionable = false),
-    NEEDS_AUTHORIZATION(actionable = true),
-    FAILED(actionable = true),
-    REFUNDED(actionable = true),
-    WITHDRAW_FAILED(actionable = true),
+enum class PerpsFundingStatus {
+    SENDING,
+    WITHDRAW_SENT,
+    CONFIRMED,
+    NEEDS_AUTHORIZATION,
+    WITHDRAW_FAILED,
 }
 
 sealed interface PerpsPortfolioAction : MviAction {
@@ -85,8 +110,14 @@ sealed interface PerpsPortfolioAction : MviAction {
     data class SetActive(val active: Boolean) : PerpsPortfolioAction
     data class RowVisible(val symbol: String, val visible: Boolean) : PerpsPortfolioAction
     data object Retry : PerpsPortfolioAction
-    data class AuthorizeDeposit(val context: Context) : PerpsPortfolioAction
+    data object AuthorizeDeposit : PerpsPortfolioAction
     data object DismissFundingOutcome : PerpsPortfolioAction
+    data object DepositSent : PerpsPortfolioAction
+    data object DepositInteraction : PerpsPortfolioAction
+    data object OpenDepositRow : PerpsPortfolioAction
+    data class OpenDepositDetails(val depositId: String) : PerpsPortfolioAction
+    data object CloseDepositDetails : PerpsPortfolioAction
+    data object CloseDepositStatuses : PerpsPortfolioAction
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -96,10 +127,19 @@ class PerpsPortfolioFeature(
     private val portfolioStore: PerpsPortfolioStore,
     private val fundingRecovery: PerpsFundingRecovery,
     private val depositService: PerpsDepositService,
-    private val mcAccountRepository: McAccountRepository,
-    private val passcodeManager: PasscodeManager,
+    private val walletUnlocker: WalletUnlocker,
     private val settingsRepository: SettingsRepository,
+    private val regionAccess: PerpsRegionAccess,
 ) : GraphViewModel<PerpsPortfolioViewState, PerpsPortfolioAction>(), PerpsPortfolioViewState {
+
+    private val depositBanner = PerpsDepositBannerState(isVisible = false)
+    private val depositBannerChanges = MutableStateFlow(0)
+    private val depositStatusesOpen = MutableStateFlow(false)
+    private val depositDetailsId = MutableStateFlow<String?>(null)
+    private var depositToastJob: Job? = null
+    private val depositDateFormat = Locale.getDefault().let { locale ->
+        SimpleDateFormat(DateFormat.getBestDateTimePattern(locale, DEPOSIT_DATE_SKELETON), locale)
+    }
 
     private val portfolioLive = portfolioStore.liveSubscription()
 
@@ -111,6 +151,12 @@ class PerpsPortfolioFeature(
         actions.on<PerpsPortfolioAction.SetActive>().filter { it.active },
     )
         .onEach { portfolioStore.refresh() }
+        .cacheState(initialValue = null)
+
+    private val accessReloads = actions
+        .on<PerpsPortfolioAction.SetActive>()
+        .filter { it.active }
+        .mapLatest { regionAccess.refresh() }
         .cacheState(initialValue = null)
 
     private val active = actions
@@ -188,24 +234,179 @@ class PerpsPortfolioFeature(
             if (walletId == null) {
                 flowOf(null)
             } else {
-                fundingRecovery.observe(walletId).flatMapLatest { records -> fundingStatus(records) }
+                fundingRecovery.observe(walletId).flatMapLatest { records ->
+                    fundingStatus(records.filter { it.kind == PerpsFundingKind.WITHDRAW || it.stage == PerpsDepositStage.NEEDS_AUTHORIZATION })
+                }
             }
         }
         .cacheState(initialValue = null)
 
+    override val depositToast: StateFlow<PerpsDepositToast?> field = MutableStateFlow<PerpsDepositToast?>(null)
+
+    private val depositUpdates = combine(
+        depositBannerChanges,
+        settingsRepository.hiddenBalancesFlow,
+        transform = { _, _ -> Unit },
+    )
+
+    override val depositRow = depositUpdates
+        .flatMapLatest {
+            ticking(next = { now -> depositBanner.nextRowChange(now) }) { now ->
+                depositBanner.rowUi(now, settingsRepository.hiddenBalances)
+            }
+        }
+        .cacheState(initialValue = null)
+
+    override val depositStatuses = combine(depositUpdates, depositStatusesOpen) { _, open -> open }
+        .map { open ->
+            if (open) {
+                depositBanner.listedDeposits.map { deposit ->
+                    deposit.toListItemUi(settingsRepository.hiddenBalances) { depositDateFormat.format(Date(it)) }
+                }
+            } else {
+                null
+            }
+        }
+        .cacheState(initialValue = null)
+
+    override val depositDetails = combine(depositUpdates, depositDetailsId) { _, id -> id?.let(depositBanner::deposit) }
+        .toStatusUi(hiddenBalance = { settingsRepository.hiddenBalances })
+        .cacheState(initialValue = null)
+
+    override val regionRestricted = regionAccess.restricted
+        .cacheState(initialValue = regionAccess.isRestricted)
+
     init {
         mainScope.launch {
-            actions.on<PerpsPortfolioAction.AuthorizeDeposit>().collect { authorizeDeposit(it.context) }
+            actions.on<PerpsPortfolioAction.AuthorizeDeposit>().collect { authorizeDeposit() }
+        }
+        mainScope.launch {
+            combine(
+                snapshot.map { it?.walletId }.distinctUntilChanged().flatMapLatest { walletId ->
+                    if (walletId == null) {
+                        flowOf(emptyList())
+                    } else {
+                        fundingRecovery.observe(walletId).map { records -> records.mapNotNull { it.toDepositStatus() } }
+                    }
+                },
+                snapshot.map { it?.loading == true }.distinctUntilChanged(),
+                transform = { deposits, refreshing -> deposits to refreshing },
+            ).collect { (deposits, refreshing) ->
+                val arrived = depositBanner.apply(deposits, isBalanceRefreshing = refreshing)
+                depositBannerChanges.update { it + 1 }
+                if (arrived.isNotEmpty() && depositBanner.isVisible) {
+                    showDepositToast(PerpsDepositToast.COMPLETED)
+                }
+            }
+        }
+        mainScope.launch {
+            active.collect { isActive ->
+                depositBanner.isVisible = isActive
+                if (!isActive) {
+                    depositBanner.didInteract()
+                    depositBannerChanges.update { it + 1 }
+                }
+            }
+        }
+        mainScope.launch {
+            actions.on<PerpsPortfolioAction.DepositSent>().collect { showDepositToast(PerpsDepositToast.IN_PROGRESS) }
+        }
+        mainScope.launch {
+            actions
+                .filter { it is PerpsPortfolioAction.OpenDepositRow || it is PerpsPortfolioAction.DepositInteraction }
+                .collect { action ->
+                    if (action is PerpsPortfolioAction.OpenDepositRow) {
+                        openDepositRow()
+                    } else {
+                        dismissCompletedDeposit()
+                    }
+                }
+        }
+        mainScope.launch {
+            actions.on<PerpsPortfolioAction.OpenDepositDetails>().collect { openDepositDetails(it.depositId) }
+        }
+        mainScope.launch {
+            actions.on<PerpsPortfolioAction.CloseDepositDetails>().collect { depositDetailsId.value = null }
+        }
+        mainScope.launch {
+            actions.on<PerpsPortfolioAction.CloseDepositStatuses>().collect { closeDepositStatuses() }
         }
         mainScope.launch {
             actions.on<PerpsPortfolioAction.DismissFundingOutcome>().collect { dismissFundingOutcome() }
         }
     }
 
+    private fun openDepositRow() {
+        when (val banner = depositBanner.banner) {
+            is PerpsDepositBanner.Single -> openDepositDetails(banner.depositId)
+            is PerpsDepositBanner.Completed -> {
+                val single = banner.depositIds.singleOrNull()
+                if (single != null) {
+                    openDepositDetails(single)
+                } else {
+                    openDepositStatuses(announced = banner.depositIds)
+                }
+            }
+
+            PerpsDepositBanner.Multiple,
+            PerpsDepositBanner.Problems -> openDepositStatuses()
+            null -> Unit
+        }
+    }
+
+    private fun dismissCompletedDeposit() {
+        if (depositBanner.banner is PerpsDepositBanner.Completed) {
+            depositBanner.didInteract()
+            depositBannerChanges.update { it + 1 }
+        }
+    }
+
+    private fun openDepositStatuses(announced: Set<String> = emptySet()) {
+        depositStatusesOpen.value = true
+        acknowledgeDeposits(depositBanner.didOpenList(announced))
+        depositBannerChanges.update { it + 1 }
+    }
+
+    private fun closeDepositStatuses() {
+        depositStatusesOpen.value = false
+        acknowledgeDeposits(depositBanner.didCloseList())
+        depositBannerChanges.update { it + 1 }
+    }
+
+    private fun openDepositDetails(depositId: String) {
+        depositDetailsId.value = depositId
+        acknowledgeDeposits(depositBanner.didOpen(depositId))
+        depositBannerChanges.update { it + 1 }
+    }
+
+    private fun acknowledgeDeposits(operationIds: Set<String>) {
+        if (operationIds.isEmpty()) {
+            return
+        }
+        mainScope.launch {
+            try {
+                depositService.acknowledgeDepositStatuses(operationIds)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                L.e(e, "perps funding: acknowledging deposit statuses failed")
+            }
+        }
+    }
+
+    private fun showDepositToast(toast: PerpsDepositToast) {
+        depositToastJob?.cancel()
+        depositToast.value = toast
+        depositToastJob = mainScope.launch {
+            delay(DEPOSIT_TOAST_MS)
+            depositToast.value = null
+        }
+    }
+
     private suspend fun dismissFundingOutcome() {
         val walletId = snapshot.value?.walletId ?: return
         try {
-            withContext(Async.Io) { depositService.dismissOutcomes(walletId) }
+            withContext(Async.Io) { depositService.dismissOutcomes(walletId, PerpsFundingKind.WITHDRAW) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -213,13 +414,10 @@ class PerpsPortfolioFeature(
         }
     }
 
-    private suspend fun authorizeDeposit(context: Context) {
+    private suspend fun authorizeDeposit() {
         val walletId = snapshot.value?.walletId ?: return
         try {
-            val wallet = passcodeManager.unlockMultichainVault(context) { coder ->
-                mcAccountRepository.getCryptoWallet(walletId, coder)
-                    ?: throw IllegalStateException("No multichain wallet for $walletId")
-            }
+            val wallet = walletUnlocker.unlockWallet(walletId, PasscodeReason.PERPS)
             withContext(Async.Io) { depositService.relinkWallet(walletId, wallet) }
         } catch (e: CancellationException) {
             currentCoroutineContext().ensureActive()
@@ -240,13 +438,11 @@ class PerpsPortfolioFeature(
             emit(PerpsFundingStatus.NEEDS_AUTHORIZATION)
             return@flow
         }
-        val confirmedUntil = records
-            .filter { it.stage.isSucceeded }
-            .maxOfOrNull { it.updatedAt + CONFIRMED_PILL_MS }
         val now = System.currentTimeMillis()
-        if (confirmedUntil != null && confirmedUntil > now) {
-            emit(PerpsFundingStatus.CONFIRMED)
-            delay(confirmedUntil - now)
+        val recent = recentWithdrawStatus(records, now)
+        if (recent != null) {
+            emit(recent.status)
+            delay(recent.shownUntil - now)
         }
         emit(outcomeStatus(records))
     }
@@ -256,16 +452,15 @@ class PerpsPortfolioFeature(
             .filter { it.stage.isSucceeded }
             .maxOfOrNull { it.updatedAt }
             ?: 0L
-        val outcomes = records.filter { it.updatedAt > lastSucceededAt }
-        val failed = outcomes.filter { it.stage == PerpsDepositStage.FAILED }.maxByOrNull { it.updatedAt }
-        return when {
-            failed?.kind == PerpsFundingKind.WITHDRAW -> PerpsFundingStatus.WITHDRAW_FAILED
-            failed != null -> PerpsFundingStatus.FAILED
-            outcomes.any { it.stage == PerpsDepositStage.REFUNDED && it.kind == PerpsFundingKind.WITHDRAW } ->
-                PerpsFundingStatus.WITHDRAW_FAILED
-
-            outcomes.any { it.stage == PerpsDepositStage.REFUNDED } -> PerpsFundingStatus.REFUNDED
-            else -> null
+        val withdrawFailed = records.any {
+            it.updatedAt > lastSucceededAt &&
+                it.kind == PerpsFundingKind.WITHDRAW &&
+                (it.stage == PerpsDepositStage.FAILED || it.stage == PerpsDepositStage.REFUNDED)
+        }
+        return if (withdrawFailed) {
+            PerpsFundingStatus.WITHDRAW_FAILED
+        } else {
+            null
         }
     }
 
@@ -275,7 +470,8 @@ class PerpsPortfolioFeature(
     }
 
     private companion object {
-        const val CONFIRMED_PILL_MS = 6_000L
+        const val DEPOSIT_TOAST_MS = 2_000L
+        const val DEPOSIT_DATE_SKELETON = "d MMM HH:mm"
     }
 }
 
@@ -318,6 +514,8 @@ private fun PerpsPortfolioOrder.toUi(hiddenBalance: Boolean): PerpsOrderUi {
         order = this,
         amountFormat = margin?.let { maskIf(hiddenBalance) { formatUsdAmount(it) } } ?: PERPS_EMPTY_VALUE,
         limitPriceFormat = limitPrice?.let { formatUsdPrice(it.toDouble(), it.scale()) } ?: PERPS_EMPTY_VALUE,
+        takeProfitFormat = takeProfit?.triggerPrice?.let(::formatTrimmedUsdPrice),
+        stopLossFormat = stopLoss?.triggerPrice?.let(::formatTrimmedUsdPrice),
     )
 }
 
@@ -326,6 +524,7 @@ private fun PerpsPortfolioOrder.toUi(hiddenBalance: Boolean): PerpsOrderUi {
  *
  *                     Retry ──┐
  *   SetActive [active only] ──┴──► refreshRequests? ╌► store.refresh()
+ *   SetActive [active only] ╌► PerpsRegionAccess.refresh()
  *
  *   snapshot? ──┐
  *   hiddenBalancesFlow ─┴──► portfolio
@@ -337,4 +536,30 @@ private fun PerpsPortfolioOrder.toUi(hiddenBalance: Boolean): PerpsOrderUi {
  *   RowVisible ──► [fold] visibleSymbols ──┐
  *                    SetActive ──► active ─┴──► [fold] tickers ──► livePrices
  *                                  active ╌► store live subscription
+ *
+ *   API.configFlow ──► regionRestricted
  */
+
+internal class PerpsRecentWithdrawStatus(
+    val status: PerpsFundingStatus,
+    val shownUntil: Long,
+)
+
+internal fun recentWithdrawStatus(records: List<PerpsFundingRecord>, now: Long): PerpsRecentWithdrawStatus? {
+    val latest = records
+        .filter { it.stage.isSucceeded }
+        .maxByOrNull { it.updatedAt }
+        ?: return null
+    val shownUntil = latest.updatedAt + STATUS_PILL_MS
+    if (shownUntil <= now) {
+        return null
+    }
+    val status = if (latest.stage == PerpsDepositStage.SETTLED) {
+        PerpsFundingStatus.CONFIRMED
+    } else {
+        PerpsFundingStatus.WITHDRAW_SENT
+    }
+    return PerpsRecentWithdrawStatus(status = status, shownUntil = shownUntil)
+}
+
+private const val STATUS_PILL_MS = 6_000L

@@ -9,11 +9,15 @@ import com.tonapps.blockchain.model.legacy.TokenEntity
 import com.tonapps.blockchain.model.legacy.Wallet
 import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.blockchain.model.legacy.errors.InsufficientBalanceType
 import com.tonapps.blockchain.model.legacy.errors.InsufficientFundsException
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.chainkit.core.chain.model.account.Chain
 import com.tonapps.deposit.DepositFragment
 import com.tonapps.deposit.DepositRoutes
+import com.tonapps.deposit.multicoin.DepositMulticoinFragment
+import com.tonapps.deposit.multicoin.DepositMulticoinRoutes
 import com.tonapps.deposit.screens.method.RampAsset
 import com.tonapps.deposit.screens.qr.QrAssetFragment
 import com.tonapps.icu.Coins
@@ -86,17 +90,12 @@ class InsufficientFundsDialog(
         tonButton.text = context.getString(Localization.buy_ton, e.currency.code)
         tonButton.setMoonOnClickListener {
             if (e.currency == WalletCurrency.TON) {
-                navigation?.add(
-                    DepositFragment.create(
-                        DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON)),
-                        analyticsFrom = depositFrom,
-                    )
-                )
+                openBuyTon(wallet)
             } else {
                 fragment.finish()
                 navigation?.add(BrowserMoreScreen.newInstance(wallet, "defi"))
+                dismiss()
             }
-            dismiss()
         }
 
         batteryButton.setMoonOnClickListener {
@@ -150,14 +149,11 @@ class InsufficientFundsDialog(
         }
         tonButton.setMoonOnClickListener {
             if (required.isTon) {
-                navigation?.add(
-                    DepositFragment.create(
-                        DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON)),
-                        analyticsFrom = depositFrom,
-                    )
-                )
-            } else if (required.isTrx) {
-                navigation?.add(QrAssetFragment.newInstance(TokenEntity.TRX, analyticsFrom = depositFrom))
+                openBuyTon(wallet)
+                return@setMoonOnClickListener
+            }
+            if (required.isTrx) {
+                navigation?.add(QrAssetFragment.newInstance(TokenEntity.TRX, walletId = wallet.id, analyticsFrom = depositFrom))
             } else {
                 fragment.finish()
                 navigation?.add(BrowserMoreScreen.newInstance(wallet, "defi"))
@@ -249,6 +245,27 @@ class InsufficientFundsDialog(
                     Localization.insufficient_balance_default
                 }
             textView.descriptionView.text = context.getString(resId, requiredFormat, balanceFormat)
+        }
+    }
+
+    private fun openBuyTon(wallet: WalletEntity) {
+        navigation?.add(buyTonScreen(wallet))
+        dismiss()
+    }
+
+    private fun buyTonScreen(wallet: WalletEntity): BaseFragment {
+        return if (wallet.type == WalletType.Multichain) {
+            DepositMulticoinFragment.create(
+                walletId = wallet.id,
+                initial = DepositMulticoinRoutes.Buy(Chain.Ton.Mainnet.coinAssetId),
+                analyticsFrom = depositFrom,
+            )
+        } else {
+            DepositFragment.create(
+                DepositRoutes.Buy(RampAsset.Currency(WalletCurrency.TON)),
+                walletId = wallet.id,
+                analyticsFrom = depositFrom,
+            )
         }
     }
 }

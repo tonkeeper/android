@@ -4,6 +4,7 @@ import android.net.Uri
 import com.tonapps.icu.Coins
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.BaseListItem
+import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.uikit.icon.UIKitIcon
@@ -22,6 +23,12 @@ sealed class Item(type: Int): BaseListItem(type) {
         const val TYPE_STAKE_STATUS = 9
         const val TYPE_REWARDS = 10
         const val TYPE_TITLE = 11
+        const val TYPE_REWARDS_HISTORY_TITLE = 12
+        const val TYPE_REWARD = 13
+        const val TYPE_REWARD_SKELETON = 14
+        const val TYPE_UPCOMING_REWARD = 15
+        const val TYPE_UPCOMING_REWARD_SKELETON = 16
+        const val TYPE_REWARDS_SKELETON = 17
     }
 
     data class Balance(
@@ -126,6 +133,36 @@ sealed class Item(type: Int): BaseListItem(type) {
     data class Title(
         val titleRes: Int,
     ): Item(TYPE_TITLE)
+
+    data class RewardsHistoryTitle(
+        val wallet: WalletEntity,
+        val totalFormat: CharSequence,
+        val hiddenBalance: Boolean,
+    ): Item(TYPE_REWARDS_HISTORY_TITLE)
+
+    data class Reward(
+        val id: String,
+        val position: ListCell.Position,
+        val amountFormat: CharSequence,
+        val apyFormat: CharSequence?,
+        val dateFormat: String,
+        val hiddenBalance: Boolean,
+    ): Item(TYPE_REWARD)
+
+    data class RewardSkeleton(
+        val position: ListCell.Position,
+    ): Item(TYPE_REWARD_SKELETON)
+
+    data class UpcomingReward(
+        val titleRes: Int,
+        val amountFormat: CharSequence,
+        val subtitle: String,
+        val hiddenBalance: Boolean,
+    ): Item(TYPE_UPCOMING_REWARD)
+
+    data object UpcomingRewardSkeleton: Item(TYPE_UPCOMING_REWARD_SKELETON)
+
+    data object RewardsSkeleton: Item(TYPE_REWARDS_SKELETON)
 
     data class CollectTarget(
         val wallet: WalletEntity,

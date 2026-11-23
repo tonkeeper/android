@@ -51,12 +51,17 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
     private lateinit var titleView: AppCompatTextView
     private lateinit var subtitleView: AppCompatTextView
     private lateinit var button: AppCompatTextView
+    private lateinit var loaderView: View
 
     private val stories = mutableListOf<Item>()
     private var state = StoriesState()
     private var progress: Double = 0.0
 
     private var timerJob: Job? = null
+    private var imageWaitJob: Job? = null
+    private var isStoryReady = false
+    private var isStoryShownReported = false
+    private var storyRequest = 0
 
     private var pressedLink: ClickableSpan? = null
 
@@ -68,6 +73,9 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
 
     val currentIndex: Int
         get() = state.currentIndex
+
+    open val holdsLastStory: Boolean
+        get() = false
 
     val windowInsetsController: WindowInsetsControllerCompat?
         get() = window?.let {
@@ -86,7 +94,7 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         super.onViewCreated(view, savedInstanceState)
         view.setBackgroundColor(Color.BLACK)
 
-        view.findViewById<View>(R.id.stories_close).setMoonOnClickListener { finish() }
+        view.findViewById<View>(R.id.stories_close).setMoonOnClickListener { onCloseRequested() }
 
         contentView = view.findViewById(R.id.stories_content)
         contentView.setOnTouchListener { v, event ->
@@ -105,6 +113,7 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         textsView = view.findViewById(R.id.story_texts)
         button = view.findViewById(R.id.story_button)
         button.setMoonOnClickListener { onStoryButton(state.currentIndex) }
+        loaderView = view.findViewById(R.id.story_loader)
 
         val closeTopMargin = resources.getDimensionPixelSize(R.dimen.tertiaryHeight)
         val textsBottomMargin = 32.dp
@@ -164,11 +173,55 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
 
     open fun onStoryLink(url: String) {}
 
+    open fun onCloseRequested() {
+        finish()
+    }
+
+    /** The current page started playing on a resumed screen; not called for a page left while loading. */
+    open fun onStoryShown(index: Int) {}
+
     open fun onStoryItem(item: Item) {
         setTitle(item.title)
         setSubtitle(item.subtitle, item.links)
         setButton(item.button)
-        imageView.setImageURI(item.image)
+        showStoryContent(false)
+        isStoryShownReported = false
+        val request = ++storyRequest
+        // A blocked or stalled CDN must not hold the text back for the whole download timeout;
+        // the image still lands in the view if it arrives later. Started before the load, so a
+        // memory-cache hit that settles synchronously cancels it.
+        imageWaitJob = lifecycleScope.launch {
+            delay(loaderDelay)
+            loaderView.visibility = View.VISIBLE
+            delay(imageWait - loaderDelay)
+            onStoryImageSettled(request)
+        }
+        imageView.loadImageURI(item.image) { onStoryImageSettled(request) }
+    }
+
+    private fun onStoryImageSettled(request: Int) {
+        if (request != storyRequest || isStoryReady) {
+            return
+        }
+        showStoryContent(true)
+        if (isResumed && !state.isAutoSwitchPaused) {
+            startStoryTimer()
+        }
+    }
+
+    private fun showStoryContent(isReady: Boolean) {
+        isStoryReady = isReady
+        imageWaitJob?.cancel()
+        textsView.animate().cancel()
+        if (isReady) {
+            loaderView.visibility = View.GONE
+            textsView.visibility = View.VISIBLE
+            textsView.animate().alpha(1f).setDuration(contentFadeDuration).start()
+        } else {
+            loaderView.visibility = View.GONE
+            textsView.alpha = 0f
+            textsView.visibility = View.INVISIBLE
+        }
     }
 
     private fun onTouchEvent(event: MotionEvent) {
@@ -232,8 +285,7 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         val action = event.actionMasked
         if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
             pressedLink = null
-            state = state.copy(isAutoSwitchPaused = false)
-            startStoryTimer()
+            resumeTimer()
             if (action == MotionEvent.ACTION_UP && findLink(event) === link) {
                 link.onClick(subtitleView)
             }
@@ -271,9 +323,11 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         onProgress(state.currentIndex, newProgress.toFloat())
     }
 
-    fun putItems(items: List<Item>) {
+    fun putItems(items: List<Item>, startIndex: Int = 0) {
         this.stories.clear()
         this.stories.addAll(items)
+        AsyncImageView.prefetch(requireContext(), items.map { it.image }.filter { it.scheme == "http" || it.scheme == "https" })
+        state = state.copy(currentIndex = startIndex)
         applyLines()
         applyCurrentStory()
     }
@@ -286,6 +340,11 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         )
     }
 
+    fun resumeTimer() {
+        state = state.copy(isAutoSwitchPaused = false)
+        startStoryTimer()
+    }
+
     fun resume(next: Boolean) {
         state = state.copy(
             isAutoSwitchPaused = false
@@ -293,10 +352,12 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         val elapsedSincePause = System.currentTimeMillis() - state.lastPauseTime
         if (172 >= elapsedSincePause) {
             if (next) {
-                if (isLastStory) {
-                    finish()
-                } else {
+                if (!isLastStory) {
                     nextStory()
+                } else if (holdsLastStory) {
+                    startStoryTimer()
+                } else {
+                    finish()
                 }
             } else if (!isFirstStory) {
                 prevStory()
@@ -310,6 +371,13 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
 
     private fun startStoryTimer() {
         stopStoryTimer()
+        if (!isStoryReady) {
+            return
+        }
+        if (isResumed && !isStoryShownReported) {
+            isStoryShownReported = true
+            onStoryShown(state.currentIndex)
+        }
         timerJob = lifecycleScope.launch {
             val startFromProgress = progress
             var remainingTime = autoSwitchDuration * (1 - startFromProgress)
@@ -348,8 +416,8 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
         if (state.currentIndex < 0 || state.currentIndex >= stories.size) {
             state = state.copy(currentIndex = 0)
         }
-        onStoryItem(stories[state.currentIndex])
         setProgress(0.0)
+        onStoryItem(stories[state.currentIndex])
         startStoryTimer()
     }
 
@@ -372,6 +440,9 @@ open class BaseStoriesScreen: BaseFragment(R.layout.fragment_stories) {
     companion object {
         private val autoSwitchDuration = 5000L
         private val progressDelay = 8L
+        private const val loaderDelay = 500L
+        private const val imageWait = 5000L
+        private const val contentFadeDuration = 200L
     }
 
 }

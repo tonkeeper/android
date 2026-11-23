@@ -34,18 +34,6 @@ interface EventDelegate {
     fun tcViewConfirm(url: String, address: String)
     fun tcSendSuccess(url: String, address: String, feePaid: String)
 
-    fun onRampOpen(source: String)
-    fun onRampEnterAmount(type: String, sellAsset: String, buyAsset: String, countryCode: String)
-    fun onRampOpenWebview(
-        type: String,
-        sellAsset: String,
-        buyAsset: String,
-        countryCode: String,
-        paymentMethod: String?,
-        providerName: String,
-        providerDomain: String
-    )
-
     fun onRampClick(type: String, placement: String, location: String, name: String, url: String)
 
     fun trackStoryClick(
@@ -58,4 +46,5 @@ interface EventDelegate {
 
     fun trackStoryView(storiesId: String, index: Int)
     fun trackStoryOpen(storiesId: String, from: String)
+    fun trackStoryCloseAlert(storiesId: String, pageNumber: Int, outcome: String)
 }

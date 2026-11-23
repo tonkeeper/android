@@ -3,4 +3,5 @@ package com.tonapps.wc.models
 data class WcDappConnection(
     val topic: String,
     val app: WcAppData,
+    val validation: WcValidation? = null,
 )

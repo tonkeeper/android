@@ -132,7 +132,7 @@ class CountryPickerViewModel(
         val code: String
 
         if (data.code.equals("auto", true)) {
-            val apiCountry = api.resolveCountry() ?: settingsRepository.getLocale().country
+            val apiCountry = api.resolveCountry() ?: settingsRepository.getSystemLocale().country
             selected = selectedCountry.equals("auto", true)
             code = apiCountry
         } else {
@@ -169,7 +169,7 @@ class CountryPickerViewModel(
         if (country.isNotBlank()) {
             list.add(country)
         }
-        val langCountry = settingsRepository.getLocale().country
+        val langCountry = settingsRepository.getSystemLocale().country
         if (langCountry.isNotBlank()) {
             list.add(langCountry)
         }

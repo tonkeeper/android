@@ -19,6 +19,7 @@ import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.color.accentGreenColor
 import com.tonapps.uikit.color.stateList
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.launch
 import uikit.extensions.activity
@@ -80,7 +81,7 @@ class SetupSwitchHolder(parent: ViewGroup): Holder<Item.SetupSwitch>(parent, R.l
         lifecycleScope?.launch {
             try {
                 if (value) {
-                    val code = passcodeManager?.requestValidPasscode(context) ?: throw IllegalStateException("Passcode is not available")
+                    val code = passcodeManager?.requestValidPasscode(context, PasscodeReason.ENABLE_BIOMETRY) ?: throw IllegalStateException("Passcode is not available")
                     rnLegacy?.setupBiometry(code)
                 } else {
                     rnLegacy?.removeBiometry()

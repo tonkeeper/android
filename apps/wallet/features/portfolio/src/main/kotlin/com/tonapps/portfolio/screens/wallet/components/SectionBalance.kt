@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.tonapps.uikit.icon.UIKitIcon
 import ui.painterResource
@@ -21,6 +22,7 @@ import ui.theme.UIKit
 internal fun SectionBalance(
     format: String,
     onClick: () -> Unit,
+    color: Color = UIKit.colorScheme.text.secondary,
 ) {
     Row(
         modifier = Modifier
@@ -34,7 +36,7 @@ internal fun SectionBalance(
         Text(
             text = format,
             style = UIKit.typography.label2,
-            color = UIKit.colorScheme.text.secondary,
+            color = color,
         )
         Spacer(modifier = Modifier.width(6.dp))
         Icon(

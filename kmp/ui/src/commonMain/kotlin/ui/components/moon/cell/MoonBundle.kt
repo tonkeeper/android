@@ -85,6 +85,7 @@ internal object ObjectAvoirBundleDefaults {
 fun MoonBundleTitleCell(
     title: String,
     modifier: Modifier = Modifier,
+    titleModifier: Modifier = Modifier,
     description: String? = null,
     onClick: (() -> Unit)? = null,
     content: (@Composable () -> Unit)? = null,
@@ -101,7 +102,7 @@ fun MoonBundleTitleCell(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier
+                modifier = titleModifier
                     .modifyIf {
                         onClick?.let {
                             clickable(
@@ -151,14 +152,22 @@ fun MoonBundleCell(
     // LocalMoonBundleScaleSource. Grouped cells expose no source, so their content scales on its
     // own and the shared card background keeps forming one continuous card.
     val standalone = position == MoonBundlePosition.Default
-    val islandSource = if (standalone) remember { MutableInteractionSource() } else null
+    val islandSource = if (standalone) {
+        remember { MutableInteractionSource() }
+    } else {
+        null
+    }
     CompositionLocalProvider(LocalMoonBundleScaleSource provides islandSource) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(margins)
                 .then(
-                    if (islandSource != null) Modifier.indication(islandSource, LocalIndication.current) else Modifier
+                    if (islandSource != null) {
+                        Modifier.indication(islandSource, LocalIndication.current)
+                    } else {
+                        Modifier
+                    }
                 )
                 .run {
                     if (onClick != null && standalone) {

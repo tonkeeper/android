@@ -9,6 +9,8 @@ import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import io.walletapi.models.ActivityType
 
+private const val PERPS_PROTOCOL_LIGHTER = "Lighter"
+
 internal enum class HistoryStakingProvider(
     val protocol: String,
     @DrawableRes val iconRes: Int,
@@ -57,9 +59,12 @@ internal fun HistoryEventEntity.stakingProviderName(): String? {
 }
 
 @Composable
-internal fun protocolDisplayName(protocol: String?): String? {
+internal fun protocolDisplayName(protocol: String?, isPerps: Boolean): String? {
     if (protocol.isNullOrBlank()) {
         return null
+    }
+    if (isPerps && protocol.equals(PERPS_PROTOCOL_LIGHTER, ignoreCase = true)) {
+        return PERPS_PROTOCOL_LIGHTER
     }
     val provider = HistoryStakingProvider.of(protocol)
     return if (provider != null) {

@@ -13,6 +13,7 @@
         markers: [],
         priceDecimals: 2,
         priceGroupingSeparator: " ",
+        priceDecimalSeparator: ".",
         lineWidth: 1,
         lineOpacity: 0.32,
         fontSize: 12,
@@ -154,10 +155,15 @@
             return "";
         }
 
-        return formatAxisPrice(value, Math.max(2, options.priceDecimals || 0), options.priceGroupingSeparator || " ");
+        return formatAxisPrice(
+            value,
+            Math.max(2, options.priceDecimals || 0),
+            options.priceGroupingSeparator || " ",
+            options.priceDecimalSeparator || ".",
+        );
     }
 
-    function formatAxisPrice(value, decimals, groupingSeparator) {
+    function formatAxisPrice(value, decimals, groupingSeparator, decimalSeparator) {
         const fixed = value.toFixed(decimals);
         const trimmed = fixed.includes(".")
             ? fixed.replace(/(\.\d{2}.*?)0+$/, "$1")
@@ -166,7 +172,7 @@
         const sign = parts[0].startsWith("-") ? "-" : "";
         const integer = sign ? parts[0].slice(1) : parts[0];
         const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, groupingSeparator);
-        return `${sign}${grouped}${parts[1] ? `.${parts[1]}` : ""}`;
+        return `${sign}${grouped}${parts[1] ? `${decimalSeparator}${parts[1]}` : ""}`;
     }
 
     function tagHeightFor(options) {
@@ -339,24 +345,16 @@
             .sort(byY(1))
             .map(item => ({ item, tagY: Math.min(Math.max(item.y, half), plotBottom - half), edge: null }));
 
-        let floor = topEnd === null ? -Infinity : topEnd + step;
+        let floor = topEnd === null ? half : topEnd + step;
         for (const entry of inRange) {
-            if (entry.tagY < floor) {
-                entry.tagY = floor;
-                floor = entry.tagY + step;
-            } else {
-                floor = -Infinity;
-            }
+            entry.tagY = Math.max(entry.tagY, floor);
+            floor = entry.tagY + step;
         }
-        let ceiling = bottomEnd === null ? Infinity : bottomEnd - step;
+        let ceiling = bottomEnd === null ? plotBottom - half : bottomEnd - step;
         for (let index = inRange.length - 1; index >= 0; index--) {
             const entry = inRange[index];
-            if (entry.tagY > ceiling) {
-                entry.tagY = ceiling;
-                ceiling = entry.tagY - step;
-            } else {
-                ceiling = Infinity;
-            }
+            entry.tagY = Math.min(entry.tagY, ceiling);
+            ceiling = entry.tagY - step;
         }
         return layout.concat(inRange);
     }

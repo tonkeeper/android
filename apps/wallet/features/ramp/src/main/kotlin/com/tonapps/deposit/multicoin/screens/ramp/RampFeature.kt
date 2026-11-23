@@ -3,6 +3,7 @@ package com.tonapps.deposit.multicoin.screens.ramp
 import com.tonapps.async.Async
 import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.deposit.data.ExchangeRepository
@@ -10,7 +11,7 @@ import com.tonapps.deposit.multicoin.analytics.DepositAnalytics
 import com.tonapps.deposit.screens.ramp.RampType
 import com.tonapps.log.L
 import com.tonapps.mvi.AsyncViewModel
-import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import io.exchangeapi.models.ExchangeLayoutCard
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,16 +27,19 @@ sealed interface RampState {
 }
 
 class RampFeature(
+    private val walletId: String,
     private val rampType: RampType,
     private val analyticsFrom: DepositFlowFrom,
     private val utm: UtmParameters,
     private val exchangeRepository: ExchangeRepository,
-    private val accountRepository: AccountRepository,
+    private val accountRepository: UnifiedAccountRepository,
 ) : AsyncViewModel() {
 
     val state: StateFlow<RampState> field = MutableStateFlow<RampState>(RampState.Loading)
 
-    val analytics = DepositAnalytics(rampType, analyticsFrom, DepositFlowWalletMode.Multi, utm)
+    val analytics = DepositAnalytics(
+        rampType, analyticsFrom, DepositFlowWalletMode.Multi, utm, DepositFlowDepositScreen.AddFunds,
+    )
 
     init {
         load()
@@ -44,7 +48,12 @@ class RampFeature(
     private fun load() {
         bgScope.launch {
             try {
-                val wallet = accountRepository.getSelectedWallet() ?: return@launch
+                val wallet = accountRepository.getTonWalletById(walletId)
+                if (wallet == null) {
+                    L.w("Ramp: no wallet $walletId")
+                    state.emit(RampState.Data(cards = emptyList(), isSendAvailable = false, isExchangeAvailable = false))
+                    return@launch
+                }
 
                 val isMainnet = wallet.network.isMainnet
                 val isExchangeAvailable = isMainnet && !wallet.isWatchOnly

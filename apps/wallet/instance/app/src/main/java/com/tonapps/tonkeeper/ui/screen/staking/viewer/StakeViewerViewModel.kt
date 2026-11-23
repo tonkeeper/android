@@ -15,7 +15,9 @@ import com.tonapps.icu.Coins
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.legacy.enteties.StakedEntity
 import com.tonapps.tonkeeper.ui.base.BaseWalletVM
+import com.tonapps.tonkeeper.ui.screen.staking.rewards.StakingRewardFormat
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Item
+import com.tonapps.uikit.list.ListCell
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.wallet.data.multichain.account.AccountWithDetails
@@ -29,20 +31,39 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.StakingPool
 import com.tonapps.wallet.data.staking.StakingRepository
+import com.tonapps.wallet.data.staking.StakingRewardsPeriod
 import com.tonapps.wallet.data.staking.entities.PoolDetailsEntity
 import com.tonapps.wallet.data.staking.entities.PoolEntity
+import com.tonapps.wallet.data.staking.entities.StakingRewardsForecast
+import com.tonapps.wallet.data.staking.entities.StakingRewardsPage
+import com.tonapps.wallet.data.staking.entities.StakingUpcomingReward
+import com.tonapps.wallet.data.rates.entity.RatesEntity
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.wallet.localization.Localization
+import com.tonapps.wallet.localization.Plurals
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+private const val REWARDS_PREVIEW_SIZE = 3
+
+private sealed interface RewardsPreview {
+    data object Loading : RewardsPreview
+    data class Loaded(
+        val page: StakingRewardsPage?,
+        val forecast: StakingRewardsForecast?,
+    ) : RewardsPreview
+}
 
 class StakeViewerViewModel(
     app: Application,
@@ -82,6 +103,8 @@ class StakeViewerViewModel(
     val tokensFlow = _tokensFlow.asStateFlow().filterNotNull()
 
     private val _mcLiquidTokenFlow = MutableStateFlow<McLiquidToken?>(null)
+
+    private val _rewardsPreviewFlow = MutableStateFlow<RewardsPreview>(RewardsPreview.Loading)
 
     val ethenaItemsFlow = combine(ethenaDataFlow, tokensFlow) { ethena, tokens ->
         val uiItems = mutableListOf<Item>()
@@ -125,12 +148,13 @@ class StakeViewerViewModel(
             )
         )
 
-        val actions = if (!usdeDisabled || balance.isPositive) {
+        val hasStake = !CurrencyFormatter.isDisplayedAsZero(balance)
+        val actions = if (!usdeDisabled || hasStake) {
             StakeViewerActions(
                 wallet = wallet,
                 ethenaMethod = method,
-                unstakeDisabled = balance.isZero,
-                stakeDisabled = usdeDisabled,
+                unstakeDisabled = !hasStake || !wallet.isStakingAllowed,
+                stakeDisabled = usdeDisabled || !wallet.isStakingAllowed,
             )
         } else {
             null
@@ -194,7 +218,7 @@ class StakeViewerViewModel(
         StakeViewerUiState(uiItems, actions)
     }.flowOn(Dispatchers.IO)
 
-    val stakingItemsFlow = combine(poolFlow, _mcLiquidTokenFlow) { (staked, details), mcLiquid ->
+    val stakingItemsFlow = combine(poolFlow, _mcLiquidTokenFlow, _rewardsPreviewFlow) { (staked, details), mcLiquid, rewardsPreview ->
         val liquidToken = staked.liquidToken
         val currencyCode = TokenEntity.TON.symbol
         val rates = ratesRepository.getRates(
@@ -227,12 +251,13 @@ class StakeViewerViewModel(
         val config = api.getConfig(wallet.network)
         val stakingDisabled = !config.enabledStaking.contains(staked.pool.implementation.title) || config.flags.disableStaking
 
-        val actions = if (!stakingDisabled || amount.isPositive) {
+        val hasStake = !CurrencyFormatter.isDisplayedAsZero(amount)
+        val actions = if (!stakingDisabled || hasStake) {
             StakeViewerActions(
                 wallet = wallet,
                 poolAddress = poolAddress,
-                unstakeDisabled = amount.isZero,
-                stakeDisabled = stakingDisabled,
+                unstakeDisabled = !hasStake || !wallet.isStakingAllowed,
+                stakeDisabled = stakingDisabled || !wallet.isStakingAllowed,
                 utm = utm,
             )
         } else {
@@ -310,6 +335,12 @@ class StakeViewerViewModel(
             }
         }
 
+        if (hasRewardsHistory(staked.pool)) {
+            uiItems.addAll(upcomingRewardItems(rewardsPreview))
+            uiItems.addAll(rewardsHistoryItems(rewardsPreview))
+            uiItems.addAll(currentRewardsItems(rewardsPreview, rates))
+        }
+
         uiItems.add(Item.Space)
         uiItems.add(Item.Title(Localization.staking_details))
         uiItems.add(
@@ -347,9 +378,16 @@ class StakeViewerViewModel(
     private suspend fun getData(refresh: Boolean = false) {
         if (wallet.type == WalletType.Multichain) {
             getMultichainData(refresh)
-            return
+        } else {
+            getLegacyData(refresh)
         }
+        val pool = _poolFlow.value?.first?.pool ?: return
+        if (hasRewardsHistory(pool)) {
+            refreshRewardsPreview(pool)
+        }
+    }
 
+    private suspend fun getLegacyData(refresh: Boolean) {
         val tokens =
             tokenRepository.get(currency, wallet.accountId, wallet.network, refresh = refresh)
                 ?: return
@@ -434,6 +472,142 @@ class StakeViewerViewModel(
             ),
             details,
         )
+    }
+
+    private fun hasRewardsHistory(pool: PoolEntity): Boolean {
+        return pool.implementation == StakingPool.Implementation.LiquidTF && !wallet.testnet
+    }
+
+    private suspend fun refreshRewardsPreview(pool: PoolEntity) {
+        coroutineScope {
+            val page = async {
+                stakingRepository.getRewards(
+                    accountId = wallet.accountId,
+                    period = StakingRewardsPeriod.AllTime,
+                    nowMillis = System.currentTimeMillis(),
+                    limit = REWARDS_PREVIEW_SIZE,
+                    offset = 0,
+                )
+            }
+            val forecast = async {
+                stakingRepository.getRewardsForecast(
+                    accountId = wallet.accountId,
+                    poolApyPercent = pool.apy,
+                    nowSeconds = api.serverTime.currentTimeSeconds(),
+                )
+            }
+            val loadedPage = page.await()
+            val loadedForecast = forecast.await()
+            _rewardsPreviewFlow.update { current ->
+                val previous = current as? RewardsPreview.Loaded
+                RewardsPreview.Loaded(
+                    page = loadedPage ?: previous?.page,
+                    forecast = loadedForecast,
+                )
+            }
+        }
+    }
+
+    private fun upcomingRewardItems(preview: RewardsPreview): List<Item> {
+        val title = Item.Title(Localization.staking_upcoming_reward)
+        return when (preview) {
+            is RewardsPreview.Loading -> listOf(Item.Space, title, Item.UpcomingRewardSkeleton)
+            is RewardsPreview.Loaded -> {
+                val reward = preview.forecast?.upcoming ?: return emptyList()
+                val isFirstReward = preview.page?.items?.isEmpty() == true
+                listOf(Item.Space, title, upcomingRewardItem(reward, isFirstReward))
+            }
+        }
+    }
+
+    private fun upcomingRewardItem(reward: StakingUpcomingReward, isFirstReward: Boolean): Item.UpcomingReward {
+        return Item.UpcomingReward(
+            titleRes = if (isFirstReward) {
+                Localization.staking_first_reward
+            } else {
+                Localization.staking_current_round
+            },
+            amountFormat = StakingRewardFormat.estimate(reward.amount),
+            subtitle = roundEndsFormat(reward.roundEndSeconds),
+            hiddenBalance = settingsRepository.hiddenBalances,
+        )
+    }
+
+    private fun roundEndsFormat(roundEndSeconds: Long): String {
+        val remainingSeconds = roundEndSeconds - api.serverTime.currentTimeSeconds()
+        return when (val roundEnds = StakingRewardFormat.roundEnds(remainingSeconds)) {
+            is StakingRewardFormat.RoundEnds.Soon -> getString(Localization.staking_round_ends_soon)
+            is StakingRewardFormat.RoundEnds.InHours -> quantityString(Plurals.staking_round_ends_in_hours, roundEnds.count)
+            is StakingRewardFormat.RoundEnds.InMinutes -> quantityString(Plurals.staking_round_ends_in_minutes, roundEnds.count)
+        }
+    }
+
+    private fun quantityString(pluralsRes: Int, count: Int): String {
+        return context.resources.getQuantityString(pluralsRes, count, count)
+    }
+
+    private fun currentRewardsItems(preview: RewardsPreview, rates: RatesEntity): List<Item> {
+        val loaded = preview as? RewardsPreview.Loaded
+            ?: return listOf(Item.Space, Item.Title(Localization.staking_current_rewards), Item.RewardsSkeleton)
+        val rewards = loaded.forecast?.current ?: return emptyList()
+        val monthlyFiat = rates.convert(TokenEntity.TON.symbol, rewards.monthly)
+        val yearlyFiat = rates.convert(TokenEntity.TON.symbol, rewards.yearly)
+        return listOf(
+            Item.Space,
+            Item.Rewards(
+                monthlyFormat = StakingRewardFormat.amount(rewards.monthly),
+                monthlyFiatFormat = CurrencyFormatter.formatFiat(currency.code, monthlyFiat, compact = true),
+                yearlyFormat = StakingRewardFormat.amount(rewards.yearly),
+                yearlyFiatFormat = CurrencyFormatter.formatFiat(currency.code, yearlyFiat, compact = true),
+                hiddenBalance = settingsRepository.hiddenBalances,
+            ),
+        )
+    }
+
+    private fun rewardsHistoryItems(preview: RewardsPreview): List<Item> {
+        return when (preview) {
+            is RewardsPreview.Loading -> rewardsHistorySkeletonItems()
+            is RewardsPreview.Loaded -> {
+                val page = preview.page
+                if (page == null || page.items.isEmpty()) {
+                    emptyList()
+                } else {
+                    listOf(Item.Space) + rewardsHistoryItems(page)
+                }
+            }
+        }
+    }
+
+    private fun rewardsHistorySkeletonItems(): List<Item> {
+        val rows = List(REWARDS_PREVIEW_SIZE) { index ->
+            Item.RewardSkeleton(ListCell.getPosition(REWARDS_PREVIEW_SIZE, index))
+        }
+        return listOf(Item.Space, Item.Title(Localization.staking_rewards_history)) + rows
+    }
+
+    private fun rewardsHistoryItems(rewards: StakingRewardsPage): List<Item> {
+        val hiddenBalance = settingsRepository.hiddenBalances
+        val locale = settingsRepository.getLocale()
+        val items = mutableListOf<Item>(
+            Item.RewardsHistoryTitle(
+                wallet = wallet,
+                totalFormat = rewards.total?.let(StakingRewardFormat::amount) ?: StakingRewardFormat.NO_VALUE,
+                hiddenBalance = hiddenBalance,
+            )
+        )
+        rewards.items.forEachIndexed { index, reward ->
+            items.add(
+                Item.Reward(
+                    id = reward.id,
+                    position = ListCell.getPosition(rewards.items.size, index),
+                    amountFormat = StakingRewardFormat.reward(reward),
+                    apyFormat = StakingRewardFormat.apy(reward)?.let { getString(Localization.staking_reward_apy, it) },
+                    dateFormat = StakingRewardFormat.date(reward, locale),
+                    hiddenBalance = hiddenBalance,
+                )
+            )
+        }
+        return items
     }
 
     private suspend fun loadLiquidAccount(pool: PoolEntity, forceRefresh: Boolean): AccountWithDetails? {

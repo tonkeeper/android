@@ -19,6 +19,7 @@ internal class CurrencyFormat(val locale: Locale) {
         private const val DEFAULT_SPACE = " "
         private const val APOSTROPHE = "'"
         const val TON_SYMBOL = "GRAM"
+        val MAX_ZERO_DISPLAY: BigDecimal = BigDecimal("0.0000001")
 
         private val fiatSymbols = ArrayMap<String, String>().apply {
             put("USD", "$")
@@ -79,6 +80,9 @@ internal class CurrencyFormat(val locale: Locale) {
 
         private val symbols = fiatSymbols + tokenSymbols
 
+        /** The glyph an amount of [currency] is shown with (`ETH` → `Ξ`, `USDT` → `USD₮`); [currency] as written when it has none. */
+        fun symbol(currency: String): String = symbols[currency] ?: fixSymbol(currency, cutLongSymbol = false)
+
         private fun isFiat(currency: String): Boolean {
             return fiatSymbols.containsKey(currency)
         }
@@ -138,7 +142,7 @@ internal class CurrencyFormat(val locale: Locale) {
             return when {
                 value >= BigDecimal("1000") -> 0
                 value >= BigDecimal.ONE -> 2
-                BigDecimal("0.0000001") >= value -> 0
+                MAX_ZERO_DISPLAY >= value -> 0
                 else -> {
                     val plainString = value.stripTrailingZeros().toPlainString()
                     val dotIndex = plainString.indexOf('.')
@@ -186,6 +190,17 @@ internal class CurrencyFormat(val locale: Locale) {
         val bigDecimal = value.stripTrailingZeros().setScale(scale, RoundingMode.HALF_EVEN).stripTrailingZeros()
         val decimals = bigDecimal.scale()
         val amount = getFormat(decimals).format(bigDecimal)
+        return format(
+            currency = currency,
+            value = amount,
+            replaceSymbol = true,
+            cutLongSymbol = false
+        )
+    }
+
+    fun formatExact(currency: String, value: BigDecimal, minDecimals: Int): CharSequence {
+        val decimals = value.stripTrailingZeros().scale().coerceAtLeast(minDecimals)
+        val amount = getFormat(decimals).format(value.setScale(decimals))
         return format(
             currency = currency,
             value = amount,
@@ -247,7 +262,7 @@ internal class CurrencyFormat(val locale: Locale) {
         val str = if (rounded % 1.0 == 0.0) {
             rounded.toLong().toString()
         } else {
-            rounded.toString()
+            rounded.toString().replace(".", decimalSeparator)
         }
         return "$str$suffix"
     }

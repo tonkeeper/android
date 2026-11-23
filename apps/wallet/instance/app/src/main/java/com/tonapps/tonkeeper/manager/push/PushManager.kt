@@ -169,8 +169,8 @@ class PushManager(
     }
 
     private suspend fun reconcileLegacyPush(): Boolean {
-        val locale = settingsRepository.getPushLocale()
-        if (settingsRepository.legacyPushLocale == locale.toString()) {
+        val locale = settingsRepository.getPushLocale().toPushCode()
+        if (settingsRepository.legacyPushLocale == locale) {
             return true
         }
         val wallets = unifiedAccountRepository.getTonWallets()
@@ -186,7 +186,7 @@ class PushManager(
             accounts = wallets.map { it.accountId },
         )
         if (successful) {
-            settingsRepository.legacyPushLocale = locale.toString()
+            settingsRepository.legacyPushLocale = locale
         }
         return successful
     }
@@ -242,7 +242,7 @@ class PushManager(
 
             val firebaseToken = getFirebaseToken() ?: throw IllegalStateException("Firebase token not found")
             val accounts = wallets.map { it.accountId }
-            val locale = settingsRepository.getPushLocale()
+            val locale = settingsRepository.getPushLocale().toPushCode()
             val successful = api.pushSubscribe(
                 locale = locale,
                 firebaseToken = firebaseToken,
@@ -253,7 +253,7 @@ class PushManager(
             if (!successful) {
                 throw IllegalStateException("Failed to subscribe")
             }
-            settingsRepository.legacyPushLocale = locale.toString()
+            settingsRepository.legacyPushLocale = locale
 
             for (wallet in wallets) {
                 val apps = dAppsRepository.getConnections(wallet.accountId, wallet.network)

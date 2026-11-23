@@ -80,6 +80,15 @@ data class PerpsFundingEntity(
     @ColumnInfo("failure_reason")
     val failureReason: String?,
 
+    @ColumnInfo("pending_step")
+    val pendingStep: String?,
+
+    @ColumnInfo("estimated_duration_seconds")
+    val estimatedDurationSeconds: Long?,
+
+    @ColumnInfo("status_acknowledged", defaultValue = "0")
+    val statusAcknowledged: Boolean,
+
     @ColumnInfo("revision")
     val revision: Int,
 

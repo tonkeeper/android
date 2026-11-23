@@ -2,6 +2,7 @@ package com.tonapps.portfolio.screens.raffle
 
 import com.tonapps.blockchain.model.legacy.WalletEntity
 import com.tonapps.blockchain.model.legacy.WalletType
+import com.tonapps.core.flags.WalletFeature
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.StoryEntity
 import com.tonapps.wallet.data.settings.SettingsRepository
@@ -10,6 +11,7 @@ class ConfigStoriesAutoShow(
     private val api: API,
     private val settingsRepository: SettingsRepository,
     private val session: StoryAutoShowSession,
+    private val prefetchImages: (List<StoryEntity.Stories>) -> Unit,
 ) {
 
     private val storiesWithoutAutoShow = mutableSetOf<Pair<String?, List<String>>>()
@@ -23,7 +25,7 @@ class ConfigStoriesAutoShow(
         if ((walletId to configStories) in storiesWithoutAutoShow) {
             return
         }
-        val candidates = configStories.filter { !settingsRepository.isStoriesViewed(it) }
+        val candidates = configStories.filter { !WalletFeature.Perps.isPromoHidden(it) && !settingsRepository.isStoriesViewed(it) }
         if (candidates.isEmpty()) {
             return
         }
@@ -33,6 +35,7 @@ class ConfigStoriesAutoShow(
             network = wallet.network,
             isNew = !settingsRepository.hadWalletsOnMultichainRelease,
         )
+        prefetchImages(loaded)
         val stories = candidates.firstNotNullOfOrNull { id -> loaded.find { it.id == id && it.isAutoShow } }
         if (stories == null) {
             if (loaded.isNotEmpty()) {

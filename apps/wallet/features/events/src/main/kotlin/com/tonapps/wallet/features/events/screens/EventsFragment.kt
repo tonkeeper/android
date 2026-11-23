@@ -30,7 +30,7 @@ class EventsFragment : ComposableFragment(), BaseFragment.SwipeBack {
                 mode = mode,
                 awaitsFundingActivity = awaitsFundingActivity,
                 onBack = { finish() },
-                onOpenDeposit = { delegate?.onOpenDeposit(DepositFlowFrom.HistoryScreen) },
+                onOpenDeposit = { delegate?.onOpenDeposit(DepositFlowFrom.HistoryScreen, walletId = null) },
                 onOpenNft = { address -> delegate?.onOpenNft(address) },
             )
         }

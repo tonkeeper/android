@@ -7,9 +7,11 @@ import androidx.camera.view.PreviewView
 import androidx.lifecycle.lifecycleScope
 import com.tonapps.blockchain.ton.extensions.publicKeyFromHex
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
+import com.tonapps.bus.walletimport.WalletImportPairingSession
+import com.tonapps.bus.walletimport.WalletImportPairingSessions
 import com.tonapps.tonkeeper.helper.BrowserHelper
 import com.tonapps.tonkeeper.core.signer.SignerApp
-import com.tonapps.tonkeeper.extensions.toast
+import com.tonapps.tonkeeper.extensions.failureToast
 import com.tonapps.tonkeeper.ui.base.QRCameraScreen
 import com.tonapps.tonkeeper.ui.component.CameraFlashIconView
 import com.tonapps.tonkeeper.ui.screen.init.InitArgs
@@ -41,6 +43,14 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
 
     private val importAnalytics: WalletImportAnalytics by inject()
 
+    private val pairingSessions: WalletImportPairingSessions by inject()
+
+    private val pairingSession: WalletImportPairingSession? by lazy {
+        pairingSessions.active(WalletFlowWalletSource.Signer)
+    }
+
+    private var isHandedOff = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -64,6 +74,8 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
         val signerOpenButton = view.findViewById<View>(R.id.signer_open)
         signerOpenButton.pinToBottomInsets()
         signerOpenButton.setMoonOnClickListener {
+            pairingSession?.signerAppOpened()
+            isHandedOff = true
             SignerApp.openAppOrInstall(requireContext())
             finish()
         }
@@ -77,7 +89,7 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
         }
 
         readerFlow.map { Uri.parse(it) }.filter { it.host == "signer" }.catch {
-            navigation?.toast(Localization.unknown_error)
+            navigation?.failureToast(Localization.unknown_error)
             trackImportError("signer_qr_scan_error", it.message)
         }.onEach { uri ->
             val pk = uri.getQueryParameter("pk")
@@ -87,9 +99,25 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
                     return@onEach
                 }
             val name = uri.getQueryParameter("name") ?: ""
+            pairingSession?.connected()
             importAnalytics.trackSignerScanned()
             addAccount(pk, name)
         }.launchIn(lifecycleScope)
+    }
+
+    override fun onCameraStarted() {
+        pairingSession?.cameraStarted()
+    }
+
+    override fun onCameraPermissionDenied() {
+        pairingSession?.setBlocked(WalletImportPairingSession.Blocker.CameraPermissionDenied)
+    }
+
+    override fun onDestroy() {
+        if (!isHandedOff && activity?.isChangingConfigurations != true) {
+            pairingSession?.exit()
+        }
+        super.onDestroy()
     }
 
     private suspend fun trackImportError(errorType: String, errorMessage: String? = null) {
@@ -107,6 +135,7 @@ class SignerAddScreen: QRCameraScreen(R.layout.fragment_signer_add), BaseFragmen
             name = name,
             importStartedTracked = true,
         )
+        isHandedOff = true
         navigation?.add(fragment)
         finish()
     }

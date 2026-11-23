@@ -50,7 +50,14 @@ class BalloonTooltip private constructor(
     private val autoDismissMs: Long,
     private val onShown: (() -> Unit)?,
     private val onClickListener: (() -> Unit)?,
+    private val onDismissed: ((DismissReason) -> Unit)?,
 ) {
+
+    enum class DismissReason {
+        User,
+        Timeout,
+        Other,
+    }
 
     enum class Placement {
         TOP,
@@ -99,6 +106,7 @@ class BalloonTooltip private constructor(
             autoDismissMs: Long = AUTO_DISMISS_MS,
             onShown: (() -> Unit)? = null,
             onClickListener: (() -> Unit)? = null,
+            onDismissed: ((DismissReason) -> Unit)? = null,
         ): BalloonTooltip {
             assertBalloonTooltipMainThread()
             existingForAnchor(anchorView)?.let { return it }
@@ -113,6 +121,7 @@ class BalloonTooltip private constructor(
                 autoDismissMs = autoDismissMs,
                 onShown = onShown,
                 onClickListener = onClickListener,
+                onDismissed = onDismissed,
             )
             if (current == null) {
                 tooltip.display()
@@ -265,9 +274,10 @@ class BalloonTooltip private constructor(
 
     private fun anchor(): View? = anchorRef.get()
 
-    private val dismissRunnable = Runnable { dismiss() }
+    private val dismissRunnable = Runnable { dismiss(DismissReason.Timeout) }
     private var popup: PopupWindow? = null
     private var dismissed = false
+    private var dismissReason = DismissReason.Other
     private var dismissCleanupDone = false
     private var anchorVisibilityListener: ViewTreeObserver.OnGlobalLayoutListener? = null
     private var visibilityAnchorRef: WeakReference<View>? = null
@@ -346,6 +356,9 @@ class BalloonTooltip private constructor(
             isOutsideTouchable = true
             isFocusable = false
             setOnDismissListener {
+                if (!dismissed) {
+                    dismissReason = DismissReason.User
+                }
                 removeAnchorVisibilityListener()
                 mainHandler.removeCallbacks(dismissRunnable)
                 dismissed = true
@@ -470,10 +483,15 @@ class BalloonTooltip private constructor(
     }
 
     fun dismiss() {
+        dismiss(DismissReason.Other)
+    }
+
+    private fun dismiss(reason: DismissReason) {
         assertBalloonTooltipMainThread()
         if (dismissed) {
             return
         }
+        dismissReason = reason
         dismissed = true
         removeAnchorVisibilityListener()
         mainHandler.removeCallbacks(dismissRunnable)
@@ -517,6 +535,7 @@ class BalloonTooltip private constructor(
         }
         dismissCleanupDone = true
         popup = null
+        onDismissed?.invoke(dismissReason)
 
         if (current === this) {
             advanceQueue()

@@ -1,5 +1,6 @@
 package com.tonapps.wc
 
+import androidx.annotation.WorkerThread
 import com.reown.walletkit.client.Wallet
 import com.reown.walletkit.client.WalletKit
 import com.tonapps.chainkit.core.chain.model.account.Account
@@ -16,25 +17,32 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 class WalletConnectManager {
 
-    val isAvailable: Boolean
-        get() = WcInitializer.isInitialized
+    val becameAvailableFlow: Flow<Unit> = WcInitializer.state
+        .filter { it == WcInitializer.State.Initialized }
+        .map { }
 
     private val walletDelegate = WcEventDelegate()
-    private val requestController = WcRequestController(walletDelegate) 
+    private val requestController = WcRequestController(walletDelegate, ::loadUnansweredRequests)
 
     private val wcEvents = MutableSharedFlow<WcEvent>(0, Int.MAX_VALUE, BufferOverflow.DROP_OLDEST)
     val events: Flow<WcEvent> = merge(wcEvents, requestController.events)
 
     init {
-        if (WcInitializer.isInitialized) {
+        WcInitializer.doOnInitialized {
             WalletKit.setWalletDelegate(walletDelegate)
         }
+    }
+
+    suspend fun awaitAvailable(): Boolean {
+        return WcInitializer.awaitInitialized()
     }
 
     fun createPair(uri: String) {
@@ -230,6 +238,18 @@ class WalletConnectManager {
                 cont.resume(Result.success(it.sessionTopic))
             },
         )
+    }
+
+    @WorkerThread
+    private fun loadUnansweredRequests(): List<WcEventData.SessionRequest> {
+        return WalletKit.getListOfActiveSessions()
+            .flatMap { session -> WalletKit.getPendingListOfSessionRequests(session.topic) }
+            .sortedBy { it.request.id }
+            .map { request ->
+                val verifyContext = WalletKit.getVerifyContext(request.request.id)
+                    ?: Wallet.Model.VerifyContext(request.request.id, "", Wallet.Model.Validation.UNKNOWN, "", null)
+                WcEventData.SessionRequest(request, verifyContext)
+            }
     }
 
     private fun buildSessionNamespaces(

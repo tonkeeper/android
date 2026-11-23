@@ -65,7 +65,9 @@ data class Raffle(
     @SerialName(value = "stories")
     val stories: List<RaffleStory>? = null,
     @SerialName(value = "progress")
-    val progress: RaffleProgress? = null
+    val progress: RaffleProgress? = null,
+    @SerialName(value = "leaderboard")
+    val leaderboard: RaffleLeaderboard? = null
 ) {
 }
 

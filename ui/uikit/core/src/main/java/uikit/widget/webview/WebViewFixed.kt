@@ -9,8 +9,11 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.RectF
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.os.Message
 import android.util.AttributeSet
+import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
@@ -24,17 +27,33 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.webkit.Profile
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
+import com.tonapps.uikit.color.backgroundPageColor
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.json.JSONException
 import org.json.JSONObject
+import org.json.JSONTokener
 import uikit.R
+import uikit.drawable.HeaderDrawable
+import uikit.extensions.isDark
+import uikit.extensions.setMoonOnClickListener
 import java.util.LinkedList
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.resume
+
+private const val BLANK_PAGE_URL = "about:blank"
+private const val BLANK_PAGE_HOST_CHECK_INTERVAL_MS = 500L
 
 open class WebViewFixed @JvmOverloads constructor(
     context: Context,
@@ -102,7 +121,7 @@ open class WebViewFixed @JvmOverloads constructor(
         settings.domStorageEnabled = true
         settings.javaScriptCanOpenWindowsAutomatically = true
         settings.setSupportMultipleWindows(true)
-        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         settings.allowFileAccess = false
         settings.cacheMode = WebSettings.LOAD_NO_CACHE
         settings.allowContentAccess = false
@@ -321,6 +340,7 @@ open class WebViewFixed @JvmOverloads constructor(
         val transport = resultMsg.obj as? WebViewTransport ?: return false
         transport.webView = dialog.webView
         resultMsg.sendToTarget()
+        dialog.postBlankPageHostCheck()
         return true
     }
 
@@ -329,10 +349,35 @@ open class WebViewFixed @JvmOverloads constructor(
 
         val webView = WebViewFixed(context)
 
+        private val headerDrawable = HeaderDrawable(context)
+        private val titleView: AppCompatTextView
+        private val hostView: AppCompatTextView
+        private val blankPageHostHandler = Handler(Looper.getMainLooper())
+        private val blankPageHostCheck = Runnable { checkBlankPageHost() }
+        private var blankPageHostRequestId = 0
+
         private val isAttachedAndShowing: Boolean
             get() = isShowing && window?.decorView?.isAttachedToWindow == true
 
         init {
+            setContentView(R.layout.dialog_web_popup)
+            findViewById<View>(R.id.web_popup_header).background = headerDrawable
+            titleView = findViewById(R.id.web_popup_title)
+            hostView = findViewById(R.id.web_popup_host)
+            hostView.text = BLANK_PAGE_URL
+            findViewById<View>(R.id.web_popup_close).setMoonOnClickListener { dismiss() }
+            findViewById<FrameLayout>(R.id.web_popup_container).addView(
+                webView,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.web_popup)) { view, insets ->
+                val topInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.ime() or WindowInsetsCompat.Type.navigationBars())
+                view.updatePadding(top = topInsets.top, bottom = bottomInsets.bottom)
+                insets
+            }
+
             webView.setProfileName(profileName)
             webView.addCallback(object : Callback() {
                 override fun onWindowClose() {
@@ -340,21 +385,104 @@ open class WebViewFixed @JvmOverloads constructor(
                         dismiss()
                     }
                 }
+
+                override fun onReceivedTitle(title: String) {
+                    titleView.text = title
+                    titleView.isVisible = title.isNotBlank()
+                }
+
+                override fun onPageStarted(url: String, favicon: Bitmap?) {
+                    updateHost(url)
+                }
+
+                override fun onPageFinished(url: String) {
+                    updateHost(webView.url ?: url)
+                }
+
+                override fun onScroll(y: Int, x: Int) {
+                    headerDrawable.setDivider(y > 0)
+                }
             })
-            setContentView(webView)
             window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            matchSystemBarsWithBackground()
+        }
+
+        fun postBlankPageHostCheck() {
+            blankPageHostHandler.post(blankPageHostCheck)
+        }
+
+        private fun updateHost(url: String?) {
+            stopBlankPageHostCheck()
+            val host = siteHost(url)
+            if (host == null) {
+                hostView.text = BLANK_PAGE_URL
+                checkBlankPageHost()
+            } else {
+                hostView.text = host
+            }
+        }
+
+        private fun checkBlankPageHost() {
+            val requestId = ++blankPageHostRequestId
+            webView.evaluateJavascript("location.href") { value ->
+                if (requestId != blankPageHostRequestId) {
+                    return@evaluateJavascript
+                }
+                val host = siteHost(parseJsString(value))
+                if (host == null) {
+                    blankPageHostHandler.postDelayed(blankPageHostCheck, BLANK_PAGE_HOST_CHECK_INTERVAL_MS)
+                } else {
+                    hostView.text = host
+                }
+            }
+        }
+
+        private fun stopBlankPageHostCheck() {
+            blankPageHostRequestId++
+            blankPageHostHandler.removeCallbacks(blankPageHostCheck)
+        }
+
+        private fun parseJsString(value: String?): String? {
+            return try {
+                JSONTokener(value.orEmpty()).nextValue() as? String
+            } catch (_: JSONException) {
+                null
+            }
+        }
+
+        private fun siteHost(url: String?): String? {
+            val uri = url?.toUri() ?: return null
+            return when (val scheme = uri.scheme?.lowercase()) {
+                null, "about" -> null
+                "blob" -> uri.schemeSpecificPart.toUri().host ?: "$scheme:"
+                else -> uri.host ?: "$scheme:"
+            }
+        }
+
+        private fun matchSystemBarsWithBackground() {
+            val dialogWindow = window ?: return
+            val isLightBackground = !context.backgroundPageColor.isDark()
+            WindowCompat.getInsetsController(dialogWindow, dialogWindow.decorView).apply {
+                isAppearanceLightStatusBars = isLightBackground
+                isAppearanceLightNavigationBars = isLightBackground
+            }
         }
 
         override fun onStop() {
             super.onStop()
-            webView.destroy()
+            destroyWebView()
         }
 
         fun destroy() {
             when {
                 isAttachedAndShowing -> dismiss()
-                isShowing -> webView.destroy()
+                isShowing -> destroyWebView()
             }
+        }
+
+        private fun destroyWebView() {
+            stopBlankPageHostCheck()
+            webView.destroy()
         }
     }
 

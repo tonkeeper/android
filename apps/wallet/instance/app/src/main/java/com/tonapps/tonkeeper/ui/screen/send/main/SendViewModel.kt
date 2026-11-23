@@ -23,6 +23,7 @@ import com.tonapps.blockchain.tron.TronTransfer
 import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.core.helper.SendRedMetadata
 import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.analyticsAssetId
 import com.tonapps.core.helper.nftAnalyticsAssetId
@@ -44,7 +45,6 @@ import com.tonapps.deposit.usecase.emulation.TronFeesEmulation
 import com.tonapps.deposit.usecase.sign.SignUseCase
 import com.tonapps.extensions.MutableEffectFlow
 import com.tonapps.extensions.currentTimeMillis
-import com.tonapps.extensions.currentTimeSecondsInt
 import com.tonapps.extensions.filterList
 import com.tonapps.extensions.generateUuid
 import com.tonapps.extensions.isPositive
@@ -71,13 +71,14 @@ import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
+import com.tonapps.wallet.data.passcode.PasscodeReason
 import com.tonapps.wallet.data.rates.RatesRepository
-import com.tonapps.wallet.data.settings.BatteryTransaction
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.settings.entities.PreferredFeeMethod
 import com.tonapps.wallet.data.settings.entities.PreferredTronFeeMethod
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import com.tonapps.wallet.data.token.entities.hasTron
 import com.tonapps.wallet.data.tx.TransactionManager
 import com.tonapps.wallet.localization.Localization
 import io.batteryapi.models.EstimatedTronTx
@@ -116,6 +117,7 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(FlowPreview::class)
+@Suppress("LargeClass")
 class SendViewModel(
     app: Application,
     private val wallet: WalletEntity,
@@ -206,7 +208,7 @@ class SendViewModel(
     private val tokensFlow = _tokensFlow.asStateFlow().filterNotNull()
 
     val tronAvailableFlow = tokensFlow.map { tokens ->
-        tokens.any { it.blockchain == Blockchain.TRON }
+        tokens.hasTron()
     }.flowOn(Dispatchers.IO).state(viewModelScope)
 
     private val selectedTokenFlow = combine(
@@ -308,7 +310,7 @@ class SendViewModel(
     private val inputAmountFlow = userInputFlow.map { it.amount }.distinctUntilChanged()
 
     val uiInputCommentErrorFlow = uiInputComment.map { comment ->
-        if (wallet.isLedger && !comment.isNullOrEmpty() && !comment.isPrintableAscii()) {
+        if (wallet.signsWithLedger && !comment.isNullOrEmpty() && !comment.isPrintableAscii()) {
             Localization.ledger_comment_error
         } else {
             null
@@ -655,15 +657,9 @@ class SendViewModel(
         gaslessFee: Coins = Coins.ZERO,
         type: InsufficientBalanceType,
     ) {
-        val txType = when {
-            nftAddress.isNotBlank() -> BatteryTransaction.NFT
-            !type.isTON() -> BatteryTransaction.JETTON
-            else -> BatteryTransaction.UNKNOWN
-        }
         val batteryBalance = getBatteryBalance()
-        val batteryEnabled = !isBatteryDisabled && settingsRepository.batteryIsEnabledTx(
-            wallet.accountId, txType
-        )
+        // The battery pays an NFT or a token transfer, never a TON one.
+        val batteryEnabled = !isBatteryDisabled && wallet.supportsBattery && (nftAddress.isNotBlank() || !type.isTON())
 
         var withRechargeBattery = batteryEnabled && batteryBalance.balance.value == BigDecimal.ZERO
         if (withRechargeBattery && type.isEmptyBalance()) {
@@ -964,7 +960,7 @@ class SendViewModel(
                 flow = Events.RedOperations.RedOperationsFlow.Transfer,
                 operation = Events.RedOperations.RedOperationsOperation.Emulate,
                 attemptSource = null,
-                startedAtMs = currentTimeSecondsInt(),
+                startedAtMs = startedAtMs,
                 otherMetadata = null,
             )
             try {
@@ -980,7 +976,7 @@ class SendViewModel(
                     flow = Events.RedOperations.RedOperationsFlow.Transfer,
                     operation = Events.RedOperations.RedOperationsOperation.Emulate,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     error = null,
                 )
             } catch (e: Throwable) {
@@ -991,7 +987,7 @@ class SendViewModel(
                     flow = Events.RedOperations.RedOperationsFlow.Transfer,
                     operation = Events.RedOperations.RedOperationsOperation.Emulate,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     error = e,
                 )
                 delay(100)
@@ -1018,17 +1014,7 @@ class SendViewModel(
     }
 
     private fun shouldAttemptWithRelayer(transfer: TransferEntity): Boolean {
-        if ((transfer.isTon && !transfer.isNft) || transfer.wallet.isExternal) {
-            return false
-        }
-
-        val transactionType = if (transfer.isNft) {
-            BatteryTransaction.NFT
-        } else {
-            BatteryTransaction.JETTON
-        }
-
-        return settingsRepository.batteryIsEnabledTx(transfer.wallet.accountId, transactionType)
+        return (!transfer.isTon || transfer.isNft) && !transfer.wallet.isExternal && transfer.wallet.supportsBattery
     }
 
     private fun resetFees() {
@@ -1119,7 +1105,7 @@ class SendViewModel(
         val message = transfer.signForEstimation(
             internalMessage = true,
             excessesAddress = excessesAddress,
-            jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT,
+            jettonTransferAmount = batteryRepository.getConfig(wallet.network).transferCost(transfer),
         )
 
         try {
@@ -1194,7 +1180,7 @@ class SendViewModel(
                     )
                 ),
                 excessesAddress = excessesAddress,
-                jettonTransferAmount = TransferEntity.BASE_FORWARD_AMOUNT
+                jettonTransferAmount = batteryRepository.getConfig(wallet.network).transferCost(tokenAddress)
             )
 
             val commission = api.estimateGaslessCost(
@@ -1255,10 +1241,11 @@ class SendViewModel(
             )
             val fee = Fee(emulated?.event?.extra ?: 0L)
 
+            val transferCost = batteryRepository.getConfig(transfer.wallet.network).transferCost(transfer)
             return if (fee.isRefund) {
-                TransferEntity.BASE_FORWARD_AMOUNT
+                transferCost
             } else {
-                fee.value + TransferEntity.BASE_FORWARD_AMOUNT
+                fee.value + transferCost
             }
         } catch (_: Throwable) {
             return TransferEntity.POINT_ONE_TON
@@ -1387,12 +1374,12 @@ class SendViewModel(
     fun setFeeMethod(fee: SendFee) {
         if (fee is SendFee.TronTrx && !fee.enoughBalance) {
             viewModelScope.launch {
-                openScreen(QrAssetFragment.newInstance(TokenEntity.TRX, analyticsFrom = analyticsFrom.asDepositFlowFrom()))
+                openScreen(QrAssetFragment.newInstance(TokenEntity.TRX, walletId = wallet.id, analyticsFrom = analyticsFrom.asDepositFlowFrom()))
             }
         } else if (fee is SendFee.TronTon && !fee.enoughBalance) {
             viewModelScope.launch {
                 openScreen(
-                    QrAssetFragment.newInstance(TokenEntity.TON, true, analyticsFrom = analyticsFrom.asDepositFlowFrom())
+                    QrAssetFragment.newInstance(TokenEntity.TON, true, walletId = wallet.id, analyticsFrom = analyticsFrom.asDepositFlowFrom())
                 )
             }
         } else if (fee is SendFee.Battery && !fee.enoughCharges) {
@@ -1488,22 +1475,23 @@ class SendViewModel(
 
         val internalMessage = excessesAddress != null
 
+        val transferCost = batteryRepository.getConfig(wallet.network).transferCost(transfer)
         val jettonTransferAmount = when (fee) {
-            is SendFee.Gasless -> TransferEntity.BASE_FORWARD_AMOUNT
+            is SendFee.Gasless -> transferCost
             is SendFee.Extra -> {
                 val extra = Coins.of(fee.extra)
                 when {
                     transfer.token.isRequestMinting || transfer.token.customPayloadApiUri != null -> TransferEntity.POINT_ONE_TON
-                    extra.isPositive -> TransferEntity.BASE_FORWARD_AMOUNT
+                    extra.isPositive -> transferCost
                     extra.isZero -> TransferEntity.POINT_ONE_TON
-                    else -> Coins.of(abs(fee.extra)) + TransferEntity.BASE_FORWARD_AMOUNT
+                    else -> Coins.of(abs(fee.extra)) + transferCost
                 }
             }
 
             is SendFee.Ton -> when {
                 transfer.token.isRequestMinting || transfer.token.customPayloadApiUri != null -> TransferEntity.POINT_ONE_TON
-                fee.amount.isRefund -> TransferEntity.BASE_FORWARD_AMOUNT
-                else -> fee.amount.value + TransferEntity.BASE_FORWARD_AMOUNT
+                fee.amount.isRefund -> transferCost
+                else -> fee.amount.value + transferCost
             }
 
             else -> TransferEntity.POINT_ONE_TON
@@ -1512,6 +1500,10 @@ class SendViewModel(
         val boc = signUseCase(
             context = context,
             wallet = wallet,
+            reason = when {
+                isNft -> PasscodeReason.CONFIRM_ACTION
+                else -> PasscodeReason.CONFIRM_TRANSFER
+            },
             unsignedBody = transfer.getUnsignedBody(
                 privateKey = privateKey,
                 internalMessage = internalMessage,
@@ -1533,6 +1525,19 @@ class SendViewModel(
         send(boc, wallet, internalMessage)
     }
 
+    private fun sendRedMetadata(): String? {
+        if (isNft) {
+            return SendRedMetadata.nftTransfer(analyticsFrom, nftAnalyticsAssetId(nftAddress), currentFeeAsset)
+        }
+        return SendRedMetadata.transfer(
+            from = analyticsFrom,
+            asset = currentToken.analyticsAssetId(),
+            amount = currentAmountDouble,
+            feeAsset = currentFeeAsset,
+            tokenSymbol = currentToken.symbol,
+        )
+    }
+
     fun sign() {
         _uiEventFlow.tryEmit(SendEvent.Loading)
         viewModelScope.launch(Dispatchers.IO) {
@@ -1542,9 +1547,9 @@ class SendViewModel(
                 operationId = operationId,
                 flow = Events.RedOperations.RedOperationsFlow.Transfer,
                 operation = Events.RedOperations.RedOperationsOperation.Send,
-                attemptSource = null,
-                startedAtMs = currentTimeSecondsInt(),
-                otherMetadata = null,
+                attemptSource = SendRedMetadata.attemptSource(analyticsFrom),
+                startedAtMs = startedAtMs,
+                otherMetadata = sendRedMetadata(),
             )
             try {
                 if (selectedTokenFlow.value.blockchain == Blockchain.TRON) {
@@ -1558,7 +1563,7 @@ class SendViewModel(
                     flow = Events.RedOperations.RedOperationsFlow.Transfer,
                     operation = Events.RedOperations.RedOperationsOperation.Send,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     error = null,
                 )
                 analytics.eventsTaggedWith(analyticsUtm).sendNative.sendSuccess(
@@ -1605,7 +1610,7 @@ class SendViewModel(
                     flow = Events.RedOperations.RedOperationsFlow.Transfer,
                     operation = Events.RedOperations.RedOperationsOperation.Send,
                     durationMs = (finishedAtMs - startedAtMs).toDouble(),
-                    finishedAtMs = currentTimeSecondsInt(),
+                    finishedAtMs = finishedAtMs,
                     error = e,
                 )
                 if (e is CancellationException) {
@@ -1642,6 +1647,10 @@ class SendViewModel(
         }
         val resources =
             _tronResourcesFlow.value ?: throw IllegalStateException("Tron resources is null")
+        // The TON fee of a TRON send is signed by the TON wallet's key, which 2FA may have turned off.
+        if (fee is SendFee.TronTon) {
+            signUseCase.requireSignatureEnabled(wallet)
+        }
         val privateKey = accountRepository.getPrivateKey(wallet.id)
             ?: throw IllegalStateException("Private key is null")
         val tonToken = tokenRepository.getTON(currency, wallet.accountId, wallet.network)
@@ -1651,6 +1660,7 @@ class SendViewModel(
             context = context,
             wallet = wallet,
             transaction = transaction,
+            reason = PasscodeReason.CONFIRM_TRANSFER,
         )
 
         val auth = authorizationProvider.getAuthBy(wallet.id)

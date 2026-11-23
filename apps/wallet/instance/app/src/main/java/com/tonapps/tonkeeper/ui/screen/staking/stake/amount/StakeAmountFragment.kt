@@ -21,7 +21,6 @@ import com.tonapps.uikit.color.stateList
 import com.tonapps.uikit.color.textSecondaryColor
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.staking.StakingPool
-import com.tonapps.wallet.data.staking.entities.PoolEntity
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.map
 import uikit.extensions.collectFlow
@@ -40,6 +39,7 @@ class StakeAmountFragment :
     private lateinit var poolIconView: AsyncImageView
     private lateinit var poolTitleView: AppCompatTextView
     private lateinit var poolMaxApyView: View
+    private lateinit var poolSwitchView: View
     private lateinit var poolDescriptionView: AppCompatTextView
     private lateinit var availableView: AppCompatTextView
     private lateinit var availableInfoView: AppCompatImageView
@@ -48,7 +48,7 @@ class StakeAmountFragment :
     private lateinit var maxView: View
     private lateinit var button: Button
 
-    private var reserveHintFormat: CharSequence? = null
+    private var reserveHint: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -81,6 +81,7 @@ class StakeAmountFragment :
         poolMaxApyView = view.findViewById(R.id.pool_max_apy)
         poolMaxApyView.backgroundTintList =
             requireContext().accentGreenColor.withAlpha(.16f).stateList
+        poolSwitchView = view.findViewById(R.id.pool_switch)
 
         poolDescriptionView = view.findViewById(R.id.pool_description)
 
@@ -88,12 +89,9 @@ class StakeAmountFragment :
         availableInfoView = view.findViewById(R.id.available_info)
         availableContainerView = view.findViewById(R.id.available_container)
         availableContainerView.setMoonOnClickListener {
-            val format = reserveHintFormat
-            if (availableInfoView.isVisible && format != null) {
-                showStakingTooltip(
-                    availableInfoView,
-                    getString(Localization.staking_leave_reserve_hint, format),
-                )
+            val hint = reserveHint
+            if (availableInfoView.isVisible && hint != null) {
+                showStakingTooltip(availableInfoView, hint)
             }
         }
 
@@ -106,7 +104,7 @@ class StakeAmountFragment :
         maxView = view.findViewById(R.id.max)
         maxView.setMoonOnClickListener { applyMax() }
 
-        collectFlow(primaryViewModel.selectedPoolFlow, ::applyPoolInfo)
+        collectFlow(primaryViewModel.poolUiStateFlow, ::applyPoolInfo)
         collectFlow(primaryViewModel.availableUiStateFlow, ::applyAvailableState)
         collectFlow(primaryViewModel.fiatFormatFlow, ::applyFiat)
         collectFlow(primaryViewModel.apyFormatFlow.map {
@@ -121,11 +119,8 @@ class StakeAmountFragment :
     private fun applyMax() {
         collectFlow(primaryViewModel.requestMax()) { max ->
             amountView.setValue(max.amount.value)
-            max.reserveHintFormat?.let { format ->
-                showStakingTooltip(
-                    maxView,
-                    getString(Localization.staking_max_reserve_hint, format),
-                )
+            max.reserveHint?.let { hint ->
+                showStakingTooltip(maxView, hint)
             }
         }
     }
@@ -152,8 +147,8 @@ class StakeAmountFragment :
 
     private fun applyAvailableState(state: StakingViewModel.AvailableUiState) {
         button.text = getString(Localization.continue_action)
-        reserveHintFormat = state.reserveHintFormat
-        availableInfoView.isVisible = state.insufficientBalance && state.reserveHintFormat != null
+        reserveHint = state.reserveHint
+        availableInfoView.isVisible = state.insufficientBalance && state.reserveHint != null
         availableContainerView.isClickable = availableInfoView.isVisible
         if (state.insufficientBalance) {
             availableView.setText(Localization.insufficient_balance)
@@ -187,12 +182,15 @@ class StakeAmountFragment :
         }
     }
 
-    private fun applyPoolInfo(pool: PoolEntity) {
+    private fun applyPoolInfo(state: StakingViewModel.PoolUiState) {
+        val pool = state.pool
         poolIconView.setLocalRes(StakingPool.getIcon(pool.implementation))
         poolTitleView.text = pool.name.ifBlank {
             getString(StakingPool.getTitle(pool.implementation))
         }
-        poolMaxApyView.isVisible = pool.maxApy
+        poolMaxApyView.isVisible = state.maxApy
+        poolSwitchView.isVisible = state.canChoosePool
+        poolItemView.isClickable = state.canChoosePool
     }
 
     private fun openConfirm() {

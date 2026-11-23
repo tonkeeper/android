@@ -1,15 +1,14 @@
 package com.tonapps.deposit.multicoin.screens.confirm.perpetual
 
-import android.content.Context
 import com.tonapps.async.Async
 import com.tonapps.blockchain.model.ConfirmRequest
 import com.tonapps.blockchain.model.ConfirmType
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
 import com.tonapps.log.L
 import com.tonapps.mvi.AsyncViewModel
 import com.tonapps.mvi.MviRelay
-import com.tonapps.wallet.data.multichain.account.McAccountRepository
-import com.tonapps.wallet.data.passcode.PasscodeManager
+import com.tonapps.time.TimeProvider
+import com.tonapps.wallet.data.passcode.PasscodeReason
+import com.tonapps.wallet.data.passcode.WalletUnlocker
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -36,8 +35,8 @@ sealed interface PerpetualConfirmEvent {
 class PerpetualConfirmFeature(
     private val request: ConfirmRequest,
     private val delegate: PerpetualConfirmDelegate,
-    private val accountRepo: McAccountRepository,
-    private val passcodeManager: PasscodeManager,
+    private val walletUnlocker: WalletUnlocker,
+    private val timeProvider: TimeProvider,
 ) : AsyncViewModel() {
 
     private val withdraw = request.type as ConfirmType.PerpetualWithdraw
@@ -64,15 +63,15 @@ class PerpetualConfirmFeature(
         load()
     }
 
-    fun confirm(context: Context) {
-        mainScope.launch { submit(context) }
+    fun confirm() {
+        mainScope.launch { submit() }
     }
 
-    fun retry(context: Context) {
+    fun retry() {
         if (loadFailure.value != null) {
             load()
         } else {
-            confirm(context)
+            confirm()
         }
     }
 
@@ -93,16 +92,25 @@ class PerpetualConfirmFeature(
             reviewState.value = loaded
             loadFailure.value = null
             loadingState.value = false
-
-            val expiresAt = loaded.expiresAtMs ?: return@launch
-            delay((expiresAt - System.currentTimeMillis() - REQUOTE_LEAD_MS).coerceAtLeast(0L))
-            // A send in flight owns this quote; re-quote once it is over, if the screen is still here.
-            sendingState.first { it == PerpetualSendingState.None }
-            load()
+            requoteBeforeExpiry(loaded)
         }
     }
 
-    private suspend fun submit(context: Context) {
+    private fun show(requoted: PerpetualReview) {
+        loadJob?.cancel()
+        reviewState.value = requoted
+        loadJob = stateScope.launch { requoteBeforeExpiry(requoted) }
+    }
+
+    private suspend fun requoteBeforeExpiry(review: PerpetualReview) {
+        val expiresAt = review.expiresAtMs ?: return
+        delay((expiresAt - timeProvider.currentTimeMillis() - REQUOTE_LEAD_MS).coerceAtLeast(0L))
+        // A send in flight owns this quote; re-quote once it is over, if the screen is still here.
+        sendingState.first { it == PerpetualSendingState.None }
+        load()
+    }
+
+    private suspend fun submit() {
         if (sendingState.value != PerpetualSendingState.None || loadingState.value || loadFailure.value != null) {
             return
         }
@@ -110,11 +118,7 @@ class PerpetualConfirmFeature(
         sendingState.value = PerpetualSendingState.Loading
         submitFailure.value = null
         try {
-            val expiresAt = loaded.expiresAtMs
-            if (expiresAt != null && expiresAt < System.currentTimeMillis() + REQUOTE_LEAD_MS) {
-                throw PerpetualConfirmException(PerpetualConfirmError.QuoteExpired, requote = true)
-            }
-            val cryptoWallet = unlockCryptoWallet(context, loaded.walletId)
+            val cryptoWallet = walletUnlocker.unlockWallet(loaded.walletId, PasscodeReason.PERPS)
             withContext(Async.Io) { delegate.submit(loaded, cryptoWallet) }
             sendingState.value = PerpetualSendingState.Done
             delay(DONE_DELAY_MS)
@@ -126,18 +130,13 @@ class PerpetualConfirmFeature(
             currentCoroutineContext().ensureActive()
         } catch (e: Throwable) {
             L.e(e)
+            val requoted = (e as? PerpetualConfirmException)?.requoted
+            requoted?.let(::show)
             sendingState.value = PerpetualSendingState.None
             submitFailure.value = e.toConfirmError()
-            if (e is PerpetualConfirmException && e.requote) {
+            if (requoted == null && e is PerpetualConfirmException && e.requote) {
                 load()
             }
-        }
-    }
-
-    private suspend fun unlockCryptoWallet(context: Context, walletId: String): CryptoWallet {
-        return passcodeManager.unlockMultichainVault(context) { coder ->
-            accountRepo.getCryptoWallet(walletId, coder)
-                ?: throw IllegalStateException("No multichain wallet for $walletId")
         }
     }
 

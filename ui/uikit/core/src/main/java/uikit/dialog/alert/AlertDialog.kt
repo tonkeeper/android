@@ -9,6 +9,7 @@ import android.view.animation.OvershootInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import androidx.core.view.WindowCompat
 import com.tonapps.uikit.color.textPrimaryColor
 import uikit.R
 import uikit.base.BaseDialog
@@ -45,8 +46,13 @@ class AlertDialog private constructor(
     private val negativeButton: AppCompatTextView
     private val positiveButton: AppCompatTextView
 
+    private var isDismissing = false
+
     init {
         setContentView(R.layout.dialog_alert)
+        window?.let {
+            WindowCompat.getInsetsController(it, it.decorView).isAppearanceLightNavigationBars = false
+        }
 
         rootView = findViewById(R.id.alert_root)
 
@@ -91,7 +97,7 @@ class AlertDialog private constructor(
         view.visibility = View.VISIBLE
         view.text = button.title
         view.setMoonOnClickListener {
-            if (isShowing) {
+            if (isShowing && !isDismissing) {
                 button.action?.invoke(this)
                 dismiss()
             }
@@ -99,6 +105,7 @@ class AlertDialog private constructor(
     }
 
     override fun show() {
+        isDismissing = false
         super.show()
         animator.duration = 220
         animator.interpolator = showInterpolator
@@ -106,6 +113,10 @@ class AlertDialog private constructor(
     }
 
     override fun dismiss() {
+        if (isDismissing) {
+            return
+        }
+        isDismissing = true
         animator.duration = 120
         animator.interpolator = hideInterpolator
         animator.doOnEnd { super.dismiss() }

@@ -16,7 +16,6 @@ import okhttp3.HttpUrl
 
 import io.perpsapi.models.ErrorResponse
 import io.perpsapi.models.NextNonce
-import io.perpsapi.models.ReportTransactionsRequest
 import io.perpsapi.models.SendTransactionsRequest
 import io.perpsapi.models.SendTransactionsResponse
 
@@ -88,54 +87,6 @@ class TransactionsApi(basePath: String = defaultBasePath, client: Call.Factory =
         return RequestConfig(
             method = RequestMethod.GET,
             path = "/transactions/next-nonce",
-            query = localVariableQuery,
-            headers = localVariableHeaders,
-            requiresAuthentication = true,
-            requiresWalletAuthentication = true,
-            walletId = xWalletId,
-            body = localVariableBody
-        )
-    }
-
-    @Throws(IllegalStateException::class, IOException::class, UnsupportedOperationException::class, ClientException::class, ServerException::class)
-    fun reportTransactions(reportTransactionsRequest: ReportTransactionsRequest, xWalletId: String? = null): Unit {
-        val localVarResponse = reportTransactionsWithHttpInfo(reportTransactionsRequest = reportTransactionsRequest, xWalletId = xWalletId)
-
-        return when (localVarResponse.responseType) {
-            ResponseType.Success -> Unit
-            ResponseType.Informational -> throw UnsupportedOperationException("Client does not support Informational responses.")
-            ResponseType.Redirection -> throw UnsupportedOperationException("Client does not support Redirection responses.")
-            ResponseType.ClientError -> {
-                val localVarError = localVarResponse as ClientError<*>
-                throw ClientException("Client error : ${localVarError.statusCode} ${localVarError.message.orEmpty()}", localVarError.statusCode, localVarResponse)
-            }
-            ResponseType.ServerError -> {
-                val localVarError = localVarResponse as ServerError<*>
-                throw ServerException("Server error : ${localVarError.statusCode} ${localVarError.message.orEmpty()} ${localVarError.body}", localVarError.statusCode, localVarResponse)
-            }
-        }
-    }
-
-    @Throws(IllegalStateException::class, IOException::class)
-    fun reportTransactionsWithHttpInfo(reportTransactionsRequest: ReportTransactionsRequest, xWalletId: String?): ApiResponse<Unit?> {
-        val localVariableConfig = reportTransactionsRequestConfig(reportTransactionsRequest = reportTransactionsRequest, xWalletId = xWalletId)
-
-        return request<ReportTransactionsRequest, Unit>(
-            localVariableConfig
-        )
-    }
-
-    fun reportTransactionsRequestConfig(reportTransactionsRequest: ReportTransactionsRequest, xWalletId: String?): RequestConfig<ReportTransactionsRequest> {
-        val localVariableBody = reportTransactionsRequest
-        val localVariableQuery: MultiValueMap = mutableMapOf()
-        val localVariableHeaders: MutableMap<String, String> = mutableMapOf()
-        xWalletId?.apply { localVariableHeaders["X-Wallet-ID"] = this }
-        localVariableHeaders["Content-Type"] = "application/json"
-        localVariableHeaders["Accept"] = "application/json"
-
-        return RequestConfig(
-            method = RequestMethod.POST,
-            path = "/transactions",
             query = localVariableQuery,
             headers = localVariableHeaders,
             requiresAuthentication = true,

@@ -463,7 +463,11 @@ private fun bannerAction(button: BannerEntity.Button): BannerAction {
             is DeepLinkRoute.Send, is DeepLinkRoute.Transfer -> BannerAction.Send
             is DeepLinkRoute.Tabs.Trading, is DeepLinkRoute.Asset -> BannerAction.Trade
             is DeepLinkRoute.Exchange -> BannerAction.Exchange
-            is DeepLinkRoute.DApp, is DeepLinkRoute.Tabs.Browser -> BannerAction.Dapp
+            is DeepLinkRoute.DApp,
+            is DeepLinkRoute.MultichainDApp,
+            is DeepLinkRoute.Loyalty,
+            is DeepLinkRoute.Earn,
+            is DeepLinkRoute.Tabs.Browser -> BannerAction.Dapp
             else -> BannerAction.Other
         }
     }.getOrDefault(BannerAction.Other)

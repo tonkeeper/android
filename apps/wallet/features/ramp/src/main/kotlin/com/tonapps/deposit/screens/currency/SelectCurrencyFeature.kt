@@ -8,6 +8,7 @@ import com.tonapps.mvi.contract.MviState
 import com.tonapps.mvi.contract.MviViewState
 import com.tonapps.mvi.props.MviProperty
 import com.tonapps.wallet.data.account.AccountRepository
+import com.tonapps.wallet.data.multichain.account.UnifiedAccountRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 
 sealed interface SelectCurrencyAction : MviAction {
@@ -24,8 +25,11 @@ class SelectCurrencyViewState(
     val global: MviProperty<SelectCurrencyState>
 ) : MviViewState
 
+// [walletId] is the multichain ramp's wallet; the legacy screens pass none and get the selected one.
 class SelectCurrencyFeature(
+    private val walletId: String?,
     private val accountRepository: AccountRepository,
+    private val unifiedAccountRepository: UnifiedAccountRepository,
     private val exchangeRepository: ExchangeRepository,
     private val settingsRepository: SettingsRepository,
 ) : MviFeature<SelectCurrencyAction, SelectCurrencyState, SelectCurrencyViewState>(
@@ -42,7 +46,7 @@ class SelectCurrencyFeature(
     override suspend fun executeAction(action: SelectCurrencyAction) {
         when (action) {
             SelectCurrencyAction.Init -> {
-                val wallet = accountRepository.forceSelectedWallet()
+                val wallet = walletId?.let { unifiedAccountRepository.getTonWalletById(it) } ?: accountRepository.forceSelectedWallet()
                 val currencies =
                     exchangeRepository.getCurrencies(wallet.network, settingsRepository.getLocale(), wallet.multichainWalletId)
 

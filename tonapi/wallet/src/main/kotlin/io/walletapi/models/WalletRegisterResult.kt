@@ -31,7 +31,7 @@ data class WalletRegisterResult(
     @SerialName(value = "wallet_id")
     val walletId: String? = null,
 
-    /* Machine-readable reason when status=failed: invalid_proof, invalid_accounts, invalid_wallet_id, missing_wallet_id, missing_wallet_proof, invalid_wallet_proof, storage_error, wallet_limit_reached, device_limit_reached. */
+    /* Machine-readable reason when status=failed: invalid_proof, invalid_accounts, burn_address, address_limit_reached, invalid_wallet_id, missing_wallet_id, missing_wallet_proof, invalid_wallet_proof, storage_error, wallet_limit_reached, device_limit_reached. */
     @SerialName(value = "error")
     val error: String? = null
 ) {

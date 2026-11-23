@@ -2,6 +2,7 @@ package com.tonapps.perps.funding
 
 import com.tonapps.log.L
 import com.tonapps.perps.data.PerpsRepository
+import com.tonapps.wallet.data.multichain.perps.PerpsDepositPendingStep
 import com.tonapps.wallet.data.multichain.perps.PerpsDepositRegistration
 import com.tonapps.wallet.data.multichain.perps.PerpsDepositStage
 import com.tonapps.wallet.data.multichain.perps.PerpsFundingJournal
@@ -51,6 +52,8 @@ class PerpsDepositRegistrar(
                 registration = registration,
                 depositId = deposit.depositId,
                 stage = stageOf(deposit, whenPending = PerpsDepositStage.REGISTERED_PENDING),
+                pendingStep = pendingStepOf(deposit) ?: current.pendingStep,
+                l1TxHash = current.l1TxHash ?: l1TxHashOf(deposit),
                 creditedAmount = deposit.creditedAmount ?: current.creditedAmount,
                 accountIndex = deposit.accountIndex ?: current.accountIndex,
             )
@@ -68,6 +71,8 @@ class PerpsDepositRegistrar(
         return journal.update(record.operationId, record.revision) { current ->
             current.copy(
                 stage = stageOf(deposit, whenPending = current.stage),
+                pendingStep = pendingStepOf(deposit) ?: current.pendingStep,
+                l1TxHash = current.l1TxHash ?: l1TxHashOf(deposit),
                 creditedAmount = deposit.creditedAmount ?: current.creditedAmount,
                 accountIndex = deposit.accountIndex ?: current.accountIndex,
             )
@@ -88,6 +93,7 @@ class PerpsDepositRegistrar(
             amount = amount,
             l1TxHash = l1TxHash,
             executionId = executionId.ifEmpty { null },
+            sourceTxHash = record.sourceTxHash?.trim()?.takeIf { it.isNotEmpty() },
         )
     }
 
@@ -113,6 +119,20 @@ class PerpsDepositRegistrar(
         }
     }
 
+    private fun l1TxHashOf(deposit: Deposit): String? = deposit.l1TxHash?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+
+    private fun pendingStepOf(deposit: Deposit): PerpsDepositPendingStep? {
+        if (deposit.status != Deposit.Status.pending) {
+            return null
+        }
+        return when (deposit.pendingStep) {
+            Deposit.PendingStep.sending -> PerpsDepositPendingStep.SENDING
+            Deposit.PendingStep.converting -> PerpsDepositPendingStep.CONVERTING
+            Deposit.PendingStep.adding -> PerpsDepositPendingStep.ADDING
+            Deposit.PendingStep.unknown, null -> null
+        }
+    }
+
     private fun PerpsDepositRegistration.toRequest(): OpenDepositRequest {
         return OpenDepositRequest(
             operationId = operationId,
@@ -120,6 +140,7 @@ class PerpsDepositRegistrar(
             amount = amount,
             l1TxHash = l1TxHash,
             executionId = executionId,
+            sourceTxHash = sourceTxHash,
         )
     }
 

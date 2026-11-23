@@ -6,6 +6,11 @@ import com.tonapps.bus.generated.Events
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowBalanceBucket
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowFrom
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowLedgerModel
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowLedgerTransport
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowPairingAction
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowPairingEntry
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowPairingExitReason
+import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowPairingLastStep
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowSource
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletMode
 import com.tonapps.bus.generated.Events.WalletFlow.WalletFlowWalletSource
@@ -120,21 +125,93 @@ class WalletFlowImpl(
     /**
      * wallet_import_started
      *
-     * User tapped "Import existing wallet", entering the import flow. wallet_source says which kind of account is being imported, matching wallet_import_success / wallet_import_error.
+     * User tapped "Import existing wallet", entering the import flow. wallet_source says which kind of account is being imported, matching wallet_import_success / wallet_import_error. For Signer, Keystone and Ledger it is sent on the tap of the pairing option in the Add Wallet menu, before the pairing screen; a multichain Ledger is wallet_mode = multi. pairing_entry identifies the pairing entry path when known; Signer deeplink and app QR scanner entries can bypass the menu and signer-scanned step. Moving a TON-only Ledger wallet to a multichain one is not an import and does not send it (ledger_migration_start).
 
      */
     @AnyThread
     override fun walletImportStarted(
         walletMode: WalletFlowWalletMode,
         walletSource: WalletFlowWalletSource,
-        from: WalletFlowFrom
+        from: WalletFlowFrom,
+        pairingEntry: WalletFlowPairingEntry?
     ) {
-        val props = hashMapOf(
+        val props = hashMapOf<String, Any>(
             "wallet_mode" to walletMode.key,
             "wallet_source" to walletSource.key,
             "from" to from.key
         )
+        pairingEntry?.let { props["pairing_entry"] = it.key }
         trackEvent("wallet_import_started", props)
+    }
+
+    /**
+     * wallet_import_pairing_action
+     *
+     * First action on a Signer, Keystone or Ledger pairing screen. Send once per screen visit, on the first qualifying action only; a new visit can send again. It precedes the scanned or Ledger connected step when those steps occur; leaving without an action sends no action event.
+
+     */
+    @AnyThread
+    override fun walletImportPairingAction(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        pairingAction: WalletFlowPairingAction
+    ) {
+        val props = hashMapOf(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key,
+            "pairing_action" to pairingAction.key
+        )
+        trackEvent("wallet_import_pairing_action", props)
+    }
+
+    /**
+     * wallet_import_ledger_device_found
+     *
+     * A Ledger is discovered by the import search, before connection. Send once per discovered device per pairing-screen visit, even if search reports it repeatedly; another device or a new visit can send again. Discovery does not imply wallet_import_ledger_bluetooth_connected or wallet_import_ledger_usb_connected will follow.
+
+     */
+    @AnyThread
+    override fun walletImportLedgerDeviceFound(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        ledgerTransport: WalletFlowLedgerTransport,
+        ledgerModel: WalletFlowLedgerModel?
+    ) {
+        val props = hashMapOf<String, Any>(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key,
+            "ledger_transport" to ledgerTransport.key
+        )
+        ledgerModel?.let { props["ledger_model"] = it.key }
+        trackEvent("wallet_import_ledger_device_found", props)
+    }
+
+    /**
+     * wallet_import_pairing_exit
+     *
+     * User leaves a Signer, Keystone or Ledger pairing screen without a successful import. Send once per unsuccessful screen visit, including leaving before an action; do not send on a successful import. Record the furthest step reached on that visit and the reason for leaving. An error can also emit wallet_import_error; the exit is sent on leaving, not on every error or retry.
+
+     */
+    @AnyThread
+    override fun walletImportPairingExit(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        pairingLastStep: WalletFlowPairingLastStep,
+        pairingExitReason: WalletFlowPairingExitReason
+    ) {
+        val props = hashMapOf(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key,
+            "pairing_last_step" to pairingLastStep.key,
+            "pairing_exit_reason" to pairingExitReason.key
+        )
+        trackEvent("wallet_import_pairing_exit", props)
     }
 
     /**
@@ -199,7 +276,7 @@ class WalletFlowImpl(
     /**
      * wallet_import_ledger_bluetooth_connected
      *
-     * Ledger device connected over Bluetooth during import. Emitted again only after a disconnect, when the device connects once more.
+     * Ledger device connected over Bluetooth during import. Emitted again only after a disconnect, when the device connects once more. For a multichain Ledger: sent for each Ledger the user picks, once it connects and its accounts start being read; a Ledger connected by cable sends wallet_import_ledger_usb_connected instead.
 
      */
     @AnyThread
@@ -219,9 +296,31 @@ class WalletFlowImpl(
     }
 
     /**
+     * wallet_import_ledger_usb_connected
+     *
+     * A multichain Ledger the user picked connected over a USB cable during import — the counterpart of wallet_import_ledger_bluetooth_connected, and the only way Nano S and Nano S Plus connect. Sent for each Ledger the user picks, once it connects.
+
+     */
+    @AnyThread
+    override fun walletImportLedgerUsbConnected(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        ledgerModel: WalletFlowLedgerModel?
+    ) {
+        val props = hashMapOf<String, Any>(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key
+        )
+        ledgerModel?.let { props["ledger_model"] = it.key }
+        trackEvent("wallet_import_ledger_usb_connected", props)
+    }
+
+    /**
      * wallet_import_ledger_app_opened
      *
-     * TON app on the connected Ledger reported itself open during import.
+     * TON app on the connected Ledger reported itself open during import. A multichain Ledger reads the TON app first, so this is also the point where its other apps start being read.
 
      */
     @AnyThread
@@ -241,9 +340,33 @@ class WalletFlowImpl(
     }
 
     /**
+     * wallet_import_ledger_accounts_view
+     *
+     * The accounts of a multichain Ledger were read and the account picker listed them, with their addresses in the networks of every app read from the device. ledger_apps is the apps whose addresses were read: an app that is not installed, is too old, or that the user declined on the device is skipped, its networks are not added, and it sends ledger_discovery_error instead. Sent each time the list renders, Load more included; a TON-only Ledger does not send it.
+
+     */
+    @AnyThread
+    override fun walletImportLedgerAccountsView(
+        walletMode: WalletFlowWalletMode,
+        walletSource: WalletFlowWalletSource,
+        from: WalletFlowFrom,
+        ledgerModel: WalletFlowLedgerModel?,
+        ledgerApps: String
+    ) {
+        val props = hashMapOf<String, Any>(
+            "wallet_mode" to walletMode.key,
+            "wallet_source" to walletSource.key,
+            "from" to from.key,
+            "ledger_apps" to ledgerApps
+        )
+        ledgerModel?.let { props["ledger_model"] = it.key }
+        trackEvent("wallet_import_ledger_accounts_view", props)
+    }
+
+    /**
      * wallet_import_error
      *
-     * Wallet import attempt failed (e.g. invalid recovery phrase). Error fields use the same type/code/message shape as op_terminal for consistent grouping.
+     * Wallet import attempt failed (e.g. invalid recovery phrase). Error fields use the same type/code/message shape as op_terminal for consistent grouping. For a multichain Ledger error_type is a LedgerFailureType value (ledger-flow.yaml).
 
      */
     @AnyThread
@@ -271,13 +394,15 @@ class WalletFlowImpl(
     /**
      * wallet_import_success
      *
-     * User imported an existing wallet successfully
+     * User imported an existing wallet successfully. pairing_entry records the pairing entry path when known; Signer deeplink and app QR scanner entries can reach success without wallet_import_signer_scanned.
+
      */
     @AnyThread
     override fun walletImportSuccess(
         walletMode: WalletFlowWalletMode,
         walletSource: WalletFlowWalletSource,
         from: WalletFlowFrom,
+        pairingEntry: WalletFlowPairingEntry?,
         ledgerModel: WalletFlowLedgerModel?
     ) {
         val props = hashMapOf<String, Any>(
@@ -285,6 +410,7 @@ class WalletFlowImpl(
             "wallet_source" to walletSource.key,
             "from" to from.key
         )
+        pairingEntry?.let { props["pairing_entry"] = it.key }
         ledgerModel?.let { props["ledger_model"] = it.key }
         trackEvent("wallet_import_success", props)
     }

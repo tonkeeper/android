@@ -21,7 +21,7 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class GaslessV2ErrorBody(
-    /* unsupported_chain | unsupported_asset | unsupported_payload | insufficient_funds | emulation_failed | emulation_expired | payload_mismatch | invalid_signature | broadcast_failed | operation_not_found | already_sent | bad_request | unauthorized | not_implemented | internal_error */
+    /* unsupported_chain | unsupported_asset | unsupported_payload | insufficient_funds | emulation_failed | route_not_sponsorable | emulation_expired | payload_mismatch | invalid_signature | broadcast_failed | operation_not_found | already_sent | bad_request | unauthorized | not_implemented | internal_error. route_not_sponsorable: the payload calls a contract that only accepts transactions the wallet sends and pays for itself (it checks tx.origin), so neither the battery nor a gasless fee can pay for it; the client should ask for another route or offer to pay in the native coin. */
     @SerialName(value = "code")
     val code: String,
     @SerialName(value = "message")

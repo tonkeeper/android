@@ -184,7 +184,7 @@ fun MoonAnchorTooltip(
 }
 
 @Composable
-private fun MoonTooltipContent(
+internal fun MoonTooltipContent(
     text: String,
     modifier: Modifier = Modifier,
     backgroundColor: Color = UIKit.colorScheme.background.contentAttention,

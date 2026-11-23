@@ -6,11 +6,17 @@ import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.DetailsHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.DescriptionHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.EthenaDetailsHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.LinksHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.RewardHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.RewardSkeletonHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.RewardsHistoryTitleHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.RewardsHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.RewardsSkeletonHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.SpaceHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.StakeStatusHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.TitleHolder
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.TokenHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.UpcomingRewardHolder
+import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.holder.UpcomingRewardSkeletonHolder
 import com.tonapps.uikit.list.BaseListAdapter
 import com.tonapps.uikit.list.BaseListHolder
 import com.tonapps.uikit.list.BaseListItem
@@ -29,6 +35,12 @@ class Adapter: BaseListAdapter() {
             Item.TYPE_STAKE_STATUS -> StakeStatusHolder(parent)
             Item.TYPE_REWARDS -> RewardsHolder(parent)
             Item.TYPE_TITLE -> TitleHolder(parent)
+            Item.TYPE_REWARDS_HISTORY_TITLE -> RewardsHistoryTitleHolder(parent)
+            Item.TYPE_REWARD -> RewardHolder(parent)
+            Item.TYPE_REWARD_SKELETON -> RewardSkeletonHolder(parent)
+            Item.TYPE_UPCOMING_REWARD -> UpcomingRewardHolder(parent)
+            Item.TYPE_UPCOMING_REWARD_SKELETON -> UpcomingRewardSkeletonHolder(parent)
+            Item.TYPE_REWARDS_SKELETON -> RewardsSkeletonHolder(parent)
             else -> throw IllegalArgumentException("Unknown view type: $viewType")
         }
     }

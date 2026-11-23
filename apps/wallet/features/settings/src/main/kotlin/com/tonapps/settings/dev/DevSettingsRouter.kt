@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.tonapps.settings.dev.features.FeatureFlagsScreen
+import com.tonapps.settings.dev.glass.GlassGalleryScreen
 import com.tonapps.settings.dev.tooltips.TooltipsScreen
 import kotlinx.serialization.Serializable
 import ui.moon.MoonNav
@@ -16,6 +17,9 @@ sealed interface DevSettingsRoutes : NavKey {
 
     @Serializable
     data object Tooltips : DevSettingsRoutes
+
+    @Serializable
+    data object Glass : DevSettingsRoutes
 }
 
 @Composable
@@ -25,6 +29,7 @@ fun DevSettingsRouter(
 ) {
     val initialRoute = when (startRoute) {
         ROUTE_TOOLTIPS -> DevSettingsRoutes.Tooltips
+        ROUTE_GLASS -> DevSettingsRoutes.Glass
         else -> DevSettingsRoutes.FeatureFlags
     }
     val backStack = rememberNavBackStack(initialRoute)
@@ -45,6 +50,12 @@ fun DevSettingsRouter(
                 )
             }
 
+            is DevSettingsRoutes.Glass -> NavEntry(key) {
+                GlassGalleryScreen(
+                    onBack = onClose,
+                )
+            }
+
             else -> throw IllegalStateException("Unknown key: $key")
         }
     }
@@ -52,3 +63,4 @@ fun DevSettingsRouter(
 
 const val ROUTE_FEATURE_FLAGS = "feature_flags"
 const val ROUTE_TOOLTIPS = "tooltips"
+const val ROUTE_GLASS = "glass"

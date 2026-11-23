@@ -1,6 +1,7 @@
 package com.tonapps.wallet.data.raffle
 
 import android.content.Context
+import android.os.SystemClock
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.tonapps.log.L
 import com.tonapps.wallet.api.API
@@ -10,6 +11,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import io.walletapi.models.MarkWalletRaffleImportRequest
 import io.walletapi.models.Raffle
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
+import java.util.concurrent.ConcurrentHashMap
 
 class RaffleRepository(
     context: Context,
@@ -34,30 +37,49 @@ class RaffleRepository(
     private val diskCache = BlobDataSource.simpleJSON<List<Raffle>>(context, "raffles")
     private val memoryCache = MutableStateFlow<Map<String, List<Raffle>>>(emptyMap())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val prefetches = ConcurrentHashMap<String, Prefetch>()
 
     private val lang: String
         get() = settingsRepository.getLocale().language
 
     fun getRafflesFlow(walletId: String, forced: Boolean): Flow<List<RaffleEntity>> =
-        remoteFlow(walletId, forced).map { raffles -> raffles.mapNotNull { it.toEntity() } }
+        remoteFlow(walletId, forced, reusePrefetch = false).map { raffles -> raffles.mapNotNull { it.toEntity() } }
+
+    /** A forced [getRafflesFlow] that skips the request if a [prefetch] started less than 10 s ago succeeds. */
+    fun getRafflesFlowAfterPrefetch(walletId: String): Flow<List<RaffleEntity>> =
+        remoteFlow(walletId, forced = true, reusePrefetch = true).map { raffles -> raffles.mapNotNull { it.toEntity() } }
 
     suspend fun getRaffle(
         walletId: String,
         raffleId: String?,
         forced: Boolean,
-    ): RaffleEntity? = withContext(Dispatchers.IO) {
+    ): RaffleEntity? {
+        val entities = getEntities(walletId, forced)
+        return entities.firstOrNull { it.id == raffleId } ?: entities.firstOrNull { !it.hasLeaderboard }
+    }
+
+    suspend fun getRaffleWithStory(walletId: String, storyId: String): RaffleEntity? =
+        getEntities(walletId, forced = false).firstOrNull { it.ownsStoryId(storyId) }
+
+    private suspend fun getEntities(walletId: String, forced: Boolean): List<RaffleEntity> = withContext(Dispatchers.IO) {
         val key = cacheKey(walletId)
         val raffles = if (forced) {
             loadRemote(walletId) ?: cached(key)
         } else {
             cached(key) ?: loadRemote(walletId)
         }
-        val entities = raffles?.mapNotNull { it.toEntity() }.orEmpty()
-        entities.firstOrNull { it.id == raffleId } ?: entities.firstOrNull()
+        raffles?.mapNotNull { it.toEntity() }.orEmpty()
     }
 
     suspend fun prefetch(walletId: String) {
-        withContext(Dispatchers.IO) { loadRemote(walletId) }
+        val prefetch = Prefetch(SystemClock.elapsedRealtime())
+        prefetches[cacheKey(walletId)] = prefetch
+        try {
+            // Inside the IO block: a cancelled prefetch still finishes its blocking request and writes the cache.
+            withContext(Dispatchers.IO) { prefetch.succeeded.complete(loadRemote(walletId) != null) }
+        } finally {
+            prefetch.succeeded.complete(false)
+        }
     }
 
     suspend fun reportImport(sourceWalletId: String, importedWalletId: String) = withContext(Dispatchers.IO) {
@@ -75,11 +97,15 @@ class RaffleRepository(
         }
     }
 
-    private fun remoteFlow(walletId: String, forced: Boolean): Flow<List<Raffle>> = flow {
+    private fun remoteFlow(walletId: String, forced: Boolean, reusePrefetch: Boolean): Flow<List<Raffle>> = flow {
         val key = cacheKey(walletId)
         seedFromDisk(key)
         if (forced) {
-            scope.launch { loadRemote(walletId) }
+            scope.launch {
+                if (!reusePrefetch || !recentPrefetchSucceeded(key)) {
+                    loadRemote(walletId)
+                }
+            }
         }
         emitAll(memoryCache.map { it[key] ?: emptyList() }.distinctUntilChanged())
     }.flowOn(Dispatchers.IO)
@@ -96,6 +122,14 @@ class RaffleRepository(
                 current + (key to disk)
             }
         }
+    }
+
+    private suspend fun recentPrefetchSucceeded(key: String): Boolean {
+        val prefetch = prefetches[key] ?: return false
+        if (SystemClock.elapsedRealtime() - prefetch.startedAt >= RECENT_PREFETCH_MS) {
+            return false
+        }
+        return prefetch.succeeded.await()
     }
 
     private fun cached(key: String): List<Raffle>? = memoryCache.value[key] ?: diskCache.getCache(key)
@@ -130,4 +164,12 @@ class RaffleRepository(
     }
 
     private fun cacheKey(walletId: String) = "raffles_${lang}_$walletId"
+
+    private companion object {
+        const val RECENT_PREFETCH_MS = 10_000L
+    }
+}
+
+private class Prefetch(val startedAt: Long) {
+    val succeeded = CompletableDeferred<Boolean>()
 }

@@ -1,5 +1,7 @@
 package com.tonapps.portfolio.screens.wallet.components
 
+import androidx.compose.ui.text.style.TextOverflow
+import com.tonapps.chainkit.core.chain.model.account.Chain
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -46,6 +48,7 @@ internal fun FinishSetupCard(
     onEnablePushClick: () -> Unit,
     onMigrationClick: () -> Unit,
     onEnableBiometryClick: () -> Unit,
+    onLedgerNetworksClick: () -> Unit,
     onSkipClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -93,6 +96,11 @@ internal fun FinishSetupCard(
 
                     is FinishSetupLine.Biometry -> FinishSetupBiometryRow(
                         onClick = onEnableBiometryClick,
+                    )
+
+                    is FinishSetupLine.LedgerNetworks -> FinishSetupLedgerNetworksRow(
+                        chains = line.chains,
+                        onClick = onLedgerNetworksClick,
                     )
                 }
             }
@@ -156,6 +164,45 @@ private fun FinishSetupPushRow(
             checked = enabling,
             onCheckedChange = null,
         )
+    }
+}
+
+@Composable
+private fun FinishSetupLedgerNetworksRow(
+    chains: List<Chain>,
+    onClick: () -> Unit,
+) {
+    val names = remember(chains) { chains.joinToString(" · ") { it.name } }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FinishSetupIcon(
+            iconRes = UIKitIcon.ic_ledger_device_28,
+            color = UIKit.colorScheme.accent.blue,
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp),
+        ) {
+            Text(
+                text = stringResource(Localization.ledger_mc_add_networks),
+                style = UIKit.typography.body2,
+                color = UIKit.colorScheme.text.primary,
+            )
+            Text(
+                text = names,
+                style = UIKit.typography.body2,
+                color = UIKit.colorScheme.text.secondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        MoonChevronRight()
     }
 }
 

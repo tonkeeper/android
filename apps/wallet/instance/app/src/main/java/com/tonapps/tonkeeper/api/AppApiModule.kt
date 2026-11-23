@@ -1,5 +1,6 @@
 package com.tonapps.tonkeeper.api
 
+import com.tonapps.deposit.multicoin.moonpay.MoonPayEnvironmentProvider
 import com.tonapps.network.interceptor.LoggingInterceptor
 import com.tonapps.tonkeeper.core.DevSettings
 import com.tonapps.tonkeeperx.BuildConfig
@@ -15,7 +16,11 @@ val appApiModule = module {
         }
     }
 
-    single<API.BuildProvider> {
-        API.BuildProvider { DevSettings.buildOverride }
+    single<API.VersionNameProvider> {
+        API.VersionNameProvider { DevSettings.reportedVersionName }
+    }
+
+    single<MoonPayEnvironmentProvider> {
+        MoonPayEnvironmentProvider { BuildConfig.DEBUG && DevSettings.moonPaySandbox }
     }
 }

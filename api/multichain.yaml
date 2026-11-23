@@ -109,7 +109,7 @@ components:
         maxItems: 20
         items:
           type: string
-          enum: [ "swap", "onramp", "offramp", "p2p", "perp_deposit" ]
+          enum: [ "swap", "onramp", "offramp", "p2p", "perp_deposit", "battery_deposit" ]
         example: [ "swap" ]
     AssetIdQuery:
       name: asset_id
@@ -381,6 +381,13 @@ components:
       schema:
         type: boolean
         default: false
+    CountryHeader:
+      name: CF-IPCountry
+      in: header
+      required: false
+      description: "Client country (ISO alpha-2) set by Cloudflare"
+      schema:
+        type: string
 
   schemas:
     WalletPerps:
@@ -539,15 +546,15 @@ components:
         verified:
           deprecated: true
           type: boolean
-          description: "True when the asset appears on a curated list (main core coins, Trust Wallet assets, ton-blockchain jettons). Clients can use this for a verified badge and/or a 'show unverified' toggle."
+          description: "True when verification is whitelist or trusted, or the asset is a main core coin. Use verification instead."
         is_scam:
           deprecated: true
           type: boolean
-          description: "Backend-classified scam flag on the token itself (global, not per-wallet). Clients may render a warning badge or hide by default in balances and activities."
+          description: "Always false. Use verification instead."
         verification:
           type: string
           enum: [ blacklist, none, whitelist, trusted ]
-          description: Union of verify and is_scam
+          description: Asset verification status
         capabilities:
           $ref: '#/components/schemas/AssetCapabilities'
     AssetCapability:
@@ -862,6 +869,18 @@ components:
         name:
           type: string
           description: Current DNS name of the address (TON mainnet only), e.g. alice.ton
+    ActivityExplorerLink:
+      type: object
+      description: "Explorer link for one entry of tx_ids."
+      required: [ tx_id, chain, url ]
+      properties:
+        tx_id:
+          type: string
+          description: "The tx_ids entry this link opens, format: chain:txhash"
+        chain:
+          $ref: '#/components/schemas/Chain'
+        url:
+          type: string
     Activity:
       type: object
       required: [ activity_type, status, block_time, from_chain, to_chain, direction, tx_ids ]
@@ -949,6 +968,11 @@ components:
         explorer_url:
           type: string
           description: "Ready-to-open explorer URL for the primary tx (source chain for cross-chain bridges). Omitted when the chain has no known explorer template — clients should hide the link in that case."
+        explorer_urls:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityExplorerLink'
+          description: "Explorer links for every tx_ids entry, in tx_ids order (a cross-chain swap carries both the source and the destination tx). Entries whose chain has no known explorer template are left out."
         is_read:
           type: boolean
           description: "Has the wallet owner acknowledged this activity in the app. Client-driven flag."
@@ -986,6 +1010,17 @@ components:
             `liquidation`. `asset_id` is the market's
             catalog asset (`lighter/<network>/<market_id>`); `account_index` is the
             Lighter account; `settled_at` is when a deposit arrived.
+            On a `perps.balance_withdrawal` with status `failed` (a withdrawal through an
+            aggregator): `outcome` is what happened to the money, `refunded` (it is back on
+            the perps balance), `failed` or `expired` (the payout was never made);
+            `failure_code` is why, `not_sent` (the money never reached the aggregator),
+            `reverted` (a transaction was reverted) or `other`. Clients draw their text from
+            it and treat an unknown value as `other`. It is always set, `other` on
+            `expired`. A withdrawal that failed before this was added has neither.
+            `reward` — `{asset, amount, boost}`, what the loyalty program paid for the
+            trade: `asset` is the code (`OHM`), `amount` is a decimal string in whole
+            units with `boost` (the streak part, absent when none) already inside. It
+            arrives after the trade, so a fresh row can have none yet.
     PendingTransaction:
       type: object
       description: "A locally-broadcast transaction, recorded as pending until the indexer observes it on-chain"
@@ -1013,7 +1048,9 @@ components:
             the aggregator's own route id, for swaps.xyz its `txId`, which registers the
             broadcast hash and keys the pending swap so the webhook and this row converge;
             `route_id` — the swap backend's own id for the route, stored as sent and not
-            interpreted here.
+            interpreted here; `to_address` — on a cross-chain swap, the recipient on the
+            destination chain (the quote's `recipient_address`), shown as the pending
+            swap's counterparty.
     TronRpcMethod:
       type: string
       description: >-
@@ -1309,6 +1346,53 @@ components:
             $ref: '#/components/schemas/RaffleStory'
         progress:
           $ref: '#/components/schemas/RaffleProgress'
+        leaderboard:
+          $ref: '#/components/schemas/RaffleLeaderboard'
+    RaffleLeaderboard:
+      type: object
+      description: "Points and ranking of a leaderboard raffle; set only for that kind"
+      required: [ trade_points, hold_points, points, top ]
+      properties:
+        next_hold_at:
+          type: string
+          format: date-time
+          description: "End of the current hold window; absent once no window is left"
+        trade_points:
+          type: string
+          description: "Decimal string, two decimals"
+        hold_points:
+          type: string
+          description: "Decimal string, two decimals"
+        points:
+          type: string
+          description: "Sum of trade_points and hold_points; decimal string, two decimals"
+        rank:
+          type: integer
+          minimum: 1
+          description: "Absent until the wallet is on the leaderboard"
+        result:
+          type: string
+          enum: [ reserve, seat_opened ]
+          description: "After the reveal: in the reserve (status lost), or a seat passed on from the reserve (status won)"
+        top:
+          type: array
+          items:
+            $ref: '#/components/schemas/RaffleLeaderboardRow'
+    RaffleLeaderboardRow:
+      type: object
+      required: [ rank, address, points, is_me ]
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+        address:
+          type: string
+          description: "Shortened address, aaaa…bbbb"
+        points:
+          type: string
+          description: "Decimal string, two decimals"
+        is_me:
+          type: boolean
     AuthChallenge:
       type: object
       required: [ challenge, expires_at ]
@@ -1365,7 +1449,7 @@ components:
           description: >-
             Format 2 wallet_id: `base32(format ‖ kind_byte ‖
             blake2b160(LP("keeper.wallet.id.v2") ‖ LP(kind) ‖ LP(rootPub)))`, where `format` =
-            2 and `kind_byte` = 1 for multichain.
+            2 and `kind_byte` = 0 for legacy, 1 for multichain, 0x80 for ledger.
         wallet_proof:
           type: string
           minLength: 130
@@ -1403,8 +1487,9 @@ components:
           type: string
           description: >-
             Machine-readable reason when status=failed: invalid_proof, invalid_accounts,
-            invalid_wallet_id, missing_wallet_id, missing_wallet_proof, invalid_wallet_proof,
-            storage_error, wallet_limit_reached, device_limit_reached.
+            burn_address, address_limit_reached, invalid_wallet_id, missing_wallet_id,
+            missing_wallet_proof, invalid_wallet_proof, storage_error, wallet_limit_reached,
+            device_limit_reached.
     IntrospectResult:
       type: object
       required: [ active, rv ]
@@ -1426,6 +1511,116 @@ components:
             minLength: 36
             maxLength: 36
             pattern: '^[a-z2-7]{36}$'
+    SwapRouteFactsSource:
+      description: "What the indexer resolved the reported source transaction to. TON sources only."
+      type: object
+      required: [ chain, resolved_at ]
+      properties:
+        chain:
+          type: string
+        reported_tx_hash:
+          type: string
+          description: "The hash the app reported."
+        resolved_tx_hash:
+          type: string
+          description: "The user's own wallet transaction."
+        trace_id:
+          type: string
+        landed_msg_hash:
+          type: string
+          description: "The external message that reached the chain."
+        resolved_at:
+          type: string
+          format: date-time
+    SwapRouteFactsDestination:
+      description: "The receive the indexer matched to the route, the TON trace in which the user received the destination asset, or both."
+      type: object
+      required: [ chain ]
+      properties:
+        chain:
+          type: string
+        matched_at:
+          type: string
+          format: date-time
+        external_id:
+          type: string
+        trace_id:
+          type: string
+          description: "The TON trace in which the user received the destination asset."
+        tx_hash:
+          type: string
+        block_time:
+          type: string
+          format: date-time
+        amount:
+          type: string
+          pattern: '^[0-9]+$'
+          description: "Integer amount in base units."
+        amount_usd:
+          type: string
+          pattern: '^[0-9]+(\.[0-9]+)?$'
+          description: "Decimal USD value."
+        candidates:
+          type: integer
+          description: "How many receives fitted the route when it matched."
+    SwapRouteFactsRoute:
+      type: object
+      required: [ route_id, source, destination ]
+      properties:
+        route_id:
+          type: string
+          format: uuid
+        source:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/SwapRouteFactsSource'
+        destination:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/SwapRouteFactsDestination'
+    SwapRouteFactsResult:
+      type: object
+      required: [ routes, unknown ]
+      properties:
+        routes:
+          type: array
+          description: "Known routes, in the order of the request."
+          items:
+            $ref: '#/components/schemas/SwapRouteFactsRoute'
+        unknown:
+          type: array
+          description: "Requested ids with no stored route."
+          items:
+            type: string
+            format: uuid
+    SwapRouteSourceTx:
+      type: object
+      required: [ route_id, chain, tx_hash ]
+      properties:
+        route_id:
+          type: string
+          format: uuid
+        chain:
+          type: string
+          description: "The route's source chain, a Chain value."
+        tx_hash:
+          type: string
+          description: "The source transaction hash the app reported, as stored."
+    SwapRouteSourceTxsResult:
+      type: object
+      required: [ routes, unknown ]
+      properties:
+        routes:
+          type: array
+          description: "Known routes with a reported source transaction."
+          items:
+            $ref: '#/components/schemas/SwapRouteSourceTx'
+        unknown:
+          type: array
+          description: "Requested ids with no stored route or no reported source transaction."
+          items:
+            type: string
+            format: uuid
     Jwk:
       type: object
       required: [ kty, crv, x, y, kid, alg, use ]
@@ -1679,6 +1874,106 @@ components:
                 minLength: 36
                 maxLength: 36
                 pattern: '^[a-z2-7]{36}$'
+    SwapRouteFactsRequest:
+      description: "Route ids to look up."
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ route_ids ]
+            properties:
+              route_ids:
+                type: array
+                minItems: 1
+                maxItems: 80
+                uniqueItems: true
+                items:
+                  type: string
+                  format: uuid
+    SwapRouteSourceTxsRequest:
+      description: "Route ids to look up."
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ route_ids ]
+            properties:
+              route_ids:
+                type: array
+                minItems: 1
+                maxItems: 80
+                uniqueItems: true
+                items:
+                  type: string
+                  format: uuid
+    LiveActivityRegister:
+      description: >-
+        The device's one transaction Live Activity. The app repeats it on every switch to another
+        transaction and on every new ActivityKit token. The final update keeps content_state and
+        changes only the status, title, updatedAt and stage, so the texts come from the app.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ activity_id, push_token, wallet_id, content_state, final_titles ]
+            properties:
+              activity_id:
+                type: string
+                minLength: 1
+                maxLength: 128
+                description: "ActivityKit Activity.id"
+              push_token:
+                type: string
+                minLength: 1
+                maxLength: 4096
+                description: "ActivityKit update token of this activity, hex"
+              wallet_id:
+                type: string
+                minLength: 36
+                maxLength: 36
+                pattern: '^[a-z2-7]{36}$'
+                description: "The wallet the activity shows; bound to the device"
+              content_state:
+                type: object
+                additionalProperties: true
+                description: "The activity's current ContentState as the app encodes it; transactionId names the shown transaction"
+              final_titles:
+                type: object
+                required: [ confirmed, failed, dropped ]
+                description: "The final state's title for each outcome, in the app's language"
+                properties:
+                  confirmed:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                  failed:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                  dropped:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+              alert_body:
+                type: string
+                maxLength: 256
+                description: "The final update's alert body; its title is the final title"
+    LiveActivityUnregister:
+      description: "Forget the Live Activity. Another or an unknown activity_id changes nothing."
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [ activity_id ]
+            properties:
+              activity_id:
+                type: string
+                minLength: 1
+                maxLength: 128
     WalletPushSubscribe:
       description: >-
         Register the device's push token. There is no challenge and no per-wallet proof: the
@@ -2043,6 +2338,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/IntrospectResult'
+    SwapRouteFacts:
+      description: "Stored facts for the requested routes"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SwapRouteFactsResult'
+    SwapRouteSourceTxs:
+      description: "Reported source transactions of the requested routes"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SwapRouteSourceTxsResult'
     Jwks:
       description: "Public keys for verifying device access tokens"
       content:
@@ -2430,6 +2737,31 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/wallets/{wallet_id}/perps-realtime-token:
+    get:
+      operationId: getWalletPerpsRealtimeToken
+      summary: Mint a realtime subscription token for one wallet's perps channel
+      description: The wallet proof is always required, whatever the client version.
+      tags:
+        - wallets
+      security:
+        - deviceJWT: [ ]
+          walletAuth: [ ]
+          xWalletId: [ ]
+      parameters:
+        - $ref: '#/components/parameters/WalletIdPath'
+      responses:
+        '200':
+          $ref: '#/components/responses/RealtimeToken'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/wallets/{wallet_id}/reindex:
     post:
       operationId: reindexWallet
@@ -2503,12 +2835,11 @@ paths:
       operationId: saveWalletAssetsFilters
       summary: Set wallet's assets hidden/shown settings
       description: >-
-        Writes the caller's own show/hide choices. Auth is **optional for now and becomes
-        mandatory at release**: clients have not shipped the token on this call yet.
+        Writes the caller's own show/hide choices. Needs the wallet proof, or a device bound
+        to the wallet.
       tags:
         - wallets
       security:
-        - { }
         - deviceJWT: [ ]
         - deviceJWT: [ ]
           walletAuth: [ ]
@@ -2522,6 +2853,8 @@ paths:
           description: OK (no content)
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -2602,11 +2935,10 @@ paths:
       description: >-
         The wallet must already be registered. `activity_type` is a hint, used only while the
         transaction is unknown to the chain — once the chain's own feed describes it, the feed
-        wins.
+        wins. Needs the wallet proof, or a device bound to the wallet.
       tags:
         - wallets
       security:
-        - { }
         - deviceJWT: [ ]
         - deviceJWT: [ ]
           walletAuth: [ ]
@@ -2620,6 +2952,8 @@ paths:
           $ref: '#/components/responses/Ok'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -2656,6 +2990,7 @@ paths:
         - $ref: '#/components/parameters/LangQuery'
         - $ref: '#/components/parameters/RaffleIdsQuery'
         - $ref: '#/components/parameters/IsNewUserQuery'
+        - $ref: '#/components/parameters/CountryHeader'
       responses:
         '200':
           $ref: '#/components/responses/Raffles'
@@ -2743,6 +3078,66 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /internal/swap-routes/facts:
+    post:
+      operationId: getSwapRouteFacts
+      summary: Read what the indexer recorded for swap routes, by route id
+      tags:
+        - internal
+      security:
+        - internalAuth: [ ]
+      requestBody:
+        $ref: '#/components/requestBodies/SwapRouteFactsRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SwapRouteFacts'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: "Signed correctly, but this caller may not call this endpoint"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ error ]
+                properties:
+                  error:
+                    type: string
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /internal/swap-routes/source-txs:
+    post:
+      operationId: getSwapRouteSourceTxs
+      summary: Read the source transaction the app reported for swap routes, by route id
+      tags:
+        - internal
+      security:
+        - internalAuth: [ ]
+      requestBody:
+        $ref: '#/components/requestBodies/SwapRouteSourceTxsRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/SwapRouteSourceTxs'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: "Signed correctly, but this caller may not call this endpoint"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ error ]
+                properties:
+                  error:
+                    type: string
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -2919,6 +3314,50 @@ paths:
           $ref: '#/components/responses/Ok'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /api/v2/wallets/push/live-activity:
+    post:
+      operationId: registerLiveActivity
+      summary: Register or replace the device's transaction Live Activity, so it can be settled while the app is not running
+      tags:
+        - auth
+      security:
+        - deviceJWT: [ ]
+      requestBody:
+        $ref: '#/components/requestBodies/LiveActivityRegister'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /api/v2/wallets/push/live-activity/unregister:
+    post:
+      operationId: unregisterLiveActivity
+      summary: Forget the device's transaction Live Activity once it is ended or dismissed
+      tags:
+        - auth
+      security:
+        - deviceJWT: [ ]
+      requestBody:
+        $ref: '#/components/requestBodies/LiveActivityUnregister'
+      responses:
+        '200':
+          $ref: '#/components/responses/Ok'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':

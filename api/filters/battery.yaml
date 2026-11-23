@@ -1,0 +1,36 @@
+# Usage by platform; both generators consume the entire list.
+filter:
+  operations:
+    # Both platforms
+    - getStatus
+    - gaslessBatteryConfig
+    - gaslessEstimate
+    - gaslessEmulate
+    - gaslessSend
+    - getConfig
+    - getBalance
+    - sendMessage
+    - getTronConfig
+    - tronEstimate
+    - tronSend
+    - getTronTransactions
+    - verifyPurchasePromo
+    - getRechargeMethods
+    - getPurchases
+    - estimateGaslessCost
+    - getNetworkFees
+    - purchaseBatteryEstimate
+    - purchaseBatteryEmulate
+    - migrateBattery
+    # iOS only
+    - emulateMessageToWallet
+    - estimate
+    - send
+    - iosBatteryPurchase
+    # Android only
+    - androidBatteryPurchase
+  schemas:
+    # Android only
+    - Error
+    - RelayerSendingEstimation
+    - Chain

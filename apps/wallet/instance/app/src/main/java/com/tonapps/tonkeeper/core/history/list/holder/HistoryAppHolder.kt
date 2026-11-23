@@ -4,7 +4,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.net.toUri
 import com.tonapps.tonkeeper.core.history.list.item.HistoryItem
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.koin.dappScreenFactory
 import com.tonapps.tonkeeperx.R
 import com.tonapps.uikit.list.ListCell
 import uikit.extensions.drawable
@@ -31,7 +31,7 @@ class HistoryAppHolder(
         if (item.isClickable) {
             itemView.setMoonOnClickListener {
                 navigation?.add(
-                DAppScreen.newInstance(
+                context.dappScreenFactory.create(
                     wallet = item.wallet,
                     title = item.title,
                     url = item.deepLink.toUri(),

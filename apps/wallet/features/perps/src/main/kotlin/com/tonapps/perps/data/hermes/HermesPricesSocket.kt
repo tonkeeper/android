@@ -1,6 +1,7 @@
 package com.tonapps.perps.data.hermes
 
 import com.tonapps.log.L
+import com.tonapps.perps.data.toWireDecimalOrNull
 import com.tonapps.wallet.api.core.HermesAPI
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -27,6 +28,7 @@ sealed interface HermesPriceEvent {
     data object Subscribed : HermesPriceEvent
     data object LoggedIn : HermesPriceEvent
     data object LoginRejected : HermesPriceEvent
+    data object LoginFailed : HermesPriceEvent
     data class Prices(val prices: Map<String, BigDecimal>) : HermesPriceEvent
 
     /** The subscribe will never deliver on this connection — reconnecting cannot fix it. */
@@ -45,6 +47,9 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
 
     @Volatile
     private var subscribeRequestId: Long = 0L
+
+    @Volatile
+    private var loginRequestId: Long = 0L
 
     val events: ReceiveChannel<HermesPriceEvent>
         get() = inbound
@@ -80,7 +85,8 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
     }
 
     fun login(token: String) {
-        send(CHANNEL_LOGIN, NAME_LOGIN, nextRequestId.incrementAndGet(), buildJsonObject { put("token", token) })
+        loginRequestId = nextRequestId.incrementAndGet()
+        send(CHANNEL_LOGIN, NAME_LOGIN, loginRequestId, buildJsonObject { put("token", token) })
     }
 
     fun subscribe(tickers: List<String>) {
@@ -118,14 +124,23 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
         try {
             val envelope = hermesJson.decodeFromString<InboundEnvelope>(text)
             val message = envelope.message ?: return null
+            val loginReply = message.loginReply(loginRequestId)
+            if (loginReply != null) {
+                if (loginReply != HermesLoginReply.ACCEPTED) {
+                    val error = message.payload?.let { hermesJson.decodeFromJsonElement<ErrorPayload>(it) }
+                    L.e("hermes prices ${envelope.channel} error: ${error?.code} ${error?.description}")
+                }
+                return when (loginReply) {
+                    HermesLoginReply.ACCEPTED -> HermesPriceEvent.LoggedIn
+                    HermesLoginReply.REJECTED -> HermesPriceEvent.LoginRejected
+                    HermesLoginReply.FAILED -> HermesPriceEvent.LoginFailed
+                }
+            }
             if (envelope.channel == CHANNEL_PRICES && message.name == NAME_PRICES_PUSH) {
                 val payload = message.payload ?: return null
                 return HermesPriceEvent.Prices(
                     hermesJson.decodeFromJsonElement<PricesPush>(payload).toPrices()
                 )
-            }
-            if (envelope.channel == CHANNEL_LOGIN && message.name == NAME_LOGIN_RESPONSE) {
-                return HermesPriceEvent.LoggedIn
             }
             if (message.name == NAME_SUBSCRIBE_RESPONSE) {
                 val reqid = runCatching { message.reqid?.jsonPrimitive?.longOrNull }.getOrNull()
@@ -138,9 +153,6 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
                 val error = message.payload?.let { hermesJson.decodeFromJsonElement<ErrorPayload>(it) }
                 L.e("hermes prices ${envelope.channel} error: ${error?.code} ${error?.description}")
                 val code = error?.code.orEmpty()
-                if (envelope.channel == CHANNEL_LOGIN) {
-                    return HermesPriceEvent.LoginRejected.takeIf { code == HERMES_ERROR_INVALID_CREDENTIALS }
-                }
                 if (envelope.channel != CHANNEL_SUBSCRIBE) {
                     return null
                 }
@@ -163,7 +175,7 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
         val decoded = mutableMapOf<String, BigDecimal>()
         for (entry in markPrices) {
             val ticker = entry.ticker?.takeIf { it.isNotBlank() } ?: continue
-            val price = entry.markPrice?.let { runCatching { BigDecimal(it) }.getOrNull() } ?: continue
+            val price = entry.markPrice.toWireDecimalOrNull() ?: continue
             if (price.signum() <= 0) {
                 continue
             }
@@ -191,12 +203,9 @@ class HermesPricesSocket(private val hermes: HermesAPI) {
 
         const val NAME_PING = "ping"
         const val NAME_LOGIN = "loginRequest"
-        const val NAME_LOGIN_RESPONSE = "loginResponse"
         const val NAME_SUBSCRIBE = "subscribeMarkPricesRequest"
         const val NAME_SUBSCRIBE_RESPONSE = "subscribeMarkPricesResponse"
         const val NAME_PRICES_PUSH = "markPricesMessage"
-        const val NAME_ERROR_RESPONSE = "errorResponse"
-        const val NAME_ERROR_MESSAGE = "errorMessage"
 
         const val COOLDOWN = "PT2S"
 

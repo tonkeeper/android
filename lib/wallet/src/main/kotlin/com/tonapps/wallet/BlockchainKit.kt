@@ -1,7 +1,11 @@
 package com.tonapps.wallet
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
+import com.squareup.wire.Message
+import com.tonapps.chainkit.ChainMediatorWrapper
 import com.tonapps.chainkit.CryptoKitClient
+import com.tonapps.chainkit.chain.bitcoin.BitcoinMediator
+import com.tonapps.chainkit.chain.bitcoin.data.UnspentOutput
 import com.tonapps.chainkit.core.chain.api.models.ChainError
 import com.tonapps.chainkit.core.chain.api.models.ChainRes
 import com.tonapps.chainkit.core.chain.api.models.NodeRes
@@ -9,9 +13,13 @@ import com.tonapps.chainkit.core.chain.api.models.SignRes
 import com.tonapps.chainkit.core.chain.api.models.TxRes
 import com.tonapps.chainkit.core.chain.model.MessageType
 import com.tonapps.chainkit.core.chain.model.account.Account
+import com.tonapps.chainkit.core.chain.model.account.TonWallets
 import com.tonapps.chainkit.core.chain.model.account.AccountBalance
+import com.tonapps.chainkit.core.chain.model.account.Address
 import com.tonapps.chainkit.core.chain.model.account.Chain
-import com.tonapps.chainkit.core.chain.model.account.CryptoWallet
+import com.tonapps.chainkit.core.chain.model.account.Hierarchy
+import com.tonapps.chainkit.core.chain.model.account.MnemonicWallet
+import com.tonapps.chainkit.core.chain.model.account.PrivateKey
 import com.tonapps.chainkit.core.chain.model.account.PubKey
 import com.tonapps.chainkit.core.chain.model.account.WalletAuth
 import com.tonapps.chainkit.core.chain.model.account.WalletKeyPair
@@ -19,15 +27,17 @@ import com.tonapps.chainkit.core.chain.model.signing.SigSet
 import com.tonapps.chainkit.core.chain.model.transaction.Fee
 import com.tonapps.chainkit.core.chain.model.transaction.Transaction
 import com.tonapps.chainkit.core.chain.model.transaction.TransactionInfo
+import com.tonapps.chainkit.core.op.Intent
+import com.tonapps.chainkit.core.op.OpRes
+import com.tonapps.chainkit.core.op.Operation
 import com.tonapps.chainkit.core.op.Payload
+import com.tonapps.chainkit.core.op.PayloadMeta
 import com.tonapps.chainkit.core.op.SignedPayload
-import com.tonapps.chainkit.transaction.ApprovalTransactions
+import com.tonapps.chainkit.core.op.ValidationRes
 import com.tonapps.chainkit.transaction.GasReservePolicy
 import com.tonapps.chainkit.transaction.GasReserveResult
 import com.tonapps.extensions.fromHex
-import com.trustwallet.core.PublicKey
-import com.trustwallet.core.PublicKeyType
-import com.trustwallet.core.TONWallet
+import com.tonapps.chainkit.CryptoKitPlatforms
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -42,6 +52,12 @@ class ChainKitProvider(
         return mediator.fee.calculateFee(transaction)
     }
 
+    /** What [transaction] costs at the chain's default limit, without simulating it. */
+    suspend fun defaultFee(transaction: Transaction): ChainRes<Fee> {
+        val mediator = client.blockchain.getMediator(transaction.account.chain.network.type)
+        return mediator.fee.getDefaultFee(transaction)
+    }
+
     suspend fun estimateFee(
         payload: Payload,
         account: Account,
@@ -51,12 +67,30 @@ class ChainKitProvider(
         return mediator.operation.calculateFee(payload, account, priority)
     }
 
+    /** The `main` payload meta that sends [amount] of [account]'s own asset to [to], as its chain signs it. */
+    suspend fun transferPayload(
+        account: Account,
+        to: Address,
+        amount: BigInteger,
+        memo: String? = null,
+        isMax: Boolean = false,
+    ): OpRes<PayloadMeta> {
+        val mediator = client.blockchain.getMediator(account.chain.network.type)
+        return mediator.operation.transfer(account, to, amount, memo, isMax)
+    }
+
+    /** [operation] held to [intent], what the user agreed to: every finding the user should read before signing. */
+    suspend fun validateOperation(operation: Operation, account: Account, intent: Intent): ValidationRes<Unit> {
+        val mediator = client.blockchain.getMediator(account.chain.network.type)
+        return mediator.operation.validate(operation, account, intent)
+    }
+
     suspend fun signPayload(
         payload: Payload,
         account: Account,
         fee: Fee,
         nonce: BigInteger,
-        wallet: CryptoWallet,
+        wallet: MnemonicWallet,
     ): SignRes<SignedPayload> {
         val mediator = client.blockchain.getMediator(payload.chain.network.type)
         return mediator.operation.sign(payload, account, fee, nonce, wallet)
@@ -117,7 +151,7 @@ class ChainKitProvider(
         data: String,
         type: MessageType,
         account: Account,
-        wallet: CryptoWallet,
+        wallet: MnemonicWallet,
     ): SignRes<String>? {
         val network = account.chain.network.type
         val mediator = client.blockchain.getMediator(network)
@@ -216,19 +250,51 @@ class ChainKitProvider(
         return result
     }
 
+    fun signedTransactionHex(chain: Chain, signingOutput: ByteArray): String {
+        require(chain is Chain.Evm) { "A signed transaction is answered unsent on EVM only, not on $chain" }
+        return evmSignedTransactionHex(signingOutput)
+    }
+
+    suspend fun buildUnsignedInputs(
+        tx: Transaction,
+        fee: Fee,
+        nonce: BigInteger,
+    ): SignRes<List<ByteArray>> {
+        val mediator = client.blockchain.getMediator(tx.account.chain.network.type)
+        return mediator.encodedUnsignedInputs(tx, fee, nonce)
+    }
+
+    suspend fun bitcoinUnlockedUtxos(account: Account): List<UnspentOutput> {
+        val mediator = client.blockchain.getMediator(account.chain.network.type).mediator as? BitcoinMediator
+            ?: throw IllegalArgumentException("Not a Bitcoin account")
+        return mediator.utxoLockService.getUnlockedUtxos(account)
+    }
+
+    suspend fun findTransactionMeta(account: Account, hash: String): String? {
+        val mediator = client.blockchain.getMediator(account.chain.network.type)
+        return mediator.transaction.findTransaction(account, hash, BigInteger.ZERO).getOrNull()?.meta
+    }
+
+    private suspend fun <I : Message<I, *>, O : Message<O, *>> ChainMediatorWrapper<I, O>.encodedUnsignedInputs(
+        tx: Transaction,
+        fee: Fee,
+        nonce: BigInteger,
+    ): SignRes<List<ByteArray>> {
+        val signer = sign.transaction
+        val inputs = if (tx.account.chain is Chain.Bitcoin) {
+            signer.buildSigningInput(tx, fee, nonce, null as Hierarchy?)
+        } else {
+            signer.buildSigningInput(tx, fee, nonce, null as PrivateKey?)
+        }
+        return inputs.map { set -> set.outputs.map { signer.inputAdapter.encode(it) } }
+    }
+
     fun buildTonV5R1StateInit(publicKeyHex: String, testnet: Boolean = false): ByteArray? {
         val bytes = publicKeyHex
             .removePrefix("0x")
             .fromHex()
 
-        val publicKey = PublicKey(bytes, PublicKeyType.ED25519)
-        val walletId = if (testnet) {
-            TON_V5R1_WALLET_ID_TESTNET
-        } else {
-            TON_V5R1_WALLET_ID_MAINNET
-        }
-        val base64Boc = TONWallet.buildV5R1StateInit(publicKey, TON_WORKCHAIN, walletId) ?: return null
-        return java.util.Base64.getDecoder().decode(base64Boc)
+        return TonWallets.v5R1StateInit(bytes, testnet)
     }
 
     fun signWalletRegisterProof(
@@ -263,18 +329,10 @@ class ChainKitProvider(
         return client.tx.calculateGasReserve(account, energy, amount, isMax, fee, policy)
     }
 
-    /** The approve [approvalData] makes for [tx], as an exact and as an unlimited allowance. */
-    fun buildApproval(tx: Transaction.Swap, approvalData: String): ApprovalTransactions? {
-        return client.tx.buildApproval(tx, approvalData)
-    }
-
     companion object {
-        private const val TON_WORKCHAIN: Int = 0
-        private const val TON_V5R1_WALLET_ID_MAINNET: Int = 2147483409
-        private const val TON_V5R1_WALLET_ID_TESTNET: Int = 0x7FFFFFFD
-
+        // Loads ChainKit's native library; throws UnsatisfiedLinkError when the device cannot.
         fun init() {
-            System.loadLibrary("TrustWalletCore")
+            CryptoKitPlatforms().init()
         }
     }
 }

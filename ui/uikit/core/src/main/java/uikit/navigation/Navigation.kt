@@ -10,6 +10,7 @@ import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
 import kotlinx.coroutines.Runnable
 import uikit.base.BaseFragment
+import uikit.widget.ToastFeedback
 import uikit.widget.ToastView
 
 interface Navigation {
@@ -41,7 +42,8 @@ interface Navigation {
         color: Int,
         duration: Long = ToastView.DURATION_DEFAULT,
         @DrawableRes iconRes: Int = 0,
-        @ColorInt iconTint: Int = Color.TRANSPARENT
+        @ColorInt iconTint: Int = Color.TRANSPARENT,
+        feedback: ToastFeedback = ToastFeedback.Neutral,
     )
 
     fun run(fragment: BaseFragment) {

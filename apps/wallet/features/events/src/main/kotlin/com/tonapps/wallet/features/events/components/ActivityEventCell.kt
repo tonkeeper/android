@@ -38,6 +38,7 @@ import com.tonapps.chainkit.core.chain.model.num.Formatter
 import com.tonapps.core.components.coinShortName
 import com.tonapps.extensions.short4
 import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.icu.TransactionDateFormatter
 import com.tonapps.perps.data.formatUsdAmount
 import com.tonapps.wallet.data.core.HIDDEN_BALANCE
 import com.tonapps.wallet.data.multichain.asset.AssetEntity
@@ -45,14 +46,15 @@ import com.tonapps.wallet.features.events.components.legacy.EventActionEncrypted
 import com.tonapps.wallet.features.events.data.HistoryEventEntity
 import com.tonapps.wallet.features.events.data.HistoryNft
 import com.tonapps.wallet.features.events.formattedDateTime
-import com.tonapps.wallet.features.events.formattedTime
 import com.tonapps.wallet.features.events.hasStakingProviderIcon
 import com.tonapps.wallet.features.events.iconPainter
+import com.tonapps.wallet.features.events.isPerpsAmountMuted
 import com.tonapps.wallet.features.events.perpsResultText
 import com.tonapps.wallet.features.events.perpsSubtitle
 import com.tonapps.wallet.features.events.stakingProviderName
 import com.tonapps.wallet.features.events.statusTitle
 import com.tonapps.wallet.localization.Localization
+import io.walletapi.models.ActivityStatus
 import io.walletapi.models.ActivityType
 import ui.components.base.UIKitProgressIndicator
 import ui.components.moon.MoonItemSubtitle
@@ -75,17 +77,17 @@ fun ActivityEventCell(
     hiddenBalance: Boolean,
     nft: HistoryNft? = null,
     position: MoonBundlePosition = MoonBundlePosition.Default,
-    labelsPerpsBalanceChanges: Boolean = true,
     onClick: () -> Unit = {},
     onNftClick: (() -> Unit)? = null,
     decryptedComment: String? = null,
     onDecryptComment: (() -> Unit)? = null,
-    showDate: Boolean = false,
+    dateFrom: TransactionDateFormatter.DateFrom = TransactionDateFormatter.DateFrom.Never,
 ) {
     val subtitle = if (activity.isPerps) {
-        activity.perpsSubtitle(labelsBalanceChanges = labelsPerpsBalanceChanges)
+        activity.perpsSubtitle()
     } else {
         activity.stakingProviderName()
+            ?: activity.counterpartyName
             ?: activity.counterpartyAddress?.short4
             ?: stringResource(Localization.unknown)
     }
@@ -121,7 +123,7 @@ fun ActivityEventCell(
                     isEncrypted = isEncrypted,
                     onNftClick = onNftClick,
                     onDecryptComment = onDecryptComment,
-                    showDate = showDate,
+                    dateFrom = dateFrom,
                 )
             },
             content = null,
@@ -202,7 +204,7 @@ private fun ActivitySecondaryRow(
     isEncrypted: Boolean,
     onNftClick: (() -> Unit)?,
     onDecryptComment: (() -> Unit)?,
-    showDate: Boolean,
+    dateFrom: TransactionDateFormatter.DateFrom,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -243,11 +245,7 @@ private fun ActivitySecondaryRow(
         Spacer(modifier = Modifier.width(8.dp))
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = if (showDate) {
-                    activity.formattedDateTime()
-                } else {
-                    activity.formattedTime()
-                },
+                text = activity.formattedDateTime(dateFrom),
                 style = UIKit.typography.body2,
                 color = UIKit.colorScheme.text.secondary,
             )
@@ -453,6 +451,7 @@ private fun PerpsAmountRow(
     } ?: return
     val isPositive = !showsMargin && activity.perpsResult?.isPositive == true
     val color = when {
+        activity.isPerpsAmountMuted() -> UIKit.colorScheme.text.secondary
         activity.isFailed -> UIKit.colorScheme.accent.orange
         isPositive && !hiddenBalance -> UIKit.colorScheme.accent.green
         else -> UIKit.colorScheme.text.primary
@@ -721,6 +720,11 @@ private fun ActivityEventCellPerpsPreview() {
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
+                activity = previewPerpsDeposit(ActivityStatus.pending),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
                 activity = previewPerpsDeposit(),
                 hiddenBalance = false,
                 position = MoonBundlePosition.Middle,
@@ -731,7 +735,22 @@ private fun ActivityEventCellPerpsPreview() {
                 position = MoonBundlePosition.Middle,
             )
             ActivityEventCell(
+                activity = previewPerpsDroppedDeposit(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsWithdrawal(ActivityStatus.pending),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
                 activity = previewPerpsWithdrawal(),
+                hiddenBalance = false,
+                position = MoonBundlePosition.Middle,
+            )
+            ActivityEventCell(
+                activity = previewPerpsWithdrawal(ActivityStatus.failed),
                 hiddenBalance = false,
                 position = MoonBundlePosition.Footer,
             )
@@ -759,27 +778,6 @@ private fun ActivityEventCellHiddenBalancePreview() {
                 hiddenBalance = true,
                 nft = PREVIEW_NFT,
                 position = MoonBundlePosition.Footer,
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun ActivityEventCellPerpsListPreview() {
-    ThemedPreview {
-        Column {
-            ActivityEventCell(
-                activity = previewPerpsDeposit(),
-                hiddenBalance = false,
-                position = MoonBundlePosition.Header,
-                labelsPerpsBalanceChanges = false,
-            )
-            ActivityEventCell(
-                activity = previewPerpsWithdrawal(),
-                hiddenBalance = false,
-                position = MoonBundlePosition.Footer,
-                labelsPerpsBalanceChanges = false,
             )
         }
     }

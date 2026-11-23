@@ -61,6 +61,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
+import com.tonapps.bus.generated.Events.Scanner.ScannerInput
 import com.tonapps.qr.QRImageAnalyzer
 import com.tonapps.uikit.icon.UIKitIcon
 import com.tonapps.wallet.localization.Localization
@@ -76,8 +77,9 @@ import java.util.concurrent.Executors
 // TODO refactor later
 @Composable
 fun ScannerScreen(
-    onResult: (String) -> Unit,
+    onResult: (value: String, input: ScannerInput) -> Unit,
     onClose: () -> Unit,
+    onNoCode: (ScannerInput) -> Unit = {},
     isFullScreen: Boolean = false,
 ) {
     val context = LocalContext.current
@@ -133,13 +135,18 @@ fun ScannerScreen(
                         val value = barcodes.firstOrNull()?.rawValue
                         if (value == null) {
                             context.toastInvalidLink(toastColor)
+                            onNoCode(ScannerInput.Gallery)
                         } else {
-                            onResult(value)
+                            onResult(value, ScannerInput.Gallery)
                         }
                     }
-                    .addOnFailureListener { context.toastInvalidLink(toastColor) }
+                    .addOnFailureListener {
+                        context.toastInvalidLink(toastColor)
+                        onNoCode(ScannerInput.Gallery)
+                    }
             } catch (_: Throwable) {
                 context.toastInvalidLink(toastColor)
+                onNoCode(ScannerInput.Gallery)
             }
         }
     }
@@ -151,7 +158,7 @@ fun ScannerScreen(
             .filterNotNull()
             .collect { value ->
                 withContext(Dispatchers.Main) {
-                    onResult(value)
+                    onResult(value, ScannerInput.Camera)
                 }
             }
     }

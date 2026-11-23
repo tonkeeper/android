@@ -2,6 +2,7 @@ package com.tonapps.deposit.multicoin.analytics
 
 import com.tonapps.blockchain.model.ConfirmInitiator
 import com.tonapps.bus.core.contract.UtmParameters
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowDepositScreen
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowWalletMode
 import com.tonapps.bus.generated.Events.SendNative.SendNativeFrom
@@ -100,9 +101,10 @@ interface RampAnalytics {
             from: DepositFlowFrom,
             walletMode: DepositFlowWalletMode,
             utm: UtmParameters = UtmParameters.Empty,
+            screen: DepositFlowDepositScreen,
         ): RampAnalytics {
             if (rampType == RampType.RampOn) {
-                return DepositAnalytics(rampType, from, walletMode, utm)
+                return DepositAnalytics(rampType, from, walletMode, utm, screen)
             }
             return WithdrawAnalytics(
                 from = from.asWithdrawFlowFrom(),

@@ -5,6 +5,7 @@ import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
 import com.tonapps.deposit.screens.ramp.RampType
 
 data class RampAmountData(
+    val walletId: String,
     val rampType: RampType,
     val assetId: String,
     val paymentMethodType: String,

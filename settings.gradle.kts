@@ -83,7 +83,10 @@ buildCache {
     //https://docs.gradle.org/current/userguide/build_cache.html#sec:build_cache_configure_remote
     local {
         isEnabled = true
-        directory = rootDir.resolve(".build-cache")
+        // On CI the default location in Gradle User Home, which setup-gradle saves between runs.
+        if (System.getenv("CI") == null) {
+            directory = rootDir.resolve(".build-cache")
+        }
     }
 }
 
@@ -102,6 +105,8 @@ include(
     ":tonapi:perps",
     ":tonapi:kandelabr",
     ":tonapi:wallet",
+    ":tonapi:earn",
+    ":tonapi:tonendpoint",
     ":tonapi:legacy",
 
     ":ui:shimmer",
@@ -115,6 +120,7 @@ include(
     ":lib:extensions",
     ":lib:security",
     ":lib:network",
+    ":lib:time",
     ":lib:qr",
     ":lib:log",
     ":lib:icu",
@@ -122,11 +128,13 @@ include(
     ":lib:blockchain",
     ":lib:sqlite",
     ":lib:ledger",
+    ":lib:ledgerkit",
     ":lib:ur",
     ":lib:base64",
     ":lib:bus",
     ":lib:wallet",
     ":lib:wc",
+    ":lib:webview-bridge",
     ":lib:features",
     ":lib:test",
     ":apps:wallet:testing",
@@ -146,6 +154,7 @@ include(
     ":apps:wallet:data:browser",
     ":apps:wallet:data:banner",
     ":apps:wallet:data:raffle",
+    ":apps:wallet:data:loyalty",
     ":apps:wallet:data:earn",
     ":apps:wallet:data:backup",
     ":apps:wallet:data:tx",
@@ -164,10 +173,12 @@ include(
 
     ":apps:wallet:data:multichain:wallet",
     ":apps:wallet:data:multichain:exchange",
+    ":apps:wallet:data:ledger",
 
     ":apps:wallet:features:core",
     ":apps:wallet:features:dapp",
     ":apps:wallet:features:onboarding",
+    ":apps:wallet:features:ledger",
     ":apps:wallet:features:ramp",
     ":apps:wallet:features:confirm",
     ":apps:wallet:features:settings",

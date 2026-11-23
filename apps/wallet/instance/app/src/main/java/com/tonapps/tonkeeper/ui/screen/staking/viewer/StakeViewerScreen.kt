@@ -16,17 +16,17 @@ import androidx.lifecycle.lifecycleScope
 import com.tonapps.bus.core.contract.UtmParameters
 import com.tonapps.extensions.uri
 import com.tonapps.tonkeeper.Environment
-import com.tonapps.tonkeeper.extensions.toast
 import com.tonapps.tonkeeper.koin.walletViewModel
 import com.tonapps.tonkeeper.ui.base.BaseListWalletScreen
 import com.tonapps.tonkeeper.ui.base.ScreenContext
-import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreen
+import com.tonapps.tonkeeper.ui.screen.browser.dapp.DAppScreenFactory
 import com.tonapps.tonkeeper.ui.screen.staking.stake.StakingScreen
 import com.tonapps.tonkeeper.ui.screen.staking.unstake.UnStakeScreen
 import com.tonapps.tonkeeper.ui.screen.staking.viewer.list.Adapter
 import com.tonapps.uikit.color.backgroundPageColor
 import com.tonapps.wallet.api.entity.EthenaEntity
 import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.tonkeeper.extensions.failureToast
 import com.tonapps.wallet.localization.Localization
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
@@ -50,6 +50,7 @@ class StakeViewerScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContex
     private val args: StakeViewerArgs by lazy { StakeViewerArgs(requireArguments()) }
 
     private val environment: Environment by inject()
+    private val dappScreenFactory: DAppScreenFactory by inject()
 
     private val adapter = Adapter()
 
@@ -61,7 +62,7 @@ class StakeViewerScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContex
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel.uiStateFlow.catch {
-            navigation?.toast(Localization.unknown_error)
+            navigation?.failureToast(Localization.unknown_error)
             finish()
         }.onEach(::applyState).launchIn(lifecycleScope)
     }
@@ -161,7 +162,7 @@ class StakeViewerScreen(wallet: WalletEntity): BaseListWalletScreen<ScreenContex
     private fun openEthenaDApp(actions: StakeViewerActions, url: String) {
         val method = actions.ethenaMethod ?: return
         navigation?.add(
-            DAppScreen.newInstance(
+            dappScreenFactory.create(
                 wallet = actions.wallet,
                 title = method.name,
                 url = url.toUri(),

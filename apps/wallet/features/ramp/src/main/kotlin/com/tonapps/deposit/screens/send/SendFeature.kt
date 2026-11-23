@@ -30,10 +30,11 @@ import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.token.TokenRepository
 import com.tonapps.wallet.data.token.entities.AccountTokenEntity
+import com.tonapps.wallet.data.token.entities.hasTron
 import com.tonapps.wallet.localization.Localization
-import io.exchangeapi.infrastructure.ApiResult
 import io.exchangeapi.models.CreateExchangeRequest
 import io.exchangeapi.models.ExchangeFlow
+import io.infrastructure.ApiResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
@@ -53,6 +54,7 @@ interface SendModel {
         data class AddressInput(val address: String) : Action
         data class AmountInput(val amount: String) : Action
         data class CommentInput(val comment: String?) : Action
+        data class ExchangeMemoInput(val memo: String) : Action
         data class EncryptedCommentToggle(val enabled: Boolean) : Action
         data class SelectToken(val token: TokenEntity) : Action
         data class SelectTokenByAddress(val address: String) : Action
@@ -88,6 +90,7 @@ interface SendModel {
         val isContinueEnabled: Boolean = false,
         val isProcessing: Boolean = false,
         val exchangeAsset: WalletCurrency? = null,
+        val exchangeMemo: String = "",
         val exchangeMinAmount: Coins? = null,
         val exchangeMaxAmount: Coins? = null,
         val isNft: Boolean = false,
@@ -95,6 +98,9 @@ interface SendModel {
         val tronSwapTitle: String? = null,
     ) : MviState {
         val isExchangeMode get() = exchangeAsset != null
+        val isExchangeMemoAvailable get() = exchangeAsset?.let {
+            it.chain is WalletCurrency.Chain.TON && (it.isToken || it.title.equals("TON", ignoreCase = true))
+        } == true
     }
 
     
@@ -181,6 +187,7 @@ class SendFeature(
             is SendModel.Action.AddressInput -> handleAddressInput(action.address)
             is SendModel.Action.AmountInput -> handleAmountInput(action.amount)
             is SendModel.Action.CommentInput -> handleCommentInput(action.comment)
+            is SendModel.Action.ExchangeMemoInput -> setState { copy(exchangeMemo = action.memo) }
             is SendModel.Action.EncryptedCommentToggle -> handleEncryptedCommentToggle(action.enabled)
             is SendModel.Action.SelectToken -> handleSelectToken(action.token)
             is SendModel.Action.SelectTokenByAddress -> handleSelectTokenByAddress(action.address)
@@ -199,7 +206,7 @@ class SendFeature(
             tokens = tokenRepository.get(fiatCurrency, wallet.accountId, wallet.network)
                 ?: emptyList()
 
-            tronAvailable = tokens.any { it.blockchain == Blockchain.TRON }
+            tronAvailable = tokens.hasTron()
 
             val selectedToken = if (data.presetCurrency != null) {
                 tokens.firstOrNull { it.address.equalsAddress(data.presetCurrency.address) }
@@ -221,7 +228,7 @@ class SendFeature(
                 selectedToken = selectedToken,
                 currency = fiatCurrency,
                 hiddenBalance = settingsRepository.hiddenBalances,
-                isLedger = wallet.isLedger,
+                isLedger = wallet.signsWithLedger,
                 remainingTokenBalance = selectedToken.balance.uiBalance,
                 isCommentAvailable = !isExchange && selectedToken.blockchain != Blockchain.TRON,
                 availableTokens = tokens.filter { it.balance.isTransferable },
@@ -295,7 +302,7 @@ class SendFeature(
 
     private fun handleCommentInput(comment: String?) {
         setState {
-            val error = if (wallet.isLedger && !comment.isNullOrEmpty() && !comment.all { it.code in 32..126 }) {
+            val error = if (wallet.signsWithLedger && !comment.isNullOrEmpty() && !comment.all { it.code in 32..126 }) {
                 Localization.ledger_comment_error
             } else {
                 null
@@ -369,6 +376,7 @@ class SendFeature(
             val tokenAmount = getTokenAmount(input)
 
             val exchangeTo = data.sendExchangeData!!.exchangeTo
+            val memo = input.exchangeMemo.trim().takeIf { input.isExchangeMemoAvailable && it.isNotEmpty() }
             val apiResult = exchangeRepository.createExchange(
                 CreateExchangeRequest(
                     from = input.selectedToken.symbol,
@@ -376,6 +384,7 @@ class SendFeature(
                     wallet = externalAddress,
                     fromNetwork = data.presetCurrency?.network,
                     toNetwork = exchangeTo.network,
+                    extraId = memo,
                     flow = ExchangeFlow.withdraw,
                 )
             )
@@ -419,6 +428,7 @@ class SendFeature(
                 exchangeData = SendParams.Exchange(
                     currency = exchangeTo,
                     exchangeAddress = input.address,
+                    memo = memo,
                     estimatedDurationSeconds = exchangeResult.estimatedDuration,
                     withdrawalFee = data.sendExchangeData.withdrawalFee,
                 ),

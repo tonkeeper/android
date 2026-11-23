@@ -13,8 +13,10 @@ import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.HTTP_BAD_REQUEST
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.SEND_TRANSACTIONS
 import com.tonapps.perps.funding.PerpsFundingTestEnv.Companion.WALLET_ID
 import com.tonapps.wallet.data.multichain.lighter.PerpetualRepository
+import com.tonapps.wallet.data.multichain.lighter.StoredIntegratorApproval
 import com.tonapps.wallet.data.multichain.perps.PerpsOperationJournal
 import com.tonapps.wallet.testing.BaseUnitTest
+import com.tonapps.wallet.testing.FakeTimeProvider
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +26,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
@@ -36,7 +39,11 @@ class PerpsIntegratorApprovalTest : BaseUnitTest() {
 
     private val perpetualRepository = mockk<PerpetualRepository>()
     private val signedApprovalNonces = mutableListOf<Long>()
+    private val signedTxExpiries = mutableListOf<Long>()
+    private val serverTime = FakeTimeProvider()
     private var venueNonce = FIRST_NONCE
+    private var stored: StoredIntegratorApproval? = null
+    private val unlock: suspend () -> PerpsOwnerMessageSigner? = { PerpsOwnerMessageSigner { "0x" } }
 
     @Before
     fun setUp() {
@@ -50,14 +57,24 @@ class PerpsIntegratorApprovalTest : BaseUnitTest() {
             )
         }
         relay = PerpsExecutionRelay(env.repository, mockk<PerpsOperationJournal>(), PerpsNonceCoordinator())
-        approval = PerpsIntegratorApproval(perpetualRepository, relay)
+        approval = PerpsIntegratorApproval(perpetualRepository, relay, serverTime)
         coEvery {
-            perpetualRepository.approveIntegratorTransaction(WALLET_ID, any<LighterApproveIntegratorTxReq>(), any(), any())
+            perpetualRepository.approveIntegratorTransaction(
+                WALLET_ID,
+                any<LighterApproveIntegratorTxReq>(),
+                any(),
+                any(),
+                any(),
+            )
         } answers {
             val nonce = thirdArg<Long>()
             signedApprovalNonces += nonce
+            signedTxExpiries += arg<Long>(EXPIRY_OF_APPROVAL)
             signedApproval(nonce)
         }
+        coEvery { perpetualRepository.integratorApproval(WALLET_ID) } answers { stored }
+        coEvery { perpetualRepository.saveIntegratorApproval(WALLET_ID, any()) } answers { stored = secondArg() }
+        coEvery { perpetualRepository.forgetIntegratorApproval(WALLET_ID) } answers { stored = null }
     }
 
     @Test
@@ -82,15 +99,15 @@ class PerpsIntegratorApprovalTest : BaseUnitTest() {
 
     @Test
     fun aRenewalApprovesAgainAgainstTheVenueNonce() = runTest {
-        assertNull(approval.ensure(WALLET_ID, SCOPE, INTEGRATOR))
+        assertNull(approval.ensure(WALLET_ID, SCOPE, INTEGRATOR, unlock))
         venueNonce++
-        assertNull(approval.ensure(WALLET_ID, SCOPE, INTEGRATOR))
+        assertNull(approval.ensure(WALLET_ID, SCOPE, INTEGRATOR, unlock))
         assertEquals(listOf(FIRST_NONCE), signedApprovalNonces)
 
         val refusedOrderNonce = relay.nextNonce(SCOPE).value
         assertEquals(FIRST_NONCE + 1, refusedOrderNonce)
 
-        assertNull(approval.renew(WALLET_ID, SCOPE, INTEGRATOR))
+        assertNull(approval.renew(WALLET_ID, SCOPE, INTEGRATOR, unlock))
 
         assertEquals(listOf(FIRST_NONCE, FIRST_NONCE + 1), signedApprovalNonces)
         venueNonce++
@@ -99,15 +116,29 @@ class PerpsIntegratorApprovalTest : BaseUnitTest() {
 
     @Test
     fun aRenewalTheVenueRefusesFails() = runTest {
-        assertNull(approval.ensure(WALLET_ID, SCOPE, INTEGRATOR))
+        assertNull(approval.ensure(WALLET_ID, SCOPE, INTEGRATOR, unlock))
+        venueNonce++
         env.answer(SEND_TRANSACTIONS) {
             env.refused(HTTP_BAD_REQUEST, code = "validation_error", reason = "lighter_rejected")
         }
 
-        val failure = approval.renew(WALLET_ID, SCOPE, INTEGRATOR) as PerpsTradeFailure.SendRefused
+        val failure = approval.renew(WALLET_ID, SCOPE, INTEGRATOR, unlock) as PerpsTradeFailure.SendRefused
 
         assertEquals(PerpsSendReason.LIGHTER_REJECTED, failure.reason)
-        assertEquals(listOf(FIRST_NONCE, FIRST_NONCE), signedApprovalNonces)
+        assertEquals(listOf(FIRST_NONCE, FIRST_NONCE + 1), signedApprovalNonces)
+    }
+
+    @Test
+    fun anApprovalIsSignedOnTheServersClock() = runTest {
+        serverTime.offsetMs = -DEVICE_CLOCK_SKEW_MS
+        val before = serverTime.currentTimeMillis()
+
+        assertNull(approval.ensure(WALLET_ID, SCOPE, INTEGRATOR, unlock))
+
+        // Lighter reads both expiries on its own clock.
+        val signedAt = before..serverTime.currentTimeMillis()
+        assertTrue(checkNotNull(stored).expiryMs - INTEGRATOR.approvalTtlMs in signedAt)
+        assertTrue(signedTxExpiries.single() - LighterConstants.DefaultExpireTimeMillis in signedAt)
     }
 
     private fun signedApproval(nonce: Long): L2ApproveIntegratorTxInfo {
@@ -126,6 +157,8 @@ class PerpsIntegratorApprovalTest : BaseUnitTest() {
         const val FIRST_NONCE = 41L
         const val TX_TYPE_CREATE_ORDER = 14
         const val HASH_HEX_LENGTH = 80
+        const val EXPIRY_OF_APPROVAL = 3
+        const val DEVICE_CLOCK_SKEW_MS = 60L * 60L * 1_000L
 
         val SCOPE = PerpsScope(
             walletId = WALLET_ID,

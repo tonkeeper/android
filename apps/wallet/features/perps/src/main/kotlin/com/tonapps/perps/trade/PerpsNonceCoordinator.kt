@@ -18,6 +18,10 @@ internal class PerpsNonceCoordinator {
 
     private val cursors = mutableMapOf<Key, Long>()
 
+    private val accepted = mutableMapOf<Key, Long>()
+
+    private val issuedCounts = mutableMapOf<Key, Long>()
+
     suspend fun next(scope: PerpsScope, fetch: suspend () -> Long): Long {
         val key = key(scope)
         mutex.withLock {
@@ -35,8 +39,10 @@ internal class PerpsNonceCoordinator {
         return mutex.withLock {
             val cursor = cursors[key]
             if (cursor == null) {
-                cursors[key] = remote
-                remote
+                val first = maxOf(remote, (accepted[key] ?: remote - 1) + 1)
+                cursors[key] = first
+                countIssued(key)
+                first
             } else {
                 advance(key, cursor)
             }
@@ -55,7 +61,48 @@ internal class PerpsNonceCoordinator {
             mutex.withLock { cursors.remove(key) }
             throw PerpsExecutionException(PerpsExecutionErrorKind.Validation, "nonce response is negative")
         }
-        mutex.withLock { cursors[key] = remote - 1 }
+        mutex.withLock { cursors[key] = maxOf(remote - 1, accepted[key] ?: remote - 1) }
+    }
+
+    suspend fun catchUp(scope: PerpsScope, fetch: suspend () -> Long) {
+        val key = key(scope)
+        val (cursorBeforeRead, issuedBeforeRead) = mutex.withLock { cursors[key] to (issuedCounts[key] ?: 0L) }
+        val remote = try {
+            fetch()
+        } catch (e: Throwable) {
+            mutex.withLock { cursors.remove(key) }
+            throw e
+        }
+        if (remote < 0) {
+            mutex.withLock { cursors.remove(key) }
+            throw PerpsExecutionException(PerpsExecutionErrorKind.Validation, "nonce response is negative")
+        }
+        mutex.withLock {
+            val movedDuringRead = cursors[key]?.takeIf { current ->
+                (issuedCounts[key] ?: 0L) != issuedBeforeRead || cursorBeforeRead == null || current > cursorBeforeRead
+            }
+            cursors[key] = listOfNotNull(remote - 1, accepted[key], movedDuringRead).max()
+        }
+    }
+
+    suspend fun markAccepted(scope: PerpsScope, nonce: Long) {
+        val key = key(scope)
+        mutex.withLock {
+            accepted[key] = maxOf(accepted[key] ?: nonce, nonce)
+        }
+    }
+
+    suspend fun returnUnconsumed(scope: PerpsScope, nonce: Long) {
+        val key = key(scope)
+        mutex.withLock {
+            if (cursors[key] == nonce) {
+                cursors[key] = nonce - 1
+            }
+        }
+    }
+
+    suspend fun forget(scope: PerpsScope) {
+        mutex.withLock { cursors.remove(key(scope)) }
     }
 
     private fun advance(key: Key, cursor: Long): Long {
@@ -64,8 +111,13 @@ internal class PerpsNonceCoordinator {
         }
         val next = cursor + 1
         cursors[key] = next
+        countIssued(key)
 
         return next
+    }
+
+    private fun countIssued(key: Key) {
+        issuedCounts[key] = (issuedCounts[key] ?: 0L) + 1
     }
 
     private fun key(scope: PerpsScope): Key {

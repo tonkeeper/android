@@ -6,21 +6,26 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.tonapps.bus.generated.Events.AssetScreen.AssetScreenFrom
 import com.tonapps.bus.generated.Events.Perps.PerpsEntryPoint
+import com.tonapps.bus.screenrender.ScreenRenderId
 import com.tonapps.core.ComposableFragment
 import com.tonapps.core.navigation.NavigationDelegate
-import com.tonapps.perps.PerpsFragment
+import com.tonapps.core.screenrender.ScreenRenderFragmentLifecycle
 import com.tonapps.trading.AssetsFragment
 import io.tradingapi.models.AssetsTab
 import io.tradingapi.models.MarketListKey
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.koin.androidx.compose.koinViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import uikit.base.TabScreen
 import uikit.extensions.activity
 import uikit.navigation.Navigation.Companion.navigation
 
 class ShelvesFragment : ComposableFragment(), TabScreen {
+
+    // Taken here rather than in Compose, so the tab can tell the feature it is shown again.
+    private val feature: ShelvesFeature by viewModel()
+    private val screenRender = ScreenRenderFragmentLifecycle(this, ScreenRenderId.Trade)
 
     private val scrollToShelfFlow = MutableStateFlow<MarketListKey?>(null)
     private val scrollToTopEvents = MutableSharedFlow<Unit>(
@@ -37,12 +42,29 @@ class ShelvesFragment : ComposableFragment(), TabScreen {
         scrollToTopEvents.tryEmit(Unit)
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        screenRender.onHiddenChanged(hidden)
+        if (!hidden) {
+            feature.onScreenShown()
+            feature.reloadPerpsShelf()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!isHidden) {
+            feature.reloadPerpsShelf()
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        screenRender.onViewCreated()
 
         val delegate = context?.activity as? NavigationDelegate
         setContent {
-            val viewModel = koinViewModel<ShelvesFeature>()
+            val viewModel = feature
             val scrollToShelfKey by scrollToShelfFlow.collectAsState()
             val isMultichainWallet by viewModel.isMultichainWallet.collectAsState()
             ShelvesScreen(
@@ -64,7 +86,7 @@ class ShelvesFragment : ComposableFragment(), TabScreen {
                 },
                 onOpenSeeAll = { tab, sort, network ->
                     if (isMultichainWallet) {
-                        delegate?.onOpenPortfolioSearch(sort, network)
+                        delegate?.onOpenPortfolioSearch(sort, network, tab.toPortfolioSearchAssetType())
                     } else {
                         navigation?.add(AssetsFragment.newInstance(initialTab = tab))
                     }
@@ -77,10 +99,10 @@ class ShelvesFragment : ComposableFragment(), TabScreen {
                         )
                     )
                 },
-                onOpenPerps = { navigation?.add(PerpsFragment.newInstance(PerpsEntryPoint.TradeTab)) },
+                onOpenPerps = { delegate?.onOpenPerps(PerpsEntryPoint.TradeTab) },
                 onOpenSearchCategory = { category -> delegate?.onOpenPortfolioSearch(initialAssetType = category) },
                 onOpenPerpMarket = { marketIndex, symbol ->
-                    navigation?.add(PerpsFragment.newInstance(marketIndex, symbol, PerpsEntryPoint.TradeTab))
+                    delegate?.onOpenPerpMarket(marketIndex, symbol, PerpsEntryPoint.TradeTab)
                 },
                 onOpenLink = { url -> delegate?.onOpenLink(url) },
             )

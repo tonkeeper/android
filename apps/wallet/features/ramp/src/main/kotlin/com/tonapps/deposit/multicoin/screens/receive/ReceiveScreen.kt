@@ -29,6 +29,7 @@ fun ReceiveScreen(
 ) {
     val accounts by feature.stateAccounts.collectAsState()
     val selectedAccount by feature.selectedAccount.collectAsState()
+    val canVerifyOnLedger by feature.canVerifyOnLedger.collectAsState()
 
     MoonScaffold(
         title = stringResource(Localization.receiving_address),
@@ -60,7 +61,15 @@ fun ReceiveScreen(
 
     selectedAccount?.let {
         MoonDialogDisposableScope {
-            QrDialog(account = it, onClose = { feature.selectAccount(null) })
+            QrDialog(
+                account = it,
+                onClose = { feature.selectAccount(null) },
+                onVerifyOnLedger = if (canVerifyOnLedger) {
+                    { feature.verifyOnLedger(it) }
+                } else {
+                    null
+                },
+            )
         }
     }
 }
